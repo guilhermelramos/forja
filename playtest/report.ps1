@@ -35,6 +35,8 @@ foreach ($dir in Get-ChildItem $In -Directory -ErrorAction SilentlyContinue) {
     foreach ($line in Get-Content $file.FullName) {
         if (-not $line.Trim()) { continue }
         $finding = $line | ConvertFrom-Json
+        # A clean exit (code 0) is the tester closing the window, not a crash.
+        if ($finding.kind -eq "crash" -and [string]$finding.actual -match "código 0\.") { continue }
         $finding | Add-Member -NotePropertyName mission -NotePropertyValue ($dir.Name -replace '^playtest-', '') -Force
         $all += $finding
     }

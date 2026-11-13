@@ -20,7 +20,10 @@ param(
     [Parameter(Mandatory)] [string]$Mission,
     [int]$Minutes = 80,
     [int]$SessionMinutes = 20,
-    [string[]]$Models = @("opencode/glm-5.3-flash-free", "opencode/deepseek-v4.1-flash-free"),
+    [string[]]$Models = @("opencode/glm-5.3-flash-free", "opencode/deepseek-v4.1-flash-free",
+        "opencode/minimax-m3.1-flash-free", "opencode/mimo-v2.6-flash-free"),
+    # Testers start at different models so the free limits are spread out.
+    [int]$ModelOffset = 0,
     [string]$App = "target/release/forja-app.exe",
     [string]$Mcp = "target/release/forja-mcp.exe",
     [string]$Out = "playtest-out",
@@ -81,6 +84,9 @@ $missionText = Get-Content $Mission -Raw
 $forja = Start-Forja
 $summary = ""
 $session = 0
+$exhausted = @{}
+$quickFailures = 0
+$Models = @($Models | Where-Object { $_ })
 
 while ((Get-Date) -lt $deadline) {
     $session++
@@ -94,7 +100,13 @@ while ((Get-Date) -lt $deadline) {
     if ($summary) { $prompt += "Resumo da sessão anterior (continue a partir daqui, explore o que ainda não foi testado):`n$summary`n`n" }
     $prompt += "Tempo restante: cerca de $left minutos. Comece com ui_look."
 
-    $model = $Models[($session - 1) % $Models.Count]
+    $available = @($Models | Where-Object { -not $exhausted[$_] })
+    if ($available.Count -eq 0) {
+        Write-Host "playtest[$name]: todos os modelos atingiram o limite gratuito; encerrando"
+        break
+    }
+    $model = $available[($session - 1 + $ModelOffset) % $available.Count]
+    $sessionStart = Get-Date
     Write-Host "playtest[$name]: sessão $session com $model ($left min restantes)"
     $psi = [System.Diagnostics.ProcessStartInfo]::new($opencode)
     foreach ($arg in @("run", "--standalone", "--auto", "--archived", "-m", $model, $prompt)) { $psi.ArgumentList.Add($arg) }
@@ -115,7 +127,24 @@ while ((Get-Date) -lt $deadline) {
     Set-Content "$Out\sessions\$('{0:d2}' -f $session)-$($model -replace '[/:]', '_').txt" $text -Encoding utf8
     $summary = (($stdout.Result -replace "\x1b\[[0-9;]*[A-Za-z]", "") -split "`n" | Select-Object -Last 40) -join "`n"
 
-    if ($forja.HasExited) {
+    $plain = $text
+    if ($plain -match "(?i)usage limit reached|free usage limit|insufficient (credit|quota)|subscribe to OpenCode") {
+        $exhausted[$model] = $true
+        Write-Host "  $model atingiu o limite de uso; próximo modelo"
+    } elseif (((Get-Date) - $sessionStart).TotalSeconds -lt 45) {
+        $quickFailures++
+        Write-Host "  sessão curta demais ($quickFailures seguidas)"
+        if ($quickFailures -ge 5) { Write-Host "playtest[$name]: o agente não está conseguindo trabalhar; encerrando"; break }
+        Start-Sleep -Seconds (15 * $quickFailures)
+    } else {
+        $quickFailures = 0
+    }
+
+    if ($forja.HasExited -and $forja.ExitCode -eq 0) {
+        # Closed normally (e.g. the tester clicked the window's close button): reopen.
+        Write-Host "  o app foi fechado normalmente; reabrindo"
+        $forja = Start-Forja
+    } elseif ($forja.HasExited) {
         $tail = ""
         if (Test-Path "$Out\actions.jsonl") { $tail = (Get-Content "$Out\actions.jsonl" -Tail 5) -join "`n" }
         $crash = @{
@@ -130,7 +159,7 @@ while ((Get-Date) -lt $deadline) {
         Write-Host "  o app caiu; reabrindo"
         $forja = Start-Forja
     }
-    if ($text -match "rate limit|429|quota") { Start-Sleep -Seconds 60 }
+    if ($text -match "(?i)rate limit|429") { Start-Sleep -Seconds 60 }
 }
 
 if (-not $forja.HasExited) { $forja.Kill($true) }

@@ -20,8 +20,9 @@ Regras:
    - gravidade: `critical` (perde dados ou trava), `high` (bloqueia a tarefa), `medium` (atrapalha) ou `low` (detalhe).
 5. Não registre o mesmo problema duas vezes. Veja a lista de achados já registrados abaixo, se houver.
 6. Seletores de pasta e de arquivo do Windows respondem sozinhos com uma pasta de exemplo (`C:\playground\exemplo`), que é um repositório git com alguns commits.
-7. Os ajudantes de código (Claude, Codex...) **não estão instalados** nesta máquina. Se a interface não explicar isso bem, registre.
-8. Trabalhe até completar a missão ou o tempo acabar. No fim, escreva um **resumo** com:
+7. Não feche a janela principal da Forja (o × no canto superior direito) nem use Alt+F4: isso encerra o teste.
+8. Os ajudantes de código (Claude, Codex...) **não estão instalados** nesta máquina. Se a interface não explicar isso bem, registre.
+9. Trabalhe até completar a missão ou o tempo acabar. No fim, escreva um **resumo** com:
    - o que você fez;
    - o que funcionou bem;
    - os achados;

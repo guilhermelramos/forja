@@ -70,9 +70,9 @@ jobs:
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         run: |
-          $models = "${{ vars.PLAYTEST_MODELS || 'opencode/glm-5.3-flash-free,opencode/deepseek-v4.1-flash-free' }}" -split ','
+          $models = "${{ vars.PLAYTEST_MODELS || 'opencode/glm-5.3-flash-free,opencode/deepseek-v4.1-flash-free,opencode/minimax-m3.1-flash-free,opencode/mimo-v2.6-flash-free' }}" -split ','
           ./playtest/run.ps1 -Mission "playtest/missions/${{ matrix.mission }}.md" `
-            -Minutes ([int]"${{ inputs.minutes || '80' }}") -Models $models -Out playtest-out
+            -Minutes ([int]"${{ inputs.minutes || '80' }}") -Models $models -ModelOffset ${{ strategy.job-index }} -Out playtest-out
 
       - name: Keep the session
         if: always()
