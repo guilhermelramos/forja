@@ -137,7 +137,18 @@ fn run() -> i32 {
             }
         }
     }
-    if start_maximized(runtime.settings().values().get("appearance.window.start_maximized"), flags.screenshot.is_some()) {
+    let background = (flags.test_driver || flags.screenshot.is_some())
+        && std::env::var("FORJA_TEST_WINDOW").as_deref() != Ok("visible");
+    if background {
+        // Tests and captures must not interrupt whoever uses the computer: the window
+        // is placed off-screen, never takes focus and has no taskbar button. It still
+        // renders every frame. `FORJA_TEST_WINDOW=visible` shows it for debugging.
+        viewport = viewport
+            .with_active(false)
+            .with_taskbar(false)
+            .with_position([-20000.0, -20000.0])
+            .with_inner_size([1920.0, 1080.0]);
+    } else if start_maximized(runtime.settings().values().get("appearance.window.start_maximized"), flags.screenshot.is_some()) {
         viewport = viewport.with_maximized(true);
     }
     if let Some(icon) = icon::window_icon() {
