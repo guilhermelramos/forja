@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 30/160 telas documentadas · elementos citados 1821/1821 · completo: false
+**Progresso:** 33/160 telas documentadas · elementos citados 1959/1959 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -110,10 +110,10 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.dark.modal.bench.dialogs` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.modal.bench.dialogs.png) |
 | `en.dark.bench-tab.bench.detail` | [página](pages/en.dark.bench-tab.bench.detail.md) | [png](captures/en.dark.bench-tab.bench.detail.png) |
 | `en.dark.rail.board.page` | — | [png](captures/en.dark.rail.board.page.png) |
-| `en.dark.bench-tab.browser.tab` | — | [png](captures/en.dark.bench-tab.browser.tab.png) |
-| `en.dark.bench-tab.chat.tab` | — | [png](captures/en.dark.bench-tab.chat.tab.png) |
+| `en.dark.bench-tab.browser.tab` | [página](pages/en.dark.bench-tab.browser.tab.md) | [png](captures/en.dark.bench-tab.browser.tab.png) |
+| `en.dark.bench-tab.chat.tab` | [página](pages/en.dark.bench-tab.chat.tab.md) | [png](captures/en.dark.bench-tab.chat.tab.png) |
 | `en.dark.modal.counter.poller` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.modal.counter.poller.png) |
-| `en.dark.bench-tab.diff.tab` | — | [png](captures/en.dark.bench-tab.diff.tab.png) |
+| `en.dark.bench-tab.diff.tab` | [página](pages/en.dark.bench-tab.diff.tab.md) | [png](captures/en.dark.bench-tab.diff.tab.png) |
 | `en.dark.bench-tab.editor.tab` | — | [png](captures/en.dark.bench-tab.editor.tab.png) |
 | `en.dark.right-tab.explorer.panel` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.right-tab.explorer.panel.png) |
 | `en.dark.rail.extension.page` | — | [png](captures/en.dark.rail.extension.page.png) |

@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 30,
-  "widgets_total": 1821,
-  "widgets_covered": 1821,
+  "states_done": 33,
+  "widgets_total": 1959,
+  "widgets_covered": 1959,
   "complete": false,
   "stale": [
     {
@@ -95,21 +95,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "en.dark.bench-tab.browser.tab",
-      "png": "captures/en.dark.bench-tab.browser.tab.png",
-      "tree": "captures/en.dark.bench-tab.browser.tab.json"
-    },
-    {
-      "state": "en.dark.bench-tab.chat.tab",
-      "png": "captures/en.dark.bench-tab.chat.tab.png",
-      "tree": "captures/en.dark.bench-tab.chat.tab.json"
-    },
-    {
-      "state": "en.dark.bench-tab.diff.tab",
-      "png": "captures/en.dark.bench-tab.diff.tab.png",
-      "tree": "captures/en.dark.bench-tab.diff.tab.json"
-    },
     {
       "state": "en.dark.bench-tab.editor.tab",
       "png": "captures/en.dark.bench-tab.editor.tab.png",
