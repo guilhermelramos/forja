@@ -1,0 +1,71 @@
+# Perfil de ajudante: Cursor Agent CLI (executável `cursor-agent`).
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "cursor-agent"
+name = "Cursor Agent CLI"
+maker = "Cursor"
+site = "https://cursor.com/docs/cli/overview"
+
+[detect]
+executables = ["cursor-agent", "agent"]   # a ajuda local mostra "Usage: agent"; a documentação usa "agent"
+version = ["--version"]          # saída: "2026.11.11-b912975"
+
+[start]
+command = "cursor-agent"
+args = []
+
+[prompt]
+mode = "argument"              # cursor-agent "<prompt>" ("Initial prompt for the agent")
+headless = ["-p", "{prompt}"]   # imprime e sai; sem --force, ações que pedem aprovação são recusadas (headless)
+# headless_stdin: NOT FOUND. A documentação mostra só agent -p "...", com o prompt como argumento.
+# --output-format text | json | stream-json existe, só com -p.
+
+# [permissions.ask]  # a confirmar: "Before running terminal commands, CLI will ask you to approve (y) or reject (n)" (using),
+#                         # mas o approvalMode padrão não está dito. "allowlist" é valor de config, não flag.
+# [permissions.accept-edits]  # NOT FOUND: sem modo nomeado para edições
+
+[permissions.automatic]
+args = ["--auto-review"]        # "Auto-review (Smart Auto)": o classificador roda chamadas seguras e pergunta o resto (ajuda)
+env = {}
+
+[permissions.full]
+args = ["--force"]              # "Force allow commands unless explicitly denied"; alias --yolo (ajuda)
+env = {}
+# Em modo não interativo, --trust confia no workspace sem perguntar. Com approvalMode "unrestricted" no config, o print também não pede aprovação.
+
+[resume]
+last = ["--continue"]         # alias de --resume=-1 (documentação de parâmetros)
+id = ["--resume", "{id}"]       # "--resume [chatId]" (ajuda)
+
+# [fork]  # NOT FOUND
+
+[models]
+model_args = ["--model", "{model}"]   # "--list-models" lista os modelos da conta (ajuda)
+# effort_args: NOT FOUND (nem flag, nem chave de config). Só existe display.showThinkingBlocks, que é de exibição.
+
+[sessions]
+# formato e local: a confirmar. A documentação não diz onde os chats ficam. "agent ls" abre os chats anteriores (página using).
+create = ["create-chat"]         # "Create a new empty chat and return its ID" (ajuda)
+confidence = "medium"
+
+# [hooks]  # a confirmar: "Runs in the Cursor desktop app and CLI" só vale para workspaceOpen; os demais eventos são do editor (cursor.com/docs/hooks).
+# supported = true
+# config = ["~/.cursor/hooks.json", "<projeto>/.cursor/hooks.json"]
+
+[skills]
+# a confirmar: diretórios de skills não confirmados na documentação oficial.
+user = []
+project = []
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://cursor.com/docs/cli/reference/parameters",
+  "https://cursor.com/docs/cli/headless",
+  "https://cursor.com/docs/cli/reference/configuration",
+  "https://cursor.com/docs/cli/using",
+  "https://cursor.com/docs/hooks",
+]
+commands = ["cursor-agent --version", "cursor-agent --help"]
+confidence = "medium"

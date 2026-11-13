@@ -1,0 +1,17 @@
+[package]
+name = "forja-module-search"
+description = "Forja module search: the Search panel (streaming grep, regex options, replace with preview)."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+forja-kernel = { path = "../../kernel", features = ["egui"] }
+forja-ui-kit = { path = "../../ui-kit" }
+forja-contracts = { path = "../../contracts" }
+ignore.workspace = true
+regex.workspace = true
+sha2.workspace = true
+linkme.workspace = true
+serde_json.workspace = true

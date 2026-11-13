@@ -1,0 +1,12 @@
+[package]
+name = "forja-module-hello"
+description = "Forja module hello."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+forja-kernel = { path = "../../kernel", features = ["egui"] }
+linkme.workspace = true
+serde_json.workspace = true

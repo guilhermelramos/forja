@@ -1,0 +1,68 @@
+# Perfil de ajudante: Continue CLI (executável `cn`, não `continue`).
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# NÃO instalado nesta máquina. A página docs.continue.dev/guides/cli tem o título "Continue CLI (cn) is currently in Alpha" (busca; não lido na íntegra).
+# O nome do pacote npm e o comando de instalação no Windows não aparecem nas páginas lidas: a confirmar.
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "continue"
+name = "Continue CLI"
+maker = "Continue"
+site = "https://docs.continue.dev/cli/quickstart"
+
+[detect]
+executables = ["cn"]
+version = ["--version"]         # "cn --version" (guia rápido)
+
+[start]
+command = "cn"
+args = []                      # TUI no diretório do projeto
+
+[prompt]
+headless = ["-p", "{prompt}"]  # cn -p "<prompt>": uma tarefa, sem sessão interativa; imprime a resposta
+headless_stdin = true          # git diff --staged | cn -p "..." (documentação headless)
+# modo interativo: NOT FOUND. Nenhum argumento de prompt inicial nas páginas lidas.
+
+[permissions.ask]
+args = []                      # "Write, Edit, MultiEdit e Bash começam em ask" (tool-permissions). Só na TUI: em headless, essas ferramentas são excluídas
+env = {}
+
+[permissions.accept-edits]
+args = ["--allow", "Write", "--allow", "Edit"]   # exemplo da documentação headless: cn -p "..." --allow Write --allow Edit
+env = {}
+
+# [permissions.automatic]  # NOT FOUND como chave com esse nome. Existe ~/.continue/permissions.yaml (listas allow, ask e exclude)
+
+[permissions.full]
+args = ["--auto"]              # "auto (--auto): Allows everything — *: allow" (tool-permissions). Planos e auto ignoram allow, exclude e permissions.yaml
+env = {}
+
+[resume]
+last = ["--resume"]          # "cn --resume": a sessão mais recente (TUI)
+# id: NOT FOUND. Nas páginas lidas só há a mais recente.
+# headless: "cn -p --resume" é descrito como "Resume a previous session without interactive input"; a forma com prompt não está no exemplo.
+
+# [fork]  # NOT FOUND como flag. /fork existe só como comando de barra na TUI.
+
+[models]
+model_args = ["--model", "{model}"]   # repetível; /model troca o modelo na TUI
+# esforco: NOT FOUND nas páginas lidas.
+
+# [sessions]  # NOT FOUND: caminho e formato das sessões. Configuração documentada: ~/.continue/config.yaml
+# [hooks]    # NOT FOUND nas páginas lidas (isso não prova que não há)
+
+[skills]
+# a confirmar: diretórios de skills não confirmados na documentação oficial.
+user = []
+project = []
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://docs.continue.dev/cli/quickstart",
+  "https://docs.continue.dev/cli/headless-mode",
+  "https://docs.continue.dev/cli/tui-mode",
+  "https://docs.continue.dev/cli/tool-permissions",
+  "https://docs.continue.dev/cli/configuration",
+]
+commands = []
+confidence = "medium"

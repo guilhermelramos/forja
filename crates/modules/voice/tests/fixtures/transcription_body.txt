@@ -1,0 +1,14 @@
+--forja-test
+Content-Disposition: form-data; name="model"
+
+gpt-4o-mini-transcribe
+--forja-test
+Content-Disposition: form-data; name="language"
+
+pt
+--forja-test
+Content-Disposition: form-data; name="file"; filename="voz.wav"
+Content-Type: audio/wav
+
+RIFFtest
+--forja-test--

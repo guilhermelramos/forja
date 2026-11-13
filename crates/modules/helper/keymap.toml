@@ -1,0 +1,14 @@
+[[binding]]
+id = "helper.launch.default"
+key = "Ctrl+Shift+A"
+scope = "global"
+
+[[binding]]
+id = "helper.focus"
+key = "Ctrl+Shift+H"
+scope = "global"
+
+[[binding]]
+id = "helper.launch.profile"
+key = "Ctrl+Alt+Shift+A"
+scope = "global"

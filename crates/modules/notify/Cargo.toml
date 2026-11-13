@@ -1,0 +1,16 @@
+[package]
+name = "forja-module-notify"
+description = "Toasts da Forja e notificações do Windows."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+forja-kernel = { path = "../../kernel", features = ["egui"] }
+forja-contracts = { path = "../../contracts" }
+forja-ui-kit = { path = "../../ui-kit" }
+linkme.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+windows-sys = { workspace = true, features = ["Win32_Media_Audio"] }

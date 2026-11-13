@@ -1,0 +1,14 @@
+hello-name = Hello
+hello-command-greet = Cumprimentar
+hello-tab-title = Hello
+setting-hello-greeting-style-label = Estilo do cumprimento
+setting-hello-greeting-style-help = Escolhe entre um cumprimento caloroso e um simples.
+hello-greeting-warm = Olá, { $name }!
+hello-greeting-plain = Oi, { $name }.
+hello-method-greet-description = Cumprimenta uma pessoa e registra a mensagem.
+hello-method-greet-result = Mensagem do cumprimento.
+hello-default_name = mundo
+hello-view-button = Cumprimentar
+hello-view-history = Cumprimentos
+hello-view-empty = Nenhum cumprimento ainda. Clique em "Cumprimentar" para começar.
+hello-view-error = Não foi possível cumprimentar: { $message }

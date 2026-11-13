@@ -1,0 +1,16 @@
+{
+  "quick_commands": {
+    "entries": [
+      { "name": "Testes", "command": "cargo test", "scope": { "kind": "global" }, "append_enter": true },
+      { "name": "Build da API", "command": "cargo build", "scope": { "kind": "project", "path": "C:/exemplo/exemplo-api" }, "append_enter": false }
+    ]
+  },
+  "appearance": { "dark": true, "theme": "dark" },
+  "terminal": { "font_size": 15.0 },
+  "remote": {
+    "ssh_targets": [
+      { "id": "servidor", "label": "Servidor", "host": "exemplo.invalid", "user": "ana", "port": 2222, "identity_file": "", "proxy_jump": "", "forwards": [] }
+    ]
+  },
+  "api_token": "fixture-only-not-a-real-secret"
+}

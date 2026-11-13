@@ -1,0 +1,14 @@
+[package]
+name = "forja-module-counter"
+description = "Forja module counter: counter settings and the list of installed counters."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+forja-kernel = { path = "../../kernel", features = ["egui"] }
+forja-contracts = { path = "../../contracts" }
+forja-counter-kit = { path = "../../counter-kit" }
+linkme.workspace = true
+serde_json.workspace = true

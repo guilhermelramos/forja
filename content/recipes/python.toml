@@ -1,0 +1,46 @@
+# Python recipes for Forja
+
+[[recipe]]
+id = "python-build"
+title = { pt-BR = "Compilar pacote Python", en = "Build Python package" }
+command = "python -m build"
+scope = "project"
+enter = true
+directory = "."
+manifest = "pyproject.toml"
+
+[[recipe]]
+id = "python-test"
+title = { pt-BR = "Executar testes com pytest", en = "Run tests with pytest" }
+command = "pytest"
+scope = "project"
+enter = true
+directory = "."
+manifest = "pyproject.toml"
+
+[[recipe]]
+id = "python-lint"
+title = { pt-BR = "Executar linter Ruff", en = "Run Ruff linter" }
+command = "ruff check ."
+scope = "project"
+enter = true
+directory = "."
+manifest = "pyproject.toml"
+
+[[recipe]]
+id = "python-format-check"
+title = { pt-BR = "Verificar formatação Ruff", en = "Check Ruff formatting" }
+command = "ruff format --check ."
+scope = "project"
+enter = true
+directory = "."
+manifest = "pyproject.toml"
+
+[[recipe]]
+id = "python-format-fix"
+title = { pt-BR = "Formatar código com Ruff", en = "Format code with Ruff" }
+command = "ruff format ."
+scope = "project"
+enter = true
+directory = "."
+manifest = "pyproject.toml"

@@ -1,0 +1,20 @@
+[package]
+name = "forja-module-explorer"
+description = "Forja module explorer: the Files panel (bench tree, file operations with undo, watcher)."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+forja-kernel = { path = "../../kernel", features = ["egui"] }
+forja-ui-kit = { path = "../../ui-kit" }
+forja-contracts = { path = "../../contracts" }
+ignore.workspace = true
+notify.workspace = true
+linkme.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys.workspace = true

@@ -1,0 +1,3 @@
+routine_done = "Rotina concluída"
+routine_failed = "Rotina falhou"
+no_result = "ainda não rodou"

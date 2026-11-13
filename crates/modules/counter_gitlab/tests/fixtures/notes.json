@@ -1,0 +1,4 @@
+[
+  {"id": 501, "system": true, "body": "added ~backend label", "author": {"username": "bia.dev"}, "created_at": "2026-11-10T15:00:00Z"},
+  {"id": 502, "system": false, "body": "Reproduzi com dois merges seguidos.", "author": {"username": "carlos"}, "created_at": "2026-11-10T17:30:00Z"}
+]

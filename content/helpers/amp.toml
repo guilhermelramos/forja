@@ -1,0 +1,69 @@
+# Perfil de ajudante: Amp (executável `amp`).
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# NÃO instalado nesta máquina. Páginas /docs lidas; /manual retornou só a introdução e /manual/cli deu 404.
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "amp"
+name = "Amp"
+maker = "Amp"            # a confirmar: empresa responsável pelo produto
+site = "https://ampcode.com"
+
+[detect]
+executables = ["amp"]
+version = ["version"]           # subcomando: "amp version" (documentação da CLI)
+
+[start]
+command = "amp"
+args = []                      # interativo; entrada por pipe vira a primeira mensagem
+
+[prompt]
+mode = "none"                # NOT FOUND: sem argumento posicional. "If you pipe input to the CLI, it uses the input as the first user message in interactive mode" (página cli)
+headless = ["-x", "{prompt}"]  # modo de execução: envia o prompt, espera o turno, imprime a resposta final e sai
+headless_stdin = true          # echo "..." | amp -x (página de execução)
+
+# [permissions.*]  # sem modos de permissão por flag. "By default, Amp does not ask for approval before running tools" (página de ferramentas).
+#   O controle é por plugin (tool.call: allow ou reject-and-continue) e por amp.tools.disable e amp.mcpPermissions em settings.json.
+#   --dangerously-allow-all: NOT FOUND nas páginas oficiais (só aparece em espelho de 2025). Por isso a seção não existe aqui.
+
+# [resume]  # a confirmar: "amp threads continue T-..." anexa a uma thread pelo id (interativo).
+#            # Continuar a última thread sem id: NOT FOUND.
+
+[resume.headless]
+id = ["threads", "continue", "{id}", "-x"]   # amp threads continue T-... -x "<prompt>" (exemplo do anúncio do modo de execução)
+
+# [fork]  # NOT FOUND
+
+# [models]  # sem flag de modelo. Exemplo oficial: amp -ox --features model:<nome>,effort:high (só no modo Claude Code); a confirmar como regra geral.
+
+[sessions]
+format = "server"           # threads ficam no servidor: "A thread is not tied to the device you started it on"
+# local: NOT FOUND. A cópia local, se existir, não está documentada.
+export = ["threads", "export", "{id}"]   # amp threads export T-... (página de threads)
+confidence = "medium"
+
+[hooks]
+supported = true
+mechanism = "plugin"           # plugins em TypeScript ou JavaScript, com amp.on(evento, ...); a doc não usa o termo "hooks"
+config = [".amp/plugins/", "~/.config/amp/plugins/", '%USERPROFILE%\.config\amp\plugins\']
+events = ["session.start", "agent.start", "tool.call", "tool.result", "agent.end", "changes.prompt"]
+# Instalar: amp plugins add <url>. Listar: amp plugins list.
+
+[skills]
+# a confirmar: diretórios de skills não confirmados na documentação oficial.
+user = []
+project = []
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://ampcode.com/docs/cli",
+  "https://ampcode.com/docs/cli/execute-mode",
+  "https://ampcode.com/docs/cli/settings",
+  "https://ampcode.com/docs/threads",
+  "https://ampcode.com/docs/tools",
+  "https://ampcode.com/docs/customize/plugins",
+  "https://ampcode.com/docs/the-dial",
+  "https://ampcode.com/news/amp-x",   # anúncio de 24/07/2025: exemplos de "threads continue -x"
+]
+commands = []
+confidence = "medium"

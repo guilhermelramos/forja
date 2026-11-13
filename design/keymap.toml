@@ -1,0 +1,974 @@
+# Forja: mapa de atalhos (formato de máquina)
+# Fonte de verdade: design/keymap.md. Atalhos padrão do Windows.
+schema_version = 1
+platform = "windows"
+
+[meta]
+name_pt = "Mapa de atalhos da Forja"
+name_en = "Forja keymap"
+binding_count = 108
+
+[[binding]]
+id = "anvil.open"
+key = "Ctrl+K"
+scope = "global"
+family = "anvil"
+title_pt = "Abrir a Bigorna"
+title_en = "Open the Anvil"
+even_in_terminal = true
+note_pt = "Funciona mesmo com o foco no terminal."
+note_en = "Works even when the terminal has focus."
+
+[[binding]]
+id = "anvil.command_mode"
+key = "Ctrl+Shift+P"
+scope = "global"
+family = "anvil"
+title_pt = "Modo comando da Bigorna"
+title_en = "Anvil command mode"
+even_in_terminal = true
+note_pt = "Abre a Bigorna já filtrando comandos."
+note_en = "Opens the Anvil already filtering commands."
+
+[[binding]]
+id = "find.file"
+key = "Ctrl+P"
+scope = "global"
+family = "anvil"
+title_pt = "Achar arquivo"
+title_en = "Find file"
+even_in_terminal = true
+note_pt = "Funciona mesmo com o foco no terminal."
+note_en = "Works even when the terminal has focus."
+
+[[binding]]
+id = "find.in_files"
+key = "Ctrl+Shift+F"
+scope = "global"
+family = "anvil"
+title_pt = "Buscar nos arquivos"
+title_en = "Search in files"
+even_in_terminal = false
+note_pt = "No terminal, esta tecla não abre a busca global; use a Bigorna."
+note_en = "In the terminal, this key does not open global search; use the Anvil."
+
+[[binding]]
+id = "bench.create"
+key = "Ctrl+Shift+N"
+scope = "global"
+family = "bench"
+title_pt = "Nova bancada"
+title_en = "New bench"
+even_in_terminal = true
+
+[[binding]]
+id = "bench.next"
+key = "Alt+PageDown"
+scope = "global"
+family = "bench"
+title_pt = "Próxima bancada"
+title_en = "Next bench"
+even_in_terminal = true
+
+[[binding]]
+id = "bench.previous"
+key = "Alt+PageUp"
+scope = "global"
+family = "bench"
+title_pt = "Bancada anterior"
+title_en = "Previous bench"
+even_in_terminal = true
+
+[[binding]]
+id = "tab.next"
+key = "Ctrl+Tab"
+scope = "global"
+family = "tab"
+title_pt = "Próxima aba"
+title_en = "Next tab"
+even_in_terminal = true
+
+[[binding]]
+id = "tab.previous"
+key = "Ctrl+Shift+Tab"
+scope = "global"
+family = "tab"
+title_pt = "Aba anterior"
+title_en = "Previous tab"
+even_in_terminal = true
+
+[[binding]]
+id = "tab.close"
+key = "Ctrl+W"
+scope = "global"
+family = "tab"
+title_pt = "Fechar aba"
+title_en = "Close tab"
+even_in_terminal = false
+note_pt = "No terminal, Ctrl+W vai para o shell; use Ctrl+Shift+W para fechar a aba."
+note_en = "In the terminal, Ctrl+W goes to the shell; use Ctrl+Shift+W to close the tab."
+
+[[binding]]
+id = "tab.close_force"
+key = "Ctrl+Shift+W"
+scope = "global"
+family = "tab"
+title_pt = "Fechar aba em qualquer superfície"
+title_en = "Close tab anywhere"
+even_in_terminal = true
+note_pt = "Funciona mesmo com o foco no terminal."
+note_en = "Works even when the terminal has focus."
+
+[[binding]]
+id = "tab.reopen"
+key = "Ctrl+Shift+T"
+scope = "global"
+family = "tab"
+title_pt = "Reabrir aba fechada"
+title_en = "Reopen closed tab"
+even_in_terminal = true
+
+[[binding]]
+id = "terminal.toggle"
+key = "Ctrl+Backtick"
+scope = "global"
+family = "terminal"
+title_pt = "Mostrar ou ocultar terminal"
+title_en = "Toggle terminal"
+even_in_terminal = true
+
+[[binding]]
+id = "sidebar.toggle"
+key = "Ctrl+B"
+scope = "global"
+family = "system"
+title_pt = "Mostrar ou ocultar lateral"
+title_en = "Toggle sidebar"
+even_in_terminal = false
+note_pt = "No terminal, Ctrl+B continua indo para o shell."
+note_en = "In the terminal, Ctrl+B keeps going to the shell."
+
+[[binding]]
+id = "panel.toggle"
+key = "Ctrl+Shift+B"
+scope = "global"
+family = "system"
+title_pt = "Mostrar ou ocultar painel direito"
+title_en = "Toggle right panel"
+even_in_terminal = true
+
+[[binding]]
+id = "settings.open"
+key = "Ctrl+Comma"
+scope = "global"
+family = "system"
+title_pt = "Abrir Ajustes"
+title_en = "Open Settings"
+even_in_terminal = true
+
+[[binding]]
+id = "settings.keymap"
+key = "Ctrl+Shift+Comma"
+scope = "global"
+family = "system"
+title_pt = "Abrir atalhos"
+title_en = "Open keymap"
+even_in_terminal = true
+
+[[binding]]
+id = "help.keymap"
+key = "Ctrl+Shift+Slash"
+scope = "global"
+family = "system"
+title_pt = "Ver todos os atalhos"
+title_en = "Show all shortcuts"
+even_in_terminal = true
+
+[[binding]]
+id = "window.fullscreen"
+key = "F11"
+scope = "global"
+family = "system"
+title_pt = "Tela cheia"
+title_en = "Full screen"
+even_in_terminal = true
+
+[[binding]]
+id = "view.zoom.in"
+key = "Ctrl+Shift+Plus"
+scope = "global"
+family = "system"
+title_pt = "Aumentar interface"
+title_en = "Zoom in UI"
+even_in_terminal = true
+note_pt = "Zoom da interface; o zoom da página no navegador usa Ctrl+=."
+note_en = "UI zoom; page zoom in the browser uses Ctrl+=."
+
+[[binding]]
+id = "view.zoom.out"
+key = "Ctrl+Shift+Minus"
+scope = "global"
+family = "system"
+title_pt = "Reduzir interface"
+title_en = "Zoom out UI"
+even_in_terminal = true
+note_pt = "Zoom da interface; o zoom da página no navegador usa Ctrl+-."
+note_en = "UI zoom; page zoom in the browser uses Ctrl+-."
+
+[[binding]]
+id = "view.zoom.reset"
+key = "Ctrl+Shift+0"
+scope = "global"
+family = "system"
+title_pt = "Restaurar interface a 100%"
+title_en = "Reset UI zoom"
+even_in_terminal = true
+note_pt = "Ctrl+0 sem Shift muda para a aba 10."
+note_en = "Ctrl+0 without Shift switches to tab 10."
+
+[[binding]]
+id = "helper.launch.default"
+key = "Ctrl+Shift+A"
+scope = "global"
+family = "helper"
+title_pt = "Iniciar ajudante padrão"
+title_en = "Launch default helper"
+even_in_terminal = true
+
+[[binding]]
+id = "helper.launch.profile"
+key = "Ctrl+Alt+Shift+A"
+scope = "global"
+family = "helper"
+title_pt = "Iniciar ajudante de um perfil"
+title_en = "Launch helper from profile"
+even_in_terminal = true
+note_pt = "Abre o seletor de perfis antes de iniciar."
+note_en = "Opens the profile picker before launching."
+
+[[binding]]
+id = "helper.focus"
+key = "Ctrl+Shift+H"
+scope = "global"
+family = "helper"
+title_pt = "Ir para o ajudante da bancada"
+title_en = "Focus bench helper"
+even_in_terminal = true
+
+[[binding]]
+id = "muster.open"
+key = "Ctrl+Shift+M"
+scope = "global"
+family = "helper"
+title_pt = "Abrir Mutirão"
+title_en = "Open Muster"
+even_in_terminal = true
+
+[[binding]]
+id = "diff.open"
+key = "Ctrl+Shift+D"
+scope = "global"
+family = "diff"
+title_pt = "Abrir Diferenças"
+title_en = "Open Diff"
+even_in_terminal = true
+
+[[binding]]
+id = "bench.switch_1"
+key = "Alt+1"
+scope = "global"
+family = "bench"
+title_pt = "Ir para a bancada 1"
+title_en = "Go to bench 1"
+even_in_terminal = true
+
+[[binding]]
+id = "bench.switch_2"
+key = "Alt+2"
+scope = "global"
+family = "bench"
+title_pt = "Ir para a bancada 2"
+title_en = "Go to bench 2"
+even_in_terminal = true
+
+[[binding]]
+id = "bench.switch_3"
+key = "Alt+3"
+scope = "global"
+family = "bench"
+title_pt = "Ir para a bancada 3"
+title_en = "Go to bench 3"
+even_in_terminal = true
+
+[[binding]]
+id = "bench.switch_4"
+key = "Alt+4"
+scope = "global"
+family = "bench"
+title_pt = "Ir para a bancada 4"
+title_en = "Go to bench 4"
+even_in_terminal = true
+
+[[binding]]
+id = "bench.switch_5"
+key = "Alt+5"
+scope = "global"
+family = "bench"
+title_pt = "Ir para a bancada 5"
+title_en = "Go to bench 5"
+even_in_terminal = true
+
+[[binding]]
+id = "bench.switch_6"
+key = "Alt+6"
+scope = "global"
+family = "bench"
+title_pt = "Ir para a bancada 6"
+title_en = "Go to bench 6"
+even_in_terminal = true
+
+[[binding]]
+id = "bench.switch_7"
+key = "Alt+7"
+scope = "global"
+family = "bench"
+title_pt = "Ir para a bancada 7"
+title_en = "Go to bench 7"
+even_in_terminal = true
+
+[[binding]]
+id = "bench.switch_8"
+key = "Alt+8"
+scope = "global"
+family = "bench"
+title_pt = "Ir para a bancada 8"
+title_en = "Go to bench 8"
+even_in_terminal = true
+
+[[binding]]
+id = "bench.switch_9"
+key = "Alt+9"
+scope = "global"
+family = "bench"
+title_pt = "Ir para a bancada 9"
+title_en = "Go to bench 9"
+even_in_terminal = true
+
+[[binding]]
+id = "bench.switch_10"
+key = "Alt+0"
+scope = "global"
+family = "bench"
+title_pt = "Ir para a bancada 10"
+title_en = "Go to bench 10"
+even_in_terminal = true
+
+[[binding]]
+id = "tab.switch_1"
+key = "Ctrl+1"
+scope = "global"
+family = "tab"
+title_pt = "Ir para a aba 1"
+title_en = "Go to tab 1"
+even_in_terminal = true
+
+[[binding]]
+id = "tab.switch_2"
+key = "Ctrl+2"
+scope = "global"
+family = "tab"
+title_pt = "Ir para a aba 2"
+title_en = "Go to tab 2"
+even_in_terminal = true
+
+[[binding]]
+id = "tab.switch_3"
+key = "Ctrl+3"
+scope = "global"
+family = "tab"
+title_pt = "Ir para a aba 3"
+title_en = "Go to tab 3"
+even_in_terminal = true
+
+[[binding]]
+id = "tab.switch_4"
+key = "Ctrl+4"
+scope = "global"
+family = "tab"
+title_pt = "Ir para a aba 4"
+title_en = "Go to tab 4"
+even_in_terminal = true
+
+[[binding]]
+id = "tab.switch_5"
+key = "Ctrl+5"
+scope = "global"
+family = "tab"
+title_pt = "Ir para a aba 5"
+title_en = "Go to tab 5"
+even_in_terminal = true
+
+[[binding]]
+id = "tab.switch_6"
+key = "Ctrl+6"
+scope = "global"
+family = "tab"
+title_pt = "Ir para a aba 6"
+title_en = "Go to tab 6"
+even_in_terminal = true
+
+[[binding]]
+id = "tab.switch_7"
+key = "Ctrl+7"
+scope = "global"
+family = "tab"
+title_pt = "Ir para a aba 7"
+title_en = "Go to tab 7"
+even_in_terminal = true
+
+[[binding]]
+id = "tab.switch_8"
+key = "Ctrl+8"
+scope = "global"
+family = "tab"
+title_pt = "Ir para a aba 8"
+title_en = "Go to tab 8"
+even_in_terminal = true
+
+[[binding]]
+id = "tab.switch_9"
+key = "Ctrl+9"
+scope = "global"
+family = "tab"
+title_pt = "Ir para a aba 9"
+title_en = "Go to tab 9"
+even_in_terminal = true
+
+[[binding]]
+id = "tab.switch_10"
+key = "Ctrl+0"
+scope = "global"
+family = "tab"
+title_pt = "Ir para a aba 10"
+title_en = "Go to tab 10"
+even_in_terminal = true
+
+[[binding]]
+id = "terminal.copy"
+key = "Ctrl+Shift+C"
+scope = "terminal"
+family = "terminal"
+title_pt = "Copiar do terminal"
+title_en = "Copy from terminal"
+note_pt = "Ctrl+C continua sendo interrupção do processo."
+note_en = "Ctrl+C remains the process interrupt."
+
+[[binding]]
+id = "terminal.paste"
+key = "Ctrl+V"
+scope = "terminal"
+family = "terminal"
+title_pt = "Colar no terminal"
+title_en = "Paste into terminal"
+note_pt = "A colagem segura é a mesma de qualquer campo do Windows."
+note_en = "Safe paste works like any Windows field."
+
+[[binding]]
+id = "terminal.search"
+key = "Ctrl+Shift+F"
+scope = "terminal"
+family = "terminal"
+title_pt = "Buscar no terminal"
+title_en = "Search terminal"
+note_pt = "No terminal, esta tecla vence a busca global."
+note_en = "In the terminal, this key wins over global search."
+
+[[binding]]
+id = "terminal.clear"
+key = "Ctrl+Shift+K"
+scope = "terminal"
+family = "terminal"
+title_pt = "Limpar terminal"
+title_en = "Clear terminal"
+
+[[binding]]
+id = "terminal.split.right"
+key = "Alt+Shift+R"
+scope = "terminal"
+family = "terminal"
+title_pt = "Dividir à direita"
+title_en = "Split right"
+note_pt = "R de right; D divide abaixo."
+note_en = "R for right; D splits down."
+
+[[binding]]
+id = "terminal.split.down"
+key = "Alt+Shift+D"
+scope = "terminal"
+family = "terminal"
+title_pt = "Dividir abaixo"
+title_en = "Split down"
+
+[[binding]]
+id = "terminal.pane.next"
+key = "Alt+Shift+PageDown"
+scope = "terminal"
+family = "terminal"
+title_pt = "Próximo painel"
+title_en = "Next pane"
+note_pt = "PageDown sem Shift troca de bancada."
+note_en = "PageDown without Shift switches benches."
+
+[[binding]]
+id = "terminal.pane.previous"
+key = "Alt+Shift+PageUp"
+scope = "terminal"
+family = "terminal"
+title_pt = "Painel anterior"
+title_en = "Previous pane"
+
+[[binding]]
+id = "terminal.pane.close"
+key = "Alt+Shift+W"
+scope = "terminal"
+family = "terminal"
+title_pt = "Fechar painel"
+title_en = "Close pane"
+
+[[binding]]
+id = "terminal.scroll.page_up"
+key = "PageUp"
+scope = "terminal"
+family = "terminal"
+title_pt = "Rolar uma página para cima"
+title_en = "Scroll page up"
+
+[[binding]]
+id = "terminal.scroll.page_down"
+key = "PageDown"
+scope = "terminal"
+family = "terminal"
+title_pt = "Rolar uma página para baixo"
+title_en = "Scroll page down"
+
+[[binding]]
+id = "terminal.scroll.top"
+key = "Ctrl+Home"
+scope = "terminal"
+family = "terminal"
+title_pt = "Ir ao início do histórico"
+title_en = "Scroll to top"
+
+[[binding]]
+id = "terminal.scroll.bottom"
+key = "Ctrl+End"
+scope = "terminal"
+family = "terminal"
+title_pt = "Ir ao fim do histórico"
+title_en = "Scroll to bottom"
+
+[[binding]]
+id = "editor.undo"
+key = "Ctrl+Z"
+scope = "editor"
+family = "editor"
+title_pt = "Desfazer"
+title_en = "Undo"
+
+[[binding]]
+id = "editor.redo"
+key = "Ctrl+Y"
+scope = "editor"
+family = "editor"
+title_pt = "Refazer"
+title_en = "Redo"
+
+[[binding]]
+id = "editor.cut"
+key = "Ctrl+X"
+scope = "editor"
+family = "editor"
+title_pt = "Recortar"
+title_en = "Cut"
+
+[[binding]]
+id = "editor.copy"
+key = "Ctrl+C"
+scope = "editor"
+family = "editor"
+title_pt = "Copiar"
+title_en = "Copy"
+
+[[binding]]
+id = "editor.paste"
+key = "Ctrl+V"
+scope = "editor"
+family = "editor"
+title_pt = "Colar"
+title_en = "Paste"
+
+[[binding]]
+id = "editor.select_all"
+key = "Ctrl+A"
+scope = "editor"
+family = "editor"
+title_pt = "Selecionar tudo"
+title_en = "Select all"
+
+[[binding]]
+id = "editor.save"
+key = "Ctrl+S"
+scope = "editor"
+family = "editor"
+title_pt = "Salvar"
+title_en = "Save"
+
+[[binding]]
+id = "editor.find"
+key = "Ctrl+F"
+scope = "editor"
+family = "editor"
+title_pt = "Buscar no arquivo"
+title_en = "Find in file"
+
+[[binding]]
+id = "editor.replace"
+key = "Ctrl+H"
+scope = "editor"
+family = "editor"
+title_pt = "Substituir no arquivo"
+title_en = "Replace in file"
+
+[[binding]]
+id = "editor.find.next"
+key = "F3"
+scope = "editor"
+family = "editor"
+title_pt = "Próxima ocorrência"
+title_en = "Find next"
+
+[[binding]]
+id = "editor.find.previous"
+key = "Shift+F3"
+scope = "editor"
+family = "editor"
+title_pt = "Ocorrência anterior"
+title_en = "Find previous"
+
+[[binding]]
+id = "editor.goto.line"
+key = "Ctrl+G"
+scope = "editor"
+family = "editor"
+title_pt = "Ir para linha"
+title_en = "Go to line"
+
+[[binding]]
+id = "editor.comment.toggle"
+key = "Ctrl+Slash"
+scope = "editor"
+family = "editor"
+title_pt = "Comentar ou descomentar"
+title_en = "Toggle comment"
+
+[[binding]]
+id = "editor.quick_fix"
+key = "Ctrl+Period"
+scope = "editor"
+family = "editor"
+title_pt = "Correção rápida"
+title_en = "Quick fix"
+
+[[binding]]
+id = "editor.rename"
+key = "F2"
+scope = "editor"
+family = "editor"
+title_pt = "Renomear símbolo"
+title_en = "Rename symbol"
+
+[[binding]]
+id = "editor.goto.definition"
+key = "F12"
+scope = "editor"
+family = "editor"
+title_pt = "Ir para definição"
+title_en = "Go to definition"
+note_pt = "No navegador, F12 abre as ferramentas de desenvolvedor."
+note_en = "In the browser, F12 opens developer tools."
+
+[[binding]]
+id = "editor.peek.definition"
+key = "Alt+F12"
+scope = "editor"
+family = "editor"
+title_pt = "Espiar definição"
+title_en = "Peek definition"
+
+[[binding]]
+id = "editor.completion"
+key = "Ctrl+Space"
+scope = "editor"
+family = "editor"
+title_pt = "Sugestões"
+title_en = "Suggestions"
+
+[[binding]]
+id = "editor.parameter_hint"
+key = "Ctrl+Shift+Space"
+scope = "editor"
+family = "editor"
+title_pt = "Dica de parâmetros"
+title_en = "Parameter hints"
+
+[[binding]]
+id = "editor.move_line.up"
+key = "Alt+Up"
+scope = "editor"
+family = "editor"
+title_pt = "Mover linha para cima"
+title_en = "Move line up"
+
+[[binding]]
+id = "editor.move_line.down"
+key = "Alt+Down"
+scope = "editor"
+family = "editor"
+title_pt = "Mover linha para baixo"
+title_en = "Move line down"
+
+[[binding]]
+id = "editor.duplicate_line"
+key = "Alt+Shift+Down"
+scope = "editor"
+family = "editor"
+title_pt = "Duplicar linha"
+title_en = "Duplicate line"
+
+[[binding]]
+id = "editor.delete_line"
+key = "Ctrl+Shift+K"
+scope = "editor"
+family = "editor"
+title_pt = "Apagar linha"
+title_en = "Delete line"
+note_pt = "No terminal, Ctrl+Shift+K limpa a tela."
+note_en = "In the terminal, Ctrl+Shift+K clears the screen."
+
+[[binding]]
+id = "editor.wrap.toggle"
+key = "Alt+Z"
+scope = "editor"
+family = "editor"
+title_pt = "Quebrar linha"
+title_en = "Toggle word wrap"
+
+[[binding]]
+id = "editor.format"
+key = "Ctrl+Alt+F"
+scope = "editor"
+family = "editor"
+title_pt = "Formatar arquivo"
+title_en = "Format file"
+
+[[binding]]
+id = "editor.indent"
+key = "Tab"
+scope = "editor"
+family = "editor"
+title_pt = "Indentar"
+title_en = "Indent"
+
+[[binding]]
+id = "editor.outdent"
+key = "Shift+Tab"
+scope = "editor"
+family = "editor"
+title_pt = "Remover indentação"
+title_en = "Outdent"
+
+[[binding]]
+id = "browser.address"
+key = "Ctrl+L"
+scope = "browser"
+family = "browser"
+title_pt = "Barra de endereço"
+title_en = "Address bar"
+
+[[binding]]
+id = "browser.reload"
+key = "Ctrl+R"
+scope = "browser"
+family = "browser"
+title_pt = "Recarregar página"
+title_en = "Reload page"
+
+[[binding]]
+id = "browser.reload_hard"
+key = "Ctrl+Shift+R"
+scope = "browser"
+family = "browser"
+title_pt = "Recarregar sem cache"
+title_en = "Hard reload"
+
+[[binding]]
+id = "browser.find"
+key = "Ctrl+F"
+scope = "browser"
+family = "browser"
+title_pt = "Buscar na página"
+title_en = "Find in page"
+
+[[binding]]
+id = "browser.new_page"
+key = "Ctrl+T"
+scope = "browser"
+family = "browser"
+title_pt = "Nova página"
+title_en = "New page"
+
+[[binding]]
+id = "browser.reopen_page"
+key = "Ctrl+Shift+T"
+scope = "browser"
+family = "browser"
+title_pt = "Reabrir página fechada"
+title_en = "Reopen closed page"
+note_pt = "Sobrepõe reabrir aba enquanto o navegador tem foco."
+note_en = "Overrides reopen tab while the browser has focus."
+
+[[binding]]
+id = "browser.close_page"
+key = "Ctrl+W"
+scope = "browser"
+family = "browser"
+title_pt = "Fechar página"
+title_en = "Close page"
+note_pt = "Sobrepõe o fechamento de aba enquanto o navegador tem foco."
+note_en = "Overrides tab close while the browser has focus."
+
+[[binding]]
+id = "browser.zoom.in"
+key = "Ctrl+Plus"
+scope = "browser"
+family = "browser"
+title_pt = "Aumentar página"
+title_en = "Zoom page in"
+
+[[binding]]
+id = "browser.zoom.out"
+key = "Ctrl+Minus"
+scope = "browser"
+family = "browser"
+title_pt = "Reduzir página"
+title_en = "Zoom page out"
+
+[[binding]]
+id = "browser.zoom.reset"
+key = "Ctrl+0"
+scope = "browser"
+family = "browser"
+title_pt = "Restaurar página a 100%"
+title_en = "Reset page zoom"
+note_pt = "Sobrepõe a aba 10 enquanto o navegador tem foco."
+note_en = "Overrides tab 10 while the browser has focus."
+
+[[binding]]
+id = "browser.back"
+key = "Alt+Left"
+scope = "browser"
+family = "browser"
+title_pt = "Voltar"
+title_en = "Back"
+
+[[binding]]
+id = "browser.forward"
+key = "Alt+Right"
+scope = "browser"
+family = "browser"
+title_pt = "Avançar"
+title_en = "Forward"
+
+[[binding]]
+id = "browser.devtools"
+key = "F12"
+scope = "browser"
+family = "browser"
+title_pt = "Ferramentas de desenvolvedor"
+title_en = "Developer tools"
+note_pt = "Sobrepõe 'ir para definição' quando o navegador tem foco."
+note_en = "Overrides go to definition when the browser has focus."
+
+[[binding]]
+id = "browser.open_external"
+key = "Alt+Enter"
+scope = "browser"
+family = "browser"
+title_pt = "Abrir no navegador do sistema"
+title_en = "Open in system browser"
+
+[[binding]]
+id = "anvil.close"
+key = "Escape"
+scope = "anvil"
+family = "anvil"
+title_pt = "Fechar a Bigorna"
+title_en = "Close the Anvil"
+
+[[binding]]
+id = "anvil.run"
+key = "Enter"
+scope = "anvil"
+family = "anvil"
+title_pt = "Executar o item selecionado"
+title_en = "Run selected item"
+
+[[binding]]
+id = "anvil.previous"
+key = "Up"
+scope = "anvil"
+family = "anvil"
+title_pt = "Item anterior"
+title_en = "Previous item"
+
+[[binding]]
+id = "anvil.next"
+key = "Down"
+scope = "anvil"
+family = "anvil"
+title_pt = "Próximo item"
+title_en = "Next item"
+
+[[binding]]
+id = "anvil.group.next"
+key = "Tab"
+scope = "anvil"
+family = "anvil"
+title_pt = "Próximo grupo"
+title_en = "Next group"
+
+[[binding]]
+id = "anvil.group.previous"
+key = "Shift+Tab"
+scope = "anvil"
+family = "anvil"
+title_pt = "Grupo anterior"
+title_en = "Previous group"
+
+[[binding]]
+id = "anvil.run_background"
+key = "Ctrl+Enter"
+scope = "anvil"
+family = "anvil"
+title_pt = "Executar em segundo plano"
+title_en = "Run in background"
+
+[[binding]]
+id = "voice.dictate"
+key = "Ctrl+Alt+V"
+scope = "voice"
+family = "helper"
+title_pt = "Ditar por voz"
+title_en = "Voice dictation"
+note_pt = "Alterna o ditado do Windows no painel de voz."
+note_en = "Toggles Windows dictation in the voice panel."

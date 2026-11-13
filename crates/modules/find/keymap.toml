@@ -1,0 +1,12 @@
+# Atalhos do catálogo (design/keymap.toml), com os ids de lá.
+[[binding]]
+id = "find.file"
+key = "Ctrl+P"
+scope = "global"
+title_key = "find.command.file"
+
+[[binding]]
+id = "find.in_files"
+key = "Ctrl+Shift+F"
+scope = "global"
+title_key = "find.command.in_files"

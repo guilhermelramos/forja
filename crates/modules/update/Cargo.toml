@@ -1,0 +1,12 @@
+[package]
+name = "forja-module-update"
+description = "Forja module update: local version check, channel and download policy."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+forja-kernel = { path = "../../kernel" }
+linkme.workspace = true
+serde_json.workspace = true

@@ -1,0 +1,13 @@
+update-name = Atualizações
+update-command-check = Verificar atualizações
+update-command-status = Estado da atualização
+setting-update-channel-name-label = Canal de atualização
+setting-update-channel-name-help = Canal de atualizações do app.
+setting-update-check-frequency-label = Verificar atualizações
+setting-update-check-frequency-help = Frequência de verificação de atualização do app.
+setting-update-download-auto-label = Baixar atualizações
+setting-update-download-auto-help = Baixa atualizações automaticamente, sem instalar.
+update-method-check-description = Compara uma versão mais recente conhecida localmente com a versão em execução.
+update-method-check-result = Canal, frequência, versões e se há atualização disponível.
+update-method-status-description = Devolve o canal, a frequência e a última verificação local.
+update-method-status-result = Canal, frequência, download automático e hora da última verificação.

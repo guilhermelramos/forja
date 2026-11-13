@@ -1,0 +1,18 @@
+{
+  "total_count": 1,
+  "incomplete_results": false,
+  "items": [
+    {
+      "number": 48,
+      "title": "Refatorar o cache de ícones",
+      "state": "open",
+      "draft": false,
+      "html_url": "https://github.com/acme/tools/pull/48",
+      "user": {"login": "bia-dev"},
+      "assignees": [],
+      "labels": [{"name": "refactor"}],
+      "updated_at": "2026-11-11T10:15:00Z",
+      "pull_request": {"merged_at": null}
+    }
+  ]
+}

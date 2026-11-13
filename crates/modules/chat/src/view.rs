@@ -1,0 +1,919 @@
+//! Aba "Ajudante (chat)" e composer.
+
+use crate::diff_mode::DiffMode;
+use crate::model::{
+    filter_mentions, ChatBlock, ChatMessage, ChatRole, ChatUsage, SessionStatus, ToolStatus,
+};
+use crate::state::{ChatSession, ChatState};
+use crate::Shared;
+use forja_kernel::ui_contract::{egui, View};
+use forja_kernel::{Args, Ctx};
+use serde_json::json;
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::Duration;
+
+/// Aba de chat de uma sessão.
+pub struct ChatView {
+    core: Shared,
+    composer: String,
+    selected_mention: usize,
+    show_mentions: bool,
+    attach_error: Option<String>,
+}
+
+impl ChatView {
+    /// Cria a view ligada ao estado.
+    pub fn new(core: Shared) -> Self {
+        Self {
+            core,
+            composer: String::new(),
+            selected_mention: 0,
+            show_mentions: false,
+            attach_error: None,
+        }
+    }
+
+    fn seed_preview(&self, session: &mut ChatSession) {
+        if std::env::var_os("FORJA_CHAT_PREVIEW").is_none() {
+            return;
+        }
+        session.messages = vec![
+            ChatMessage {
+                role: ChatRole::Assistant,
+                blocks: vec![ChatBlock::ToolCall {
+                    name: "Bash".to_owned(),
+                    input: "cargo test -p forja-module-chat".to_owned(),
+                    output: Some("14 passed; 0 failed".to_owned()),
+                    status: ToolStatus::Ok,
+                }],
+                timestamp_ms: 0,
+                usage: Some(ChatUsage {
+                    input_tokens: 1240,
+                    output_tokens: 386,
+                    total_tokens: 1626,
+                }),
+            },
+            ChatMessage::text(ChatRole::Assistant, "Testes verdes."),
+        ];
+        session.model = Some("opus".to_owned());
+        session.effort = Some("high".to_owned());
+        session.usage = ChatUsage {
+            input_tokens: 1240,
+            output_tokens: 386,
+            total_tokens: 1626,
+        };
+        session.session_id = Some("preview-session".to_owned());
+        session.files = vec![
+            "src/main.rs".to_owned(),
+            "src/view.rs".to_owned(),
+            "src/state.rs".to_owned(),
+            "README.md".to_owned(),
+        ];
+        session.commands = vec!["review".to_owned(), "test".to_owned()];
+        session.commands_loaded = true;
+        session.status = SessionStatus::Idle;
+    }
+
+    fn draw_header(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, session: &mut ChatSession) {
+        ui.horizontal(|ui| {
+            ui.heading(&session.profile.name);
+            let (label, color) = match session.status {
+                SessionStatus::Idle => (cx.t("chat.view.idle"), egui::Color32::from_rgb(0x6C, 0xC4, 0x8A)),
+                SessionStatus::Working => (cx.t("chat.view.working"), egui::Color32::from_rgb(0x6F, 0xA8, 0xDC)),
+                SessionStatus::Cancelled => (cx.t("chat.view.cancelled"), egui::Color32::from_rgb(0xFF, 0xC1, 0x4D)),
+                SessionStatus::Error => (cx.t("chat.view.error"), egui::Color32::from_rgb(0xE5, 0x53, 0x4B)),
+            };
+            ui.label(egui::RichText::new(label).color(color).strong());
+            if matches!(session.status, SessionStatus::Working) {
+                ui.label(
+                    egui::RichText::new(format!(
+                        "{}s",
+                        session.turn_seconds()
+                    ))
+                    .weak(),
+                );
+            }
+            if session.pending() > 0 {
+                ui.label(
+                    egui::RichText::new(format!(
+                        "{}: {}",
+                        cx.t("chat.view.queued"),
+                        session.pending()
+                    ))
+                    .weak(),
+                );
+            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.button(cx.t("chat.view.terminal")).clicked() {
+                    let mut args = Args::new();
+                    args.insert("profile_id", json!(session.profile.id.clone()));
+                    args.insert(
+                        "bench_path",
+                        json!(session.bench_path.display().to_string()),
+                    );
+                    let command = if session.session_id.is_some()
+                        && cx.registry().command("archive.resume").is_some()
+                    {
+                        args.insert("session_id", json!(session.session_id.clone()));
+                        "archive.resume"
+                    } else {
+                        "helper.launch"
+                    };
+                    if let Err(error) = cx.run_command(command, args) {
+                        self.attach_error = Some(error.to_string());
+                    }
+                }
+                let effort_values = &session.profile.models.effort_values;
+                if !effort_values.is_empty() {
+                    egui::ComboBox::from_id_salt("chat-effort")
+                        .selected_text(
+                            session
+                                .effort
+                                .clone()
+                                .unwrap_or_else(|| cx.t("chat.view.effort")),
+                        )
+                        .width(110.0)
+                        .show_ui(ui, |ui| {
+                            ui.selectable_value(&mut session.effort, None, cx.t("chat.view.default"));
+                            for value in effort_values {
+                                ui.selectable_value(
+                                    &mut session.effort,
+                                    Some(value.clone()),
+                                    value,
+                                );
+                            }
+                        });
+                }
+                if let Some(model_env) = &session.profile.models.model_env {
+                    let mut model = session.model.clone().unwrap_or_default();
+                    if ui
+                        .add(
+                            egui::TextEdit::singleline(&mut model)
+                                .hint_text(model_env)
+                                .desired_width(140.0),
+                        )
+                        .changed()
+                    {
+                        session.model = (!model.trim().is_empty()).then_some(model);
+                    }
+                }
+            });
+        });
+        ui.horizontal(|ui| {
+            ui.label(
+                egui::RichText::new(session.bench_path.display().to_string())
+                    .monospace()
+                    .weak(),
+            );
+            if let Some(session_id) = &session.session_id {
+                ui.label(egui::RichText::new(session_id).weak());
+            }
+        });
+    }
+
+    fn draw_composer(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, session: &mut ChatSession) {
+        ui.separator();
+        if let Some(error) = self
+            .attach_error
+            .clone()
+            .or_else(|| session.error.clone())
+        {
+            ui.label(egui::RichText::new(error).color(egui::Color32::from_rgb(0xE5, 0x53, 0x4B)));
+        }
+        if let Some(notice) = &session.notice {
+            ui.label(egui::RichText::new(notice).weak());
+        }
+        let enter_sends = cx
+            .setting("chat.input.enter_sends")
+            .and_then(|value| value.as_bool())
+            .unwrap_or(true);
+        let mut send = false;
+        let mut cancel = false;
+        ui.horizontal(|ui| {
+            if ui.button(cx.t("chat.view.attach")).clicked() {
+                if let Some(path) = rfd::FileDialog::new().pick_file() {
+                    let limit = cx
+                        .setting("chat.attachments.max_mb")
+                        .and_then(|value| value.as_i64())
+                        .unwrap_or(20)
+                        .max(1) as u64;
+                    match std::fs::metadata(&path) {
+                        Ok(metadata) if metadata.len() <= limit * 1024 * 1024 => {
+                            session.attachments.push(path);
+                        }
+                        Ok(_) => {
+                            self.attach_error = Some(format!(
+                                "{}: {} MB",
+                                cx.t("chat.view.attachment-too-large"),
+                                limit
+                            ))
+                        }
+                        Err(error) => self.attach_error = Some(error.to_string()),
+                    }
+                }
+            }
+            for path in &session.attachments {
+                ui.label(
+                    egui::RichText::new(
+                        path.file_name()
+                            .map(|name| name.to_string_lossy().into_owned())
+                            .unwrap_or_else(|| path.display().to_string()),
+                    )
+                    .weak(),
+                );
+            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if matches!(session.status, SessionStatus::Working) {
+                    if ui.button(cx.t("chat.view.cancel")).clicked() {
+                        cancel = true;
+                    }
+                } else if ui.button(cx.t("chat.view.send")).clicked() {
+                    send = true;
+                }
+            });
+        });
+        let paste_images = cx
+            .setting("chat.attachments.paste_images")
+            .and_then(|value| value.as_bool())
+            .unwrap_or(true);
+        let response = ui.add(
+            egui::TextEdit::multiline(&mut self.composer)
+                .hint_text(cx.t("chat.view.composer-hint"))
+                .desired_rows(3)
+                .desired_width(f32::INFINITY),
+        );
+        if paste_images
+            && response.has_focus()
+            && ui.input(|input| input.modifiers.command && input.key_pressed(egui::Key::V))
+        {
+            self.paste_clipboard_image(cx);
+        }
+        if enter_sends
+            && response.has_focus()
+            && ui.input(|input| input.key_pressed(egui::Key::Enter) && !input.modifiers.shift)
+        {
+            send = true;
+        }
+        if send {
+            let mut prompt = self.composer.trim().to_owned();
+            for path in session.attachments.drain(..) {
+                prompt.push_str(&format!(
+                    "\n@{}",
+                    path.display().to_string().replace('\\', "/")
+                ));
+            }
+            if !prompt.is_empty() {
+                let _tokens = crate::model::composer_tokens(&prompt);
+                match session.send(prompt) {
+                    Ok(_) => {
+                        self.composer.clear();
+                        self.attach_error = None;
+                    }
+                    Err(error) => self.attach_error = Some(error),
+                }
+            }
+        }
+        if cancel {
+            session.cancel();
+        }
+        self.draw_selectors(ui, cx, session);
+    }
+
+    /// Attaches the clipboard image, when there is one. The PNG is written in the
+    /// background under the module store, and then listed as an attachment.
+    fn paste_clipboard_image(&mut self, cx: &mut Ctx<'_>) {
+        let Some(png) = crate::clipboard::clipboard_png() else {
+            return;
+        };
+        let limit = cx
+            .setting("chat.attachments.max_mb")
+            .and_then(|value| value.as_i64())
+            .unwrap_or(20)
+            .max(1) as usize;
+        if png.len() > limit * 1024 * 1024 {
+            self.attach_error = Some(format!(
+                "{}: {} MB",
+                cx.t("chat.view.attachment-too-large"),
+                limit
+            ));
+            return;
+        }
+        let Some(dir) = cx.store().path().parent().map(|modules| modules.join("chat-pastes")) else {
+            self.attach_error = Some(cx.t("chat.view.paste-failed"));
+            return;
+        };
+        let path = dir.join(format!("paste-{}.png", chrono::Utc::now().timestamp_millis()));
+        let core = Arc::clone(&self.core);
+        cx.spawn(
+            move || -> Result<PathBuf, String> {
+                std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
+                std::fs::write(&path, &png).map_err(|error| error.to_string())?;
+                Ok(path)
+            },
+            move |_cx, result| {
+                let Ok(mut state) = core.state.lock() else {
+                    return;
+                };
+                if let Some(session) = state.active.as_mut() {
+                    match result {
+                        Ok(path) => session.attachments.push(path),
+                        Err(error) => session.error = Some(error),
+                    }
+                }
+            },
+        );
+    }
+
+    fn draw_selectors(&mut self, ui: &mut egui::Ui, cx: &Ctx<'_>, session: &mut ChatSession) {
+        let last = self
+            .composer
+            .split_whitespace()
+            .last()
+            .unwrap_or("")
+            .to_owned();
+        if last.starts_with('@') && (self.show_mentions || session.files.is_empty()) {
+            let query = last.trim_start_matches('@');
+            let matches: Vec<String> = filter_mentions(&session.files, query, 6)
+                .into_iter()
+                .cloned()
+                .collect();
+            ui.horizontal_wrapped(|ui| {
+                ui.label(egui::RichText::new(cx.t("chat.view.files")).weak());
+                if session.files.is_empty() {
+                    ui.label(egui::RichText::new(cx.t("chat.view.loading-files")).weak());
+                }
+                for (index, file) in matches.iter().enumerate() {
+                    let selected = index == self.selected_mention.min(matches.len().saturating_sub(1));
+                    if ui
+                        .selectable_label(selected, egui::RichText::new(file).monospace())
+                        .clicked()
+                    {
+                        replace_last_token(&mut self.composer, &format!("@{file} "));
+                        self.selected_mention = 0;
+                    }
+                }
+            });
+        } else if last.starts_with('/') && !last.starts_with("//") {
+            let query = last.trim_start_matches('/');
+            let commands = session.commands.clone();
+            let matches: Vec<&String> = commands
+                .iter()
+                .filter(|command| command.to_ascii_lowercase().contains(&query.to_ascii_lowercase()))
+                .take(6)
+                .collect();
+            if !matches.is_empty() {
+                ui.horizontal_wrapped(|ui| {
+                    ui.label(egui::RichText::new(cx.t("chat.view.commands")).weak());
+                    for command in matches {
+                        if ui
+                            .button(format!("/{command}"))
+                            .clicked()
+                        {
+                            replace_last_token(&mut self.composer, &format!("/{command} "));
+                        }
+                    }
+                });
+            } else {
+                ui.label(
+                    egui::RichText::new(cx.t("chat.view.command-hint")).weak(),
+                );
+            }
+        }
+    }
+
+    fn poll_idle(&self, cx: &mut Ctx<'_>) {
+        let minutes = cx
+            .setting("helper.monitor.idle_minutes")
+            .and_then(|value| value.as_i64())
+            .unwrap_or(10)
+            .max(0) as u64;
+        let Ok(mut state) = self.core.state.lock() else {
+            return;
+        };
+        let Some(session) = &mut state.active else {
+            return;
+        };
+        session.poll_turn(200);
+        session.poll_transcript();
+        if session.idle_expired(minutes) {
+            session.stop_idle();
+        }
+        while let Some(prompt) = session.take_next_prompt() {
+            if let Err(error) = session.start_prompt(prompt) {
+                session.error = Some(error);
+                session.queue.finish();
+                break;
+            }
+        }
+    }
+
+    fn maybe_load_lists(&self, cx: &mut Ctx<'_>) {
+        let needs_files = {
+            let Ok(state) = self.core.state.lock() else {
+                return;
+            };
+            state.active.as_ref().is_some_and(|session| {
+                self.composer.contains('@') && session.files.is_empty() && !session.files_loading
+            })
+        };
+        if needs_files {
+            let bench = {
+                let Ok(mut state) = self.core.state.lock() else {
+                    return;
+                };
+                let Some(session) = &mut state.active else {
+                    return;
+                };
+                session.files_loading = true;
+                session.bench_path.clone()
+            };
+            let core = Arc::clone(&self.core);
+            cx.spawn(
+                move || ChatState::list_files(&bench, 4000),
+                move |_cx, files| {
+                    if let Ok(mut state) = core.state.lock() {
+                        if let Some(session) = &mut state.active {
+                            session.files = files;
+                            session.files_loading = false;
+                        }
+                    }
+                },
+            );
+        }
+        let needs_commands = {
+            let Ok(state) = self.core.state.lock() else {
+                return;
+            };
+            state
+                .active
+                .as_ref()
+                .is_some_and(|session| self.composer.contains('/') && !session.commands_loaded)
+        };
+        if needs_commands {
+            let bench = {
+                let Ok(mut state) = self.core.state.lock() else {
+                    return;
+                };
+                let Some(session) = &mut state.active else {
+                    return;
+                };
+                session.commands_loaded = true;
+                session.bench_path.clone()
+            };
+            let mut args = Args::new();
+            args.insert("scope", serde_json::json!("chat"));
+            let from_contract = cx
+                .run_command("content.commands.list", args)
+                .ok()
+                .and_then(|value| {
+                    value
+                        .get("commands")
+                        .and_then(serde_json::Value::as_array)
+                        .map(|items| {
+                            items
+                                .iter()
+                                .filter_map(|item| {
+                                    item.get("name")
+                                        .and_then(serde_json::Value::as_str)
+                                        .map(str::to_owned)
+                                })
+                                .collect::<Vec<_>>()
+                        })
+                });
+            if let Some(commands) = from_contract {
+                if let Ok(mut state) = self.core.state.lock() {
+                    if let Some(session) = &mut state.active {
+                        session.commands = commands;
+                    }
+                }
+            } else {
+                let core = Arc::clone(&self.core);
+                cx.spawn(
+                    move || ChatState::list_commands(&bench),
+                    move |_cx, commands| {
+                        if let Ok(mut state) = core.state.lock() {
+                            if let Some(session) = &mut state.active {
+                                session.commands = commands;
+                            }
+                        }
+                    },
+                );
+            }
+        }
+    }
+}
+
+impl View for ChatView {
+    /// Runs every frame, also while the tab is hidden, so idle stop and queued turns advance.
+    fn poll(&mut self, cx: &mut Ctx<'_>) {
+        self.poll_idle(cx);
+    }
+
+    fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
+        let core = Arc::clone(&self.core);
+        let bench = cx
+            .run_command("bench.current", Args::new())
+            .ok()
+            .and_then(|value| {
+                value
+                    .get("path")
+                    .and_then(serde_json::Value::as_str)
+                    .map(PathBuf::from)
+            })
+            .or_else(|| std::env::current_dir().ok())
+            .unwrap_or_else(|| PathBuf::from("."));
+        let mut state = match core.state.lock() {
+            Ok(state) => state,
+            Err(_) => return,
+        };
+        state.ensure_profiles(Some(&bench));
+        if state.active.is_none() {
+            let profile_id = state
+                .profiles
+                .iter()
+                .find(|profile| profile.supports_stream())
+                .map(|profile| profile.id.clone())
+                .unwrap_or_else(|| "claude-code".to_owned());
+            let permission = cx
+                .setting("helper.default.permissions")
+                .and_then(|value| value.as_str())
+                .unwrap_or("ask")
+                .to_owned();
+            let _ = state.open(&bench, &profile_id, None, permission);
+        }
+        if !state.preview_seeded {
+            if let Some(session) = &mut state.active {
+                if std::env::var_os("FORJA_CHAT_PREVIEW").is_some() {
+                    self.seed_preview(session);
+                    self.composer = "@src/".to_owned();
+                    self.show_mentions = true;
+                }
+            }
+            state.preview_seeded = true;
+        }
+        drop(state);
+        self.poll_idle(cx);
+        self.maybe_load_lists(cx);
+
+        let (messages, header, collapse_output, show_calls, diff_mode) = {
+            let Ok(state) = core.state.lock() else {
+                return;
+            };
+            let Some(session) = &state.active else {
+                ui.label(cx.t("chat.view.no-session"));
+                return;
+            };
+            (
+                session.messages.clone(),
+                HeaderInfo {
+                    profile_name: session.profile.name.clone(),
+                    bench_path: session.bench_path.clone(),
+                    session_id: session.session_id.clone(),
+                    usage: session.usage,
+                },
+                cx.setting("chat.tools.collapse_output")
+                    .and_then(|value| value.as_bool())
+                    .unwrap_or(true),
+                cx.setting("chat.tools.show_calls")
+                    .and_then(|value| value.as_bool())
+                    .unwrap_or(true),
+                DiffMode::from_setting(
+                    cx.setting("chat.diff.apply_mode")
+                        .and_then(|value| value.as_str()),
+                ),
+            )
+        };
+        let active_working = {
+            let Ok(state) = core.state.lock() else {
+                return;
+            };
+            state
+                .active
+                .as_ref()
+                .is_some_and(|session| matches!(session.status, SessionStatus::Working))
+        };
+        egui::TopBottomPanel::top("forja-chat-header")
+            .resizable(false)
+            .show_inside(ui, |ui| {
+                ui.label(egui::RichText::new(cx.t("chat.view.title")).weak());
+                if let Ok(mut state) = core.state.lock() {
+                    if let Some(session) = &mut state.active {
+                        self.draw_header(ui, cx, session);
+                    }
+                }
+            });
+        egui::TopBottomPanel::bottom("forja-chat-composer")
+            .resizable(false)
+            .show_inside(ui, |ui| {
+                if let Ok(mut state) = core.state.lock() {
+                    if let Some(session) = &mut state.active {
+                        self.draw_composer(ui, cx, session);
+                    }
+                }
+            });
+        egui::CentralPanel::default().show_inside(ui, |ui| {
+            let font_size = cx
+                .setting("chat.font.size")
+                .and_then(|value| value.as_i64())
+                .unwrap_or(14)
+                .clamp(10, 24) as f32;
+            ui.scope(|ui| {
+                ui.style_mut().override_text_style = Some(egui::TextStyle::Body);
+                ui.style_mut().text_styles.insert(
+                    egui::TextStyle::Body,
+                    egui::FontId::proportional(font_size),
+                );
+                draw_message_list(
+                    ui,
+                    cx,
+                    &messages,
+                    &header,
+                    collapse_output,
+                    show_calls,
+                    diff_mode,
+                    std::env::var_os("FORJA_CHAT_PREVIEW").is_some(),
+                );
+            });
+        });
+        ui.ctx().request_repaint_after(Duration::from_millis(if active_working {
+            16
+        } else {
+            350
+        }));
+    }
+}
+
+struct HeaderInfo {
+    profile_name: String,
+    bench_path: PathBuf,
+    session_id: Option<String>,
+    usage: ChatUsage,
+}
+
+#[allow(clippy::too_many_arguments)]
+fn draw_message_list(
+    ui: &mut egui::Ui,
+    cx: &Ctx<'_>,
+    messages: &[ChatMessage],
+    header: &HeaderInfo,
+    collapse_output: bool,
+    show_calls: bool,
+    diff_mode: DiffMode,
+    preview: bool,
+) {
+    let max_width = cx
+        .setting("chat.message.max_width")
+        .and_then(|value| value.as_i64())
+        .unwrap_or(760)
+        .clamp(400, 1200) as f32;
+    ui.separator();
+    let scroll = egui::ScrollArea::vertical()
+        .stick_to_bottom(!preview)
+        .auto_shrink([false, false]);
+    let scroll = if preview {
+        scroll.vertical_scroll_offset(0.0)
+    } else {
+        scroll
+    };
+    scroll
+        .max_height((ui.available_height() - 24.0).max(60.0))
+        .show(ui, |ui| {
+            for message in messages {
+                draw_message(ui, cx, message, max_width, collapse_output, show_calls, diff_mode);
+                ui.add_space(6.0);
+            }
+        });
+    ui.horizontal(|ui| {
+        ui.label(
+            egui::RichText::new(format!(
+                "{} · {} · {}",
+                header.profile_name,
+                header.bench_path.display(),
+                header.session_id.clone().unwrap_or_default()
+            ))
+            .weak(),
+        );
+        if header.usage.total_tokens > 0 {
+            ui.label(
+                egui::RichText::new(format!(
+                    "↑{} ↓{} Σ{}",
+                    header.usage.input_tokens,
+                    header.usage.output_tokens,
+                    header.usage.total_tokens
+                ))
+                .weak(),
+            );
+        }
+    });
+}
+
+fn draw_message(
+    ui: &mut egui::Ui,
+    cx: &Ctx<'_>,
+    message: &ChatMessage,
+    max_width: f32,
+    collapse_output: bool,
+    show_calls: bool,
+    diff_mode: DiffMode,
+) {
+    let (name, color) = match message.role {
+        ChatRole::User => (cx.t("chat.view.you"), egui::Color32::from_rgb(0xFF, 0xC1, 0x4D)),
+        ChatRole::Assistant => (
+            cx.t("chat.view.assistant"),
+            egui::Color32::from_rgb(0x6F, 0xA8, 0xDC),
+        ),
+        ChatRole::Tool => (cx.t("chat.view.tool"), egui::Color32::from_rgb(0xA6, 0x9C, 0x93)),
+        ChatRole::System => (cx.t("chat.view.system"), egui::Color32::GRAY),
+    };
+    ui.horizontal(|ui| {
+        ui.label(egui::RichText::new(name).color(color).strong());
+        if message.timestamp_ms > 0 {
+            if let Some(time) = chrono::DateTime::from_timestamp_millis(message.timestamp_ms) {
+                ui.label(
+                    egui::RichText::new(time.format("%H:%M").to_string()).weak(),
+                );
+            }
+        }
+    });
+    for block in &message.blocks {
+        match block {
+            ChatBlock::Text(text) => {
+                if matches!(message.role, ChatRole::User) {
+                    egui::Frame::group(ui.style())
+                        .fill(ui.visuals().faint_bg_color)
+                        .show(ui, |ui| {
+                            ui.set_max_width(max_width);
+                            ui.label(text);
+                        });
+                } else {
+                    ui.scope(|ui| {
+                        ui.set_max_width(max_width);
+                        ui.label(text);
+                    });
+                }
+            }
+            ChatBlock::Code { lang, code } => {
+                ui.label(egui::RichText::new(lang).weak().monospace());
+                egui::Frame::group(ui.style())
+                    .fill(ui.visuals().extreme_bg_color)
+                    .show(ui, |ui| {
+                        ui.add(
+                            egui::Label::new(egui::RichText::new(code).monospace())
+                                .wrap_mode(egui::TextWrapMode::Extend),
+                        );
+                    });
+            }
+            ChatBlock::ToolCall {
+                name,
+                input,
+                output,
+                status,
+            } => {
+                if !show_calls {
+                    continue;
+                }
+                let status_text = match status {
+                    ToolStatus::Running => cx.t("chat.view.running"),
+                    ToolStatus::Ok => cx.t("chat.view.ok"),
+                    ToolStatus::Error => cx.t("chat.view.failed"),
+                };
+                let status_color = match status {
+                    ToolStatus::Running => egui::Color32::from_rgb(0x6F, 0xA8, 0xDC),
+                    ToolStatus::Ok => egui::Color32::from_rgb(0x6C, 0xC4, 0x8A),
+                    ToolStatus::Error => egui::Color32::from_rgb(0xE5, 0x53, 0x4B),
+                };
+                egui::Frame::group(ui.style()).show(ui, |ui| {
+                    ui.set_max_width(max_width);
+                    ui.horizontal(|ui| {
+                        ui.label(
+                            egui::RichText::new(format!("🔧 {name}"))
+                                .strong()
+                                .monospace(),
+                        );
+                        ui.label(egui::RichText::new(status_text).color(status_color));
+                    });
+                    if !input.trim().is_empty() {
+                        if collapse_output {
+                            egui::CollapsingHeader::new(cx.t("chat.view.input"))
+                                .id_salt(format!("tool-in-{name}"))
+                                .show(ui, |ui| {
+                                    ui.add(
+                                        egui::Label::new(
+                                            egui::RichText::new(input).monospace().weak(),
+                                        )
+                                        .wrap_mode(egui::TextWrapMode::Truncate),
+                                    );
+                                });
+                        } else {
+                            ui.add(
+                                egui::Label::new(egui::RichText::new(input).monospace().weak())
+                                    .wrap_mode(egui::TextWrapMode::Truncate),
+                            );
+                        }
+                    }
+                    if let Some(output) = output {
+                        if collapse_output && output.lines().count() > 3 {
+                            egui::CollapsingHeader::new(format!(
+                                "{} ({} linhas)",
+                                cx.t("chat.view.output"),
+                                output.lines().count()
+                            ))
+                            .id_salt(format!("tool-out-{name}"))
+                            .show(ui, |ui| {
+                                ui.add(
+                                    egui::Label::new(
+                                        egui::RichText::new(output).monospace().weak(),
+                                    )
+                                    .wrap_mode(egui::TextWrapMode::Truncate),
+                                );
+                            });
+                        } else {
+                            ui.add(
+                                egui::Label::new(egui::RichText::new(output).monospace().weak())
+                                    .wrap_mode(egui::TextWrapMode::Truncate),
+                            );
+                        }
+                    }
+                });
+            }
+            ChatBlock::FileEdit { path, diff } => {
+                egui::Frame::group(ui.style())
+                    .fill(ui.visuals().faint_bg_color)
+                    .show(ui, |ui| {
+                        ui.set_max_width(max_width);
+                        let title = match diff_mode.status_key() {
+                            Some(key) => format!("✎ {path} · {}", cx.t(key)),
+                            None => format!("✎ {path}"),
+                        };
+                        ui.label(egui::RichText::new(title).strong());
+                        egui::CollapsingHeader::new(cx.t("chat.view.diff"))
+                            .id_salt(format!("diff-{path}"))
+                            .default_open(diff_mode.starts_open())
+                            .show(ui, |ui| {
+                                for line in diff.lines() {
+                                    let color = if line.starts_with('+') {
+                                        egui::Color32::from_rgb(0x6C, 0xC4, 0x8A)
+                                    } else if line.starts_with('-') {
+                                        egui::Color32::from_rgb(0xE5, 0x53, 0x4B)
+                                    } else {
+                                        ui.visuals().text_color()
+                                    };
+                                    ui.label(
+                                        egui::RichText::new(line).monospace().color(color),
+                                    );
+                                }
+                            });
+                    });
+            }
+            ChatBlock::Todo { items } => {
+                egui::Frame::group(ui.style()).show(ui, |ui| {
+                    ui.set_max_width(max_width);
+                    ui.label(egui::RichText::new(cx.t("chat.view.todos")).strong());
+                    for item in items {
+                        let marker = match item.status.as_str() {
+                            "completed" => "✔",
+                            "in_progress" => "◐",
+                            _ => "○",
+                        };
+                        ui.label(format!("{marker} {}", item.text));
+                    }
+                });
+            }
+            ChatBlock::Thinking(text) => {
+                egui::CollapsingHeader::new(cx.t("chat.view.thinking"))
+                    .id_salt("chat-thinking")
+                    .show(ui, |ui| {
+                        ui.add(
+                            egui::Label::new(
+                                egui::RichText::new(text).italics().weak(),
+                            )
+                            .wrap_mode(egui::TextWrapMode::Truncate),
+                        );
+                    });
+            }
+        }
+    }
+    if let Some(usage) = message.usage {
+        ui.label(
+            egui::RichText::new(format!(
+                "↑{} ↓{} Σ{}",
+                usage.input_tokens, usage.output_tokens, usage.total_tokens
+            ))
+            .weak(),
+        );
+    }
+}
+
+fn replace_last_token(text: &mut String, replacement: &str) {
+    let trimmed = text.trim_end();
+    let start = trimmed
+        .rfind(char::is_whitespace)
+        .map(|index| index + 1)
+        .unwrap_or(0);
+    let mut next = String::with_capacity(text.len() + replacement.len());
+    next.push_str(&text[..start]);
+    next.push_str(replacement);
+    *text = next;
+}
+

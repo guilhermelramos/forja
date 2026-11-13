@@ -1,0 +1,9 @@
+integrations-name = Integrations
+integrations-notice-webhook-failed = The webhook did not accept an event: { $message }
+integrations-notice-webhook-title = Webhook failed
+setting-integrations-webhook-enabled-label = Webhook
+setting-integrations-webhook-enabled-help = Sends Forja events to a URL.
+setting-integrations-webhook-url-label = Webhook URL
+setting-integrations-webhook-url-help = URL that receives webhook events.
+setting-integrations-webhook-events-label = Webhook events
+setting-integrations-webhook-events-help = Events sent to the webhook.

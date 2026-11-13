@@ -1,0 +1,13 @@
+# exemplo de configuração do usuário
+Host build
+  HostName build.example.com
+  User ci
+
+Host db web
+  User ana
+
+Host *
+  ServerAliveInterval 30
+
+Host *.corp
+  User corp

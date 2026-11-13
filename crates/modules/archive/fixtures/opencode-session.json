@@ -1,0 +1,18 @@
+{
+  "info": {
+    "id": "opencode-session-1",
+    "title": "Revisar a view do Acervo",
+    "directory": "C:/work/forja",
+    "time": { "created": 1763000000000, "updated": 1763000060000 }
+  },
+  "messages": [
+    {
+      "info": { "role": "user", "time": { "created": 1763000000000 } },
+      "parts": [{ "type": "text", "text": "Reveja a tabela do Acervo e o filtro." }]
+    },
+    {
+      "info": { "role": "assistant", "time": { "created": 1763000001000 } },
+      "parts": [{ "type": "text", "text": "Vou conferir os resultados e os trechos." }]
+    }
+  ]
+}

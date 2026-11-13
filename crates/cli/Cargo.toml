@@ -1,0 +1,15 @@
+[package]
+name = "forja-cli"
+description = "Forja command-line client generated from the RPC method catalog."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "forja"
+path = "src/main.rs"
+
+[dependencies]
+forja-protocol = { path = "../protocol" }
+serde_json.workspace = true

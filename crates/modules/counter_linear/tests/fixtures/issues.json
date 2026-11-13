@@ -1,0 +1,20 @@
+{"data": {"issues": {
+  "nodes": [
+    {"id": "9f1d0c2e-1111-4a6b-9b1a-000000000001", "identifier": "ENG-42", "title": "Cache do quadro demora ao abrir",
+     "url": "https://linear.app/acme/issue/ENG-42", "updatedAt": "2026-11-11T13:00:00Z",
+     "description": "Abrir o quadro com mais de 200 cartões leva segundos.",
+     "state": {"name": "In Progress", "type": "started"}, "assignee": {"name": "Ana Lima"},
+     "creator": {"name": "Bruno Teles"}, "labels": {"nodes": [{"name": "perf"}]}, "team": {"key": "ENG"}},
+    {"id": "9f1d0c2e-1111-4a6b-9b1a-000000000002", "identifier": "ENG-45", "title": "Mensagem de erro do login",
+     "url": "https://linear.app/acme/issue/ENG-45", "updatedAt": "2026-11-09T10:30:00Z",
+     "description": null,
+     "state": {"name": "Backlog", "type": "backlog"}, "assignee": null,
+     "creator": {"name": "Carla Rocha"}, "labels": {"nodes": []}, "team": {"key": "ENG"}},
+    {"id": "9f1d0c2e-1111-4a6b-9b1a-000000000003", "identifier": "ENG-39", "title": "Remover flag antiga",
+     "url": "https://linear.app/acme/issue/ENG-39", "updatedAt": "2026-10-28T08:00:00Z",
+     "description": null,
+     "state": {"name": "Done", "type": "completed"}, "assignee": {"name": "Ana Lima"},
+     "creator": {"name": "Ana Lima"}, "labels": {"nodes": []}, "team": {"key": "ENG"}}
+  ],
+  "pageInfo": {"hasNextPage": false, "endCursor": null}
+}}}

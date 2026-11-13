@@ -1,0 +1,84 @@
+# Atalhos do catálogo (design/keymap.toml) com os ids de lá.
+[[binding]]
+id = "browser.address"
+key = "Ctrl+L"
+scope = "browser"
+title_key = "browser.command.address"
+
+[[binding]]
+id = "browser.reload"
+key = "Ctrl+R"
+scope = "browser"
+title_key = "browser.command.reload"
+
+[[binding]]
+id = "browser.reload_hard"
+key = "Ctrl+Shift+R"
+scope = "browser"
+title_key = "browser.command.reload_hard"
+
+[[binding]]
+id = "browser.find"
+key = "Ctrl+F"
+scope = "browser"
+title_key = "browser.command.find"
+
+[[binding]]
+id = "browser.new_page"
+key = "Ctrl+T"
+scope = "browser"
+title_key = "browser.command.new_page"
+
+[[binding]]
+id = "browser.reopen_page"
+key = "Ctrl+Shift+T"
+scope = "browser"
+title_key = "browser.command.reopen_page"
+
+[[binding]]
+id = "browser.close_page"
+key = "Ctrl+W"
+scope = "browser"
+title_key = "browser.command.close_page"
+
+[[binding]]
+id = "browser.zoom.in"
+key = "Ctrl+Plus"
+scope = "browser"
+title_key = "browser.command.zoom_in"
+
+[[binding]]
+id = "browser.zoom.out"
+key = "Ctrl+Minus"
+scope = "browser"
+title_key = "browser.command.zoom_out"
+
+[[binding]]
+id = "browser.zoom.reset"
+key = "Ctrl+0"
+scope = "browser"
+title_key = "browser.command.zoom_reset"
+
+[[binding]]
+id = "browser.back"
+key = "Alt+Left"
+scope = "browser"
+title_key = "browser.command.back"
+
+[[binding]]
+id = "browser.forward"
+key = "Alt+Right"
+scope = "browser"
+title_key = "browser.command.forward"
+
+[[binding]]
+id = "browser.devtools"
+key = "F12"
+scope = "browser"
+title_key = "browser.command.devtools"
+
+[[binding]]
+id = "browser.open_external"
+key = "Alt+Enter"
+scope = "browser"
+title_key = "browser.command.open_external"

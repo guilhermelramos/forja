@@ -1,0 +1,60 @@
+[
+  {
+    "number": 41,
+    "title": "Login falha quando o token expira",
+    "state": "open",
+    "html_url": "https://github.com/acme/tools/issues/41",
+    "user": {"login": "bia-dev"},
+    "assignees": [{"login": "ana-dev"}],
+    "labels": [{"name": "bug"}, {"name": "auth"}],
+    "updated_at": "2026-11-10T14:20:00Z",
+    "body": "Ao expirar o token, o app mostra erro genérico em vez de pedir login.",
+    "comments": 2
+  },
+  {
+    "number": 44,
+    "title": "Documentar o formato do arquivo de configuração",
+    "state": "open",
+    "html_url": "https://github.com/acme/tools/issues/44",
+    "user": {"login": "carlos"},
+    "assignees": [],
+    "labels": ["docs"],
+    "updated_at": "2026-11-08T09:05:00Z",
+    "body": null
+  },
+  {
+    "number": 52,
+    "title": "Ajustar contraste do rótulo de etapa",
+    "state": "open",
+    "draft": false,
+    "html_url": "https://github.com/acme/tools/pull/52",
+    "user": {"login": "ana-dev"},
+    "assignees": [{"login": "ana-dev"}],
+    "labels": [{"name": "ui"}],
+    "updated_at": "2026-11-11T18:40:00Z",
+    "pull_request": {"merged_at": null}
+  },
+  {
+    "number": 55,
+    "title": "Cache de resultados da busca",
+    "state": "open",
+    "draft": true,
+    "html_url": "https://github.com/acme/tools/pull/55",
+    "user": {"login": "ana-dev"},
+    "assignees": [],
+    "labels": [{"name": "perf"}],
+    "updated_at": "2026-11-09T12:00:00Z",
+    "pull_request": {"merged_at": null}
+  },
+  {
+    "number": 39,
+    "title": "Corrigir paginação da lista de tarefas",
+    "state": "closed",
+    "html_url": "https://github.com/acme/tools/pull/39",
+    "user": {"login": "carlos"},
+    "assignees": [],
+    "labels": [],
+    "updated_at": "2026-11-02T08:30:00Z",
+    "pull_request": {"merged_at": "2026-11-02T08:30:00Z"}
+  }
+]

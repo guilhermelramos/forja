@@ -1,0 +1,10 @@
+{"data": {"issue": {
+  "id": "9f1d0c2e-1111-4a6b-9b1a-000000000001", "identifier": "ENG-42", "title": "Cache do quadro demora ao abrir",
+  "url": "https://linear.app/acme/issue/ENG-42", "updatedAt": "2026-11-11T13:00:00Z",
+  "description": "Abrir o quadro com mais de 200 cartões leva segundos.",
+  "state": {"name": "In Progress", "type": "started"}, "assignee": {"name": "Ana Lima"},
+  "creator": {"name": "Bruno Teles"}, "labels": {"nodes": [{"name": "perf"}]}, "team": {"key": "ENG"},
+  "comments": {"nodes": [
+    {"id": "c-1", "body": "Medi: 2,4 s no lote grande.", "createdAt": "2026-11-11T12:00:00Z", "user": {"name": "Bruno Teles"}}
+  ]}
+}}}

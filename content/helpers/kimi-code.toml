@@ -1,0 +1,96 @@
+# Perfil de ajudante: Kimi Code CLI (executável `kimi`). Substitui o perfil do Kimi CLI, que foi arquivado.
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# NÃO instalado nesta máquina. Dados das páginas oficiais do Kimi Code (moonshotai.github.io/kimi-code e kimi.com/code/docs).
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "kimi-code"
+name = "Kimi Code CLI"
+maker = "Moonshot AI"
+site = "https://moonshotai.github.io/kimi-code/en/"
+
+[detect]
+executables = ["kimi"]
+version = ["--version"]          # "Print the version number and exit." (também -V)
+
+[start]
+command = "kimi"
+args = []                       # sem argumentos, abre a TUI
+
+[prompt]
+mode = "none"                 # NOT FOUND: nenhum prompt inicial no modo interativo nas páginas lidas
+headless = ["-p", "{prompt}"]   # kimi -p "<prompt>": não abre a TUI (referência de kimi-command)
+# headless_stdin: NOT FOUND. --output-format text ou stream-json só vale com -p.
+
+# Permissões: --yolo ("Ask When Needed"), --auto ("Never Ask") e --plan. A documentação diz que --prompt não combina
+# com nenhum dos três. Logo, no modo não interativo a Forja não oferece permissão por flag para este CLI.
+# Sem flag, o padrão é "Always Ask". Equivalente em config.toml: default_permission_mode = manual | yolo | auto.
+
+[permissions.ask]
+args = []                       # "Always Ask" (padrão, sem flag)
+env = {}
+
+# [permissions.accept-edits]  # NOT FOUND: não há modo só para edições (os rótulos são Always Ask, Ask When Needed e Never Ask)
+
+[permissions.automatic]
+args = ["--yolo"]               # "Ask When Needed" (-y; aliases ocultos --yes e --auto-approve)
+env = {}
+
+[permissions.full]
+args = ["--auto"]               # "Never Ask"
+env = {}
+# --yolo e --auto não combinam: o CLI recusa a inicialização.
+
+[resume]
+last = ["--continue"]         # -c: a sessão mais recente do diretório atual
+id = ["--session", "{id}"]      # -S; -r é alias oculto. Sem id, abre o seletor (no modo shell)
+# --continue e --session não combinam. Ao retomar, --auto, --yolo ou --plan sobrescrevem o modo salvo.
+
+# [fork]  # NOT FOUND como flag: /fork é comando da TUI e a sessão continua na mesma janela.
+
+[models]
+model_args = ["--model", "{model}"]     # -m: alias do modelo para este início (padrão: default_model)
+effort_env = "KIMI_MODEL_THINKING_EFFORT"
+# effort_args: NOT FOUND como flag. O esforço vem de [thinking].effort (low até max) em config.toml, ou dessa variável.
+# effort_values: a confirmar (a referência diz "low through max", sem lista fechada).
+
+[sessions]
+format = "jsonl"
+path = "~/.kimi-code/sessions/<workDirKey>/<sessionId>/agents/main/wire.jsonl"
+dir_env = "KIMI_CODE_HOME"      # padrão ~/.kimi-code; sessions/ e session_index.jsonl ficam dentro dela
+# Índice: $KIMI_CODE_HOME/session_index.jsonl, uma linha por sessão (sessionId, sessionDir, workDir). state.json fica na pasta da sessão.
+export = ["export", "{id}"]   # kimi export [sessionId]; -o define o caminho e -y pula a confirmação
+# kimi import-sessions traz sessões do Claude Code e do Codex (não usado aqui).
+confidence = "medium"
+
+[hooks]
+supported = true
+mechanism = "command"
+config = ["~/.kimi-code/config.toml"]   # tabelas [[hooks]] com event, matcher, command e timeout; sem arquivo de hooks do projeto
+key = "hooks"
+events = [
+  "UserPromptSubmit", "UserPromptQueued", "PreToolUse", "Stop", "TurnStarted",
+  "PostToolUse", "PostToolUseFailure", "PermissionRequest", "PermissionResult",
+  "SessionStart", "SessionEnd", "SessionHeartbeat", "SubagentStart", "SubagentStop",
+  "TaskStarted", "StopFailure", "Interrupt", "PreCompact", "PostCompact", "Notification",
+]
+# Código de saída 2 bloqueia. Só PreToolUse, Stop e UserPromptSubmit podem bloquear. Hooks em modo print: NOT FOUND.
+
+[skills]
+# a confirmar: diretórios de skills não confirmados na documentação oficial.
+user = []
+project = []
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://moonshotai.github.io/kimi-code/en/reference/kimi-command",
+  "https://moonshotai.github.io/kimi-code/en/reference/slash-commands.html",
+  "https://www.kimi.com/code/docs/en/kimi-code-cli/guides/sessions.html",
+  "https://www.kimi.com/code/docs/en/kimi-code-cli/guides/interaction.html",
+  "https://www.kimi.com/code/docs/en/kimi-code-cli/configuration/config-files.html",
+  "https://www.kimi.com/code/docs/en/kimi-code-cli/configuration/env-vars.html",
+  "https://www.kimi.com/code/docs/en/kimi-code-cli/configuration/data-locations.html",
+  "https://www.kimi.com/code/docs/en/kimi-code-cli/customization/hooks.html",
+]
+commands = []
+confidence = "medium"

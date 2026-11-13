@@ -1,0 +1,25 @@
+[package]
+name = "forja-kernel"
+description = "Modular core of Forja: module registry, commands, slots, settings, keymap, i18n, tasks and storage."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+forja-protocol = { path = "../protocol", version = "0.1.0" }
+forja-kernel-macros = { path = "../kernel-macros", version = "0.1.0" }
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+thiserror.workspace = true
+linkme.workspace = true
+fluent-bundle.workspace = true
+unic-langid.workspace = true
+eframe = { workspace = true, optional = true }
+
+[features]
+default = []
+# The UI contract (`View`) uses `eframe::egui` types only when this feature is
+# on. The kernel itself never stores or renders egui values.
+egui = ["dep:eframe"]

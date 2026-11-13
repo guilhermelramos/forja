@@ -1,0 +1,92 @@
+# Perfil de ajudante: GitHub Copilot CLI (executável `copilot`).
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# NÃO instalado nesta máquina: tudo vem da documentação oficial (confiança média; partes lidas em resumo).
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "copilot"
+name = "GitHub Copilot CLI"
+maker = "GitHub"
+site = "https://docs.github.com/en/copilot"
+
+[detect]
+executables = ["copilot"]
+version = ["version"]            # "copilot version": "Display version information and check for updates." (referência de comandos)
+
+[start]
+command = "copilot"
+args = []
+
+[prompt]
+mode = "flag"
+flag = "-i"                     # "Start an interactive session and automatically execute this prompt." (referência)
+headless = ["-p", "{prompt}"]   # "Execute a prompt in non-interactive mode. The CLI runs the prompt and exits when done." (programmatic)
+# headless_stdin: a confirmar. A referência cita "piped standard input" como combinação, mas não liga isso ao -p.
+
+[permissions.ask]
+args = []                       # "In manual approval mode, Copilot CLI prompts you for requests that aren't already allowed." (allowing-tools)
+env = {}
+
+[permissions.accept-edits]
+args = ["--allow-tool=write"]   # "allow write operations". O argumento é opcional: omitido, casa todas as ferramentas do tipo (referência)
+env = {}
+
+[permissions.automatic]
+args = ["--assisted-approval"]  # "The option is only valid for non-interactive runs." (programmatic)
+env = {}
+
+[permissions.full]
+args = ["--allow-all"]          # equivale a --allow-all-tools --allow-all-paths --allow-all-urls; alias --yolo (referência)
+env = { COPILOT_ALLOW_ALL = "true" }   # variável citada no resumo da referência
+# Administradores de contas Business e Enterprise podem bloquear essas flags.
+
+[resume]
+last = ["--continue"]         # "Resume the most recent session in the current working directory, falling back to the globally most recent session."
+id = ["--resume", "{id}"]       # --resume[=valor] escolhe da lista e aceita id, prefixo ou nome; --session-id ID exige id exato
+
+# [fork]  # a confirmar: /fork existe como comando de barra ("Fork the current session into a new session"); sem flag de linha de comando.
+
+[models]
+model_args = ["--model", "{model}"]
+effort_args = ["--reasoning-effort", "{effort}"]   # "Set the reasoning effort level (low, medium, high, xhigh, max)". --effort também existe
+effort_values = ["low", "medium", "high", "xhigh", "max"]
+model_env = "COPILOT_MODEL"
+
+[sessions]
+format = "jsonl"
+path = "~/.copilot/session-state/<session-id>/events.jsonl"   # resumo da página de dados de sessão
+dir_env = "COPILOT_HOME"        # muda a pasta ~/.copilot
+# Banco entre sessões: ~/.copilot/session-store.db (SQLite, segundo a documentação). Caminho no Windows: a confirmar.
+confidence = "medium"
+
+[hooks]
+supported = true
+mechanism = "command"
+config = [".github/hooks/*.json", "~/.copilot/hooks/", "~/.copilot/settings.json", ".github/copilot/settings.json"]
+key = "hooks"
+events = [
+  "agentStop", "errorOccurred", "notification", "permissionRequest", "postToolUse",
+  "postToolUseFailure", "preCompact", "preToolUse", "sessionEnd", "sessionStart",
+  "subagentStart", "subagentStop", "userPromptSubmitted", "userPromptTransformed",
+]
+# Arquivos usam "version": 1 e um objeto "hooks" indexado pelo evento. disableAllHooks desliga todos.
+
+[skills]
+# Pastas de skills. `user` é relativa ao diretório pessoal; `project`, à raiz do projeto.
+# Fonte: https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/create-skills
+user = ["~/.copilot/skills"]
+project = [".github/skills"]
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/create-skills",
+  "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference",
+  "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-programmatic-reference",
+  "https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference",
+  "https://docs.github.com/en/copilot/how-tos/copilot-cli/use-copilot-cli/allowing-tools",
+  "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/use-hooks",
+  "https://docs.github.com/en/copilot/reference/hooks-reference",
+  "https://docs.github.com/en/copilot/concepts/security-governance-and-network-settings/session-data",
+]
+commands = []                   # nenhum: o CLI não está instalado nesta máquina
+confidence = "medium"

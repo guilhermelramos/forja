@@ -1,0 +1,17 @@
+[package]
+name = "forja-module-review"
+description = "Forja module review: pull requests, checks and AI text generation."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+forja-kernel = { path = "../../kernel", features = ["egui"] }
+forja-contracts = { path = "../../contracts" }
+forja-counter-kit = { path = "../../counter-kit" }
+forja-ui-kit = { path = "../../ui-kit" }
+linkme.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true

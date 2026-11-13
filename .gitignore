@@ -1,0 +1,7 @@
+/target/
+/dist/
+/shots/
+*.tmp
+.forja-dev/
+.opencode/
+.claude/

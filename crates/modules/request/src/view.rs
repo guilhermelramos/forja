@@ -1,0 +1,400 @@
+//! A página de Pedidos: filtros, busca, lista, gaveta de detalhes e pedidos locais.
+//!
+//! Regra de ouro: a tela copia o que precisa do estado e solta o lock antes de chamar
+//! qualquer comando, porque os comandos também travam o estado.
+
+use crate::commands::{self, with_state};
+use crate::state::{self, Filter, Notice, NoticeKind, Shared, State};
+use forja_contracts::{RequestItem, RequestKind, RequestState};
+use forja_counter_kit::error_key;
+use forja_kernel::ui_contract::{egui, View};
+use forja_kernel::Ctx;
+use forja_ui_kit::{button, segmented, text_field, ButtonKind};
+use std::time::SystemTime;
+
+/// Cópia do estado usada por um quadro. Não guarda lock.
+struct Frame {
+    filter: Filter,
+    source: Option<String>,
+    project_known: bool,
+    loading: bool,
+    local_loaded: bool,
+    items: Vec<RequestItem>,
+    detail: Option<RequestItem>,
+    selected: Option<(String, String)>,
+    notice: Option<Notice>,
+    errors: Vec<(String, String)>,
+}
+
+pub struct RequestsView {
+    shared: Shared,
+    started: bool,
+    /// Em modo fixture (captura de tela), abre o primeiro pedido uma vez para mostrar a gaveta.
+    auto_selected: bool,
+    query_draft: String,
+    comment_draft: String,
+    local_open: bool,
+    local_title: String,
+    local_body: String,
+}
+
+impl RequestsView {
+    pub fn new(shared: Shared) -> Self {
+        Self {
+            shared,
+            started: false,
+            auto_selected: false,
+            query_draft: String::new(),
+            comment_draft: String::new(),
+            local_open: false,
+            local_title: String::new(),
+            local_body: String::new(),
+        }
+    }
+
+    fn frame(&self) -> Frame {
+        with_state(&self.shared, |state: &mut State| Frame {
+            filter: state.filter,
+            source: state.source.clone(),
+            project_known: state.project.is_some(),
+            loading: !state.pending.is_empty(),
+            local_loaded: state.local_loaded,
+            items: state::visible(state, SystemTime::now()),
+            detail: state.detail.clone(),
+            selected: state.selected.clone(),
+            notice: state.notice.clone(),
+            errors: state
+                .errors
+                .iter()
+                .map(|(counter, error)| (counter.clone(), error_key("request", error)))
+                .collect(),
+        })
+        .unwrap_or_else(|| Frame {
+            filter: Filter::All,
+            source: None,
+            project_known: false,
+            loading: false,
+            local_loaded: false,
+            items: Vec::new(),
+            detail: None,
+            selected: None,
+            notice: None,
+            errors: Vec::new(),
+        })
+    }
+
+    fn set_filter(&self, filter: Filter) {
+        with_state(&self.shared, |state| state.filter = filter);
+    }
+
+    fn set_query(&self, query: &str) {
+        with_state(&self.shared, |state| state.query = query.to_owned());
+    }
+
+    /// Primeiro quadro: carrega os pedidos locais e pede a lista dos balcões.
+    fn start(&mut self, cx: &mut Ctx<'_>) {
+        if self.started {
+            return;
+        }
+        self.started = true;
+        self.query_draft = with_state(&self.shared, |state| state.query.clone()).unwrap_or_default();
+        commands::ensure_local(cx, &self.shared);
+        let _ = commands::refresh(cx, &self.shared);
+    }
+
+    /// Atualização automática pelo intervalo da configuração, ou logo após conectar.
+    fn maybe_refresh(&self, cx: &mut Ctx<'_>, ui: &egui::Ui) {
+        let interval = cx
+            .setting("request.refresh.interval_s")
+            .and_then(forja_kernel::SettingValue::as_i64)
+            .unwrap_or(60);
+        let Some(every) = state::refresh_interval(interval) else {
+            return;
+        };
+        ui.ctx().request_repaint_after(every);
+        let due = with_state(&self.shared, |state| {
+            state.needs_refresh
+                || state
+                    .last_refresh
+                    .map(|last| last.elapsed().map(|age| age >= every).unwrap_or(true))
+                    .unwrap_or(true)
+        })
+        .unwrap_or(false);
+        if due {
+            let _ = commands::refresh(cx, &self.shared);
+        }
+    }
+
+    fn header(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, frame: &Frame) {
+        let title = cx.t("request-name");
+        let loading = frame.loading.then(|| cx.t("request-loading"));
+        forja_ui_kit::page_heading(ui, &title, loading.as_deref(), |ui| {
+            if button(ui, ButtonKind::Secondary, &cx.t("request-refresh")).clicked() {
+                let _ = commands::refresh(cx, &self.shared);
+            }
+            let label = cx.t("request-local-create");
+            if button(ui, ButtonKind::Ghost, &label).clicked() {
+                self.local_open = !self.local_open;
+            }
+        });
+    }
+
+    fn filters(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, frame: &Frame) {
+        let labels: Vec<String> = Filter::ALL.iter().map(|f| cx.t(f.label_key())).collect();
+        let refs: Vec<&str> = labels.iter().map(String::as_str).collect();
+        let mut selected = Filter::ALL
+            .iter()
+            .position(|filter| *filter == frame.filter)
+            .unwrap_or(4);
+        if segmented(ui, &mut selected, &refs).changed() {
+            if let Some(filter) = Filter::ALL.get(selected).copied() {
+                self.set_filter(filter);
+                let _ = commands::refresh(cx, &self.shared);
+            }
+        }
+        self.source_row(ui, cx, frame);
+        if text_field(ui, &mut self.query_draft, &cx.t("request-search-hint")).changed() {
+            self.set_query(&self.query_draft.clone());
+        }
+    }
+
+    /// Balcão mostrado: local, cada balcão instalado e todos.
+    fn source_row(&self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, frame: &Frame) {
+        let mut options: Vec<Option<String>> = vec![Some(crate::local::COUNTER.to_owned())];
+        options.extend(
+            commands::sources(cx)
+                .into_iter()
+                .map(|(counter, _)| Some(counter)),
+        );
+        options.push(None);
+        let labels: Vec<String> = options
+            .iter()
+            .map(|option| match option {
+                Some(counter) => counter_label(cx, counter),
+                None => cx.t(Filter::All.label_key()),
+            })
+            .collect();
+        let refs: Vec<&str> = labels.iter().map(String::as_str).collect();
+        let mut selected = options
+            .iter()
+            .position(|option| *option == frame.source)
+            .unwrap_or(options.len() - 1);
+        if segmented(ui, &mut selected, &refs).changed() {
+            if let Some(source) = options.get(selected).cloned() {
+                commands::set_source(&self.shared, source);
+                let _ = commands::refresh(cx, &self.shared);
+            }
+        }
+    }
+
+    fn notices(&self, ui: &mut egui::Ui, cx: &Ctx<'_>, frame: &Frame) {
+        if !frame.project_known && !forja_counter_kit::fixtures_enabled() {
+            ui.label(egui::RichText::new(cx.t("request-no-project")).weak());
+        }
+        if let Some(notice) = &frame.notice {
+            let color = match notice.kind {
+                NoticeKind::Ok => egui::Color32::from_rgb(0x6C, 0xC4, 0x8A),
+                NoticeKind::Warn => egui::Color32::from_rgb(0xFF, 0xC1, 0x4D),
+                NoticeKind::Error => egui::Color32::from_rgb(0xE5, 0x53, 0x4B),
+                NoticeKind::Info => ui.visuals().weak_text_color(),
+            };
+            ui.colored_label(color, cx.t(&notice.key));
+        }
+        for (counter, key) in &frame.errors {
+            let counter_name = counter_label(cx, counter);
+            let error_text = cx.t(key);
+            let line = cx.t_args(
+                "request-error-line",
+                &[("counter", counter_name.as_str()), ("error", error_text.as_str())],
+            );
+            ui.colored_label(egui::Color32::from_rgb(0xE5, 0x53, 0x4B), line);
+        }
+    }
+
+    fn local_form(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, frame: &Frame) {
+        if !self.local_open {
+            return;
+        }
+        if !frame.local_loaded {
+            ui.label(cx.t("request-local-loading"));
+            return;
+        }
+        ui.group(|ui| {
+            text_field(ui, &mut self.local_title, &cx.t("request-local-title-hint"));
+            text_field(ui, &mut self.local_body, &cx.t("request-local-body-hint"));
+            if button(ui, ButtonKind::Primary, &cx.t("request-local-create")).clicked() {
+                let body = self.local_body.trim().to_owned();
+                let body = (!body.is_empty()).then_some(body);
+                let title = self.local_title.clone();
+                if commands::create_local(cx, &self.shared, &title, body.as_deref()).is_ok() {
+                    self.local_title.clear();
+                    self.local_body.clear();
+                    self.local_open = false;
+                }
+            }
+        });
+    }
+
+    fn list(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, frame: &Frame) {
+        if frame.items.is_empty() {
+            forja_ui_kit::empty_state(ui, forja_ui_kit::REQUESTS, &cx.t("request-empty"), None);
+            return;
+        }
+        egui::ScrollArea::vertical()
+            .id_salt("request.list")
+            .show(ui, |ui| {
+                for item in &frame.items {
+                    let selected = frame
+                        .selected
+                        .as_ref()
+                        .is_some_and(|(counter, key)| *counter == item.counter && *key == item.key);
+                    let title = format!("{}  {}", item.key, item.title);
+                    if ui.selectable_label(selected, title).clicked() {
+                        let _ = commands::open(cx, &self.shared, &item.counter, &item.key);
+                    }
+                    ui.label(
+                        egui::RichText::new(row_meta(cx, item))
+                            .small()
+                            .weak(),
+                    );
+                    ui.add_space(4.0);
+                }
+            });
+    }
+
+    fn drawer(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, frame: &Frame) {
+        let Some(item) = frame.detail.clone() else {
+            return;
+        };
+        ui.horizontal(|ui| {
+            ui.strong(format!("{}  {}", item.key, item.title));
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if button(ui, ButtonKind::Ghost, &cx.t("request-detail-close")).clicked() {
+                    with_state(&self.shared, |state| {
+                        state.selected = None;
+                        state.detail = None;
+                    });
+                }
+            });
+        });
+        ui.label(egui::RichText::new(row_meta(cx, &item)).small().weak());
+        if let Some(url) = &item.url {
+            ui.label(egui::RichText::new(url).small().weak());
+        }
+        ui.add_space(6.0);
+        match item.body.as_deref().map(str::trim).filter(|body| !body.is_empty()) {
+            Some(body) => {
+                ui.label(body);
+            }
+            None => {
+                ui.label(egui::RichText::new(cx.t("request-detail-empty-body")).weak());
+            }
+        }
+        ui.add_space(8.0);
+        self.actions(ui, cx, &item, frame.project_known);
+        ui.add_space(8.0);
+        ui.label(egui::RichText::new(cx.t("request-detail-comments")).strong());
+        if item.comments.is_empty() {
+            ui.label(egui::RichText::new(cx.t("request-detail-no-comments")).weak());
+        }
+        for comment in &item.comments {
+            let who = if comment.author.is_empty() {
+                cx.t("request-local-tag")
+            } else {
+                comment.author.clone()
+            };
+            ui.label(egui::RichText::new(format!("{who}  {}", comment.created_at.clone().unwrap_or_default())).small().weak());
+            ui.label(comment.body.as_str());
+            ui.add_space(4.0);
+        }
+        ui.add(
+            egui::TextEdit::multiline(&mut self.comment_draft)
+                .hint_text(cx.t("request-comment-hint"))
+                .desired_width(f32::INFINITY)
+                .desired_rows(2),
+        );
+        if button(ui, ButtonKind::Secondary, &cx.t("request-action-comment")).clicked()
+            && !self.comment_draft.trim().is_empty()
+        {
+            let body = self.comment_draft.clone();
+            if commands::comment(cx, &self.shared, &item.counter, &item.key, &body).is_ok() {
+                self.comment_draft.clear();
+            }
+        }
+    }
+
+    fn actions(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, item: &RequestItem, project_known: bool) {
+        ui.horizontal(|ui| {
+            let can_forge = project_known || forja_counter_kit::fixtures_enabled();
+            ui.add_enabled_ui(can_forge, |ui| {
+                if button(ui, ButtonKind::Primary, &cx.t("request-action-forge")).clicked() {
+                    let _ = commands::forge(cx, &self.shared, &item.counter, &item.key);
+                }
+            });
+            let (label, to) = if item.is_open() {
+                (cx.t("request-action-close"), RequestState::Closed)
+            } else {
+                (cx.t("request-action-reopen"), RequestState::Open)
+            };
+            if button(ui, ButtonKind::Secondary, &label).clicked() {
+                let _ = commands::transition(cx, &self.shared, &item.counter, &item.key, to);
+            }
+        });
+    }
+}
+
+impl View for RequestsView {
+    fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
+        self.start(cx);
+        self.maybe_refresh(cx, ui);
+        let frame = self.frame();
+        if !self.auto_selected && forja_counter_kit::fixtures_enabled() && frame.selected.is_none() {
+            if let Some(first) = frame.items.first().cloned() {
+                self.auto_selected = true;
+                let _ = commands::open(cx, &self.shared, &first.counter, &first.key);
+            }
+        }
+        self.header(ui, cx, &frame);
+        self.filters(ui, cx, &frame);
+        self.notices(ui, cx, &frame);
+        self.local_form(ui, cx, &frame);
+        ui.separator();
+        if frame.selected.is_some() {
+            ui.columns(2, |columns| {
+                self.list(&mut columns[0], cx, &frame);
+                self.drawer(&mut columns[1], cx, &frame);
+            });
+        } else {
+            self.list(ui, cx, &frame);
+        }
+    }
+}
+
+/// Nome do balcão para a tela: `GitHub`, `GitLab`, `Linear`, `Jira` ou `Local`.
+fn counter_label(cx: &Ctx<'_>, counter: &str) -> String {
+    if counter == crate::local::COUNTER {
+        return cx.t("request-counter-local");
+    }
+    cx.t(&format!("counter_{counter}-name"))
+}
+
+/// Linha de apoio do pedido: balcão, tipo, estado, autor e rótulos.
+fn row_meta(cx: &Ctx<'_>, item: &RequestItem) -> String {
+    let mut parts = vec![counter_label(cx, &item.counter)];
+    parts.push(match item.kind {
+        RequestKind::Issue => cx.t("request-kind-issue"),
+        RequestKind::Change => cx.t("request-kind-change"),
+    });
+    if item.draft {
+        parts.push(cx.t("request-draft"));
+    }
+    parts.push(cx.t(state::state_key(item.state)));
+    if let Some(author) = &item.author {
+        parts.push(author.clone());
+    }
+    if !item.labels.is_empty() {
+        parts.push(item.labels.join(", "));
+    }
+    parts.join(" · ")
+}
+

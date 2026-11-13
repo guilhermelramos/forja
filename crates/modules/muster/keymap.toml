@@ -1,0 +1,5 @@
+# O catálogo define `muster.open` com Ctrl+Shift+M no escopo global.
+[[binding]]
+id = "muster.open"
+key = "Ctrl+Shift+M"
+scope = "global"

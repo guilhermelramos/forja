@@ -1,0 +1,11 @@
+id = "routine-reminder"
+name = { pt-BR = "Lembrete de rotina", en = "Routine reminder" }
+version = "1.0.0"
+author = "Forja"
+api = "1"
+
+[capabilities]
+commands = true
+"ui.panel" = true
+settings = true
+events = ["routine.finished", "routine.failed"]

@@ -1,0 +1,13 @@
+id = "todo-counter"
+name = { pt-BR = "Contador de TODOs", en = "TODO counter" }
+version = "1.0.0"
+author = "Forja"
+description = { pt-BR = "Conta TODO e FIXME nos arquivos do projeto.", en = "Counts TODO and FIXME in project files." }
+api = "1"
+
+[capabilities]
+commands = true
+"ui.panel" = true
+settings = true
+events = ["project.opened"]
+"fs.read" = ["**/*.rs", "**/*.ts", "**/*.md"]

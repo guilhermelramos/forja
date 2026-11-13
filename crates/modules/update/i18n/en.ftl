@@ -1,0 +1,13 @@
+update-name = Updates
+update-command-check = Check for updates
+update-command-status = Update status
+setting-update-channel-name-label = Update channel
+setting-update-channel-name-help = App update channel.
+setting-update-check-frequency-label = Check for updates
+setting-update-check-frequency-help = How often app updates are checked.
+setting-update-download-auto-label = Download updates
+setting-update-download-auto-help = Downloads updates automatically without installing.
+update-method-check-description = Compares a locally known latest version with the running version.
+update-method-check-result = Channel, frequency, versions and whether an update is available.
+update-method-status-description = Returns the update channel, frequency and last local check.
+update-method-status-result = Channel, frequency, automatic download and last check time.

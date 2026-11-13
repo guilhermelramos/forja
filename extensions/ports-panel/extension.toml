@@ -1,0 +1,11 @@
+id = "ports-panel"
+name = { pt-BR = "Painel de portas", en = "Ports panel" }
+version = "1.0.0"
+author = "Forja"
+api = "1"
+
+[capabilities]
+"ui.panel" = true
+settings = true
+events = ["port.detected", "port.closed"]
+"ui.open_url" = ["localhost"]

@@ -1,0 +1,46 @@
+# Go toolchain recipes for Forja
+
+[[recipe]]
+id = "go-build"
+title = { pt-BR = "Compilar pacotes Go", en = "Build Go packages" }
+command = "go build ./..."
+scope = "project"
+enter = true
+directory = "."
+manifest = "go.mod"
+
+[[recipe]]
+id = "go-test"
+title = { pt-BR = "Executar testes Go", en = "Run Go tests" }
+command = "go test ./..."
+scope = "project"
+enter = true
+directory = "."
+manifest = "go.mod"
+
+[[recipe]]
+id = "go-lint"
+title = { pt-BR = "Executar golangci-lint", en = "Run golangci-lint" }
+command = "golangci-lint run"
+scope = "project"
+enter = true
+directory = "."
+manifest = "go.mod"
+
+[[recipe]]
+id = "go-format-check"
+title = { pt-BR = "Verificar formatação gofmt", en = "Check gofmt formatting" }
+command = "gofmt -l ."
+scope = "project"
+enter = true
+directory = "."
+manifest = "go.mod"
+
+[[recipe]]
+id = "go-format-fix"
+title = { pt-BR = "Formatar código com gofmt", en = "Format code with gofmt" }
+command = "gofmt -w ."
+scope = "project"
+enter = true
+directory = "."
+manifest = "go.mod"

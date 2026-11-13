@@ -1,0 +1,71 @@
+# Perfil de ajudante: Aider (executável `aider`).
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# NÃO instalado nesta máquina: dados da documentação oficial aider.chat (confiança média).
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "aider"
+name = "Aider"
+maker = "Aider"           # a confirmar: mantenedor do projeto
+site = "https://aider.chat"
+
+[detect]
+executables = ["aider"]
+version = ["--version"]         # "shows the version number and exits" (página de opções)
+
+[start]
+command = "aider"
+args = []                      # começa no modo "code"
+
+[prompt]
+# modo: NOT FOUND para o chat interativo. --load LOAD_FILE roda /comandos de um arquivo ao abrir; não é prompt.
+headless = ["--message", "{prompt}"]   # "Specify a single message to send the LLM, process reply then exit (disables chat mode)"
+# headless_stdin: NOT FOUND. --message-file lê o prompt de um arquivo e sai.
+
+# [permissions.ask]        # NOT FOUND: a página de opções não diz que o Aider pede antes de editar ou rodar comandos.
+#                               # Flags com padrão True: --auto-accept-architect, --suggest-shell-commands, --auto-commits, --dirty-commits.
+# [permissions.accept-edits]  # NOT FOUND: sem flag de edições
+# [permissions.automatic]       # NOT FOUND: --auto-accept-architect vale só para mudanças do modo architect
+
+[permissions.full]
+args = ["--yes-always"]        # "Always say yes to every confirmation" (página de opções; env AIDER_YES_ALWAYS)
+env = {}
+# A página de scripting cita --yes (env AIDER_YES). Conflito: usamos a referência de opções.
+
+[resume]
+last = ["--restore-chat-history"]   # "Restore the previous chat history messages (default: False)". Restaura mensagens; não é sessão com id
+# id: NOT FOUND. Não há conceito de sessão nomeada nas páginas lidas.
+
+# [fork]  # NOT FOUND: sem conceito de sessão
+
+[models]
+model_args = ["--model", "{model}"]              # env AIDER_MODEL
+effort_args = ["--reasoning-effort", "{effort}"] # "Set the reasoning_effort API parameter (default: not set)"
+effort_values = ["low", "medium", "high"]        # valores citados para modelos de raciocínio da OpenAI (página reasoning)
+model_env = "AIDER_MODEL"
+# --architect (um modelo planeja, outro edita) e --editor-model existem; não modelados aqui.
+
+[sessions]
+format = "markdown"
+path = ".aider.chat.history.md"   # padrão do histórico de chat ("default: .aider.chat.history.md"). Diretório base: a confirmar
+# .aider.input.history guarda a entrada. --llm-history-file grava a conversa com o modelo e não tem padrão.
+confidence = "medium"
+
+# [hooks]  # NOT FOUND nas cinco páginas lidas. Não há API de eventos: a página scripting diz que a API Python não é suportada oficialmente.
+#          # --notifications-command COMMAND só cobre notificações ("instead of the terminal bell").
+
+[skills]
+# a confirmar: diretórios de skills não confirmados na documentação oficial.
+user = []
+project = []
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://aider.chat/docs/config/options.html",
+  "https://aider.chat/docs/scripting.html",
+  "https://aider.chat/docs/usage/modes.html",
+  "https://aider.chat/docs/config/reasoning.html",
+  "https://aider.chat/docs/faq.html",
+]
+commands = []
+confidence = "medium"

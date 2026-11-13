@@ -1,0 +1,17 @@
+[package]
+name = "forja-module-trust"
+description = "Forja module trust: hash-bound approvals for project and extension content."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+forja-kernel = { path = "../../kernel", features = ["egui"] }
+forja-ui-kit = { path = "../../ui-kit" }
+forja-contracts = { path = "../../contracts" }
+linkme.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+chrono.workspace = true

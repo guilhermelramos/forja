@@ -1,0 +1,105 @@
+# Perfil de ajudante: OpenAI Codex CLI (executável `codex`).
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "codex"
+name = "OpenAI Codex CLI"
+maker = "OpenAI"
+site = "https://developers.openai.com/codex"
+
+[detect]
+executables = ["codex"]
+version = ["--version"]          # saída: "codex-cli 0.167.1"
+
+[start]
+command = "codex"
+args = []                       # abre a TUI
+
+[prompt]
+mode = "argument"              # codex "<prompt>" abre a TUI com o prompt
+headless = ["exec", "{prompt}"] # codex exec "<prompt>"; sem prompt ou com "-", lê o stdin
+headless_stdin = true           # ajuda de exec: stdin vira bloco <stdin> se houver prompt
+
+# [permissions.ask]  # a confirmar: "read-only" diz que o Codex "can read files and run commands within the
+#                         # read-only sandbox", mas a doc não diz que cada edição pede aprovação.
+# args = ["--sandbox", "read-only", "--ask-for-approval", "on-request"]
+# env = {}
+
+[permissions.accept-edits]
+args = ["--sandbox", "workspace-write", "--ask-for-approval", "on-request"]
+env = {}
+# workspace-write: "Codex can read files, make edits, and run commands in the working directory automatically."
+# on-request: "Codex asks for approval to edit files outside the workspace or to run commands that require network access."
+# Fonte: learn.chatgpt.com/docs/agent-approvals-security. Para pastas versionadas, a própria doc recomenda este par.
+
+[permissions.automatic]
+args = ["--approve-for-me"]     # aprovações passam por revisão automática, com sandbox workspace-write (ajuda)
+env = {}
+
+[permissions.full]
+args = ["--dangerously-bypass-approvals-and-sandbox"]   # sem confirmações e sem sandbox (ajuda)
+env = {}
+
+[resume]
+last = ["resume", "--last"]   # a sessão mais recente, sem abrir o seletor
+id = ["resume", "{id}"]         # id UUID ou nome da sessão
+
+[resume.headless]
+last = ["exec", "resume", "--last"]
+id = ["exec", "resume", "{id}"]
+
+[fork]
+last = ["fork", "--last"]
+id = ["fork", "{id}"]
+
+[fork.headless]
+id = ["exec", "fork", "{id}"]   # exec fork aceita id; não há --last no modo não interativo
+
+[models]
+model_args = ["--model", "{model}"]
+effort_args = ["-c", "model_reasoning_effort={effort}"]   # chave de config, passada com -c chave=valor
+# effort_values: a confirmar. A doc diz "such as low, medium, high, xhigh, max, or ultra" e "Available levels depend on the model and client".
+
+[sessions]
+format = "jsonl"
+path = "$CODEX_HOME/sessions/rollout-*.jsonl"   # a doc cita rollout-*.jsonl e $CODEX_HOME/sessions/ em páginas diferentes; o config-reference fala em history.jsonl: a confirmar
+dir_env = "CODEX_HOME"          # padrão ~/.codex (config-advanced)
+# exec --ephemeral roda sem gravar arquivos de sessão (ajuda de exec).
+confidence = "medium"
+
+[accounts]
+env = "CODEX_HOME"          # config-advanced: pasta de configuração e sessões
+login = ["login"]            # `codex login`
+
+[hooks]
+supported = true
+mechanism = "command"
+config = ["~/.codex/hooks.json", "~/.codex/config.toml", "<repo>/.codex/hooks.json", "<repo>/.codex/config.toml"]
+key = "hooks"
+events = [
+  "SessionStart", "SessionEnd", "SubagentStart", "PreToolUse", "PermissionRequest",
+  "PostToolUse", "PreModelRequest", "PostModelRequest", "PreCompact", "PostCompact",
+  "UserPromptSubmit", "SubagentStop", "Stop", "Interrupt",
+]
+# Hooks vêm ligados; [features] hooks = false desliga. Hooks não gerenciados precisam de revisão (/hooks).
+# --dangerously-bypass-hook-trust pula a revisão em uma execução só (ajuda de exec).
+
+[skills]
+# Pastas de skills. `user` é relativa ao diretório pessoal; `project`, à raiz do projeto.
+# Fonte: https://developers.openai.com/codex/skills
+user = ["~/.codex/skills"]
+project = [".agents/skills"]
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://developers.openai.com/codex/skills",
+  "https://developers.openai.com/codex/cli/reference",   # redireciona para learn.chatgpt.com/docs
+  "https://learn.chatgpt.com/docs/non-interactive-mode",
+  "https://learn.chatgpt.com/docs/agent-approvals-security",
+  "https://learn.chatgpt.com/docs/config-file/config-reference",
+  "https://learn.chatgpt.com/docs/config-file/config-advanced",
+  "https://learn.chatgpt.com/docs/hooks",
+]
+commands = ["codex --version", "codex --help", "codex exec --help", "codex resume --help", "codex fork --help"]
+confidence = "high"

@@ -1,0 +1,4868 @@
+# Forja: catálogo de configurações (formato de máquina)
+# Fonte de verdade: design/settings.md. schema_version 1.
+# Chaves planas com pontos; cada configuração tem um módulo dono e um grupo de Ajustes.
+schema_version = 1
+
+[[group]]
+id = "appearance"
+label_pt = "Aparência"
+label_en = "Appearance"
+setting_count = 35
+
+[[group]]
+id = "benches"
+label_pt = "Bancadas"
+label_en = "Benches"
+setting_count = 40
+
+[[group]]
+id = "terminal"
+label_pt = "Terminal"
+label_en = "Terminal"
+setting_count = 28
+
+[[group]]
+id = "editor"
+label_pt = "Editor"
+label_en = "Editor"
+setting_count = 40
+
+[[group]]
+id = "helpers"
+label_pt = "Ajudantes"
+label_en = "Helpers"
+setting_count = 37
+
+[[group]]
+id = "muster"
+label_pt = "Mutirão"
+label_en = "Muster"
+setting_count = 14
+
+[[group]]
+id = "routines"
+label_pt = "Rotinas"
+label_en = "Routines"
+setting_count = 10
+
+[[group]]
+id = "requests"
+label_pt = "Pedidos e balcões"
+label_en = "Requests and counters"
+setting_count = 18
+
+[[group]]
+id = "integrations"
+label_pt = "Integrações"
+label_en = "Integrations"
+setting_count = 22
+
+[[group]]
+id = "remote"
+label_pt = "Remoto (SSH/WSL)"
+label_en = "Remote (SSH/WSL)"
+setting_count = 13
+
+[[group]]
+id = "extensions"
+label_pt = "Extensões"
+label_en = "Extensions"
+setting_count = 13
+
+[[group]]
+id = "privacy"
+label_pt = "Privacidade"
+label_en = "Privacy"
+setting_count = 17
+
+[[group]]
+id = "advanced"
+label_pt = "Avançado"
+label_en = "Advanced"
+setting_count = 24
+
+
+[[module]]
+id = "appearance"
+group = "appearance"
+
+[[module]]
+id = "i18n"
+group = "appearance"
+
+[[module]]
+id = "notifications"
+group = "appearance"
+
+[[module]]
+id = "bench"
+group = "benches"
+
+[[module]]
+id = "board"
+group = "benches"
+
+[[module]]
+id = "git"
+group = "benches"
+
+[[module]]
+id = "archive"
+group = "benches"
+
+[[module]]
+id = "terminal"
+group = "terminal"
+
+[[module]]
+id = "editor"
+group = "editor"
+
+[[module]]
+id = "diff"
+group = "editor"
+
+[[module]]
+id = "find"
+group = "editor"
+
+[[module]]
+id = "explorer"
+group = "editor"
+
+[[module]]
+id = "helper"
+group = "helpers"
+
+[[module]]
+id = "chat"
+group = "helpers"
+
+[[module]]
+id = "voice"
+group = "helpers"
+
+[[module]]
+id = "usage"
+group = "helpers"
+
+[[module]]
+id = "accounts"
+group = "helpers"
+
+[[module]]
+id = "muster"
+group = "muster"
+
+[[module]]
+id = "routine"
+group = "routines"
+
+[[module]]
+id = "request"
+group = "requests"
+
+[[module]]
+id = "counter"
+group = "requests"
+
+[[module]]
+id = "mcp"
+group = "integrations"
+
+[[module]]
+id = "browser"
+group = "integrations"
+
+[[module]]
+id = "integrations"
+group = "integrations"
+
+[[module]]
+id = "remote"
+group = "remote"
+
+[[module]]
+id = "extension"
+group = "extensions"
+
+[[module]]
+id = "privacy"
+group = "privacy"
+
+[[module]]
+id = "network"
+group = "privacy"
+
+[[module]]
+id = "anvil"
+group = "advanced"
+
+[[module]]
+id = "ports"
+group = "advanced"
+
+[[module]]
+id = "keymap"
+group = "advanced"
+
+[[module]]
+id = "app"
+group = "advanced"
+
+[[module]]
+id = "update"
+group = "advanced"
+
+[[module]]
+id = "onboarding"
+group = "advanced"
+
+
+[[setting]]
+key = "appearance.theme.mode"
+module = "appearance"
+group = "appearance"
+type = "choice"
+default = "system"
+options = ["system", "dark", "light"]
+label_pt = "Tema"
+label_en = "Theme"
+help_pt = "Segue o Windows ou fixa a interface em escuro ou claro."
+help_en = "Follows Windows or locks the interface to dark or light."
+why = "Seguir o Windows evita contraste inesperado ao alternar dia e noite."
+label_key = "setting-appearance-theme-mode-label"
+help_key = "setting-appearance-theme-mode-help"
+
+[[setting]]
+key = "appearance.theme.dark_name"
+module = "appearance"
+group = "appearance"
+type = "choice"
+default = "brasa_escuro"
+options = ["brasa_escuro", "carvao", "cinza_quente", "aco"]
+options_from = "themes_dark"
+label_pt = "Tema escuro"
+label_en = "Dark theme"
+help_pt = "Tema aplicado quando a interface está no modo escuro."
+help_en = "Theme applied when the interface is in dark mode."
+why = "Brasa Escuro é a identidade padrão e o contraste de referência."
+label_key = "setting-appearance-theme-dark_name-label"
+help_key = "setting-appearance-theme-dark_name-help"
+
+[[setting]]
+key = "appearance.theme.light_name"
+module = "appearance"
+group = "appearance"
+type = "choice"
+default = "brasa_claro"
+options = ["brasa_claro"]
+options_from = "themes_light"
+label_pt = "Tema claro"
+label_en = "Light theme"
+help_pt = "Tema aplicado quando a interface está no modo claro."
+help_en = "Theme applied when the interface is in light mode."
+why = "Brasa Claro preserva a mesma hierarquia no modo claro."
+label_key = "setting-appearance-theme-light_name-label"
+help_key = "setting-appearance-theme-light_name-help"
+
+[[setting]]
+key = "appearance.ui.density"
+module = "appearance"
+group = "appearance"
+type = "choice"
+default = "comfortable"
+options = ["comfortable", "compact"]
+label_pt = "Densidade"
+label_en = "Density"
+help_pt = "Escolhe o espaçamento entre confortável e compacto."
+help_en = "Chooses comfortable or compact spacing."
+why = "Confortável é o padrão do design system; compacto é opção para telas pequenas."
+label_key = "setting-appearance-ui-density-label"
+help_key = "setting-appearance-ui-density-help"
+
+[[setting]]
+key = "appearance.ui.scale"
+module = "appearance"
+group = "appearance"
+type = "number"
+default = 1.0
+min = 0.8
+max = 1.5
+step = 0.05
+label_pt = "Escala da interface"
+label_en = "UI scale"
+help_pt = "Aumenta ou reduz toda a interface."
+help_en = "Scales the whole interface up or down."
+why = "100% mantém as medidas dos tokens Brasa sem arredondamentos."
+label_key = "setting-appearance-ui-scale-label"
+help_key = "setting-appearance-ui-scale-help"
+
+[[setting]]
+key = "appearance.ui.font_family"
+deferred = "Aguardando API de seleção de fontes no ui-kit."
+module = "appearance"
+group = "appearance"
+type = "choice"
+default = "auto"
+options = ["auto", "segoe_ui_variable", "segoe_ui", "system"]
+label_pt = "Fonte da interface"
+label_en = "UI font"
+help_pt = "Fonte dos menus, rótulos e textos da interface."
+help_en = "Font used in menus, labels and interface text."
+why = "Auto usa Segoe UI Variable quando o Windows oferece e cai para Segoe UI."
+label_key = "setting-appearance-ui-font_family-label"
+help_key = "setting-appearance-ui-font_family-help"
+
+[[setting]]
+key = "appearance.ui.font_size"
+deferred = "Aguardando métricas tipográficas configuráveis no ui-kit."
+module = "appearance"
+group = "appearance"
+type = "number"
+default = 14
+min = 12
+max = 18
+label_pt = "Tamanho do texto"
+label_en = "Text size"
+help_pt = "Tamanho base do texto da interface."
+help_en = "Base size of interface text."
+why = "14 px é o menor tamanho que mantém a grade de 4 px confortável."
+label_key = "setting-appearance-ui-font_size-label"
+help_key = "setting-appearance-ui-font_size-help"
+
+[[setting]]
+key = "appearance.ui.code_font"
+deferred = "Aguardando API de seleção de fontes de código no ui-kit."
+module = "appearance"
+group = "appearance"
+type = "choice"
+default = "cascadia_code"
+options = ["cascadia_code", "cascadia_mono", "consolas", "jetbrains_mono"]
+label_pt = "Fonte de código"
+label_en = "Code font"
+help_pt = "Fonte padrão para editor e terminal."
+help_en = "Default font for editor and terminal."
+why = "Cascadia Code é a fonte da identidade e acompanha o Windows 11; sem ela, a Forja usa Consolas."
+label_key = "setting-appearance-ui-code_font-label"
+help_key = "setting-appearance-ui-code_font-help"
+
+[[setting]]
+key = "appearance.ui.code_size"
+deferred = "Aguardando métricas tipográficas configuráveis no ui-kit."
+module = "appearance"
+group = "appearance"
+type = "number"
+default = 13
+min = 10
+max = 24
+label_pt = "Tamanho do código"
+label_en = "Code size"
+help_pt = "Tamanho base do código no editor e no terminal."
+help_en = "Base code size in editor and terminal."
+why = "13 px mantém cerca de 100 colunas visíveis em telas comuns."
+label_key = "setting-appearance-ui-code_size-label"
+help_key = "setting-appearance-ui-code_size-help"
+
+[[setting]]
+key = "appearance.ui.ligatures"
+deferred = "Aguardando suporte de composição tipográfica a ligaduras no renderizador."
+module = "appearance"
+group = "appearance"
+type = "toggle"
+default = true
+label_pt = "Ligaduras"
+label_en = "Ligatures"
+help_pt = "Desenha sequências como -> e => como um único glifo."
+help_en = "Draws sequences such as -> and => as a single glyph."
+why = "Ligaduras são legíveis e não alteram o texto do arquivo."
+label_key = "setting-appearance-ui-ligatures-label"
+help_key = "setting-appearance-ui-ligatures-help"
+
+[[setting]]
+key = "appearance.motion.reduce"
+module = "appearance"
+group = "appearance"
+type = "choice"
+default = "auto"
+options = ["auto", "always", "never"]
+label_pt = "Reduzir movimento"
+label_en = "Reduce motion"
+help_pt = "Segue a preferência de acessibilidade do sistema ou força a redução."
+help_en = "Follows the system accessibility preference or forces reduction."
+why = "Auto respeita quem já pediu menos animação no Windows."
+label_key = "setting-appearance-motion-reduce-label"
+help_key = "setting-appearance-motion-reduce-help"
+
+[[setting]]
+key = "appearance.motion.duration_ms"
+deferred = "Aguardando duração de animação configurável nos tokens do ui-kit."
+module = "appearance"
+group = "appearance"
+type = "number"
+default = 120
+min = 0
+max = 400
+label_pt = "Duração da animação (ms)"
+label_en = "Animation duration (ms)"
+help_pt = "Duração das transições curtas."
+help_en = "Duration of short transitions."
+why = "120 ms é perceptível sem atrasar a resposta da interface."
+label_key = "setting-appearance-motion-duration_ms-label"
+help_key = "setting-appearance-motion-duration_ms-help"
+
+[[setting]]
+key = "appearance.colors.accent"
+module = "appearance"
+group = "appearance"
+type = "color"
+default = "#F2762E"
+hint = "#RRGGBB"
+label_pt = "Cor de destaque"
+label_en = "Accent color"
+help_pt = "Cor de ação principal e de foco."
+help_en = "Primary action and focus color."
+why = "O padrão é o token accent da Brasa; a troca não muda o contraste do texto."
+label_key = "setting-appearance-colors-accent-label"
+help_key = "setting-appearance-colors-accent-help"
+
+[[setting]]
+key = "appearance.sidebar.visible"
+module = "appearance"
+group = "appearance"
+type = "toggle"
+default = true
+label_pt = "Mostrar lateral"
+label_en = "Show sidebar"
+help_pt = "Mostra a lista de projetos e bancadas."
+help_en = "Shows the project and bench list."
+why = "A lateral é o mapa de projetos e bancadas e começa à vista."
+label_key = "setting-appearance-sidebar-visible-label"
+help_key = "setting-appearance-sidebar-visible-help"
+
+[[setting]]
+key = "appearance.sidebar.width"
+module = "appearance"
+group = "appearance"
+type = "number"
+default = 260
+min = 180
+max = 480
+label_pt = "Largura da lateral"
+label_en = "Sidebar width"
+help_pt = "Largura da lateral em pixels."
+help_en = "Sidebar width in pixels."
+why = "260 px cabe nome de projeto e branch sem truncar."
+label_key = "setting-appearance-sidebar-width-label"
+help_key = "setting-appearance-sidebar-width-help"
+
+[[setting]]
+key = "appearance.rail.visible"
+module = "appearance"
+group = "appearance"
+type = "toggle"
+default = true
+label_pt = "Mostrar trilho"
+label_en = "Show rail"
+help_pt = "Mostra o trilho de navegação à esquerda."
+help_en = "Shows the left navigation rail."
+why = "O trilho é a navegação primária e não deve sumir por acidente."
+label_key = "setting-appearance-rail-visible-label"
+help_key = "setting-appearance-rail-visible-help"
+
+[[setting]]
+key = "appearance.status_bar.visible"
+module = "appearance"
+group = "appearance"
+type = "toggle"
+default = true
+label_pt = "Mostrar barra de status"
+label_en = "Show status bar"
+help_pt = "Mostra branch, ajudantes ativos, uso e recursos na base."
+help_en = "Shows branch, active helpers, usage and resources at the bottom."
+why = "A barra é o painel de saúde do trabalho em andamento."
+label_key = "setting-appearance-status_bar-visible-label"
+help_key = "setting-appearance-status_bar-visible-help"
+
+[[setting]]
+key = "appearance.window.remember_geometry"
+module = "appearance"
+group = "appearance"
+type = "toggle"
+default = true
+label_pt = "Lembrar tamanho e posição"
+label_en = "Remember size and position"
+help_pt = "Reabre a janela no tamanho e na posição anteriores."
+help_en = "Reopens the window at its previous size and position."
+why = "Retomar o layout é mais útil que centralizar a janela a cada abertura."
+label_key = "setting-appearance-window-remember_geometry-label"
+help_key = "setting-appearance-window-remember_geometry-help"
+
+[[setting]]
+key = "appearance.window.start_maximized"
+module = "appearance"
+group = "appearance"
+type = "toggle"
+default = false
+label_pt = "Abrir maximizada"
+label_en = "Start maximized"
+help_pt = "Inicia a janela ocupando a tela inteira."
+help_en = "Starts the window filling the entire screen."
+why = "Abrir no tamanho anterior evita surpresa em monitores múltiplos."
+label_key = "setting-appearance-window-start_maximized-label"
+help_key = "setting-appearance-window-start_maximized-help"
+
+[[setting]]
+key = "appearance.tabs.middle_click"
+deferred = "Aguardando contrato de fechamento das abas do shell."
+module = "appearance"
+group = "appearance"
+type = "toggle"
+default = true
+label_pt = "Fechar aba com botão do meio"
+label_en = "Middle-click closes tab"
+help_pt = "Fecha a aba ao clicar com o botão do meio."
+help_en = "Closes a tab when middle-clicked."
+why = "O gesto é o esperado em abas e navegadores."
+label_key = "setting-appearance-tabs-middle_click-label"
+help_key = "setting-appearance-tabs-middle_click-help"
+
+[[setting]]
+key = "appearance.tooltips.enabled"
+deferred = "Aguardando controle compartilhado de dicas nos componentes da interface."
+module = "appearance"
+group = "appearance"
+type = "toggle"
+default = true
+label_pt = "Dicas"
+label_en = "Tooltips"
+help_pt = "Mostra uma dica ao passar o mouse sobre controles."
+help_en = "Shows a hint when hovering controls."
+why = "Dicas curtas ensinam atalhos sem abrir a ajuda."
+label_key = "setting-appearance-tooltips-enabled-label"
+help_key = "setting-appearance-tooltips-enabled-help"
+
+[[setting]]
+key = "i18n.language.mode"
+module = "i18n"
+group = "appearance"
+type = "choice"
+default = "auto"
+options = ["auto", "pt_BR", "en"]
+label_pt = "Idioma"
+label_en = "Language"
+help_pt = "Idioma da interface ou automático pelo sistema."
+help_en = "Interface language or automatic from the system."
+why = "Auto acompanha o idioma do Windows sem exigir escolha."
+label_key = "setting-i18n-language-mode-label"
+help_key = "setting-i18n-language-mode-help"
+
+[[setting]]
+key = "i18n.language.fallback"
+module = "i18n"
+group = "appearance"
+type = "choice"
+default = "en"
+options = ["en", "pt_BR"]
+label_pt = "Idioma de reserva"
+label_en = "Fallback language"
+help_pt = "Idioma usado quando falta uma tradução."
+help_en = "Language used when a translation is missing."
+why = "Inglês é o fallback do kernel e evita rótulo vazio."
+label_key = "setting-i18n-language-fallback-label"
+help_key = "setting-i18n-language-fallback-help"
+
+[[setting]]
+key = "i18n.time.format"
+module = "i18n"
+group = "appearance"
+type = "choice"
+default = "auto"
+options = ["auto", "24h", "12h"]
+label_pt = "Formato de hora"
+label_en = "Time format"
+help_pt = "Relógio de 24 ou 12 horas."
+help_en = "24-hour or 12-hour clock."
+why = "Auto segue o formato de hora do Windows."
+label_key = "setting-i18n-time-format-label"
+help_key = "setting-i18n-time-format-help"
+
+[[setting]]
+key = "i18n.date.week_start"
+module = "i18n"
+group = "appearance"
+type = "choice"
+default = "auto"
+options = ["auto", "sunday", "monday"]
+label_pt = "Início da semana"
+label_en = "Week starts on"
+help_pt = "Primeiro dia da semana em calendários."
+help_en = "First day of the week in calendars."
+why = "Auto respeita a região configurada no Windows."
+label_key = "setting-i18n-date-week_start-label"
+help_key = "setting-i18n-date-week_start-help"
+
+[[setting]]
+key = "notifications.toast.enabled"
+module = "notifications"
+group = "appearance"
+type = "toggle"
+default = true
+label_pt = "Avisos na tela"
+label_en = "On-screen toasts"
+help_pt = "Mostra avisos temporários no canto da janela."
+help_en = "Shows temporary toasts in the window corner."
+why = "Aviso na tela não interrompe o trabalho."
+label_key = "setting-notifications-toast-enabled-label"
+help_key = "setting-notifications-toast-enabled-help"
+
+[[setting]]
+key = "notifications.toast.position"
+module = "notifications"
+group = "appearance"
+type = "choice"
+default = "bottom_right"
+options = ["bottom_right", "top_right", "bottom_left", "top_left"]
+label_pt = "Posição dos avisos"
+label_en = "Toast position"
+help_pt = "Canto onde os avisos aparecem."
+help_en = "Corner where toasts appear."
+why = "Perto da barra de status, onde o olho já procura estado."
+label_key = "setting-notifications-toast-position-label"
+help_key = "setting-notifications-toast-position-help"
+
+[[setting]]
+key = "notifications.toast.duration_s"
+module = "notifications"
+group = "appearance"
+type = "number"
+default = 5
+min = 2
+max = 15
+label_pt = "Duração do aviso (s)"
+label_en = "Toast duration (s)"
+help_pt = "Tempo que cada aviso permanece na tela."
+help_en = "How long each toast stays on screen."
+why = "5 s dá tempo de ler sem cobrir o trabalho."
+label_key = "setting-notifications-toast-duration_s-label"
+help_key = "setting-notifications-toast-duration_s-help"
+
+[[setting]]
+key = "notifications.toast.max"
+module = "notifications"
+group = "appearance"
+type = "number"
+default = 3
+min = 1
+max = 5
+label_pt = "Avisos simultâneos"
+label_en = "Simultaneous toasts"
+help_pt = "Quantidade máxima de avisos empilhados."
+help_en = "Maximum number of stacked toasts."
+why = "Três avisos evitam uma parede de mensagens."
+label_key = "setting-notifications-toast-max-label"
+help_key = "setting-notifications-toast-max-help"
+
+[[setting]]
+key = "notifications.os.enabled"
+module = "notifications"
+group = "appearance"
+type = "toggle"
+default = true
+label_pt = "Notificação do Windows"
+label_en = "Windows notification"
+help_pt = "Envia avisos para a central de notificações do Windows."
+help_en = "Sends notifications to the Windows notification center."
+why = "A central do Windows alcança você com a Forja minimizada."
+label_key = "setting-notifications-os-enabled-label"
+help_key = "setting-notifications-os-enabled-help"
+
+[[setting]]
+key = "notifications.os.only_unfocused"
+module = "notifications"
+group = "appearance"
+type = "toggle"
+default = true
+label_pt = "Só quando a Forja não está em foco"
+label_en = "Only when Forja is unfocused"
+help_pt = "Notifica pelo Windows só quando a Forja não está em foco."
+help_en = "Sends Windows notifications only when Forja is not focused."
+why = "Com a janela ativa, o aviso na tela já basta."
+label_key = "setting-notifications-os-only_unfocused-label"
+help_key = "setting-notifications-os-only_unfocused-help"
+
+[[setting]]
+key = "notifications.os.sound"
+module = "notifications"
+group = "appearance"
+type = "toggle"
+default = false
+label_pt = "Som nas notificações"
+label_en = "Notification sound"
+help_pt = "Toca o som do Windows ao notificar."
+help_en = "Plays the Windows sound when notifying."
+why = "Som por padrão atrapalha quem ouve música; a voz tem controle próprio."
+label_key = "setting-notifications-os-sound-label"
+help_key = "setting-notifications-os-sound-help"
+
+[[setting]]
+key = "notifications.quiet.enabled"
+module = "notifications"
+group = "appearance"
+type = "toggle"
+default = false
+label_pt = "Horário de silêncio"
+label_en = "Quiet hours"
+help_pt = "Silencia avisos dentro de um intervalo de horas."
+help_en = "Mutes notifications during a time range."
+why = "Silêncio inesperado faz perder pedido; é opt-in."
+label_key = "setting-notifications-quiet-enabled-label"
+help_key = "setting-notifications-quiet-enabled-help"
+
+[[setting]]
+key = "notifications.quiet.start"
+module = "notifications"
+group = "appearance"
+type = "text"
+default = "22:00"
+hint = "HH:MM"
+label_pt = "Início do silêncio"
+label_en = "Quiet start"
+help_pt = "Hora em que o horário de silêncio começa."
+help_en = "Time when quiet hours start."
+why = "22:00 cobre a noite típica de quem trabalha tarde."
+label_key = "setting-notifications-quiet-start-label"
+help_key = "setting-notifications-quiet-start-help"
+
+[[setting]]
+key = "notifications.quiet.end"
+module = "notifications"
+group = "appearance"
+type = "text"
+default = "07:00"
+hint = "HH:MM"
+label_pt = "Fim do silêncio"
+label_en = "Quiet end"
+help_pt = "Hora em que o horário de silêncio termina."
+help_en = "Time when quiet hours end."
+why = "07:00 devolve os avisos junto com o começo do dia."
+label_key = "setting-notifications-quiet-end-label"
+help_key = "setting-notifications-quiet-end-help"
+
+[[setting]]
+key = "bench.worktree.location"
+module = "bench"
+group = "benches"
+type = "choice"
+default = "data_dir"
+options = ["data_dir", "beside_project", "custom"]
+label_pt = "Onde ficam as bancadas"
+label_en = "Where benches live"
+help_pt = "Escolhe se as bancadas ficam na pasta de dados, ao lado do projeto ou num caminho próprio."
+help_en = "Chooses whether benches live in the data folder, beside the project or in a custom path."
+why = "Fora do repositório evita que busca e git vejam worktrees alheias."
+label_key = "setting-bench-worktree-location-label"
+help_key = "setting-bench-worktree-location-help"
+
+[[setting]]
+key = "bench.worktree.path"
+module = "bench"
+group = "benches"
+type = "path"
+default = "%LOCALAPPDATA%\\Forja\\bancadas"
+hint = "caminho absoluto"
+label_pt = "Pasta das bancadas"
+label_en = "Benches folder"
+help_pt = "Pasta usada quando o local das bancadas é personalizado."
+help_en = "Folder used when the bench location is custom."
+why = "Um caminho explícito deixa limpeza e backup sob controle."
+label_key = "setting-bench-worktree-path-label"
+help_key = "setting-bench-worktree-path-help"
+
+[[setting]]
+key = "bench.worktree.name_template"
+module = "bench"
+group = "benches"
+type = "text"
+default = "{pedido}-{slug}"
+hint = "{pedido}, {slug}, {tipo}, {numero}"
+label_pt = "Nome da bancada"
+label_en = "Bench name"
+help_pt = "Modelo do nome da pasta e da branch da bancada."
+help_en = "Template for the bench folder and branch name."
+why = "Pedido mais slug produz nome legível e estável."
+label_key = "setting-bench-worktree-name_template-label"
+help_key = "setting-bench-worktree-name_template-help"
+
+[[setting]]
+key = "bench.worktree.branch_prefix"
+module = "bench"
+group = "benches"
+type = "text"
+default = "forja/"
+hint = "texto"
+label_pt = "Prefixo de branch"
+label_en = "Branch prefix"
+help_pt = "Prefixo aplicado às branches criadas pela Forja."
+help_en = "Prefix applied to branches created by Forja."
+why = "O prefixo separa trabalho de agente do trabalho manual."
+label_key = "setting-bench-worktree-branch_prefix-label"
+help_key = "setting-bench-worktree-branch_prefix-help"
+
+[[setting]]
+key = "bench.worktree.base_branch"
+module = "bench"
+group = "benches"
+type = "choice"
+default = "auto"
+options = ["auto", "current", "main", "master"]
+label_pt = "Branch base"
+label_en = "Base branch"
+help_pt = "Branch de onde uma nova bancada nasce."
+help_en = "Branch a new bench starts from."
+why = "Auto usa a branch padrão do remoto e reduz divergência."
+label_key = "setting-bench-worktree-base_branch-label"
+help_key = "setting-bench-worktree-base_branch-help"
+
+[[setting]]
+key = "bench.worktree.fetch_before"
+module = "bench"
+group = "benches"
+type = "toggle"
+default = true
+label_pt = "Atualizar antes de criar"
+label_en = "Fetch before creating"
+help_pt = "Faz fetch da branch base antes de criar a bancada."
+help_en = "Fetches the base branch before creating the bench."
+why = "A bancada nasce do estado mais recente sem passo manual."
+label_key = "setting-bench-worktree-fetch_before-label"
+help_key = "setting-bench-worktree-fetch_before-help"
+
+[[setting]]
+key = "bench.worktree.auto_prune_days"
+module = "bench"
+group = "benches"
+type = "number"
+default = 0
+min = 0
+max = 90
+label_pt = "Limpar bancadas antigas (dias)"
+label_en = "Prune old benches (days)"
+help_pt = "Remove bancadas guardadas após esse prazo; 0 desliga."
+help_en = "Removes archived benches after this period; 0 disables."
+why = "0 preserva trabalho guardado; a limpeza automática é escolha explícita."
+label_key = "setting-bench-worktree-auto_prune_days-label"
+help_key = "setting-bench-worktree-auto_prune_days-help"
+
+[[setting]]
+key = "bench.layout.tabs"
+module = "bench"
+group = "benches"
+type = "list"
+default = ["terminal", "helper"]
+item = "id de aba"
+label_pt = "Abas iniciais"
+label_en = "Initial tabs"
+help_pt = "Abas abertas automaticamente ao criar uma bancada."
+help_en = "Tabs opened automatically when creating a bench."
+why = "Terminal e ajudante são o par mínimo do fluxo de forja."
+label_key = "setting-bench-layout-tabs-label"
+help_key = "setting-bench-layout-tabs-help"
+
+[[setting]]
+key = "bench.layout.restore"
+module = "bench"
+group = "benches"
+type = "toggle"
+default = true
+label_pt = "Restaurar abas"
+label_en = "Restore tabs"
+help_pt = "Reabre as abas da última visita a cada bancada."
+help_en = "Reopens each bench's tabs from the last visit."
+why = "Voltar ao contexto é mais útil que começar do zero."
+label_key = "setting-bench-layout-restore-label"
+help_key = "setting-bench-layout-restore-help"
+
+[[setting]]
+key = "bench.setup.policy"
+module = "bench"
+group = "benches"
+type = "choice"
+default = "ask"
+options = ["ask", "always", "never"]
+label_pt = "Rodar preparo do forja.toml"
+label_en = "Run forja.toml setup"
+help_pt = "Executa o script de preparo do forja.toml ao criar a bancada."
+help_en = "Runs the forja.toml setup script when creating a bench."
+why = "Pedir mantém o repositório no controle do que roda."
+label_key = "setting-bench-setup-policy-label"
+help_key = "setting-bench-setup-policy-help"
+
+[[setting]]
+key = "bench.setup.timeout_s"
+module = "bench"
+group = "benches"
+type = "number"
+default = 300
+min = 30
+max = 1800
+label_pt = "Limite do preparo (s)"
+label_en = "Setup timeout (s)"
+help_pt = "Tempo máximo do script de preparo."
+help_en = "Maximum setup script time."
+why = "5 min cobre instaladores comuns sem travar a criação."
+label_key = "setting-bench-setup-timeout_s-label"
+help_key = "setting-bench-setup-timeout_s-help"
+
+[[setting]]
+key = "bench.teardown.policy"
+module = "bench"
+group = "benches"
+type = "choice"
+default = "ask"
+options = ["ask", "always", "never"]
+label_pt = "Rodar desmonte"
+label_en = "Run teardown"
+help_pt = "Executa o script de desmonte ao guardar a bancada."
+help_en = "Runs the teardown script when archiving the bench."
+why = "O desmonte pode apagar dados; confirmação é a regra."
+label_key = "setting-bench-teardown-policy-label"
+help_key = "setting-bench-teardown-policy-help"
+
+[[setting]]
+key = "bench.teardown.branch"
+module = "bench"
+group = "benches"
+type = "choice"
+default = "ask"
+options = ["ask", "keep", "delete"]
+label_pt = "Branch ao guardar"
+label_en = "Branch on archive"
+help_pt = "Mantém, apaga ou pergunta o destino da branch ao guardar."
+help_en = "Keeps, deletes or asks about the branch when archiving."
+why = "Perguntar evita perder commits que não foram enviados."
+label_key = "setting-bench-teardown-branch-label"
+help_key = "setting-bench-teardown-branch-help"
+
+[[setting]]
+key = "bench.close.confirm_dirty"
+module = "bench"
+group = "benches"
+type = "toggle"
+default = true
+label_pt = "Confirmar com mudanças"
+label_en = "Confirm with changes"
+help_pt = "Pede confirmação ao fechar bancada com mudanças não salvas."
+help_en = "Asks before closing a bench with uncommitted changes."
+why = "Fechar não pode descartar trabalho sem aviso."
+label_key = "setting-bench-close-confirm_dirty-label"
+help_key = "setting-bench-close-confirm_dirty-help"
+
+[[setting]]
+key = "bench.close.stop_helpers"
+module = "bench"
+group = "benches"
+type = "toggle"
+default = true
+label_pt = "Parar ajudantes ao fechar"
+label_en = "Stop helpers on close"
+help_pt = "Encerra os ajudantes da bancada ao fechá-la."
+help_en = "Stops the bench's helpers when closing it."
+why = "Ajudante órfão consome recurso e escreve sem supervisão."
+label_key = "setting-bench-close-stop_helpers-label"
+help_key = "setting-bench-close-stop_helpers-help"
+
+[[setting]]
+key = "board.cards.show_branch"
+module = "board"
+group = "benches"
+type = "toggle"
+default = true
+label_pt = "Mostrar branch no cartão"
+label_en = "Show branch on card"
+help_pt = "Mostra a branch no cartão da bancada."
+help_en = "Shows the branch on the bench card."
+why = "Branch é a identidade técnica da bancada."
+label_key = "setting-board-cards-show_branch-label"
+help_key = "setting-board-cards-show_branch-help"
+
+[[setting]]
+key = "board.cards.show_helper"
+module = "board"
+group = "benches"
+type = "toggle"
+default = true
+label_pt = "Mostrar ajudante no cartão"
+label_en = "Show helper on card"
+help_pt = "Mostra o estado do ajudante no cartão."
+help_en = "Shows helper status on the card."
+why = "O cartão responde quem está trabalhando sem abrir a bancada."
+label_key = "setting-board-cards-show_helper-label"
+help_key = "setting-board-cards-show_helper-help"
+
+[[setting]]
+key = "board.cards.show_request"
+module = "board"
+group = "benches"
+type = "toggle"
+default = true
+label_pt = "Mostrar pedido no cartão"
+label_en = "Show request on card"
+help_pt = "Mostra o número ou título do pedido no cartão."
+help_en = "Shows the request number or title on the card."
+why = "Liga o trabalho ao pedido de origem."
+label_key = "setting-board-cards-show_request-label"
+help_key = "setting-board-cards-show_request-help"
+
+[[setting]]
+key = "board.cards.compact"
+module = "board"
+group = "benches"
+type = "toggle"
+default = false
+label_pt = "Cartões compactos"
+label_en = "Compact cards"
+help_pt = "Reduz o cartão a uma linha."
+help_en = "Shrinks cards to a single line."
+why = "O cartão normal mostra contexto; compacto serve a quadros cheios."
+label_key = "setting-board-cards-compact-label"
+help_key = "setting-board-cards-compact-help"
+
+[[setting]]
+key = "board.refresh.interval_s"
+module = "board"
+group = "benches"
+type = "number"
+default = 15
+min = 0
+max = 120
+label_pt = "Atualização do quadro (s)"
+label_en = "Board refresh (s)"
+help_pt = "Intervalo de atualização automática do quadro; 0 desliga."
+help_en = "Automatic board refresh interval; 0 disables."
+why = "15 s mantém o quadro vivo sem consultar git o tempo todo."
+label_key = "setting-board-refresh-interval_s-label"
+help_key = "setting-board-refresh-interval_s-help"
+
+[[setting]]
+key = "bench.stage.creation_default"
+module = "bench"
+group = "benches"
+type = "choice"
+default = "draft"
+options = ["draft", "forging", "review", "ready"]
+label_pt = "Etapa inicial"
+label_en = "Initial stage"
+help_pt = "Etapa de uma bancada recém-criada."
+help_en = "Stage of a newly created bench."
+why = "Toda bancada nasce em rascunho, antes de qualquer agente."
+label_key = "setting-bench-stage-creation-default-label"
+help_key = "setting-bench-stage-creation-default-help"
+
+[[setting]]
+key = "bench.stage.wip_limit"
+module = "bench"
+group = "benches"
+type = "number"
+default = 0
+min = 0
+max = 50
+label_pt = "Limite de bancadas em forjando"
+label_en = "WIP limit in forging"
+help_pt = "Avisa quando o número de bancadas em forjando passa do limite; 0 desliga."
+help_en = "Warns when the number of benches in forging exceeds the limit; 0 disables."
+why = "Limite é aviso, não bloqueio; 0 respeita quem trabalha em paralelo."
+label_key = "setting-bench-stage-limit-wip-label"
+help_key = "setting-bench-stage-limit-wip-help"
+
+[[setting]]
+key = "bench.stage.sync_request"
+module = "bench"
+group = "benches"
+type = "toggle"
+default = true
+label_pt = "Sincronizar com pedidos"
+label_en = "Sync with requests"
+help_pt = "Reflete a etapa da bancada no pedido quando existe um balcão."
+help_en = "Mirrors the bench stage to the request when a counter exists."
+why = "Quadro e pedido não devem contar histórias diferentes."
+label_key = "setting-bench-stage-sync-request-label"
+help_key = "setting-bench-stage-sync-request-help"
+
+[[setting]]
+key = "bench.stage.pr_open"
+module = "bench"
+group = "benches"
+type = "choice"
+default = "always"
+options = ["always", "ask", "never"]
+label_pt = "Mover para revisão ao abrir PR"
+label_en = "Move to review on PR open"
+help_pt = "Define se a bancada vai para revisão quando um PR é aberto."
+help_en = "Defines whether the bench moves to review when a PR opens."
+why = "O fluxo do produto já trata PR aberto como revisão; automático evita esquecimento."
+label_key = "setting-bench-stage-pr-open-label"
+help_key = "setting-bench-stage-pr-open-help"
+
+[[setting]]
+key = "bench.stage.pr_merge"
+module = "bench"
+group = "benches"
+type = "choice"
+default = "always"
+options = ["always", "ask", "never"]
+label_pt = "Mover para pronto ao mesclar PR"
+label_en = "Move to ready on PR merge"
+help_pt = "Define se a bancada vai para pronto quando o PR é mesclado."
+help_en = "Defines whether the bench moves to ready when the PR is merged."
+why = "Merge é a entrega objetiva; a etapa deve refletir isso."
+label_key = "setting-bench-stage-pr-merge-label"
+help_key = "setting-bench-stage-pr-merge-help"
+
+[[setting]]
+key = "bench.stage.archive_on_ready"
+module = "bench"
+group = "benches"
+type = "toggle"
+default = false
+label_pt = "Guardar ao entrar em pronto"
+label_en = "Archive on ready"
+help_pt = "Guarda a bancada automaticamente ao entrar na etapa pronto."
+help_en = "Archives the bench automatically when it reaches ready."
+why = "Pronto ainda pode precisar de ajustes de revisão."
+label_key = "setting-bench-stage-archive-on_ready-label"
+help_key = "setting-bench-stage-archive-on_ready-help"
+
+[[setting]]
+key = "git.identity.name"
+module = "git"
+group = "benches"
+type = "text"
+default = ""
+hint = "nome"
+label_pt = "Nome do autor"
+label_en = "Author name"
+help_pt = "Nome de autor usado em commits quando o git não tem um configurado."
+help_en = "Author name used for commits when git has none configured."
+why = "Vazio usa o git config; preencher só quando o repositório não define."
+label_key = "setting-git-identity-name-label"
+help_key = "setting-git-identity-name-help"
+
+[[setting]]
+key = "git.identity.email"
+module = "git"
+group = "benches"
+type = "text"
+default = ""
+hint = "email"
+label_pt = "E-mail do autor"
+label_en = "Author email"
+help_pt = "E-mail de autor usado em commits quando o git não tem um configurado."
+help_en = "Author email used for commits when git has none configured."
+why = "Mesma regra do nome: o git config manda."
+label_key = "setting-git-identity-email-label"
+help_key = "setting-git-identity-email-help"
+
+[[setting]]
+key = "git.commit.sign"
+module = "git"
+group = "benches"
+type = "toggle"
+default = false
+label_pt = "Assinar commits"
+label_en = "Sign commits"
+help_pt = "Assina commits com a chave GPG configurada."
+help_en = "Signs commits with the configured GPG key."
+why = "Assinatura exige chave e senha; opt-in evita bloquear quem não usa."
+label_key = "setting-git-commit-sign-label"
+help_key = "setting-git-commit-sign-help"
+
+[[setting]]
+key = "git.commit.gpg_key"
+module = "git"
+group = "benches"
+type = "text"
+default = ""
+hint = "id da chave"
+label_pt = "Chave GPG"
+label_en = "GPG key"
+help_pt = "Chave GPG usada para assinar commits."
+help_en = "GPG key used to sign commits."
+why = "Vazio usa a chave padrão do git."
+label_key = "setting-git-commit-gpg_key-label"
+help_key = "setting-git-commit-gpg_key-help"
+
+[[setting]]
+key = "git.commit.sign_off"
+module = "git"
+group = "benches"
+type = "toggle"
+default = false
+label_pt = "Assinar como autor (sign-off)"
+label_en = "Sign off commits"
+help_pt = "Acrescenta Signed-off-by ao commit."
+help_en = "Adds Signed-off-by to the commit."
+why = "Só repositórios que exigem DCO precisam."
+label_key = "setting-git-commit-sign_off-label"
+help_key = "setting-git-commit-sign_off-help"
+
+[[setting]]
+key = "git.sync.fetch_interval_min"
+module = "git"
+group = "benches"
+type = "number"
+default = 10
+min = 0
+max = 60
+label_pt = "Buscar do remoto (min)"
+label_en = "Fetch interval (min)"
+help_pt = "Intervalo de fetch em segundo plano; 0 desliga."
+help_en = "Background fetch interval; 0 disables."
+why = "10 min mantém o status de sincronização honesto."
+label_key = "setting-git-sync-fetch_interval_min-label"
+help_key = "setting-git-sync-fetch_interval_min-help"
+
+[[setting]]
+key = "git.sync.auto_pull"
+module = "git"
+group = "benches"
+type = "choice"
+default = "never"
+options = ["never", "clean_only", "always"]
+label_pt = "Atualizar automaticamente"
+label_en = "Auto pull"
+help_pt = "Faz pull automaticamente quando a bancada está limpa."
+help_en = "Pulls automatically when the bench is clean."
+why = "Pull automático pode conflitar com agente; o padrão é não puxar."
+label_key = "setting-git-sync-auto_pull-label"
+help_key = "setting-git-sync-auto_pull-help"
+
+[[setting]]
+key = "git.push.auto_set_upstream"
+module = "git"
+group = "benches"
+type = "toggle"
+default = true
+label_pt = "Configurar upstream ao enviar"
+label_en = "Set upstream on push"
+help_pt = "Configura a branch remota no primeiro push."
+help_en = "Sets the remote branch on the first push."
+why = "Evita o primeiro push falhar por falta de upstream."
+label_key = "setting-git-push-auto_set_upstream-label"
+help_key = "setting-git-push-auto_set_upstream-help"
+
+[[setting]]
+key = "git.protected.branches"
+module = "git"
+group = "benches"
+type = "list"
+default = ["main", "master"]
+item = "nome de branch"
+label_pt = "Branches protegidas"
+label_en = "Protected branches"
+help_pt = "Branches que a Forja não altera diretamente."
+help_en = "Branches that Forja never changes directly."
+why = "main e master são o mínimo para não escrever na linha principal."
+label_key = "setting-git-protected-branches-label"
+help_key = "setting-git-protected-branches-help"
+
+[[setting]]
+key = "git.status.interval_s"
+module = "git"
+group = "benches"
+type = "number"
+default = 5
+min = 1
+max = 60
+label_pt = "Atualização do status (s)"
+label_en = "Status refresh (s)"
+help_pt = "Intervalo de leitura do status do repositório."
+help_en = "Repository status read interval."
+why = "5 s mantém a barra de status útil sem varrer o disco demais."
+label_key = "setting-git-status-interval_s-label"
+help_key = "setting-git-status-interval_s-help"
+
+[[setting]]
+key = "archive.sessions.index"
+module = "archive"
+group = "benches"
+type = "toggle"
+default = true
+label_pt = "Indexar sessões no Acervo"
+label_en = "Index sessions in Archive"
+help_pt = "Guarda sessões de ajudantes para busca no Acervo."
+help_en = "Stores helper sessions for search in the Archive."
+why = "O Acervo é a memória do trabalho; indexar é o padrão."
+label_key = "setting-archive-sessions-index-label"
+help_key = "setting-archive-sessions-index-help"
+
+[[setting]]
+key = "archive.sessions.retention_days"
+module = "archive"
+group = "benches"
+type = "number"
+default = 365
+min = 0
+max = 3650
+label_pt = "Retenção de sessões (dias)"
+label_en = "Session retention (days)"
+help_pt = "Apaga sessões indexadas após esse prazo; 0 mantém para sempre."
+help_en = "Deletes indexed sessions after this period; 0 keeps them forever."
+why = "Um ano cobre arqueologia de projeto sem crescer para sempre."
+label_key = "setting-archive-sessions-retention_days-label"
+help_key = "setting-archive-sessions-retention_days-help"
+
+[[setting]]
+key = "archive.sessions.max_gb"
+module = "archive"
+group = "benches"
+type = "number"
+default = 10
+min = 1
+max = 50
+label_pt = "Tamanho máximo do Acervo (GB)"
+label_en = "Archive size limit (GB)"
+help_pt = "Tamanho máximo do índice de sessões."
+help_en = "Maximum size of the session index."
+why = "10 GB é folgado para texto e evita encher o disco."
+label_key = "setting-archive-sessions-max_gb-label"
+help_key = "setting-archive-sessions-max_gb-help"
+
+[[setting]]
+key = "archive.transcripts.keep"
+module = "archive"
+group = "benches"
+type = "toggle"
+default = true
+label_pt = "Guardar transcrições"
+label_en = "Keep transcripts"
+help_pt = "Mantém o texto completo das sessões indexadas."
+help_en = "Keeps the full text of indexed sessions."
+why = "Sem transcrição não há busca; desligar só para quem exporta por fora."
+label_key = "setting-archive-transcripts-keep-label"
+help_key = "setting-archive-transcripts-keep-help"
+
+[[setting]]
+key = "terminal.shell.default"
+module = "terminal"
+group = "terminal"
+type = "choice"
+default = "auto"
+options = ["auto", "pwsh", "powershell", "cmd", "custom"]
+label_pt = "Shell padrão"
+label_en = "Default shell"
+help_pt = "Shell aberto em novos terminais."
+help_en = "Shell opened in new terminals."
+why = "Auto escolhe pwsh quando instalado e cai para powershell."
+label_key = "setting-terminal-shell-default-label"
+help_key = "setting-terminal-shell-default-help"
+
+[[setting]]
+key = "terminal.shell.path"
+module = "terminal"
+group = "terminal"
+type = "path"
+default = ""
+hint = "executável"
+label_pt = "Caminho do shell"
+label_en = "Shell path"
+help_pt = "Executável do shell quando a opção é personalizada."
+help_en = "Shell executable when the custom option is selected."
+why = "Só vale no modo personalizado; vazio usa a detecção."
+label_key = "setting-terminal-shell-path-label"
+help_key = "setting-terminal-shell-path-help"
+
+[[setting]]
+key = "terminal.shell.start_dir"
+module = "terminal"
+group = "terminal"
+type = "choice"
+default = "bench"
+options = ["bench", "project", "home"]
+label_pt = "Pasta inicial"
+label_en = "Start folder"
+help_pt = "Pasta em que novos terminais abrem."
+help_en = "Folder where new terminals start."
+why = "A raiz da bancada é o contexto do trabalho."
+label_key = "setting-terminal-shell-start_dir-label"
+help_key = "setting-terminal-shell-start_dir-help"
+
+[[setting]]
+key = "terminal.shell.env"
+module = "terminal"
+group = "terminal"
+type = "list"
+default = []
+item = "NOME=valor"
+label_pt = "Variáveis de ambiente"
+label_en = "Environment variables"
+help_pt = "Variáveis de ambiente extras para processos do terminal."
+help_en = "Extra environment variables for terminal processes."
+why = "Lista explícita é mais auditável que herdar tudo."
+label_key = "setting-terminal-shell-env-label"
+help_key = "setting-terminal-shell-env-help"
+
+[[setting]]
+key = "terminal.scroll.history_lines"
+module = "terminal"
+group = "terminal"
+type = "number"
+default = 10000
+min = 1000
+max = 200000
+label_pt = "Histórico de rolagem"
+label_en = "Scrollback"
+help_pt = "Linhas de histórico guardadas por terminal."
+help_en = "History lines kept per terminal."
+why = "10 mil linhas cobrem um build longo sem pesar."
+label_key = "setting-terminal-scroll-history_lines-label"
+help_key = "setting-terminal-scroll-history_lines-help"
+
+[[setting]]
+key = "terminal.scroll.wheel_lines"
+module = "terminal"
+group = "terminal"
+type = "number"
+default = 3
+min = 1
+max = 10
+label_pt = "Linhas por rolagem"
+label_en = "Lines per wheel notch"
+help_pt = "Linhas roladas por entalhe da roda do mouse."
+help_en = "Lines scrolled per mouse wheel notch."
+why = "Três linhas é o passo confortável em fonte de 13 px."
+label_key = "setting-terminal-scroll-wheel_lines-label"
+help_key = "setting-terminal-scroll-wheel_lines-help"
+
+[[setting]]
+key = "terminal.scroll.follow_output"
+module = "terminal"
+group = "terminal"
+type = "toggle"
+default = true
+label_pt = "Acompanhar saída"
+label_en = "Follow output"
+help_pt = "Mantém a visão no fim quando chega saída nova."
+help_en = "Keeps the view at the bottom when new output arrives."
+why = "Acompanhar é o esperado num terminal de build."
+label_key = "setting-terminal-scroll-follow_output-label"
+help_key = "setting-terminal-scroll-follow_output-help"
+
+[[setting]]
+key = "terminal.cursor.style"
+module = "terminal"
+group = "terminal"
+type = "choice"
+default = "block"
+options = ["block", "bar", "underline"]
+label_pt = "Estilo do cursor"
+label_en = "Cursor style"
+help_pt = "Forma do cursor do terminal."
+help_en = "Terminal cursor shape."
+why = "Bloco é o padrão clássico e o mais visível."
+label_key = "setting-terminal-cursor-style-label"
+help_key = "setting-terminal-cursor-style-help"
+
+[[setting]]
+key = "terminal.font.family"
+module = "terminal"
+group = "terminal"
+type = "choice"
+default = "inherit"
+options = ["inherit", "cascadia_code", "cascadia_mono", "consolas"]
+label_pt = "Fonte do terminal"
+label_en = "Terminal font"
+help_pt = "Fonte usada no terminal."
+help_en = "Font used in the terminal."
+why = "Herdar mantém o terminal igual ao editor."
+label_key = "setting-terminal-font-family-label"
+help_key = "setting-terminal-font-family-help"
+
+[[setting]]
+key = "terminal.font.size"
+module = "terminal"
+group = "terminal"
+type = "number"
+default = 13
+min = 8
+max = 32
+label_pt = "Tamanho da fonte"
+label_en = "Font size"
+help_pt = "Tamanho da fonte do terminal."
+help_en = "Terminal font size."
+why = "13 px é o mesmo do código para não saltar entre abas."
+label_key = "setting-terminal-font-size-label"
+help_key = "setting-terminal-font-size-help"
+
+[[setting]]
+key = "terminal.theme.name"
+module = "terminal"
+group = "terminal"
+type = "choice"
+default = "brasa_escuro"
+options = ["brasa_escuro", "brasa_claro", "carvao", "cinza_quente", "aco"]
+options_from = "themes"
+label_pt = "Tema do terminal"
+label_en = "Terminal theme"
+help_pt = "Paleta de cores do terminal quando ele não segue o tema da interface."
+help_en = "Terminal color palette when it does not follow the interface theme."
+why = "Brasa Escuro liga o terminal à identidade do app."
+label_key = "setting-terminal-theme-name-label"
+help_key = "setting-terminal-theme-name-help"
+
+[[setting]]
+key = "terminal.theme.follow_app"
+module = "terminal"
+group = "terminal"
+type = "toggle"
+default = true
+label_pt = "Seguir o tema do app"
+label_en = "Follow app theme"
+help_pt = "Troca a paleta do terminal junto com o tema da interface; desligue para fixar a paleta acima."
+help_en = "Switches the terminal palette with the interface theme; turn off to lock the palette above."
+why = "Um tema só evita interface clara com terminal escuro."
+label_key = "setting-terminal-theme-follow_app-label"
+help_key = "setting-terminal-theme-follow_app-help"
+
+[[setting]]
+key = "terminal.color.opacity"
+module = "terminal"
+group = "terminal"
+type = "number"
+default = 1.0
+min = 0.6
+max = 1.0
+step = 0.05
+label_pt = "Opacidade do fundo"
+label_en = "Background opacity"
+help_pt = "Transparência do fundo do terminal."
+help_en = "Terminal background transparency."
+why = "Opaco é o padrão; transparência é gosto e custa legibilidade."
+label_key = "setting-terminal-color-opacity-label"
+help_key = "setting-terminal-color-opacity-help"
+
+[[setting]]
+key = "terminal.bell.mode"
+module = "terminal"
+group = "terminal"
+type = "choice"
+default = "visual"
+options = ["none", "visual", "audible", "both"]
+label_pt = "Aviso sonoro"
+label_en = "Bell"
+help_pt = "Como o terminal reage ao caractere de campainha."
+help_en = "How the terminal reacts to the bell character."
+why = "Visual avisa sem som em ambiente compartilhado."
+label_key = "setting-terminal-bell-mode-label"
+help_key = "setting-terminal-bell-mode-help"
+
+[[setting]]
+key = "terminal.copy.on_select"
+module = "terminal"
+group = "terminal"
+type = "toggle"
+default = false
+label_pt = "Copiar ao selecionar"
+label_en = "Copy on select"
+help_pt = "Copia automaticamente o texto selecionado."
+help_en = "Automatically copies selected text."
+why = "Cópia automática surpreende quem seleciona só para ler."
+label_key = "setting-terminal-copy-on_select-label"
+help_key = "setting-terminal-copy-on_select-help"
+
+[[setting]]
+key = "terminal.copy.trim"
+module = "terminal"
+group = "terminal"
+type = "toggle"
+default = true
+label_pt = "Remover espaços ao copiar"
+label_en = "Trim spaces on copy"
+help_pt = "Remove espaços à direita ao copiar do terminal."
+help_en = "Trims trailing spaces when copying from the terminal."
+why = "Espaços invisíveis quebram comandos colados."
+label_key = "setting-terminal-copy-trim-label"
+help_key = "setting-terminal-copy-trim-help"
+
+[[setting]]
+key = "terminal.paste.warn_multiline"
+module = "terminal"
+group = "terminal"
+type = "toggle"
+default = true
+label_pt = "Avisar ao colar várias linhas"
+label_en = "Warn on multiline paste"
+help_pt = "Pede confirmação antes de colar várias linhas."
+help_en = "Asks for confirmation before pasting multiple lines."
+why = "Colar várias linhas pode executar comando sem revisão."
+label_key = "setting-terminal-paste-warn_multiline-label"
+help_key = "setting-terminal-paste-warn_multiline-help"
+
+[[setting]]
+key = "terminal.paste.bracketed"
+module = "terminal"
+group = "terminal"
+type = "toggle"
+default = true
+label_pt = "Colagem com colchetes"
+label_en = "Bracketed paste"
+help_pt = "Usa o modo de colagem segura do shell."
+help_en = "Uses the shell's safe paste mode."
+why = "Evita que o shell execute cada linha colada na hora."
+label_key = "setting-terminal-paste-bracketed-label"
+help_key = "setting-terminal-paste-bracketed-help"
+
+[[setting]]
+key = "terminal.links.confirm"
+module = "terminal"
+group = "terminal"
+type = "toggle"
+default = true
+label_pt = "Confirmar abertura de links"
+label_en = "Confirm link opening"
+help_pt = "Pede confirmação antes de abrir um link do terminal."
+help_en = "Asks before opening a terminal link."
+why = "Links em saída de build podem ser hostis."
+label_key = "setting-terminal-links-confirm-label"
+help_key = "setting-terminal-links-confirm-help"
+
+[[setting]]
+key = "terminal.links.open_with"
+module = "terminal"
+group = "terminal"
+type = "choice"
+default = "system"
+options = ["system", "app"]
+label_pt = "Abrir links com"
+label_en = "Open links with"
+help_pt = "Abre links no navegador do sistema ou numa aba interna."
+help_en = "Opens links in the system browser or an internal tab."
+why = "O navegador do sistema tem as sessões e extensões do usuário."
+label_key = "setting-terminal-links-open_with-label"
+help_key = "setting-terminal-links-open_with-help"
+
+[[setting]]
+key = "terminal.shell.marks"
+module = "terminal"
+group = "terminal"
+type = "toggle"
+default = true
+label_pt = "Marcação de prompt"
+label_en = "Shell marks"
+help_pt = "Marca o início e o fim de cada comando no terminal."
+help_en = "Marks the start and end of each command in the terminal."
+why = "Permite pular entre comandos e copiar a saída certa."
+label_key = "setting-terminal-shell-marks-label"
+help_key = "setting-terminal-shell-marks-help"
+
+[[setting]]
+key = "terminal.close.confirm_running"
+module = "terminal"
+group = "terminal"
+type = "toggle"
+default = true
+label_pt = "Confirmar ao fechar processo"
+label_en = "Confirm closing a running process"
+help_pt = "Pede confirmação ao fechar terminal com processo ativo."
+help_en = "Asks before closing a terminal with an active process."
+why = "Fechar aba não deve matar build sem aviso."
+label_key = "setting-terminal-close-confirm_running-label"
+help_key = "setting-terminal-close-confirm_running-help"
+
+[[setting]]
+key = "terminal.gpu.mode"
+module = "terminal"
+group = "terminal"
+type = "choice"
+default = "auto"
+options = ["auto", "on", "off"]
+label_pt = "Renderização por GPU"
+label_en = "GPU rendering"
+help_pt = "Usa a GPU para desenhar o terminal."
+help_en = "Uses the GPU to draw the terminal."
+why = "Auto liga quando o driver é confiável e desliga em caso de artefato."
+label_key = "setting-terminal-gpu-mode-label"
+help_key = "setting-terminal-gpu-mode-help"
+
+[[setting]]
+key = "terminal.osc52.enabled"
+module = "terminal"
+group = "terminal"
+type = "toggle"
+default = false
+label_pt = "Área de transferência OSC 52"
+label_en = "OSC 52 clipboard"
+help_pt = "Permite que programas no terminal escrevam na área de transferência via OSC 52."
+help_en = "Lets terminal programs write to the clipboard through OSC 52."
+why = "Desligado impede que um processo remoto copie dados sem você ver."
+label_key = "setting-terminal-osc52-enabled-label"
+help_key = "setting-terminal-osc52-enabled-help"
+
+[[setting]]
+key = "terminal.recipes.press_enter"
+module = "terminal"
+group = "recipes"
+type = "toggle"
+default = true
+label_pt = "Enviar Enter ao rodar receita"
+label_en = "Press Enter when running a recipe"
+help_pt = "Envia Enter automaticamente depois de colar a receita."
+help_en = "Sends Enter automatically after pasting the recipe."
+why = "Receita é atalho de comando; o Enter evita um passo."
+label_key = "setting-terminal-recipes-press_enter-label"
+help_key = "setting-terminal-recipes-press_enter-help"
+
+[[setting]]
+key = "terminal.recipes.confirm"
+module = "terminal"
+group = "recipes"
+type = "toggle"
+default = false
+label_pt = "Confirmar antes de rodar"
+label_en = "Confirm before running"
+help_pt = "Pede confirmação antes de executar uma receita."
+help_en = "Asks before running a recipe."
+why = "Receitas salvas são confiáveis; confirmação fica para quem quer."
+label_key = "setting-terminal-recipes-confirm-label"
+help_key = "setting-terminal-recipes-confirm-help"
+
+[[setting]]
+key = "terminal.recipes.show_scope"
+module = "terminal"
+group = "recipes"
+type = "choice"
+default = "all"
+options = ["all", "global", "project"]
+label_pt = "Escopo das receitas"
+label_en = "Recipe scope"
+help_pt = "Quais receitas aparecem no seletor."
+help_en = "Which recipes appear in the picker."
+why = "Todas são úteis; o filtro atende quem tem muitas receitas."
+label_key = "setting-terminal-recipes-show_scope-label"
+help_key = "setting-terminal-recipes-show_scope-help"
+
+[[setting]]
+key = "terminal.recipes.shell"
+module = "terminal"
+group = "recipes"
+type = "choice"
+default = "inherit"
+options = ["inherit", "pwsh", "powershell", "cmd"]
+label_pt = "Shell das receitas"
+label_en = "Recipe shell"
+help_pt = "Shell usado para executar receitas de comando."
+help_en = "Shell used to run command recipes."
+why = "Herdar o terminal evita diferença de sintaxe."
+label_key = "setting-terminal-recipes-shell-label"
+help_key = "setting-terminal-recipes-shell-help"
+
+[[setting]]
+key = "editor.font.family"
+module = "editor"
+group = "editor"
+type = "choice"
+default = "inherit"
+options = ["inherit", "cascadia_code", "cascadia_mono", "consolas", "jetbrains_mono"]
+label_pt = "Fonte do editor"
+label_en = "Editor font"
+help_pt = "Fonte usada no editor."
+help_en = "Font used in the editor."
+why = "Herdar mantém o código igual ao terminal."
+label_key = "setting-editor-font-family-label"
+help_key = "setting-editor-font-family-help"
+
+[[setting]]
+key = "editor.font.size"
+module = "editor"
+group = "editor"
+type = "number"
+default = 13
+min = 8
+max = 32
+label_pt = "Tamanho da fonte"
+label_en = "Font size"
+help_pt = "Tamanho da fonte do editor."
+help_en = "Editor font size."
+why = "13 px equilibra densidade e leitura."
+label_key = "setting-editor-font-size-label"
+help_key = "setting-editor-font-size-help"
+
+[[setting]]
+key = "editor.line.height"
+module = "editor"
+group = "editor"
+type = "number"
+default = 1.4
+min = 1.0
+max = 1.8
+step = 0.05
+label_pt = "Altura da linha"
+label_en = "Line height"
+help_pt = "Espaço vertical entre linhas."
+help_en = "Vertical space between lines."
+why = "1,4 separa blocos sem afastar demais."
+label_key = "setting-editor-line-height-label"
+help_key = "setting-editor-line-height-help"
+
+[[setting]]
+key = "editor.gutter.line_numbers"
+module = "editor"
+group = "editor"
+type = "toggle"
+default = true
+label_pt = "Números de linha"
+label_en = "Line numbers"
+help_pt = "Mostra a coluna de números de linha."
+help_en = "Shows the line number gutter."
+why = "Números são referência de revisão e de erro de compilação."
+label_key = "setting-editor-gutter-line_numbers-label"
+help_key = "setting-editor-gutter-line_numbers-help"
+
+[[setting]]
+key = "editor.indent.auto_detect"
+module = "editor"
+group = "editor"
+type = "toggle"
+default = true
+label_pt = "Detectar indentação"
+label_en = "Detect indentation"
+help_pt = "Usa o estilo de indentação que o arquivo já tem."
+help_en = "Uses the indentation style the file already has."
+why = "Detectar evita reformatar arquivo alheio."
+label_key = "setting-editor-indent-auto_detect-label"
+help_key = "setting-editor-indent-auto_detect-help"
+
+[[setting]]
+key = "editor.indent.size"
+module = "editor"
+group = "editor"
+type = "number"
+default = 4
+min = 1
+max = 8
+label_pt = "Tamanho da indentação"
+label_en = "Indent size"
+help_pt = "Espaços por nível quando não há detecção."
+help_en = "Spaces per level when detection finds nothing."
+why = "4 é o padrão de Rust, Go e Java; a detecção cobre o resto."
+label_key = "setting-editor-indent-size-label"
+help_key = "setting-editor-indent-size-help"
+
+[[setting]]
+key = "editor.indent.tabs"
+module = "editor"
+group = "editor"
+type = "choice"
+default = "spaces"
+options = ["spaces", "tabs"]
+label_pt = "Usar tabs"
+label_en = "Use tabs"
+help_pt = "Indenta com espaços ou tabulações."
+help_en = "Indents with spaces or tabs."
+why = "Espaços são previsíveis em diff e revisão."
+label_key = "setting-editor-indent-tabs-label"
+help_key = "setting-editor-indent-tabs-help"
+
+[[setting]]
+key = "editor.wrap.mode"
+module = "editor"
+group = "editor"
+type = "choice"
+default = "off"
+options = ["off", "column", "window"]
+label_pt = "Quebra de linha"
+label_en = "Line wrapping"
+help_pt = "Quebra linhas longas por coluna ou pela largura da janela."
+help_en = "Wraps long lines by column or by window width."
+why = "Desligado preserva a leitura de código; prosa liga por coluna."
+label_key = "setting-editor-wrap-mode-label"
+help_key = "setting-editor-wrap-mode-help"
+
+[[setting]]
+key = "editor.wrap.column"
+module = "editor"
+group = "editor"
+type = "number"
+default = 100
+min = 40
+max = 200
+label_pt = "Coluna de quebra"
+label_en = "Wrap column"
+help_pt = "Coluna usada quando a quebra é por coluna."
+help_en = "Column used when wrapping by column."
+why = "100 colunas cabem em duas telas lado a lado."
+label_key = "setting-editor-wrap-column-label"
+help_key = "setting-editor-wrap-column-help"
+
+[[setting]]
+key = "editor.highlight.current_line"
+module = "editor"
+group = "editor"
+type = "toggle"
+default = true
+label_pt = "Destacar linha atual"
+label_en = "Highlight current line"
+help_pt = "Realça a linha onde está o cursor."
+help_en = "Highlights the line where the cursor is."
+why = "Um realce discreto ancora a leitura."
+label_key = "setting-editor-highlight-current_line-label"
+help_key = "setting-editor-highlight-current_line-help"
+
+[[setting]]
+key = "editor.view.minimap"
+module = "editor"
+group = "editor"
+type = "toggle"
+default = false
+label_pt = "Minimapa"
+label_en = "Minimap"
+help_pt = "Mostra uma miniatura do arquivo na lateral."
+help_en = "Shows a miniature of the file in the margin."
+why = "Desligado por padrão: rouba largura e pouco acrescenta em código."
+label_key = "setting-editor-view-minimap-label"
+help_key = "setting-editor-view-minimap-help"
+
+[[setting]]
+key = "editor.brackets.guides"
+module = "editor"
+group = "editor"
+type = "toggle"
+default = true
+label_pt = "Guias de blocos"
+label_en = "Bracket guides"
+help_pt = "Desenha linhas nos níveis de indentação."
+help_en = "Draws lines at indentation levels."
+why = "Guias ajudam a fechar blocos longos."
+label_key = "setting-editor-brackets-guides-label"
+help_key = "setting-editor-brackets-guides-help"
+
+[[setting]]
+key = "editor.whitespace.show"
+module = "editor"
+group = "editor"
+type = "choice"
+default = "selection"
+options = ["never", "selection", "always"]
+label_pt = "Mostrar espaços"
+label_en = "Show whitespace"
+help_pt = "Exibe espaços e tabulações."
+help_en = "Shows spaces and tabs."
+why = "Só na seleção mostra o invisível sem poluir o código."
+label_key = "setting-editor-whitespace-show-label"
+help_key = "setting-editor-whitespace-show-help"
+
+[[setting]]
+key = "editor.save.auto"
+module = "editor"
+group = "editor"
+type = "choice"
+default = "off"
+options = ["off", "delay", "focus_change"]
+label_pt = "Salvamento automático"
+label_en = "Auto save"
+help_pt = "Salva sozinho após um atraso ou ao trocar de foco."
+help_en = "Saves automatically after a delay or on focus change."
+why = "Desligado mantém controle explícito; agentes salvam pelos próprios meios."
+label_key = "setting-editor-save-auto-label"
+help_key = "setting-editor-save-auto-help"
+
+[[setting]]
+key = "editor.save.delay_ms"
+module = "editor"
+group = "editor"
+type = "number"
+default = 1500
+min = 500
+max = 10000
+label_pt = "Atraso do salvamento (ms)"
+label_en = "Auto save delay (ms)"
+help_pt = "Espera antes do salvamento automático."
+help_en = "Wait before automatic saving."
+why = "1,5 s evita gravar a cada tecla."
+label_key = "setting-editor-save-delay_ms-label"
+help_key = "setting-editor-save-delay_ms-help"
+
+[[setting]]
+key = "editor.save.format"
+module = "editor"
+group = "editor"
+type = "toggle"
+default = false
+label_pt = "Formatar ao salvar"
+label_en = "Format on save"
+help_pt = "Roda o formatador do projeto ao salvar."
+help_en = "Runs the project formatter on save."
+why = "Formatar pode mudar o arquivo inteiro; opt-in."
+label_key = "setting-editor-save-format-label"
+help_key = "setting-editor-save-format-help"
+
+[[setting]]
+key = "editor.save.trim_trailing"
+module = "editor"
+group = "editor"
+type = "toggle"
+default = false
+label_pt = "Remover espaços finais"
+label_en = "Trim trailing whitespace"
+help_pt = "Remove espaços no fim das linhas ao salvar."
+help_en = "Removes trailing spaces on save."
+why = "Pode gerar diff grande em arquivo alheio."
+label_key = "setting-editor-save-trim_trailing-label"
+help_key = "setting-editor-save-trim_trailing-help"
+
+[[setting]]
+key = "editor.save.final_newline"
+module = "editor"
+group = "editor"
+type = "toggle"
+default = true
+label_pt = "Garantir newline final"
+label_en = "Ensure final newline"
+help_pt = "Garante uma quebra de linha no fim do arquivo."
+help_en = "Ensures a newline at the end of the file."
+why = "POSIX e git preferem arquivo terminado em newline."
+label_key = "setting-editor-save-final_newline-label"
+help_key = "setting-editor-save-final_newline-help"
+
+[[setting]]
+key = "editor.files.encoding"
+module = "editor"
+group = "editor"
+type = "choice"
+default = "auto"
+options = ["auto", "utf8", "utf8_bom", "utf16le"]
+label_pt = "Codificação"
+label_en = "Encoding"
+help_pt = "Codificação usada ao abrir e salvar arquivos."
+help_en = "Encoding used when opening and saving files."
+why = "Auto respeita BOM e padrão do sistema."
+label_key = "setting-editor-files-encoding-label"
+help_key = "setting-editor-files-encoding-help"
+
+[[setting]]
+key = "editor.files.eol"
+module = "editor"
+group = "editor"
+type = "choice"
+default = "auto"
+options = ["auto", "lf", "crlf"]
+label_pt = "Fim de linha"
+label_en = "Line endings"
+help_pt = "Mantém ou converte o fim de linha."
+help_en = "Keeps or converts line endings."
+why = "Auto preserva o que o arquivo já usa."
+label_key = "setting-editor-files-eol-label"
+help_key = "setting-editor-files-eol-help"
+
+[[setting]]
+key = "editor.files.large_mb"
+module = "editor"
+group = "editor"
+type = "number"
+default = 10
+min = 1
+max = 100
+label_pt = "Limite de arquivo grande (MB)"
+label_en = "Large file limit (MB)"
+help_pt = "Abre arquivos acima desse tamanho em modo leve."
+help_en = "Opens files above this size in light mode."
+why = "10 MB evita travar a interface com log ou minificado."
+label_key = "setting-editor-files-large_mb-label"
+help_key = "setting-editor-files-large_mb-help"
+
+[[setting]]
+key = "editor.search.regex"
+module = "editor"
+group = "editor"
+type = "toggle"
+default = false
+label_pt = "Usar regex por padrão"
+label_en = "Regex by default"
+help_pt = "Trata o termo de busca como expressão regular."
+help_en = "Treats the search term as a regular expression."
+why = "Busca literal é o caso comum; regex é escolha explícita."
+label_key = "setting-editor-search-regex-label"
+help_key = "setting-editor-search-regex-help"
+
+[[setting]]
+key = "editor.search.case_sensitive"
+module = "editor"
+group = "editor"
+type = "toggle"
+default = false
+label_pt = "Diferenciar maiúsculas"
+label_en = "Case sensitive"
+help_pt = "Diferencia maiúsculas de minúsculas."
+help_en = "Treats upper and lower case as different."
+why = "Sem diferenciação acha mais; o botão Aa fica à mão."
+label_key = "setting-editor-search-case_sensitive-label"
+help_key = "setting-editor-search-case_sensitive-help"
+
+[[setting]]
+key = "editor.search.whole_word"
+module = "editor"
+group = "editor"
+type = "toggle"
+default = false
+label_pt = "Palavra inteira"
+label_en = "Whole word"
+help_pt = "Encontra apenas a palavra completa."
+help_en = "Matches whole words only."
+why = "Ligado evita trocar parte de outra palavra."
+label_key = "setting-editor-search-whole_word-label"
+help_key = "setting-editor-search-whole_word-help"
+
+[[setting]]
+key = "editor.markdown.preview"
+module = "editor"
+group = "editor"
+type = "toggle"
+default = true
+label_pt = "Prévia de Markdown"
+label_en = "Markdown preview"
+help_pt = "Abre a prévia ao editar um arquivo Markdown."
+help_en = "Opens a preview when editing a Markdown file."
+why = "Documento e prévia lado a lado é o fluxo natural."
+label_key = "setting-editor-markdown-preview-label"
+help_key = "setting-editor-markdown-preview-help"
+
+[[setting]]
+key = "diff.view.mode"
+module = "diff"
+group = "editor"
+type = "choice"
+default = "split"
+options = ["split", "unified"]
+label_pt = "Modo de diferenças"
+label_en = "Diff mode"
+help_pt = "Exibe diferenças lado a lado ou em modo unificado."
+help_en = "Shows differences side by side or unified."
+why = "Lado a lado mostra antes e depois sem rolar."
+label_key = "setting-diff-view-mode-label"
+help_key = "setting-diff-view-mode-help"
+
+[[setting]]
+key = "diff.context.lines"
+module = "diff"
+group = "editor"
+type = "number"
+default = 3
+min = 0
+max = 20
+label_pt = "Linhas de contexto"
+label_en = "Context lines"
+help_pt = "Linhas de contexto ao redor de cada mudança."
+help_en = "Context lines around each change."
+why = "3 linhas bastam para localizar o trecho."
+label_key = "setting-diff-context-lines-label"
+help_key = "setting-diff-context-lines-help"
+
+[[setting]]
+key = "diff.whitespace.ignore"
+module = "diff"
+group = "editor"
+type = "toggle"
+default = false
+label_pt = "Ignorar espaço"
+label_en = "Ignore whitespace"
+help_pt = "Esconde diferenças que só mudam espaço em branco."
+help_en = "Hides differences that only change whitespace."
+why = "Mostrar tudo é o padrão de revisão honesta."
+label_key = "setting-diff-whitespace-ignore-label"
+help_key = "setting-diff-whitespace-ignore-help"
+
+[[setting]]
+key = "diff.view.collapse_unchanged"
+module = "diff"
+group = "editor"
+type = "toggle"
+default = true
+label_pt = "Recolher trechos iguais"
+label_en = "Collapse unchanged"
+help_pt = "Recolhe blocos sem nenhuma mudança."
+help_en = "Collapses blocks with no changes."
+why = "Revisão foca no que mudou."
+label_key = "setting-diff-view-collapse_unchanged-label"
+help_key = "setting-diff-view-collapse_unchanged-help"
+
+[[setting]]
+key = "diff.notes.inline"
+module = "diff"
+group = "editor"
+type = "toggle"
+default = true
+label_pt = "Notas na linha"
+label_en = "Inline notes"
+help_pt = "Mostra notas de revisão junto à linha."
+help_en = "Shows review notes next to the line."
+why = "Nota no lugar certo evita perder contexto."
+label_key = "setting-diff-notes-inline-label"
+help_key = "setting-diff-notes-inline-help"
+
+[[setting]]
+key = "diff.notes.send_mode"
+module = "diff"
+group = "editor"
+type = "choice"
+default = "append"
+options = ["append", "replace", "ask"]
+label_pt = "Enviar notas ao ajudante"
+label_en = "Send notes to helper"
+help_pt = "Define como as notas são enviadas ao ajudante."
+help_en = "Defines how notes are sent to the helper."
+why = "Anexar preserva o histórico da conversa."
+label_key = "setting-diff-notes-send_mode-label"
+help_key = "setting-diff-notes-send_mode-help"
+
+[[setting]]
+key = "find.results.limit"
+module = "find"
+group = "editor"
+type = "number"
+default = 200
+min = 50
+max = 1000
+label_pt = "Limite de resultados"
+label_en = "Result limit"
+help_pt = "Máximo de itens na busca de arquivos."
+help_en = "Maximum items in file search."
+why = "200 cobre o caso comum sem montar listas enormes."
+label_key = "setting-find-results-limit-label"
+help_key = "setting-find-results-limit-help"
+
+[[setting]]
+key = "find.search.respect_gitignore"
+module = "find"
+group = "editor"
+type = "toggle"
+default = true
+label_pt = "Respeitar .gitignore"
+label_en = "Respect .gitignore"
+help_pt = "Esconde arquivos ignorados pelo git."
+help_en = "Hides files ignored by git."
+why = "Build e cache não devem poluir a busca."
+label_key = "setting-find-search-respect_gitignore-label"
+help_key = "setting-find-search-respect_gitignore-help"
+
+[[setting]]
+key = "find.search.include_hidden"
+module = "find"
+group = "editor"
+type = "toggle"
+default = false
+label_pt = "Incluir ocultos"
+label_en = "Include hidden"
+help_pt = "Inclui arquivos e pastas ocultos."
+help_en = "Includes hidden files and folders."
+why = "Ocultos são ruído até serem o alvo."
+label_key = "setting-find-search-include_hidden-label"
+help_key = "setting-find-search-include_hidden-help"
+
+[[setting]]
+key = "find.recent.count"
+module = "find"
+group = "editor"
+type = "number"
+default = 20
+min = 5
+max = 50
+label_pt = "Arquivos recentes"
+label_en = "Recent files"
+help_pt = "Arquivos recentes mostrados quando a busca está vazia."
+help_en = "Recent files shown when the search is empty."
+why = "20 é suficiente para retomar sem virar lista."
+label_key = "setting-find-recent-count-label"
+help_key = "setting-find-recent-count-help"
+
+[[setting]]
+key = "find.grep.engine"
+module = "find"
+group = "editor"
+type = "choice"
+default = "auto"
+options = ["auto", "ripgrep", "builtin"]
+label_pt = "Motor de busca"
+label_en = "Search engine"
+help_pt = "Motor usado para buscar no conteúdo dos arquivos."
+help_en = "Engine used to search file contents."
+why = "Auto usa ripgrep quando disponível e cai para o motor interno."
+label_key = "setting-find-grep-engine-label"
+help_key = "setting-find-grep-engine-help"
+
+[[setting]]
+key = "find.grep.context"
+module = "find"
+group = "editor"
+type = "number"
+default = 2
+min = 0
+max = 10
+label_pt = "Contexto da busca (linhas)"
+label_en = "Search context (lines)"
+help_pt = "Linhas de contexto ao redor de cada resultado."
+help_en = "Context lines around each result."
+why = "2 linhas mostram o suficiente para decidir."
+label_key = "setting-find-grep-context-label"
+help_key = "setting-find-grep-context-help"
+
+[[setting]]
+key = "explorer.tree.show_ignored"
+module = "explorer"
+group = "editor"
+type = "toggle"
+default = false
+label_pt = "Mostrar arquivos ignorados"
+label_en = "Show ignored files"
+help_pt = "Lista arquivos que o .gitignore esconde."
+help_en = "Lists files that .gitignore hides."
+why = "Ignorados costumam ser build e cache; mostrar é opt-in."
+label_key = "setting-explorer-tree-show_ignored-label"
+help_key = "setting-explorer-tree-show_ignored-help"
+
+[[setting]]
+key = "explorer.tree.follow_symlinks"
+module = "explorer"
+group = "editor"
+type = "toggle"
+default = false
+label_pt = "Seguir links simbólicos"
+label_en = "Follow symbolic links"
+help_pt = "Lista o destino dos links simbólicos."
+help_en = "Lists the targets of symbolic links."
+why = "Um link pode apontar para fora da bancada; seguir é opt-in."
+label_key = "setting-explorer-tree-follow_symlinks-label"
+help_key = "setting-explorer-tree-follow_symlinks-help"
+
+[[setting]]
+key = "helper.default.profile"
+module = "helper"
+group = "helpers"
+type = "choice"
+default = "auto"
+options = ["auto"]
+options_from = "profiles"
+label_pt = "Perfil padrão"
+label_en = "Default profile"
+help_pt = "Perfil de ajudante usado quando o projeto não escolhe um."
+help_en = "Helper profile used when the project does not choose one."
+why = "Auto usa o primeiro perfil instalado na ordem que decidimos."
+label_key = "setting-helper-default-profile-label"
+help_key = "setting-helper-default-profile-help"
+
+[[setting]]
+key = "helper.default.permissions"
+module = "helper"
+group = "helpers"
+type = "choice"
+default = "ask"
+options = ["ask", "accept_edits", "auto", "total"]
+label_pt = "Permissões padrão"
+label_en = "Default permissions"
+help_pt = "Modo de permissões padrão ao iniciar um ajudante."
+help_en = "Default permission mode when launching a helper."
+why = "Perguntar é o padrão seguro; autonomia é escolha explícita."
+label_key = "setting-helper-default-permissions-label"
+help_key = "setting-helper-default-permissions-help"
+
+[[setting]]
+key = "helper.launch.auto_start"
+module = "helper"
+group = "helpers"
+type = "toggle"
+default = true
+label_pt = "Iniciar ajudante automaticamente"
+label_en = "Auto-start helper"
+help_pt = "Inicia um ajudante ao criar uma bancada a partir de um pedido."
+help_en = "Starts a helper when creating a bench from a request."
+why = "O fluxo do pedido já nasce com um ajudante trabalhando."
+label_key = "setting-helper-launch-auto_start-label"
+help_key = "setting-helper-launch-auto_start-help"
+
+[[setting]]
+key = "helper.launch.initial_context"
+deferred = "Aguardando contrato de contexto do pedido e preparação assíncrona do lançamento."
+module = "helper"
+group = "helpers"
+type = "choice"
+default = "request"
+options = ["request", "bench", "none"]
+label_pt = "Contexto inicial"
+label_en = "Initial context"
+help_pt = "Contexto incluído no prompt inicial do ajudante."
+help_en = "Context included in the helper's initial prompt."
+why = "O pedido é o contrato do trabalho; o resto o ajudante lê no repositório."
+label_key = "setting-helper-launch-initial_context-label"
+help_key = "setting-helper-launch-initial_context-help"
+
+[[setting]]
+key = "helper.launch.include_rules"
+deferred = "Aguardando leitura assíncrona de regras no contrato de lançamento do ajudante."
+module = "helper"
+group = "helpers"
+type = "toggle"
+default = true
+label_pt = "Incluir regras do projeto"
+label_en = "Include project rules"
+help_pt = "Inclui AGENTS.md e regras equivalentes no contexto inicial."
+help_en = "Includes AGENTS.md and equivalent rules in the initial context."
+why = "Regras do projeto devem chegar antes da primeira ação."
+label_key = "setting-helper-launch-include_rules-label"
+help_key = "setting-helper-launch-include_rules-help"
+
+[[setting]]
+key = "helper.launch.mode"
+module = "helper"
+group = "helpers"
+type = "choice"
+default = "tui"
+options = ["tui", "chat"]
+label_pt = "Modo do ajudante"
+label_en = "Helper mode"
+help_pt = "Abre o ajudante no terminal ou no chat da Forja."
+help_en = "Opens the helper in the terminal or in Forja chat."
+why = "A TUI preserva o CLI original e seus atalhos; o chat é opção."
+label_key = "setting-helper-launch-mode-label"
+help_key = "setting-helper-launch-mode-help"
+
+[[setting]]
+key = "helper.launch.ready_timeout_s"
+deferred = "Aguardando sinal de prontidão verificável do terminal e dos perfis de ajudante."
+module = "helper"
+group = "helpers"
+type = "number"
+default = 30
+min = 5
+max = 120
+label_pt = "Tempo para ficar pronto (s)"
+label_en = "Ready timeout (s)"
+help_pt = "Tempo máximo para o ajudante ficar pronto após iniciar."
+help_en = "Maximum time for the helper to become ready after launch."
+why = "30 s cobre CLIs que carregam modelo e ferramentas."
+label_key = "setting-helper-launch-ready_timeout_s-label"
+help_key = "setting-helper-launch-ready_timeout_s-help"
+
+[[setting]]
+key = "helper.monitor.idle_minutes"
+module = "helper"
+group = "helpers"
+type = "number"
+default = 10
+min = 1
+max = 120
+label_pt = "Tempo para considerar parado (min)"
+label_en = "Idle time (min)"
+help_pt = "Tempo sem atividade para marcar o ajudante como parado."
+help_en = "Time without activity before marking the helper idle."
+why = "10 min distingue pensamento longo de sessão parada."
+label_key = "setting-helper-monitor-idle_minutes-label"
+help_key = "setting-helper-monitor-idle_minutes-help"
+
+[[setting]]
+key = "helper.notifications.waiting"
+module = "helper"
+group = "helpers"
+type = "toggle"
+default = true
+label_pt = "Avisar quando precisa de você"
+label_en = "Notify when waiting"
+help_pt = "Notifica quando um ajudante precisa de você."
+help_en = "Notifies when a helper needs you."
+why = "Ajudante que pede aprovação trava o trabalho até você ver."
+label_key = "setting-helper-notifications-waiting-label"
+help_key = "setting-helper-notifications-waiting-help"
+
+[[setting]]
+key = "helper.notifications.done"
+module = "helper"
+group = "helpers"
+type = "toggle"
+default = true
+label_pt = "Avisar quando termina"
+label_en = "Notify when done"
+help_pt = "Notifica quando um ajudante termina a tarefa."
+help_en = "Notifies when a helper finishes the task."
+why = "Entrega concluída é o evento que libera a revisão."
+label_key = "setting-helper-notifications-done-label"
+help_key = "setting-helper-notifications-done-help"
+
+[[setting]]
+key = "helper.notifications.error"
+module = "helper"
+group = "helpers"
+type = "toggle"
+default = true
+label_pt = "Avisar quando falha"
+label_en = "Notify on error"
+help_pt = "Notifica quando um ajudante falha ou perde a conexão."
+help_en = "Notifies when a helper fails or loses connection."
+why = "Falha silenciosa é o pior estado de um agente."
+label_key = "setting-helper-notifications-error-label"
+help_key = "setting-helper-notifications-error-help"
+
+[[setting]]
+key = "helper.sessions.resume_policy"
+deferred = "Aguardando ciclo de vida persistente de sessões e retomada automática."
+module = "helper"
+group = "helpers"
+type = "choice"
+default = "ask"
+options = ["ask", "auto", "never"]
+label_pt = "Retomar sessões"
+label_en = "Resume sessions"
+help_pt = "Define se sessões anteriores são retomadas automaticamente."
+help_en = "Defines whether previous sessions are resumed automatically."
+why = "Retomar sem perguntar pode continuar uma sessão errada."
+label_key = "setting-helper-sessions-resume_policy-label"
+help_key = "setting-helper-sessions-resume_policy-help"
+
+[[setting]]
+key = "helper.sessions.keep_transcripts"
+module = "helper"
+group = "helpers"
+type = "toggle"
+default = true
+label_pt = "Guardar transcrições"
+label_en = "Keep transcripts"
+help_pt = "Guarda o texto das sessões para o Acervo."
+help_en = "Stores session text for the Archive."
+why = "Sem transcrição não há Acervo nem auditoria."
+label_key = "setting-helper-sessions-keep_transcripts-label"
+help_key = "setting-helper-sessions-keep_transcripts-help"
+
+[[setting]]
+key = "helper.hooks.enabled"
+module = "helper"
+group = "helpers"
+type = "toggle"
+default = true
+label_pt = "Aceitar hooks dos agentes"
+label_en = "Accept agent hooks"
+help_pt = "Aceita eventos dos hooks dos CLIs de agente."
+help_en = "Accepts events from agent CLI hooks."
+why = "Hooks são como o app sabe que o agente mudou de estado."
+label_key = "setting-helper-hooks-enabled-label"
+help_key = "setting-helper-hooks-enabled-help"
+
+[[setting]]
+key = "helper.hooks.timeout_s"
+module = "helper"
+group = "helpers"
+type = "number"
+default = 10
+min = 1
+max = 60
+label_pt = "Limite do hook (s)"
+label_en = "Hook timeout (s)"
+help_pt = "Tempo máximo de espera por um hook."
+help_en = "Maximum time to wait for a hook."
+why = "10 s evita hook travado segurar o encerramento."
+label_key = "setting-helper-hooks-timeout_s-label"
+help_key = "setting-helper-hooks-timeout_s-help"
+
+[[setting]]
+key = "helper.close.confirm_running"
+module = "helper"
+group = "helpers"
+type = "toggle"
+default = true
+label_pt = "Confirmar ao fechar ajudante"
+label_en = "Confirm closing helper"
+help_pt = "Pede confirmação ao fechar um ajudante em execução."
+help_en = "Asks before closing a running helper."
+why = "Encerrar um agente no meio pode deixar trabalho pela metade."
+label_key = "setting-helper-close-confirm_running-label"
+help_key = "setting-helper-close-confirm_running-help"
+
+[[setting]]
+key = "chat.font.size"
+module = "chat"
+group = "helpers"
+type = "number"
+default = 14
+min = 10
+max = 24
+label_pt = "Tamanho do texto do chat"
+label_en = "Chat text size"
+help_pt = "Tamanho do texto no chat."
+help_en = "Text size in chat."
+why = "14 px é confortável para prosa longa."
+label_key = "setting-chat-font-size-label"
+help_key = "setting-chat-font-size-help"
+
+[[setting]]
+key = "chat.message.max_width"
+module = "chat"
+group = "helpers"
+type = "number"
+default = 760
+min = 400
+max = 1200
+label_pt = "Largura das mensagens"
+label_en = "Message width"
+help_pt = "Largura máxima das mensagens do chat."
+help_en = "Maximum width of chat messages."
+why = "760 px mantém a linha legível em telas largas."
+label_key = "setting-chat-message-max_width-label"
+help_key = "setting-chat-message-max_width-help"
+
+[[setting]]
+key = "chat.input.enter_sends"
+module = "chat"
+group = "helpers"
+type = "toggle"
+default = true
+label_pt = "Enter envia"
+label_en = "Enter sends"
+help_pt = "Usa Enter para enviar e Shift+Enter para nova linha."
+help_en = "Uses Enter to send and Shift+Enter for a new line."
+why = "Enter envia e Shift+Enter quebra linha, como no chat comum."
+label_key = "setting-chat-input-enter_sends-label"
+help_key = "setting-chat-input-enter_sends-help"
+
+[[setting]]
+key = "chat.attachments.max_mb"
+module = "chat"
+group = "helpers"
+type = "number"
+default = 20
+min = 1
+max = 100
+label_pt = "Tamanho máximo de anexo (MB)"
+label_en = "Attachment size limit (MB)"
+help_pt = "Tamanho máximo de anexo enviado ao ajudante."
+help_en = "Maximum attachment size sent to the helper."
+why = "20 MB cobre imagem e log sem estourar a memória."
+label_key = "setting-chat-attachments-max_mb-label"
+help_key = "setting-chat-attachments-max_mb-help"
+
+[[setting]]
+key = "chat.attachments.paste_images"
+module = "chat"
+group = "helpers"
+type = "toggle"
+default = true
+label_pt = "Colar imagens"
+label_en = "Paste images"
+help_pt = "Aceita imagens coladas direto no chat."
+help_en = "Accepts images pasted directly into chat."
+why = "Colar print é parte do jeito de pedir correção."
+label_key = "setting-chat-attachments-paste_images-label"
+help_key = "setting-chat-attachments-paste_images-help"
+
+[[setting]]
+key = "chat.tools.show_calls"
+module = "chat"
+group = "helpers"
+type = "toggle"
+default = true
+label_pt = "Mostrar chamadas de ferramenta"
+label_en = "Show tool calls"
+help_pt = "Mostra as chamadas de ferramenta do ajudante."
+help_en = "Shows the helper's tool calls."
+why = "Ver a ferramenta e os argumentos torna o agente auditável."
+label_key = "setting-chat-tools-show_calls-label"
+help_key = "setting-chat-tools-show_calls-help"
+
+[[setting]]
+key = "chat.tools.collapse_output"
+module = "chat"
+group = "helpers"
+type = "toggle"
+default = true
+label_pt = "Recolher saída longa"
+label_en = "Collapse long output"
+help_pt = "Recolhe a saída longa das ferramentas."
+help_en = "Collapses long tool output."
+why = "Saída longa esconde a conversa; recolhida, continua a um clique."
+label_key = "setting-chat-tools-collapse_output-label"
+help_key = "setting-chat-tools-collapse_output-help"
+
+[[setting]]
+key = "chat.diff.apply_mode"
+module = "chat"
+group = "helpers"
+type = "choice"
+default = "review"
+options = ["review", "inline", "auto"]
+label_pt = "Aplicar mudanças do chat"
+label_en = "Apply chat changes"
+help_pt = "Define como mudanças propostas no chat são aplicadas."
+help_en = "Defines how changes proposed in chat are applied."
+why = "Revisar antes de aplicar é o padrão seguro."
+label_key = "setting-chat-diff-apply_mode-label"
+help_key = "setting-chat-diff-apply_mode-help"
+
+[[setting]]
+key = "voice.mode.enabled"
+module = "voice"
+group = "helpers"
+type = "toggle"
+default = false
+label_pt = "Voz"
+label_en = "Voice"
+help_pt = "Liga entrada e saída de voz na Forja."
+help_en = "Enables voice input and output in Forja."
+why = "Voz é opt-in: microfone e áudio merecem consentimento."
+label_key = "setting-voice-mode-enabled-label"
+help_key = "setting-voice-mode-enabled-help"
+
+[[setting]]
+key = "voice.input.engine"
+module = "voice"
+group = "helpers"
+type = "choice"
+default = "windows"
+options = ["windows", "whisper_cpp"]
+label_pt = "Motor de transcrição"
+label_en = "Transcription engine"
+help_pt = "Motor de transcrição da fala."
+help_en = "Speech transcription engine."
+why = "O motor do Windows funciona offline sem baixar modelo."
+label_key = "setting-voice-input-engine-label"
+help_key = "setting-voice-input-engine-help"
+
+[[setting]]
+key = "voice.input.model_path"
+deferred = "Aguardando o motor local de transcrição (whisper.cpp) ser aprovado como dependência."
+module = "voice"
+group = "helpers"
+type = "path"
+default = "~/.forja/modelos/voz"
+hint = "pasta"
+label_pt = "Modelo de transcrição"
+label_en = "Transcription model"
+help_pt = "Pasta com o modelo do motor whisper.cpp; o motor do Windows não usa."
+help_en = "Folder with the whisper.cpp model; the Windows engine does not use it."
+why = "Só vale no motor whisper.cpp; o caminho fica no conteúdo do usuário."
+label_key = "setting-voice-input-model_path-label"
+help_key = "setting-voice-input-model_path-help"
+
+[[setting]]
+key = "voice.input.language"
+module = "voice"
+group = "helpers"
+type = "choice"
+default = "auto"
+options = ["auto", "pt_BR", "en"]
+label_pt = "Idioma da fala"
+label_en = "Speech language"
+help_pt = "Idioma esperado na fala."
+help_en = "Language expected in speech."
+why = "Auto usa o idioma da interface; comando técnico mistura idiomas."
+label_key = "setting-voice-input-language-label"
+help_key = "setting-voice-input-language-help"
+
+[[setting]]
+key = "voice.output.engine"
+deferred = "Aguardando a síntese de voz (SAPI ou Piper) ser aprovada como dependência."
+module = "voice"
+group = "helpers"
+type = "choice"
+default = "sapi"
+options = ["sapi", "piper"]
+label_pt = "Motor de síntese"
+label_en = "Speech engine"
+help_pt = "Motor de síntese de voz."
+help_en = "Speech synthesis engine."
+why = "SAPI já vem no Windows e não exige download."
+label_key = "setting-voice-output-engine-label"
+help_key = "setting-voice-output-engine-help"
+
+[[setting]]
+key = "voice.output.model_path"
+deferred = "Aguardando a síntese de voz local (Piper) ser aprovada como dependência."
+module = "voice"
+group = "helpers"
+type = "path"
+default = "~/.forja/modelos/voz"
+hint = "arquivo"
+label_pt = "Modelo de síntese"
+label_en = "Speech model"
+help_pt = "Arquivo de modelo do motor Piper; o SAPI não usa."
+help_en = "Model file for the Piper engine; SAPI does not use it."
+why = "Só vale no motor Piper; o caminho fica no conteúdo do usuário."
+label_key = "setting-voice-output-model_path-label"
+help_key = "setting-voice-output-model_path-help"
+
+[[setting]]
+key = "voice.output.rate"
+deferred = "Aguardando a síntese de voz (SAPI ou Piper) ser aprovada como dependência."
+module = "voice"
+group = "helpers"
+type = "number"
+default = 1.0
+min = 0.5
+max = 2.0
+step = 0.1
+label_pt = "Velocidade da fala"
+label_en = "Speech rate"
+help_pt = "Velocidade da fala sintetizada."
+help_en = "Synthesized speech rate."
+why = "1,0 é a velocidade natural da voz do sistema."
+label_key = "setting-voice-output-rate-label"
+help_key = "setting-voice-output-rate-help"
+
+[[setting]]
+key = "voice.output.auto_read"
+deferred = "Aguardando a síntese de voz (SAPI ou Piper) ser aprovada como dependência."
+module = "voice"
+group = "helpers"
+type = "toggle"
+default = false
+label_pt = "Ler respostas em voz alta"
+label_en = "Read responses aloud"
+help_pt = "Lê automaticamente as respostas do ajudante."
+help_en = "Automatically reads helper responses aloud."
+why = "Ler toda resposta em voz alta atrapalha quem está lendo."
+label_key = "setting-voice-output-auto_read-label"
+help_key = "setting-voice-output-auto_read-help"
+
+[[setting]]
+key = "voice.privacy.keep_audio"
+module = "voice"
+group = "helpers"
+type = "toggle"
+default = false
+label_pt = "Guardar áudio"
+label_en = "Keep audio"
+help_pt = "Guarda os arquivos de áudio usados na transcrição."
+help_en = "Keeps audio files used for transcription."
+why = "Áudio bruto é dado sensível e não é necessário depois da transcrição."
+label_key = "setting-voice-privacy-keep_audio-label"
+help_key = "setting-voice-privacy-keep_audio-help"
+
+[[setting]]
+key = "usage.cost.track"
+module = "usage"
+group = "helpers"
+type = "toggle"
+default = true
+label_pt = "Registrar uso"
+label_en = "Track usage"
+help_pt = "Registra consumo de tokens e custo por ajudante."
+help_en = "Tracks token usage and cost per helper."
+why = "Uso local ajuda a entender custo sem enviar nada para fora."
+label_key = "setting-usage-cost-track-label"
+help_key = "setting-usage-cost-track-help"
+
+[[setting]]
+key = "usage.cost.alert_usd"
+deferred = "Adiado por decisão de escopo do coordenador: o aviso de custo fica para depois da Fase F."
+module = "usage"
+group = "helpers"
+type = "number"
+default = 25
+min = 0
+max = 1000
+label_pt = "Aviso de custo (US$)"
+label_en = "Cost alert (USD)"
+help_pt = "Avisa quando o custo acumulado do dia passa desse valor; 0 desliga."
+help_en = "Warns when the day's accumulated cost exceeds this value; 0 disables."
+why = "25 dólares é um aviso cedo o bastante para agir; 0 desliga."
+label_key = "setting-usage-cost-alert_usd-label"
+help_key = "setting-usage-cost-alert_usd-help"
+
+[[setting]]
+key = "usage.display.status_bar"
+module = "usage"
+group = "helpers"
+type = "toggle"
+default = true
+label_pt = "Mostrar uso na barra de status"
+label_en = "Show usage in status bar"
+help_pt = "Mostra o uso acumulado na barra de status."
+help_en = "Shows accumulated usage in the status bar."
+why = "Custo visível evita surpresa no fim do dia."
+label_key = "setting-usage-display-status_bar-label"
+help_key = "setting-usage-display-status_bar-help"
+
+[[setting]]
+key = "accounts.confirm.remove"
+module = "accounts"
+group = "helpers"
+type = "toggle"
+default = true
+label_pt = "Confirmar remoção de conta"
+label_en = "Confirm account removal"
+help_pt = "Pede confirmação antes de apagar a pasta de uma conta."
+help_en = "Asks before deleting an account folder."
+why = "A pasta guarda a sessão e as credenciais do CLI; apagar sem confirmação é irreversível."
+label_key = "setting-accounts-confirm-remove-label"
+help_key = "setting-accounts-confirm-remove-help"
+
+[[setting]]
+key = "muster.mode.enabled"
+module = "muster"
+group = "muster"
+type = "toggle"
+default = true
+label_pt = "Mutirão"
+label_en = "Muster"
+help_pt = "Liga a coordenação de vários ajudantes."
+help_en = "Enables coordination of multiple helpers."
+why = "Mutirão é o diferencial do produto e deve estar disponível."
+label_key = "setting-muster-mode-enabled-label"
+help_key = "setting-muster-mode-enabled-help"
+
+[[setting]]
+key = "muster.coordinator.profile"
+deferred = "Aguardando ciclo de vida do ajudante coordenador."
+module = "muster"
+group = "muster"
+type = "choice"
+default = "auto"
+options = ["auto"]
+options_from = "profiles"
+label_pt = "Perfil do coordenador"
+label_en = "Coordinator profile"
+help_pt = "Perfil que coordena o mutirão."
+help_en = "Profile that coordinates the muster."
+why = "Auto usa o perfil padrão e deixa o projeto escolher outro."
+label_key = "setting-muster-coordinator-profile-label"
+help_key = "setting-muster-coordinator-profile-help"
+
+[[setting]]
+key = "muster.plan.max_tasks"
+module = "muster"
+group = "muster"
+type = "number"
+default = 20
+min = 1
+max = 100
+label_pt = "Máximo de tarefas"
+label_en = "Maximum tasks"
+help_pt = "Máximo de tarefas propostas num plano."
+help_en = "Maximum tasks proposed in a plan."
+why = "20 tarefas é grande o bastante sem virar um plano impossível de revisar."
+label_key = "setting-muster-plan-max_tasks-label"
+help_key = "setting-muster-plan-max_tasks-help"
+
+[[setting]]
+key = "muster.plan.require_approval"
+module = "muster"
+group = "muster"
+type = "toggle"
+default = true
+label_pt = "Aprovar o plano"
+label_en = "Approve the plan"
+help_pt = "Pede aprovação do plano antes de iniciar as tarefas."
+help_en = "Asks for plan approval before starting tasks."
+why = "Nada é despachado antes de você ver o plano."
+label_key = "setting-muster-plan-require_approval-label"
+help_key = "setting-muster-plan-require_approval-help"
+
+[[setting]]
+key = "muster.dispatch.max_parallel"
+module = "muster"
+group = "muster"
+type = "number"
+default = 4
+min = 1
+max = 16
+label_pt = "Ajudantes em paralelo"
+label_en = "Parallel helpers"
+help_pt = "Máximo de ajudantes trabalhando ao mesmo tempo."
+help_en = "Maximum helpers working at the same time."
+why = "4 equilibra paralelismo e consumo de recursos."
+label_key = "setting-muster-dispatch-max_parallel-label"
+help_key = "setting-muster-dispatch-max_parallel-help"
+
+[[setting]]
+key = "muster.dispatch.target"
+deferred = "Aguardando contrato de conclusão e falha da criação assíncrona de bancada."
+module = "muster"
+group = "muster"
+type = "choice"
+default = "ask"
+options = ["ask", "current", "new"]
+label_pt = "Onde despachar"
+label_en = "Dispatch target"
+help_pt = "Onde cada tarefa é despachada."
+help_en = "Where each task is dispatched."
+why = "Perguntar respeita o isolamento que cada trabalho pede."
+label_key = "setting-muster-dispatch-target-label"
+help_key = "setting-muster-dispatch-target-help"
+
+[[setting]]
+key = "muster.notes.poll_s"
+module = "muster"
+group = "muster"
+type = "number"
+default = 3
+min = 1
+max = 60
+label_pt = "Leitura de recados (s)"
+label_en = "Notes polling (s)"
+help_pt = "Intervalo de leitura de recados dos ajudantes."
+help_en = "Interval for reading helper notes."
+why = "3 s mantém a caixa de entrada viva sem inundar o pipe."
+label_key = "setting-muster-notes-poll_s-label"
+help_key = "setting-muster-notes-poll_s-help"
+
+[[setting]]
+key = "muster.notes.retention_days"
+module = "muster"
+group = "muster"
+type = "number"
+default = 30
+min = 1
+max = 365
+label_pt = "Retenção de recados (dias)"
+label_en = "Notes retention (days)"
+help_pt = "Tempo de retenção dos recados."
+help_en = "How long notes are kept."
+why = "30 dias cobre a revisão de um mutirão sem guardar ruído para sempre."
+label_key = "setting-muster-notes-retention_days-label"
+help_key = "setting-muster-notes-retention_days-help"
+
+[[setting]]
+key = "muster.handoff.require_evidence"
+module = "muster"
+group = "muster"
+type = "toggle"
+default = true
+label_pt = "Exigir evidência na entrega"
+label_en = "Require handoff evidence"
+help_pt = "Exige evidências na entrega de cada tarefa."
+help_en = "Requires evidence in each task handoff."
+why = "Entrega sem evidência não é verificável."
+label_key = "setting-muster-handoff-require_evidence-label"
+help_key = "setting-muster-handoff-require_evidence-help"
+
+[[setting]]
+key = "muster.escalation.max_retries"
+deferred = "Aguardando verificação de encerramento e identidade para reenvio seguro."
+module = "muster"
+group = "muster"
+type = "number"
+default = 2
+min = 0
+max = 10
+label_pt = "Reenvios por tarefa"
+label_en = "Retries per task"
+help_pt = "Quantas vezes uma tarefa que falha é reenviada."
+help_en = "How many times a failed task is resent."
+why = "Duas tentativas resolvem erro transitório sem repetir em loop."
+label_key = "setting-muster-escalation-max_retries-label"
+help_key = "setting-muster-escalation-max_retries-help"
+
+[[setting]]
+key = "muster.budget.max_usd"
+module = "muster"
+group = "muster"
+type = "number"
+default = 0
+min = 0
+max = 10000
+label_pt = "Teto de custo (US$)"
+label_en = "Cost ceiling (USD)"
+help_pt = "Teto de custo por mutirão; 0 desliga."
+help_en = "Cost ceiling per muster; 0 disables."
+why = "0 desliga o teto; quem precisa de limite escolhe um valor."
+label_key = "setting-muster-budget-max_usd-label"
+help_key = "setting-muster-budget-max_usd-help"
+
+[[setting]]
+key = "muster.cleanup.on_finish"
+deferred = "Aguardando rastreamento de posse das bancadas e conclusão assíncrona do arquivamento."
+module = "muster"
+group = "muster"
+type = "choice"
+default = "ask"
+options = ["ask", "keep", "remove"]
+label_pt = "Limpar bancadas ao terminar"
+label_en = "Clean up benches on finish"
+help_pt = "O que fazer com as bancadas ao terminar o mutirão."
+help_en = "What to do with benches when the muster finishes."
+why = "Perguntar evita apagar bancadas que ainda têm trabalho."
+label_key = "setting-muster-cleanup-on_finish-label"
+help_key = "setting-muster-cleanup-on_finish-help"
+
+[[setting]]
+key = "muster.notifications.task_failed"
+module = "muster"
+group = "muster"
+type = "toggle"
+default = true
+label_pt = "Avisar falha de tarefa"
+label_en = "Notify task failure"
+help_pt = "Notifica quando uma tarefa do mutirão falha."
+help_en = "Notifies when a muster task fails."
+why = "Falha de tarefa exige decisão do coordenador."
+label_key = "setting-muster-notifications-task_failed-label"
+help_key = "setting-muster-notifications-task_failed-help"
+
+[[setting]]
+key = "muster.workspace.isolation"
+deferred = "Aguardando contrato de criação e prontidão de bancada isolada."
+module = "muster"
+group = "muster"
+type = "choice"
+default = "worktree"
+options = ["worktree", "shared"]
+label_pt = "Isolamento das tarefas"
+label_en = "Task isolation"
+help_pt = "Define se tarefas usam bancadas isoladas ou a mesma bancada."
+help_en = "Defines whether tasks use isolated benches or the same bench."
+why = "Worktree é o isolamento que evita conflito entre ajudantes."
+label_key = "setting-muster-workspace-isolation-label"
+help_key = "setting-muster-workspace-isolation-help"
+
+[[setting]]
+key = "routine.mode.enabled"
+module = "routine"
+group = "routines"
+type = "toggle"
+default = true
+label_pt = "Rotinas"
+label_en = "Routines"
+help_pt = "Liga a execução de rotinas agendadas."
+help_en = "Enables scheduled routine execution."
+why = "Rotina é parte do produto e começa disponível."
+label_key = "setting-routine-mode-enabled-label"
+help_key = "setting-routine-mode-enabled-help"
+
+[[setting]]
+key = "routine.schedule.timezone"
+module = "routine"
+group = "routines"
+type = "choice"
+default = "system"
+options = ["system", "utc"]
+label_pt = "Fuso horário"
+label_en = "Time zone"
+help_pt = "Fuso usado para interpretar os horários."
+help_en = "Time zone used to interpret schedules."
+why = "System segue o fuso do Windows e evita horário deslocado."
+label_key = "setting-routine-schedule-timezone-label"
+help_key = "setting-routine-schedule-timezone-help"
+
+[[setting]]
+key = "routine.schedule.missed"
+module = "routine"
+group = "routines"
+type = "choice"
+default = "run_once"
+options = ["skip", "run_once", "ask"]
+label_pt = "Rotina perdida"
+label_en = "Missed routine"
+help_pt = "O que fazer quando o horário passou com a Forja fechada."
+help_en = "What to do when the time passed while Forja was closed."
+why = "Rodar uma vez recupera o atraso sem repetir a série inteira."
+label_key = "setting-routine-schedule-missed-label"
+help_key = "setting-routine-schedule-missed-help"
+
+[[setting]]
+key = "routine.schedule.grace_s"
+module = "routine"
+group = "routines"
+type = "number"
+default = 120
+min = 0
+max = 3600
+label_pt = "Tolerância de atraso (s)"
+label_en = "Schedule grace (s)"
+help_pt = "Tolerância para executar uma rotina atrasada."
+help_en = "Tolerance for running a late routine."
+why = "2 min absorve suspensão e relógio impreciso."
+label_key = "setting-routine-schedule-grace_s-label"
+help_key = "setting-routine-schedule-grace_s-help"
+
+[[setting]]
+key = "routine.run.timeout_min"
+module = "routine"
+group = "routines"
+type = "number"
+default = 60
+min = 1
+max = 720
+label_pt = "Tempo máximo (min)"
+label_en = "Maximum runtime (min)"
+help_pt = "Tempo máximo de execução de uma rotina."
+help_en = "Maximum routine runtime."
+why = "1 h cobre a maioria dos trabalhos de agente sem travar a fila."
+label_key = "setting-routine-run-timeout_min-label"
+help_key = "setting-routine-run-timeout_min-help"
+
+[[setting]]
+key = "routine.run.concurrency"
+module = "routine"
+group = "routines"
+type = "number"
+default = 1
+min = 1
+max = 8
+label_pt = "Rotinas simultâneas"
+label_en = "Concurrent routines"
+help_pt = "Quantas rotinas podem rodar ao mesmo tempo."
+help_en = "How many routines may run at the same time."
+why = "Uma por vez evita dois agentes disputando a mesma bancada."
+label_key = "setting-routine-run-concurrency-label"
+help_key = "setting-routine-run-concurrency-help"
+
+[[setting]]
+key = "routine.run.target"
+module = "routine"
+group = "routines"
+type = "choice"
+default = "ask"
+options = ["ask", "fixed", "new"]
+label_pt = "Alvo padrão"
+label_en = "Default target"
+help_pt = "Onde a rotina trabalha quando não define um alvo."
+help_en = "Where the routine works when it does not define a target."
+why = "Perguntar respeita rotinas de revisão e rotinas de trabalho novo."
+label_key = "setting-routine-run-target-label"
+help_key = "setting-routine-run-target-help"
+
+[[setting]]
+key = "routine.logs.retention_days"
+module = "routine"
+group = "routines"
+type = "number"
+default = 30
+min = 1
+max = 365
+label_pt = "Retenção do histórico (dias)"
+label_en = "History retention (days)"
+help_pt = "Tempo de retenção do histórico de execuções."
+help_en = "How long execution history is kept."
+why = "30 dias cobre a investigação de uma falha recorrente."
+label_key = "setting-routine-logs-retention_days-label"
+help_key = "setting-routine-logs-retention_days-help"
+
+[[setting]]
+key = "routine.notifications.failure"
+module = "routine"
+group = "routines"
+type = "toggle"
+default = true
+label_pt = "Avisar falha"
+label_en = "Notify failure"
+help_pt = "Notifica quando uma rotina falha."
+help_en = "Notifies when a routine fails."
+why = "Rotina falha em silêncio é rotina que não existe."
+label_key = "setting-routine-notifications-failure-label"
+help_key = "setting-routine-notifications-failure-help"
+
+[[setting]]
+key = "routine.notifications.success"
+module = "routine"
+group = "routines"
+type = "toggle"
+default = false
+label_pt = "Avisar sucesso"
+label_en = "Notify success"
+help_pt = "Notifica quando uma rotina termina com sucesso."
+help_en = "Notifies when a routine finishes successfully."
+why = "Sucesso a cada hora vira ruído; o histórico já registra."
+label_key = "setting-routine-notifications-success-label"
+help_key = "setting-routine-notifications-success-help"
+
+[[setting]]
+key = "request.default.source"
+module = "request"
+group = "requests"
+type = "choice"
+default = "local"
+options = ["local", "github", "gitlab", "linear", "jira"]
+label_pt = "Balcão padrão"
+label_en = "Default counter"
+help_pt = "Balcão usado quando o projeto não define um."
+help_en = "Counter used when the project does not define one."
+why = "Pedido local funciona offline e não exige conta."
+label_key = "setting-request-default-source-label"
+help_key = "setting-request-default-source-help"
+
+[[setting]]
+key = "request.create.branch_from_title"
+module = "request"
+group = "requests"
+type = "toggle"
+default = true
+label_pt = "Branch a partir do título"
+label_en = "Branch from title"
+help_pt = "Gera o nome da branch a partir do título do pedido."
+help_en = "Generates the branch name from the request title."
+why = "Título legível vira branch legível sem digitação."
+label_key = "setting-request-create-branch_from_title-label"
+help_key = "setting-request-create-branch_from_title-help"
+
+[[setting]]
+key = "request.create.assign_self"
+module = "request"
+group = "requests"
+type = "toggle"
+default = true
+label_pt = "Atribuir a mim"
+label_en = "Assign to me"
+help_pt = "Atribui o pedido a você ao criar uma bancada."
+help_en = "Assigns the request to you when creating a bench."
+why = "Quem cria o pedido normalmente é quem vai forjar."
+label_key = "setting-request-create-assign_self-label"
+help_key = "setting-request-create-assign_self-help"
+
+[[setting]]
+key = "request.filters.default"
+module = "request"
+group = "requests"
+type = "text"
+default = ""
+hint = "expressão de filtro"
+label_pt = "Filtro padrão"
+label_en = "Default filter"
+help_pt = "Filtro aplicado ao abrir a lista de pedidos."
+help_en = "Filter applied when opening the request list."
+why = "Vazio mostra tudo; filtro salvo é preferência de quem tem fila grande."
+label_key = "setting-request-filters-default-label"
+help_key = "setting-request-filters-default-help"
+
+[[setting]]
+key = "request.refresh.interval_s"
+module = "request"
+group = "requests"
+type = "number"
+default = 60
+min = 0
+max = 600
+label_pt = "Atualização dos pedidos (s)"
+label_en = "Request refresh (s)"
+help_pt = "Intervalo de atualização dos pedidos; 0 desliga."
+help_en = "Request refresh interval; 0 disables."
+why = "1 min mantém a lista atual sem bater no balcão."
+label_key = "setting-request-refresh-interval_s-label"
+help_key = "setting-request-refresh-interval_s-help"
+
+[[setting]]
+key = "request.sync.stage_on_pr"
+module = "request"
+group = "requests"
+type = "toggle"
+default = true
+label_pt = "Revisão ao abrir PR"
+label_en = "Review on PR open"
+help_pt = "Move o pedido para revisão quando o PR é aberto."
+help_en = "Moves the request to review when the PR opens."
+why = "Abrir PR é o sinal natural de revisão."
+label_key = "setting-request-sync-stage_on_pr-label"
+help_key = "setting-request-sync-stage_on_pr-help"
+
+[[setting]]
+key = "request.sync.close_on_merge"
+module = "request"
+group = "requests"
+type = "toggle"
+default = true
+label_pt = "Fechar ao mesclar PR"
+label_en = "Close on PR merge"
+help_pt = "Fecha o pedido quando o PR é mesclado."
+help_en = "Closes the request when the PR is merged."
+why = "Merge é a entrega objetiva do pedido."
+label_key = "setting-request-sync-close_on_merge-label"
+help_key = "setting-request-sync-close_on_merge-help"
+
+[[setting]]
+key = "request.local.prefix"
+module = "request"
+group = "requests"
+type = "text"
+default = "LOCAL-"
+hint = "texto"
+label_pt = "Prefixo de pedido local"
+label_en = "Local request prefix"
+help_pt = "Prefixo dos pedidos criados localmente."
+help_en = "Prefix for locally created requests."
+why = "O prefixo distingue pedido local de número de balcão."
+label_key = "setting-request-local-prefix-label"
+help_key = "setting-request-local-prefix-help"
+
+[[setting]]
+key = "request.local.counter_start"
+module = "request"
+group = "requests"
+type = "number"
+default = 1
+min = 1
+max = 100000
+label_pt = "Primeiro pedido local"
+label_en = "First local request"
+help_pt = "Número inicial dos pedidos locais."
+help_en = "Starting number for local requests."
+why = "Começar em 1 é previsível para leitura humana."
+label_key = "setting-request-local-counter_start-label"
+help_key = "setting-request-local-counter_start-help"
+
+[[setting]]
+key = "counter.github.host"
+module = "counter"
+group = "requests"
+type = "text"
+default = "github.com"
+hint = "host"
+label_pt = "Host do GitHub"
+label_en = "GitHub host"
+help_pt = "Host do GitHub usado pelo balcão."
+help_en = "GitHub host used by the counter."
+why = "github.com cobre o caso comum; empresa usa o host próprio."
+label_key = "setting-counter-github-host-label"
+help_key = "setting-counter-github-host-help"
+
+[[setting]]
+key = "counter.github.include_drafts"
+module = "counter"
+group = "requests"
+type = "toggle"
+default = false
+label_pt = "Incluir rascunhos"
+label_en = "Include drafts"
+help_pt = "Inclui pull requests em rascunho na lista."
+help_en = "Includes draft pull requests in the list."
+why = "Rascunho ainda não é pedido para forjar."
+label_key = "setting-counter-github-include_drafts-label"
+help_key = "setting-counter-github-include_drafts-help"
+
+[[setting]]
+key = "counter.github.label_filter"
+module = "counter"
+group = "requests"
+type = "list"
+default = []
+item = "rótulo"
+label_pt = "Filtro de rótulos"
+label_en = "Label filter"
+help_pt = "Rótulos que um pedido precisa ter para aparecer."
+help_en = "Labels a request must have to appear."
+why = "Vazio traz tudo; rótulos são o filtro que cada equipe já usa."
+label_key = "setting-counter-github-label_filter-label"
+help_key = "setting-counter-github-label_filter-help"
+
+[[setting]]
+key = "counter.gitlab.host"
+module = "counter"
+group = "requests"
+type = "text"
+default = "gitlab.com"
+hint = "host"
+label_pt = "Host do GitLab"
+label_en = "GitLab host"
+help_pt = "Host do GitLab usado pelo balcão."
+help_en = "GitLab host used by the counter."
+why = "gitlab.com cobre o caso comum; instâncias próprias trocam o host."
+label_key = "setting-counter-gitlab-host-label"
+help_key = "setting-counter-gitlab-host-help"
+
+[[setting]]
+key = "counter.linear.team"
+module = "counter"
+group = "requests"
+type = "text"
+default = ""
+hint = "equipe"
+label_pt = "Equipe do Linear"
+label_en = "Linear team"
+help_pt = "Equipe do Linear usada como fonte de pedidos."
+help_en = "Linear team used as a request source."
+why = "Vazio mostra todas as equipes visíveis."
+label_key = "setting-counter-linear-team-label"
+help_key = "setting-counter-linear-team-help"
+
+[[setting]]
+key = "counter.jira.project"
+module = "counter"
+group = "requests"
+type = "text"
+default = ""
+hint = "chave"
+label_pt = "Projeto do Jira"
+label_en = "Jira project"
+help_pt = "Projeto do Jira usado como fonte de pedidos."
+help_en = "Jira project used as a request source."
+why = "Vazio mostra todos os projetos visíveis."
+label_key = "setting-counter-jira-project-label"
+help_key = "setting-counter-jira-project-help"
+
+[[setting]]
+key = "counter.poll.interval_s"
+module = "counter"
+group = "requests"
+type = "number"
+default = 300
+min = 30
+max = 3600
+label_pt = "Consulta aos balcões (s)"
+label_en = "Counter polling (s)"
+help_pt = "Intervalo de consulta aos balcões."
+help_en = "Interval for polling counters."
+why = "5 min é suficiente para pedidos e não gasta cota de API."
+label_key = "setting-counter-poll-interval_s-label"
+help_key = "setting-counter-poll-interval_s-help"
+
+[[setting]]
+key = "counter.notifications.new_request"
+module = "counter"
+group = "requests"
+type = "toggle"
+default = true
+label_pt = "Avisar pedido novo"
+label_en = "Notify new request"
+help_pt = "Notifica quando aparece um pedido novo."
+help_en = "Notifies when a new request appears."
+why = "Pedido novo é trabalho que pode entrar na fila."
+label_key = "setting-counter-notifications-new_request-label"
+help_key = "setting-counter-notifications-new_request-help"
+
+[[setting]]
+key = "counter.notifications.checks_failed"
+module = "counter"
+group = "requests"
+type = "toggle"
+default = true
+label_pt = "Avisar check quebrado"
+label_en = "Notify failed checks"
+help_pt = "Notifica quando um check do PR falha."
+help_en = "Notifies when a PR check fails."
+why = "Check quebrado bloqueia a entrega e precisa de ação."
+label_key = "setting-counter-notifications-checks_failed-label"
+help_key = "setting-counter-notifications-checks_failed-help"
+
+[[setting]]
+key = "mcp.client.enabled"
+deferred = "Cliente MCP ainda não implementado."
+module = "mcp"
+group = "integrations"
+type = "toggle"
+default = true
+label_pt = "Servidores MCP"
+label_en = "MCP servers"
+help_pt = "Liga servidores MCP configurados."
+help_en = "Enables configured MCP servers."
+why = "MCP é como modelos operam a Forja; vem ligado."
+label_key = "setting-mcp-client-enabled-label"
+help_key = "setting-mcp-client-enabled-help"
+
+[[setting]]
+key = "mcp.startup.timeout_s"
+deferred = "Cliente MCP ainda não implementado."
+module = "mcp"
+group = "integrations"
+type = "number"
+default = 20
+min = 1
+max = 120
+label_pt = "Tempo de início MCP (s)"
+label_en = "MCP startup timeout (s)"
+help_pt = "Tempo máximo para um servidor MCP iniciar."
+help_en = "Maximum time for an MCP server to start."
+why = "20 s cobre servidor local que carrega ferramentas."
+label_key = "setting-mcp-startup-timeout_s-label"
+help_key = "setting-mcp-startup-timeout_s-help"
+
+[[setting]]
+key = "mcp.tools.auto_approve"
+deferred = "Cliente MCP ainda não implementado."
+module = "mcp"
+group = "integrations"
+type = "list"
+default = []
+item = "ferramenta"
+label_pt = "Ferramentas aprovadas"
+label_en = "Approved tools"
+help_pt = "Ferramentas MCP aprovadas sem perguntar."
+help_en = "MCP tools approved without asking."
+why = "Aprovar ferramenta por ferramenta é o padrão seguro; vazio não aprova nada."
+label_key = "setting-mcp-tools-auto_approve-label"
+help_key = "setting-mcp-tools-auto_approve-help"
+
+[[setting]]
+key = "mcp.log.requests"
+deferred = "Aguardando observação de requisições na ponte MCP e serviço de log."
+module = "mcp"
+group = "integrations"
+type = "toggle"
+default = false
+label_pt = "Registrar requisições MCP"
+label_en = "Log MCP requests"
+help_pt = "Registra requisições MCP no log de desenvolvimento."
+help_en = "Logs MCP requests in the development log."
+why = "Log de MCP pode conter dados do projeto; desligado por padrão."
+label_key = "setting-mcp-log-requests-label"
+help_key = "setting-mcp-log-requests-help"
+
+[[setting]]
+key = "mcp.server.enabled"
+module = "mcp"
+group = "integrations"
+type = "toggle"
+default = true
+label_pt = "Servidor MCP da Forja"
+label_en = "Forja MCP server"
+help_pt = "Liga o servidor MCP que expõe a Forja a agentes."
+help_en = "Enables the MCP server that exposes Forja to agents."
+why = "Agentes operam a Forja por MCP; leitura é segura e escrita pede aprovação."
+label_key = "setting-mcp-server-enabled-label"
+help_key = "setting-mcp-server-enabled-help"
+
+[[setting]]
+key = "mcp.server.expose"
+module = "mcp"
+group = "integrations"
+type = "list"
+default = []
+item = "ferramenta"
+label_pt = "Ferramentas expostas"
+label_en = "Exposed tools"
+help_pt = "Ferramentas além do padrão, como comandos de extensão."
+help_en = "Tools beyond the default set, such as extension commands."
+why = "Expor além do padrão é escolha explícita; ferramenta destrutiva e de aprovação nunca entram."
+label_key = "setting-mcp-server-expose-label"
+help_key = "setting-mcp-server-expose-help"
+
+[[setting]]
+key = "mcp.server.auto_approve"
+module = "mcp"
+group = "integrations"
+type = "list"
+default = []
+item = "ferramenta"
+label_pt = "Escritas aprovadas"
+label_en = "Auto-approved writes"
+help_pt = "Ferramentas de escrita de baixo risco que rodam sem perguntar."
+help_en = "Low-risk write tools that run without asking."
+why = "Aprovar cada escrita é o padrão seguro; ferramenta destrutiva não pode entrar aqui."
+label_key = "setting-mcp-server-auto_approve-label"
+help_key = "setting-mcp-server-auto_approve-help"
+
+[[setting]]
+key = "mcp.server.timeout_s"
+module = "mcp"
+group = "integrations"
+type = "number"
+default = 120
+min = 1
+max = 600
+label_pt = "Tempo para aprovar (s)"
+label_en = "Approval timeout (s)"
+help_pt = "Tempo para responder a um pedido de aprovação de agente antes de negar."
+help_en = "Time to answer an agent's approval request before denying it."
+why = "Dois minutos dão tempo de olhar a janela sem deixar o agente esperando para sempre."
+label_key = "setting-mcp-server-timeout_s-label"
+help_key = "setting-mcp-server-timeout_s-help"
+
+[[setting]]
+key = "browser.engine.kind"
+module = "browser"
+group = "integrations"
+type = "choice"
+default = "embedded"
+options = ["embedded", "system"]
+label_pt = "Navegador"
+label_en = "Browser"
+help_pt = "A aba interna usa o WebView2; sistema abre a página no navegador padrão do Windows."
+help_en = "The internal tab uses WebView2; system opens the page in the default Windows browser."
+why = "A aba interna mantém o contexto da bancada; o sistema é alternativa."
+label_key = "setting-browser-engine-kind-label"
+help_key = "setting-browser-engine-kind-help"
+restart = true
+
+[[setting]]
+key = "browser.home.url"
+module = "browser"
+group = "integrations"
+type = "text"
+default = "forja://inicio"
+hint = "URL"
+label_pt = "Página inicial"
+label_en = "Home page"
+help_pt = "Página aberta em uma aba nova do navegador."
+help_en = "Page opened in a new browser tab."
+why = "A página inicial local não faz requisição externa."
+label_key = "setting-browser-home-url-label"
+help_key = "setting-browser-home-url-help"
+
+[[setting]]
+key = "browser.search.engine"
+module = "browser"
+group = "integrations"
+type = "choice"
+default = "duckduckgo"
+options = ["duckduckgo", "bing", "google"]
+label_pt = "Mecanismo de busca"
+label_en = "Search engine"
+help_pt = "Mecanismo de busca da barra de endereço."
+help_en = "Search engine for the address bar."
+why = "DuckDuckGo é o padrão que menos perfil traça."
+label_key = "setting-browser-search-engine-label"
+help_key = "setting-browser-search-engine-help"
+
+[[setting]]
+key = "browser.privacy.third_party_cookies"
+deferred = "Aguardando a API de perfil do WebView2 para bloquear cookies de terceiros."
+module = "browser"
+group = "integrations"
+type = "toggle"
+default = true
+label_pt = "Bloquear cookies de terceiros"
+label_en = "Block third-party cookies"
+help_pt = "Bloqueia cookies de terceiros no navegador interno."
+help_en = "Blocks third-party cookies in the internal browser."
+why = "Bloquear rastreadores de terceiros é o padrão de privacidade."
+label_key = "setting-browser-privacy-third_party_cookies-label"
+help_key = "setting-browser-privacy-third_party_cookies-help"
+
+[[setting]]
+key = "browser.privacy.do_not_track"
+module = "browser"
+group = "integrations"
+type = "toggle"
+default = true
+label_pt = "Enviar Do Not Track"
+label_en = "Send Do Not Track"
+help_pt = "Envia o cabeçalho Do Not Track."
+help_en = "Sends the Do Not Track header."
+why = "Sinalizar não rastrear não custa nada e é intenção clara."
+label_key = "setting-browser-privacy-do_not_track-label"
+help_key = "setting-browser-privacy-do_not_track-help"
+
+[[setting]]
+key = "browser.devtools.enabled"
+module = "browser"
+group = "integrations"
+type = "toggle"
+default = false
+label_pt = "Ferramentas de desenvolvedor"
+label_en = "Developer tools"
+help_pt = "Permite abrir as ferramentas de desenvolvedor da aba."
+help_en = "Allows opening the tab's developer tools."
+why = "Devtools é ferramenta de quem desenvolve o app, não do fluxo comum."
+label_key = "setting-browser-devtools-enabled-label"
+help_key = "setting-browser-devtools-enabled-help"
+
+[[setting]]
+key = "browser.download.dir"
+module = "browser"
+group = "integrations"
+type = "path"
+default = "%USERPROFILE%\\Downloads"
+hint = "pasta"
+label_pt = "Pasta de downloads"
+label_en = "Downloads folder"
+help_pt = "Pasta de destino dos downloads."
+help_en = "Destination folder for downloads."
+why = "Downloads é onde o Windows e o usuário já procuram arquivos."
+label_key = "setting-browser-download-dir-label"
+help_key = "setting-browser-download-dir-help"
+
+[[setting]]
+key = "browser.download.ask_each"
+module = "browser"
+group = "integrations"
+type = "toggle"
+default = true
+label_pt = "Perguntar onde salvar"
+label_en = "Ask where to save"
+help_pt = "Pergunta onde salvar cada download."
+help_en = "Asks where to save each download."
+why = "Perguntar evita arquivo baixado para lugar inesperado."
+label_key = "setting-browser-download-ask_each-label"
+help_key = "setting-browser-download-ask_each-help"
+
+[[setting]]
+key = "browser.zoom.default"
+module = "browser"
+group = "integrations"
+type = "number"
+default = 1.0
+min = 0.5
+max = 2.0
+step = 0.1
+label_pt = "Zoom padrão"
+label_en = "Default zoom"
+help_pt = "Zoom padrão das páginas."
+help_en = "Default page zoom."
+why = "100% mostra o site como foi desenhado."
+label_key = "setting-browser-zoom-default-label"
+help_key = "setting-browser-zoom-default-help"
+
+[[setting]]
+key = "browser.tabs.restore"
+module = "browser"
+group = "integrations"
+type = "toggle"
+default = true
+label_pt = "Restaurar páginas"
+label_en = "Restore pages"
+help_pt = "Reabre as páginas da última sessão."
+help_en = "Reopens pages from the last session."
+why = "Retomar as páginas abertas é o comportamento esperado de aba."
+label_key = "setting-browser-tabs-restore-label"
+help_key = "setting-browser-tabs-restore-help"
+
+[[setting]]
+key = "browser.auth.open_external"
+module = "browser"
+group = "integrations"
+type = "toggle"
+default = false
+label_pt = "Login no navegador do sistema"
+label_en = "Sign in with system browser"
+help_pt = "Abre fluxos de login no navegador do sistema."
+help_en = "Opens sign-in flows in the system browser."
+why = "Login no navegador do sistema evita copiar sessão para o app."
+label_key = "setting-browser-auth-open_external-label"
+help_key = "setting-browser-auth-open_external-help"
+
+[[setting]]
+key = "integrations.webhook.enabled"
+module = "integrations"
+group = "integrations"
+type = "toggle"
+default = false
+label_pt = "Webhook"
+label_en = "Webhook"
+help_pt = "Envia eventos da Forja para uma URL."
+help_en = "Sends Forja events to a URL."
+why = "Webhook é saída de dados; só liga com intenção explícita."
+label_key = "setting-integrations-webhook-enabled-label"
+help_key = "setting-integrations-webhook-enabled-help"
+
+[[setting]]
+key = "integrations.webhook.url"
+module = "integrations"
+group = "integrations"
+type = "text"
+default = ""
+hint = "https://"
+label_pt = "URL do webhook"
+label_en = "Webhook URL"
+help_pt = "URL que recebe os eventos do webhook."
+help_en = "URL that receives webhook events."
+why = "Vazio não envia nada; URL só existe quando o recurso é ligado."
+label_key = "setting-integrations-webhook-url-label"
+help_key = "setting-integrations-webhook-url-help"
+
+[[setting]]
+key = "integrations.webhook.events"
+module = "integrations"
+group = "integrations"
+type = "list"
+default = []
+item = "evento"
+label_pt = "Eventos do webhook"
+label_en = "Webhook events"
+help_pt = "Eventos enviados ao webhook."
+help_en = "Events sent to the webhook."
+why = "Lista vazia não envia nada; eventos são escolhidos um a um."
+label_key = "setting-integrations-webhook-events-label"
+help_key = "setting-integrations-webhook-events-help"
+
+[[setting]]
+key = "remote.ssh.enabled"
+module = "remote"
+group = "remote"
+type = "toggle"
+default = true
+label_pt = "SSH"
+label_en = "SSH"
+help_pt = "Liga o suporte a bancadas e terminais remotos por SSH."
+help_en = "Enables remote benches and terminals over SSH."
+why = "SSH é o caminho padrão para trabalhar em outra máquina."
+label_key = "setting-remote-ssh-enabled-label"
+help_key = "setting-remote-ssh-enabled-help"
+
+[[setting]]
+key = "remote.ssh.config_path"
+module = "remote"
+group = "remote"
+type = "path"
+default = "~/.ssh/config"
+hint = "arquivo"
+label_pt = "Arquivo de configuração SSH"
+label_en = "SSH config file"
+help_pt = "Arquivo de configuração SSH lido pela Forja."
+help_en = "SSH configuration file read by Forja."
+why = "Reaproveita hosts e chaves que o usuário já mantém."
+label_key = "setting-remote-ssh-config_path-label"
+help_key = "setting-remote-ssh-config_path-help"
+
+[[setting]]
+key = "remote.ssh.default_host"
+module = "remote"
+group = "remote"
+type = "text"
+default = ""
+hint = "host"
+label_pt = "Host SSH padrão"
+label_en = "Default SSH host"
+help_pt = "Host SSH sugerido ao abrir uma conexão."
+help_en = "SSH host suggested when opening a connection."
+why = "Vazio pergunta o host; não há servidor padrão da Forja."
+label_key = "setting-remote-ssh-default_host-label"
+help_key = "setting-remote-ssh-default_host-help"
+
+[[setting]]
+key = "remote.ssh.connect_timeout_s"
+module = "remote"
+group = "remote"
+type = "number"
+default = 20
+min = 5
+max = 120
+label_pt = "Tempo de conexão (s)"
+label_en = "Connection timeout (s)"
+help_pt = "Tempo máximo para estabelecer uma conexão SSH."
+help_en = "Maximum time to establish an SSH connection."
+why = "20 s cobre rede lenta sem parecer travado."
+label_key = "setting-remote-ssh-connect_timeout_s-label"
+help_key = "setting-remote-ssh-connect_timeout_s-help"
+
+[[setting]]
+key = "remote.ssh.keep_alive_s"
+module = "remote"
+group = "remote"
+type = "number"
+default = 30
+min = 0
+max = 300
+label_pt = "Keep-alive SSH (s)"
+label_en = "SSH keep-alive (s)"
+help_pt = "Intervalo de keep-alive da conexão SSH; 0 desliga."
+help_en = "SSH connection keep-alive interval; 0 disables."
+why = "30 s mantém a conexão viva atrás de NAT sem tráfego excessivo."
+label_key = "setting-remote-ssh-keep_alive_s-label"
+help_key = "setting-remote-ssh-keep_alive_s-help"
+
+[[setting]]
+key = "remote.ssh.reuse_connections"
+module = "remote"
+group = "remote"
+type = "toggle"
+default = true
+label_pt = "Reutilizar conexões"
+label_en = "Reuse connections"
+help_pt = "Reaproveita conexões SSH abertas."
+help_en = "Reuses open SSH connections."
+why = "Reutilizar conexão reduz latência e novas autenticações."
+label_key = "setting-remote-ssh-reuse_connections-label"
+help_key = "setting-remote-ssh-reuse_connections-help"
+
+[[setting]]
+key = "remote.ssh.agent_forward"
+module = "remote"
+group = "remote"
+type = "toggle"
+default = false
+label_pt = "Encaminhar agente SSH"
+label_en = "Forward SSH agent"
+help_pt = "Encaminha o agente SSH para a máquina remota."
+help_en = "Forwards the SSH agent to the remote machine."
+why = "Encaminhar o agente expõe chaves à máquina remota; opt-in."
+label_key = "setting-remote-ssh-agent_forward-label"
+help_key = "setting-remote-ssh-agent_forward-help"
+
+[[setting]]
+key = "remote.ssh.host_key_policy"
+module = "remote"
+group = "remote"
+type = "choice"
+default = "ask"
+options = ["strict", "ask", "accept_new"]
+label_pt = "Validar chave do host"
+label_en = "Host key policy"
+help_pt = "Como validar a chave do host SSH."
+help_en = "How to validate the SSH host key."
+why = "Perguntar na primeira conexão equilibra segurança e uso."
+label_key = "setting-remote-ssh-host_key_policy-label"
+help_key = "setting-remote-ssh-host_key_policy-help"
+
+[[setting]]
+key = "remote.wsl.default_distro"
+module = "remote"
+group = "remote"
+type = "text"
+default = ""
+hint = "distro"
+label_pt = "Distribuição WSL padrão"
+label_en = "Default WSL distro"
+help_pt = "Distribuição WSL usada por padrão."
+help_en = "WSL distribution used by default."
+why = "Vazio usa a distro padrão do WSL."
+label_key = "setting-remote-wsl-default_distro-label"
+help_key = "setting-remote-wsl-default_distro-help"
+
+[[setting]]
+key = "remote.wsl.default_user"
+module = "remote"
+group = "remote"
+type = "text"
+default = ""
+hint = "usuário"
+label_pt = "Usuário WSL padrão"
+label_en = "Default WSL user"
+help_pt = "Usuário WSL usado por padrão."
+help_en = "WSL user used by default."
+why = "Vazio usa o usuário padrão da distro."
+label_key = "setting-remote-wsl-default_user-label"
+help_key = "setting-remote-wsl-default_user-help"
+
+[[setting]]
+key = "remote.sync.mode"
+deferred = "Aguardando contrato de sincronização de arquivos com bancada remota; o módulo ainda não sincroniza arquivos."
+module = "remote"
+group = "remote"
+type = "choice"
+default = "manual"
+options = ["manual", "push", "pull"]
+label_pt = "Sincronização remota"
+label_en = "Remote sync"
+help_pt = "Como arquivos são sincronizados com uma bancada remota."
+help_en = "How files are synced to a remote bench."
+why = "Manual evita sobrescrever trabalho remoto ou local sem intenção."
+label_key = "setting-remote-sync-mode-label"
+help_key = "setting-remote-sync-mode-help"
+
+[[setting]]
+key = "remote.forward.mode"
+module = "remote"
+group = "remote"
+type = "choice"
+default = "ask"
+options = ["ask", "auto", "off"]
+label_pt = "Encaminhamento de portas"
+label_en = "Port forwarding"
+help_pt = "Como portas detectadas numa sessão remota são encaminhadas."
+help_en = "How ports detected in a remote session are forwarded."
+why = "Perguntar evita abrir porta sem intenção."
+label_key = "setting-remote-forward-mode-label"
+help_key = "setting-remote-forward-mode-help"
+
+[[setting]]
+key = "remote.latency.warning_ms"
+module = "remote"
+group = "remote"
+type = "number"
+default = 300
+min = 50
+max = 2000
+label_pt = "Aviso de latência (ms)"
+label_en = "Latency warning (ms)"
+help_pt = "Avisa quando a latência da conexão passa desse valor."
+help_en = "Warns when connection latency exceeds this value."
+why = "300 ms é o ponto em que digitar em terminal remoto começa a incomodar."
+label_key = "setting-remote-latency-warning_ms-label"
+help_key = "setting-remote-latency-warning_ms-help"
+
+[[setting]]
+key = "extension.mode.enabled"
+module = "extension"
+group = "extensions"
+type = "toggle"
+default = true
+label_pt = "Extensões"
+label_en = "Extensions"
+help_pt = "Liga o carregamento de extensões."
+help_en = "Enables extension loading."
+why = "Extensões são parte do produto e começam disponíveis."
+label_key = "setting-extension-mode-enabled-label"
+help_key = "setting-extension-mode-enabled-help"
+
+[[setting]]
+key = "extension.sandbox.mode"
+module = "extension"
+group = "extensions"
+type = "choice"
+default = "strict"
+options = ["strict", "ask"]
+label_pt = "Isolamento"
+label_en = "Sandbox"
+help_pt = "Estrito usa só o que foi aprovado na instalação; perguntar abre uma aprovação em tempo de execução."
+help_en = "Strict uses only what was approved at install; ask prompts at runtime."
+why = "Estrito é o padrão: a extensão só alcança o que pediu e foi aprovado."
+label_key = "setting-extension-sandbox-mode-label"
+help_key = "setting-extension-sandbox-mode-help"
+
+[[setting]]
+key = "extension.update.check"
+module = "extension"
+group = "extensions"
+type = "choice"
+default = "weekly"
+options = ["never", "daily", "weekly"]
+label_pt = "Verificar atualizações"
+label_en = "Check for updates"
+help_pt = "Frequência de verificação de atualizações de extensões."
+help_en = "How often extension updates are checked."
+why = "Semanal encontra correção sem consultar a rede todo dia."
+label_key = "setting-extension-update-check-label"
+help_key = "setting-extension-update-check-help"
+
+[[setting]]
+key = "extension.update.auto"
+module = "extension"
+group = "extensions"
+type = "toggle"
+default = false
+label_pt = "Atualizar automaticamente"
+label_en = "Auto-update"
+help_pt = "Atualiza extensões automaticamente."
+help_en = "Updates extensions automatically."
+why = "Atualizar sozinho pode mudar comportamento no meio do trabalho."
+label_key = "setting-extension-update-auto-label"
+help_key = "setting-extension-update-auto-help"
+
+[[setting]]
+key = "extension.lua.memory_mb"
+module = "extension"
+group = "extensions"
+type = "number"
+default = 64
+min = 8
+max = 512
+label_pt = "Memória por extensão (MB)"
+label_en = "Memory per extension (MB)"
+help_pt = "Memória máxima de uma extensão Lua."
+help_en = "Maximum memory for a Lua extension."
+why = "64 MB cobre automação de texto e impede uma extensão de engolir a máquina."
+label_key = "setting-extension-lua-memory_mb-label"
+help_key = "setting-extension-lua-memory_mb-help"
+
+[[setting]]
+key = "extension.lua.timeout_ms"
+module = "extension"
+group = "extensions"
+type = "number"
+default = 1000
+min = 100
+max = 10000
+label_pt = "Tempo máximo Lua (ms)"
+label_en = "Lua timeout (ms)"
+help_pt = "Tempo máximo de execução de um trecho Lua."
+help_en = "Maximum execution time for a Lua chunk."
+why = "1 s evita extensão travada bloquear a interface."
+label_key = "setting-extension-lua-timeout_ms-label"
+help_key = "setting-extension-lua-timeout_ms-help"
+
+[[setting]]
+key = "extension.fs.allow_outside_project"
+module = "extension"
+group = "extensions"
+type = "toggle"
+default = false
+label_pt = "Permitir pedido fora do projeto"
+label_en = "Allow outside-project requests"
+help_pt = "Permite que uma extensão peça acesso fora do projeto; a aprovação continua por extensão."
+help_en = "Allows an extension to request access outside the project; approval stays per extension."
+why = "Fora do projeto é onde ficam configs de outros apps; a capacidade é pedida e aprovada caso a caso."
+label_key = "setting-extension-fs-allow_outside_project-label"
+help_key = "setting-extension-fs-allow_outside_project-help"
+
+[[setting]]
+key = "extension.network.allow"
+module = "extension"
+group = "extensions"
+type = "toggle"
+default = false
+label_pt = "Permitir pedido de rede"
+label_en = "Allow network requests"
+help_pt = "Permite que uma extensão peça acesso à rede; a aprovação continua por extensão."
+help_en = "Allows an extension to request network access; approval stays per extension."
+why = "Rede não é necessária para a maioria das extensões."
+label_key = "setting-extension-network-allow-label"
+help_key = "setting-extension-network-allow-help"
+
+[[setting]]
+key = "extension.process.allow_spawn"
+module = "extension"
+group = "extensions"
+type = "toggle"
+default = false
+label_pt = "Permitir pedido de processo"
+label_en = "Allow process requests"
+help_pt = "Permite que uma extensão peça para criar processos; a aprovação continua por extensão."
+help_en = "Allows an extension to request process creation; approval stays per extension."
+why = "Criar processos é a capacidade mais perigosa e fica desligada."
+label_key = "setting-extension-process-allow_spawn-label"
+help_key = "setting-extension-process-allow_spawn-help"
+
+[[setting]]
+key = "extension.log.level"
+module = "extension"
+group = "extensions"
+type = "choice"
+default = "warn"
+options = ["error", "warn", "info", "debug"]
+label_pt = "Nível de log"
+label_en = "Log level"
+help_pt = "Nível de log das extensões."
+help_en = "Extension log level."
+why = "Warn mostra problema real sem afogar em detalhe."
+label_key = "setting-extension-log-level-label"
+help_key = "setting-extension-log-level-help"
+
+[[setting]]
+key = "extension.dev.watch"
+module = "extension"
+group = "extensions"
+type = "toggle"
+default = false
+label_pt = "Recarregar ao editar"
+label_en = "Reload on edit"
+help_pt = "Recarrega extensões ao detectar mudança nos arquivos."
+help_en = "Reloads extensions when files change."
+why = "Recarregar a cada arquivo é útil só enquanto se desenvolve uma extensão."
+label_key = "setting-extension-dev-watch-label"
+help_key = "setting-extension-dev-watch-help"
+
+[[setting]]
+key = "content.reload.watch"
+module = "content"
+group = "extensions"
+type = "toggle"
+default = true
+label_pt = "Recarregar conteúdo ao editar"
+label_en = "Reload content on edit"
+help_pt = "Recarrega comandos, temas, atalhos e receitas quando os arquivos mudam."
+help_en = "Reloads commands, themes, keymaps and recipes when files change."
+why = "Editar arquivo e ver o efeito na hora é o ciclo que torna a Forja extensível sem compilar."
+label_key = "setting-content-reload-watch-label"
+help_key = "setting-content-reload-watch-help"
+
+[[setting]]
+key = "content.trust.review_on_change"
+module = "content"
+group = "extensions"
+type = "toggle"
+default = true
+label_pt = "Pedir nova confirmação ao mudar item de risco"
+label_en = "Ask again when a risky item changes"
+help_pt = "Pede nova confirmação de uma pasta .forja do projeto quando receita ou perfil com permissão ampla muda."
+help_en = "Asks again to trust a project .forja folder when a recipe or a broad-permission profile changes."
+why = "Conteúdo de repositório pode mudar depois da confirmação; mudança de item de risco pede nova decisão."
+label_key = "setting-content-trust-review_on_change-label"
+help_key = "setting-content-trust-review_on_change-help"
+
+[[setting]]
+key = "privacy.history.enabled"
+module = "privacy"
+group = "privacy"
+type = "toggle"
+default = true
+label_pt = "Histórico local"
+label_en = "Local history"
+help_pt = "Guarda histórico local de edições e navegação."
+help_en = "Stores local history of edits and browsing."
+why = "Histórico local ajuda a voltar atrás sem depender de nuvem."
+label_key = "setting-privacy-history-enabled-label"
+help_key = "setting-privacy-history-enabled-help"
+
+[[setting]]
+key = "privacy.history.retention_days"
+module = "privacy"
+group = "privacy"
+type = "number"
+default = 180
+min = 0
+max = 3650
+label_pt = "Retenção do histórico (dias)"
+label_en = "History retention (days)"
+help_pt = "Tempo de retenção do histórico local; 0 mantém para sempre."
+help_en = "Local history retention; 0 keeps it forever."
+why = "Meio ano cobre retomada de projeto sem crescer para sempre."
+label_key = "setting-privacy-history-retention_days-label"
+help_key = "setting-privacy-history-retention_days-help"
+
+[[setting]]
+key = "privacy.clipboard.clear_after_s"
+module = "privacy"
+group = "privacy"
+type = "number"
+default = 0
+min = 0
+max = 300
+label_pt = "Limpar área de transferência (s)"
+label_en = "Clear clipboard (s)"
+help_pt = "Limpa a área de transferência depois desse tempo; 0 desliga."
+help_en = "Clears the clipboard after this time; 0 disables."
+why = "0 desliga; limpar a área de transferência é preferência de segurança."
+label_key = "setting-privacy-clipboard-clear_after_s-label"
+help_key = "setting-privacy-clipboard-clear_after_s-help"
+
+[[setting]]
+key = "privacy.logs.redact_secrets"
+module = "privacy"
+group = "privacy"
+type = "toggle"
+default = true
+label_pt = "Ocultar segredos nos logs"
+label_en = "Redact secrets in logs"
+help_pt = "Remove tokens e senhas dos logs."
+help_en = "Removes tokens and passwords from logs."
+why = "Log não deve virar vazamento de token."
+label_key = "setting-privacy-logs-redact_secrets-label"
+help_key = "setting-privacy-logs-redact_secrets-help"
+
+[[setting]]
+key = "privacy.secrets.backend"
+module = "privacy"
+group = "privacy"
+type = "choice"
+default = "credential_manager"
+options = ["credential_manager", "file"]
+label_pt = "Cofre de segredos"
+label_en = "Secrets vault"
+help_pt = "Onde os segredos são guardados."
+help_en = "Where secrets are stored."
+why = "O cofre do Windows é o lugar certo para segredo."
+label_key = "setting-privacy-secrets-backend-label"
+help_key = "setting-privacy-secrets-backend-help"
+
+[[setting]]
+key = "privacy.secrets.lock_on_idle_min"
+module = "privacy"
+group = "privacy"
+type = "number"
+default = 15
+min = 0
+max = 120
+label_pt = "Bloquear cofre após (min)"
+label_en = "Lock vault after (min)"
+help_pt = "Bloqueia o cofre após inatividade; 0 desliga."
+help_en = "Locks the vault after inactivity; 0 disables."
+why = "15 min reduz a janela de cofre aberto sem irritar."
+label_key = "setting-privacy-secrets-lock_on_idle_min-label"
+help_key = "setting-privacy-secrets-lock_on_idle_min-help"
+
+[[setting]]
+key = "privacy.usage.local_only"
+module = "privacy"
+group = "privacy"
+type = "toggle"
+default = true
+label_pt = "Uso só nesta máquina"
+label_en = "Usage local only"
+help_pt = "Mantém o registro de uso apenas nesta máquina."
+help_en = "Keeps usage records on this machine only."
+why = "Dados de uso são locais, como o resto do produto."
+label_key = "setting-privacy-usage-local_only-label"
+help_key = "setting-privacy-usage-local_only-help"
+
+[[setting]]
+key = "privacy.assistant.share_workspace"
+module = "privacy"
+group = "privacy"
+type = "choice"
+default = "ask"
+options = ["ask", "always", "never"]
+label_pt = "Compartilhar com ajudante"
+label_en = "Share with helper"
+help_pt = "Define o que é enviado ao ajudante quando ele pede contexto."
+help_en = "Defines what is sent to the helper when it asks for context."
+why = "Compartilhar arquivo com modelo é decisão do usuário, não padrão."
+label_key = "setting-privacy-assistant-share_workspace-label"
+help_key = "setting-privacy-assistant-share_workspace-help"
+
+[[setting]]
+key = "privacy.browser.clear_on_exit"
+module = "privacy"
+group = "privacy"
+type = "toggle"
+default = false
+label_pt = "Limpar navegador ao sair"
+label_en = "Clear browser on exit"
+help_pt = "Limpa cookies e cache ao fechar o navegador."
+help_en = "Clears cookies and cache when closing the browser."
+why = "Limpar tudo ao sair apaga logins que o usuário quer manter."
+label_key = "setting-privacy-browser-clear_on_exit-label"
+help_key = "setting-privacy-browser-clear_on_exit-help"
+
+[[setting]]
+key = "privacy.browser.cookies_days"
+module = "privacy"
+group = "privacy"
+type = "number"
+default = 30
+min = 0
+max = 365
+label_pt = "Retenção de cookies (dias)"
+label_en = "Cookie retention (days)"
+help_pt = "Retenção de cookies do navegador; 0 mantém apenas a sessão."
+help_en = "Browser cookie retention; 0 keeps session cookies only."
+why = "30 dias cobre sessões de trabalho sem guardar rastreador para sempre."
+label_key = "setting-privacy-browser-cookies_days-label"
+help_key = "setting-privacy-browser-cookies_days-help"
+
+[[setting]]
+key = "network.proxy.mode"
+module = "network"
+group = "privacy"
+type = "choice"
+default = "system"
+options = ["system", "none", "manual"]
+label_pt = "Proxy"
+label_en = "Proxy"
+help_pt = "Como a Forja escolhe o proxy de rede."
+help_en = "How Forja chooses the network proxy."
+why = "System respeita o proxy corporativo sem configuração extra."
+label_key = "setting-network-proxy-mode-label"
+help_key = "setting-network-proxy-mode-help"
+
+[[setting]]
+key = "network.proxy.url"
+module = "network"
+group = "privacy"
+type = "text"
+default = ""
+hint = "http://host:porta"
+label_pt = "URL do proxy"
+label_en = "Proxy URL"
+help_pt = "Endereço do proxy manual."
+help_en = "Manual proxy address."
+why = "Vazio só é válido no modo manual com URL preenchida."
+label_key = "setting-network-proxy-url-label"
+help_key = "setting-network-proxy-url-help"
+
+[[setting]]
+key = "network.proxy.bypass"
+module = "network"
+group = "privacy"
+type = "list"
+default = ["localhost", "127.0.0.1"]
+item = "host"
+label_pt = "Hosts sem proxy"
+label_en = "Proxy bypass"
+help_pt = "Hosts que ignoram o proxy."
+help_en = "Hosts that bypass the proxy."
+why = "Serviços locais não devem passar pelo proxy."
+label_key = "setting-network-proxy-bypass-label"
+help_key = "setting-network-proxy-bypass-help"
+
+[[setting]]
+key = "network.proxy.auth"
+module = "network"
+group = "privacy"
+type = "choice"
+default = "none"
+options = ["none", "basic", "ntlm"]
+label_pt = "Autenticação do proxy"
+label_en = "Proxy authentication"
+help_pt = "Tipo de autenticação do proxy."
+help_en = "Proxy authentication type."
+why = "Sem autenticação é o padrão; o modo depende da rede."
+label_key = "setting-network-proxy-auth-label"
+help_key = "setting-network-proxy-auth-help"
+
+[[setting]]
+key = "network.tls.verify"
+module = "network"
+group = "privacy"
+type = "toggle"
+default = true
+label_pt = "Verificar TLS"
+label_en = "Verify TLS"
+help_pt = "Verifica certificados TLS nas conexões."
+help_en = "Verifies TLS certificates on connections."
+why = "Desligar verificação de TLS não é uma opção de conveniência."
+label_key = "setting-network-tls-verify-label"
+help_key = "setting-network-tls-verify-help"
+
+[[setting]]
+key = "network.http.timeout_s"
+module = "network"
+group = "privacy"
+type = "number"
+default = 30
+min = 5
+max = 120
+label_pt = "Tempo limite de rede (s)"
+label_en = "Network timeout (s)"
+help_pt = "Tempo máximo de uma requisição de rede."
+help_en = "Maximum time for a network request."
+why = "30 s cobre rede lenta sem segurar a interface."
+label_key = "setting-network-http-timeout_s-label"
+help_key = "setting-network-http-timeout_s-help"
+
+[[setting]]
+key = "network.mode.offline"
+module = "network"
+group = "privacy"
+type = "toggle"
+default = false
+label_pt = "Modo offline"
+label_en = "Offline mode"
+help_pt = "Bloqueia todo acesso de rede da Forja."
+help_en = "Blocks all Forja network access."
+why = "Offline é um modo explícito para trabalhar sem rede."
+label_key = "setting-network-mode-offline-label"
+help_key = "setting-network-mode-offline-help"
+
+[[setting]]
+key = "anvil.history.limit"
+module = "anvil"
+group = "advanced"
+type = "number"
+default = 100
+min = 10
+max = 1000
+label_pt = "Histórico da Bigorna"
+label_en = "Anvil history"
+help_pt = "Quantos comandos ficam no histórico da Bigorna."
+help_en = "How many commands stay in the Anvil history."
+why = "100 comandos recentes cobrem o dia sem virar um diário."
+label_key = "setting-anvil-history-limit-label"
+help_key = "setting-anvil-history-limit-help"
+
+[[setting]]
+key = "anvil.history.show_recent"
+module = "anvil"
+group = "advanced"
+type = "toggle"
+default = true
+label_pt = "Mostrar recentes"
+label_en = "Show recent"
+help_pt = "Mostra comandos recentes ao abrir a Bigorna."
+help_en = "Shows recent commands when the Anvil opens."
+why = "Recentes são o atalho mais usado na paleta."
+label_key = "setting-anvil-history-show_recent-label"
+help_key = "setting-anvil-history-show_recent-help"
+
+[[setting]]
+key = "keymap.file.custom_path"
+module = "keymap"
+group = "advanced"
+type = "path"
+default = "~/.forja/atalhos.toml"
+hint = "arquivo"
+label_pt = "Arquivo de atalhos"
+label_en = "Keymap file"
+help_pt = "Arquivo de atalhos personalizados."
+help_en = "Custom keymap file."
+why = "Um arquivo de texto editável por pessoa e por modelo."
+label_key = "setting-keymap-file-custom_path-label"
+help_key = "setting-keymap-file-custom_path-help"
+
+[[setting]]
+key = "keymap.conflict.policy"
+module = "keymap"
+group = "advanced"
+type = "choice"
+default = "warn"
+options = ["warn", "block"]
+label_pt = "Conflito de atalho"
+label_en = "Shortcut conflict"
+help_pt = "O que fazer quando um atalho personalizado conflita."
+help_en = "What to do when a custom shortcut conflicts."
+why = "Avisar ensina; bloquear protege quem já tem atalhos demais."
+label_key = "setting-keymap-conflict-policy-label"
+help_key = "setting-keymap-conflict-policy-help"
+
+[[setting]]
+key = "app.startup.open_last"
+deferred = "Aguardando política de restauração na inicialização de projetos e bancadas."
+module = "app"
+group = "advanced"
+type = "toggle"
+default = true
+label_pt = "Abrir último projeto"
+label_en = "Open last project"
+help_pt = "Abre o último projeto ao iniciar a Forja."
+help_en = "Opens the last project when Forja starts."
+why = "Retomar o último projeto é o fluxo de quem trabalha todo dia."
+label_key = "setting-app-startup-open_last-label"
+help_key = "setting-app-startup-open_last-help"
+
+[[setting]]
+key = "app.close.confirm"
+deferred = "Aguardando contrato agregado de trabalho em andamento para confirmação ao fechar."
+module = "app"
+group = "advanced"
+type = "toggle"
+default = true
+label_pt = "Confirmar ao fechar"
+label_en = "Confirm on close"
+help_pt = "Pede confirmação ao fechar com trabalho em andamento."
+help_en = "Asks before closing with work in progress."
+why = "Fechar com ajudante ou rotina ativa não pode ser silencioso."
+label_key = "setting-app-close-confirm-label"
+help_key = "setting-app-close-confirm-help"
+
+[[setting]]
+key = "app.tray.enabled"
+module = "app"
+group = "advanced"
+type = "toggle"
+default = false
+label_pt = "Bandeja do Windows"
+label_en = "Windows tray"
+help_pt = "Mantém a Forja na bandeja do Windows."
+help_en = "Keeps Forja in the Windows tray."
+why = "Bandeja é opcional; fechar deve fechar, não esconder."
+label_key = "setting-app-tray-enabled-label"
+help_key = "setting-app-tray-enabled-help"
+
+[[setting]]
+key = "app.cli.enabled"
+deferred = "Aguardando ciclo de vida cancelável do servidor RPC local."
+module = "app"
+group = "advanced"
+type = "toggle"
+default = true
+label_pt = "CLI e RPC local"
+label_en = "Local CLI and RPC"
+help_pt = "Liga o servidor local do CLI e do RPC."
+help_en = "Enables the local CLI and RPC server."
+why = "O CLI forja é a interface dos modelos e da automação."
+label_key = "setting-app-cli-enabled-label"
+help_key = "setting-app-cli-enabled-help"
+
+[[setting]]
+key = "app.storage.data_dir"
+deferred = "Aguardando configuração de bootstrap do diretório de dados no kernel."
+module = "app"
+group = "advanced"
+type = "path"
+default = "%APPDATA%\\Forja"
+hint = "pasta"
+label_pt = "Pasta de estado"
+label_en = "State folder"
+help_pt = "Pasta de estado, configurações e bancadas; exige reinício."
+help_en = "Folder for state, settings and benches; requires restart."
+why = "A pasta de estado do usuário é o lugar padrão no Windows."
+label_key = "setting-app-storage-data_dir-label"
+help_key = "setting-app-storage-data_dir-help"
+restart = true
+
+[[setting]]
+key = "app.storage.content_dir"
+deferred = "Aguardando configuração de bootstrap do diretório de conteúdo no kernel."
+module = "app"
+group = "advanced"
+type = "path"
+default = "~/.forja"
+hint = "pasta"
+label_pt = "Pasta de conteúdo"
+label_en = "Content folder"
+help_pt = "Pasta de comandos, perfis, temas e atalhos; exige reinício."
+help_en = "Folder for commands, profiles, themes and shortcuts; requires restart."
+why = "Conteúdo autoral do usuário fica separado do estado da máquina."
+label_key = "setting-app-storage-content_dir-label"
+help_key = "setting-app-storage-content_dir-help"
+restart = true
+
+[[setting]]
+key = "app.storage.cleanup_days"
+deferred = "Aguardando contrato de retenção e limpeza dos caches de módulos."
+module = "app"
+group = "advanced"
+type = "number"
+default = 30
+min = 0
+max = 365
+label_pt = "Limpeza de cache (dias)"
+label_en = "Cache cleanup (days)"
+help_pt = "Remove cache antigo após esse prazo; 0 desliga."
+help_en = "Removes old cache after this period; 0 disables."
+why = "30 dias limpa cache e logs antigos sem tocar em trabalho."
+label_key = "setting-app-storage-cleanup_days-label"
+help_key = "setting-app-storage-cleanup_days-help"
+
+[[setting]]
+key = "update.channel.name"
+module = "update"
+group = "advanced"
+type = "choice"
+default = "stable"
+options = ["stable", "beta"]
+label_pt = "Canal de atualização"
+label_en = "Update channel"
+help_pt = "Canal de atualizações do app."
+help_en = "App update channel."
+why = "Stable é o padrão; beta é para quem quer testar antes."
+label_key = "setting-update-channel-name-label"
+help_key = "setting-update-channel-name-help"
+
+[[setting]]
+key = "update.check.frequency"
+module = "update"
+group = "advanced"
+type = "choice"
+default = "daily"
+options = ["startup", "daily", "weekly", "never"]
+label_pt = "Verificar atualizações"
+label_en = "Check for updates"
+help_pt = "Frequência de verificação de atualização do app."
+help_en = "How often app updates are checked."
+why = "Diário encontra correção sem consultar a rede a cada abertura."
+label_key = "setting-update-check-frequency-label"
+help_key = "setting-update-check-frequency-help"
+
+[[setting]]
+key = "update.download.auto"
+module = "update"
+group = "advanced"
+type = "toggle"
+default = true
+label_pt = "Baixar atualizações"
+label_en = "Download updates"
+help_pt = "Baixa atualizações automaticamente, sem instalar."
+help_en = "Downloads updates automatically without installing."
+why = "Baixar em segundo plano deixa a instalação rápida e reversível."
+label_key = "setting-update-download-auto-label"
+help_key = "setting-update-download-auto-help"
+
+[[setting]]
+key = "app.log.level"
+deferred = "Aguardando serviço de log configurável da aplicação."
+module = "app"
+group = "advanced"
+type = "choice"
+default = "info"
+options = ["error", "warn", "info", "debug", "trace"]
+label_pt = "Nível de log"
+label_en = "Log level"
+help_pt = "Nível de detalhe do log do app."
+help_en = "App log detail level."
+why = "Info registra o suficiente para suporte sem inundar o disco."
+label_key = "setting-app-log-level-label"
+help_key = "setting-app-log-level-help"
+
+[[setting]]
+key = "app.log.max_mb"
+deferred = "Aguardando serviço de log com rotação por tamanho."
+module = "app"
+group = "advanced"
+type = "number"
+default = 20
+min = 1
+max = 100
+label_pt = "Tamanho do log (MB)"
+label_en = "Log size (MB)"
+help_pt = "Tamanho máximo de cada arquivo de log."
+help_en = "Maximum size of each log file."
+why = "20 MB por arquivo mantém histórico útil sem crescer sem limite."
+label_key = "setting-app-log-max_mb-label"
+help_key = "setting-app-log-max_mb-help"
+
+[[setting]]
+key = "app.log.keep"
+deferred = "Aguardando serviço de log com retenção de arquivos."
+module = "app"
+group = "advanced"
+type = "number"
+default = 5
+min = 1
+max = 20
+label_pt = "Arquivos de log mantidos"
+label_en = "Log files kept"
+help_pt = "Quantos arquivos de log são mantidos."
+help_en = "How many log files are kept."
+why = "5 arquivos cobrem uma semana de uso normal."
+label_key = "setting-app-log-keep-label"
+help_key = "setting-app-log-keep-help"
+
+[[setting]]
+key = "app.log.include_terminal_output"
+deferred = "Aguardando integração explícita e controlada da saída de terminal ao log."
+module = "app"
+group = "advanced"
+type = "toggle"
+default = false
+label_pt = "Incluir saída do terminal"
+label_en = "Include terminal output"
+help_pt = "Inclui a saída do terminal nos logs."
+help_en = "Includes terminal output in logs."
+why = "Saída de terminal pode conter segredo; não vai para o log por padrão."
+label_key = "setting-app-log-include_terminal_output-label"
+help_key = "setting-app-log-include_terminal_output-help"
+
+[[setting]]
+key = "app.performance.max_fps"
+deferred = "Aguardando limitador de quadros no ciclo de janela."
+module = "app"
+group = "advanced"
+type = "number"
+default = 60
+min = 30
+max = 240
+label_pt = "Quadros por segundo"
+label_en = "Frames per second"
+help_pt = "Limite de quadros por segundo da interface."
+help_en = "Interface frame rate limit."
+why = "60 fps é fluido e economiza bateria."
+label_key = "setting-app-performance-max_fps-label"
+help_key = "setting-app-performance-max_fps-help"
+
+[[setting]]
+key = "app.performance.worker_threads"
+deferred = "Aguardando configuração de bootstrap do executor de tarefas do kernel."
+module = "app"
+group = "advanced"
+type = "number"
+default = 0
+min = 0
+max = 32
+label_pt = "Threads de trabalho"
+label_en = "Worker threads"
+help_pt = "Threads para tarefas de disco; 0 é automático."
+help_en = "Threads for disk tasks; 0 is automatic."
+why = "0 deixa o sistema escolher o número certo de núcleos."
+label_key = "setting-app-performance-worker_threads-label"
+help_key = "setting-app-performance-worker_threads-help"
+restart = true
+
+[[setting]]
+key = "app.dev.mode"
+deferred = "Aguardando ferramentas internas e painel de diagnóstico."
+module = "app"
+group = "advanced"
+type = "toggle"
+default = false
+label_pt = "Modo de desenvolvimento"
+label_en = "Development mode"
+help_pt = "Liga ferramentas internas e o painel de diagnóstico."
+help_en = "Enables internal tools and the diagnostics panel."
+why = "Modo de desenvolvimento expõe ferramentas internas; desligado por padrão."
+label_key = "setting-app-dev-mode-label"
+help_key = "setting-app-dev-mode-help"
+
+[[setting]]
+key = "ports.scan.interval_s"
+module = "ports"
+group = "advanced"
+type = "number"
+default = 30
+min = 0
+max = 600
+label_pt = "Varredura de portas (s)"
+label_en = "Port scan (s)"
+help_pt = "Intervalo da varredura de portas em segundo plano; 0 desliga."
+help_en = "Background port scan interval; 0 disables."
+why = "30 s mostra um servidor recém-aberto sem varrer o sistema o tempo todo."
+label_key = "setting-ports-scan-interval_s-label"
+help_key = "setting-ports-scan-interval_s-help"
+
+[[setting]]
+key = "ports.confirm.kill"
+module = "ports"
+group = "advanced"
+type = "toggle"
+default = true
+label_pt = "Confirmar encerramento"
+label_en = "Confirm process termination"
+help_pt = "Pede confirmação antes de encerrar o processo de uma porta."
+help_en = "Asks before terminating the process behind a port."
+why = "Um PID pode ser o terminal do próprio trabalho; confirmar evita perder estado."
+label_key = "setting-ports-confirm-kill-label"
+help_key = "setting-ports-confirm-kill-help"
+
+[[setting]]
+key = "onboarding.projects.dir"
+module = "onboarding"
+group = "advanced"
+type = "path"
+default = ""
+label_pt = "Pasta de projetos"
+label_en = "Project folder"
+help_pt = "Pasta onde você guarda os projetos que a Forja deve conhecer."
+help_en = "Folder where you keep the projects Forja should know about."
+why = "Define a pasta padrão sugerida no assistente inicial."
+label_key = "setting-onboarding-projects-dir-label"
+help_key = "setting-onboarding-projects-dir-help"

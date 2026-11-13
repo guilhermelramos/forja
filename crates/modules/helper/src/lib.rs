@@ -1,0 +1,779 @@
+//! Módulo `helper` da Forja: perfis, detecção, início e status dos ajudantes.
+//!
+//! O módulo não importa o crate do terminal: fala com ele por `terminal.open`,
+//! `terminal.send`, `terminal.read` e pelos eventos de contrato. Sem o módulo
+//! terminal, o launch falha com uma mensagem clara e o resto continua de pé.
+
+mod commands;
+mod detect;
+mod hooks;
+mod launch;
+mod picker;
+mod profile;
+mod profile_data;
+mod rpc;
+mod status;
+mod store;
+mod views;
+
+#[cfg(test)]
+mod conpty_test;
+
+use forja_contracts::names;
+use forja_contracts::{
+    HelperStatus, HelperStatusChanged, TerminalBell, TerminalCommandFinished, TerminalExited,
+    TerminalTitleChanged,
+};
+use forja_kernel::{
+    Module, ModuleManifest, Registrar, SettingKind, SettingSpec, SettingValue, Slot,
+};
+use std::collections::BTreeMap;
+use std::sync::{Arc, Mutex};
+use views::{HelperPage, HelperSettings};
+use windows_sys::Win32::System::Power::{
+    SetThreadExecutionState, ES_CONTINUOUS, ES_SYSTEM_REQUIRED,
+};
+
+/// Ponteiro compartilhado para o estado do módulo.
+pub(crate) type Shared = Arc<Core>;
+
+/// Estado global do módulo.
+pub struct Core {
+    /// Estado protegido por mutex.
+    pub state: Mutex<HelperState>,
+}
+
+impl Core {
+    fn new() -> Self {
+        Self {
+            state: Mutex::new(HelperState::default()),
+        }
+    }
+}
+
+/// Estado em memória.
+#[derive(Default)]
+pub struct HelperState {
+    /// Perfis carregados.
+    pub profiles: Vec<profile::Profile>,
+    /// Detecção por id.
+    pub detection: BTreeMap<String, detect::Detection>,
+    /// Runs ativos por id de terminal.
+    pub runs: BTreeMap<String, status::Run>,
+    /// Preferências e consentimentos persistidos.
+    pub file: store::HelperFile,
+    /// Bancada da última carga.
+    pub loaded_for: Option<std::path::PathBuf>,
+    /// Detecção em andamento.
+    pub detecting: bool,
+    /// O computador está sendo mantido acordado.
+    pub hook_results: BTreeMap<String, Result<hooks::HookStatus, String>>,
+    pub hook_busy: bool,
+    pub awake: bool,
+    /// A prévia de captura já foi semeada.
+    pub preview_seeded: bool,
+}
+
+impl HelperState {
+    /// Ajustes de um perfil.
+    pub fn overrides(&self, id: &str) -> launch::ProfileOverride {
+        self.file.profiles.get(id).cloned().unwrap_or_default()
+    }
+
+    /// Atualiza o estado de energia conforme existem runs ativos.
+    pub fn refresh_awake(&mut self) {
+        let active = self
+            .runs
+            .values()
+            .any(|run| !matches!(run.status, HelperStatus::Finished));
+        if active != self.awake {
+            self.awake = active;
+            set_awake(active);
+        }
+    }
+}
+
+impl Drop for HelperState {
+    fn drop(&mut self) {
+        if self.awake {
+            set_awake(false);
+        }
+    }
+}
+
+fn set_awake(enabled: bool) {
+    #[cfg(windows)]
+    unsafe {
+        SetThreadExecutionState(if enabled {
+            ES_CONTINUOUS | ES_SYSTEM_REQUIRED
+        } else {
+            ES_CONTINUOUS
+        });
+    }
+}
+
+#[forja_kernel::module]
+static HELPER: fn() -> Box<dyn Module> = || {
+    Box::new(HelperModule {
+        core: Arc::new(Core::new()),
+    })
+};
+
+/// Módulo helper.
+pub struct HelperModule {
+    core: Shared,
+}
+
+impl Module for HelperModule {
+    fn manifest(&self) -> ModuleManifest {
+        ModuleManifest::new("helper", "helper.name", env!("CARGO_PKG_VERSION"))
+    }
+
+    fn register(&mut self, r: &mut Registrar<'_>) {
+        r.i18n(include_str!("../i18n/en.ftl"), include_str!("../i18n/pt-BR.ftl"));
+        r.keymap(include_str!("../keymap.toml"));
+        register_settings(r);
+        commands::register(r, &self.core);
+        picker::register(r);
+        r.view(
+            forja_kernel::Slot::Modal,
+            picker::PICKER_VIEW,
+            "helper.profile-picker.title",
+            10,
+            {
+                let core = std::sync::Arc::clone(&self.core);
+                move || Box::new(picker::ProfilePicker::new(std::sync::Arc::clone(&core)))
+            },
+        );
+        rpc::register(r, &self.core);
+        register_events(r, &self.core);
+
+        for key in [
+            "helper.view.title",
+            "helper.view.empty",
+            "helper.view.active",
+            "helper.view.profiles",
+            "helper.view.launch",
+            "helper.view.select",
+            "helper.view.working",
+            "helper.view.needs-you",
+            "helper.view.finished",
+            "helper.view.idle",
+            "helper.view.unknown",
+            "helper.view.installed",
+            "helper.view.not-installed",
+            "helper.view.detect",
+            "helper.view.focus",
+            "helper.view.bench",
+            "helper.view.duration",
+            "helper.settings.title",
+            "helper.settings.profiles",
+            "helper.settings.enabled",
+            "helper.settings.command",
+            "helper.settings.extra-args",
+            "helper.settings.environment",
+            "helper.settings.hooks",
+            "helper.settings.hook-target",
+            "helper.settings.consent",
+            "helper.settings.install",
+            "helper.settings.remove",
+            "helper.settings.save",
+            "helper.settings.status.installed",
+            "helper.settings.status.partial",
+            "helper.settings.status.not-installed",
+            "helper.settings.status.unsupported",
+            "helper.settings.status.error",
+            "helper.settings.status.loading",
+            "helper.settings.preview-title",
+            "helper.settings.preview-body",
+            "helper.notice.terminal-missing",
+            "helper.notify.waiting-title",
+            "helper.notify.waiting-body",
+            "helper.notify.done-title",
+            "helper.notify.done-body",
+            "helper.profile-picker.empty",
+            "helper.profile-picker.cancel",
+            "helper.notify.error-title",
+            "helper.notify.error-body",
+        ] {
+            r.uses_i18n(key);
+        }
+
+        let page_core = Arc::clone(&self.core);
+        let page_order = if std::env::var_os("FORJA_HELPER_PREVIEW").is_some() {
+            1
+        } else {
+            30
+        };
+        r.view(
+            Slot::Rail,
+            "helper.tab",
+            "helper.view.title",
+            page_order,
+            move || Box::new(HelperPage::new(Arc::clone(&page_core))),
+        );
+        r.view_glyph("helper.tab", forja_ui_kit::HELPERS);
+        let settings_core = Arc::clone(&self.core);
+        r.view(
+            Slot::SettingsSection,
+            "helper.settings",
+            "helper.settings.title",
+            20,
+            move || Box::new(HelperSettings::new(Arc::clone(&settings_core))),
+        );
+    }
+}
+
+fn register_settings(r: &mut Registrar<'_>) {
+    let mut add = |key: &str, kind: SettingKind, default: SettingValue| {
+        r.setting(SettingSpec::new(
+            key,
+            kind,
+            default,
+            format!("setting-{}-label", key.replace('.', "-")),
+            format!("setting-{}-help", key.replace('.', "-")),
+        ));
+    };
+    add(
+        "helper.default.profile",
+        SettingKind::Choice {
+            options: [
+                "auto",
+                "aider",
+                "amp",
+                "antigravity",
+                "claude-code",
+                "cline",
+                "codex",
+                "continue",
+                "copilot",
+                "crush",
+                "cursor-agent",
+                "gemini",
+                "goose",
+                "kimi-code",
+                "kiro",
+                "opencode",
+                "qwen-code",
+            ]
+            .into_iter()
+            .map(str::to_owned)
+            .collect(),
+        },
+        SettingValue::Text("auto".to_owned()),
+    );
+    add(
+        "helper.default.permissions",
+        SettingKind::Choice {
+            options: ["ask", "accept_edits", "auto", "total"]
+                .into_iter()
+                .map(str::to_owned)
+                .collect(),
+        },
+        SettingValue::Text("ask".to_owned()),
+    );
+    add(
+        "helper.launch.auto_start",
+        SettingKind::Bool,
+        SettingValue::Bool(true),
+    );
+    add(
+        "helper.launch.mode",
+        SettingKind::Choice {
+            options: ["tui", "chat"]
+                .into_iter()
+                .map(str::to_owned)
+                .collect(),
+        },
+        SettingValue::Text("tui".to_owned()),
+    );
+    add(
+        "helper.monitor.idle_minutes",
+        SettingKind::Integer {
+            min: Some(1),
+            max: Some(120),
+        },
+        SettingValue::Integer(10),
+    );
+    add(
+        "helper.notifications.waiting",
+        SettingKind::Bool,
+        SettingValue::Bool(true),
+    );
+    add(
+        "helper.notifications.done",
+        SettingKind::Bool,
+        SettingValue::Bool(true),
+    );
+    add(
+        "helper.notifications.error",
+        SettingKind::Bool,
+        SettingValue::Bool(true),
+    );
+    add(
+        "helper.sessions.keep_transcripts",
+        SettingKind::Bool,
+        SettingValue::Bool(true),
+    );
+    add(
+        "helper.hooks.enabled",
+        SettingKind::Bool,
+        SettingValue::Bool(true),
+    );
+    add(
+        "helper.hooks.timeout_s",
+        SettingKind::Integer {
+            min: Some(1),
+            max: Some(60),
+        },
+        SettingValue::Integer(10),
+    );
+    add(
+        "helper.close.confirm_running",
+        SettingKind::Bool,
+        SettingValue::Bool(true),
+    );
+}
+
+fn register_events(r: &mut Registrar<'_>, core: &Shared) {
+    r.contract_event::<HelperStatusChanged>(names::HELPER_STATUS_CHANGED);
+    r.contract_event::<TerminalExited>(names::TERMINAL_EXITED);
+    r.contract_event::<TerminalBell>(names::TERMINAL_BELL);
+    r.contract_event::<TerminalCommandFinished>(names::TERMINAL_COMMAND_FINISHED);
+    r.contract_event::<TerminalTitleChanged>(names::TERMINAL_TITLE_CHANGED);
+
+    let exited_core = Arc::clone(core);
+    r.subscribe(move |cx, event: &TerminalExited| {
+        let _ = commands::ensure_current(cx, &exited_core);
+        status::update_exited_run(
+            cx,
+            &exited_core,
+            &event.terminal,
+            event.exit_code,
+        );
+    });
+    let bell_core = Arc::clone(core);
+    r.subscribe(move |cx, event: &TerminalBell| {
+        let _ = commands::ensure_current(cx, &bell_core);
+        status::update_run(
+            cx,
+            &bell_core,
+            &event.terminal,
+            HelperStatus::NeedsYou,
+            Some("bell".to_owned()),
+        );
+    });
+    let finished_core = Arc::clone(core);
+    r.subscribe(move |cx, event: &TerminalCommandFinished| {
+        let _ = commands::ensure_current(cx, &finished_core);
+        status::update_run(
+            cx,
+            &finished_core,
+            &event.terminal,
+            HelperStatus::Idle,
+            Some("command finished".to_owned()),
+        );
+    });
+    let title_core = Arc::clone(core);
+    r.subscribe(move |cx, event: &TerminalTitleChanged| {
+        let _ = commands::ensure_current(cx, &title_core);
+        status::infer_from_terminal(cx, &title_core, &event.terminal);
+    });
+}
+
+/// Detecta o status de um terminal por título e saída.
+pub(crate) fn read_output(cx: &mut forja_kernel::Ctx<'_>, terminal_id: &str) -> Option<String> {
+    let mut args = forja_kernel::Args::new();
+    args.insert("terminal_id", serde_json::json!(terminal_id));
+    args.insert("lines", serde_json::json!(24));
+    cx.run_command("terminal.read", args)
+        .ok()
+        .and_then(|value| value.get("text").and_then(serde_json::Value::as_str).map(str::to_owned))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use forja_kernel::{contract, Runtime, RuntimeOptions};
+    use serde_json::{json, Map};
+    use std::path::PathBuf;
+
+    fn temp_dir(label: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "forja-helper-module-{label}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        dir
+    }
+
+    fn runtime(dir: &std::path::Path, core: Shared) -> Runtime {
+        Runtime::new(
+            vec![Box::new(HelperModule { core })],
+            RuntimeOptions {
+                data_dir: Some(dir.to_path_buf()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("helper module registers")
+    }
+
+    #[test]
+    fn failed_exit_respects_error_notification_setting() {
+        struct NotifyStub(Arc<std::sync::Mutex<Vec<String>>>);
+        impl Module for NotifyStub {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("notify", "helper.name", "0")
+            }
+            fn register(&mut self, r: &mut Registrar<'_>) {
+                let calls = Arc::clone(&self.0);
+                r.command("notify.show", "helper.name", move |_, args| {
+                    calls.lock().unwrap().push(args.str("title").unwrap_or("").to_owned());
+                    Ok(json!({}))
+                });
+            }
+        }
+        let dir = temp_dir("exit-notification");
+        let core = Arc::new(Core::new());
+        let calls = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mut runtime = Runtime::new(vec![Box::new(HelperModule { core: Arc::clone(&core) }), Box::new(NotifyStub(Arc::clone(&calls)))], RuntimeOptions {
+            data_dir: Some(dir.clone()), user_dir: Some(dir.join("user")), locale: Some("en".into()), wake: None,
+        }).unwrap();
+        core.state.lock().unwrap().runs.insert("1".into(), status::Run {
+            terminal_id: "1".into(), profile_id: "test".into(), bench_path: dir.display().to_string(),
+            started_at: String::new(), hook_token: String::new(), status: HelperStatus::Working, last_event: None,
+        });
+        let event = TerminalExited { terminal: forja_contracts::TerminalRef {
+            terminal_id: "1".into(), bench_path: dir.display().to_string(), title: String::new(),
+        }, exit_code: Some(1) };
+        runtime.set_setting("helper.notifications.error", SettingValue::Bool(false)).unwrap();
+        runtime.emit(&event);
+        assert!(calls.lock().unwrap().is_empty());
+        runtime.set_setting("helper.notifications.error", SettingValue::Bool(true)).unwrap();
+        runtime.emit(&event);
+        assert_eq!(calls.lock().unwrap().as_slice(), ["Helper failed"]);
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn contract_rpc_list_and_missing_terminal() {
+        let dir = temp_dir("rpc");
+        let core = Arc::new(Core::new());
+        let mut runtime = runtime(&dir, Arc::clone(&core));
+        contract::assert_ok(runtime.registry(), runtime.i18n());
+        assert!(runtime.registry().method("helper.hooks.consent").is_none());
+        assert!(runtime.registry().command("helper.hooks.consent").is_some());
+        let list = runtime
+            .call_method("helper.list", Map::new())
+            .expect("list profiles");
+        assert_eq!(
+            list["profiles"].as_array().map(Vec::len),
+            Some(16),
+            "{list}"
+        );
+        let launch = runtime.call_method(
+            "helper.launch",
+            Map::from_iter([("profile_id".to_owned(), json!("claude-code"))]),
+        );
+        let error = launch.expect_err("terminal module is absent");
+        assert!(error.message.contains("terminal"), "{}", error.message);
+        let hook = runtime
+            .call_method("helper.hook", Map::from_iter([("payload".to_owned(), json!({}))]))
+            .expect("hook without runs");
+        assert_eq!(hook, json!({}));
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn hook_status_returns_pending_then_delivers_background_result() {
+        let dir = temp_dir("hook-async");
+        let core = Arc::new(Core::new());
+        let mut runtime = runtime(&dir, Arc::clone(&core));
+        let mut profile = profile::Profile::parse(
+            r#"id = "claude-code"
+name = "Test"
+maker = "Test"
+site = "https://example.test"
+[detect]
+executables = ["test"]
+[start]
+command = "test"
+[prompt]
+mode = "argument"
+[hooks]
+supported = true
+mechanism = "command"
+events = ["Stop"]
+"#,
+            dir.join("profile.toml"),
+            profile::Layer::User,
+        ).unwrap();
+        profile.trusted = true;
+        profile.hooks.config = vec![dir.join("settings.json").display().to_string()];
+        {
+            let mut state = core.state.lock().unwrap();
+            state.profiles = vec![profile];
+            state.loaded_for = std::env::current_dir().ok();
+        }
+        let params = || Map::from_iter([("profile_id".to_owned(), json!("claude-code"))]);
+        let (sender, receiver) = std::sync::mpsc::channel();
+        runtime.set_wake(Arc::new(move || { let _ = sender.send(()); }));
+        let first = runtime.call_method("helper.hooks.status", params()).unwrap();
+        assert_eq!(first["pending"], true);
+        while core.state.lock().unwrap().hook_busy {
+            runtime.poll_tasks();
+            if core.state.lock().unwrap().hook_busy {
+                receiver.recv_timeout(std::time::Duration::from_secs(60)).expect("hook task did not signal completion");
+            }
+        }
+        let result = runtime.call_method("helper.hooks.status", params()).unwrap();
+        assert!(result["state"].is_string(), "{result}");
+        assert!(!core.state.lock().unwrap().hook_busy);
+        for method in ["helper.hooks.install", "helper.hooks.remove"] {
+            let error = runtime.call_method(method, params()).unwrap_err();
+            assert!(error.message.contains("consent"), "{}", error.message);
+        }
+        drop(runtime);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    struct StubChat {
+        calls: Arc<std::sync::Mutex<Vec<(String, serde_json::Value)>>>,
+    }
+
+    impl Module for StubChat {
+        fn manifest(&self) -> ModuleManifest {
+            ModuleManifest::new("chat", "chat.name", "0.0.0")
+        }
+
+        fn register(&mut self, r: &mut Registrar<'_>) {
+            let open_calls = Arc::clone(&self.calls);
+            r.command("chat.open", "chat.command.open", move |_, args| {
+                open_calls
+                    .lock()
+                    .unwrap()
+                    .push(("chat.open".to_owned(), args.into_json()));
+                Ok(json!({ "session_id": serde_json::Value::Null }))
+            });
+            let send_calls = Arc::clone(&self.calls);
+            r.command("chat.send", "chat.command.send", move |_, args| {
+                send_calls
+                    .lock()
+                    .unwrap()
+                    .push(("chat.send".to_owned(), args.into_json()));
+                Ok(json!({ "queued": false, "pending": 0 }))
+            });
+        }
+    }
+
+    #[test]
+    fn chat_mode_calls_chat_open_and_send() {
+        let dir = temp_dir("chat-mode");
+        let calls = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(HelperModule {
+                    core: Arc::new(Core::new()),
+                }),
+                Box::new(StubChat {
+                    calls: Arc::clone(&calls),
+                }),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("helper and stub chat register");
+        runtime
+            .set_setting(
+                "helper.launch.mode",
+                SettingValue::Text("chat".to_owned()),
+            )
+            .unwrap();
+        let value = runtime
+            .call_method(
+                "helper.launch",
+                Map::from_iter([
+                    ("profile_id".to_owned(), json!("claude-code")),
+                    ("prompt".to_owned(), json!("oi")),
+                    ("bench_path".to_owned(), json!(dir.display().to_string())),
+                ]),
+            )
+            .expect("chat launch");
+        assert_eq!(value["mode"], "chat");
+        let calls = calls.lock().unwrap();
+        assert_eq!(calls[0].0, "chat.open");
+        assert_eq!(calls[0].1["profile_id"], "claude-code");
+        assert_eq!(calls[1].0, "chat.send");
+        assert_eq!(calls[1].1["prompt"], "oi");
+        drop(calls);
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn hook_payload_requires_the_per_run_token_before_updating_status() {
+        let dir = temp_dir("hook");
+        let core = Arc::new(Core::new());
+        let mut runtime = runtime(&dir, Arc::clone(&core));
+        core.with_state(|state| {
+            state.runs.insert(
+                "terminal-1".to_owned(),
+                status::Run {
+                    terminal_id: "terminal-1".to_owned(),
+                    profile_id: "claude-code".to_owned(),
+                    bench_path: std::env::current_dir().unwrap().display().to_string(),
+                    started_at: chrono::Utc::now().to_rfc3339(),
+                    hook_token: "run-secret".to_owned(),
+                    status: HelperStatus::Working,
+                    last_event: None,
+                },
+            );
+        })
+        .unwrap();
+        runtime
+            .call_method(
+                "helper.hook",
+                Map::from_iter([(
+                    "payload".to_owned(),
+                    json!({
+                        "terminal_id": "terminal-1",
+                        "hook_event_name": "Stop",
+                        "cwd": std::env::current_dir().unwrap().display().to_string()
+                    }),
+                )]),
+            )
+            .expect("hook event");
+        let status = core
+            .with_state(|state| state.runs["terminal-1"].status)
+            .unwrap();
+        assert_eq!(status, HelperStatus::Working, "forged payload is ignored");
+
+        runtime
+            .call_method(
+                "helper.hook",
+                Map::from_iter([(
+                    "payload".to_owned(),
+                    json!({
+                        "forja_profile_id": "claude-code",
+                        "forja_token": "run-secret",
+                        "forja_event": "Notification",
+                        "payload": {
+                            "cwd": std::env::current_dir().unwrap().display().to_string()
+                        }
+                    }),
+                )]),
+            )
+            .expect("authorized hook event");
+        let status = core
+            .with_state(|state| state.runs["terminal-1"].status)
+            .unwrap();
+        assert_eq!(status, HelperStatus::NeedsYou);
+        let rpc_status = runtime
+            .call_method(
+                "helper.status",
+                Map::from_iter([("terminal_id".to_owned(), json!("terminal-1"))]),
+            )
+            .expect("helper.status rpc");
+        assert_eq!(rpc_status["runs"].as_array().unwrap().len(), 1);
+        assert_eq!(rpc_status["runs"][0]["profile_id"], "claude-code");
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    struct StubTerminal {
+        calls: Arc<std::sync::Mutex<Vec<(String, serde_json::Value)>>>,
+    }
+
+    impl Module for StubTerminal {
+        fn manifest(&self) -> ModuleManifest {
+            ModuleManifest::new("terminal", "terminal.name", "0.0.0")
+        }
+
+        fn register(&mut self, r: &mut Registrar<'_>) {
+            r.i18n(
+                "terminal-name = Terminal\nterminal-open = Open\nterminal-focus = Focus\n",
+                "terminal-name = Terminal\nterminal-open = Abrir\nterminal-focus = Focar\n",
+            );
+            let open_calls = Arc::clone(&self.calls);
+            r.command("terminal.open", "terminal.open", move |_, args| {
+                open_calls
+                    .lock()
+                    .unwrap()
+                    .push(("terminal.open".to_owned(), args.into_json()));
+                Ok(json!({ "terminal_id": "term-default" }))
+            });
+            let focus_calls = Arc::clone(&self.calls);
+            r.command("terminal.focus", "terminal.focus", move |_, args| {
+                focus_calls
+                    .lock()
+                    .unwrap()
+                    .push(("terminal.focus".to_owned(), args.into_json()));
+                Ok(json!({ "focused": true }))
+            });
+        }
+    }
+
+    #[test]
+    fn launch_default_and_focus_without_terminal_id_work() {
+        let dir = temp_dir("launch-default-focus");
+        let core = Arc::new(Core::new());
+        let calls = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(HelperModule {
+                    core: Arc::clone(&core),
+                }),
+                Box::new(StubTerminal {
+                    calls: Arc::clone(&calls),
+                }),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.to_path_buf()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("helper and stub terminal register");
+
+        core.with_state(|state| {
+            state.detection.insert(
+                "claude-code".to_owned(),
+                detect::Detection {
+                    executable: Some(dir.join("claude.exe")),
+                    ..detect::Detection::default()
+                },
+            );
+        })
+        .unwrap();
+
+        let launched = runtime
+            .run_command("helper.launch.default", forja_kernel::Args::new())
+            .expect("helper.launch.default runs");
+        assert_eq!(launched["terminal_id"], "term-default");
+
+        let focused = runtime
+            .run_command("helper.focus", forja_kernel::Args::new())
+            .expect("helper.focus selects active run");
+        assert_eq!(focused["focused"], true);
+        let calls = calls.lock().unwrap();
+        assert_eq!(calls.last().unwrap().0, "terminal.focus");
+        assert_eq!(calls.last().unwrap().1["terminal_id"], "term-default");
+        drop(calls);
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+}
+

@@ -1,0 +1,16 @@
+[package]
+name = "forja-module-counter_gitlab"
+description = "Forja module counter_gitlab: GitLab issues and pull requests as request sources."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+forja-kernel = { path = "../../kernel", features = ["egui"] }
+forja-contracts = { path = "../../contracts" }
+forja-counter-kit = { path = "../../counter-kit" }
+forja-ui-kit = { path = "../../ui-kit" }
+linkme.workspace = true
+serde.workspace = true
+serde_json.workspace = true

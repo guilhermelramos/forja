@@ -1,0 +1,46 @@
+# Node.js / JavaScript / TypeScript recipes for Forja
+
+[[recipe]]
+id = "node-build"
+title = { pt-BR = "Compilar projeto Node", en = "Build Node project" }
+command = "npm run build"
+scope = "project"
+enter = true
+directory = "."
+manifest = "package.json"
+
+[[recipe]]
+id = "node-test"
+title = { pt-BR = "Executar testes Node", en = "Run Node tests" }
+command = "npm test"
+scope = "project"
+enter = true
+directory = "."
+manifest = "package.json"
+
+[[recipe]]
+id = "node-lint"
+title = { pt-BR = "Executar linter Node", en = "Run Node linter" }
+command = "npm run lint"
+scope = "project"
+enter = true
+directory = "."
+manifest = "package.json"
+
+[[recipe]]
+id = "node-format-check"
+title = { pt-BR = "Verificar formatação Prettier", en = "Check Prettier formatting" }
+command = "npx prettier --check ."
+scope = "project"
+enter = true
+directory = "."
+manifest = "package.json"
+
+[[recipe]]
+id = "node-format-fix"
+title = { pt-BR = "Formatar código com Prettier", en = "Format code with Prettier" }
+command = "npx prettier --write ."
+scope = "project"
+enter = true
+directory = "."
+manifest = "package.json"

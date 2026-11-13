@@ -1,0 +1,32 @@
+# forja.toml — Configuração do repositório para a Forja
+# Coloque este arquivo na raiz do seu projeto.
+# Mais informações em docs/guia.md e design/product.md
+
+schema_version = 1
+
+# Script de preparo executado na pasta da nova bancada após sua criação.
+# Exige aprovação de segurança antes de ser executado (armazenada por hash SHA-256).
+# Exemplos comuns:
+#   Rust:   "cargo fetch"
+#   Node:   "npm ci"
+#   Python: "python -m venv .venv && .venv/Scripts/pip install -e ."
+#   Go:     "go mod download"
+setup = "cargo check"
+
+# Script de desmonte executado antes de arquivar ou descartar a bancada.
+# Útil para liberar portas, apagar contêineres efêmeros ou limpar caches locais.
+# Exemplo: "npm run clean" ou "docker compose down"
+teardown = ""
+
+# Abas que serão abertas automaticamente ao criar uma nova bancada.
+# Ordem de abertura e tipos disponíveis:
+#   "terminal"  - Terminal de linha de comando (ConPTY)
+#   "helper"    - Sessão com o ajudante de IA configurado
+#   "editor"    - Editor de código embutido
+#   "diff"      - Visualizador de diferenças
+tabs = ["terminal", "helper"]
+
+[request]
+# Comando executado ou exibido no detalhe da bancada quando ela é criada a partir de um Pedido.
+# O placeholder {id} é substituído pelo identificador do pedido/issue/ticket.
+command = "forja request list"

@@ -1,0 +1,72 @@
+# Perfil de ajudante: Cline CLI (executável `cline`).
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# NÃO instalado nesta máquina: dados da documentação oficial docs.cline.bot (confiança média).
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "cline"
+name = "Cline CLI"
+maker = "Cline"
+site = "https://docs.cline.bot"
+
+[detect]
+executables = ["cline"]
+version = ["version"]           # "cline version" ou "cline -V" (referência da CLI)
+
+[start]
+command = "cline"
+args = []                      # "cline" inicia uma tarefa ou entra no modo interativo; -i/--tui abre a TUI
+
+[prompt]
+mode = "argument"             # cline "<prompt>" roda uma tarefa
+headless = ["--json", "{prompt}"]   # cline --json "list TODO comments" (página de primeiros passos)
+headless_stdin = true          # echo "prompt" | cline; stdin pipado ou stdout redirecionado também ativam o modo não interativo
+
+# [permissions.ask]  # a confirmar: --auto-approve false sai do modo yolo, mas a referência não diz que pede a cada passo
+# args = ["--auto-approve", "false"]
+# env = {}
+
+[permissions.full]
+args = ["--auto-approve", "true"]   # "Runs in yolo mode by default" e "--auto-approve <boolean>... (default: true)" (referência)
+env = {}
+# -y/--yolo: NOT FOUND na referência (a busca citou). Modos de edição e automático: NOT FOUND como flag (só toggles na interface).
+
+[resume]
+id = ["--id", "{id}"]          # "Resume an existing session by ID" (--id <session-id>, referência)
+# last: NOT FOUND na referência de CLI (a busca citou "--continue"; a página não confirma).
+
+# [fork]  # NOT FOUND
+
+[models]
+model_args = ["--model", "{model}"]              # -m, --model <model-id>; provedor com -P/--provider
+effort_args = ["--thinking", "{effort}"]
+effort_values = ["none", "low", "medium", "high", "xhigh"]   # "--thinking" sem valor usa medium (referência)
+
+[sessions]
+format = "to-confirm"        # um diretório por sessão com as mensagens; formato dos arquivos NOT FOUND
+path = "~/.cline/data/sessions/"   # "Use isolated local state at this directory path (default: ~/.cline/data)" (referência). Índice: ~/.cline/data/db/sessions.db (SQLite)
+dir_env = "CLINE_DATA_DIR"     # também --data-dir
+list = ["history", "--json"] # cline history --json (referência). A referência cita --limit 10 como exemplo
+confidence = "medium"
+
+# [hooks]  # a confirmar: --hooks-dir (padrão ~/.cline/hooks) e .cline/hooks aparecem na referência, mas nenhuma página diz
+#          # que a CLI executa esses arquivos. Eventos: PreToolUse na CLI; beforeRun... onEvent no SDK. Não reconciliados.
+# supported = true
+# mechanism = "command"
+# config = ["~/.cline/hooks/", ".cline/hooks/"]
+
+[skills]
+# a confirmar: diretórios de skills não confirmados na documentação oficial.
+user = []
+project = []
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://docs.cline.bot/cline-cli/cli-reference",
+  "https://docs.cline.bot/cline-cli/getting-started",
+  "https://docs.cline.bot/features/auto-approve",
+  "https://docs.cline.bot/getting-started/config",
+  "https://docs.cline.bot/sdk/plugins",
+]
+commands = []
+confidence = "medium"

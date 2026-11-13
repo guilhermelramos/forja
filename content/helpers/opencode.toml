@@ -1,0 +1,84 @@
+# Perfil de ajudante: OpenCode (executável `opencode`).
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "opencode"
+name = "OpenCode"
+maker = "OpenCode"         # a confirmar: organização responsável (a documentação não diz quem mantém)
+site = "https://opencode.ai/docs"
+
+[detect]
+executables = ["opencode"]
+version = ["--version"]          # saída: "opencode v2.2.6"
+
+[start]
+command = "opencode"
+args = []                       # TUI no diretório atual
+
+[prompt]
+mode = "none"                 # NOT FOUND: a documentação só mostra prompt em "opencode run". --prompt aparece na ajuda da raiz, sem exemplo de TUI
+headless = ["run", "{prompt}"]  # opencode run "<mensagem>" (ajuda de run; documentação: "Use opencode run to submit a prompt")
+# headless_stdin: a confirmar (não encontrado).
+
+[permissions.ask]
+args = []                       # sem regra que case, o CLI usa "ask" (documentação de permissões)
+env = {}
+
+# [permissions.accept-edits]  # a confirmar: exige regra {"action": "edit", "effect": "allow"} em opencode.json; não é flag
+# [permissions.automatic]       # a confirmar: exige regras "allow" por comando em opencode.json; não é flag
+
+[permissions.full]
+args = ["--auto"]               # aprova o que não está explicitamente negado (ajuda da raiz e de run)
+env = {}
+# Regras de "deny" continuam valendo com --auto (documentação de permissões).
+
+[resume]
+last = ["--continue"]         # TUI; no modo não interativo, ver [retomar.headless]
+id = ["--session", "{id}"]      # cria a sessão se o id não existir (ajuda: "Session ID to continue, or to create if it does not exist")
+
+[resume.headless]
+last = ["run", "--continue"]
+id = ["run", "--session", "{id}"]
+
+[fork]
+adds = ["--fork"]               # "Fork the session before continuing" (ajuda de run). Usar com --continue ou --session
+# Na TUI: a confirmar (--fork aparece só na ajuda de run).
+
+[models]
+model_args = ["--model", "{model}"]   # formato provedor/modelo, com sufixo #variante (ex.: #high), conforme a ajuda de run
+# effort_args: a confirmar como flag. Na documentação de modelos, reasoningEffort fica em settings do modelo ou em variants.
+
+[sessions]
+format = "sqlite"
+path = "~/.local/share/opencode/opencode.db"   # página de troubleshooting: "The database normally lives at". OPENCODE_DB muda o caminho. Windows: NOT FOUND
+list = ["session", "list"]            # "List top-level sessions in the current project, newest first" (ajuda de session)
+export = ["session", "export"]        # "Export session data as JSON" (argumentos a confirmar)
+confidence = "medium"
+
+[hooks]
+supported = true
+mechanism = "plugin"            # plugins em JS ou TS, não comando externo
+config = ["opencode.json", "~/.config/opencode/opencode.json"]   # chave "plugins"; diretórios: .opencode/plugins/ e ~/.config/opencode/plugins/
+# eventos: a confirmar. A doc registra hooks com ctx.<domínio>.hook(nome, callback): session prompt, context,
+# compaction, generate, title, fork, retry, model.request, http.request, http.response; permission evaluate;
+# shell create.before; tool execute.before e execute.after. Lista completa não encontrada.
+
+[skills]
+# Pastas de skills. `user` é relativa ao diretório pessoal; `project`, à raiz do projeto.
+# Fonte: https://opencode.ai/docs/skills
+user = ["~/.config/opencode/skills"]
+project = [".opencode/skills"]
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://opencode.ai/docs/skills",
+  "https://opencode.ai/docs/cli",
+  "https://opencode.ai/docs/permissions",
+  "https://opencode.ai/docs/config",
+  "https://opencode.ai/docs/models",
+  "https://opencode.ai/docs/plugins",
+  "https://opencode.ai/docs/troubleshooting",
+]
+commands = ["opencode --version", "opencode --help", "opencode run --help", "opencode session --help"]
+confidence = "medium"

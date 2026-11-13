@@ -1,0 +1,74 @@
+[workspace]
+resolver = "2"
+# `crates/*` cannot be used: it would match the `crates/modules` parent folder,
+# which is not a package. Top-level crates are listed explicitly and modules
+# are discovered one level down.
+members = [
+    "crates/kernel",
+    "crates/kernel-macros",
+    "crates/protocol",
+    "crates/shell",
+    "crates/cli",
+    "crates/hook",
+    "crates/mcp",
+    "crates/ui-kit",
+    "crates/contracts",
+    "crates/modules/*",
+    "xtask",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+authors = ["Forja contributors"]
+
+# Every crate uses dependencies from this list via `dep.workspace = true`.
+# Adding or upgrading an entry here is the coordinator's job (see AGENTS.md).
+[workspace.dependencies]
+eframe = { version = "0.33.3", default-features = false, features = ["default_fonts", "glow"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+toml = "0.9"
+toml_edit = "0.25"
+thiserror = "2"
+linkme = "0.3"
+fluent-bundle = "0.16"
+unic-langid = "0.9"
+mlua = { version = "0.12", features = ["lua54", "vendored", "send", "serialize"] }
+regex = "1"
+chrono = "0.4"
+sha2 = "0.10"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "bmp", "ico", "webp"] }
+rfd = "0.15"
+notify = "8"
+ignore = "0.4"
+syntect = { version = "5.3", default-features = false, features = ["default-fancy"] }
+two-face = { version = "0.5", default-features = false, features = ["syntect-fancy"] }
+pulldown-cmark = "0.13"
+similar = "3"
+trash = "5"
+cpal = "0.17"
+hound = "3"
+tantivy = "0.27"
+zip = { version = "8", default-features = false, features = ["deflate"] }
+wry = "0.53"
+raw-window-handle = "0.6"
+webview2-com = "0.38"
+windows-core = "0.61"
+cron = "0.17"
+ureq = { version = "3.5.1", features = ["json"] }
+keyring = { version = "4.2.0", features = ["windows-native-keyring-store"] }
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_System_Console", "Win32_System_Pipes", "Win32_System_Threading", "Win32_System_IO", "Win32_Security", "Win32_Security_Cryptography", "Win32_System_JobObjects", "Win32_Storage_FileSystem", "Win32_System_Power", "Win32_UI_WindowsAndMessaging", "Win32_UI_Shell", "Win32_System_DataExchange", "Win32_System_Memory"] }
+
+# Keep debug builds small: full debug info only for our own crates' line tables,
+# none for dependencies. Debug info was most of the multi-GB target folders.
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
+
+[profile.release]
+lto = "thin"
+codegen-units = 4

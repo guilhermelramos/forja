@@ -1,0 +1,13 @@
+[
+  {"iid": 21, "title": "Ajustar margem da lista", "state": "opened",
+   "web_url": "https://gitlab.com/acme/tools/-/merge_requests/21", "author": {"username": "bia.dev"},
+   "assignees": [{"username": "ana.dev"}], "reviewers": [{"username": "ana.dev"}],
+   "labels": ["ui"], "updated_at": "2026-11-11T09:00:00Z", "draft": false, "work_in_progress": false},
+  {"iid": 22, "title": "Rascunho do cache", "state": "opened",
+   "web_url": "https://gitlab.com/acme/tools/-/merge_requests/22", "author": {"username": "ana.dev"},
+   "assignees": [], "reviewers": [], "labels": [], "updated_at": "2026-11-09T09:00:00Z",
+   "draft": true, "work_in_progress": false},
+  {"iid": 19, "title": "Corrigir paginação", "state": "merged",
+   "web_url": "https://gitlab.com/acme/tools/-/merge_requests/19", "author": {"username": "carlos"},
+   "assignees": [], "reviewers": [], "labels": [], "updated_at": "2026-11-01T09:00:00Z"}
+]

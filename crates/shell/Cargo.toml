@@ -1,0 +1,75 @@
+[package]
+name = "forja-app"
+description = "Forja desktop shell: borderless window, slots, Anvil and generated settings."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "forja-app"
+path = "src/main.rs"
+
+[dependencies]
+forja-kernel = { path = "../kernel", features = ["egui"] }
+forja-protocol = { path = "../protocol" }
+forja-ui-kit = { path = "../ui-kit" }
+eframe.workspace = true
+serde_json.workspace = true
+image.workspace = true
+windows-sys = { workspace = true, features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_Globalization",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Registry",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+# Modules are linked here. `cargo xtask new-module <name>` edits only this block;
+# never edit another file to add a module.
+# forja:modules:start
+forja-module-projects = { path = "../modules/projects" }
+forja-module-benches = { path = "../modules/benches" }
+forja-module-git = { path = "../modules/git" }
+forja-module-board = { path = "../modules/board" }
+forja-module-explorer = { path = "../modules/explorer" }
+forja-module-find = { path = "../modules/find" }
+forja-module-search = { path = "../modules/search" }
+forja-module-terminal = { path = "../modules/terminal" }
+forja-module-request = { path = "../modules/request" }
+forja-module-counter = { path = "../modules/counter" }
+forja-module-counter_github = { path = "../modules/counter_github" }
+forja-module-counter_gitlab = { path = "../modules/counter_gitlab" }
+forja-module-counter_linear = { path = "../modules/counter_linear" }
+forja-module-counter_jira = { path = "../modules/counter_jira" }
+forja-module-notify = { path = "../modules/notify" }
+forja-module-onboarding = { path = "../modules/onboarding" }
+forja-module-editor = { path = "../modules/editor" }
+forja-module-diff = { path = "../modules/diff" }
+forja-module-viewers = { path = "../modules/viewers" }
+forja-module-routine = { path = "../modules/routine" }
+forja-module-remote = { path = "../modules/remote" }
+forja-module-trust = { path = "../modules/trust" }
+forja-module-helper = { path = "../modules/helper" }
+forja-module-hook = { path = "../modules/hook" }
+forja-module-skill = { path = "../modules/skill" }
+forja-module-voice = { path = "../modules/voice" }
+forja-module-chat = { path = "../modules/chat" }
+forja-module-archive = { path = "../modules/archive" }
+forja-module-muster = { path = "../modules/muster" }
+forja-module-mcp = { path = "../modules/mcp" }
+forja-module-review = { path = "../modules/review" }
+forja-module-browser = { path = "../modules/browser" }
+forja-module-import = { path = "../modules/import" }
+forja-module-ports = { path = "../modules/ports" }
+forja-module-usage = { path = "../modules/usage" }
+forja-module-accounts = { path = "../modules/accounts" }
+forja-module-content = { path = "../modules/content" }
+forja-module-extension = { path = "../modules/extension" }
+forja-module-integrations = { path = "../modules/integrations" }
+forja-module-privacy = { path = "../modules/privacy" }
+forja-module-network = { path = "../modules/network" }
+forja-module-update = { path = "../modules/update" }
+# forja:modules:end

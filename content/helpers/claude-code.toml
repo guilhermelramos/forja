@@ -1,0 +1,100 @@
+# Perfil de ajudante: Claude Code (executável `claude`).
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "claude-code"
+name = "Claude Code"
+maker = "Anthropic"
+site = "https://code.claude.com/docs"
+
+[detect]
+executables = ["claude"]
+version = ["--version"]          # saída: "2.1.322 (Claude Code)"
+
+[start]
+command = "claude"
+args = []
+
+[prompt]
+mode = "argument"              # claude "<prompt>" abre a sessão interativa com o prompt
+headless = ["-p", "{prompt}"]   # claude -p "<prompt>": imprime a resposta e sai
+headless_stdin = true           # cat arquivo | claude -p "..." (documentação headless)
+
+[permissions.ask]
+args = []                       # padrão do CLI: pede permissão no primeiro uso de cada ferramenta
+env = {}
+
+[permissions.accept-edits]
+args = ["--permission-mode", "acceptEdits"]
+env = {}
+
+[permissions.automatic]
+args = ["--permission-mode", "auto"]     # o classificador do CLI decide o que pedir
+env = {}
+
+[permissions.full]
+args = ["--dangerously-skip-permissions"]   # equivale a --permission-mode bypassPermissions
+env = {}
+# Pode estar bloqueado por permissions.disableBypassPermissionsMode nas configurações.
+
+[resume]
+last = ["--continue"]         # a conversa mais recente deste diretório
+id = ["--resume", "{id}"]       # por id ou nome; sem valor abre o seletor
+
+[fork]
+adds = ["--fork-session"]       # somado a retomar: ao retomar, cria um id de sessão novo
+
+[models]
+model_args = ["--model", "{model}"]     # aceita alias (sonnet, opus, fable) ou nome completo
+effort_args = ["--effort", "{effort}"]
+effort_values = ["low", "medium", "high", "xhigh", "max"]
+model_env = "ANTHROPIC_MODEL"
+# Variável de ambiente para o esforço: não encontrada na documentação.
+
+[sessions]
+format = "jsonl"
+path = "~/.claude/projects/<diretorio-com-nao-alfanumericos-trocados-por-hifen>/<session-id>.jsonl"
+dir_env = "CLAUDE_CONFIG_DIR"   # muda onde ficam configurações e histórico
+# Limpeza automática: cleanupPeriodDays (padrão 30 dias, mínimo 1).
+# --no-session-persistence (só com -p) não grava a sessão e impede retomá-la.
+confidence = "high"
+
+[accounts]
+env = "CLAUDE_CONFIG_DIR"    # [sessions].dir_env; a doc de settings muda configs e histórico
+login = ["auth", "login"]    # `claude auth login` (referência do CLI)
+
+[hooks]
+supported = true
+mechanism = "command"           # hooks do tipo "command" executam um comando externo
+config = ["~/.claude/settings.json", ".claude/settings.json", ".claude/settings.local.json"]
+key = "hooks"
+events = [
+  "SessionStart", "Setup", "UserPromptSubmit", "UserPromptExpansion", "PreToolUse",
+  "PermissionRequest", "PermissionDenied", "PostToolUse", "PostToolUseFailure",
+  "PostToolBatch", "Notification", "MessageDisplay", "SubagentStart", "SubagentStop",
+  "TaskCreated", "TaskCompleted", "Stop", "StopFailure", "TeammateIdle",
+  "InstructionsLoaded", "ConfigChange", "CwdChanged", "DirectoryAdded", "FileChanged",
+  "WorktreeCreate", "WorktreeRemove", "PreCompact", "PostCompact", "PreModelSwitch",
+  "PostModelSwitch", "Elicitation", "ElicitationResult", "SessionEnd",
+]
+# --bare pula os hooks; disableAllHooks desliga todos.
+
+[skills]
+# Pastas de skills. `user` é relativa ao diretório pessoal; `project`, à raiz do projeto.
+# Fonte: https://code.claude.com/docs/en/skills
+user = ["~/.claude/skills"]
+project = [".claude/skills"]
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://code.claude.com/docs/en/skills",
+  "https://code.claude.com/docs/en/headless",
+  "https://code.claude.com/docs/en/permissions",
+  "https://code.claude.com/docs/en/cli-reference",
+  "https://code.claude.com/docs/en/settings",
+  "https://code.claude.com/docs/en/hooks",
+  "https://code.claude.com/docs/en/sessions",
+]
+commands = ["claude --version", "claude --help"]
+confidence = "high"

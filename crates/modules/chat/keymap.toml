@@ -1,0 +1,2 @@
+# O módulo chat não tem atalhos próprios no catálogo; o composer usa os
+# acordes globais do shell e a configuração chat.input.enter_sends.

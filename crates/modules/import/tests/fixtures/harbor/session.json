@@ -1,0 +1,25 @@
+{
+  "projects": [
+    {
+      "name": "exemplo-api",
+      "display_name": "API de exemplo",
+      "path": "C:/exemplo/exemplo-api",
+      "icon": "A",
+      "badge_color": "#3366CC",
+      "workspaces": [
+        { "name": "feature-login", "path": "C:/exemplo/exemplo-api-feature-login" }
+      ]
+    },
+    {
+      "name": "exemplo-web",
+      "display_name": "",
+      "path": "C:/exemplo/exemplo-web",
+      "icon": "",
+      "badge_color": "",
+      "workspaces": []
+    }
+  ],
+  "notes": "Notas de exemplo.\nSegunda linha.",
+  "tasks": [],
+  "automations": []
+}

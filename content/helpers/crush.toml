@@ -1,0 +1,68 @@
+# Perfil de ajudante: Crush (executável `crush`).
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# NÃO instalado nesta máquina. Fontes: README oficial (github.com/charmbracelet/crush) e páginas Charm Docs (next-docs.charm.land).
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "crush"
+name = "Crush"
+maker = "Charm"
+site = "https://github.com/charmbracelet/crush"
+
+[detect]
+executables = ["crush"]
+# versao: a confirmar. As páginas mandam rodar "crush --help"; "--version" não aparece.
+
+[start]
+command = "crush"
+args = []                       # TUI no diretório atual; --cwd <caminho> escolhe outro
+
+# [prompt]  # NOT FOUND: sem prompt inicial, sem modo "run" e sem stdin nas páginas lidas.
+#           # Subcomandos listados: serve, logs, models, update-providers.
+
+[permissions.ask]
+args = []                       # "Crush will ask you for permission before running tool calls." (página de permissões)
+env = {}
+
+# [permissions.accept-edits]  # NOT FOUND: não há modo só para edições; há permissão por ferramenta.
+# [permissions.automatic]       # a confirmar: lista de ferramentas liberadas (permissions allow <tool> no crushrc). É config, não flag.
+
+[permissions.full]
+args = ["--yolo"]               # "Skip all permission prompts. Be very, very careful." (página da CLI)
+env = {}
+
+# [resume]  # NOT FOUND: sem flag para continuar a última sessão nem para retomar por id. O gerenciador abre com ctrl+s.
+# [fork] # NOT FOUND.
+
+# [models]  # NOT FOUND como flag. "crush models" lista <provedor>/<id>; a troca é pela interface (ctrl+l) e por "model add" no crushrc.
+
+[sessions]
+# formato e local: a confirmar. Dados de máquina ficam em $XDG_DATA_HOME/crush ou %LOCALAPPDATA%\crush ("machine-owned JSON state"),
+# mas o formato das sessões é NOT FOUND. Logs: ./.crush/logs/crush.log
+confidence = "low"
+
+[hooks]
+supported = true
+mechanism = "command"           # "hook add <evento> --command <cmd>" no crushrc, ou objeto "hooks" no crush.json (legado)
+config = ["./.crushrc", "~/.config/crush/crushrc", "crush.json"]   # crush.json e .crush.json são JSON legado, ainda aceitos
+key = "hooks"                 # só no crush.json
+events = ["PreToolUse"]        # único evento documentado
+# Códigos de saída: 0 (JSON no stdout), 2 (bloqueia; stderr vira o motivo), 49 (interrompe o turno); outros são ignorados. Tempo padrão: 30 s.
+# A documentação marca os hooks como "preliminary".
+
+[skills]
+# a confirmar: diretórios de skills não confirmados na documentação oficial.
+user = []
+project = []
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://github.com/charmbracelet/crush",
+  "https://next-docs.charm.land/crush/reference/cli.html",
+  "https://next-docs.charm.land/crush/configuration/permissions.html",
+  "https://next-docs.charm.land/crush/configuration/",
+  "https://next-docs.charm.land/crush/advanced/sessions.html",
+  "https://next-docs.charm.land/crush/integrations/hooks/",
+]
+commands = []
+confidence = "medium"            # README oficial e páginas Charm Docs; o status de produção dessas páginas não foi confirmado

@@ -1,0 +1,14 @@
+hello-name = Hello
+hello-command-greet = Greet
+hello-tab-title = Hello
+setting-hello-greeting-style-label = Greeting style
+setting-hello-greeting-style-help = Chooses between a warm and a plain greeting.
+hello-greeting-warm = Hello, { $name }!
+hello-greeting-plain = Hi, { $name }.
+hello-method-greet-description = Greets a person and records the message.
+hello-method-greet-result = Greeting message.
+hello-default_name = world
+hello-view-button = Greet
+hello-view-history = Greetings
+hello-view-empty = No greeting yet. Press "Greet" to start.
+hello-view-error = Could not greet: { $message }

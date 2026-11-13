@@ -1,0 +1,86 @@
+# Perfil de ajudante: Goose (executável `goose`).
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# NÃO instalado nesta máquina. A documentação atual está em goose-docs.ai (block.github.io respondeu 404 nas páginas lidas).
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "goose"
+name = "Goose"
+maker = "Block"           # a confirmar: a busca indica migração para o repositório aaif-goose/goose
+site = "https://goose-docs.ai"
+
+[detect]
+executables = ["goose"]
+version = ["--version"]         # "goose --version" (página de comandos da CLI)
+
+[start]
+command = "goose"
+args = ["session"]             # sessão interativa; "goose session" não tem flag de prompt inicial
+
+[prompt]
+mode = "none"                # "goose run -i <arquivo> -s" continua a sessão depois da instrução (running-tasks); goose session não aceita prompt
+headless = ["run", "-t", "{prompt}"]   # goose run -t "<texto>": executa a tarefa e sai ao terminar
+headless_stdin = true          # "pass instructions to goose using standard input via -i -" (running-tasks)
+
+[permissions.ask]
+args = []
+env = { GOOSE_MODE = "approve" }    # "goose asks for confirmation before using any tools or extensions"
+
+# [permissions.accept-edits]  # NOT FOUND: nenhum modo aprova só edições. Em approve e smart_approve, ferramentas de escrita são pedidas
+
+[permissions.automatic]
+args = []
+env = { GOOSE_MODE = "smart_approve" }   # "a risk-based approach to automatically approve low-risk actions and flag others for approval"
+
+[permissions.full]
+args = []
+env = { GOOSE_MODE = "auto" }   # "goose can modify files, use extensions, and delete files without requiring approval"; é o padrão do CLI
+# O modo "chat" ("goose only engages in chat") não usa ferramentas e não entra como permissão.
+
+[resume]
+last = ["session", "--resume"]                      # a sessão mais recente (goose session -r)
+id = ["session", "--resume", "--session-id", "{id}"]  # por nome: goose session -r --name <nome>
+
+# [resume.headless]  # a confirmar: "goose run -n my-project -r" retoma uma execução nomeada (running-tasks), mas a forma com -t não está no exemplo.
+#                     # A Forja precisaria dar -n ao criar a execução. Forma provável: ["run", "-n", "{id}", "-r", "-t", "{prompt}"]
+
+[fork]
+last = ["session", "--resume", "--fork"]            # copia a sessão mais recente para uma nova
+id = ["session", "--resume", "--session-id", "{id}", "--fork"]
+
+[models]
+model_args = ["--model", "{model}"]   # em "goose run"; goose session não aceita --model (documentação)
+model_env = "GOOSE_MODEL"
+# Provedor: --provider <nome> em goose run, ou GOOSE_PROVIDER.
+# Esforço: NOT FOUND nas páginas lidas. Existem só variáveis de "thinking" por provedor (CLAUDE_THINKING_TYPE, GEMINI3_THINKING_LEVEL).
+
+[sessions]
+format = "sqlite"
+path = "~/.local/share/goose/sessions/sessions.db"   # Unix. "All sessions are stored in the same database." Windows: a confirmar
+# A partir da versão 1.10.0 as sessões ficam nesse banco. Arquivos .jsonl de versões antigas ainda existem, mas não são gerenciados.
+confidence = "medium"
+
+[hooks]
+supported = true
+mechanism = "plugin"           # hooks ficam em hooks/hooks.json dentro de um plugin
+config = ["~/.agents/plugins/<nome>/hooks/hooks.json", "<projeto>/.agents/plugins/<nome>/hooks/hooks.json"]
+events = ["SessionStart", "PreToolUse", "PostToolUse"]   # lista parcial: a página diz "include". Caminho no Windows: a confirmar
+
+[skills]
+# a confirmar: diretórios de skills não confirmados na documentação oficial.
+user = []
+project = []
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://goose-docs.ai/docs/guides/goose-cli-commands",
+  "https://goose-docs.ai/docs/guides/running-tasks",
+  "https://goose-docs.ai/docs/guides/sessions/session-management",
+  "https://goose-docs.ai/docs/guides/managing-tools/goose-permissions",
+  "https://goose-docs.ai/docs/guides/config-files",
+  "https://goose-docs.ai/docs/guides/environment-variables",
+  "https://goose-docs.ai/docs/guides/logs",
+  "https://goose-docs.ai/docs/guides/context-engineering/hooks",
+]
+commands = []
+confidence = "medium"

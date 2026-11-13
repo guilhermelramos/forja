@@ -1,0 +1,13 @@
+[package]
+name = "forja-protocol"
+description = "Wire contract for Forja: JSON-RPC 2.0, named-pipe transport and method schemas."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+windows-sys = { workspace = true }

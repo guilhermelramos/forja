@@ -1,0 +1,15 @@
+[package]
+name = "forja-module-integrations"
+description = "Forja module integrations: outgoing webhook for chosen events."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+forja-kernel = { path = "../../kernel", features = ["egui"] }
+forja-contracts = { path = "../../contracts" }
+linkme.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+ureq.workspace = true

@@ -1,0 +1,8 @@
+# Ditado do Windows, alternando (um toque liga, o próximo desliga).
+# Pendência: o id voice.dictate ainda não consta em design/keymap.toml. O coordenador precisa
+# acrescentá-lo ao mapa de atalhos; até lá, o atalho vale só neste módulo.
+[[binding]]
+id = "voice.dictate"
+key = "Ctrl+Alt+V"
+scope = "voice"
+title_key = "voice-command-dictate"

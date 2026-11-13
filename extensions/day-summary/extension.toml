@@ -1,0 +1,11 @@
+id = "day-summary"
+name = { pt-BR = "Resumo do dia", en = "Day summary" }
+version = "1.0.0"
+author = "Forja"
+api = "1"
+
+[capabilities]
+commands = true
+"ui.panel" = true
+settings = true
+"git.read" = true

@@ -1,0 +1,19 @@
+[package]
+name = "forja-module-helper"
+description = "Forja module helper: coding-agent profiles, detection, launch and status."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+forja-kernel = { path = "../../kernel", features = ["egui"] }
+forja-ui-kit = { path = "../../ui-kit" }
+forja-contracts = { path = "../../contracts" }
+linkme.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+sha2.workspace = true
+chrono.workspace = true
+windows-sys.workspace = true

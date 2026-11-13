@@ -1,0 +1,162 @@
+# Atalhos do catálogo (design/keymap.toml) com os ids de lá.
+[[binding]]
+id = "editor.save"
+key = "Ctrl+S"
+scope = "editor"
+title_key = "editor.command.save"
+
+[[binding]]
+id = "editor.find"
+key = "Ctrl+F"
+scope = "editor"
+title_key = "editor.command.find"
+
+[[binding]]
+id = "editor.replace"
+key = "Ctrl+H"
+scope = "editor"
+title_key = "editor.command.replace_all"
+
+[[binding]]
+id = "editor.find.next"
+key = "F3"
+scope = "editor"
+title_key = "editor.command.find_next"
+
+[[binding]]
+id = "editor.find.previous"
+key = "Shift+F3"
+scope = "editor"
+title_key = "editor.command.find_previous"
+
+[[binding]]
+id = "editor.goto.line"
+key = "Ctrl+G"
+scope = "editor"
+title_key = "editor.command.goto"
+
+[[binding]]
+id = "editor.comment.toggle"
+key = "Ctrl+Slash"
+scope = "editor"
+title_key = "editor.command.comment"
+
+[[binding]]
+id = "editor.move_line.up"
+key = "Alt+Up"
+scope = "editor"
+title_key = "editor.command.move_up"
+
+[[binding]]
+id = "editor.move_line.down"
+key = "Alt+Down"
+scope = "editor"
+title_key = "editor.command.move_down"
+
+[[binding]]
+id = "editor.duplicate_line"
+key = "Alt+Shift+Down"
+scope = "editor"
+title_key = "editor.command.duplicate"
+
+[[binding]]
+id = "editor.delete_line"
+key = "Ctrl+Shift+K"
+scope = "editor"
+title_key = "editor.command.delete"
+
+[[binding]]
+id = "editor.wrap.toggle"
+key = "Alt+Z"
+scope = "editor"
+title_key = "editor.command.wrap"
+
+[[binding]]
+id = "editor.format"
+key = "Ctrl+Alt+F"
+scope = "editor"
+title_key = "editor.command.format"
+
+[[binding]]
+id = "editor.indent"
+key = "Tab"
+scope = "editor"
+title_key = "editor.command.indent"
+
+[[binding]]
+id = "editor.outdent"
+key = "Shift+Tab"
+scope = "editor"
+title_key = "editor.command.outdent"
+
+[[binding]]
+id = "editor.undo"
+key = "Ctrl+Z"
+scope = "editor"
+title_key = "editor.command.undo"
+
+[[binding]]
+id = "editor.redo"
+key = "Ctrl+Y"
+scope = "editor"
+title_key = "editor.command.redo"
+
+[[binding]]
+id = "editor.cut"
+key = "Ctrl+X"
+scope = "editor"
+title_key = "editor.command.cut"
+
+[[binding]]
+id = "editor.copy"
+key = "Ctrl+C"
+scope = "editor"
+title_key = "editor.command.copy"
+
+[[binding]]
+id = "editor.paste"
+key = "Ctrl+V"
+scope = "editor"
+title_key = "editor.command.paste"
+
+[[binding]]
+id = "editor.select_all"
+key = "Ctrl+A"
+scope = "editor"
+title_key = "editor.command.select_all"
+
+[[binding]]
+id = "editor.quick_fix"
+key = "Ctrl+Period"
+scope = "editor"
+title_key = "editor.command.quick_fix"
+
+[[binding]]
+id = "editor.rename"
+key = "F2"
+scope = "editor"
+title_key = "editor.command.rename"
+
+[[binding]]
+id = "editor.goto.definition"
+key = "F12"
+scope = "editor"
+title_key = "editor.command.goto_definition"
+
+[[binding]]
+id = "editor.peek.definition"
+key = "Alt+F12"
+scope = "editor"
+title_key = "editor.command.peek_definition"
+
+[[binding]]
+id = "editor.completion"
+key = "Ctrl+Space"
+scope = "editor"
+title_key = "editor.command.completion"
+
+[[binding]]
+id = "editor.parameter_hint"
+key = "Ctrl+Shift+Space"
+scope = "editor"
+title_key = "editor.command.parameter_hint"

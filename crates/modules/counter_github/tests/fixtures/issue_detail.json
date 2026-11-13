@@ -1,0 +1,12 @@
+{
+  "number": 41,
+  "title": "Login falha quando o token expira",
+  "state": "open",
+  "html_url": "https://github.com/acme/tools/issues/41",
+  "user": {"login": "bia-dev"},
+  "assignees": [{"login": "ana-dev"}],
+  "labels": [{"name": "bug"}, {"name": "auth"}],
+  "updated_at": "2026-11-10T14:20:00Z",
+  "body": "Ao expirar o token, o app mostra erro genérico em vez de pedir login.",
+  "comments": 2
+}

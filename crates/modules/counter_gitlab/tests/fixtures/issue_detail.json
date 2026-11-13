@@ -1,0 +1,4 @@
+{"iid": 12, "title": "Sincronizar rótulos com o quadro", "state": "opened",
+ "web_url": "https://gitlab.com/acme/tools/-/issues/12", "author": {"username": "bia.dev"},
+ "assignees": [{"username": "ana.dev"}], "labels": ["backend", "sync"],
+ "updated_at": "2026-11-10T16:00:00Z", "description": "Os rótulos somem depois de um merge."}

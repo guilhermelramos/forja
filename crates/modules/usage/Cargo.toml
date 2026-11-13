@@ -1,0 +1,15 @@
+[package]
+name = "forja-module-usage"
+description = "Forja module usage: local token usage by day, model, project and session."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+forja-kernel = { path = "../../kernel", features = ["egui"] }
+forja-ui-kit = { path = "../../ui-kit" }
+linkme.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true

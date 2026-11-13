@@ -1,0 +1,79 @@
+# Atalhos de bancada do catálogo (design/keymap.toml §Bancadas).
+
+[[binding]]
+id = "bench.create"
+key = "Ctrl+Shift+N"
+scope = "global"
+title_key = "bench.command.create"
+
+[[binding]]
+id = "bench.next"
+key = "Alt+PageDown"
+scope = "global"
+title_key = "bench.command.next"
+
+[[binding]]
+id = "bench.previous"
+key = "Alt+PageUp"
+scope = "global"
+title_key = "bench.command.previous"
+
+[[binding]]
+id = "bench.switch_1"
+key = "Alt+1"
+scope = "global"
+title_key = "bench.command.switch"
+
+[[binding]]
+id = "bench.switch_2"
+key = "Alt+2"
+scope = "global"
+title_key = "bench.command.switch"
+
+[[binding]]
+id = "bench.switch_3"
+key = "Alt+3"
+scope = "global"
+title_key = "bench.command.switch"
+
+[[binding]]
+id = "bench.switch_4"
+key = "Alt+4"
+scope = "global"
+title_key = "bench.command.switch"
+
+[[binding]]
+id = "bench.switch_5"
+key = "Alt+5"
+scope = "global"
+title_key = "bench.command.switch"
+
+[[binding]]
+id = "bench.switch_6"
+key = "Alt+6"
+scope = "global"
+title_key = "bench.command.switch"
+
+[[binding]]
+id = "bench.switch_7"
+key = "Alt+7"
+scope = "global"
+title_key = "bench.command.switch"
+
+[[binding]]
+id = "bench.switch_8"
+key = "Alt+8"
+scope = "global"
+title_key = "bench.command.switch"
+
+[[binding]]
+id = "bench.switch_9"
+key = "Alt+9"
+scope = "global"
+title_key = "bench.command.switch"
+
+[[binding]]
+id = "bench.switch_10"
+key = "Alt+0"
+scope = "global"
+title_key = "bench.command.switch"

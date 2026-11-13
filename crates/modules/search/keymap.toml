@@ -1,0 +1,2 @@
+# O painel Busca não tem atalho próprio: Ctrl+Shift+F (find.in_files) pertence
+# ao módulo find e chama o comando search.focus.

@@ -1,0 +1,92 @@
+# Perfil de ajudante: Antigravity CLI (executável `agy`). Substitui o Gemini CLI.
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# NÃO instalado nesta máquina. Dados das páginas oficiais antigravity.google/docs (confiança média).
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "antigravity"
+name = "Antigravity CLI"
+maker = "Google"
+site = "https://antigravity.google/docs"
+
+[detect]
+executables = ["agy"]
+version = ["--version"]          # "agy --version" (página de primeiros passos, aba CLI)
+
+[start]
+command = "agy"
+args = []                       # abre a TUI
+
+[prompt]
+mode = "flag"
+flag = "-i"                     # agy -i "<prompt>" (--prompt-interactive): roda o prompt e continua na sessão
+headless = ["-p", "{prompt}"]   # agy -p "<prompt>" (--print): imprime a resposta no stdout
+# headless_stdin: NOT FOUND. --input-format stream-json aceita stdin, mas exige --output-format stream-json.
+
+# Modo de permissão = agentMode: flag --mode, ou chave "agentMode" em ~/.gemini/antigravity-cli/settings.json.
+# A política toolPermission (request-review, proceed-in-sandbox, always-proceed, strict) é só de configuração, sem flag.
+
+[permissions.ask]
+args = []                       # modo "default" (sem --mode), com toolPermission "request-review" (padrão da configuração)
+env = {}
+
+[permissions.accept-edits]
+args = ["--mode", "accept-edits"]   # "accept-edits": aprova edições no workspace (página de modos)
+env = {}
+
+[permissions.automatic]
+args = ["--mode", "auto"]       # "auto": avalia comandos fora do sandbox automaticamente (página de modos)
+env = {}
+
+[permissions.full]
+args = ["--dangerously-skip-permissions"]   # "approves all tool calls, including file writes and command execution" (headless)
+env = {}
+
+[resume]
+last = ["--continue"]         # -c: a conversa mais recente
+id = ["--conversation", "{id}"] # conversa por id (página de conversas)
+
+[resume.headless]
+last = ["-p", "{prompt}", "--continue"]   # página headless: agy -p "..." --continue
+
+# [fork]  # a confirmar: /fork (alias /branch) existe na TUI; NOT FOUND como flag de linha de comando.
+
+[models]
+model_args = ["--model", "{model}"]
+effort_args = ["--effort", "{effort}"]
+# effort_values: a confirmar. A referência diz "low through max, depending on the model"; a página headless lista low, medium e high.
+# env_modelo: NOT FOUND.
+
+[sessions]
+format = "jsonl"
+path = "~/.gemini/antigravity-cli/brain/<conversationId>/.system_generated/logs/transcript.jsonl"   # exemplo da página de hooks
+# índice das conversas: NOT FOUND.
+confidence = "medium"
+
+[hooks]
+supported = true
+mechanism = "command"           # "type": "command" é o único tipo documentado e é o padrão
+config = ["<projeto>/.agents/hooks.json", "~/.gemini/config/hooks.json"]   # também hooks.json de plugins
+events = ["SessionStart", "PreToolUse", "PostToolUse", "PreInvocation", "PostInvocation", "Stop"]
+# Campo "command": o comando a executar. Plugins: agy plugin install|uninstall|enable|disable|list|validate|import.
+
+[skills]
+# a confirmar: diretórios de skills não confirmados na documentação oficial.
+user = []
+project = []
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://antigravity.google/docs/getting-started?tab=cli",
+  "https://antigravity.google/docs/cli/reference/",
+  "https://antigravity.google/docs/cli/modes/",
+  "https://antigravity.google/docs/cli/headless/",
+  "https://antigravity.google/docs/cli/conversations/",
+  "https://antigravity.google/docs/settings?tab=cli",
+  "https://antigravity.google/docs/hooks/",
+  "https://antigravity.google/docs/plugins/",
+  "https://antigravity.google/docs/cli/gcli-migration",
+  "https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/",
+]
+commands = []
+confidence = "medium"

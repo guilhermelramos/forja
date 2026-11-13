@@ -1,0 +1,87 @@
+# Perfil de ajudante: Kiro CLI (executável `kiro-cli`).
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# NÃO instalado nesta máquina: dados da documentação oficial kiro.dev (confiança média).
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "kiro"
+name = "Kiro CLI"
+maker = "Kiro"            # a confirmar: empresa responsável
+site = "https://kiro.dev/docs"
+
+[detect]
+executables = ["kiro-cli"]
+version = ["--version"]         # global -V / --version; também "kiro-cli version"
+
+[start]
+command = "kiro-cli"
+args = ["chat"]                # "kiro-cli" e "kiro-cli chat" abrem o chat; usamos o subcomando explícito
+
+[prompt]
+mode = "argument"             # kiro-cli chat "<prompt>" ("INPUT" posicional)
+headless = ["chat", "--no-interactive", "{prompt}"]   # "The instruction can be a positional argument or supplied through piped stdin" (headless)
+headless_stdin = true
+# --output-format stream-json existe (V2 e V3). Sem --v2 ou --v3, o modo não interativo roda em V2 quando não há harness indicado.
+
+# [permissions.ask]        # NOT FOUND: "Supervised" é nome de modo da interface, sem comando nem flag. Só "/permissions" aparece na V3.
+# [permissions.accept-edits]  # NOT FOUND: "Accept file changes" é nome de modo da interface, sem comando nem flag
+# [permissions.automatic]       # "Approve for me" é opção em /permissions numa sessão V3 (slash, não flag). --trust-tools usa nomes de ferramenta (V3 usa ids internos)
+
+[permissions.full]
+args = ["--trust-all-tools"]   # "Allow the model to use any tool without confirmation" (ajuda)
+env = {}
+# Em modo não interativo é preciso pré-autorizar, porque ninguém responde aos pedidos (página headless).
+# Regras por arquivo: ~/.kiro/settings/permissions.yaml e o campo "permissions" dos perfis de agente.
+
+[resume]
+last = ["chat", "--resume"]  # sessão mais recente do diretório (-r também)
+id = ["chat", "--resume-id", "{id}"]
+# --resume-picker abre o seletor; --list-sessions lista (ver [sessoes]).
+
+# [resume.headless]  # a confirmar: --resume combinado com --no-interactive e --trust-all-tools não tem exemplo na documentação
+
+# [fork]  # NOT FOUND como flag. /rewind (slash, TUI): "Fork conversation at an earlier turn to explore a different path".
+
+[models]
+model_args = ["--model", "{model}"]          # --list-models lista os modelos
+effort_args = ["--effort", "{effort}"]       # "--effort <LEVEL>" em kiro-cli chat (referência de comandos)
+effort_values = ["low", "medium", "high", "xhigh", "max"]   # "Not all models support every level" (página de esforço)
+# Padrões salvos: chat.modelDefaults em ~/.kiro/settings/cli.json.
+
+[sessions]
+format = "sqlite"             # "SQLite database in ~/.kiro/" (página de sessões); o nome do arquivo é NOT FOUND
+path = "~/.kiro/sessions/"    # onde ficam as sessões, segundo a página de permissões
+dir_env = "KIRO_HOME"
+list = ["chat", "--list-sessions"]
+delete = ["chat", "--delete-session", "{id}"]
+# exportar: NOT FOUND como subcomando. Só existe "/chat save backup.zip" dentro da sessão (V3).
+confidence = "medium"
+
+[hooks]
+supported = true
+mechanism = "command"
+config = [".kiro/hooks/<id>.json", "~/.kiro/hooks/"]   # projeto e global (CLI V3), confirmados na página de hooks
+# formato: {"version": "v1", "hooks": [{"name", "trigger", "matcher", "action"}]}
+events = ["SessionStart", "SessionEnd", "PreToolUse", "PostToolUse", "PreCompact", "PostCompact", "Stop"]
+# Outros gatilhos aparecem só pelo nome de exibição: Prompt Submit, Agent Stop, File Create/Save/Delete, Pre/Post Task Execution, Manual.
+# O formato "foi introduzido no IDE 1.0 e no CLI V3" (página de hooks).
+
+[skills]
+# a confirmar: diretórios de skills não confirmados na documentação oficial.
+user = []
+project = []
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://kiro.dev/docs/reference/cli-commands/",
+  "https://kiro.dev/docs/cli/headless/",
+  "https://kiro.dev/docs/cli/experimental/tui/",
+  "https://kiro.dev/docs/cli/chat/session-management/",
+  "https://kiro.dev/docs/cli/agent-harness/",
+  "https://kiro.dev/docs/permissions/",
+  "https://kiro.dev/docs/models/effort/",
+  "https://kiro.dev/docs/hooks/",
+  "https://kiro.dev/docs/hooks/types/",
+]
+commands = []
+confidence = "medium"

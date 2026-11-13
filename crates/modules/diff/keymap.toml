@@ -1,0 +1,6 @@
+# Atalho do catálogo (design/keymap.toml).
+[[binding]]
+id = "diff.open"
+key = "Ctrl+Shift+D"
+scope = "global"
+title_key = "diff.command.open"

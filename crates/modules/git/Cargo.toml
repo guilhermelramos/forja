@@ -1,0 +1,16 @@
+[package]
+name = "forja-module-git"
+description = "Forja module git: changes, history graph and blame."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+forja-kernel = { path = "../../kernel", features = ["egui"] }
+forja-contracts = { path = "../../contracts" }
+forja-ui-kit = { path = "../../ui-kit" }
+linkme.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true

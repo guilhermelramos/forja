@@ -1,0 +1,11 @@
+id = "open-pr"
+name = { pt-BR = "Abrir PR", en = "Open PR" }
+version = "1.0.0"
+author = "Forja"
+api = "1"
+
+[capabilities]
+commands = true
+settings = true
+"git.read" = true
+"ui.open_url" = ["github.com"]

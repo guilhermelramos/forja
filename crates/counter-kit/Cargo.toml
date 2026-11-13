@@ -1,0 +1,15 @@
+[package]
+name = "forja-counter-kit"
+description = "Shared plumbing for Forja counters: HTTP transport, status and pagination mapping, git remotes and the secret vault."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+# Support library, not a module: the counter_* modules depend on it, never on each other.
+[dependencies]
+forja-contracts = { path = "../contracts" }
+serde.workspace = true
+serde_json.workspace = true
+ureq.workspace = true
+keyring.workspace = true

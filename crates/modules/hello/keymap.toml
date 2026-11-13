@@ -1,0 +1,7 @@
+# Atalho padrão do módulo hello. O escopo próprio evita conflito com os
+# atalhos globais do produto.
+[[binding]]
+id = "hello.greet"
+key = "Ctrl+Alt+H"
+scope = "hello"
+title_key = "hello.command.greet"

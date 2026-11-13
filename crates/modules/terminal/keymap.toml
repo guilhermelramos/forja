@@ -1,0 +1,86 @@
+# Atalhos do terminal. Os ids vêm de `design/keymap.toml` (escopo terminal),
+# e cada um aponta para o comando de mesmo nome registrado pelo módulo.
+
+[[binding]]
+id = "terminal.copy"
+key = "Ctrl+Shift+C"
+scope = "terminal"
+title_key = "terminal.command.copy"
+
+[[binding]]
+id = "terminal.paste"
+key = "Ctrl+V"
+scope = "terminal"
+title_key = "terminal.command.paste"
+
+[[binding]]
+id = "terminal.search"
+key = "Ctrl+Shift+F"
+scope = "terminal"
+title_key = "terminal.command.search"
+
+[[binding]]
+id = "terminal.clear"
+key = "Ctrl+Shift+K"
+scope = "terminal"
+title_key = "terminal.command.clear"
+
+[[binding]]
+id = "terminal.split.right"
+key = "Alt+Shift+R"
+scope = "terminal"
+title_key = "terminal.command.split-right"
+
+[[binding]]
+id = "terminal.split.down"
+key = "Alt+Shift+D"
+scope = "terminal"
+title_key = "terminal.command.split-down"
+
+[[binding]]
+id = "terminal.pane.next"
+key = "Alt+Shift+PageDown"
+scope = "terminal"
+title_key = "terminal.command.pane-next"
+
+[[binding]]
+id = "terminal.pane.previous"
+key = "Alt+Shift+PageUp"
+scope = "terminal"
+title_key = "terminal.command.pane-previous"
+
+[[binding]]
+id = "terminal.pane.close"
+key = "Alt+Shift+W"
+scope = "terminal"
+title_key = "terminal.command.pane-close"
+
+[[binding]]
+id = "terminal.scroll.page_up"
+key = "PageUp"
+scope = "terminal"
+title_key = "terminal.command.scroll-page-up"
+
+[[binding]]
+id = "terminal.scroll.page_down"
+key = "PageDown"
+scope = "terminal"
+title_key = "terminal.command.scroll-page-down"
+
+[[binding]]
+id = "terminal.scroll.top"
+key = "Ctrl+Home"
+scope = "terminal"
+title_key = "terminal.command.scroll-top"
+
+[[binding]]
+id = "terminal.scroll.bottom"
+key = "Ctrl+End"
+scope = "terminal"
+title_key = "terminal.command.scroll-bottom"
+
+[[binding]]
+id = "terminal.toggle"
+key = "Ctrl+Backtick"
+scope = "global"
+title_key = "terminal.command.toggle"

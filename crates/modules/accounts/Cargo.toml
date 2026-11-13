@@ -1,0 +1,15 @@
+[package]
+name = "forja-module-accounts"
+description = "Forja module accounts: per-profile CLI config homes and active account env."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+forja-kernel = { path = "../../kernel", features = ["egui"] }
+forja-ui-kit = { path = "../../ui-kit" }
+linkme.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true

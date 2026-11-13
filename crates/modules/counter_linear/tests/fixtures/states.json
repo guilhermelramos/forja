@@ -1,0 +1,5 @@
+{"data": {"issue": {"id": "9f1d0c2e-1111-4a6b-9b1a-000000000001", "team": {"states": {"nodes": [
+  {"id": "st-backlog", "name": "Backlog", "type": "backlog"},
+  {"id": "st-started", "name": "In Progress", "type": "started"},
+  {"id": "st-done", "name": "Done", "type": "completed"}
+]}}}}}

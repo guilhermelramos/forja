@@ -1,0 +1,251 @@
+//! Sidebar for registered projects.
+
+use crate::state::{CloneForm, Dialog, EditForm, ProjectForm, Shared};
+use crate::view_dialogs::render_dialog;
+use forja_contracts::BenchRef;
+use forja_kernel::ui_contract::{egui, View};
+use forja_kernel::{Args, Ctx};
+use serde_json::{json, Map};
+
+pub struct ProjectsView {
+    state: Shared,
+}
+
+impl ProjectsView {
+    pub fn new(state: Shared) -> Self {
+        Self { state }
+    }
+}
+
+impl View for ProjectsView {
+    fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
+        self.state.ensure_loaded(cx);
+        let tokens = forja_ui_kit::applied_tokens(ui.ctx());
+        let projects = self.state.projects();
+        let mut dialog = self.state.dialog();
+
+        // A aba "Projetos" da barra lateral já diz o nome da lista: sem cabeçalho repetido.
+        ui.horizontal_wrapped(|ui| {
+            if forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Primary,
+                &cx.t("project.sidebar.add"),
+            )
+            .clicked()
+            {
+                dialog = Dialog::Add(ProjectForm::default());
+            }
+            if forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Secondary,
+                &cx.t("project.sidebar.create"),
+            )
+            .clicked()
+            {
+                dialog = Dialog::Create(ProjectForm::default());
+            }
+            if forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Secondary,
+                &cx.t("project.sidebar.clone"),
+            )
+            .clicked()
+            {
+                dialog = Dialog::Clone(CloneForm::default());
+            }
+        });
+        ui.add_space(4.0);
+
+        if let Some(error) = self.state.error() {
+            ui.label(
+                egui::RichText::new(cx.t_args("project.error.prefix", &[("message", &error)]))
+                    .small()
+                    .color(tokens.color.danger.forja_color()),
+            );
+        }
+        if let Some(status) = self.state.status() {
+            ui.label(
+                egui::RichText::new(status)
+                    .small()
+                    .color(tokens.color.info.forja_color()),
+            );
+        }
+
+        if projects.is_empty() {
+            forja_ui_kit::empty_state(ui, forja_ui_kit::ARCHIVE, &cx.t("project.sidebar.empty"), None);
+        }
+
+        let mut remove_request = None;
+        let mut edit_request = None;
+        let mut bench_activation = None;
+        for project in &projects {
+            let expanded = self.state.is_expanded(&project.id);
+            let frame = egui::Frame::new()
+                .fill(tokens.color.surface.forja_color())
+                .stroke(egui::Stroke::new(
+                    1.0_f32,
+                    tokens.color.border.forja_color(),
+                ))
+                .corner_radius(6)
+                .inner_margin(egui::Margin::symmetric(8, 6));
+            frame.show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    let color =
+                        parse_color(&project.color).unwrap_or(tokens.color.info.forja_color());
+                    let (dot, _) =
+                        ui.allocate_exact_size(egui::vec2(10.0, 10.0), egui::Sense::hover());
+                    ui.painter().circle_filled(dot.center(), 4.0, color);
+                    if ui
+                        .add(
+                            egui::Button::new(
+                                egui::RichText::new(if expanded { "\u{25be}" } else { "\u{25b8}" })
+                                    .color(tokens.color.text_muted.forja_color()),
+                            )
+                            .frame(false),
+                        )
+                        .clicked()
+                    {
+                        self.state.toggle_expanded(&project.id);
+                    }
+                    ui.label(egui::RichText::new(&project.icon).size(16.0));
+                    let name = ui.add(
+                        egui::Label::new(
+                            egui::RichText::new(&project.name)
+                                .strong()
+                                .color(tokens.color.text.forja_color()),
+                        )
+                        .truncate()
+                        .sense(egui::Sense::click()),
+                    );
+                    if name.clicked() {
+                        self.state.toggle_expanded(&project.id);
+                    }
+                    name.context_menu(|ui| {
+                        if forja_ui_kit::button(
+                            ui,
+                            forja_ui_kit::ButtonKind::Ghost,
+                            &cx.t("project.sidebar.edit"),
+                        )
+                        .clicked()
+                        {
+                            edit_request = Some(project.clone());
+                            ui.close();
+                        }
+                        if forja_ui_kit::button(
+                            ui,
+                            forja_ui_kit::ButtonKind::Ghost,
+                            &cx.t("project.sidebar.remove"),
+                        )
+                        .clicked()
+                        {
+                            remove_request = Some((project.id.clone(), project.name.clone()));
+                            ui.close();
+                        }
+                    });
+                });
+                ui.label(
+                    egui::RichText::new(&project.path)
+                        .small()
+                        .color(tokens.color.text_muted.forja_color()),
+                );
+                if expanded {
+                    ui.add_space(2.0);
+                    match benches_for(cx, &project.id) {
+                        Ok(benches) => {
+                            self.state.mark_benches_missing(false);
+                            if benches.is_empty() {
+                                ui.label(
+                                    egui::RichText::new(cx.t("project.sidebar.no-benches"))
+                                        .small()
+                                        .color(tokens.color.text_muted.forja_color()),
+                                );
+                            }
+                            for bench in benches {
+                                let label = match &bench.branch {
+                                    Some(branch) => format!("{}  \u{00b7}  {}", bench.name, branch),
+                                    None => bench.name.clone(),
+                                };
+                                let row = ui.add(
+                                    egui::Label::new(
+                                        egui::RichText::new(label)
+                                            .small()
+                                            .color(tokens.color.text.forja_color()),
+                                    )
+                                    .truncate()
+                                    .sense(egui::Sense::click()),
+                                );
+                                if row.clicked() {
+                                    bench_activation = Some(bench.bench_id.clone());
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            if !self.state.benches_missing() {
+                                self.state.mark_benches_missing(true);
+                            }
+                            ui.label(
+                                egui::RichText::new(cx.t("project.sidebar.benches-missing"))
+                                    .small()
+                                    .color(tokens.color.text_muted.forja_color()),
+                            );
+                        }
+                    }
+                }
+            });
+            ui.add_space(4.0);
+        }
+
+        if let Some((project_id, name)) = remove_request {
+            dialog = Dialog::Remove { project_id, name };
+        }
+        if let Some(project) = edit_request {
+            dialog = Dialog::Edit(EditForm {
+                project_id: project.id,
+                name: project.name,
+                icon: project.icon,
+                color: project.color,
+                error: None,
+            });
+        }
+        if let Some(bench_id) = bench_activation {
+            let mut args = Map::new();
+            args.insert("bench_id".to_owned(), json!(bench_id));
+            if let Err(error) = cx.run_command("bench.activate", Args::from_map(args)) {
+                self.state.set_error(Some(error.to_string()));
+            }
+        }
+
+        let mut next = render_dialog(ui.ctx(), &mut dialog, cx, &self.state);
+        std::mem::swap(&mut dialog, &mut next);
+        self.state.set_dialog(dialog);
+    }
+}
+
+fn benches_for(cx: &mut Ctx<'_>, project_id: &str) -> Result<Vec<BenchRef>, String> {
+    let mut args = Map::new();
+    args.insert("project_id".to_owned(), json!(project_id));
+    let value = cx
+        .run_command("bench.list", Args::from_map(args))
+        .map_err(|error| error.to_string())?;
+    serde_json::from_value(value["benches"].clone()).map_err(|error| error.to_string())
+}
+
+pub(crate) fn parse_color(value: &str) -> Option<egui::Color32> {
+    let value = crate::model::normalize_color(value)?;
+    let r = u8::from_str_radix(&value[1..3], 16).ok()?;
+    let g = u8::from_str_radix(&value[3..5], 16).ok()?;
+    let b = u8::from_str_radix(&value[5..7], 16).ok()?;
+    Some(egui::Color32::from_rgb(r, g, b))
+}
+
+/// `forja_ui_kit::Color` keeps its egui conversion crate-private; modules get
+/// the same value through the public channels.
+pub(crate) trait ColorExt {
+    fn forja_color(self) -> egui::Color32;
+}
+
+impl ColorExt for forja_ui_kit::Color {
+    fn forja_color(self) -> egui::Color32 {
+        egui::Color32::from_rgba_unmultiplied(self.r, self.g, self.b, self.a)
+    }
+}

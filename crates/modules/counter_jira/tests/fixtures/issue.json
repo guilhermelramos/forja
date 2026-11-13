@@ -1,0 +1,11 @@
+{"key": "ENG-42", "fields": {"summary": "Cache do quadro demora ao abrir",
+  "status": {"name": "In Progress", "statusCategory": {"key": "indeterminate"}},
+  "assignee": {"displayName": "Ana Lima"}, "reporter": {"displayName": "Bruno Teles"},
+  "labels": ["perf"], "updated": "2026-11-11T13:00:00.000+0000", "project": {"key": "ENG"},
+  "description": {"type": "doc", "version": 1, "content": [
+    {"type": "paragraph", "content": [{"type": "text", "text": "Abrir o quadro com mais de 200 cartões leva segundos."}]}
+  ]},
+  "comment": {"comments": [
+    {"id": "10001", "author": {"displayName": "Bruno Teles"}, "created": "2026-11-11T12:00:00.000+0000",
+     "body": {"type": "doc", "version": 1, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Medi: 2,4 s no lote grande."}]}]}}
+  ]}}}

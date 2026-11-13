@@ -1,0 +1,15 @@
+[package]
+name = "forja-mcp"
+description = "Forja MCP bridge: stdio JSON-RPC to the Forja named pipe."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "forja-mcp"
+path = "src/main.rs"
+
+[dependencies]
+forja-protocol = { path = "../protocol" }
+serde_json.workspace = true

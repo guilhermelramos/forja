@@ -1,0 +1,37 @@
+{
+  "info": {
+    "id": "opencode-session-1",
+    "title": "Revisar a view do chat",
+    "directory": "C:/work/forja",
+    "time": { "created": 1763000000000, "updated": 1763000060000 }
+  },
+  "messages": [
+    {
+      "info": { "role": "user", "time": { "created": 1763000000000 } },
+      "parts": [
+        { "type": "text", "text": "Reveja a view e o composer." }
+      ]
+    },
+    {
+      "info": { "role": "assistant", "time": { "created": 1763000001000 } },
+      "parts": [
+        { "type": "reasoning", "text": "A view precisa mostrar as ferramentas." },
+        { "type": "text", "text": "Vou conferir a view." },
+        {
+          "type": "tool",
+          "tool": "bash",
+          "state": {
+            "status": "completed",
+            "input": { "command": "cargo test" },
+            "output": "ok"
+          }
+        },
+        {
+          "type": "file",
+          "path": "C:/work/forja/crates/modules/chat/src/view.rs",
+          "diff": "--- a/view.rs\n+++ b/view.rs\n-old\n+new"
+        }
+      ]
+    }
+  ]
+}

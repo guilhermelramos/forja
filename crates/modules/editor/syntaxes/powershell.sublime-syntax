@@ -1,0 +1,40 @@
+%YAML 1.2
+---
+name: PowerShell
+file_extensions:
+  - ps1
+  - psm1
+  - psd1
+scope: source.powershell
+contexts:
+  main:
+    - match: '#.*$'
+      scope: comment.line.number-sign.powershell
+    - match: '"'
+      scope: punctuation.definition.string.begin.powershell
+      push: double-quoted
+    - match: "'"
+      scope: punctuation.definition.string.begin.powershell
+      push: single-quoted
+    - match: '\$[A-Za-z_][A-Za-z0-9_]*'
+      scope: variable.other.powershell
+    - match: '\b(if|elseif|else|foreach|for|while|do|switch|function|param|return|try|catch|finally|throw|break|continue|in)\b'
+      scope: keyword.control.powershell
+    - match: '\b(Get|Set|New|Remove|Add|Write|Read|Test|Start|Stop|Invoke|Select|Where|ForEach|Sort|Measure|Copy|Move)-[A-Za-z]+'
+      scope: support.function.powershell
+    - match: '\b\d+(\.\d+)?\b'
+      scope: constant.numeric.powershell
+    - match: '(\||-eq|-ne|-gt|-lt|-ge|-le|-and|-or|-not)'
+      scope: keyword.operator.powershell
+  double-quoted:
+    - meta_scope: string.quoted.double.powershell
+    - match: '\$[A-Za-z_][A-Za-z0-9_]*'
+      scope: variable.other.powershell
+    - match: '"'
+      scope: punctuation.definition.string.end.powershell
+      pop: true
+  single-quoted:
+    - meta_scope: string.quoted.single.powershell
+    - match: "'"
+      scope: punctuation.definition.string.end.powershell
+      pop: true

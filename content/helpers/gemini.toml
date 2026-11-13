@@ -1,0 +1,87 @@
+# Perfil de ajudante: Gemini CLI (executável `gemini`).
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# SITUAÇÃO: descontinuado para uso individual. Aviso em geminicli.com: "Gemini CLI was replaced by Antigravity CLI on June 18th, 2026."
+# Mantido só para quem ainda tem acesso por organização ou por chave de API. O substituto é o Antigravity CLI (`antigravity.toml`).
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "gemini"
+name = "Gemini CLI"
+maker = "Google"
+site = "https://geminicli.com/docs"
+status = "discontinued"
+
+[detect]
+executables = ["gemini"]
+version = ["--version"]          # saída: "0.67.0"
+
+[start]
+command = "gemini"
+args = []                       # o texto posicional "query" inicia a sessão interativa com prompt
+
+[prompt]
+mode = "argument"              # gemini "<prompt>" roda em modo interativo por padrão
+headless = ["-p", "{prompt}"]   # modo não interativo; o texto de -p é somado ao stdin, se houver
+headless_stdin = true
+
+[permissions.ask]
+args = ["--approval-mode", "default"]   # pede aprovação das ações (ajuda: "prompt for approval")
+env = {}
+
+[permissions.accept-edits]
+args = ["--approval-mode", "auto_edit"] # aprova ferramentas de edição automaticamente (ajuda)
+env = {}
+
+# [permissions.automatic]  # a confirmar: sem modo nomeado. Regras "allow" ficam em ~/.gemini/policies/*.toml
+
+[permissions.full]
+args = ["--approval-mode", "yolo"]      # aprova todas as ferramentas; -y/--yolo está obsoleto (ajuda)
+env = {}
+# Em modo não interativo, pastas não confiáveis travam a execução quando a confiança de pastas está ligada.
+# --skip-trust (ou GEMINI_CLI_TRUST_WORKSPACE=true) resolve para uma execução (documentação de trusted folders).
+
+[resume]
+last = ["--resume", "latest"]
+id = ["--resume", "{id}"]       # índice (lista com --list-sessions) ou UUID (documentação de sessões)
+
+# [fork]  # a confirmar: nenhuma flag de bifurcação encontrada
+
+[models]
+model_args = ["--model", "{model}"]   # padrão "auto"; aceita apelidos (pro, flash, flash-lite) e nomes completos
+# effort_args: a confirmar (não encontrado nas páginas lidas).
+
+[sessions]
+format = "to-confirm"
+path = "~/.gemini/tmp/<hash-do-projeto>/chats/"   # resumo da página de sessões, não trecho verbatim; formato dos arquivos não confirmado
+list = ["--list-sessions"]    # "List available sessions for the current project and exit." (ajuda)
+confidence = "medium"
+
+[hooks]
+supported = true
+mechanism = "command"           # só o tipo "command" está documentado
+config = ["~/.gemini/settings.json", ".gemini/settings.json", "/etc/gemini-cli/settings.json"]
+key = "hooks"
+events = [
+  "SessionStart", "SessionEnd", "BeforeAgent", "AfterAgent", "BeforeModel", "AfterModel",
+  "BeforeToolSelection", "BeforeTool", "AfterTool", "PreCompress", "Notification",
+]
+# "gemini hooks" é o subcomando de gestão (ajuda da raiz).
+
+[skills]
+# Pastas de skills. `user` é relativa ao diretório pessoal; `project`, à raiz do projeto.
+# Fonte: https://geminicli.com/docs/cli/creating-skills/
+user = ["~/.gemini/skills"]
+project = [".gemini/skills"]
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://geminicli.com/docs/cli/creating-skills/",
+  "https://geminicli.com/docs/cli/headless",
+  "https://geminicli.com/docs/cli/cli-reference",
+  "https://geminicli.com/docs/cli/trusted-folders",
+  "https://geminicli.com/docs/cli/session-management",
+  "https://geminicli.com/docs/reference/policy-engine",
+  "https://geminicli.com/docs/hooks",
+]
+commands = ["gemini --version", "gemini --help"]
+confidence = "medium"

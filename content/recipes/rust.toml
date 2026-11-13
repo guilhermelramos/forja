@@ -1,0 +1,46 @@
+# Rust toolchain recipes for Forja
+
+[[recipe]]
+id = "rust-build"
+title = { pt-BR = "Compilar workspace Rust", en = "Build Rust workspace" }
+command = "cargo build --workspace"
+scope = "project"
+enter = true
+directory = "."
+manifest = "Cargo.toml"
+
+[[recipe]]
+id = "rust-test"
+title = { pt-BR = "Executar testes Rust", en = "Run Rust tests" }
+command = "cargo test --workspace"
+scope = "project"
+enter = true
+directory = "."
+manifest = "Cargo.toml"
+
+[[recipe]]
+id = "rust-lint"
+title = { pt-BR = "Executar Clippy linter", en = "Run Clippy linter" }
+command = "cargo clippy --workspace --all-targets -- -D warnings"
+scope = "project"
+enter = true
+directory = "."
+manifest = "Cargo.toml"
+
+[[recipe]]
+id = "rust-format-check"
+title = { pt-BR = "Verificar formatação Rust", en = "Check Rust formatting" }
+command = "cargo fmt --all --check"
+scope = "project"
+enter = true
+directory = "."
+manifest = "Cargo.toml"
+
+[[recipe]]
+id = "rust-format-fix"
+title = { pt-BR = "Formatar código Rust", en = "Format Rust code" }
+command = "cargo fmt --all"
+scope = "project"
+enter = true
+directory = "."
+manifest = "Cargo.toml"

@@ -1,0 +1,89 @@
+# Perfil de ajudante: Qwen Code (executável `qwen`).
+# Formato: design/helper-profile.md. Fontes e data: [fontes].
+# NÃO instalado nesta máquina: dados da documentação oficial lida em resumo (confiança média).
+# Campo ausente ou comentado com "a confirmar" não está confirmado na fonte.
+
+id = "qwen-code"
+name = "Qwen Code"
+maker = "QwenLM"
+site = "https://qwenlm.github.io/qwen-code-docs/en/"
+
+[detect]
+executables = ["qwen"]
+version = ["--version"]          # "Displays the version of the CLI" (página de configurações). "-v" não foi encontrado
+
+[start]
+command = "qwen"
+args = []
+
+[prompt]
+mode = "flag"
+flag = "-i"                     # --prompt-interactive: "Starts an interactive session with the provided prompt as the initial input."
+headless = ["-p", "{prompt}"]   # --prompt: modo não interativo (página headless)
+headless_stdin = true           # echo "..." | qwen; cat README.md | qwen --prompt "..."
+# Prompt posicional no modo interativo: NOT FOUND.
+
+[permissions.ask]
+args = ["--approval-mode", "default"]   # "Ask Permissions Mode is the initial mode" (approval-mode). Conflito: settings diz que tools.approvalMode padrão é "auto"
+env = {}
+
+[permissions.accept-edits]
+args = ["--approval-mode", "auto-edit"] # "/approval-mode auto-edit" (página approval-mode). Um exemplo da página headless escreve auto_edit
+env = {}
+
+[permissions.automatic]
+args = ["--approval-mode", "auto"]      # "An LLM classifier evaluates each shell command, network call, and out-of-workspace edit" (approval-mode)
+env = {}
+
+[permissions.full]
+args = ["--approval-mode", "yolo"]      # "Use --approval-mode=yolo instead of --yolo" (settings): --yolo não combina com --approval-mode
+env = {}
+# Chave de configuração: tools.approvalMode em .qwen/settings.json ou ~/.qwen/settings.json.
+
+[resume]
+last = ["--continue"]         # a sessão mais recente deste projeto; funciona em modo headless
+id = ["--resume", "{id}"]       # sessão por id. general.chatRecording precisa estar ligado: sem ele, --continue e --resume não funcionam (settings)
+
+# [fork]  # NOT FOUND como flag. Na sessão interativa, /branch faz a bifurcação.
+
+[models]
+model_args = ["--model", "{model}"]   # -m também funciona
+# effort_args: NOT FOUND como flag. Existe a configuração model.reasoningEffort e o comando /effort dentro da sessão.
+
+[sessions]
+format = "jsonl"
+path = "~/.qwen/projects/<caminho-do-diretorio-sanitizado>/chats/"   # JSONL por projeto
+dir_env = "QWEN_HOME"           # padrão ~/.qwen
+confidence = "medium"
+
+[hooks]
+supported = true
+mechanism = "command"
+config = [".qwen/settings.json", "~/.qwen/settings.json"]
+key = "hooks"
+events = [
+  "PreToolUse", "PostToolUse", "PostToolUseFailure", "PostToolBatch", "UserPromptSubmit",
+  "UserPromptExpansion", "SessionStart", "SessionEnd", "SessionDelete", "MessageDisplay",
+  "Stop", "StopFailure", "SubagentStart", "SubagentStop", "PreCompact", "PostCompact",
+  "Notification", "PermissionRequest", "PermissionDenied", "TodoCreated", "TodoCompleted",
+  "InstructionsLoaded", "FileChanged",
+]
+# Ligados por padrão. "disableAllHooks": true desliga todos. Em headless, hooks de projeto não aprovados são omitidos.
+
+[skills]
+# a confirmar: diretórios de skills não confirmados na documentação oficial.
+user = []
+project = []
+
+[sources]
+date = "2026-11-12"
+urls = [
+  "https://qwenlm.github.io/qwen-code-docs/en/users/features/headless",
+  "https://qwenlm.github.io/qwen-code-docs/en/users/features/approval-mode/",
+  "https://qwenlm.github.io/qwen-code-docs/en/users/configuration/settings/",
+  "https://qwenlm.github.io/qwen-code-docs/en/users/features/commands/",
+  "https://qwenlm.github.io/qwen-code-docs/en/users/features/hooks/",
+  "https://qwenlm.github.io/qwen-code-docs/en/users/conversations-recovery/",
+]
+commands = []
+confidence = "medium"

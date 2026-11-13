@@ -1,0 +1,4 @@
+# Files allowed to mention terms on the provenance denylist, with the reason.
+[[allow]]
+file = "crates/modules/browser/assets/mermaid/*"
+reason = "Third-party Mermaid 11.4.1 MIT bundle; VERSION and LICENSE sit next to it."
