@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 39,
-  "widgets_total": 2191,
-  "widgets_covered": 2191,
+  "states_done": 42,
+  "widgets_total": 2351,
+  "widgets_covered": 2351,
   "complete": false,
   "stale": [
     {
@@ -95,21 +95,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "en.dark.modal.helper.profile_picker",
-      "png": "captures/en.dark.modal.helper.profile_picker.png",
-      "tree": "captures/en.dark.modal.helper.profile_picker.json"
-    },
-    {
-      "state": "en.dark.open.anvil",
-      "png": "captures/en.dark.open.anvil.png",
-      "tree": "captures/en.dark.open.anvil.json"
-    },
-    {
-      "state": "en.dark.open.onboarding",
-      "png": "captures/en.dark.open.onboarding.png",
-      "tree": "captures/en.dark.open.onboarding.json"
-    },
     {
       "state": "en.dark.open.toast",
       "png": "captures/en.dark.open.toast.png",
