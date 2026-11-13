@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 36/160 telas documentadas · elementos citados 2071/2071 · completo: false
+**Progresso:** 39/160 telas documentadas · elementos citados 2191/2191 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -102,7 +102,7 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.light.settings.remote` | — | [png](captures/pt-BR.light.settings.remote.png) |
 | `pt-BR.light.settings.trust` | — | [png](captures/pt-BR.light.settings.trust.png) |
 | `pt-BR.light.settings.voice` | — | [png](captures/pt-BR.light.settings.voice.png) |
-| `en.dark.home.default` | — | [png](captures/en.dark.home.default.png) |
+| `en.dark.home.default` | [página](pages/en.dark.home.default.md) | [png](captures/en.dark.home.default.png) |
 | `en.dark.open.anvil` | — | [png](captures/en.dark.open.anvil.png) |
 | `en.dark.open.onboarding` | — | [png](captures/en.dark.open.onboarding.png) |
 | `en.dark.open.toast` | — | [png](captures/en.dark.open.toast.png) |
@@ -129,13 +129,13 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.dark.modal.onboarding.wizard` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.modal.onboarding.wizard.png) |
 | `en.dark.right-tab.ports.panel` | — | [png](captures/en.dark.right-tab.ports.panel.png) |
 | `en.dark.rail.request.page` | — | [png](captures/en.dark.rail.request.page.png) |
-| `en.dark.bench-tab.review.tab` | — | [png](captures/en.dark.bench-tab.review.tab.png) |
+| `en.dark.bench-tab.review.tab` | [página](pages/en.dark.bench-tab.review.tab.md) | [png](captures/en.dark.bench-tab.review.tab.png) |
 | `en.dark.rail.routine.page` | — | [png](captures/en.dark.rail.routine.page.png) |
 | `en.dark.right-tab.search.panel` | — | [png](captures/en.dark.right-tab.search.panel.png) |
 | `en.dark.rail.skill.page` | — | [png](captures/en.dark.rail.skill.page.png) |
 | `en.dark.bench-tab.terminal.tab` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.bench-tab.terminal.tab.png) |
 | `en.dark.rail.usage.page` | — | [png](captures/en.dark.rail.usage.page.png) |
-| `en.dark.bench-tab.viewers.tab` | — | [png](captures/en.dark.bench-tab.viewers.tab.png) |
+| `en.dark.bench-tab.viewers.tab` | [página](pages/en.dark.bench-tab.viewers.tab.md) | [png](captures/en.dark.bench-tab.viewers.tab.png) |
 | `en.dark.modal.voice.overlay` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.modal.voice.overlay.png) |
 | `en.dark.settings.accounts` | — | [png](captures/en.dark.settings.accounts.png) |
 | `en.dark.settings.content` | — | [png](captures/en.dark.settings.content.png) |
