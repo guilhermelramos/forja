@@ -155,3 +155,5 @@ setting-appearance-colors-accent-label = Accent color
 setting-appearance-colors-accent-help = Sets the interface accent color.
 setting-appearance-window-remember_geometry-label = Remember size and position
 setting-appearance-window-remember_geometry-help = Reopens the window at its previous size and position.
+shell-command-bench-focus = Show the active bench
+shell-command-tab-open = Bring a bench tab to the front

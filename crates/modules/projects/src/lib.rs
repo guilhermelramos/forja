@@ -16,7 +16,7 @@ use forja_kernel::forja_protocol::{
 };
 use forja_kernel::{Args, Module, ModuleManifest, Registrar, Slot};
 use serde_json::{json, Map, Value};
-use state::{CloneForm, Shared};
+use state::{CloneForm, Dialog, ProjectForm, Shared};
 
 #[forja_kernel::module]
 static PROJECTS: fn() -> Box<dyn Module> = || {
@@ -67,6 +67,17 @@ impl Module for ProjectsModule {
                 let id = args.required_str("project_id")?;
                 remove_state.remove(cx, id).map_err(kerr)?;
                 Ok(json!({ "removed": true }))
+            },
+        );
+
+        let add_dialog_state = self.state.clone();
+        r.command(
+            "project.add_dialog",
+            "project.command.add_dialog",
+            move |cx, _args| {
+                add_dialog_state.ensure_loaded(cx);
+                add_dialog_state.set_dialog(Dialog::Add(ProjectForm::default()));
+                Ok(json!({ "pending": true }))
             },
         );
 
@@ -235,6 +246,8 @@ impl Module for ProjectsModule {
 
         for key in [
             "project.name",
+            "project.command.add_dialog",
+            "project.dialogs.title",
             "project.sidebar.title",
             "project.sidebar.empty",
             "project.sidebar.add",
@@ -279,6 +292,14 @@ impl Module for ProjectsModule {
             "project.sidebar.title",
             10,
             move || Box::new(view::ProjectsView::new(view_state.clone())),
+        );
+        let dialog_state = self.state.clone();
+        r.view(
+            Slot::Modal,
+            "project.dialogs",
+            "project.dialogs.title",
+            20,
+            move || Box::new(view::ProjectsDialogs::new(dialog_state.clone())),
         );
     }
 }

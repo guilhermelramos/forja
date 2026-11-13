@@ -155,3 +155,5 @@ setting-appearance-colors-accent-label = Cor de destaque
 setting-appearance-colors-accent-help = Define a cor de destaque da interface.
 setting-appearance-window-remember_geometry-label = Lembrar tamanho e posição
 setting-appearance-window-remember_geometry-help = Reabre a janela no tamanho e na posição anteriores.
+shell-command-bench-focus = Mostrar a bancada ativa
+shell-command-tab-open = Trazer uma aba da bancada para a frente

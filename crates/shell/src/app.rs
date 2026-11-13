@@ -94,6 +94,8 @@ pub struct ForjaApp {
     pub(crate) top_views: Vec<ViewInstance>,
     /// Rail view shown in the center. `None` keeps the bench tabs.
     pub(crate) rail_page: Option<String>,
+    /// Project and bench names of the last activation, shown in the top bar.
+    pub(crate) active_bench: Option<(String, String)>,
     pub(crate) rail_icons: BTreeMap<String, egui::TextureHandle>,
     pub(crate) active_tab: usize,
     pub(crate) tabs: TabSet,
@@ -207,6 +209,7 @@ impl ForjaApp {
             anvil_views,
             top_views,
             rail_page: None,
+            active_bench: None,
             rail_icons: BTreeMap::new(),
             active_tab,
             tabs: TabSet::default(),
@@ -382,6 +385,19 @@ impl ForjaApp {
                         self.rail_page = Some(view_id);
                     } else {
                         self.status = Some(format!("rail page `{view_id}` not found"));
+                    }
+                }
+                actions::Action::OpenBench { project, bench } => {
+                    self.active_bench = Some((project, bench));
+                    self.rail_page = None;
+                    self.tabs.show(self.active_tab, self.bench_views.len());
+                }
+                actions::Action::ShowBenchTab(view_id) => {
+                    if let Some(index) = self.bench_views.iter().position(|view| view.id == view_id)
+                    {
+                        self.tabs.show(index, self.bench_views.len());
+                        self.active_tab = index;
+                        self.rail_page = None;
                     }
                 }
                 actions::Action::ToggleSidebar => {

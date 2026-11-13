@@ -31,7 +31,17 @@ impl ForjaApp {
             self.text("shell.top.anvil"),
             self.chord_for("anvil.open")
         );
-        let crumb = self.text("shell.top.no-project");
+        let crumb = self
+            .active_bench
+            .as_ref()
+            .map(|(project, bench)| {
+                if project == bench {
+                    project.clone()
+                } else {
+                    format!("{project} \u{00b7} {bench}")
+                }
+            })
+            .unwrap_or_else(|| self.text("shell.top.no-project"));
         let has_top = !self.top_views.is_empty();
         let response = egui::TopBottomPanel::top("forja.top")
             .exact_height(height)

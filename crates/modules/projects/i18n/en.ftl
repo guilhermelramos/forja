@@ -50,3 +50,5 @@ project-method-clone-description = Clones a git repository into a new folder and
 project-method-clone-result = Accepted clone job.
 project-method-update-description = Changes the name, icon or color of a project.
 project-method-update-result = The updated project.
+project-command-add_dialog = Open the add folder dialog
+project-dialogs-title = Project dialogs

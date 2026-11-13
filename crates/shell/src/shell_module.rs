@@ -24,7 +24,29 @@ impl Module for ShellModule {
             registrar.uses_i18n(key);
         }
         open_rail(registrar);
+        focus_bench(registrar);
     }
+}
+
+fn focus_bench(registrar: &mut Registrar<'_>) {
+    registrar.command(
+        "shell.bench.focus",
+        "shell.command.bench-focus",
+        |_, args| {
+            let project = args.required_str("project")?.to_owned();
+            let bench = args.required_str("bench")?.to_owned();
+            actions::push(Action::OpenBench {
+                project: project.clone(),
+                bench: bench.clone(),
+            });
+            Ok(json!({ "project": project, "bench": bench }))
+        },
+    );
+    registrar.command("shell.tab.open", "shell.command.tab-open", |_, args| {
+        let view_id = args.required_str("view_id")?.to_owned();
+        actions::push(Action::ShowBenchTab(view_id.clone()));
+        Ok(json!({ "opening": true, "view_id": view_id }))
+    });
 }
 
 fn open_rail(registrar: &mut Registrar<'_>) {
@@ -116,6 +138,8 @@ const CHROME_KEYS: &[&str] = &[
     "shell.command.rail-open",
     "shell.method.rail-open.description",
     "shell.method.rail-open.result",
+    "shell.command.bench-focus",
+    "shell.command.tab-open",
 ];
 
 #[cfg(test)]
@@ -154,6 +178,60 @@ mod tests {
             )
             .expect("rail command");
         assert!(actions::drain().contains(&Action::OpenRail("muster.page".to_owned())));
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn bench_focus_and_tab_open_queue_actions() {
+        let dir = std::env::temp_dir().join(format!(
+            "forja-shell-bench-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let mut runtime = Runtime::new(
+            vec![Box::new(ShellModule)],
+            RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("shell module registers");
+        let _ = actions::drain();
+        runtime
+            .run_command(
+                "shell.bench.focus",
+                forja_kernel::Args::from_map(Map::from_iter([
+                    ("project".to_owned(), json!("projeto")),
+                    ("bench".to_owned(), json!("bancada")),
+                ])),
+            )
+            .expect("focus command");
+        runtime
+            .run_command(
+                "shell.tab.open",
+                forja_kernel::Args::from_map(Map::from_iter([(
+                    "view_id".to_owned(),
+                    json!("editor.tab"),
+                )])),
+            )
+            .expect("tab command");
+        assert_eq!(
+            actions::drain(),
+            vec![
+                Action::OpenBench {
+                    project: "projeto".to_owned(),
+                    bench: "bancada".to_owned(),
+                },
+                Action::ShowBenchTab("editor.tab".to_owned()),
+            ]
+        );
         drop(runtime);
         let _ = std::fs::remove_dir_all(dir);
     }

@@ -195,6 +195,14 @@ pub fn activate(cx: &mut Ctx<'_>, shared: &Shared, bench_id: &str) -> Result<Ben
     })?;
     let bench = shared.find(bench_id).unwrap_or(bench);
     cx.emit(&BenchActivated(bench.to_ref()));
+    // The shell leaves the rail page and shows the active bench's tabs. The
+    // command is optional so the module still works without the app shell.
+    if let Some(project) = project_by_id(cx, &bench.project_id) {
+        let mut args = Map::new();
+        args.insert("project".to_owned(), json!(project.name));
+        args.insert("bench".to_owned(), json!(bench.name));
+        let _ = cx.run_command("shell.bench.focus", Args::from_map(args));
+    }
     Ok(bench.to_ref())
 }
 

@@ -160,3 +160,4 @@ setting-bench-stage-pr-merge-label = Move to ready on PR merge
 setting-bench-stage-pr-merge-help = Defines whether the bench moves to ready when a PR is merged.
 setting-bench-stage-archive-on_ready-label = Archive on ready
 setting-bench-stage-archive-on_ready-help = Archives the bench automatically when it reaches ready.
+bench-dialog-create-add-folder = Add folder

@@ -17,6 +17,7 @@ Um módulo **nunca depende do crate de outro**. Eles conversam de duas formas:
 | `project.create` | projects | `{path, name?, icon?, color?}` | `{pending: true}`; assíncrono |
 | `project.clone` | projects | `{url, path, name?, icon?, color?}` | `{pending: true}`; assíncrono |
 | `project.update` | projects | `{project_id, name?, icon?, color?}` | `ProjectRef` |
+| `project.add_dialog` | projects | - | `{pending: true}`. Abre o diálogo de adicionar pasta de qualquer tela. |
 | `bench.current` | benches | — | `BenchRef \| null` |
 | `bench.list` | benches | `{project_id?, include_archived?}` | `{benches: [BenchRef]}` |
 | `bench.list_cards` | benches | `{project_id?, include_archived?}` | `{benches: [BenchCard]}` |
@@ -35,6 +36,7 @@ Um módulo **nunca depende do crate de outro**. Eles conversam de duas formas:
 | `terminal.list` | terminal | `{bench_path?}` | `{terminals: [TerminalRef]}` |
 | `terminal.focus` | terminal | `{terminal_id}` | `{focused: bool}`. Usado pela página Ajudantes. |
 | `file.open` | editor | `{path, line?, column?}` | `{}`. Também atende o evento `file.open_requested`. |
+| `editor.active_file` | editor | - | `{path: string \| null}`. Arquivo da aba ativa, usado pelo blame. |
 | `editor.save` / `editor.reload` / `editor.compare` | editor | `{path?}` (ativo quando omitido) | `{pending: true}` |
 | `editor.find` | editor | `{query?, replacement?, replace?}` | `{open: true}` |
 | `editor.replace.all` | editor | `{path?, find?, replace?}` | `{replaced: n}` |
@@ -418,6 +420,8 @@ Consome `terminal.list` e `terminal.send` (`{terminal_id, text, enter: false}`),
 | Comando | Argumentos | Retorno |
 |---|---|---|
 | `shell.rail.open` | `{view_id}` | `{opening, view_id}`. Abre uma página do trilho pelo id da view; usado por `muster.open` e pela Bigorna. |
+| `shell.bench.focus` | `{project, bench}` | `{project, bench}`. Sai da página do trilho e mostra as abas da bancada ativa; o cabeçalho passa a nomeá-la. |
+| `shell.tab.open` | `{view_id}` | `{opening, view_id}`. Traz uma aba da bancada para a frente (o editor usa em `file.open_requested`). |
 
 ## Mutirão (onda C3)
 

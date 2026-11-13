@@ -13,6 +13,7 @@ mod view_sidebar;
 #[cfg(test)]
 mod view_tests;
 
+use forja_contracts::{names, BenchActivated, BenchCreated, BenchStored, StageChanged};
 use forja_kernel::{
     Module, ModuleManifest, Registrar, SettingKind, SettingSpec, SettingValue, Slot,
 };
@@ -44,6 +45,22 @@ impl Module for BoardModule {
 
         register_settings(r);
 
+        // A create, store, stage move or activation changes what the board and
+        // the sidebar must show; refresh at the next frame instead of waiting
+        // for the periodic timer.
+        r.contract_event::<BenchCreated>(names::BENCH_CREATED);
+        r.contract_event::<BenchStored>(names::BENCH_STORED);
+        r.contract_event::<BenchActivated>(names::BENCH_ACTIVATED);
+        r.contract_event::<StageChanged>(names::STAGE_CHANGED);
+        let created_state = self.state.clone();
+        r.subscribe::<BenchCreated, _>(move |_cx, _event| created_state.request_refresh());
+        let stored_state = self.state.clone();
+        r.subscribe::<BenchStored, _>(move |_cx, _event| stored_state.request_refresh());
+        let activated_state = self.state.clone();
+        r.subscribe::<BenchActivated, _>(move |_cx, _event| activated_state.request_refresh());
+        let stage_state = self.state.clone();
+        r.subscribe::<StageChanged, _>(move |_cx, _event| stage_state.request_refresh());
+
         let refresh_state = self.state.clone();
         r.command("board.refresh", "board.command.refresh", move |_, _| {
             refresh_state.request_refresh();
@@ -69,6 +86,9 @@ impl Module for BoardModule {
             "board.sort.stage",
             "board.action.refresh",
             "board.action.create",
+            "board.action.move",
+            "board.action.move-to",
+            "board.action.move-back",
             "board.action.open",
             "board.action.pin",
             "board.action.read",

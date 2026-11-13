@@ -160,3 +160,4 @@ setting-bench-stage-pr-merge-label = Mover para pronto ao mesclar PR
 setting-bench-stage-pr-merge-help = Define se a bancada vai para pronto quando o PR é mesclado.
 setting-bench-stage-archive-on_ready-label = Guardar ao entrar em pronto
 setting-bench-stage-archive-on_ready-help = Guarda a bancada automaticamente ao entrar na etapa pronto.
+bench-dialog-create-add-folder = Adicionar pasta
