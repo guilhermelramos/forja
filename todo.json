@@ -1,26 +1,11 @@
 {
   "states_total": 40,
-  "states_done": 3,
-  "widgets_total": 131,
-  "widgets_covered": 131,
+  "states_done": 6,
+  "widgets_total": 257,
+  "widgets_covered": 257,
   "complete": false,
   "stale": [],
   "missing": [
-    {
-      "state": "pt-BR.dark.bench-tab.diff.tab",
-      "png": "captures/pt-BR.dark.bench-tab.diff.tab.png",
-      "tree": "captures/pt-BR.dark.bench-tab.diff.tab.json"
-    },
-    {
-      "state": "pt-BR.dark.bench-tab.editor.tab",
-      "png": "captures/pt-BR.dark.bench-tab.editor.tab.png",
-      "tree": "captures/pt-BR.dark.bench-tab.editor.tab.json"
-    },
-    {
-      "state": "pt-BR.dark.bench-tab.extension.panels.bench",
-      "png": "captures/pt-BR.dark.bench-tab.extension.panels.bench.png",
-      "tree": "captures/pt-BR.dark.bench-tab.extension.panels.bench.json"
-    },
     {
       "state": "pt-BR.dark.bench-tab.git.history",
       "png": "captures/pt-BR.dark.bench-tab.git.history.png",

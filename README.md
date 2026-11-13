@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 3/40 telas documentadas · elementos citados 131/131 · completo: false
+**Progresso:** 6/40 telas documentadas · elementos citados 257/257 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -17,12 +17,12 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.dark.bench-tab.browser.tab` | [página](pages/pt-BR.dark.bench-tab.browser.tab.md) | [png](captures/pt-BR.dark.bench-tab.browser.tab.png) |
 | `pt-BR.dark.bench-tab.chat.tab` | [página](pages/pt-BR.dark.bench-tab.chat.tab.md) | [png](captures/pt-BR.dark.bench-tab.chat.tab.png) |
 | `pt-BR.dark.modal.counter.poller` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.modal.counter.poller.png) |
-| `pt-BR.dark.bench-tab.diff.tab` | — | [png](captures/pt-BR.dark.bench-tab.diff.tab.png) |
-| `pt-BR.dark.bench-tab.editor.tab` | — | [png](captures/pt-BR.dark.bench-tab.editor.tab.png) |
+| `pt-BR.dark.bench-tab.diff.tab` | [página](pages/pt-BR.dark.bench-tab.diff.tab.md) | [png](captures/pt-BR.dark.bench-tab.diff.tab.png) |
+| `pt-BR.dark.bench-tab.editor.tab` | [página](pages/pt-BR.dark.bench-tab.editor.tab.md) | [png](captures/pt-BR.dark.bench-tab.editor.tab.png) |
 | `pt-BR.dark.right-tab.explorer.panel` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.right-tab.explorer.panel.png) |
 | `pt-BR.dark.rail.extension.page` | — | [png](captures/pt-BR.dark.rail.extension.page.png) |
 | `pt-BR.dark.right-tab.extension.panels.right` | — | [png](captures/pt-BR.dark.right-tab.extension.panels.right.png) |
-| `pt-BR.dark.bench-tab.extension.panels.bench` | — | [png](captures/pt-BR.dark.bench-tab.extension.panels.bench.png) |
+| `pt-BR.dark.bench-tab.extension.panels.bench` | [página](pages/pt-BR.dark.bench-tab.extension.panels.bench.md) | [png](captures/pt-BR.dark.bench-tab.extension.panels.bench.png) |
 | `pt-BR.dark.right-tab.git.changes` | — | [png](captures/pt-BR.dark.right-tab.git.changes.png) |
 | `pt-BR.dark.bench-tab.git.history` | — | [png](captures/pt-BR.dark.bench-tab.git.history.png) |
 | `pt-BR.dark.modal.helper.profile_picker` | — | [png](captures/pt-BR.dark.modal.helper.profile_picker.png) |
