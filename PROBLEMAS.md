@@ -597,3 +597,10 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Elementos interativos sem nome acessível: ícone de tema na barra superior (1101,5), divisores dos painéis (304,42) e (972,42), faixas de abas (64,50) e (992,50), além da imagem do logotipo.
 - Os divisores verticais (304,42) e (972,42) e as faixas de abas só expõem a ação "focus", sem ação de arrastar/clique associada.
 
+## [en.dark.rail.routine.page](pages/en.dark.rail.routine.page.md)
+
+- O botão "Extension panels" do painel direito tem o retângulo (1240,50)–(1366,82) estendido além da largura da imagem/janela (1280 px): parte do elemento fica fora da tela, e o texto visível aparece truncado como "Ext".
+- O texto da aba "Extension panels" do painel esquerdo (211,50)–(337,82) é cortado visualmente pela área central, aparecendo como "Extension pa" na captura.
+- Botões-ícone do trilho ("Board", "Helpers", "Muster", "Requests", "Skills", "Usage", "Extensions", "Archive") dependem exclusivamente de ícone na interface; o nome acessível existe na árvore, mas não há rótulo visível nem dica na tela.
+- Os três ícones ilustrativos dos estados vazios, a logomarca, o ícone de tema e os divisores são expostos como "(sem nome acessível)", sem descrição para leitores de tela.
+

@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 48/160 telas documentadas · elementos citados 2571/2571 · completo: false
+**Progresso:** 50/160 telas documentadas · elementos citados 2646/2646 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -128,9 +128,9 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.dark.modal.notify.toasts` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.modal.notify.toasts.png) |
 | `en.dark.modal.onboarding.wizard` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.modal.onboarding.wizard.png) |
 | `en.dark.right-tab.ports.panel` | — | [png](captures/en.dark.right-tab.ports.panel.png) |
-| `en.dark.rail.request.page` | — | [png](captures/en.dark.rail.request.page.png) |
+| `en.dark.rail.request.page` | [página](pages/en.dark.rail.request.page.md) | [png](captures/en.dark.rail.request.page.png) |
 | `en.dark.bench-tab.review.tab` | [página](pages/en.dark.bench-tab.review.tab.md) | [png](captures/en.dark.bench-tab.review.tab.png) |
-| `en.dark.rail.routine.page` | — | [png](captures/en.dark.rail.routine.page.png) |
+| `en.dark.rail.routine.page` | [página](pages/en.dark.rail.routine.page.md) | [png](captures/en.dark.rail.routine.page.png) |
 | `en.dark.right-tab.search.panel` | — | [png](captures/en.dark.right-tab.search.panel.png) |
 | `en.dark.rail.skill.page` | — | [png](captures/en.dark.rail.skill.page.png) |
 | `en.dark.bench-tab.terminal.tab` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.bench-tab.terminal.tab.png) |

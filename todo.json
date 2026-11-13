@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 48,
-  "widgets_total": 2571,
-  "widgets_covered": 2571,
+  "states_done": 50,
+  "widgets_total": 2646,
+  "widgets_covered": 2646,
   "complete": false,
   "stale": [
     {
@@ -95,16 +95,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "en.dark.rail.request.page",
-      "png": "captures/en.dark.rail.request.page.png",
-      "tree": "captures/en.dark.rail.request.page.json"
-    },
-    {
-      "state": "en.dark.rail.routine.page",
-      "png": "captures/en.dark.rail.routine.page.png",
-      "tree": "captures/en.dark.rail.routine.page.json"
-    },
     {
       "state": "en.dark.rail.skill.page",
       "png": "captures/en.dark.rail.skill.page.png",
