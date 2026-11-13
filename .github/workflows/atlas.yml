@@ -108,7 +108,8 @@ jobs:
           if ($body.Length -gt 60000) { $body = $body.Substring(0, 60000) + "`n`n(cortado; veja PROBLEMAS.md no branch atlas)" }
           Set-Content problems.md $body -Encoding utf8
           $title = "Atlas: problemas encontrados"
-          $number = gh issue list --state open --search "in:title $title" --json number,title --jq ".[] | select(.title == \"$title\") | .number" | Select-Object -First 1
+          $number = (gh issue list --state open --limit 100 --json number,title | ConvertFrom-Json |
+            Where-Object { $_.title -eq $title } | Select-Object -First 1).number
           if ($number) { gh issue edit $number --body-file problems.md } else { gh issue create --title $title --body-file problems.md }
 
       - name: Upload captures (debug)
