@@ -1,7 +1,7 @@
 use crate::state::{PendingMove, Shared, StageColumn};
 use crate::view_shared::{
-    c32, create_dialog, dot_color, helper_status_key, save_prefs, set_stage, stage_order,
-    stage_parent, visible_cards, CardOptions,
+    c32, create_dialog, dot_color, helper_status_key, save_prefs, set_stage, stage_menu,
+    stage_order, stage_parent, visible_cards, CardOptions,
 };
 use forja_contracts::BenchCard;
 use forja_kernel::ui_contract::egui;
@@ -159,6 +159,7 @@ pub(crate) fn render_board(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) 
                                 &tokens,
                                 &options,
                                 dragging.as_deref(),
+                                &stages,
                             );
                         },
                     );
@@ -222,6 +223,7 @@ fn render_column(
     tokens: &forja_ui_kit::Tokens,
     options: &CardOptions,
     dragging: Option<&str>,
+    stages: &[StageColumn],
 ) {
     let header_fill = if stage.parent == "forging" {
         c32(tokens.color.accent_soft)
@@ -268,6 +270,7 @@ fn render_column(
                     tokens,
                     options,
                     dragging == Some(card.bench.bench_id.as_str()),
+                    stages,
                 );
                 ui.add_space(4.0);
             }
@@ -285,6 +288,7 @@ fn render_card(
     tokens: &forja_ui_kit::Tokens,
     options: &CardOptions,
     dragging: bool,
+    stages: &[StageColumn],
 ) {
     let fill = if dragging {
         c32(tokens.color.accent_soft)
@@ -440,8 +444,11 @@ fn render_card(
     if response.clicked() {
         let mut args = Map::new();
         args.insert("bench_id".to_owned(), json!(card.bench.bench_id));
-        let _ = cx.run_command("bench.activate", Args::from_map(args));
-        state.request_refresh();
+        if let Err(error) = cx.run_command("bench.activate", Args::from_map(args)) {
+            state.set_error(Some(error.to_string()));
+        } else {
+            state.request_refresh();
+        }
     }
     if response.drag_started() {
         state.set_dragging(Some(card.bench.bench_id.clone()));
@@ -456,8 +463,11 @@ fn render_card(
         {
             let mut args = Map::new();
             args.insert("bench_id".to_owned(), json!(card.bench.bench_id));
-            let _ = cx.run_command("bench.activate", Args::from_map(args));
-            state.request_refresh();
+            if let Err(error) = cx.run_command("bench.activate", Args::from_map(args)) {
+                state.set_error(Some(error.to_string()));
+            } else {
+                state.request_refresh();
+            }
             ui.close();
         }
         if forja_ui_kit::button(
@@ -510,6 +520,15 @@ fn render_card(
             let _ = cx.run_command("bench.store_dialog", Args::from_map(args));
             ui.close();
         }
+        ui.separator();
+        stage_menu(ui, cx, state, card, stages);
+    });
+    // The context menu stays, but a visible control is what makes the stage
+    // discoverable for a first-time user (and reachable with the keyboard).
+    ui.horizontal(|ui| {
+        ui.menu_button(cx.t("board.action.move"), |ui| {
+            stage_menu(ui, cx, state, card, stages);
+        });
     });
 }
 

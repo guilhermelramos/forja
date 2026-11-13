@@ -1,4 +1,4 @@
-use crate::state::{Prefs, Shared, StageColumn};
+use crate::state::{PendingMove, Prefs, Shared, StageColumn};
 use forja_contracts::BenchCard;
 use forja_kernel::ui_contract::egui;
 use forja_kernel::{Args, Ctx, SettingValue};
@@ -105,6 +105,66 @@ pub(crate) fn set_stage(
             forja_kernel::KernelError::Command { message, .. } => message,
             other => other.to_string(),
         })
+}
+
+/// Moves a card to another stage. Going back asks for confirmation first.
+pub(crate) fn move_card(
+    cx: &mut Ctx<'_>,
+    state: &Shared,
+    card: &BenchCard,
+    target: &str,
+    stages: &[StageColumn],
+) {
+    if target == card.stage {
+        return;
+    }
+    let from_order = stage_order(stages, &card.stage);
+    let to_order = stage_order(stages, target);
+    if to_order < from_order {
+        let label = stages
+            .iter()
+            .find(|stage| stage.id == target)
+            .map(|stage| stage.label.clone())
+            .unwrap_or_else(|| target.to_owned());
+        state.set_pending(Some(PendingMove {
+            bench_id: card.bench.bench_id.clone(),
+            bench_name: card.bench.name.clone(),
+            to: target.to_owned(),
+            to_label: label,
+        }));
+        return;
+    }
+    match set_stage(cx, &card.bench.bench_id, target, false) {
+        Ok(()) => state.request_refresh(),
+        Err(error) => state.set_error(Some(error)),
+    }
+}
+
+/// Menu items for every other stage of the card.
+pub(crate) fn stage_menu(
+    ui: &mut egui::Ui,
+    cx: &mut Ctx<'_>,
+    state: &Shared,
+    card: &BenchCard,
+    stages: &[StageColumn],
+) {
+    let current = stage_order(stages, &card.stage);
+    let mut chosen = None;
+    for stage in stages.iter().filter(|stage| stage.id != card.stage) {
+        let key = if stage.order < current {
+            "board.action.move-back"
+        } else {
+            "board.action.move-to"
+        };
+        let label = cx.t_args(key, &[("stage", &stage.label)]);
+        if ui.button(label).clicked() {
+            chosen = Some(stage.id.clone());
+            ui.close();
+        }
+    }
+    if let Some(target) = chosen {
+        move_card(cx, state, card, &target, stages);
+    }
 }
 
 pub(crate) fn create_dialog(cx: &mut Ctx<'_>, project_id: Option<&str>) {

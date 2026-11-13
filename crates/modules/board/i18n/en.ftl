@@ -44,3 +44,6 @@ board-card-helper-working = Working
 board-card-helper-idle = Idle
 board-card-helper-finished = Finished
 board-card-helper-unknown = Helper unknown
+board-action-move = Move stage
+board-action-move-to = Move to { $stage }
+board-action-move-back = Move back to { $stage }
