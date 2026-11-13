@@ -41,9 +41,11 @@ módulo `diff` da onda C2.
   limpa (`clean_only`).
 - **Histórico:** `git log --graph --pretty=format:…` é devolvido em linhas com
   o prefixo ASCII do grafo e o commit opcional. A view pinta o grafo em
-  monoespaçado, seleciona um commit e mostra autor, e-mail e horário.
+  monoespaçado; ao selecionar um commit, carrega `git show` em segundo plano e
+  mostra autor, e-mail, horário, estatísticas e o patch.
 - **Blame:** `git blame --line-porcelain` vira linhas com hash, autor, horário
-  e conteúdo. O campo aceita um caminho relativo à bancada.
+  e conteúdo. O campo aceita um caminho relativo à bancada e começa com o
+  arquivo ativo do editor (`editor.active_file`).
 - **Conflitos:** `git.conflicts` lista `--diff-filter=U`; o painel mostra os
   arquivos com cor de perigo.
 

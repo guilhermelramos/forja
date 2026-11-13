@@ -70,9 +70,15 @@ where
                 }));
             }
             Err(error) => {
-                let message = match error.strip_prefix("protected:") {
-                    Some(branch) => cx.t_args("git.error.protected", &[("branch", branch)]),
-                    None => error,
+                let message = if error == "no-remote" {
+                    cx.t("git.error.no-remote")
+                } else if error == "nothing-to-abort" {
+                    cx.t("git.error.nothing-to-abort")
+                } else {
+                    match error.strip_prefix("protected:") {
+                        Some(branch) => cx.t_args("git.error.protected", &[("branch", branch)]),
+                        None => error,
+                    }
                 };
                 state.set_error(Some(message));
             }
