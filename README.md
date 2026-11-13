@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 3/160 telas documentadas · elementos citados 622/622 · completo: false
+**Progresso:** 6/160 telas documentadas · elementos citados 724/724 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -10,17 +10,17 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.dark.open.anvil` | [página](pages/pt-BR.dark.open.anvil.md) | [png](captures/pt-BR.dark.open.anvil.png) |
 | `pt-BR.dark.open.onboarding` | [página](pages/pt-BR.dark.open.onboarding.md) | [png](captures/pt-BR.dark.open.onboarding.png) |
 | `pt-BR.dark.open.toast` | [página](pages/pt-BR.dark.open.toast.md) | [png](captures/pt-BR.dark.open.toast.png) |
-| `pt-BR.dark.rail.archive.tab` | — | [png](captures/pt-BR.dark.rail.archive.tab.png) |
+| `pt-BR.dark.rail.archive.tab` | [página](pages/pt-BR.dark.rail.archive.tab.md) | [png](captures/pt-BR.dark.rail.archive.tab.png) |
 | `pt-BR.dark.modal.bench.dialogs` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.modal.bench.dialogs.png) |
 | `pt-BR.dark.bench-tab.bench.detail` | [página](pages/pt-BR.dark.bench-tab.bench.detail.md) | [png](captures/pt-BR.dark.bench-tab.bench.detail.png) |
-| `pt-BR.dark.rail.board.page` | — | [png](captures/pt-BR.dark.rail.board.page.png) |
+| `pt-BR.dark.rail.board.page` | [página](pages/pt-BR.dark.rail.board.page.md) | [png](captures/pt-BR.dark.rail.board.page.png) |
 | `pt-BR.dark.bench-tab.browser.tab` | [página](pages/pt-BR.dark.bench-tab.browser.tab.md) | [png](captures/pt-BR.dark.bench-tab.browser.tab.png) |
 | `pt-BR.dark.bench-tab.chat.tab` | [página](pages/pt-BR.dark.bench-tab.chat.tab.md) | [png](captures/pt-BR.dark.bench-tab.chat.tab.png) |
 | `pt-BR.dark.modal.counter.poller` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.modal.counter.poller.png) |
 | `pt-BR.dark.bench-tab.diff.tab` | [página](pages/pt-BR.dark.bench-tab.diff.tab.md) | [png](captures/pt-BR.dark.bench-tab.diff.tab.png) |
 | `pt-BR.dark.bench-tab.editor.tab` | [página](pages/pt-BR.dark.bench-tab.editor.tab.md) | [png](captures/pt-BR.dark.bench-tab.editor.tab.png) |
 | `pt-BR.dark.right-tab.explorer.panel` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.right-tab.explorer.panel.png) |
-| `pt-BR.dark.rail.extension.page` | — | [png](captures/pt-BR.dark.rail.extension.page.png) |
+| `pt-BR.dark.rail.extension.page` | [página](pages/pt-BR.dark.rail.extension.page.md) | [png](captures/pt-BR.dark.rail.extension.page.png) |
 | `pt-BR.dark.right-tab.extension.panels.right` | — | [png](captures/pt-BR.dark.right-tab.extension.panels.right.png) |
 | `pt-BR.dark.bench-tab.extension.panels.bench` | [página](pages/pt-BR.dark.bench-tab.extension.panels.bench.md) | [png](captures/pt-BR.dark.bench-tab.extension.panels.bench.png) |
 | `pt-BR.dark.right-tab.git.changes` | — | [png](captures/pt-BR.dark.right-tab.git.changes.png) |
