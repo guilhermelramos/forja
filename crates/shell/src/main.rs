@@ -16,6 +16,7 @@ mod system;
 mod tabs;
 mod theme;
 mod tray;
+mod ui_tree;
 mod window_geometry;
 
 mod linked_modules {
@@ -41,6 +42,9 @@ struct Flags {
     rail: Option<String>,
     settings: Option<String>,
     modal: Option<String>,
+    ui_tree: Option<PathBuf>,
+    bench_tab: Option<String>,
+    right_tab: Option<String>,
 }
 
 fn main() {
@@ -98,7 +102,7 @@ fn run() -> i32 {
     let job = flags
         .screenshot
         .clone()
-        .map(|path| ScreenshotJob::new(path, flags.slot.clone()));
+        .map(|path| ScreenshotJob::new(path, flags.slot.clone()).with_ui_tree(flags.ui_tree.clone()));
     let session = app::Session {
         theme: flags.theme.clone(),
         density: flags.density.clone(),
@@ -107,6 +111,8 @@ fn run() -> i32 {
         rail: flags.rail.clone(),
         settings: flags.settings.clone(),
         modal: flags.modal.clone(),
+        bench_tab: flags.bench_tab.clone(),
+        right_tab: flags.right_tab.clone(),
         locale_locked,
     };
 
@@ -232,9 +238,23 @@ fn build_catalog_json(flags: &Flags, dir: &std::path::Path) -> Result<String, St
             })
         })
         .collect();
+    let views: Vec<_> = registry
+        .views()
+        .iter()
+        .map(|view| {
+            serde_json::json!({
+                "id": view.id,
+                "slot": view.slot.id(),
+                "module": view.module,
+                "title": runtime.i18n().t(&view.title_key),
+                "order": view.order,
+            })
+        })
+        .collect();
     serde_json::to_string_pretty(&serde_json::json!({
         "settings": settings,
         "keybinds": keybinds,
+        "views": views,
     }))
     .map_err(|error| error.to_string())
 }
@@ -267,6 +287,9 @@ fn parse_flags() -> Result<Option<Flags>, String> {
         rail: None,
         settings: None,
         modal: None,
+        ui_tree: None,
+        bench_tab: None,
+        right_tab: None,
     };
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
@@ -350,6 +373,24 @@ fn parse_flags() -> Result<Option<Flags>, String> {
                         .ok_or_else(|| "--settings needs a module id, e.g. remote".to_owned())?,
                 );
             }
+            "--ui-tree" => {
+                flags.ui_tree = Some(PathBuf::from(
+                    args.next()
+                        .ok_or_else(|| "--ui-tree needs a JSON path".to_owned())?,
+                ));
+            }
+            "--bench-tab" => {
+                flags.bench_tab = Some(
+                    args.next()
+                        .ok_or_else(|| "--bench-tab needs a bench tab view id".to_owned())?,
+                );
+            }
+            "--right-tab" => {
+                flags.right_tab = Some(
+                    args.next()
+                        .ok_or_else(|| "--right-tab needs a right panel view id".to_owned())?,
+                );
+            }
             "--anvil-query" => {
                 flags.anvil_query = Some(
                     args.next()
@@ -382,6 +423,10 @@ fn print_help() {
            --settings <módulo>  abre os Ajustes só com a seção desse módulo (ex.: remote)\n\
            --modal <id>         mostra a camada modal dessa view, mesmo fechada (ex.: voice.overlay)\n\
            --anvil-query <texto>  texto inicial da Bigorna\n\
+           --bench-tab <id>     abre essa aba da bancada (ex.: editor.tab)\n\
+           --right-tab <id>     abre essa aba do painel direito\n\
+           --ui-tree <json>     com --screenshot: grava a árvore de elementos (papel,\n\
+                                rótulo, estado e retângulo de cada widget)\n\
            -h, --help           mostra esta ajuda"
     );
 }
@@ -452,6 +497,9 @@ mod tests {
             rail: None,
             settings: None,
             modal: None,
+            ui_tree: None,
+            bench_tab: None,
+            right_tab: None,
         };
         let json = build_catalog_json(&flags, &dir).expect("catalog json");
         let _ = std::fs::remove_dir_all(dir);

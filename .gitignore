@@ -5,3 +5,5 @@
 .forja-dev/
 .opencode/
 .claude/
+/atlas-out/
+/atlas-site/

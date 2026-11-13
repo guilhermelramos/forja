@@ -7,8 +7,11 @@
 //! cargo xtask catalog
 //! cargo xtask package [--skip-build]
 //! cargo xtask installer [--skip-build]
+//! cargo xtask atlas capture|status|brief|accept|index --out <dir> [...]
 //! ```
 
+mod atlas;
+mod atlas_agent;
 mod catalog;
 mod installer;
 mod new_extension;
@@ -26,6 +29,7 @@ fn main() {
         [command] if command == "catalog" => catalog::run(),
         [command] if command == "package" => package::run(false),
         [command, flag] if command == "package" && flag == "--skip-build" => package::run(true),
+        [command, rest @ ..] if command == "atlas" => atlas::run(rest),
         [command] if command == "installer" => installer::run(false),
         [command, flag] if command == "installer" && flag == "--skip-build" => installer::run(true),
         _ => {

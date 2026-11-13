@@ -1,0 +1,113 @@
+# Atlas: captures every Forja screen on a Windows runner and has a free model
+# (OpenCode) document each one, until atlas/todo.json says complete.
+# Results go to the `atlas` branch. See atlas/README.md.
+name: Atlas
+
+on:
+  schedule:
+    - cron: "23 */4 * * *"
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "Minutos de agente nesta rodada"
+        default: "300"
+      locales:
+        description: "Idiomas (separados por vírgula)"
+        default: "pt-BR,en"
+      themes:
+        description: "Temas (separados por vírgula)"
+        default: "dark,light"
+
+concurrency:
+  group: atlas
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  atlas:
+    runs-on: windows-latest
+    timeout-minutes: 350
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      CARGO_TERM_COLOR: never
+      MESA_VERSION: "26.2.4"
+      OPENCODE_VERSION: "2.2.7"
+      ATLAS_MODEL: ${{ vars.ATLAS_MODEL || 'opencode/glm-5.3-flash-free' }}
+      ATLAS_FALLBACK_MODEL: ${{ vars.ATLAS_FALLBACK_MODEL || 'opencode/deepseek-v4.1-flash-free' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build forja-app and xtask (release)
+        run: |
+          rustup toolchain install stable --profile minimal --no-self-update
+          cargo build --release -p forja-app -p xtask
+
+      - name: Software OpenGL (Mesa llvmpipe) next to forja-app.exe
+        run: |
+          $url = "https://github.com/pal1000/mesa-dist-win/releases/download/$env:MESA_VERSION/mesa3d-$env:MESA_VERSION-release-msvc.7z"
+          Invoke-WebRequest $url -OutFile mesa.7z
+          7z x mesa.7z -omesa -y | Out-Null
+          foreach ($dll in 'opengl32.dll', 'libgallium_wgl.dll', 'libglapi.dll') {
+            if (Test-Path "mesa\x64\$dll") { Copy-Item "mesa\x64\$dll" target\release\ }
+          }
+          "GALLIUM_DRIVER=llvmpipe" >> $env:GITHUB_ENV
+
+      - name: Check out the atlas branch
+        run: |
+          git fetch origin atlas
+          if ($LASTEXITCODE -eq 0) {
+            git worktree add -B atlas atlas-site origin/atlas
+          } else {
+            git worktree add --orphan -b atlas atlas-site
+          }
+          exit 0
+
+      - name: Capture every screen
+        run: |
+          $locales = "${{ inputs.locales || 'pt-BR,en' }}"
+          $themes = "${{ inputs.themes || 'dark,light' }}"
+          target\release\xtask.exe atlas capture --exe target\release\forja-app.exe --out atlas-site --locales $locales --themes $themes
+          target\release\xtask.exe atlas status --out atlas-site
+
+      - name: Install OpenCode
+        run: npm install -g "@opencode/cli@$env:OPENCODE_VERSION"
+
+      - name: Document with the free model
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          ATLAS_PUSH_TOKEN: ${{ github.token }}
+          ATLAS_PUSH_REPO: ${{ github.repository }}
+        run: |
+          $minutes = [int]"${{ inputs.minutes || '300' }}"
+          ./atlas/agent/run.ps1 -Out atlas-site -Xtask target\release\xtask.exe -Minutes $minutes `
+            -Models @($env:ATLAS_MODEL, $env:ATLAS_FALLBACK_MODEL) -Push
+
+      - name: Publish problems as one issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if (-not (Test-Path atlas-site\PROBLEMAS.md)) { exit 0 }
+          $body = Get-Content atlas-site\PROBLEMAS.md -Raw
+          if ($body.Length -gt 60000) { $body = $body.Substring(0, 60000) + "`n`n(cortado; veja PROBLEMAS.md no branch atlas)" }
+          Set-Content problems.md $body -Encoding utf8
+          $title = "Atlas: problemas encontrados"
+          $number = gh issue list --state open --search "in:title $title" --json number,title --jq ".[] | select(.title == \"$title\") | .number" | Select-Object -First 1
+          if ($number) { gh issue edit $number --body-file problems.md } else { gh issue create --title $title --body-file problems.md }
+
+      - name: Upload captures (debug)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-captures
+          path: atlas-site/captures
+          retention-days: 3

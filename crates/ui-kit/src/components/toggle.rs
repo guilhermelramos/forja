@@ -22,6 +22,8 @@ pub fn toggle(ui: &mut Ui, on: &mut bool, label: &str) -> Response {
         *on = !*on;
         response.mark_changed();
     }
+    let state = *on;
+    response.widget_info(|| egui::WidgetInfo::selected(egui::WidgetType::Checkbox, ui.is_enabled(), state, label));
 
     let track = egui::Rect::from_min_size(
         egui::pos2(rect.left(), rect.center().y - track_h * 0.5),

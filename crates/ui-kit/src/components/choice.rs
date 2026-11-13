@@ -35,6 +35,10 @@ pub fn segmented(ui: &mut Ui, selected: &mut usize, labels: &[&str]) -> Response
         if piece_response.clicked() {
             *selected = index;
         }
+        let is_active = index == *selected;
+        piece_response.widget_info(|| {
+            egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, ui.is_enabled(), is_active, *label)
+        });
         let active = index == *selected;
         if active {
             painter.rect_filled(
@@ -111,6 +115,9 @@ pub fn tabs(ui: &mut Ui, selected: &mut usize, labels: &[&str]) -> Response {
             *selected = index;
         }
         let active = index == *selected;
+        piece_response.widget_info(|| {
+            egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, ui.is_enabled(), active, *label)
+        });
         let text = if active || piece_response.hovered() {
             tokens.color.text.to_color32()
         } else {

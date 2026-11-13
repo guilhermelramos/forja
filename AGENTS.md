@@ -22,7 +22,9 @@ Este arquivo vale para pessoas e para modelos. Leia-o inteiro antes de mudar qua
 | `crates/modules/<nome>` | **Uma funcionalidade = um crate.** Se registra sozinho. |
 | `content/` | Conteúdo autoral embutido: perfis de ajudantes, temas, atalhos, skills, modelos |
 | `extensions/` | Extensões de exemplo (Lua + arquivos) |
-| `xtask/` | `cargo xtask new-module`, `new-extension`, `provenance`, `package` |
+| `xtask/` | `cargo xtask new-module`, `new-extension`, `provenance`, `catalog`, `package`, `installer`, `atlas` |
+| `atlas/` | Atlas visual: agente que documenta cada tela (`atlas/README.md`); resultados no branch `atlas` |
+| `installer/` | Roteiro do instalador (Inno Setup) |
 
 ## 3. Receitas
 ### Criar uma funcionalidade (módulo Rust)

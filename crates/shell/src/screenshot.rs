@@ -13,6 +13,10 @@ pub struct ScreenshotJob {
     pub frames: u32,
     pub requested: bool,
     pub done: bool,
+    /// `--ui-tree`: where to write the widget tree of the captured frame.
+    pub ui_tree: Option<PathBuf>,
+    /// Latest AccessKit tree, filled by [`crate::ui_tree::UiTreeCapture`].
+    pub tree: crate::ui_tree::LatestTree,
 }
 
 impl ScreenshotJob {
@@ -23,7 +27,14 @@ impl ScreenshotJob {
             frames: 0,
             requested: false,
             done: false,
+            ui_tree: None,
+            tree: Default::default(),
         }
+    }
+
+    pub fn with_ui_tree(mut self, path: Option<PathBuf>) -> Self {
+        self.ui_tree = path;
+        self
     }
 }
 

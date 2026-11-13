@@ -71,6 +71,10 @@ pub struct Session {
     pub settings: Option<String>,
     /// `--modal <id>`: mostra essa camada modal mesmo fechada (captura de tela).
     pub modal: Option<String>,
+    /// `--bench-tab <id>`: aba da bancada que abre (captura de tela).
+    pub bench_tab: Option<String>,
+    /// `--right-tab <id>`: aba do painel direito que abre (captura de tela).
+    pub right_tab: Option<String>,
     pub locale_locked: bool,
 }
 
@@ -149,6 +153,12 @@ impl ForjaApp {
         session: Session,
     ) -> Self {
         let _ = forja_ui_kit::install_fonts(&creation.egui_ctx);
+        if let Some(job) = screenshot.as_ref().filter(|job| job.ui_tree.is_some()) {
+            creation.egui_ctx.enable_accesskit();
+            creation.egui_ctx.add_plugin(crate::ui_tree::UiTreeCapture {
+                latest: Arc::clone(&job.tree),
+            });
+        }
         let rail_views = ViewInstance::collect(runtime.registry(), Slot::Rail);
         let sidebar_views = ViewInstance::collect(runtime.registry(), Slot::Sidebar);
         let bench_views = ViewInstance::collect(runtime.registry(), Slot::BenchTab);
@@ -166,9 +176,20 @@ impl ForjaApp {
             LoadResult::Loaded(value) => crate::anvil::load_history(&value),
             _ => Vec::new(),
         };
-        let right_tab = std::env::var("FORJA_RIGHT_TAB")
-            .ok()
-            .and_then(|name| right_views.iter().position(|view| view.id.contains(&name)))
+        let right_tab = session
+            .right_tab
+            .as_deref()
+            .and_then(|id| right_views.iter().position(|view| view.id == id))
+            .or_else(|| {
+                std::env::var("FORJA_RIGHT_TAB")
+                    .ok()
+                    .and_then(|name| right_views.iter().position(|view| view.id.contains(&name)))
+            })
+            .unwrap_or(0);
+        let active_tab = session
+            .bench_tab
+            .as_deref()
+            .and_then(|id| bench_views.iter().position(|view| view.id == id))
             .unwrap_or(0);
         let mut app = Self {
             runtime,
@@ -184,7 +205,7 @@ impl ForjaApp {
             top_views,
             rail_page: None,
             rail_icons: BTreeMap::new(),
-            active_tab: 0,
+            active_tab,
             tabs: TabSet::default(),
             sidebar_tab: 0,
             right_tab,
@@ -560,6 +581,16 @@ impl ForjaApp {
             if let Err(error) = result {
                 if let Ok(mut slot) = self.screenshot_error.lock() {
                     *slot = Some(error);
+                }
+            }
+            if let Some(path) = job.ui_tree.clone() {
+                match crate::ui_tree::write(&path, &job.tree, ctx.pixels_per_point()) {
+                    Ok(()) => eprintln!("forja: ui tree saved to {}", path.display()),
+                    Err(error) => {
+                        if let Ok(mut slot) = self.screenshot_error.lock() {
+                            *slot = Some(format!("ui tree: {error}"));
+                        }
+                    }
                 }
             }
             job.done = true;

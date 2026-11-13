@@ -27,6 +27,7 @@ pub fn button(ui: &mut Ui, kind: ButtonKind, label: &str) -> Response {
     let text_size = paint::text_size(ui, label, font.clone(), text);
     let width = (text_size.x + metrics.pad_x * 2.0).max(metrics.control);
     let (rect, response) = click_zone(ui, egui::vec2(width, metrics.control));
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label));
 
     let fill = if kind == ButtonKind::Ghost {
         if response.hovered() || response.is_pointer_button_down_on() {

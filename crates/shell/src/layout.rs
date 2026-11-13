@@ -297,6 +297,9 @@ impl ForjaApp {
         selected: bool,
     ) -> egui::Response {
         let (rect, response) = ui.allocate_exact_size(egui::vec2(36.0, 36.0), Sense::click());
+        response.widget_info(|| {
+            egui::WidgetInfo::selected(egui::WidgetType::Button, ui.is_enabled(), selected, tip)
+        });
         let fill = if selected {
             self.paint(self.tokens.color.accent_soft)
         } else if response.hovered() {
