@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 21,
-  "widgets_total": 1367,
-  "widgets_covered": 1367,
+  "states_done": 24,
+  "widgets_total": 1548,
+  "widgets_covered": 1548,
   "complete": false,
   "stale": [
     {
@@ -95,21 +95,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "pt-BR.dark.settings.counter_linear",
-      "png": "captures/pt-BR.dark.settings.counter_linear.png",
-      "tree": "captures/pt-BR.dark.settings.counter_linear.json"
-    },
-    {
-      "state": "pt-BR.dark.settings.helper",
-      "png": "captures/pt-BR.dark.settings.helper.png",
-      "tree": "captures/pt-BR.dark.settings.helper.json"
-    },
-    {
-      "state": "pt-BR.dark.settings.import",
-      "png": "captures/pt-BR.dark.settings.import.png",
-      "tree": "captures/pt-BR.dark.settings.import.json"
-    },
     {
       "state": "pt-BR.dark.settings.mcp",
       "png": "captures/pt-BR.dark.settings.mcp.png",
