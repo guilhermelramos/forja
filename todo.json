@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 24,
-  "widgets_total": 1548,
-  "widgets_covered": 1548,
+  "states_done": 27,
+  "widgets_total": 1689,
+  "widgets_covered": 1689,
   "complete": false,
   "stale": [
     {
@@ -95,21 +95,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "pt-BR.dark.settings.mcp",
-      "png": "captures/pt-BR.dark.settings.mcp.png",
-      "tree": "captures/pt-BR.dark.settings.mcp.json"
-    },
-    {
-      "state": "pt-BR.dark.settings.onboarding",
-      "png": "captures/pt-BR.dark.settings.onboarding.png",
-      "tree": "captures/pt-BR.dark.settings.onboarding.json"
-    },
-    {
-      "state": "pt-BR.dark.settings.remote",
-      "png": "captures/pt-BR.dark.settings.remote.png",
-      "tree": "captures/pt-BR.dark.settings.remote.json"
-    },
     {
       "state": "pt-BR.dark.settings.trust",
       "png": "captures/pt-BR.dark.settings.trust.png",
