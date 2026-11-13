@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 18,
-  "widgets_total": 1232,
-  "widgets_covered": 1232,
+  "states_done": 21,
+  "widgets_total": 1367,
+  "widgets_covered": 1367,
   "complete": false,
   "stale": [
     {
@@ -95,21 +95,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "pt-BR.dark.settings.counter_github",
-      "png": "captures/pt-BR.dark.settings.counter_github.png",
-      "tree": "captures/pt-BR.dark.settings.counter_github.json"
-    },
-    {
-      "state": "pt-BR.dark.settings.counter_gitlab",
-      "png": "captures/pt-BR.dark.settings.counter_gitlab.png",
-      "tree": "captures/pt-BR.dark.settings.counter_gitlab.json"
-    },
-    {
-      "state": "pt-BR.dark.settings.counter_jira",
-      "png": "captures/pt-BR.dark.settings.counter_jira.png",
-      "tree": "captures/pt-BR.dark.settings.counter_jira.json"
-    },
     {
       "state": "pt-BR.dark.settings.counter_linear",
       "png": "captures/pt-BR.dark.settings.counter_linear.png",
