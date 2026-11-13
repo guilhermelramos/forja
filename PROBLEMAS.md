@@ -527,6 +527,15 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Divisores verticais (304,42)–(320,768) e (972,42)–(988,768) são Unknown sem nome acessível, o que dificulta identificação por leitor de tela.
 - Textos de estado vazio em cinza sobre fundo escuro têm contraste baixo ("Open a file in the explorer or press Ctrl+P.").
 
+## [en.dark.rail.extension.page](pages/en.dark.rail.extension.page.md)
+
+- A aba "Extension panels" do painel lateral esquerdo (botão em (211,50)–(337,82)) é cortada pelo limite do painel em ~x=304: na imagem aparece só "Extension pan", embora o retângulo acessível vá até x=337.
+- A aba "Extension panels" do painel direito (botão em (1240,50)–(1366,82)) tem retângulo além da largura da janela (1280 px); o rótulo fica fora da área visível e inacessível.
+- O botão de alternar tema na barra superior (1101,5)–(1133,37) não tem nome acessível; só se identifica pela imagem do sol.
+- O campo de busca de extensões (324,146)–(968,178) é um TextInput sem nome acessível; o rótulo "Search" fica fora do campo, sem associação.
+- O logotipo do app (imagem em 12,50) e os três ícones de estado vazio (1116,114), (168,158) e (632,202) estão sem nome acessível.
+- A instrução "Put a folder with extension.toml and init.lua in ~/.forja/extensions." é exposta com papel de Botão; semanticamente é um texto de ajuda, o que pode confundir leitores de tela.
+
 ## [en.dark.bench-tab.extension.panels.bench](pages/en.dark.bench-tab.extension.panels.bench.md)
 
 - Estouro de largura: o botão "Extension panels" do painel direito (1240,50)–(1366,82) tem retângulo além da largura da janela (1280 px) e fica cortado ou invisível.
@@ -557,6 +566,24 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Botão de tema na barra superior (1101–1133), divisores verticais e controles da área central sem nome acessível.
 - Rótulos de ícone expostos como "(ícone)" (grade e pasta dos estados vazios), sem nome acessível descritivo.
 - Elemento de dimensão nula na árvore em (640,400)–(640,400).
+
+## [en.dark.rail.helper.tab](pages/en.dark.rail.helper.tab.md)
+
+- A lista de perfis não cabe na janela: os elementos a partir de "Launch" (502,790)–(570,825) e "Kimi Code CLI" (324,797)–(410,816) ficam abaixo da altura da imagem (800 px), e as linhas de Kiro CLI, OpenCode e Qwen Code ficam inteiramente fora dela, sem indício visível de rolagem além da barra estreita em x=597.
+- Sobreposição na base da janela: o botão "Launch" (456,747)–(524,782) e a área da lista invadem a faixa da barra de status (y≥768), onde estão "Ready", "56 modules" e "Notifications" (y 775–794).
+- Texto truncado: a aba "Extension panels" (211,50)–(337,82) ultrapassa o limite do painel esquerdo (divisor em x 304–320) e aparece cortada como "Extension pai".
+- Elemento fora da janela: a aba "Extension panels" do painel direito (1240,50)–(1366,82) fica parcialmente além da largura de 1280 px, visível apenas como "Ext".
+- Botões de janela com nomes acessíveis simbólicos "–", "□" e "×" em vez de rótulos descritivos (Minimize/Maximize/Close).
+- Vários elementos sem nome acessível: dois divisores, o contêiner de abas de cada painel, o botão de tema e as imagens/ícones de estado vazio (registrados como "(sem nome acessível)" ou "(ícone)").
+- Dezesseis botões com o mesmo nome acessível "Launch" na mesma tela, o que dificulta a identificação por leitor de tela (o alvo só é inferido pela linha do perfil).
+
+## [en.dark.rail.muster.page](pages/en.dark.rail.muster.page.md)
+
+- O botão "Extension panels" da tira direita tem retângulo (1240,50)–(1366,82), que ultrapassa a largura da janela (1280 px); o texto fica cortado fora da área visível.
+- O botão "Extension panels" da tira esquerda (211,50)–(337,82) invade a região do divisor em (304,42)–(320,768); o rótulo aparece truncado ("Extension pa") no painel.
+- Dois botões com o mesmo nome acessível "Extension panels" em abas diferentes, o que dificulta a identificação por leitores de tela.
+- Botão de alternância de tema e as duas divisórias verticais estão sem nome acessível.
+- Textos de estado vazio e subtítulo em cinza sobre fundo escuro têm contraste reduzido (por exemplo, "Tasks, helpers and notes in one place.").
 
 ## [en.dark.bench-tab.review.tab](pages/en.dark.bench-tab.review.tab.md)
 
