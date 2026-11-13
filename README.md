@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 12/160 telas documentadas · elementos citados 968/968 · completo: false
+**Progresso:** 15/160 telas documentadas · elementos citados 1088/1088 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -21,9 +21,9 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.dark.bench-tab.editor.tab` | [página](pages/pt-BR.dark.bench-tab.editor.tab.md) | [png](captures/pt-BR.dark.bench-tab.editor.tab.png) |
 | `pt-BR.dark.right-tab.explorer.panel` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.right-tab.explorer.panel.png) |
 | `pt-BR.dark.rail.extension.page` | [página](pages/pt-BR.dark.rail.extension.page.md) | [png](captures/pt-BR.dark.rail.extension.page.png) |
-| `pt-BR.dark.right-tab.extension.panels.right` | — | [png](captures/pt-BR.dark.right-tab.extension.panels.right.png) |
+| `pt-BR.dark.right-tab.extension.panels.right` | [página](pages/pt-BR.dark.right-tab.extension.panels.right.md) | [png](captures/pt-BR.dark.right-tab.extension.panels.right.png) |
 | `pt-BR.dark.bench-tab.extension.panels.bench` | [página](pages/pt-BR.dark.bench-tab.extension.panels.bench.md) | [png](captures/pt-BR.dark.bench-tab.extension.panels.bench.png) |
-| `pt-BR.dark.right-tab.git.changes` | — | [png](captures/pt-BR.dark.right-tab.git.changes.png) |
+| `pt-BR.dark.right-tab.git.changes` | [página](pages/pt-BR.dark.right-tab.git.changes.md) | [png](captures/pt-BR.dark.right-tab.git.changes.png) |
 | `pt-BR.dark.bench-tab.git.history` | [página](pages/pt-BR.dark.bench-tab.git.history.md) | [png](captures/pt-BR.dark.bench-tab.git.history.png) |
 | `pt-BR.dark.modal.helper.profile_picker` | [página](pages/pt-BR.dark.modal.helper.profile_picker.md) | [png](captures/pt-BR.dark.modal.helper.profile_picker.png) |
 | `pt-BR.dark.rail.helper.tab` | [página](pages/pt-BR.dark.rail.helper.tab.md) | [png](captures/pt-BR.dark.rail.helper.tab.png) |
@@ -31,7 +31,7 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.dark.rail.muster.page` | [página](pages/pt-BR.dark.rail.muster.page.md) | [png](captures/pt-BR.dark.rail.muster.page.png) |
 | `pt-BR.dark.modal.notify.toasts` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.modal.notify.toasts.png) |
 | `pt-BR.dark.modal.onboarding.wizard` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.modal.onboarding.wizard.png) |
-| `pt-BR.dark.right-tab.ports.panel` | — | [png](captures/pt-BR.dark.right-tab.ports.panel.png) |
+| `pt-BR.dark.right-tab.ports.panel` | [página](pages/pt-BR.dark.right-tab.ports.panel.md) | [png](captures/pt-BR.dark.right-tab.ports.panel.png) |
 | `pt-BR.dark.rail.request.page` | [página](pages/pt-BR.dark.rail.request.page.md) | [png](captures/pt-BR.dark.rail.request.page.png) |
 | `pt-BR.dark.bench-tab.review.tab` | [página](pages/pt-BR.dark.bench-tab.review.tab.md) | [png](captures/pt-BR.dark.bench-tab.review.tab.png) |
 | `pt-BR.dark.rail.routine.page` | [página](pages/pt-BR.dark.rail.routine.page.md) | [png](captures/pt-BR.dark.rail.routine.page.png) |

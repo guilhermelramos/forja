@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 12,
-  "widgets_total": 968,
-  "widgets_covered": 968,
+  "states_done": 15,
+  "widgets_total": 1088,
+  "widgets_covered": 1088,
   "complete": false,
   "stale": [
     {
@@ -95,21 +95,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "pt-BR.dark.right-tab.extension.panels.right",
-      "png": "captures/pt-BR.dark.right-tab.extension.panels.right.png",
-      "tree": "captures/pt-BR.dark.right-tab.extension.panels.right.json"
-    },
-    {
-      "state": "pt-BR.dark.right-tab.git.changes",
-      "png": "captures/pt-BR.dark.right-tab.git.changes.png",
-      "tree": "captures/pt-BR.dark.right-tab.git.changes.json"
-    },
-    {
-      "state": "pt-BR.dark.right-tab.ports.panel",
-      "png": "captures/pt-BR.dark.right-tab.ports.panel.png",
-      "tree": "captures/pt-BR.dark.right-tab.ports.panel.json"
-    },
     {
       "state": "pt-BR.dark.right-tab.search.panel",
       "png": "captures/pt-BR.dark.right-tab.search.panel.png",
