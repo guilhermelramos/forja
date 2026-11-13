@@ -15,6 +15,7 @@ mod shell_module;
 mod system;
 mod tabs;
 mod theme;
+mod test_driver;
 mod tray;
 mod ui_tree;
 mod window_geometry;
@@ -45,6 +46,7 @@ struct Flags {
     ui_tree: Option<PathBuf>,
     bench_tab: Option<String>,
     right_tab: Option<String>,
+    test_driver: bool,
 }
 
 fn main() {
@@ -113,6 +115,7 @@ fn run() -> i32 {
         modal: flags.modal.clone(),
         bench_tab: flags.bench_tab.clone(),
         right_tab: flags.right_tab.clone(),
+        test_driver: flags.test_driver,
         locale_locked,
     };
 
@@ -290,6 +293,7 @@ fn parse_flags() -> Result<Option<Flags>, String> {
         ui_tree: None,
         bench_tab: None,
         right_tab: None,
+        test_driver: false,
     };
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
@@ -373,6 +377,7 @@ fn parse_flags() -> Result<Option<Flags>, String> {
                         .ok_or_else(|| "--settings needs a module id, e.g. remote".to_owned())?,
                 );
             }
+            "--test-driver" => flags.test_driver = true,
             "--ui-tree" => {
                 flags.ui_tree = Some(PathBuf::from(
                     args.next()
@@ -425,6 +430,8 @@ fn print_help() {
            --anvil-query <texto>  texto inicial da Bigorna\n\
            --bench-tab <id>     abre essa aba da bancada (ex.: editor.tab)\n\
            --right-tab <id>     abre essa aba do painel direito\n\
+           --test-driver        modo de teste: responde ui.snapshot, ui.click, ui.type,\n\
+                                ui.key, ui.scroll e ui.wait pelo RPC (agente testador)\n\
            --ui-tree <json>     com --screenshot: grava a árvore de elementos (papel,\n\
                                 rótulo, estado e retângulo de cada widget)\n\
            -h, --help           mostra esta ajuda"
@@ -500,6 +507,7 @@ mod tests {
             ui_tree: None,
             bench_tab: None,
             right_tab: None,
+            test_driver: false,
         };
         let json = build_catalog_json(&flags, &dir).expect("catalog json");
         let _ = std::fs::remove_dir_all(dir);

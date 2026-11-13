@@ -17,6 +17,7 @@ forja-ui-kit = { path = "../ui-kit" }
 eframe.workspace = true
 serde_json.workspace = true
 image.workspace = true
+base64.workspace = true
 windows-sys = { workspace = true, features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",

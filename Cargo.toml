@@ -27,6 +27,7 @@ authors = ["Forja contributors"]
 # Adding or upgrading an entry here is the coordinator's job (see AGENTS.md).
 [workspace.dependencies]
 eframe = { version = "0.33.3", default-features = false, features = ["default_fonts", "glow", "accesskit"] }
+base64 = "0.22"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
 toml = "0.9"

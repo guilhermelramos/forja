@@ -30,7 +30,23 @@ impl Backend for ProtocolBackend {
 }
 
 fn main() {
+    // `--player [--findings <file>]`: only the play-test tools (needs `forja-app --test-driver`).
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().map(String::as_str) == Some("--player") {
+        let findings = args
+            .iter()
+            .position(|arg| arg == "--findings")
+            .and_then(|index| args.get(index + 1))
+            .map(std::path::PathBuf::from);
+        let player = forja_mcp::player::Player::new(ProtocolBackend, findings);
+        serve(|line| player.handle_line(line));
+        return;
+    }
     let bridge = Bridge::new(ProtocolBackend);
+    serve(|line| bridge.handle_line(line));
+}
+
+fn serve(handle: impl Fn(&str) -> Option<String>) {
     let stdin = io::stdin();
     let mut stdout = io::stdout().lock();
     for line in stdin.lock().lines() {
@@ -40,7 +56,7 @@ fn main() {
         if line.trim().is_empty() {
             continue;
         }
-        if let Some(reply) = bridge.handle_line(&line) {
+        if let Some(reply) = handle(&line) {
             if writeln!(stdout, "{reply}").is_err() {
                 break;
             }

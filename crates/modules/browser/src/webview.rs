@@ -94,7 +94,12 @@ impl NativeTab {
             })
             .with_download_started_handler(move |url, path| {
                 let name = download::file_name(&url, path);
-                let target = if ask_download {
+                let target = if let Some(answer) = forja_kernel::test_pick::save(&name) {
+                    match answer {
+                        Some(chosen) => chosen,
+                        None => return false,
+                    }
+                } else if ask_download {
                     // The question is the user's; the native dialog answers it on this thread.
                     match rfd::FileDialog::new()
                         .set_directory(&download_dir)

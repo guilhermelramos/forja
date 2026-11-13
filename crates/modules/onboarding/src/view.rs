@@ -185,8 +185,8 @@ fn folder(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
         let shared = state.clone();
         cx.spawn(
             || {
-                rfd::FileDialog::new()
-                    .pick_folder()
+                forja_kernel::test_pick::folder()
+                    .unwrap_or_else(|| rfd::FileDialog::new().pick_folder())
                     .map(|path| path.display().to_string())
             },
             move |cx, picked| {

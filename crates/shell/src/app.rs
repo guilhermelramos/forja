@@ -75,6 +75,8 @@ pub struct Session {
     pub bench_tab: Option<String>,
     /// `--right-tab <id>`: aba do painel direito que abre (captura de tela).
     pub right_tab: Option<String>,
+    /// `--test-driver`: answers `ui.*` RPC so a play-test agent can use the app.
+    pub test_driver: bool,
     pub locale_locked: bool,
 }
 
@@ -137,6 +139,7 @@ pub struct ForjaApp {
     screenshot: Option<ScreenshotJob>,
     screenshot_error: Arc<Mutex<Option<String>>>,
     rpc: Option<RpcHost>,
+    driver: Option<crate::test_driver::Driver>,
     pub(crate) module_count: usize,
     geometry_writer: crate::window_geometry::GeometryWriter,
     geometry_checked: Instant,
@@ -245,12 +248,21 @@ impl ForjaApp {
             screenshot,
             screenshot_error,
             rpc: None,
+            driver: None,
             module_count,
             geometry_writer: crate::window_geometry::GeometryWriter::default(),
             geometry_checked: Instant::now(),
             geometry_close_pending: false,
             geometry_close_allowed: false,
         };
+        if session.test_driver {
+            let driver = crate::test_driver::Driver::new();
+            creation.egui_ctx.enable_accesskit();
+            creation.egui_ctx.add_plugin(crate::ui_tree::UiTreeCapture {
+                latest: Arc::clone(&driver.tree),
+            });
+            app.driver = Some(driver);
+        }
         if app.screenshot.is_none() {
             let context = creation.egui_ctx.clone();
             let wake: forja_kernel::tasks::Wake = Arc::new(move || context.request_repaint());
@@ -322,12 +334,19 @@ impl ForjaApp {
         }
     }
 
-    fn drain_rpc(&mut self) {
+    fn drain_rpc(&mut self, ctx: &egui::Context) {
         loop {
             let call = self.rpc.as_ref().and_then(|rpc| rpc.try_recv());
             let Some(call) = call else { break };
+            let reply_to = match self.driver.as_mut() {
+                Some(driver) => match driver.accept(&call.line, call.reply, ctx) {
+                    Some(reply_to) => reply_to,
+                    None => continue,
+                },
+                None => call.reply,
+            };
             let reply = self.runtime.handle_rpc_line(&call.line);
-            let _ = call.reply.send(reply);
+            let _ = reply_to.send(reply);
         }
     }
 
@@ -634,7 +653,7 @@ impl eframe::App for ForjaApp {
         self.sync_tray(ctx);
         let focused = ctx.input(|input| input.viewport().focused.unwrap_or(true));
         self.runtime.set_viewport_focused(focused);
-        self.drain_rpc();
+        self.drain_rpc(ctx);
         self.runtime.poll_tasks();
         self.handle_shortcuts(ctx);
         self.drain_actions(ctx);
@@ -650,6 +669,15 @@ impl eframe::App for ForjaApp {
         self.anvil_window(ctx);
         self.modal_windows(ctx);
         self.capture(ctx);
+        if let Some(driver) = self.driver.as_mut() {
+            driver.tick(ctx);
+        }
+    }
+
+    fn raw_input_hook(&mut self, _ctx: &egui::Context, raw_input: &mut egui::RawInput) {
+        if let Some(driver) = self.driver.as_mut() {
+            driver.feed(raw_input);
+        }
     }
 }
 

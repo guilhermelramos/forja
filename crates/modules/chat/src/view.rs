@@ -192,7 +192,9 @@ impl ChatView {
         let mut cancel = false;
         ui.horizontal(|ui| {
             if ui.button(cx.t("chat.view.attach")).clicked() {
-                if let Some(path) = rfd::FileDialog::new().pick_file() {
+                let picked = forja_kernel::test_pick::file()
+                    .unwrap_or_else(|| rfd::FileDialog::new().pick_file());
+                if let Some(path) = picked {
                     let limit = cx
                         .setting("chat.attachments.max_mb")
                         .and_then(|value| value.as_i64())

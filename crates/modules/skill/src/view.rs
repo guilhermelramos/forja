@@ -143,10 +143,11 @@ impl SkillView {
         let shared = self.shared.clone();
         cx.spawn(
             move || match kind {
-                InstallKind::Folder => rfd::FileDialog::new().pick_folder(),
-                InstallKind::Zip => rfd::FileDialog::new()
-                    .add_filter("zip", &["zip"])
-                    .pick_file(),
+                InstallKind::Folder => forja_kernel::test_pick::folder()
+                    .unwrap_or_else(|| rfd::FileDialog::new().pick_folder()),
+                InstallKind::Zip => forja_kernel::test_pick::file().unwrap_or_else(|| {
+                    rfd::FileDialog::new().add_filter("zip", &["zip"]).pick_file()
+                }),
             },
             move |_cx, picked: Option<PathBuf>| {
                 if let Some(source) = picked {

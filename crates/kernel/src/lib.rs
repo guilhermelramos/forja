@@ -28,6 +28,7 @@ pub mod runtime;
 pub mod settings;
 pub mod store;
 pub mod tasks;
+pub mod test_pick;
 pub mod ui;
 #[cfg(feature = "egui")]
 pub mod ui_contract;

@@ -4,6 +4,8 @@
 //! traduzida para um método do catálogo do app e encaminhada pelo pipe local.
 //! A ponte não guarda segredos, não lê configuração e não abre o app.
 
+pub mod player;
+
 use serde_json::{json, Map, Value};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};

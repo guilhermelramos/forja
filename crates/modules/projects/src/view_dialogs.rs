@@ -11,7 +11,8 @@ pub(crate) fn render_dialog(
 ) -> Dialog {
     let tokens = forja_ui_kit::applied_tokens(ctx);
     let creating_form = matches!(dialog, Dialog::Create(_));
-    let mut next = dialog.clone();
+    // Closing replaces the dialog; otherwise the edited form (typing, picked folder) is kept.
+    let mut next: Option<Dialog> = None;
     match dialog {
         Dialog::None => {}
         Dialog::Remove { project_id, name } => {
@@ -48,11 +49,11 @@ pub(crate) fn render_dialog(
                 });
             if remove {
                 match shared.remove(cx, project_id) {
-                    Ok(()) => next = Dialog::None,
+                    Ok(()) => next = Some(Dialog::None),
                     Err(error) => shared.set_error(Some(error)),
                 }
             } else if close {
-                next = Dialog::None;
+                next = Some(Dialog::None);
             }
         }
         Dialog::Add(form) | Dialog::Create(form) => {
@@ -176,11 +177,11 @@ pub(crate) fn render_dialog(
                     shared.add(cx, &new).map(|_| ())
                 };
                 match result {
-                    Ok(()) => next = Dialog::None,
+                    Ok(()) => next = Some(Dialog::None),
                     Err(error) => form.error = Some(error),
                 }
             } else if close {
-                next = Dialog::None;
+                next = Some(Dialog::None);
             }
         }
         Dialog::Clone(clone) => {
@@ -247,11 +248,11 @@ pub(crate) fn render_dialog(
                 });
             if submit {
                 match start_clone(cx, shared, clone) {
-                    Ok(()) => next = Dialog::None,
+                    Ok(()) => next = Some(Dialog::None),
                     Err(error) => clone.form.error = Some(error),
                 }
             } else if close {
-                next = Dialog::None;
+                next = Some(Dialog::None);
             }
         }
         Dialog::Edit(form) => {
@@ -310,15 +311,15 @@ pub(crate) fn render_dialog(
                     Some(&form.icon),
                     Some(&form.color),
                 ) {
-                    Ok(_) => next = Dialog::None,
+                    Ok(_) => next = Some(Dialog::None),
                     Err(error) => form.error = Some(error),
                 }
             } else if close {
-                next = Dialog::None;
+                next = Some(Dialog::None);
             }
         }
     }
-    next
+    next.unwrap_or_else(|| dialog.clone())
 }
 
 fn start_create(cx: &mut Ctx<'_>, shared: &Shared, form: &ProjectForm) -> Result<(), String> {
@@ -392,6 +393,9 @@ fn start_clone(cx: &mut Ctx<'_>, shared: &Shared, clone: &CloneForm) -> Result<(
 }
 
 fn pick_folder(current: &str) -> Option<PathBuf> {
+    if let Some(answer) = forja_kernel::test_pick::folder() {
+        return answer;
+    }
     let mut dialog = rfd::FileDialog::new();
     let path = PathBuf::from(current);
     if path.is_dir() {

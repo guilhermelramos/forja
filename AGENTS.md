@@ -25,6 +25,7 @@ Este arquivo vale para pessoas e para modelos. Leia-o inteiro antes de mudar qua
 | `xtask/` | `cargo xtask new-module`, `new-extension`, `provenance`, `catalog`, `package`, `installer`, `atlas` |
 | `atlas/` | Atlas visual: agente que documenta cada tela (`atlas/README.md`); resultados no branch `atlas` |
 | `installer/` | Roteiro do instalador (Inno Setup) |
+| `playtest/` | Testadores automáticos: agentes que usam o app ao vivo (`forja-app --test-driver` + `forja-mcp --player`) |
 
 ## 3. Receitas
 ### Criar uma funcionalidade (módulo Rust)
