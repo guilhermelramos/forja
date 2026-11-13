@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 42/160 telas documentadas · elementos citados 2351/2351 · completo: false
+**Progresso:** 45/160 telas documentadas · elementos citados 2458/2458 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -105,11 +105,11 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.dark.home.default` | [página](pages/en.dark.home.default.md) | [png](captures/en.dark.home.default.png) |
 | `en.dark.open.anvil` | [página](pages/en.dark.open.anvil.md) | [png](captures/en.dark.open.anvil.png) |
 | `en.dark.open.onboarding` | [página](pages/en.dark.open.onboarding.md) | [png](captures/en.dark.open.onboarding.png) |
-| `en.dark.open.toast` | — | [png](captures/en.dark.open.toast.png) |
-| `en.dark.rail.archive.tab` | — | [png](captures/en.dark.rail.archive.tab.png) |
+| `en.dark.open.toast` | [página](pages/en.dark.open.toast.md) | [png](captures/en.dark.open.toast.png) |
+| `en.dark.rail.archive.tab` | [página](pages/en.dark.rail.archive.tab.md) | [png](captures/en.dark.rail.archive.tab.png) |
 | `en.dark.modal.bench.dialogs` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.modal.bench.dialogs.png) |
 | `en.dark.bench-tab.bench.detail` | [página](pages/en.dark.bench-tab.bench.detail.md) | [png](captures/en.dark.bench-tab.bench.detail.png) |
-| `en.dark.rail.board.page` | — | [png](captures/en.dark.rail.board.page.png) |
+| `en.dark.rail.board.page` | [página](pages/en.dark.rail.board.page.md) | [png](captures/en.dark.rail.board.page.png) |
 | `en.dark.bench-tab.browser.tab` | [página](pages/en.dark.bench-tab.browser.tab.md) | [png](captures/en.dark.bench-tab.browser.tab.png) |
 | `en.dark.bench-tab.chat.tab` | [página](pages/en.dark.bench-tab.chat.tab.md) | [png](captures/en.dark.bench-tab.chat.tab.png) |
 | `en.dark.modal.counter.poller` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.modal.counter.poller.png) |

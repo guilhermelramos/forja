@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 42,
-  "widgets_total": 2351,
-  "widgets_covered": 2351,
+  "states_done": 45,
+  "widgets_total": 2458,
+  "widgets_covered": 2458,
   "complete": false,
   "stale": [
     {
@@ -95,21 +95,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "en.dark.open.toast",
-      "png": "captures/en.dark.open.toast.png",
-      "tree": "captures/en.dark.open.toast.json"
-    },
-    {
-      "state": "en.dark.rail.archive.tab",
-      "png": "captures/en.dark.rail.archive.tab.png",
-      "tree": "captures/en.dark.rail.archive.tab.json"
-    },
-    {
-      "state": "en.dark.rail.board.page",
-      "png": "captures/en.dark.rail.board.page.png",
-      "tree": "captures/en.dark.rail.board.page.json"
-    },
     {
       "state": "en.dark.rail.extension.page",
       "png": "captures/en.dark.rail.extension.page.png",
