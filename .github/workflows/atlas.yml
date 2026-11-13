@@ -61,6 +61,13 @@ jobs:
           }
           "GALLIUM_DRIVER=llvmpipe" >> $env:GITHUB_ENV
 
+      - name: Screen at 1920x1080 (runner default is 1024x768)
+        continue-on-error: true
+        run: |
+          Set-DisplayResolution -Width 1920 -Height 1080 -Force
+          Add-Type -AssemblyName System.Windows.Forms
+          [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+
       - name: Check out the atlas branch
         run: |
           git fetch origin atlas
