@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 15,
-  "widgets_total": 1088,
-  "widgets_covered": 1088,
+  "states_done": 18,
+  "widgets_total": 1232,
+  "widgets_covered": 1232,
   "complete": false,
   "stale": [
     {
@@ -95,21 +95,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "pt-BR.dark.right-tab.search.panel",
-      "png": "captures/pt-BR.dark.right-tab.search.panel.png",
-      "tree": "captures/pt-BR.dark.right-tab.search.panel.json"
-    },
-    {
-      "state": "pt-BR.dark.settings.accounts",
-      "png": "captures/pt-BR.dark.settings.accounts.png",
-      "tree": "captures/pt-BR.dark.settings.accounts.json"
-    },
-    {
-      "state": "pt-BR.dark.settings.content",
-      "png": "captures/pt-BR.dark.settings.content.png",
-      "tree": "captures/pt-BR.dark.settings.content.json"
-    },
     {
       "state": "pt-BR.dark.settings.counter_github",
       "png": "captures/pt-BR.dark.settings.counter_github.png",

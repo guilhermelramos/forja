@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 15/160 telas documentadas · elementos citados 1088/1088 · completo: false
+**Progresso:** 18/160 telas documentadas · elementos citados 1232/1232 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -35,14 +35,14 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.dark.rail.request.page` | [página](pages/pt-BR.dark.rail.request.page.md) | [png](captures/pt-BR.dark.rail.request.page.png) |
 | `pt-BR.dark.bench-tab.review.tab` | [página](pages/pt-BR.dark.bench-tab.review.tab.md) | [png](captures/pt-BR.dark.bench-tab.review.tab.png) |
 | `pt-BR.dark.rail.routine.page` | [página](pages/pt-BR.dark.rail.routine.page.md) | [png](captures/pt-BR.dark.rail.routine.page.png) |
-| `pt-BR.dark.right-tab.search.panel` | — | [png](captures/pt-BR.dark.right-tab.search.panel.png) |
+| `pt-BR.dark.right-tab.search.panel` | [página](pages/pt-BR.dark.right-tab.search.panel.md) | [png](captures/pt-BR.dark.right-tab.search.panel.png) |
 | `pt-BR.dark.rail.skill.page` | [página](pages/pt-BR.dark.rail.skill.page.md) | [png](captures/pt-BR.dark.rail.skill.page.png) |
 | `pt-BR.dark.bench-tab.terminal.tab` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.bench-tab.terminal.tab.png) |
 | `pt-BR.dark.rail.usage.page` | [página](pages/pt-BR.dark.rail.usage.page.md) | [png](captures/pt-BR.dark.rail.usage.page.png) |
 | `pt-BR.dark.bench-tab.viewers.tab` | [página](pages/pt-BR.dark.bench-tab.viewers.tab.md) | [png](captures/pt-BR.dark.bench-tab.viewers.tab.png) |
 | `pt-BR.dark.modal.voice.overlay` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.modal.voice.overlay.png) |
-| `pt-BR.dark.settings.accounts` | — | [png](captures/pt-BR.dark.settings.accounts.png) |
-| `pt-BR.dark.settings.content` | — | [png](captures/pt-BR.dark.settings.content.png) |
+| `pt-BR.dark.settings.accounts` | [página](pages/pt-BR.dark.settings.accounts.md) | [png](captures/pt-BR.dark.settings.accounts.png) |
+| `pt-BR.dark.settings.content` | [página](pages/pt-BR.dark.settings.content.md) | [png](captures/pt-BR.dark.settings.content.png) |
 | `pt-BR.dark.settings.counter_github` | — | [png](captures/pt-BR.dark.settings.counter_github.png) |
 | `pt-BR.dark.settings.counter_gitlab` | — | [png](captures/pt-BR.dark.settings.counter_gitlab.png) |
 | `pt-BR.dark.settings.counter_jira` | — | [png](captures/pt-BR.dark.settings.counter_jira.png) |
