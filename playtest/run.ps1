@@ -166,6 +166,10 @@ while ((Get-Date) -lt $deadline) {
 }
 
 if (-not $forja.HasExited) { $forja.Kill($true) }
+# Exact token use of this tester (the runner is fresh, so --all is only this run).
+Push-Location "$Out\room"
+& $opencode stats --all --cost --models --json 2>$null | Set-Content "$Out\usage.json" -Encoding utf8
+Pop-Location
 Set-Content "$Out\app-stderr.txt" $appErr.Result -Encoding utf8
 $count = if (Test-Path $findings) { (Get-Content $findings).Count } else { 0 }
 Write-Host "playtest[$name]: $session sessões, $count achados"

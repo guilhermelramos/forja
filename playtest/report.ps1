@@ -78,6 +78,20 @@ foreach ($finding in $all | Sort-Object { $order[[string]$_.severity] ?? 4 }) {
     }
     $lines += "- **[$($finding.severity)]** $title — _$($finding.mission)_ ($status)"
 }
-$lines += "", "$created issues novas."
+$lines += "", "$created issues novas.", "", "## Uso de tokens", "",
+    "| Testador | Passos | Entrada | Cache lido | Saída | Raciocínio | Custo |", "|---|---:|---:|---:|---:|---:|---:|"
+$sum = @{ steps = [long]0; input = [long]0; cache = [long]0; output = [long]0; reasoning = [long]0; cost = 0.0 }
+foreach ($dir in Get-ChildItem $In -Directory -ErrorAction SilentlyContinue) {
+    $file = Get-ChildItem $dir.FullName -Recurse -Filter usage.json | Select-Object -First 1
+    if (-not $file) { continue }
+    try { $usage = Get-Content $file.FullName -Raw | ConvertFrom-Json } catch { continue }
+    $row = @{
+        steps = [long]$usage.steps; input = [long]$usage.tokens.input; cache = [long]$usage.tokens.cache.read
+        output = [long]$usage.tokens.output; reasoning = [long]$usage.tokens.reasoning; cost = [double]$usage.cost
+    }
+    foreach ($key in @($row.Keys)) { $sum[$key] += $row[$key] }
+    $lines += "| $($dir.Name -replace '^playtest-', '') | $($row.steps) | $($row.input.ToString('N0')) | $($row.cache.ToString('N0')) | $($row.output.ToString('N0')) | $($row.reasoning.ToString('N0')) | US$ $($row.cost.ToString('N4')) |"
+}
+$lines += "| **total** | $($sum.steps) | $($sum.input.ToString('N0')) | $($sum.cache.ToString('N0')) | $($sum.output.ToString('N0')) | $($sum.reasoning.ToString('N0')) | US$ $($sum.cost.ToString('N4')) |"
 $lines -join "`n" | Set-Content $Report -Encoding utf8
 Write-Host ($lines -join "`n")

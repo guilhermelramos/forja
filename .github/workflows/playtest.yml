@@ -84,6 +84,7 @@ jobs:
             playtest-out/actions.jsonl
             playtest-out/sessions
             playtest-out/app-stderr.txt
+            playtest-out/usage.json
           retention-days: 30
           if-no-files-found: warn
 
