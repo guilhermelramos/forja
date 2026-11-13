@@ -1,26 +1,100 @@
 {
-  "states_total": 40,
-  "states_done": 11,
-  "widgets_total": 476,
-  "widgets_covered": 476,
+  "states_total": 160,
+  "states_done": 3,
+  "widgets_total": 622,
+  "widgets_covered": 622,
   "complete": false,
-  "stale": [],
+  "stale": [
+    {
+      "state": "pt-BR.dark.bench-tab.bench.detail",
+      "png": "captures/pt-BR.dark.bench-tab.bench.detail.png",
+      "tree": "captures/pt-BR.dark.bench-tab.bench.detail.json",
+      "page": "pages/pt-BR.dark.bench-tab.bench.detail.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": []
+    },
+    {
+      "state": "pt-BR.dark.bench-tab.browser.tab",
+      "png": "captures/pt-BR.dark.bench-tab.browser.tab.png",
+      "tree": "captures/pt-BR.dark.bench-tab.browser.tab.json",
+      "page": "pages/pt-BR.dark.bench-tab.browser.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": []
+    },
+    {
+      "state": "pt-BR.dark.bench-tab.chat.tab",
+      "png": "captures/pt-BR.dark.bench-tab.chat.tab.png",
+      "tree": "captures/pt-BR.dark.bench-tab.chat.tab.json",
+      "page": "pages/pt-BR.dark.bench-tab.chat.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": []
+    },
+    {
+      "state": "pt-BR.dark.bench-tab.diff.tab",
+      "png": "captures/pt-BR.dark.bench-tab.diff.tab.png",
+      "tree": "captures/pt-BR.dark.bench-tab.diff.tab.json",
+      "page": "pages/pt-BR.dark.bench-tab.diff.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": []
+    },
+    {
+      "state": "pt-BR.dark.bench-tab.editor.tab",
+      "png": "captures/pt-BR.dark.bench-tab.editor.tab.png",
+      "tree": "captures/pt-BR.dark.bench-tab.editor.tab.json",
+      "page": "pages/pt-BR.dark.bench-tab.editor.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": []
+    },
+    {
+      "state": "pt-BR.dark.bench-tab.extension.panels.bench",
+      "png": "captures/pt-BR.dark.bench-tab.extension.panels.bench.png",
+      "tree": "captures/pt-BR.dark.bench-tab.extension.panels.bench.json",
+      "page": "pages/pt-BR.dark.bench-tab.extension.panels.bench.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": []
+    },
+    {
+      "state": "pt-BR.dark.bench-tab.git.history",
+      "png": "captures/pt-BR.dark.bench-tab.git.history.png",
+      "tree": "captures/pt-BR.dark.bench-tab.git.history.json",
+      "page": "pages/pt-BR.dark.bench-tab.git.history.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": []
+    },
+    {
+      "state": "pt-BR.dark.bench-tab.review.tab",
+      "png": "captures/pt-BR.dark.bench-tab.review.tab.png",
+      "tree": "captures/pt-BR.dark.bench-tab.review.tab.json",
+      "page": "pages/pt-BR.dark.bench-tab.review.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": []
+    },
+    {
+      "state": "pt-BR.dark.bench-tab.viewers.tab",
+      "png": "captures/pt-BR.dark.bench-tab.viewers.tab.png",
+      "tree": "captures/pt-BR.dark.bench-tab.viewers.tab.json",
+      "page": "pages/pt-BR.dark.bench-tab.viewers.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": []
+    },
+    {
+      "state": "pt-BR.dark.home.default",
+      "png": "captures/pt-BR.dark.home.default.png",
+      "tree": "captures/pt-BR.dark.home.default.json",
+      "page": "pages/pt-BR.dark.home.default.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": []
+    },
+    {
+      "state": "pt-BR.dark.modal.helper.profile_picker",
+      "png": "captures/pt-BR.dark.modal.helper.profile_picker.png",
+      "tree": "captures/pt-BR.dark.modal.helper.profile_picker.json",
+      "page": "pages/pt-BR.dark.modal.helper.profile_picker.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": []
+    }
+  ],
   "missing": [
-    {
-      "state": "pt-BR.dark.open.anvil",
-      "png": "captures/pt-BR.dark.open.anvil.png",
-      "tree": "captures/pt-BR.dark.open.anvil.json"
-    },
-    {
-      "state": "pt-BR.dark.open.onboarding",
-      "png": "captures/pt-BR.dark.open.onboarding.png",
-      "tree": "captures/pt-BR.dark.open.onboarding.json"
-    },
-    {
-      "state": "pt-BR.dark.open.toast",
-      "png": "captures/pt-BR.dark.open.toast.png",
-      "tree": "captures/pt-BR.dark.open.toast.json"
-    },
     {
       "state": "pt-BR.dark.rail.archive.tab",
       "png": "captures/pt-BR.dark.rail.archive.tab.png",
@@ -150,6 +224,606 @@
       "state": "pt-BR.dark.settings.voice",
       "png": "captures/pt-BR.dark.settings.voice.png",
       "tree": "captures/pt-BR.dark.settings.voice.json"
+    },
+    {
+      "state": "en.dark.bench-tab.bench.detail",
+      "png": "captures/en.dark.bench-tab.bench.detail.png",
+      "tree": "captures/en.dark.bench-tab.bench.detail.json"
+    },
+    {
+      "state": "en.dark.bench-tab.browser.tab",
+      "png": "captures/en.dark.bench-tab.browser.tab.png",
+      "tree": "captures/en.dark.bench-tab.browser.tab.json"
+    },
+    {
+      "state": "en.dark.bench-tab.chat.tab",
+      "png": "captures/en.dark.bench-tab.chat.tab.png",
+      "tree": "captures/en.dark.bench-tab.chat.tab.json"
+    },
+    {
+      "state": "en.dark.bench-tab.diff.tab",
+      "png": "captures/en.dark.bench-tab.diff.tab.png",
+      "tree": "captures/en.dark.bench-tab.diff.tab.json"
+    },
+    {
+      "state": "en.dark.bench-tab.editor.tab",
+      "png": "captures/en.dark.bench-tab.editor.tab.png",
+      "tree": "captures/en.dark.bench-tab.editor.tab.json"
+    },
+    {
+      "state": "en.dark.bench-tab.extension.panels.bench",
+      "png": "captures/en.dark.bench-tab.extension.panels.bench.png",
+      "tree": "captures/en.dark.bench-tab.extension.panels.bench.json"
+    },
+    {
+      "state": "en.dark.bench-tab.git.history",
+      "png": "captures/en.dark.bench-tab.git.history.png",
+      "tree": "captures/en.dark.bench-tab.git.history.json"
+    },
+    {
+      "state": "en.dark.bench-tab.review.tab",
+      "png": "captures/en.dark.bench-tab.review.tab.png",
+      "tree": "captures/en.dark.bench-tab.review.tab.json"
+    },
+    {
+      "state": "en.dark.bench-tab.viewers.tab",
+      "png": "captures/en.dark.bench-tab.viewers.tab.png",
+      "tree": "captures/en.dark.bench-tab.viewers.tab.json"
+    },
+    {
+      "state": "en.dark.home.default",
+      "png": "captures/en.dark.home.default.png",
+      "tree": "captures/en.dark.home.default.json"
+    },
+    {
+      "state": "en.dark.modal.helper.profile_picker",
+      "png": "captures/en.dark.modal.helper.profile_picker.png",
+      "tree": "captures/en.dark.modal.helper.profile_picker.json"
+    },
+    {
+      "state": "en.dark.open.anvil",
+      "png": "captures/en.dark.open.anvil.png",
+      "tree": "captures/en.dark.open.anvil.json"
+    },
+    {
+      "state": "en.dark.open.onboarding",
+      "png": "captures/en.dark.open.onboarding.png",
+      "tree": "captures/en.dark.open.onboarding.json"
+    },
+    {
+      "state": "en.dark.open.toast",
+      "png": "captures/en.dark.open.toast.png",
+      "tree": "captures/en.dark.open.toast.json"
+    },
+    {
+      "state": "en.dark.rail.archive.tab",
+      "png": "captures/en.dark.rail.archive.tab.png",
+      "tree": "captures/en.dark.rail.archive.tab.json"
+    },
+    {
+      "state": "en.dark.rail.board.page",
+      "png": "captures/en.dark.rail.board.page.png",
+      "tree": "captures/en.dark.rail.board.page.json"
+    },
+    {
+      "state": "en.dark.rail.extension.page",
+      "png": "captures/en.dark.rail.extension.page.png",
+      "tree": "captures/en.dark.rail.extension.page.json"
+    },
+    {
+      "state": "en.dark.rail.helper.tab",
+      "png": "captures/en.dark.rail.helper.tab.png",
+      "tree": "captures/en.dark.rail.helper.tab.json"
+    },
+    {
+      "state": "en.dark.rail.muster.page",
+      "png": "captures/en.dark.rail.muster.page.png",
+      "tree": "captures/en.dark.rail.muster.page.json"
+    },
+    {
+      "state": "en.dark.rail.request.page",
+      "png": "captures/en.dark.rail.request.page.png",
+      "tree": "captures/en.dark.rail.request.page.json"
+    },
+    {
+      "state": "en.dark.rail.routine.page",
+      "png": "captures/en.dark.rail.routine.page.png",
+      "tree": "captures/en.dark.rail.routine.page.json"
+    },
+    {
+      "state": "en.dark.rail.skill.page",
+      "png": "captures/en.dark.rail.skill.page.png",
+      "tree": "captures/en.dark.rail.skill.page.json"
+    },
+    {
+      "state": "en.dark.rail.usage.page",
+      "png": "captures/en.dark.rail.usage.page.png",
+      "tree": "captures/en.dark.rail.usage.page.json"
+    },
+    {
+      "state": "en.dark.right-tab.extension.panels.right",
+      "png": "captures/en.dark.right-tab.extension.panels.right.png",
+      "tree": "captures/en.dark.right-tab.extension.panels.right.json"
+    },
+    {
+      "state": "en.dark.right-tab.git.changes",
+      "png": "captures/en.dark.right-tab.git.changes.png",
+      "tree": "captures/en.dark.right-tab.git.changes.json"
+    },
+    {
+      "state": "en.dark.right-tab.ports.panel",
+      "png": "captures/en.dark.right-tab.ports.panel.png",
+      "tree": "captures/en.dark.right-tab.ports.panel.json"
+    },
+    {
+      "state": "en.dark.right-tab.search.panel",
+      "png": "captures/en.dark.right-tab.search.panel.png",
+      "tree": "captures/en.dark.right-tab.search.panel.json"
+    },
+    {
+      "state": "en.dark.settings.accounts",
+      "png": "captures/en.dark.settings.accounts.png",
+      "tree": "captures/en.dark.settings.accounts.json"
+    },
+    {
+      "state": "en.dark.settings.content",
+      "png": "captures/en.dark.settings.content.png",
+      "tree": "captures/en.dark.settings.content.json"
+    },
+    {
+      "state": "en.dark.settings.counter_github",
+      "png": "captures/en.dark.settings.counter_github.png",
+      "tree": "captures/en.dark.settings.counter_github.json"
+    },
+    {
+      "state": "en.dark.settings.counter_gitlab",
+      "png": "captures/en.dark.settings.counter_gitlab.png",
+      "tree": "captures/en.dark.settings.counter_gitlab.json"
+    },
+    {
+      "state": "en.dark.settings.counter_jira",
+      "png": "captures/en.dark.settings.counter_jira.png",
+      "tree": "captures/en.dark.settings.counter_jira.json"
+    },
+    {
+      "state": "en.dark.settings.counter_linear",
+      "png": "captures/en.dark.settings.counter_linear.png",
+      "tree": "captures/en.dark.settings.counter_linear.json"
+    },
+    {
+      "state": "en.dark.settings.helper",
+      "png": "captures/en.dark.settings.helper.png",
+      "tree": "captures/en.dark.settings.helper.json"
+    },
+    {
+      "state": "en.dark.settings.import",
+      "png": "captures/en.dark.settings.import.png",
+      "tree": "captures/en.dark.settings.import.json"
+    },
+    {
+      "state": "en.dark.settings.mcp",
+      "png": "captures/en.dark.settings.mcp.png",
+      "tree": "captures/en.dark.settings.mcp.json"
+    },
+    {
+      "state": "en.dark.settings.onboarding",
+      "png": "captures/en.dark.settings.onboarding.png",
+      "tree": "captures/en.dark.settings.onboarding.json"
+    },
+    {
+      "state": "en.dark.settings.remote",
+      "png": "captures/en.dark.settings.remote.png",
+      "tree": "captures/en.dark.settings.remote.json"
+    },
+    {
+      "state": "en.dark.settings.trust",
+      "png": "captures/en.dark.settings.trust.png",
+      "tree": "captures/en.dark.settings.trust.json"
+    },
+    {
+      "state": "en.dark.settings.voice",
+      "png": "captures/en.dark.settings.voice.png",
+      "tree": "captures/en.dark.settings.voice.json"
+    },
+    {
+      "state": "en.light.bench-tab.bench.detail",
+      "png": "captures/en.light.bench-tab.bench.detail.png",
+      "tree": "captures/en.light.bench-tab.bench.detail.json"
+    },
+    {
+      "state": "en.light.bench-tab.browser.tab",
+      "png": "captures/en.light.bench-tab.browser.tab.png",
+      "tree": "captures/en.light.bench-tab.browser.tab.json"
+    },
+    {
+      "state": "en.light.bench-tab.chat.tab",
+      "png": "captures/en.light.bench-tab.chat.tab.png",
+      "tree": "captures/en.light.bench-tab.chat.tab.json"
+    },
+    {
+      "state": "en.light.bench-tab.diff.tab",
+      "png": "captures/en.light.bench-tab.diff.tab.png",
+      "tree": "captures/en.light.bench-tab.diff.tab.json"
+    },
+    {
+      "state": "en.light.bench-tab.editor.tab",
+      "png": "captures/en.light.bench-tab.editor.tab.png",
+      "tree": "captures/en.light.bench-tab.editor.tab.json"
+    },
+    {
+      "state": "en.light.bench-tab.extension.panels.bench",
+      "png": "captures/en.light.bench-tab.extension.panels.bench.png",
+      "tree": "captures/en.light.bench-tab.extension.panels.bench.json"
+    },
+    {
+      "state": "en.light.bench-tab.git.history",
+      "png": "captures/en.light.bench-tab.git.history.png",
+      "tree": "captures/en.light.bench-tab.git.history.json"
+    },
+    {
+      "state": "en.light.bench-tab.review.tab",
+      "png": "captures/en.light.bench-tab.review.tab.png",
+      "tree": "captures/en.light.bench-tab.review.tab.json"
+    },
+    {
+      "state": "en.light.bench-tab.viewers.tab",
+      "png": "captures/en.light.bench-tab.viewers.tab.png",
+      "tree": "captures/en.light.bench-tab.viewers.tab.json"
+    },
+    {
+      "state": "en.light.home.default",
+      "png": "captures/en.light.home.default.png",
+      "tree": "captures/en.light.home.default.json"
+    },
+    {
+      "state": "en.light.modal.helper.profile_picker",
+      "png": "captures/en.light.modal.helper.profile_picker.png",
+      "tree": "captures/en.light.modal.helper.profile_picker.json"
+    },
+    {
+      "state": "en.light.open.anvil",
+      "png": "captures/en.light.open.anvil.png",
+      "tree": "captures/en.light.open.anvil.json"
+    },
+    {
+      "state": "en.light.open.onboarding",
+      "png": "captures/en.light.open.onboarding.png",
+      "tree": "captures/en.light.open.onboarding.json"
+    },
+    {
+      "state": "en.light.open.toast",
+      "png": "captures/en.light.open.toast.png",
+      "tree": "captures/en.light.open.toast.json"
+    },
+    {
+      "state": "en.light.rail.archive.tab",
+      "png": "captures/en.light.rail.archive.tab.png",
+      "tree": "captures/en.light.rail.archive.tab.json"
+    },
+    {
+      "state": "en.light.rail.board.page",
+      "png": "captures/en.light.rail.board.page.png",
+      "tree": "captures/en.light.rail.board.page.json"
+    },
+    {
+      "state": "en.light.rail.extension.page",
+      "png": "captures/en.light.rail.extension.page.png",
+      "tree": "captures/en.light.rail.extension.page.json"
+    },
+    {
+      "state": "en.light.rail.helper.tab",
+      "png": "captures/en.light.rail.helper.tab.png",
+      "tree": "captures/en.light.rail.helper.tab.json"
+    },
+    {
+      "state": "en.light.rail.muster.page",
+      "png": "captures/en.light.rail.muster.page.png",
+      "tree": "captures/en.light.rail.muster.page.json"
+    },
+    {
+      "state": "en.light.rail.request.page",
+      "png": "captures/en.light.rail.request.page.png",
+      "tree": "captures/en.light.rail.request.page.json"
+    },
+    {
+      "state": "en.light.rail.routine.page",
+      "png": "captures/en.light.rail.routine.page.png",
+      "tree": "captures/en.light.rail.routine.page.json"
+    },
+    {
+      "state": "en.light.rail.skill.page",
+      "png": "captures/en.light.rail.skill.page.png",
+      "tree": "captures/en.light.rail.skill.page.json"
+    },
+    {
+      "state": "en.light.rail.usage.page",
+      "png": "captures/en.light.rail.usage.page.png",
+      "tree": "captures/en.light.rail.usage.page.json"
+    },
+    {
+      "state": "en.light.right-tab.extension.panels.right",
+      "png": "captures/en.light.right-tab.extension.panels.right.png",
+      "tree": "captures/en.light.right-tab.extension.panels.right.json"
+    },
+    {
+      "state": "en.light.right-tab.git.changes",
+      "png": "captures/en.light.right-tab.git.changes.png",
+      "tree": "captures/en.light.right-tab.git.changes.json"
+    },
+    {
+      "state": "en.light.right-tab.ports.panel",
+      "png": "captures/en.light.right-tab.ports.panel.png",
+      "tree": "captures/en.light.right-tab.ports.panel.json"
+    },
+    {
+      "state": "en.light.right-tab.search.panel",
+      "png": "captures/en.light.right-tab.search.panel.png",
+      "tree": "captures/en.light.right-tab.search.panel.json"
+    },
+    {
+      "state": "en.light.settings.accounts",
+      "png": "captures/en.light.settings.accounts.png",
+      "tree": "captures/en.light.settings.accounts.json"
+    },
+    {
+      "state": "en.light.settings.content",
+      "png": "captures/en.light.settings.content.png",
+      "tree": "captures/en.light.settings.content.json"
+    },
+    {
+      "state": "en.light.settings.counter_github",
+      "png": "captures/en.light.settings.counter_github.png",
+      "tree": "captures/en.light.settings.counter_github.json"
+    },
+    {
+      "state": "en.light.settings.counter_gitlab",
+      "png": "captures/en.light.settings.counter_gitlab.png",
+      "tree": "captures/en.light.settings.counter_gitlab.json"
+    },
+    {
+      "state": "en.light.settings.counter_jira",
+      "png": "captures/en.light.settings.counter_jira.png",
+      "tree": "captures/en.light.settings.counter_jira.json"
+    },
+    {
+      "state": "en.light.settings.counter_linear",
+      "png": "captures/en.light.settings.counter_linear.png",
+      "tree": "captures/en.light.settings.counter_linear.json"
+    },
+    {
+      "state": "en.light.settings.helper",
+      "png": "captures/en.light.settings.helper.png",
+      "tree": "captures/en.light.settings.helper.json"
+    },
+    {
+      "state": "en.light.settings.import",
+      "png": "captures/en.light.settings.import.png",
+      "tree": "captures/en.light.settings.import.json"
+    },
+    {
+      "state": "en.light.settings.mcp",
+      "png": "captures/en.light.settings.mcp.png",
+      "tree": "captures/en.light.settings.mcp.json"
+    },
+    {
+      "state": "en.light.settings.onboarding",
+      "png": "captures/en.light.settings.onboarding.png",
+      "tree": "captures/en.light.settings.onboarding.json"
+    },
+    {
+      "state": "en.light.settings.remote",
+      "png": "captures/en.light.settings.remote.png",
+      "tree": "captures/en.light.settings.remote.json"
+    },
+    {
+      "state": "en.light.settings.trust",
+      "png": "captures/en.light.settings.trust.png",
+      "tree": "captures/en.light.settings.trust.json"
+    },
+    {
+      "state": "en.light.settings.voice",
+      "png": "captures/en.light.settings.voice.png",
+      "tree": "captures/en.light.settings.voice.json"
+    },
+    {
+      "state": "pt-BR.light.bench-tab.bench.detail",
+      "png": "captures/pt-BR.light.bench-tab.bench.detail.png",
+      "tree": "captures/pt-BR.light.bench-tab.bench.detail.json"
+    },
+    {
+      "state": "pt-BR.light.bench-tab.browser.tab",
+      "png": "captures/pt-BR.light.bench-tab.browser.tab.png",
+      "tree": "captures/pt-BR.light.bench-tab.browser.tab.json"
+    },
+    {
+      "state": "pt-BR.light.bench-tab.chat.tab",
+      "png": "captures/pt-BR.light.bench-tab.chat.tab.png",
+      "tree": "captures/pt-BR.light.bench-tab.chat.tab.json"
+    },
+    {
+      "state": "pt-BR.light.bench-tab.diff.tab",
+      "png": "captures/pt-BR.light.bench-tab.diff.tab.png",
+      "tree": "captures/pt-BR.light.bench-tab.diff.tab.json"
+    },
+    {
+      "state": "pt-BR.light.bench-tab.editor.tab",
+      "png": "captures/pt-BR.light.bench-tab.editor.tab.png",
+      "tree": "captures/pt-BR.light.bench-tab.editor.tab.json"
+    },
+    {
+      "state": "pt-BR.light.bench-tab.extension.panels.bench",
+      "png": "captures/pt-BR.light.bench-tab.extension.panels.bench.png",
+      "tree": "captures/pt-BR.light.bench-tab.extension.panels.bench.json"
+    },
+    {
+      "state": "pt-BR.light.bench-tab.git.history",
+      "png": "captures/pt-BR.light.bench-tab.git.history.png",
+      "tree": "captures/pt-BR.light.bench-tab.git.history.json"
+    },
+    {
+      "state": "pt-BR.light.bench-tab.review.tab",
+      "png": "captures/pt-BR.light.bench-tab.review.tab.png",
+      "tree": "captures/pt-BR.light.bench-tab.review.tab.json"
+    },
+    {
+      "state": "pt-BR.light.bench-tab.viewers.tab",
+      "png": "captures/pt-BR.light.bench-tab.viewers.tab.png",
+      "tree": "captures/pt-BR.light.bench-tab.viewers.tab.json"
+    },
+    {
+      "state": "pt-BR.light.home.default",
+      "png": "captures/pt-BR.light.home.default.png",
+      "tree": "captures/pt-BR.light.home.default.json"
+    },
+    {
+      "state": "pt-BR.light.modal.helper.profile_picker",
+      "png": "captures/pt-BR.light.modal.helper.profile_picker.png",
+      "tree": "captures/pt-BR.light.modal.helper.profile_picker.json"
+    },
+    {
+      "state": "pt-BR.light.open.anvil",
+      "png": "captures/pt-BR.light.open.anvil.png",
+      "tree": "captures/pt-BR.light.open.anvil.json"
+    },
+    {
+      "state": "pt-BR.light.open.onboarding",
+      "png": "captures/pt-BR.light.open.onboarding.png",
+      "tree": "captures/pt-BR.light.open.onboarding.json"
+    },
+    {
+      "state": "pt-BR.light.open.toast",
+      "png": "captures/pt-BR.light.open.toast.png",
+      "tree": "captures/pt-BR.light.open.toast.json"
+    },
+    {
+      "state": "pt-BR.light.rail.archive.tab",
+      "png": "captures/pt-BR.light.rail.archive.tab.png",
+      "tree": "captures/pt-BR.light.rail.archive.tab.json"
+    },
+    {
+      "state": "pt-BR.light.rail.board.page",
+      "png": "captures/pt-BR.light.rail.board.page.png",
+      "tree": "captures/pt-BR.light.rail.board.page.json"
+    },
+    {
+      "state": "pt-BR.light.rail.extension.page",
+      "png": "captures/pt-BR.light.rail.extension.page.png",
+      "tree": "captures/pt-BR.light.rail.extension.page.json"
+    },
+    {
+      "state": "pt-BR.light.rail.helper.tab",
+      "png": "captures/pt-BR.light.rail.helper.tab.png",
+      "tree": "captures/pt-BR.light.rail.helper.tab.json"
+    },
+    {
+      "state": "pt-BR.light.rail.muster.page",
+      "png": "captures/pt-BR.light.rail.muster.page.png",
+      "tree": "captures/pt-BR.light.rail.muster.page.json"
+    },
+    {
+      "state": "pt-BR.light.rail.request.page",
+      "png": "captures/pt-BR.light.rail.request.page.png",
+      "tree": "captures/pt-BR.light.rail.request.page.json"
+    },
+    {
+      "state": "pt-BR.light.rail.routine.page",
+      "png": "captures/pt-BR.light.rail.routine.page.png",
+      "tree": "captures/pt-BR.light.rail.routine.page.json"
+    },
+    {
+      "state": "pt-BR.light.rail.skill.page",
+      "png": "captures/pt-BR.light.rail.skill.page.png",
+      "tree": "captures/pt-BR.light.rail.skill.page.json"
+    },
+    {
+      "state": "pt-BR.light.rail.usage.page",
+      "png": "captures/pt-BR.light.rail.usage.page.png",
+      "tree": "captures/pt-BR.light.rail.usage.page.json"
+    },
+    {
+      "state": "pt-BR.light.right-tab.extension.panels.right",
+      "png": "captures/pt-BR.light.right-tab.extension.panels.right.png",
+      "tree": "captures/pt-BR.light.right-tab.extension.panels.right.json"
+    },
+    {
+      "state": "pt-BR.light.right-tab.git.changes",
+      "png": "captures/pt-BR.light.right-tab.git.changes.png",
+      "tree": "captures/pt-BR.light.right-tab.git.changes.json"
+    },
+    {
+      "state": "pt-BR.light.right-tab.ports.panel",
+      "png": "captures/pt-BR.light.right-tab.ports.panel.png",
+      "tree": "captures/pt-BR.light.right-tab.ports.panel.json"
+    },
+    {
+      "state": "pt-BR.light.right-tab.search.panel",
+      "png": "captures/pt-BR.light.right-tab.search.panel.png",
+      "tree": "captures/pt-BR.light.right-tab.search.panel.json"
+    },
+    {
+      "state": "pt-BR.light.settings.accounts",
+      "png": "captures/pt-BR.light.settings.accounts.png",
+      "tree": "captures/pt-BR.light.settings.accounts.json"
+    },
+    {
+      "state": "pt-BR.light.settings.content",
+      "png": "captures/pt-BR.light.settings.content.png",
+      "tree": "captures/pt-BR.light.settings.content.json"
+    },
+    {
+      "state": "pt-BR.light.settings.counter_github",
+      "png": "captures/pt-BR.light.settings.counter_github.png",
+      "tree": "captures/pt-BR.light.settings.counter_github.json"
+    },
+    {
+      "state": "pt-BR.light.settings.counter_gitlab",
+      "png": "captures/pt-BR.light.settings.counter_gitlab.png",
+      "tree": "captures/pt-BR.light.settings.counter_gitlab.json"
+    },
+    {
+      "state": "pt-BR.light.settings.counter_jira",
+      "png": "captures/pt-BR.light.settings.counter_jira.png",
+      "tree": "captures/pt-BR.light.settings.counter_jira.json"
+    },
+    {
+      "state": "pt-BR.light.settings.counter_linear",
+      "png": "captures/pt-BR.light.settings.counter_linear.png",
+      "tree": "captures/pt-BR.light.settings.counter_linear.json"
+    },
+    {
+      "state": "pt-BR.light.settings.helper",
+      "png": "captures/pt-BR.light.settings.helper.png",
+      "tree": "captures/pt-BR.light.settings.helper.json"
+    },
+    {
+      "state": "pt-BR.light.settings.import",
+      "png": "captures/pt-BR.light.settings.import.png",
+      "tree": "captures/pt-BR.light.settings.import.json"
+    },
+    {
+      "state": "pt-BR.light.settings.mcp",
+      "png": "captures/pt-BR.light.settings.mcp.png",
+      "tree": "captures/pt-BR.light.settings.mcp.json"
+    },
+    {
+      "state": "pt-BR.light.settings.onboarding",
+      "png": "captures/pt-BR.light.settings.onboarding.png",
+      "tree": "captures/pt-BR.light.settings.onboarding.json"
+    },
+    {
+      "state": "pt-BR.light.settings.remote",
+      "png": "captures/pt-BR.light.settings.remote.png",
+      "tree": "captures/pt-BR.light.settings.remote.json"
+    },
+    {
+      "state": "pt-BR.light.settings.trust",
+      "png": "captures/pt-BR.light.settings.trust.png",
+      "tree": "captures/pt-BR.light.settings.trust.json"
+    },
+    {
+      "state": "pt-BR.light.settings.voice",
+      "png": "captures/pt-BR.light.settings.voice.png",
+      "tree": "captures/pt-BR.light.settings.voice.json"
     }
   ]
 }

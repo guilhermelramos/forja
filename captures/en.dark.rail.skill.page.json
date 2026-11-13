@@ -1,0 +1,3298 @@
+{
+  "format": "forja.ui-tree/1",
+  "pixels_per_point": 1.0,
+  "root": 13826925289788388,
+  "focus": 13826925289788388,
+  "nodes": [
+    {
+      "id": 14123856350706394112,
+      "parent": 13728971669222807969,
+      "role": "Button",
+      "name": "Ports",
+      "label": "Ports",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          1184.8125,
+          50.0,
+          1239.75,
+          82.0
+        ],
+        "pixels": [
+          1185.0,
+          50.0,
+          1240.0,
+          82.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 12247331903957217022,
+      "parent": 5994257071553745771,
+      "role": "Label",
+      "name": "Open a bench to see the project's skills.",
+      "label": null,
+      "value": "Open a bench to see the project's skills.",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          324.0,
+          186.0,
+          567.03125,
+          205.0
+        ],
+        "pixels": [
+          324.0,
+          186.0,
+          567.0,
+          205.0
+        ]
+      },
+      "children": [
+        5459991456866160903
+      ]
+    },
+    {
+      "id": 15251687066213349634,
+      "parent": 320594485635094898,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        14409722819966326276
+      ]
+    },
+    {
+      "id": 15956836606642184195,
+      "parent": 1177735745274859353,
+      "role": "Button",
+      "name": "Board",
+      "label": "Board",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          8.0,
+          94.0,
+          44.0,
+          130.0
+        ],
+        "pixels": [
+          8.0,
+          94.0,
+          44.0,
+          130.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 14409722819966326276,
+      "parent": 15251687066213349634,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        7196913802809895466,
+        10279052361571176022,
+        1098963694639400306,
+        4737986911637405610
+      ]
+    },
+    {
+      "id": 5459991456866160903,
+      "parent": 12247331903957217022,
+      "role": "TextRun",
+      "name": "Open a bench to see the project's skills.",
+      "label": null,
+      "value": "Open a bench to see the project's skills.",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          324.0,
+          186.0,
+          567.03125,
+          205.0
+        ],
+        "pixels": [
+          324.0,
+          186.0,
+          567.0,
+          205.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 16852936369326738952,
+      "parent": 13374689163733434678,
+      "role": "TextRun",
+      "name": "Ready",
+      "label": null,
+      "value": "Ready",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          10.0,
+          774.5,
+          47.78125,
+          793.5
+        ],
+        "pixels": [
+          10.0,
+          775.0,
+          48.0,
+          794.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 4151543581720311305,
+      "parent": 1177735745274859353,
+      "role": "Button",
+      "name": "Skills",
+      "label": "Skills",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "True",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          8.0,
+          314.0,
+          44.0,
+          350.0
+        ],
+        "pixels": [
+          8.0,
+          314.0,
+          44.0,
+          350.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 12815864547269115406,
+      "parent": 13728971669222807969,
+      "role": "Button",
+      "name": "Changes",
+      "label": "Changes",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          1042.9375,
+          50.0,
+          1119.875,
+          82.0
+        ],
+        "pixels": [
+          1043.0,
+          50.0,
+          1120.0,
+          82.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 2001200174503224079,
+      "parent": 17962351488582148266,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        15651725192175810751
+      ]
+    },
+    {
+      "id": 17493865752040765456,
+      "parent": 5847957139851059049,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        15436627065925932007
+      ]
+    },
+    {
+      "id": 3933276253405824273,
+      "parent": 9328959792129246661,
+      "role": "TextRun",
+      "name": "No project yet. Add an existing folder ",
+      "label": null,
+      "value": "No project yet. Add an existing folder ",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          182.0,
+          194.0,
+          412.875,
+          213.0
+        ],
+        "pixels": [
+          182.0,
+          194.0,
+          413.0,
+          213.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 14789158766915370001,
+      "parent": 6802635146468470882,
+      "role": "TextRun",
+      "name": "Skills are folders with a SKILL.md. Forja's own skills and each helper's folders appear here.",
+      "label": null,
+      "value": "Skills are folders with a SKILL.md. Forja's own skills and each helper's folders appear here.",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          324.0,
+          82.0,
+          793.59375,
+          98.0
+        ],
+        "pixels": [
+          324.0,
+          82.0,
+          794.0,
+          98.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 1402105924353346579,
+      "parent": 14915633932864966836,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        15547738098778922838
+      ]
+    },
+    {
+      "id": 3194128454833178128,
+      "parent": 10499233688793532299,
+      "role": "Unknown",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          384.21875,
+          146.0,
+          512.21875,
+          178.0
+        ],
+        "pixels": [
+          384.0,
+          146.0,
+          512.0,
+          178.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 5270084507012301075,
+      "parent": 5866235114295923188,
+      "role": "TextRun",
+      "name": "",
+      "label": null,
+      "value": "",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          336.0,
+          231.0,
+          336.0,
+          250.0
+        ],
+        "pixels": [
+          336.0,
+          231.0,
+          336.0,
+          250.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 4119332249298467097,
+      "parent": 6945759385954064786,
+      "role": "TextRun",
+      "name": "Install to",
+      "label": null,
+      "value": "Install to",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          324.0,
+          146.0,
+          376.21875,
+          178.0
+        ],
+        "pixels": [
+          324.0,
+          146.0,
+          376.0,
+          178.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 4971133494036647965,
+      "parent": 320594485635094898,
+      "role": "Unknown",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          304.0,
+          42.0,
+          320.0,
+          768.0
+        ],
+        "pixels": [
+          304.0,
+          42.0,
+          320.0,
+          768.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 5547529292023508000,
+      "parent": 13728971669222807969,
+      "role": "Button",
+      "name": "Extension panels",
+      "label": "Extension panels",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          1239.75,
+          50.0,
+          1365.6875,
+          82.0
+        ],
+        "pixels": [
+          1240.0,
+          50.0,
+          1366.0,
+          82.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 2551492104396290084,
+      "parent": 14678026173474935149,
+      "role": "Label",
+      "name": "",
+      "label": null,
+      "value": "",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          795.0,
+          243.0,
+          823.0,
+          271.0
+        ],
+        "pixels": [
+          795.0,
+          243.0,
+          823.0,
+          271.0
+        ]
+      },
+      "children": [
+        6521980388920373108
+      ]
+    },
+    {
+      "id": 7196913802809895466,
+      "parent": 14409722819966326276,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        4437399980500610354,
+        14266017467067224489,
+        12449773174533715440
+      ]
+    },
+    {
+      "id": 3183715716747340336,
+      "parent": 9577307515183600959,
+      "role": "TextRun",
+      "name": "",
+      "label": null,
+      "value": "",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          182.0,
+          158.0,
+          210.0,
+          186.0
+        ],
+        "pixels": [
+          182.0,
+          158.0,
+          210.0,
+          186.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 4437399980500610354,
+      "parent": 7196913802809895466,
+      "role": "Button",
+      "name": "Projects",
+      "label": "Projects",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "True",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          64.0,
+          50.0,
+          135.9375,
+          82.0
+        ],
+        "pixels": [
+          64.0,
+          50.0,
+          136.0,
+          82.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 18109952633147151410,
+      "parent": 9913386248308564967,
+      "role": "Label",
+      "name": "",
+      "label": null,
+      "value": "",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          469.0,
+          283.0,
+          497.0,
+          311.0
+        ],
+        "pixels": [
+          469.0,
+          283.0,
+          497.0,
+          311.0
+        ]
+      },
+      "children": [
+        7931983412948185215
+      ]
+    },
+    {
+      "id": 3195092494388047668,
+      "parent": 12274340460185043820,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        15843642206661685204
+      ]
+    },
+    {
+      "id": 131152336095596341,
+      "parent": 8107324973384426844,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": []
+    },
+    {
+      "id": 13374689163733434678,
+      "parent": 15547738098778922838,
+      "role": "Label",
+      "name": "Ready",
+      "label": null,
+      "value": "Ready",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          10.0,
+          774.5,
+          47.78125,
+          793.5
+        ],
+        "pixels": [
+          10.0,
+          775.0,
+          48.0,
+          794.0
+        ]
+      },
+      "children": [
+        16852936369326738952
+      ]
+    },
+    {
+      "id": 5658007984481367096,
+      "parent": 17590984224141379267,
+      "role": "Button",
+      "name": "□",
+      "label": "□",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          1194.96875,
+          5.0,
+          1227.4375,
+          37.0
+        ],
+        "pixels": [
+          1195.0,
+          5.0,
+          1227.0,
+          37.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 1072611509767977530,
+      "parent": 1177735745274859353,
+      "role": "Button",
+      "name": "Helpers",
+      "label": "Helpers",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          8.0,
+          138.0,
+          44.0,
+          174.0
+        ],
+        "pixels": [
+          8.0,
+          138.0,
+          44.0,
+          174.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 2536795170955985725,
+      "parent": 7643624069601378792,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        18401674379744240987
+      ]
+    },
+    {
+      "id": 15684096575157272127,
+      "parent": 13826925289788388,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        14915633932864966836
+      ]
+    },
+    {
+      "id": 9577307515183600959,
+      "parent": 17998614228792262473,
+      "role": "Label",
+      "name": "",
+      "label": null,
+      "value": "",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          168.0,
+          158.0,
+          196.0,
+          186.0
+        ],
+        "pixels": [
+          168.0,
+          158.0,
+          196.0,
+          186.0
+        ]
+      },
+      "children": [
+        3183715716747340336
+      ]
+    },
+    {
+      "id": 15420812182867637567,
+      "parent": 5847957139851059049,
+      "role": "Unknown",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          992.0,
+          50.0,
+          1268.0,
+          82.0
+        ],
+        "pixels": [
+          992.0,
+          50.0,
+          1268.0,
+          82.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 5449785306384321605,
+      "parent": 1177735745274859353,
+      "role": "Button",
+      "name": "Routines",
+      "label": "Routines",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          8.0,
+          182.0,
+          44.0,
+          218.0
+        ],
+        "pixels": [
+          8.0,
+          182.0,
+          44.0,
+          218.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 17998614228792262473,
+      "parent": 9573933362777137132,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        9577307515183600959,
+        9328959792129246661
+      ]
+    },
+    {
+      "id": 8399851884972169810,
+      "parent": 1177735745274859353,
+      "role": "Image",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          12.0,
+          50.0,
+          40.0,
+          78.0
+        ],
+        "pixels": [
+          12.0,
+          50.0,
+          40.0,
+          78.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 15547738098778922838,
+      "parent": 1402105924353346579,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        13374689163733434678,
+        16021172531035970261,
+        8107324973384426844
+      ]
+    },
+    {
+      "id": 10279052361571176022,
+      "parent": 14409722819966326276,
+      "role": "Unknown",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          64.0,
+          50.0,
+          300.0,
+          82.0
+        ],
+        "pixels": [
+          64.0,
+          50.0,
+          300.0,
+          82.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 7485981727495200087,
+      "parent": 2147333516987518579,
+      "role": "Label",
+      "name": "",
+      "label": null,
+      "value": "",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          1116.0,
+          114.0,
+          1144.0,
+          142.0
+        ],
+        "pixels": [
+          1116.0,
+          114.0,
+          1144.0,
+          142.0
+        ]
+      },
+      "children": [
+        13017822211405173334
+      ]
+    },
+    {
+      "id": 1177735745274859353,
+      "parent": 6294323589538451916,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        8399851884972169810,
+        15956836606642184195,
+        1072611509767977530,
+        5449785306384321605,
+        3789027533678307993,
+        495625422075494782,
+        4151543581720311305,
+        16403096682901845484,
+        1240958785225696169,
+        11180598191004704722,
+        15760359105845922993
+      ]
+    },
+    {
+      "id": 13017822211405173334,
+      "parent": 7485981727495200087,
+      "role": "TextRun",
+      "name": "",
+      "label": null,
+      "value": "",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          1130.0,
+          114.0,
+          1158.0,
+          142.0
+        ],
+        "pixels": [
+          1130.0,
+          114.0,
+          1158.0,
+          142.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 18401674379744240987,
+      "parent": 2536795170955985725,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        4509943123261050834,
+        17962351488582148266,
+        17336966465026777540,
+        17590984224141379267
+      ]
+    },
+    {
+      "id": 8107324973384426844,
+      "parent": 15547738098778922838,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        1978776662958085780,
+        6067834502652307929,
+        10845500377729383825,
+        4840057543790096869,
+        131152336095596341,
+        4752154933245816501
+      ]
+    },
+    {
+      "id": 1046121657671141718,
+      "parent": 12664103349646275169,
+      "role": "TextRun",
+      "name": "No active bench. Open a bench to see its ",
+      "label": null,
+      "value": "No active bench. Open a bench to see its ",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          1130.0,
+          150.0,
+          1381.9375,
+          169.0
+        ],
+        "pixels": [
+          1130.0,
+          150.0,
+          1382.0,
+          169.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 15159520017395032151,
+      "parent": 5994257071553745771,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        14678026173474935149
+      ]
+    },
+    {
+      "id": 12664103349646275169,
+      "parent": 2147333516987518579,
+      "role": "Label",
+      "name": "No active bench. Open a bench to see its files.",
+      "label": null,
+      "value": "No active bench. Open a bench to see its files.",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          1004.03125,
+          150.0,
+          1255.96875,
+          188.0
+        ],
+        "pixels": [
+          1004.0,
+          150.0,
+          1256.0,
+          188.0
+        ]
+      },
+      "children": [
+        1046121657671141718,
+        14996411527772100050
+      ]
+    },
+    {
+      "id": 6802635146468470882,
+      "parent": 9372474087755921853,
+      "role": "Label",
+      "name": "Skills are folders with a SKILL.md. Forja's own skills and each helper's folders appear here.",
+      "label": null,
+      "value": "Skills are folders with a SKILL.md. Forja's own skills and each helper's folders appear here.",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          324.0,
+          82.0,
+          793.59375,
+          98.0
+        ],
+        "pixels": [
+          324.0,
+          82.0,
+          794.0,
+          98.0
+        ]
+      },
+      "children": [
+        14789158766915370001
+      ]
+    },
+    {
+      "id": 17328309698497252194,
+      "parent": 9913386248308564967,
+      "role": "Label",
+      "name": "No skill found.",
+      "label": null,
+      "value": "No skill found.",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          438.5,
+          319.0,
+          527.53125,
+          338.0
+        ],
+        "pixels": [
+          439.0,
+          319.0,
+          528.0,
+          338.0
+        ]
+      },
+      "children": [
+        17607332208011212534
+      ]
+    },
+    {
+      "id": 7528245900600709990,
+      "parent": 17590984224141379267,
+      "role": "Button",
+      "name": "×",
+      "label": "×",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          1235.4375,
+          5.0,
+          1269.0,
+          37.0
+        ],
+        "pixels": [
+          1235.0,
+          5.0,
+          1269.0,
+          37.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 5847957139851059049,
+      "parent": 15590497865806244558,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        13728971669222807969,
+        15420812182867637567,
+        6966936819210998939,
+        17493865752040765456
+      ]
+    },
+    {
+      "id": 5994257071553745771,
+      "parent": 15843642206661685204,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        7104542337905455489,
+        6305960445049901705,
+        10499233688793532299,
+        12247331903957217022,
+        9081522249411439490,
+        15159520017395032151
+      ]
+    },
+    {
+      "id": 12274340460185043820,
+      "parent": 13826925289788388,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        3195092494388047668
+      ]
+    },
+    {
+      "id": 14678026173474935149,
+      "parent": 15159520017395032151,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        2551492104396290084,
+        13657141277603761043
+      ]
+    },
+    {
+      "id": 320594485635094898,
+      "parent": 13826925289788388,
+      "role": "Pane",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          52.0,
+          42.0,
+          312.0,
+          768.0
+        ],
+        "pixels": [
+          52.0,
+          42.0,
+          312.0,
+          768.0
+        ]
+      },
+      "children": [
+        15251687066213349634,
+        4971133494036647965
+      ]
+    },
+    {
+      "id": 1098963694639400306,
+      "parent": 14409722819966326276,
+      "role": "Unknown",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          64.0,
+          80.0,
+          300.0,
+          82.0
+        ],
+        "pixels": [
+          64.0,
+          80.0,
+          300.0,
+          82.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 2147333516987518579,
+      "parent": 15436627065925932007,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        7485981727495200087,
+        12664103349646275169
+      ]
+    },
+    {
+      "id": 6521980388920373108,
+      "parent": 2551492104396290084,
+      "role": "TextRun",
+      "name": "",
+      "label": null,
+      "value": "",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          809.0,
+          243.0,
+          837.0,
+          271.0
+        ],
+        "pixels": [
+          809.0,
+          243.0,
+          837.0,
+          271.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 8760528556527921274,
+      "parent": 3686873805622824322,
+      "role": "Button",
+      "name": "Add folder",
+      "label": "Add folder",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          64.0,
+          98.0,
+          153.875,
+          130.0
+        ],
+        "pixels": [
+          64.0,
+          98.0,
+          154.0,
+          130.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 495625422075494782,
+      "parent": 1177735745274859353,
+      "role": "Button",
+      "name": "Requests",
+      "label": "Requests",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          8.0,
+          270.0,
+          44.0,
+          306.0
+        ],
+        "pixels": [
+          8.0,
+          270.0,
+          44.0,
+          306.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 7931983412948185215,
+      "parent": 18109952633147151410,
+      "role": "TextRun",
+      "name": "",
+      "label": null,
+      "value": "",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          483.0,
+          283.0,
+          511.0,
+          311.0
+        ],
+        "pixels": [
+          483.0,
+          283.0,
+          511.0,
+          311.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 14686156732554186624,
+      "parent": 13826925289788388,
+      "role": "Pane",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          0.0,
+          42.0,
+          52.0,
+          768.0
+        ],
+        "pixels": [
+          0.0,
+          42.0,
+          52.0,
+          768.0
+        ]
+      },
+      "children": [
+        17768109765276379524
+      ]
+    },
+    {
+      "id": 16550590527629500801,
+      "parent": 16021172531035970261,
+      "role": "TextRun",
+      "name": "56 modules",
+      "label": null,
+      "value": "56 modules",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          69.78125,
+          774.5,
+          141.71875,
+          793.5
+        ],
+        "pixels": [
+          70.0,
+          775.0,
+          142.0,
+          794.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 3686873805622824322,
+      "parent": 9573933362777137132,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        8760528556527921274,
+        9870864726093038014,
+        5183555862561114849
+      ]
+    },
+    {
+      "id": 7104542337905455489,
+      "parent": 5994257071553745771,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        9372474087755921853,
+        4347316494754967959
+      ]
+    },
+    {
+      "id": 17768109765276379524,
+      "parent": 14686156732554186624,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        6294323589538451916
+      ]
+    },
+    {
+      "id": 9081522249411439490,
+      "parent": 5994257071553745771,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        5866235114295923188,
+        9913386248308564967
+      ]
+    },
+    {
+      "id": 6305960445049901705,
+      "parent": 5994257071553745771,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        6183330591039809004,
+        2960676825736169627,
+        4990012447280534679
+      ]
+    },
+    {
+      "id": 10499233688793532299,
+      "parent": 5994257071553745771,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        6945759385954064786,
+        3194128454833178128,
+        15423554825283212241,
+        2446563363546551757
+      ]
+    },
+    {
+      "id": 10845500377729383825,
+      "parent": 8107324973384426844,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": []
+    },
+    {
+      "id": 6945759385954064786,
+      "parent": 10499233688793532299,
+      "role": "Label",
+      "name": "Install to",
+      "label": null,
+      "value": "Install to",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          324.0,
+          146.0,
+          376.21875,
+          178.0
+        ],
+        "pixels": [
+          324.0,
+          146.0,
+          376.0,
+          178.0
+        ]
+      },
+      "children": [
+        4119332249298467097
+      ]
+    },
+    {
+      "id": 13657141277603761043,
+      "parent": 14678026173474935149,
+      "role": "Label",
+      "name": "Choose a skill to see its SKILL.md.",
+      "label": null,
+      "value": "Choose a skill to see its SKILL.md.",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          706.5,
+          279.0,
+          911.53125,
+          298.0
+        ],
+        "pixels": [
+          707.0,
+          279.0,
+          912.0,
+          298.0
+        ]
+      },
+      "children": [
+        10616589400080363477
+      ]
+    },
+    {
+      "id": 1978776662958085780,
+      "parent": 8107324973384426844,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": []
+    },
+    {
+      "id": 4347316494754967959,
+      "parent": 7104542337905455489,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": []
+    },
+    {
+      "id": 4990012447280534679,
+      "parent": 6305960445049901705,
+      "role": "Button",
+      "name": "Refresh",
+      "label": "Refresh",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          521.09375,
+          106.0,
+          591.03125,
+          138.0
+        ],
+        "pixels": [
+          521.0,
+          106.0,
+          591.0,
+          138.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 3789027533678307993,
+      "parent": 1177735745274859353,
+      "role": "Button",
+      "name": "Muster",
+      "label": "Muster",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          8.0,
+          226.0,
+          44.0,
+          262.0
+        ],
+        "pixels": [
+          8.0,
+          226.0,
+          44.0,
+          262.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 6966936819210998939,
+      "parent": 5847957139851059049,
+      "role": "Unknown",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          992.0,
+          80.0,
+          1268.0,
+          82.0
+        ],
+        "pixels": [
+          992.0,
+          80.0,
+          1268.0,
+          82.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 2960676825736169627,
+      "parent": 6305960445049901705,
+      "role": "Button",
+      "name": "Install zip",
+      "label": "Install zip",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          431.875,
+          106.0,
+          513.09375,
+          138.0
+        ],
+        "pixels": [
+          432.0,
+          106.0,
+          513.0,
+          138.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 13728971669222807969,
+      "parent": 5847957139851059049,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        17251326530235885788,
+        12815864547269115406,
+        6775868231854684347,
+        14123856350706394112,
+        5547529292023508000
+      ]
+    },
+    {
+      "id": 11229308105129228197,
+      "parent": 13826925289788388,
+      "role": "Pane",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          312.0,
+          42.0,
+          1280.0,
+          768.0
+        ],
+        "pixels": [
+          312.0,
+          42.0,
+          1280.0,
+          768.0
+        ]
+      },
+      "children": [
+        15590497865806244558,
+        6540390449713134039
+      ]
+    },
+    {
+      "id": 11120546966883012261,
+      "parent": 9372474087755921853,
+      "role": "Label",
+      "name": "Skills",
+      "label": null,
+      "value": "Skills",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          324.0,
+          50.0,
+          362.625,
+          74.0
+        ],
+        "pixels": [
+          324.0,
+          50.0,
+          363.0,
+          74.0
+        ]
+      },
+      "children": [
+        5636637986862918589
+      ]
+    },
+    {
+      "id": 1240958785225696169,
+      "parent": 1177735745274859353,
+      "role": "Button",
+      "name": "Extensions",
+      "label": "Extensions",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          8.0,
+          402.0,
+          44.0,
+          438.0
+        ],
+        "pixels": [
+          8.0,
+          402.0,
+          44.0,
+          438.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 17962351488582148266,
+      "parent": 18401674379744240987,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        2001200174503224079
+      ]
+    },
+    {
+      "id": 14266017467067224489,
+      "parent": 7196913802809895466,
+      "role": "Button",
+      "name": "Benches",
+      "label": "Benches",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          135.9375,
+          50.0,
+          210.875,
+          82.0
+        ],
+        "pixels": [
+          136.0,
+          50.0,
+          211.0,
+          82.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 4737986911637405610,
+      "parent": 14409722819966326276,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        9573933362777137132
+      ]
+    },
+    {
+      "id": 15760359105845922993,
+      "parent": 1177735745274859353,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        2480966651013750526
+      ]
+    },
+    {
+      "id": 14915633932864966836,
+      "parent": 15684096575157272127,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        1402105924353346579
+      ]
+    },
+    {
+      "id": 4752154933245816501,
+      "parent": 8107324973384426844,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": []
+    },
+    {
+      "id": 6775868231854684347,
+      "parent": 13728971669222807969,
+      "role": "Button",
+      "name": "Search",
+      "label": "Search",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          1119.875,
+          50.0,
+          1184.8125,
+          82.0
+        ],
+        "pixels": [
+          1120.0,
+          50.0,
+          1185.0,
+          82.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 9372474087755921853,
+      "parent": 7104542337905455489,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        11120546966883012261,
+        6802635146468470882
+      ]
+    },
+    {
+      "id": 9870864726093038014,
+      "parent": 3686873805622824322,
+      "role": "Button",
+      "name": "New",
+      "label": "New",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          161.875,
+          98.0,
+          213.0,
+          130.0
+        ],
+        "pixels": [
+          162.0,
+          98.0,
+          213.0,
+          130.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 15651725192175810751,
+      "parent": 2001200174503224079,
+      "role": "Button",
+      "name": "Find file  Ctrl+P",
+      "label": "Find file  Ctrl+P",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          98.75,
+          5.0,
+          217.59375,
+          37.0
+        ],
+        "pixels": [
+          99.0,
+          5.0,
+          218.0,
+          37.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 5636637986862918589,
+      "parent": 11120546966883012261,
+      "role": "TextRun",
+      "name": "Skills",
+      "label": null,
+      "value": "Skills",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          324.0,
+          50.0,
+          362.625,
+          74.0
+        ],
+        "pixels": [
+          324.0,
+          50.0,
+          363.0,
+          74.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 17590984224141379267,
+      "parent": 18401674379744240987,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        7528245900600709990,
+        5658007984481367096,
+        16604086701319730923,
+        9608727923775226082
+      ]
+    },
+    {
+      "id": 17336966465026777540,
+      "parent": 18401674379744240987,
+      "role": "Button",
+      "name": "Anvil  Ctrl+K",
+      "label": "Anvil  Ctrl+K",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          225.59375,
+          5.0,
+          326.71875,
+          37.0
+        ],
+        "pixels": [
+          226.0,
+          5.0,
+          327.0,
+          37.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 9328959792129246661,
+      "parent": 17998614228792262473,
+      "role": "Label",
+      "name": "No project yet. Add an existing folder or create a new one.",
+      "label": null,
+      "value": "No project yet. Add an existing folder or create a new one.",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          66.5625,
+          194.0,
+          297.4375,
+          232.0
+        ],
+        "pixels": [
+          67.0,
+          194.0,
+          297.0,
+          232.0
+        ]
+      },
+      "children": [
+        3933276253405824273,
+        1107866627722671868
+      ]
+    },
+    {
+      "id": 6294323589538451916,
+      "parent": 17768109765276379524,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        1177735745274859353
+      ]
+    },
+    {
+      "id": 2446563363546551757,
+      "parent": 10499233688793532299,
+      "role": "Button",
+      "name": "Project",
+      "label": "Project",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          586.96875,
+          146.0,
+          653.71875,
+          178.0
+        ],
+        "pixels": [
+          587.0,
+          146.0,
+          654.0,
+          178.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 15590497865806244558,
+      "parent": 11229308105129228197,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        5847957139851059049
+      ]
+    },
+    {
+      "id": 15423554825283212241,
+      "parent": 10499233688793532299,
+      "role": "Button",
+      "name": "User",
+      "label": "User",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "True",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          520.21875,
+          146.0,
+          586.96875,
+          178.0
+        ],
+        "pixels": [
+          520.0,
+          146.0,
+          587.0,
+          178.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 4509943123261050834,
+      "parent": 18401674379744240987,
+      "role": "Label",
+      "name": "No project",
+      "label": null,
+      "value": "No project",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          11.0,
+          11.5,
+          76.75,
+          30.5
+        ],
+        "pixels": [
+          11.0,
+          12.0,
+          77.0,
+          31.0
+        ]
+      },
+      "children": [
+        1526099701560164351
+      ]
+    },
+    {
+      "id": 11180598191004704722,
+      "parent": 1177735745274859353,
+      "role": "Button",
+      "name": "Archive",
+      "label": "Archive",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          8.0,
+          446.0,
+          44.0,
+          482.0
+        ],
+        "pixels": [
+          8.0,
+          446.0,
+          44.0,
+          482.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 15843642206661685204,
+      "parent": 3195092494388047668,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        5994257071553745771
+      ]
+    },
+    {
+      "id": 5922127385953670356,
+      "parent": 826704136819850484,
+      "role": "TextRun",
+      "name": "Notifications",
+      "label": null,
+      "value": "Notifications",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          1246.0,
+          774.5,
+          1323.9375,
+          793.5
+        ],
+        "pixels": [
+          1246.0,
+          775.0,
+          1324.0,
+          794.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 16021172531035970261,
+      "parent": 15547738098778922838,
+      "role": "Label",
+      "name": "56 modules",
+      "label": null,
+      "value": "56 modules",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          69.78125,
+          774.5,
+          141.71875,
+          793.5
+        ],
+        "pixels": [
+          70.0,
+          775.0,
+          142.0,
+          794.0
+        ]
+      },
+      "children": [
+        16550590527629500801
+      ]
+    },
+    {
+      "id": 14996411527772100050,
+      "parent": 12664103349646275169,
+      "role": "TextRun",
+      "name": "files.",
+      "label": null,
+      "value": "files.",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          1130.0,
+          169.0,
+          1158.03125,
+          188.0
+        ],
+        "pixels": [
+          1130.0,
+          169.0,
+          1158.0,
+          188.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 6540390449713134039,
+      "parent": 11229308105129228197,
+      "role": "Unknown",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          972.0,
+          42.0,
+          988.0,
+          768.0
+        ],
+        "pixels": [
+          972.0,
+          42.0,
+          988.0,
+          768.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 6067834502652307929,
+      "parent": 8107324973384426844,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": []
+    },
+    {
+      "id": 10616589400080363477,
+      "parent": 13657141277603761043,
+      "role": "TextRun",
+      "name": "Choose a skill to see its SKILL.md.",
+      "label": null,
+      "value": "Choose a skill to see its SKILL.md.",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          809.015625,
+          279.0,
+          1014.046875,
+          298.0
+        ],
+        "pixels": [
+          809.0,
+          279.0,
+          1014.0,
+          298.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 17251326530235885788,
+      "parent": 13728971669222807969,
+      "role": "Button",
+      "name": "Files",
+      "label": "Files",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "True",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          992.0,
+          50.0,
+          1042.9375,
+          82.0
+        ],
+        "pixels": [
+          992.0,
+          50.0,
+          1043.0,
+          82.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 5183555862561114849,
+      "parent": 3686873805622824322,
+      "role": "Button",
+      "name": "Clone",
+      "label": "Clone",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          221.0,
+          98.0,
+          280.3125,
+          130.0
+        ],
+        "pixels": [
+          221.0,
+          98.0,
+          280.0,
+          130.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 9608727923775226082,
+      "parent": 17590984224141379267,
+      "role": "Unknown",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          1100.96875,
+          5.0,
+          1132.96875,
+          37.0
+        ],
+        "pixels": [
+          1101.0,
+          5.0,
+          1133.0,
+          37.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 13826925289788388,
+      "parent": null,
+      "role": "Window",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        15386672761517176305,
+        15684096575157272127,
+        14686156732554186624,
+        320594485635094898,
+        11229308105129228197,
+        12274340460185043820
+      ]
+    },
+    {
+      "id": 4840057543790096869,
+      "parent": 8107324973384426844,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        826704136819850484
+      ]
+    },
+    {
+      "id": 15436627065925932007,
+      "parent": 17493865752040765456,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        2147333516987518579
+      ]
+    },
+    {
+      "id": 7643624069601378792,
+      "parent": 15386672761517176305,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        2536795170955985725
+      ]
+    },
+    {
+      "id": 9913386248308564967,
+      "parent": 9081522249411439490,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        18109952633147151410,
+        17328309698497252194
+      ]
+    },
+    {
+      "id": 16604086701319730923,
+      "parent": 17590984224141379267,
+      "role": "Button",
+      "name": "–",
+      "label": "–",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          1154.96875,
+          5.0,
+          1186.96875,
+          37.0
+        ],
+        "pixels": [
+          1155.0,
+          5.0,
+          1187.0,
+          37.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 16403096682901845484,
+      "parent": 1177735745274859353,
+      "role": "Button",
+      "name": "Usage",
+      "label": "Usage",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          8.0,
+          358.0,
+          44.0,
+          394.0
+        ],
+        "pixels": [
+          8.0,
+          358.0,
+          44.0,
+          394.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 9573933362777137132,
+      "parent": 4737986911637405610,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        3686873805622824322,
+        17998614228792262473
+      ]
+    },
+    {
+      "id": 6183330591039809004,
+      "parent": 6305960445049901705,
+      "role": "Button",
+      "name": "Install folder",
+      "label": "Install folder",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          324.0,
+          106.0,
+          423.875,
+          138.0
+        ],
+        "pixels": [
+          324.0,
+          106.0,
+          424.0,
+          138.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 12449773174533715440,
+      "parent": 7196913802809895466,
+      "role": "Button",
+      "name": "Extension panels",
+      "label": "Extension panels",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          210.875,
+          50.0,
+          336.8125,
+          82.0
+        ],
+        "pixels": [
+          211.0,
+          50.0,
+          337.0,
+          82.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 15386672761517176305,
+      "parent": 13826925289788388,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        7643624069601378792
+      ]
+    },
+    {
+      "id": 826704136819850484,
+      "parent": 4840057543790096869,
+      "role": "Label",
+      "name": "Notifications",
+      "label": null,
+      "value": "Notifications",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          1168.0,
+          774.5,
+          1246.0,
+          793.5
+        ],
+        "pixels": [
+          1168.0,
+          775.0,
+          1246.0,
+          794.0
+        ]
+      },
+      "children": [
+        5922127385953670356
+      ]
+    },
+    {
+      "id": 5866235114295923188,
+      "parent": 9081522249411439490,
+      "role": "TextInput",
+      "name": "",
+      "label": null,
+      "value": "",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          324.0,
+          227.0,
+          642.0,
+          259.0
+        ],
+        "pixels": [
+          324.0,
+          227.0,
+          642.0,
+          259.0
+        ]
+      },
+      "children": [
+        5270084507012301075
+      ]
+    },
+    {
+      "id": 17607332208011212534,
+      "parent": 17328309698497252194,
+      "role": "TextRun",
+      "name": "No skill found.",
+      "label": null,
+      "value": "No skill found.",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          483.015625,
+          319.0,
+          572.046875,
+          338.0
+        ],
+        "pixels": [
+          483.0,
+          319.0,
+          572.0,
+          338.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 1107866627722671868,
+      "parent": 9328959792129246661,
+      "role": "TextRun",
+      "name": "or create a new one.",
+      "label": null,
+      "value": "or create a new one.",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          182.0,
+          213.0,
+          307.03125,
+          232.0
+        ],
+        "pixels": [
+          182.0,
+          213.0,
+          307.0,
+          232.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 2480966651013750526,
+      "parent": 15760359105845922993,
+      "role": "Button",
+      "name": "Settings",
+      "label": "Settings",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          8.0,
+          724.0,
+          44.0,
+          760.0
+        ],
+        "pixels": [
+          8.0,
+          724.0,
+          44.0,
+          760.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 1526099701560164351,
+      "parent": 4509943123261050834,
+      "role": "TextRun",
+      "name": "No project",
+      "label": null,
+      "value": "No project",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          11.0,
+          11.5,
+          76.75,
+          30.5
+        ],
+        "pixels": [
+          11.0,
+          12.0,
+          77.0,
+          31.0
+        ]
+      },
+      "children": []
+    }
+  ]
+}
