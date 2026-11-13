@@ -17,6 +17,10 @@ Nada no kernel. Este crate não é um módulo. O shell chama `apply` e desenha c
   `ARCHIVE`, `SKILLS`, `SETTINGS`, `SEARCH`, `CLOSE`, `SPLIT_RIGHT`, `SPLIT_DOWN`, `THEME`).
 - `TerminalTheme::load_dir` lê `content/themes/*.toml`.
 - Componentes recebem o rótulo. Não há string de produto embutida.
+- Janelas flutuantes chamam `register_keyboard_layer(ui, id)` a cada quadro e
+  `consume_layer_escape(ctx, id)` antes de desenhar. O Tab fica na camada do
+  topo e Escape fecha apenas ela; um menu aberto recebe Escape primeiro. Use um
+  `id` estável e diferente para cada janela simultânea.
 - Densidade `comfortable` (controle 32 px) ou `compact` (24 px). Grade de 4 px.
 
 ## Como testar

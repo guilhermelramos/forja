@@ -45,7 +45,13 @@ impl forja_kernel::ui_contract::View for WizardView {
 impl forja_kernel::ui_contract::View for SettingsView {
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         ui.label(cx.t("onboarding.settings.hint"));
-        if button(ui, ButtonKind::Secondary, &cx.t("onboarding.settings.reopen")).clicked() {
+        if button(
+            ui,
+            ButtonKind::Secondary,
+            &cx.t("onboarding.settings.reopen"),
+        )
+        .clicked()
+        {
             self.state.reopen();
         }
     }
@@ -84,34 +90,61 @@ fn render(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
         Step::Checklist => checklist(ui, cx, state),
     }
     ui.add_space(12.0);
-    ui.horizontal(|ui| {
-        if index > 0 && button(ui, ButtonKind::Ghost, &cx.t("onboarding.back")).clicked() {
-            index -= 1;
-            state.set_step(index);
-        }
-        if index + 1 < sequence.len() {
-            if button(ui, ButtonKind::Primary, &cx.t("onboarding.next")).clicked() {
-                mark(state, step, cx);
-                index += 1;
+    ui.push_id("wizard.navigation", |ui| {
+        ui.horizontal(|ui| {
+            if index > 0
+                && ui
+                    .push_id("back", |ui| {
+                        button(ui, ButtonKind::Ghost, &cx.t("onboarding.back"))
+                    })
+                    .inner
+                    .clicked()
+            {
+                index -= 1;
                 state.set_step(index);
             }
-        } else if button(ui, ButtonKind::Primary, &cx.t("onboarding.finish")).clicked() {
-            state.finish();
-            let path = cx.store().path();
-            let progress = state.progress();
-            let bytes = serde_json::to_vec(&progress).unwrap_or_default();
-            cx.spawn(
-                move || {
-                    let _ = forja_kernel::store::write_atomic_bytes(&path, &bytes);
-                },
-                |_, _| {},
-            );
-            let mut args = Args::new();
-            args.insert("title", Value::String(cx.t("onboarding.done.title")));
-            args.insert("body", Value::String(cx.t("onboarding.done.body")));
-            args.insert("level", Value::String("success".into()));
-            let _ = cx.run_command("notify.show", args);
-        }
+            let last = index + 1 >= sequence.len();
+            let label = cx.t(if last {
+                "onboarding.finish"
+            } else {
+                "onboarding.next"
+            });
+            let forward = ui
+                .push_id("forward", |ui| button(ui, ButtonKind::Primary, &label))
+                .inner;
+            let focus_id = egui::Id::new("forja.onboarding.focus_forward");
+            if ui
+                .ctx()
+                .data_mut(|data| data.remove_temp::<bool>(focus_id))
+                .unwrap_or(false)
+            {
+                forward.request_focus();
+            }
+            if forward.clicked() {
+                if !last {
+                    mark(state, step, cx);
+                    index += 1;
+                    state.set_step(index);
+                    ui.ctx().data_mut(|data| data.insert_temp(focus_id, true));
+                } else {
+                    state.finish();
+                    let path = cx.store().path();
+                    let progress = state.progress();
+                    let bytes = serde_json::to_vec(&progress).unwrap_or_default();
+                    cx.spawn(
+                        move || {
+                            let _ = forja_kernel::store::write_atomic_bytes(&path, &bytes);
+                        },
+                        |_, _| {},
+                    );
+                    let mut args = Args::new();
+                    args.insert("title", Value::String(cx.t("onboarding.done.title")));
+                    args.insert("body", Value::String(cx.t("onboarding.done.body")));
+                    args.insert("level", Value::String("success".into()));
+                    let _ = cx.run_command("notify.show", args);
+                }
+            }
+        })
     });
 }
 
@@ -168,7 +201,10 @@ fn theme(ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
     select(ui, &mut index, &refs);
     let value = ["system", "dark", "light"][index];
     if value != current {
-        let _ = cx.set_setting("appearance.theme.mode", SettingValue::Text(value.to_owned()));
+        let _ = cx.set_setting(
+            "appearance.theme.mode",
+            SettingValue::Text(value.to_owned()),
+        );
     }
 }
 
@@ -179,7 +215,8 @@ fn folder(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
     if text_field(ui, &mut path, &placeholder).changed() {
         let _ = cx.set_setting("onboarding.projects.dir", SettingValue::Text(path));
     }
-    if !state.picking() && button(ui, ButtonKind::Secondary, &cx.t("onboarding.folder.pick")).clicked()
+    if !state.picking()
+        && button(ui, ButtonKind::Secondary, &cx.t("onboarding.folder.pick")).clicked()
     {
         state.set_picking(true);
         let shared = state.clone();
@@ -353,7 +390,9 @@ fn setting_str(cx: &Ctx<'_>, key: &str, default: &str) -> String {
 }
 
 fn flag(cx: &Ctx<'_>, key: &str, default: bool) -> bool {
-    cx.setting(key).and_then(SettingValue::as_bool).unwrap_or(default)
+    cx.setting(key)
+        .and_then(SettingValue::as_bool)
+        .unwrap_or(default)
 }
 
 fn summarize(value: &Value) -> String {

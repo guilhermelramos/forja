@@ -9,6 +9,12 @@
 //! [`Tokens::from_toml`] aceita um tema de extensão, completo ou só com o que muda.
 //! [`apply`] grava o tema no contexto e ajusta o estilo do egui.
 //!
+//! # Teclado em janelas
+//!
+//! Uma janela flutuante registra sua camada com [`register_keyboard_layer`]
+//! a cada quadro e usa [`consume_layer_escape`] antes de desenhar para fechar
+//! apenas quando ela estiver no topo e não houver menu aberto sobre ela.
+//!
 //! # Fontes
 //!
 //! [`install_fonts`] lê Segoe UI Variable, Segoe UI, Cascadia Code e os ícones
@@ -26,6 +32,7 @@ mod color;
 mod components;
 mod fonts;
 mod icon;
+mod keyboard_layer;
 mod paint;
 mod terminal;
 mod tokens;
@@ -40,8 +47,9 @@ pub use components::{
 pub use eframe::egui;
 pub use fonts::{install_fonts, FontError};
 pub use icon::{
-    font_id as icon_font, icon_button, ARCHIVE, BOARD, CLOSE, EXTENSION, HELPERS, REQUESTS, ROUTINES,
-    SEARCH, SETTINGS, SKILLS, SPLIT_DOWN, SPLIT_RIGHT, TERMINAL, THEME,
+    font_id as icon_font, icon_button, ARCHIVE, BOARD, CLOSE, EXTENSION, HELPERS, REQUESTS,
+    ROUTINES, SEARCH, SETTINGS, SKILLS, SPLIT_DOWN, SPLIT_RIGHT, TERMINAL, THEME,
 };
+pub use keyboard_layer::{consume_layer_escape, keyboard_layer_active, register_keyboard_layer};
 pub use terminal::{AnsiPalette, TerminalTheme};
 pub use tokens::{Density, Metrics, Mode, Palette, ThemeError, Tokens, GRID};
