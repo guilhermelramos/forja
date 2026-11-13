@@ -13,13 +13,20 @@ impl ForjaApp {
         }
         let mut open = self.settings_open;
         let title = self.text("shell.settings.title");
-        let modal = egui::Window::new(title)
-            .open(&mut open)
+        let close_label = self.text("shell.window.close-dialog");
+        let modal = egui::Window::new(&title)
+            .id(egui::Id::new("forja.shell.settings"))
+            .title_bar(false)
             .collapsible(false)
             .resizable(true)
             .default_width(680.0)
             .max_height((ctx.content_rect().height() - 120.0).max(240.0))
-            .show(ctx, |ui| self.settings_contents(ui));
+            .show(ctx, |ui| {
+                if forja_ui_kit::window_header(ui, &title, &close_label) {
+                    open = false;
+                }
+                self.settings_contents(ui);
+            });
         if let Some(modal) = modal {
             self.slot_rects
                 .insert("settings".into(), modal.response.rect);
@@ -36,12 +43,18 @@ impl ForjaApp {
             return;
         }
         let mut open = self.keymap_open;
-        egui::Window::new(self.text("shell.keymap.title"))
-            .open(&mut open)
+        let title = self.text("shell.keymap.title");
+        let close_label = self.text("shell.window.close-dialog");
+        egui::Window::new(&title)
+            .id(egui::Id::new("forja.shell.keymap"))
+            .title_bar(false)
             .collapsible(false)
             .resizable(true)
             .default_width(560.0)
             .show(ctx, |ui| {
+                if forja_ui_kit::window_header(ui, &title, &close_label) {
+                    open = false;
+                }
                 let muted = self.paint(self.tokens.color.text_muted);
                 ui.label(
                     RichText::new(self.text("shell.keymap.hint"))
@@ -197,6 +210,10 @@ impl ForjaApp {
                         if ui.add(drag).labelled_by(label.id).changed() {
                             changed = Some(SettingValue::Integer(value));
                         }
+                        if let Some(hint) = self.integer_bounds_hint(*min, *max) {
+                            let muted = self.paint(self.tokens.color.text_muted);
+                            ui.label(RichText::new(hint).small().color(muted));
+                        }
                     }
                     SettingKind::Number { min, max } => {
                         let mut value = current.and_then(SettingValue::as_f64).unwrap_or(0.0);
@@ -206,6 +223,10 @@ impl ForjaApp {
                         }
                         if ui.add(drag).labelled_by(label.id).changed() {
                             changed = Some(SettingValue::Number(value));
+                        }
+                        if let Some(hint) = self.number_bounds_hint(*min, *max) {
+                            let muted = self.paint(self.tokens.color.text_muted);
+                            ui.label(RichText::new(hint).small().color(muted));
                         }
                     }
                     SettingKind::Text { .. } | SettingKind::Path | SettingKind::Color => {
@@ -241,11 +262,13 @@ impl ForjaApp {
                             .unwrap_or("")
                             .to_owned();
                         let mut value = original.clone();
+                        let selected_label = self.choice_label(&spec.key, &value);
                         egui::ComboBox::from_id_salt(&spec.key)
-                            .selected_text(value.clone())
+                            .selected_text(selected_label)
                             .show_ui(ui, |ui| {
                                 for option in options {
-                                    ui.selectable_value(&mut value, option.clone(), option);
+                                    let option_label = self.choice_label(&spec.key, option);
+                                    ui.selectable_value(&mut value, option.clone(), option_label);
                                 }
                             });
                         if value != original {
@@ -299,13 +322,133 @@ impl ForjaApp {
         }
     }
 
+    pub(crate) fn choice_label(&self, setting_key: &str, option: &str) -> String {
+        choice_label_for(self.runtime.i18n(), setting_key, option)
+    }
+
+    fn integer_bounds_hint(&self, min: Option<i64>, max: Option<i64>) -> Option<String> {
+        bounds_hint_for(
+            self.runtime.i18n(),
+            min.map(|v| v.to_string()),
+            max.map(|v| v.to_string()),
+        )
+    }
+
+    fn number_bounds_hint(&self, min: Option<f64>, max: Option<f64>) -> Option<String> {
+        bounds_hint_for(
+            self.runtime.i18n(),
+            min.map(format_number_limit),
+            max.map(format_number_limit),
+        )
+    }
+
     fn apply_setting(&mut self, key: &str, value: SettingValue) {
-        if let Err(error) = self.runtime.set_setting(key, value) {
-            let message = error.to_string();
-            let text = self.text_args("shell.settings.save-failed", &[("message", &message)]);
-            self.status = Some(text);
+        match self.runtime.set_setting(key, value) {
+            Ok(()) => self.status = None,
+            Err(error) => {
+                self.status = Some(humanize_setting_error_for(
+                    self.runtime.i18n(),
+                    self.runtime.registry(),
+                    key,
+                    &error.to_string(),
+                ));
+            }
         }
     }
+}
+
+pub(crate) fn choice_label_for(
+    i18n: &forja_kernel::I18n,
+    setting_key: &str,
+    option: &str,
+) -> String {
+    let locale = i18n.locale();
+    let normalized = option.replace('.', "_");
+    let specific = format!("setting.{setting_key}.option.{normalized}");
+    if i18n.has(locale, &specific) || i18n.has(forja_kernel::i18n::Locale::En, &specific) {
+        return i18n.t(&specific);
+    }
+    let generic = format!("setting.option.{normalized}");
+    if i18n.has(locale, &generic) || i18n.has(forja_kernel::i18n::Locale::En, &generic) {
+        return i18n.t(&generic);
+    }
+    option.to_owned()
+}
+
+pub(crate) fn bounds_hint_for(
+    i18n: &forja_kernel::I18n,
+    min: Option<String>,
+    max: Option<String>,
+) -> Option<String> {
+    match (min, max) {
+        (Some(min), Some(max)) => Some(i18n.t_args("shell.settings.range", &[("min", &min), ("max", &max)])),
+        (Some(min), None) => Some(i18n.t_args("shell.settings.range-min", &[("min", &min)])),
+        (None, Some(max)) => Some(i18n.t_args("shell.settings.range-max", &[("max", &max)])),
+        (None, None) => None,
+    }
+}
+
+pub(crate) fn humanize_setting_error_for(
+    i18n: &forja_kernel::I18n,
+    registry: &forja_kernel::Registry,
+    key: &str,
+    raw: &str,
+) -> String {
+    let label = registry
+        .settings()
+        .iter()
+        .find(|spec| spec.key == key)
+        .map(|spec| i18n.t(&spec.label_key))
+        .unwrap_or_else(|| key.to_owned());
+    if raw.contains("must be a color in #RRGGBB form") {
+        return i18n.t_args(
+            "shell.settings.error-color",
+            &[("label", &label), ("detail", raw)],
+        );
+    }
+    if let Some(limit) = raw.split("must be at least ").nth(1) {
+        return i18n.t_args(
+            "shell.settings.error-min",
+            &[("label", &label), ("limit", limit.trim()), ("detail", raw)],
+        );
+    }
+    if let Some(limit) = raw.split("must be at most ").nth(1) {
+        return i18n.t_args(
+            "shell.settings.error-max",
+            &[("label", &label), ("limit", limit.trim()), ("detail", raw)],
+        );
+    }
+    if let Some(limit) = raw
+        .split("must have at most ")
+        .nth(1)
+        .and_then(|rest| rest.strip_suffix(" characters"))
+    {
+        return i18n.t_args(
+            "shell.settings.error-max-len",
+            &[("label", &label), ("limit", limit.trim()), ("detail", raw)],
+        );
+    }
+    if raw.contains("list items cannot be empty") {
+        return i18n.t_args(
+            "shell.settings.error-list-empty",
+            &[("label", &label), ("detail", raw)],
+        );
+    }
+    if raw.contains("list repeats ") {
+        return i18n.t_args(
+            "shell.settings.error-list-repeat",
+            &[("label", &label), ("detail", raw)],
+        );
+    }
+    i18n.t_args(
+        "shell.settings.error-generic",
+        &[("label", &label), ("detail", raw)],
+    )
+}
+
+fn format_number_limit(value: f64) -> String {
+    let text = format!("{value:.2}");
+    text.trim_end_matches('0').trim_end_matches('.').to_owned()
 }
 
 fn parse_hex_color(value: &str) -> Option<[u8; 3]> {
@@ -317,4 +460,73 @@ fn parse_hex_color(value: &str) -> Option<[u8; 3]> {
     let green = u8::from_str_radix(&hex[2..4], 16).ok()?;
     let blue = u8::from_str_radix(&hex[4..6], 16).ok()?;
     Some([red, green, blue])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use forja_kernel::i18n::Locale;
+
+    #[test]
+    fn every_choice_option_has_translated_label_in_both_locales() {
+        let dir = std::env::temp_dir().join(format!("forja-shell-choices-{}", std::process::id()));
+        let mut runtime =
+            crate::app::build_runtime(Some("pt-BR".into()), Some(dir.clone()), Some(dir.join("u")), true)
+                .expect("runtime");
+        assert!(
+            runtime.warnings().is_empty(),
+            "unexpected i18n/runtime warnings: {:?}",
+            runtime.warnings()
+        );
+        let mut missing = Vec::new();
+        for locale in [Locale::PtBr, Locale::En] {
+            runtime
+                .set_setting(
+                    "i18n.language.mode",
+                    SettingValue::Text(match locale {
+                        Locale::PtBr => "pt_BR".into(),
+                        Locale::En => "en".into(),
+                    }),
+                )
+                .ok();
+            let specs: Vec<_> = runtime.registry().settings().to_vec();
+            for spec in specs {
+                if let SettingKind::Choice { options } = &spec.kind {
+                    for option in options {
+                        let label = choice_label_for(runtime.i18n(), &spec.key, option);
+                        if label == *option {
+                            missing.push(format!("{locale:?}: {} -> {option}", spec.key));
+                        }
+                    }
+                }
+            }
+        }
+        assert!(missing.is_empty(), "untranslated choice options: {missing:?}");
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn bounds_hint_and_humanized_setting_errors_show_limits() {
+        let dir = std::env::temp_dir().join(format!("forja-shell-bounds-{}", std::process::id()));
+        let runtime =
+            crate::app::build_runtime(Some("pt-BR".into()), Some(dir.clone()), Some(dir.join("u")), true)
+                .expect("runtime");
+        assert_eq!(
+            bounds_hint_for(runtime.i18n(), Some("8".into()), Some("32".into())),
+            Some("Aceito: 8 a 32".to_owned())
+        );
+        assert_eq!(
+            bounds_hint_for(runtime.i18n(), Some("10".into()), None),
+            Some("Mínimo: 10".to_owned())
+        );
+        let color_err = humanize_setting_error_for(
+            runtime.i18n(),
+            runtime.registry(),
+            "appearance.colors.accent",
+            "invalid setting: `appearance.colors.accent` must be a color in #RRGGBB form",
+        );
+        assert!(color_err.contains("#RRGGBB"), "{color_err}");
+        assert!(!color_err.starts_with("invalid setting:"), "{color_err}");
+        let _ = std::fs::remove_dir_all(dir);
+    }
 }

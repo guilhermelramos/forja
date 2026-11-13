@@ -38,6 +38,7 @@ archive-view-sessions = sessões
 archive-view-files = arquivos
 archive-view-results = resultados
 archive-view-indexing = indexando sessões...
+archive-view-no-sessions = Nenhuma sessão salva ainda.
 archive-view-empty = Nenhuma sessão corresponde à busca.
 archive-view-resume = Retomar
 archive-view-fork = Bifurcar

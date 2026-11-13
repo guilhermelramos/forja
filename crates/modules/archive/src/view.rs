@@ -216,7 +216,18 @@ impl ArchiveView {
     fn draw_results(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &mut ArchiveState) {
         let results = state.results.clone();
         if results.is_empty() {
-            forja_ui_kit::empty_state(ui, forja_ui_kit::ARCHIVE, &cx.t("archive.view.empty"), None);
+            let has_filter = !self.query.trim().is_empty()
+                || self.profile_filter.is_some()
+                || !self.project_filter.trim().is_empty()
+                || self.date_filter != "all";
+            let key = if state.scanning {
+                "archive.view.indexing"
+            } else if state.sessions.is_empty() && !has_filter {
+                "archive.view.no-sessions"
+            } else {
+                "archive.view.empty"
+            };
+            forja_ui_kit::empty_state(ui, forja_ui_kit::ARCHIVE, &cx.t(key), None);
             return;
         }
         let mut resume = None;

@@ -118,6 +118,8 @@ pub struct ForjaApp {
     pub(crate) focus_anvil: bool,
     pub(crate) bench_cache: Vec<(String, String)>,
     pub(crate) bench_cached_at: Option<Instant>,
+    pub(crate) active_crumb: Option<String>,
+    pub(crate) active_crumb_checked: Option<Instant>,
     pub(crate) file_cache: Vec<(String, String)>,
     pub(crate) file_cache_query: String,
     pub(crate) show_right_panel: bool,
@@ -227,6 +229,8 @@ impl ForjaApp {
             focus_anvil: false,
             bench_cache: Vec::new(),
             bench_cached_at: None,
+            active_crumb: None,
+            active_crumb_checked: None,
             file_cache: Vec::new(),
             file_cache_query: String::new(),
             show_right_panel: true,
@@ -351,15 +355,80 @@ impl ForjaApp {
     }
 
     pub(crate) fn run_command(&mut self, id: &str) {
+        self.active_crumb_checked = None;
         match self.runtime.run_command(id, Args::new()) {
             Ok(_) => self.status = None,
             Err(error) => {
+                let title = self
+                    .runtime
+                    .registry()
+                    .command(id)
+                    .map(|spec| self.text(&spec.title_key))
+                    .unwrap_or_else(|| id.to_owned());
                 let message = error.to_string();
-                let text =
-                    self.text_args("shell.command.failed", &[("id", id), ("message", &message)]);
+                let text = self.text_args(
+                    "shell.command.failed",
+                    &[("id", &title), ("message", &message)],
+                );
                 self.status = Some(text);
             }
         }
+    }
+
+    pub(crate) fn active_project_crumb(&mut self) -> String {
+        let stale = self
+            .active_crumb_checked
+            .is_none_or(|at| at.elapsed() >= std::time::Duration::from_millis(500));
+        if stale {
+            self.active_crumb_checked = Some(Instant::now());
+            self.active_crumb = self.resolve_active_crumb();
+        }
+        self.active_crumb
+            .clone()
+            .unwrap_or_else(|| self.text("shell.top.no-project"))
+    }
+
+    fn resolve_active_crumb(&mut self) -> Option<String> {
+        let projects = if self.runtime.registry().command("project.list").is_some() {
+            self.runtime
+                .run_command("project.list", Args::new())
+                .ok()
+                .and_then(|v| v.get("projects").and_then(Value::as_array).cloned())
+                .unwrap_or_default()
+        } else {
+            Vec::new()
+        };
+        if self.runtime.registry().command("bench.current").is_some() {
+            if let Ok(value) = self.runtime.run_command("bench.current", Args::new()) {
+                let bench_name = value
+                    .get("name")
+                    .and_then(Value::as_str)
+                    .map(str::trim)
+                    .filter(|name| !name.is_empty());
+                let project_id = value.get("project_id").and_then(Value::as_str);
+                let project_name = project_id.and_then(|id| {
+                    projects.iter().find_map(|p| {
+                        (p.get("id").and_then(Value::as_str) == Some(id))
+                            .then(|| p.get("name").and_then(Value::as_str))
+                            .flatten()
+                    })
+                });
+                match (project_name, bench_name) {
+                    (Some(project), Some(bench)) if project != bench => {
+                        return Some(format!("{project} · {bench}"));
+                    }
+                    (Some(project), _) => return Some(project.to_owned()),
+                    (None, Some(bench)) => return Some(bench.to_owned()),
+                    (None, None) => {}
+                }
+            }
+        }
+        projects
+            .first()
+            .and_then(|p| p.get("name").and_then(Value::as_str))
+            .map(str::trim)
+            .filter(|name| !name.is_empty())
+            .map(str::to_owned)
     }
 
     fn drain_actions(&mut self, ctx: &egui::Context) {

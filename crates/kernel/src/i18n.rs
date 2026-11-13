@@ -244,13 +244,25 @@ fn format_in(
     let pattern = message.value()?;
     let mut fluent_args = FluentArgs::new();
     for (name, value) in args {
-        fluent_args.set(*name, *value);
+        if let Some(number) = parse_fluent_number(value) {
+            fluent_args.set(*name, number);
+        } else {
+            fluent_args.set(*name, *value);
+        }
     }
     let mut errors = Vec::new();
     let text = bundle
         .format_pattern(pattern, Some(&fluent_args), &mut errors)
         .into_owned();
     Some(text)
+}
+
+fn parse_fluent_number(value: &str) -> Option<i64> {
+    if value == "0" || (!value.starts_with('0') && value.bytes().all(|b| b.is_ascii_digit())) {
+        value.parse::<i64>().ok()
+    } else {
+        None
+    }
 }
 
 #[cfg(test)]
@@ -324,5 +336,34 @@ mod tests {
         assert!(i18n.has(Locale::En, "hello.only-en"));
         assert!(!i18n.has(Locale::PtBr, "hello.only-en"));
         assert!(i18n.has(Locale::PtBr, "hello.greeting"));
+    }
+
+    #[test]
+    fn numeric_arguments_drive_fluent_plurals() {
+        let plural_source = BundleSource {
+            module: "plural".into(),
+            en: concat!(
+                "plural-hits = { $count ->\n",
+                "    [one] { $count } result\n",
+                "   *[other] { $count } results\n",
+                "}\n",
+            )
+            .into(),
+            pt_br: concat!(
+                "plural-hits = { $count ->\n",
+                "    [1] { $count } resultado\n",
+                "   *[other] { $count } resultados\n",
+                "}\n",
+            )
+            .into(),
+        };
+        let (mut i18n, warnings) = I18n::build(&[plural_source], Locale::PtBr);
+        assert!(warnings.is_empty());
+        assert_eq!(i18n.t_args("plural.hits", &[("count", "1")]), "1 resultado");
+        assert_eq!(i18n.t_args("plural.hits", &[("count", "0")]), "0 resultados");
+        assert_eq!(i18n.t_args("plural.hits", &[("count", "3")]), "3 resultados");
+        i18n.set_locale(Locale::En);
+        assert_eq!(i18n.t_args("plural.hits", &[("count", "1")]), "1 result");
+        assert_eq!(i18n.t_args("plural.hits", &[("count", "2")]), "2 results");
     }
 }

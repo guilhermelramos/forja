@@ -75,6 +75,7 @@ impl Shared {
             state.report = Some(report);
             state.last_refresh = Some(Instant::now());
             state.refreshing = false;
+            state.error = None;
         }
     }
 

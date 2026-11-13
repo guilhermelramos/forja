@@ -154,3 +154,19 @@ fn create_initializes_a_git_repository() {
     assert_eq!(listed["projects"].as_array().unwrap().len(), 1);
     let _ = std::fs::remove_dir_all(root);
 }
+
+#[test]
+fn raw_project_errors_are_humanized_in_pt_br() {
+    let root = temp_dir("humanize-err");
+    std::fs::create_dir_all(&root).unwrap();
+    let mut runtime = runtime(&root);
+    let cx = runtime.ctx("project");
+    assert_eq!(view::humanize_error(&cx, "path is empty"), "Informe o caminho da pasta.");
+    let missing = view::humanize_error(
+        &cx,
+        "folder does not exist: The system cannot find the path specified. (os error 3)",
+    );
+    assert!(missing.starts_with("Pasta inexistente"), "{missing}");
+    assert!(missing.contains("os error 3"), "{missing}");
+    let _ = std::fs::remove_dir_all(root);
+}

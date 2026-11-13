@@ -452,11 +452,20 @@ pub(crate) fn messages(
         );
     }
     if let Some(error) = state.error() {
-        ui.label(
-            egui::RichText::new(error)
-                .small()
-                .color(c32(tokens.color.danger)),
-        );
+        let message = humanize_error(cx, &error);
+        ui.horizontal_wrapped(|ui| {
+            ui.label(
+                egui::RichText::new(message)
+                    .small()
+                    .color(c32(tokens.color.danger)),
+            );
+            if forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE)
+                .on_hover_text(cx.t("git.error.dismiss"))
+                .clicked()
+            {
+                state.set_error(None);
+            }
+        });
     }
     if let Some(notice) = state.notice() {
         ui.label(
@@ -493,6 +502,74 @@ fn unstage(cx: &mut Ctx<'_>, path: &str, files: &[String]) {
     let _ = run(cx, "git.unstage", args);
 }
 
+pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> String {
+    let trimmed = raw.trim();
+    if trimmed == "no file selected" {
+        return cx.t("git.error.no-file");
+    }
+    let protected_template = cx.t_args("git.error.protected", &[("branch", "\x00")]);
+    if let Some((head, tail)) = protected_template.split_once('\x00') {
+        if trimmed.starts_with(head) && trimmed.ends_with(tail) {
+            return trimmed.to_owned();
+        }
+    }
+    let lower = trimmed.to_ascii_lowercase();
+    if lower.contains("not a git repository") {
+        return cx.t_args("git.error.not-repo", &[("detail", trimmed)]);
+    }
+    if lower.contains("nothing to commit") || lower.contains("no changes added to commit") {
+        return cx.t_args("git.error.nothing-to-commit", &[("detail", trimmed)]);
+    }
+    if lower.contains("conflict") || lower.contains("unmerged files") {
+        return cx.t_args("git.error.conflict", &[("detail", trimmed)]);
+    }
+    if lower.contains("rejected") || lower.contains("failed to push") || lower.contains("non-fast-forward") {
+        return cx.t_args("git.error.push-rejected", &[("detail", trimmed)]);
+    }
+    if lower.contains("no upstream branch") || lower.contains("has no upstream") {
+        return cx.t_args("git.error.no-upstream", &[("detail", trimmed)]);
+    }
+    if lower.contains("authentication failed")
+        || lower.contains("permission denied")
+        || lower.contains("could not read username")
+    {
+        return cx.t_args("git.error.auth", &[("detail", trimmed)]);
+    }
+    if lower.contains("git failed to start") || lower.contains("failed to execute") {
+        return cx.t_args("git.error.exec", &[("detail", trimmed)]);
+    }
+    cx.t_args("git.error.generic", &[("detail", trimmed)])
+}
+
 pub(crate) fn c32(color: forja_ui_kit::Color) -> egui::Color32 {
     egui::Color32::from_rgba_unmultiplied(color.r, color.g, color.b, color.a)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use forja_kernel::{Module, Runtime, RuntimeOptions};
+
+    #[test]
+    fn raw_git_errors_are_humanized_with_technical_detail() {
+        let dir = std::env::temp_dir().join(format!("forja-git-err-{}", std::process::id()));
+        let mut runtime = Runtime::new(
+            vec![Box::new(crate::GitModule {
+                state: Shared::new(),
+            }) as Box<dyn Module>],
+            RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".into()),
+                wake: None,
+            },
+        )
+        .expect("runtime");
+        let cx = runtime.ctx("git");
+        let msg = humanize_error(&cx, "fatal: not a git repository (or any parent)");
+        assert!(msg.contains("repositório Git"), "{msg}");
+        assert!(msg.contains("not a git repository"), "{msg}");
+        assert_eq!(humanize_error(&cx, "no file selected"), "Selecione ao menos um arquivo.");
+        let _ = std::fs::remove_dir_all(dir);
+    }
 }

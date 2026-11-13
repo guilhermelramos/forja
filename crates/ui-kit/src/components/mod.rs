@@ -16,7 +16,7 @@ pub use card::{card, list, ListItem};
 pub use choice::{segmented, tabs};
 pub use field::{select, text_field};
 pub use menu::{context_menu, icon_menu, menu_panel, MenuItem};
-pub use modal::{modal, modal_preview};
+pub use modal::{modal, modal_preview, window_header};
 pub use page::{empty_state, page_heading};
 pub use status::{progress_bar, stage_badge, toast, Stage, ToastKind};
 pub use toggle::toggle;
