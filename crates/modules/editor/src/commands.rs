@@ -71,6 +71,12 @@ pub fn open_path(cx: &mut Ctx<'_>, shared: &Shared, path: &str, line: Option<i64
                 let mut args = Args::new();
                 args.insert("path", json!(path));
                 let _ = cx.run_command("find.record_open", args);
+                // Opening from the explorer, search or any other panel must
+                // bring the editor tab to the front. The shell command is
+                // optional for headless runs.
+                let mut focus = Args::new();
+                focus.insert("view_id", json!("editor.tab"));
+                let _ = cx.run_command("shell.tab.open", focus);
                 state.set_status(None);
             }
             Err(error) => state.set_status(Some(error)),
