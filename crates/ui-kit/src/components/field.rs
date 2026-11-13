@@ -55,6 +55,9 @@ pub fn select(ui: &mut Ui, selected: &mut usize, options: &[&str]) -> Response {
             .max(metrics.control * 4.0);
     let (rect, mut response) =
         ui.allocate_exact_size(egui::vec2(width, metrics.control), Sense::click());
+    response.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::WidgetType::ComboBox, ui.is_enabled(), label)
+    });
     let before = *selected;
     let fill = hover_fill(tokens.color.surface.to_color32(), &response, &tokens);
     let painter = painter_for(ui);
@@ -113,6 +116,14 @@ fn menu_row(ui: &mut Ui, label: &str, selected: bool) -> Response {
     let width = ui.available_width().max(80.0);
     let (rect, response) =
         ui.allocate_exact_size(egui::vec2(width, metrics.row), egui::Sense::click());
+    response.widget_info(|| {
+        egui::WidgetInfo::selected(
+            egui::WidgetType::SelectableLabel,
+            ui.is_enabled(),
+            selected,
+            label,
+        )
+    });
     let fill = if selected {
         tokens.color.accent_soft.to_color32()
     } else if response.hovered() {

@@ -1,8 +1,8 @@
 //! Bigorna: fuzzy search across commands, benches, files and settings.
 
+use crate::anvil_keys::AnvilKeys;
 use crate::app::ForjaApp;
 use eframe::egui::{self, Align2, FontId, RichText, Sense};
-use crate::anvil_keys::AnvilKeys;
 use forja_kernel::keymap::Scope;
 use forja_kernel::Args;
 use forja_ui_kit::{text_field, Color, Tokens};
@@ -35,10 +35,22 @@ impl ForjaApp {
         if !self.anvil_open {
             return;
         }
+        let layer = egui::Id::new("forja.anvil.keyboard");
+        let active = forja_ui_kit::keyboard_layer_active(ctx, layer);
         let keys = AnvilKeys::from_keymap(self.runtime.keymap());
-        if ctx.input_mut(|input| input.consume_key(keys.close.0, keys.close.1)) {
+        if active
+            && !egui::Popup::is_any_open(ctx)
+            && ctx.input_mut(|input| input.consume_key(keys.close.0, keys.close.1))
+        {
             self.anvil_open = false;
+            restore_focus(ctx);
             return;
+        }
+        if self.focus_anvil {
+            let focused = ctx.memory(|memory| memory.focused());
+            ctx.data_mut(|data| {
+                data.insert_temp(egui::Id::new("forja.anvil.return_focus"), focused)
+            });
         }
         if self.anvil_query != self.anvil_query_seen {
             self.anvil_query_seen.clone_from(&self.anvil_query);
@@ -64,6 +76,7 @@ impl ForjaApp {
             .default_width(620.0)
             .anchor(Align2::CENTER_TOP, egui::vec2(0.0, 72.0))
             .show(ctx, |ui| {
+                forja_ui_kit::register_keyboard_layer(ui, layer);
                 let hint = self.text("shell.anvil.search");
                 let search = text_field(ui, &mut self.anvil_query, &hint);
                 if self.focus_anvil {
@@ -80,41 +93,60 @@ impl ForjaApp {
                         self.anvil_query = stripped.trim_start().to_owned();
                     }
                 }
-                if ui.input_mut(|input| input.consume_key(keys.next.0, keys.next.1))
+                if active
+                    && ui.input_mut(|input| input.consume_key(keys.next.0, keys.next.1))
                     && !hits.is_empty()
                 {
                     self.anvil_selected = (self.anvil_selected + 1).min(hits.len() - 1);
                 }
-                if ui.input_mut(|input| input.consume_key(keys.previous.0, keys.previous.1)) {
+                if active
+                    && ui.input_mut(|input| input.consume_key(keys.previous.0, keys.previous.1))
+                {
                     self.anvil_selected = self.anvil_selected.saturating_sub(1);
                 }
-                if ui.input_mut(|input| input.consume_key(keys.group_next.0, keys.group_next.1)) {
+                if active
+                    && ui.input_mut(|input| input.consume_key(keys.group_next.0, keys.group_next.1))
+                {
                     cycle = 1;
                 }
-                if ui.input_mut(|input| {
-                    input.consume_key(keys.group_previous.0, keys.group_previous.1)
-                }) {
+                if active
+                    && ui.input_mut(|input| {
+                        input.consume_key(keys.group_previous.0, keys.group_previous.1)
+                    })
+                {
                     cycle = -1;
                 }
-                let keep = ui.input_mut(|input| input.consume_key(keys.run_background.0, keys.run_background.1));
-                let run = ui.input_mut(|input| input.consume_key(keys.run.0, keys.run.1));
-                if (run || keep) && !hits.is_empty() {
-                    let index = self.anvil_selected.min(hits.len() - 1);
-                    chosen = Some((hits[index].kind.clone(), keep));
+                // Enter on a filter chip belongs to the chip, not the selected result.
+                let search_active = active && (search.has_focus() || search.lost_focus());
+                let keep = search_active
+                    && ui.input_mut(|input| {
+                        input.consume_key(keys.run_background.0, keys.run_background.1)
+                    });
+                let run = search_active
+                    && ui.input_mut(|input| input.consume_key(keys.run.0, keys.run.1));
+                if run || keep {
+                    if hits.is_empty() {
+                        search.request_focus();
+                    } else {
+                        let index = self.anvil_selected.min(hits.len() - 1);
+                        chosen = Some((hits[index].kind.clone(), keep));
+                    }
                 }
                 ui.add_space(4.0);
-                egui::ScrollArea::vertical().max_height(360.0).show(ui, |ui| {
-                    if hits.is_empty() {
-                        ui.label(RichText::new(self.text(empty_key)).color(muted(&tokens)));
-                    }
-                    for (row, hit) in hits.iter().enumerate() {
-                        let response = anvil_row(ui, &tokens, hit, row == self.anvil_selected);
-                        if response.clicked() {
-                            self.anvil_selected = row;
-                            chosen = Some((hit.kind.clone(), false));
+                egui::ScrollArea::vertical()
+                    .max_height(360.0)
+                    .show(ui, |ui| {
+                        if hits.is_empty() {
+                            ui.label(RichText::new(self.text(empty_key)).color(muted(&tokens)));
                         }
-                    }
-                });
+                        for (row, hit) in hits.iter().enumerate() {
+                            let response = anvil_row(ui, &tokens, hit, row == self.anvil_selected);
+                            if response.clicked() {
+                                self.anvil_selected = row;
+                                chosen = Some((hit.kind.clone(), false));
+                            }
+                        }
+                    });
                 if !self.anvil_views.is_empty()
                     && self
                         .anvil_views
@@ -132,7 +164,11 @@ impl ForjaApp {
                     }
                 }
                 ui.add_space(6.0);
-                ui.label(RichText::new(footer).color(muted(&tokens)).size(tokens.metrics().caption));
+                ui.label(
+                    RichText::new(footer)
+                        .color(muted(&tokens))
+                        .size(tokens.metrics().caption),
+                );
             });
         if let Some(modal) = modal {
             self.slot_rects.insert("anvil".into(), modal.response.rect);
@@ -142,6 +178,9 @@ impl ForjaApp {
             self.anvil_group = (self.anvil_group as i32 + cycle).rem_euclid(count) as usize;
         }
         if let Some((kind, keep)) = chosen {
+            if !keep {
+                restore_focus(ctx);
+            }
             self.run_hit(kind, keep);
         }
     }
@@ -355,7 +394,8 @@ impl ForjaApp {
             .bindings()
             .iter()
             .find(|binding| {
-                binding.binding.command.as_str() == command && binding.binding.scope == Scope::Global
+                binding.binding.command.as_str() == command
+                    && binding.binding.scope == Scope::Global
             })
             .map(|binding| binding.binding.chord.to_string())
             .unwrap_or_default()
@@ -406,6 +446,16 @@ impl ForjaApp {
             },
             |_, _| {},
         );
+    }
+}
+
+fn restore_focus(ctx: &egui::Context) {
+    let focused: Option<egui::Id> = ctx.data_mut(|data| {
+        data.remove_temp::<Option<egui::Id>>(egui::Id::new("forja.anvil.return_focus"))
+            .flatten()
+    });
+    if let Some(focused) = focused {
+        ctx.memory_mut(|memory| memory.request_focus(focused));
     }
 }
 
@@ -526,6 +576,9 @@ fn anvil_row(ui: &mut egui::Ui, tokens: &Tokens, hit: &Hit, selected: bool) -> e
     let metrics = tokens.metrics();
     let width = ui.available_width();
     let (rect, response) = ui.allocate_exact_size(egui::vec2(width, metrics.row), Sense::click());
+    response.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), &hit.title)
+    });
     let fill = if selected {
         paint(tokens.color.accent_soft)
     } else if response.hovered() {
@@ -534,7 +587,8 @@ fn anvil_row(ui: &mut egui::Ui, tokens: &Tokens, hit: &Hit, selected: bool) -> e
         egui::Color32::TRANSPARENT
     };
     if fill != egui::Color32::TRANSPARENT {
-        ui.painter().rect_filled(rect, egui::CornerRadius::same(6), fill);
+        ui.painter()
+            .rect_filled(rect, egui::CornerRadius::same(6), fill);
     }
     let font = FontId::new(metrics.body, egui::FontFamily::Proportional);
     let text = rect.shrink2(egui::vec2(8.0, 0.0));

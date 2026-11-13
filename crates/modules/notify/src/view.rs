@@ -42,8 +42,7 @@ impl Shared {
     }
 
     pub fn focused(&self) -> bool {
-        self.focused
-            .load(std::sync::atomic::Ordering::Relaxed)
+        self.focused.load(std::sync::atomic::Ordering::Relaxed)
     }
 
     pub fn set_focused(&self, focused: bool) {
@@ -151,13 +150,13 @@ impl forja_kernel::ui_contract::View for CenterView {
             let count = unread.to_string();
             cx.t_args("notify.center.count", &[("count", &count)])
         };
-        let color = if unread == 0 {
-            muted(ui)
-        } else {
-            accent(ui)
-        };
-        let response = ui.add(egui::Label::new(egui::RichText::new(label).color(color)).sense(Sense::click()));
+        let color = if unread == 0 { muted(ui) } else { accent(ui) };
+        let response =
+            ui.add(egui::Label::new(egui::RichText::new(label).color(color)).sense(Sense::click()));
         if response.clicked() {
+            self.state.toggle_center();
+        }
+        if self.state.center_open() && dismiss_key(ui.ctx()) {
             self.state.toggle_center();
         }
         if self.state.center_open() {
@@ -169,13 +168,21 @@ impl forja_kernel::ui_contract::View for CenterView {
 fn draw_toasts(ctx: &egui::Context, cx: &mut Ctx<'_>, state: &Shared) {
     let notices = state.snapshot();
     let duration = number(cx, "notifications.toast.duration_s", 5.0) as f32;
-    let max = number(cx, "notifications.toast.max", 3.0).round().clamp(1.0, 5.0) as usize;
+    let max = number(cx, "notifications.toast.max", 3.0)
+        .round()
+        .clamp(1.0, 5.0) as usize;
     let ages: Vec<f32> = notices
         .iter()
         .map(|notice| notice.at.elapsed().as_secs_f32())
         .collect();
     let indexes = visible_toast_indexes(&ages, duration, max);
     if indexes.is_empty() {
+        return;
+    }
+    if !state.center_open() && dismiss_key(ctx) {
+        if let Some(index) = indexes.last() {
+            state.dismiss(notices[*index].id);
+        }
         return;
     }
     ctx.request_repaint_after(std::time::Duration::from_millis(200));
@@ -200,6 +207,12 @@ fn draw_toasts(ctx: &egui::Context, cx: &mut Ctx<'_>, state: &Shared) {
         });
 }
 
+fn dismiss_key(ctx: &egui::Context) -> bool {
+    !egui::Popup::is_any_open(ctx)
+        && ctx.memory(|memory| memory.top_modal_layer().is_none())
+        && ctx.input_mut(|input| input.consume_key(egui::Modifiers::NONE, egui::Key::Escape))
+}
+
 fn draw_center(ctx: &egui::Context, cx: &mut Ctx<'_>, state: &Shared, notices: &[Notice]) {
     let title = cx.t("notify.center.title");
     let empty = cx.t("notify.center.empty");
@@ -209,26 +222,28 @@ fn draw_center(ctx: &egui::Context, cx: &mut Ctx<'_>, state: &Shared, notices: &
         .anchor(Align2::RIGHT_BOTTOM, egui::vec2(-12.0, -40.0))
         .show(ctx, |ui| {
             card(ui, Some(&title), |ui| {
-                egui::ScrollArea::vertical().max_height(280.0).show(ui, |ui| {
-                    ui.set_min_width(280.0);
-                    if notices.is_empty() {
-                        ui.label(egui::RichText::new(empty).color(muted(ui)));
-                    }
-                    for notice in notices.iter().rev() {
-                        let line = brief(&notice.title, &notice.body);
-                        let response = ui.add(
-                            egui::Label::new(egui::RichText::new(line).color(text_color(ui)))
-                                .sense(Sense::click()),
-                        );
-                        if response.clicked() {
-                            if let Some(path) = &notice.bench_path {
-                                activate = Some((notice.id, path.clone()));
-                            } else {
-                                state.mark_read(notice.id);
+                egui::ScrollArea::vertical()
+                    .max_height(280.0)
+                    .show(ui, |ui| {
+                        ui.set_min_width(280.0);
+                        if notices.is_empty() {
+                            ui.label(egui::RichText::new(empty).color(muted(ui)));
+                        }
+                        for notice in notices.iter().rev() {
+                            let line = brief(&notice.title, &notice.body);
+                            let response = ui.add(
+                                egui::Label::new(egui::RichText::new(line).color(text_color(ui)))
+                                    .sense(Sense::click()),
+                            );
+                            if response.clicked() {
+                                if let Some(path) = &notice.bench_path {
+                                    activate = Some((notice.id, path.clone()));
+                                } else {
+                                    state.mark_read(notice.id);
+                                }
                             }
                         }
-                    }
-                });
+                    });
             });
         });
     if let Some((id, path)) = activate {
@@ -282,7 +297,9 @@ fn number(cx: &Ctx<'_>, key: &str, default: f64) -> f64 {
 }
 
 fn text<'a>(cx: &'a Ctx<'_>, key: &str, default: &'a str) -> &'a str {
-    cx.setting(key).and_then(SettingValue::as_str).unwrap_or(default)
+    cx.setting(key)
+        .and_then(SettingValue::as_str)
+        .unwrap_or(default)
 }
 
 fn tokens(ui: &egui::Ui) -> forja_ui_kit::Tokens {
@@ -326,4 +343,39 @@ pub fn notices_json(state: &Shared) -> Value {
         })
         .collect();
     json!({ "items": items })
+}
+
+#[cfg(test)]
+mod keyboard_tests {
+    use super::*;
+
+    fn escape_input() -> egui::RawInput {
+        let mut raw = egui::RawInput::default();
+        raw.events.push(egui::Event::Key {
+            key: egui::Key::Escape,
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: egui::Modifiers::NONE,
+        });
+        raw
+    }
+
+    #[test]
+    fn escape_is_consumed_once_and_does_not_cross_a_modal() {
+        let ctx = egui::Context::default();
+        let _ = ctx.run(escape_input(), |ctx| {
+            assert!(dismiss_key(ctx));
+            assert!(!dismiss_key(ctx));
+        });
+
+        let _ = ctx.run(egui::RawInput::default(), |ctx| {
+            let layer = egui::LayerId::new(egui::Order::Foreground, egui::Id::new("dialog"));
+            ctx.memory_mut(|memory| memory.set_modal_layer(layer));
+        });
+        let _ = ctx.run(escape_input(), |ctx| {
+            assert!(!dismiss_key(ctx));
+            assert!(ctx.input(|input| input.key_pressed(egui::Key::Escape)));
+        });
+    }
 }

@@ -164,6 +164,14 @@ impl FindView {
         if !open {
             return;
         }
+        let layer = egui::Id::new("forja.find.picker.keyboard");
+        if forja_ui_kit::keyboard_layer_active(ctx, layer)
+            && !egui::Popup::is_any_open(ctx)
+            && ctx.input_mut(|input| input.consume_key(egui::Modifiers::NONE, egui::Key::Escape))
+        {
+            commands::close_picker(&self.shared);
+            return;
+        }
         // Rebuilds the listing if the bench changed or the listing is old (throttled inside).
         commands::ensure_index(cx, &self.shared);
         let mut window_open = true;
@@ -179,6 +187,7 @@ impl FindView {
             .default_width(520.0)
             .anchor(egui::Align2::CENTER_TOP, [0.0, 80.0])
             .show(ctx, |ui| {
+                forja_ui_kit::register_keyboard_layer(ui, layer);
                 let edit = ui.add(
                     egui::TextEdit::singleline(&mut text)
                         .hint_text(hint)
@@ -186,6 +195,17 @@ impl FindView {
                 );
                 if focus_now {
                     edit.request_focus();
+                    if let Some(mut state) =
+                        egui::widgets::text_edit::TextEditState::load(ui.ctx(), edit.id)
+                    {
+                        state
+                            .cursor
+                            .set_char_range(Some(egui::text::CCursorRange::two(
+                                egui::text::CCursor::new(0),
+                                egui::text::CCursor::new(text.chars().count()),
+                            )));
+                        state.store(ui.ctx(), edit.id);
+                    }
                     focus_now = false;
                 }
                 if edit.changed() {
@@ -235,7 +255,7 @@ impl FindView {
                 };
                 ui.label(egui::RichText::new(status).weak());
             });
-        if ctx.input(|input| input.key_pressed(egui::Key::Escape)) || !window_open {
+        if !window_open {
             actions.push(Action::Close);
         }
         lock(&self.shared).focus_query = focus_now;
