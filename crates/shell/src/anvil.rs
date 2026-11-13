@@ -37,7 +37,23 @@ impl ForjaApp {
         }
         let layer = egui::Id::new("forja.anvil.keyboard");
         let active = forja_ui_kit::keyboard_layer_active(ctx, layer);
+        let active_id = egui::Id::new("forja.anvil.was_active");
+        let reactivated = ctx.data_mut(|data| {
+            let was_active = data.get_temp::<bool>(active_id).unwrap_or(false);
+            data.insert_temp(active_id, active);
+            active && !was_active
+        });
         let keys = AnvilKeys::from_keymap(self.runtime.keymap());
+        let search_id = egui::Id::new("forja.anvil.search_id");
+        let search_focused = ctx
+            .data(|data| data.get_temp::<egui::Id>(search_id))
+            .is_some_and(|id| ctx.memory(|memory| memory.has_focus(id)));
+        // TextEdit consumes Ctrl+Enter, so route the Anvil binding first.
+        let keep = active
+            && search_focused
+            && !egui::Popup::is_any_open(ctx)
+            && ctx
+                .input_mut(|input| input.consume_key(keys.run_background.0, keys.run_background.1));
         if active
             && !egui::Popup::is_any_open(ctx)
             && ctx.input_mut(|input| input.consume_key(keys.close.0, keys.close.1))
@@ -79,7 +95,9 @@ impl ForjaApp {
                 forja_ui_kit::register_keyboard_layer(ui, layer);
                 let hint = self.text("shell.anvil.search");
                 let search = text_field(ui, &mut self.anvil_query, &hint);
-                if self.focus_anvil {
+                ui.ctx()
+                    .data_mut(|data| data.insert_temp(search_id, search.id));
+                if self.focus_anvil || reactivated {
                     search.request_focus();
                     self.focus_anvil = false;
                 }
@@ -118,10 +136,6 @@ impl ForjaApp {
                 }
                 // Enter on a filter chip belongs to the chip, not the selected result.
                 let search_active = active && (search.has_focus() || search.lost_focus());
-                let keep = search_active
-                    && ui.input_mut(|input| {
-                        input.consume_key(keys.run_background.0, keys.run_background.1)
-                    });
                 let run = search_active
                     && ui.input_mut(|input| input.consume_key(keys.run.0, keys.run.1));
                 if run || keep {

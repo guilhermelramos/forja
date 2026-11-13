@@ -170,6 +170,7 @@ impl FindView {
             && ctx.input_mut(|input| input.consume_key(egui::Modifiers::NONE, egui::Key::Escape))
         {
             commands::close_picker(&self.shared);
+            restore_picker_focus(ctx);
             return;
         }
         // Rebuilds the listing if the bench changed or the listing is old (throttled inside).
@@ -194,6 +195,10 @@ impl FindView {
                         .desired_width(f32::INFINITY),
                 );
                 if focus_now {
+                    let focused = ui.memory(|memory| memory.focused());
+                    ui.ctx().data_mut(|data| {
+                        data.insert_temp(egui::Id::new("forja.find.return_focus"), focused)
+                    });
                     edit.request_focus();
                     if let Some(mut state) =
                         egui::widgets::text_edit::TextEditState::load(ui.ctx(), edit.id)
@@ -256,10 +261,21 @@ impl FindView {
                 ui.label(egui::RichText::new(status).weak());
             });
         if !window_open {
+            restore_picker_focus(ctx);
             actions.push(Action::Close);
         }
         lock(&self.shared).focus_query = focus_now;
         apply_actions(&self.shared, cx, actions);
+    }
+}
+
+fn restore_picker_focus(ctx: &egui::Context) {
+    let focused = ctx.data_mut(|data| {
+        data.remove_temp::<Option<egui::Id>>(egui::Id::new("forja.find.return_focus"))
+            .flatten()
+    });
+    if let Some(id) = focused {
+        ctx.memory_mut(|memory| memory.request_focus(id));
     }
 }
 
