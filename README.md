@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 9/160 telas documentadas · elementos citados 848/848 · completo: false
+**Progresso:** 12/160 telas documentadas · elementos citados 968/968 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -34,11 +34,11 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.dark.right-tab.ports.panel` | — | [png](captures/pt-BR.dark.right-tab.ports.panel.png) |
 | `pt-BR.dark.rail.request.page` | [página](pages/pt-BR.dark.rail.request.page.md) | [png](captures/pt-BR.dark.rail.request.page.png) |
 | `pt-BR.dark.bench-tab.review.tab` | [página](pages/pt-BR.dark.bench-tab.review.tab.md) | [png](captures/pt-BR.dark.bench-tab.review.tab.png) |
-| `pt-BR.dark.rail.routine.page` | — | [png](captures/pt-BR.dark.rail.routine.page.png) |
+| `pt-BR.dark.rail.routine.page` | [página](pages/pt-BR.dark.rail.routine.page.md) | [png](captures/pt-BR.dark.rail.routine.page.png) |
 | `pt-BR.dark.right-tab.search.panel` | — | [png](captures/pt-BR.dark.right-tab.search.panel.png) |
-| `pt-BR.dark.rail.skill.page` | — | [png](captures/pt-BR.dark.rail.skill.page.png) |
+| `pt-BR.dark.rail.skill.page` | [página](pages/pt-BR.dark.rail.skill.page.md) | [png](captures/pt-BR.dark.rail.skill.page.png) |
 | `pt-BR.dark.bench-tab.terminal.tab` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.bench-tab.terminal.tab.png) |
-| `pt-BR.dark.rail.usage.page` | — | [png](captures/pt-BR.dark.rail.usage.page.png) |
+| `pt-BR.dark.rail.usage.page` | [página](pages/pt-BR.dark.rail.usage.page.md) | [png](captures/pt-BR.dark.rail.usage.page.png) |
 | `pt-BR.dark.bench-tab.viewers.tab` | [página](pages/pt-BR.dark.bench-tab.viewers.tab.md) | [png](captures/pt-BR.dark.bench-tab.viewers.tab.png) |
 | `pt-BR.dark.modal.voice.overlay` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.modal.voice.overlay.png) |
 | `pt-BR.dark.settings.accounts` | — | [png](captures/pt-BR.dark.settings.accounts.png) |
