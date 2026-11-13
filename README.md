@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 27/160 telas documentadas · elementos citados 1689/1689 · completo: false
+**Progresso:** 30/160 telas documentadas · elementos citados 1821/1821 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -52,8 +52,8 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.dark.settings.mcp` | [página](pages/pt-BR.dark.settings.mcp.md) | [png](captures/pt-BR.dark.settings.mcp.png) |
 | `pt-BR.dark.settings.onboarding` | [página](pages/pt-BR.dark.settings.onboarding.md) | [png](captures/pt-BR.dark.settings.onboarding.png) |
 | `pt-BR.dark.settings.remote` | [página](pages/pt-BR.dark.settings.remote.md) | [png](captures/pt-BR.dark.settings.remote.png) |
-| `pt-BR.dark.settings.trust` | — | [png](captures/pt-BR.dark.settings.trust.png) |
-| `pt-BR.dark.settings.voice` | — | [png](captures/pt-BR.dark.settings.voice.png) |
+| `pt-BR.dark.settings.trust` | [página](pages/pt-BR.dark.settings.trust.md) | [png](captures/pt-BR.dark.settings.trust.png) |
+| `pt-BR.dark.settings.voice` | [página](pages/pt-BR.dark.settings.voice.md) | [png](captures/pt-BR.dark.settings.voice.png) |
 | `pt-BR.light.home.default` | — | [png](captures/pt-BR.light.home.default.png) |
 | `pt-BR.light.open.anvil` | — | [png](captures/pt-BR.light.open.anvil.png) |
 | `pt-BR.light.open.onboarding` | — | [png](captures/pt-BR.light.open.onboarding.png) |
@@ -108,7 +108,7 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.dark.open.toast` | — | [png](captures/en.dark.open.toast.png) |
 | `en.dark.rail.archive.tab` | — | [png](captures/en.dark.rail.archive.tab.png) |
 | `en.dark.modal.bench.dialogs` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.modal.bench.dialogs.png) |
-| `en.dark.bench-tab.bench.detail` | — | [png](captures/en.dark.bench-tab.bench.detail.png) |
+| `en.dark.bench-tab.bench.detail` | [página](pages/en.dark.bench-tab.bench.detail.md) | [png](captures/en.dark.bench-tab.bench.detail.png) |
 | `en.dark.rail.board.page` | — | [png](captures/en.dark.rail.board.page.png) |
 | `en.dark.bench-tab.browser.tab` | — | [png](captures/en.dark.bench-tab.browser.tab.png) |
 | `en.dark.bench-tab.chat.tab` | — | [png](captures/en.dark.bench-tab.chat.tab.png) |

@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 27,
-  "widgets_total": 1689,
-  "widgets_covered": 1689,
+  "states_done": 30,
+  "widgets_total": 1821,
+  "widgets_covered": 1821,
   "complete": false,
   "stale": [
     {
@@ -95,21 +95,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "pt-BR.dark.settings.trust",
-      "png": "captures/pt-BR.dark.settings.trust.png",
-      "tree": "captures/pt-BR.dark.settings.trust.json"
-    },
-    {
-      "state": "pt-BR.dark.settings.voice",
-      "png": "captures/pt-BR.dark.settings.voice.png",
-      "tree": "captures/pt-BR.dark.settings.voice.json"
-    },
-    {
-      "state": "en.dark.bench-tab.bench.detail",
-      "png": "captures/en.dark.bench-tab.bench.detail.png",
-      "tree": "captures/en.dark.bench-tab.bench.detail.json"
-    },
     {
       "state": "en.dark.bench-tab.browser.tab",
       "png": "captures/en.dark.bench-tab.browser.tab.png",
