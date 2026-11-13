@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 6/160 telas documentadas · elementos citados 724/724 · completo: false
+**Progresso:** 9/160 telas documentadas · elementos citados 848/848 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -26,13 +26,13 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.dark.right-tab.git.changes` | — | [png](captures/pt-BR.dark.right-tab.git.changes.png) |
 | `pt-BR.dark.bench-tab.git.history` | [página](pages/pt-BR.dark.bench-tab.git.history.md) | [png](captures/pt-BR.dark.bench-tab.git.history.png) |
 | `pt-BR.dark.modal.helper.profile_picker` | [página](pages/pt-BR.dark.modal.helper.profile_picker.md) | [png](captures/pt-BR.dark.modal.helper.profile_picker.png) |
-| `pt-BR.dark.rail.helper.tab` | — | [png](captures/pt-BR.dark.rail.helper.tab.png) |
+| `pt-BR.dark.rail.helper.tab` | [página](pages/pt-BR.dark.rail.helper.tab.md) | [png](captures/pt-BR.dark.rail.helper.tab.png) |
 | `pt-BR.dark.modal.mcp.approval` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.modal.mcp.approval.png) |
-| `pt-BR.dark.rail.muster.page` | — | [png](captures/pt-BR.dark.rail.muster.page.png) |
+| `pt-BR.dark.rail.muster.page` | [página](pages/pt-BR.dark.rail.muster.page.md) | [png](captures/pt-BR.dark.rail.muster.page.png) |
 | `pt-BR.dark.modal.notify.toasts` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.modal.notify.toasts.png) |
 | `pt-BR.dark.modal.onboarding.wizard` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.modal.onboarding.wizard.png) |
 | `pt-BR.dark.right-tab.ports.panel` | — | [png](captures/pt-BR.dark.right-tab.ports.panel.png) |
-| `pt-BR.dark.rail.request.page` | — | [png](captures/pt-BR.dark.rail.request.page.png) |
+| `pt-BR.dark.rail.request.page` | [página](pages/pt-BR.dark.rail.request.page.md) | [png](captures/pt-BR.dark.rail.request.page.png) |
 | `pt-BR.dark.bench-tab.review.tab` | [página](pages/pt-BR.dark.bench-tab.review.tab.md) | [png](captures/pt-BR.dark.bench-tab.review.tab.png) |
 | `pt-BR.dark.rail.routine.page` | — | [png](captures/pt-BR.dark.rail.routine.page.png) |
 | `pt-BR.dark.right-tab.search.panel` | — | [png](captures/pt-BR.dark.right-tab.search.panel.png) |

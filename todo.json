@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 6,
-  "widgets_total": 724,
-  "widgets_covered": 724,
+  "states_done": 9,
+  "widgets_total": 848,
+  "widgets_covered": 848,
   "complete": false,
   "stale": [
     {
@@ -95,21 +95,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "pt-BR.dark.rail.helper.tab",
-      "png": "captures/pt-BR.dark.rail.helper.tab.png",
-      "tree": "captures/pt-BR.dark.rail.helper.tab.json"
-    },
-    {
-      "state": "pt-BR.dark.rail.muster.page",
-      "png": "captures/pt-BR.dark.rail.muster.page.png",
-      "tree": "captures/pt-BR.dark.rail.muster.page.json"
-    },
-    {
-      "state": "pt-BR.dark.rail.request.page",
-      "png": "captures/pt-BR.dark.rail.request.page.png",
-      "tree": "captures/pt-BR.dark.rail.request.page.json"
-    },
     {
       "state": "pt-BR.dark.rail.routine.page",
       "png": "captures/pt-BR.dark.rail.routine.page.png",
