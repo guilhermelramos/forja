@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 33/160 telas documentadas · elementos citados 1959/1959 · completo: false
+**Progresso:** 36/160 telas documentadas · elementos citados 2071/2071 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -114,13 +114,13 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.dark.bench-tab.chat.tab` | [página](pages/en.dark.bench-tab.chat.tab.md) | [png](captures/en.dark.bench-tab.chat.tab.png) |
 | `en.dark.modal.counter.poller` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.modal.counter.poller.png) |
 | `en.dark.bench-tab.diff.tab` | [página](pages/en.dark.bench-tab.diff.tab.md) | [png](captures/en.dark.bench-tab.diff.tab.png) |
-| `en.dark.bench-tab.editor.tab` | — | [png](captures/en.dark.bench-tab.editor.tab.png) |
+| `en.dark.bench-tab.editor.tab` | [página](pages/en.dark.bench-tab.editor.tab.md) | [png](captures/en.dark.bench-tab.editor.tab.png) |
 | `en.dark.right-tab.explorer.panel` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.right-tab.explorer.panel.png) |
 | `en.dark.rail.extension.page` | — | [png](captures/en.dark.rail.extension.page.png) |
 | `en.dark.right-tab.extension.panels.right` | — | [png](captures/en.dark.right-tab.extension.panels.right.png) |
-| `en.dark.bench-tab.extension.panels.bench` | — | [png](captures/en.dark.bench-tab.extension.panels.bench.png) |
+| `en.dark.bench-tab.extension.panels.bench` | [página](pages/en.dark.bench-tab.extension.panels.bench.md) | [png](captures/en.dark.bench-tab.extension.panels.bench.png) |
 | `en.dark.right-tab.git.changes` | — | [png](captures/en.dark.right-tab.git.changes.png) |
-| `en.dark.bench-tab.git.history` | — | [png](captures/en.dark.bench-tab.git.history.png) |
+| `en.dark.bench-tab.git.history` | [página](pages/en.dark.bench-tab.git.history.md) | [png](captures/en.dark.bench-tab.git.history.png) |
 | `en.dark.modal.helper.profile_picker` | — | [png](captures/en.dark.modal.helper.profile_picker.png) |
 | `en.dark.rail.helper.tab` | — | [png](captures/en.dark.rail.helper.tab.png) |
 | `en.dark.modal.mcp.approval` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.modal.mcp.approval.png) |
