@@ -33,6 +33,9 @@ $deadline = (Get-Date).AddMinutes($Minutes)
 $instructions = Get-Content (Join-Path $PSScriptRoot "INSTRUCTIONS.md") -Raw
 $work = Join-Path ([System.IO.Path]::GetTempPath()) "forja-atlas-agent"
 New-Item -ItemType Directory -Force $work | Out-Null
+# Free models only: anything that is not an "-free" model is refused, so no paid quota is used.
+$Models = @($Models | Where-Object { $_ -and $_.Trim() -match '-free$' } | ForEach-Object { $_.Trim() })
+if ($Models.Count -eq 0) { throw "no free model configured (ids must end in -free)" }
 $failures = @{}
 $written = 0
 $sincePush = 0

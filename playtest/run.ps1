@@ -87,6 +87,9 @@ $session = 0
 $exhausted = @{}
 $quickFailures = 0
 $Models = @($Models | Where-Object { $_ })
+# Free models only: anything that is not an "-free" model is refused, so no paid quota is used.
+$Models = @($Models | Where-Object { $_ -and $_.Trim() -match '-free$' } | ForEach-Object { $_.Trim() })
+if ($Models.Count -eq 0) { throw "no free model configured (ids must end in -free)" }
 
 while ((Get-Date) -lt $deadline) {
     $session++
