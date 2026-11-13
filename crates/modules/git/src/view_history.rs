@@ -54,7 +54,9 @@ impl View for HistoryView {
         ];
         let label_refs: Vec<&str> = labels.iter().map(String::as_str).collect();
         let mut selected = if tab == 2 { 1 } else { 0 };
-        if forja_ui_kit::tabs(ui, &mut selected, &label_refs).clicked() {
+        let before = selected;
+        forja_ui_kit::tabs(ui, &mut selected, &label_refs);
+        if selected != before {
             self.state
                 .set_selected_tab(if selected == 1 { 2 } else { 1 });
         }

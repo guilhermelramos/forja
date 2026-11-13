@@ -1,5 +1,7 @@
 use crate::state::{Shared, StageColumn};
-use crate::view_shared::{c32, create_dialog, dot_color, grouped, save_prefs, visible_cards};
+use crate::view_shared::{
+    c32, create_dialog, dot_color, grouped, save_prefs, stage_menu, visible_cards,
+};
 use forja_contracts::BenchCard;
 use forja_kernel::ui_contract::egui;
 use forja_kernel::{Args, Ctx};
@@ -204,8 +206,11 @@ fn render_sidebar_row(
     if response.clicked() {
         let mut args = Map::new();
         args.insert("bench_id".to_owned(), json!(card.bench.bench_id));
-        let _ = cx.run_command("bench.activate", Args::from_map(args));
-        state.request_refresh();
+        if let Err(error) = cx.run_command("bench.activate", Args::from_map(args)) {
+            state.set_error(Some(error.to_string()));
+        } else {
+            state.request_refresh();
+        }
     }
     response.context_menu(|ui| {
         if forja_ui_kit::button(
@@ -284,5 +289,7 @@ fn render_sidebar_row(
             let _ = cx.run_command("bench.approve_dialog", Args::from_map(args));
             ui.close();
         }
+        ui.separator();
+        stage_menu(ui, cx, state, card, stages);
     });
 }

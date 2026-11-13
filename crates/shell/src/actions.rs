@@ -16,6 +16,13 @@ pub enum Action {
     OpenSettingsSection(String),
     ShowKeymap,
     OpenRail(String),
+    /// A bench was activated: leave the rail page, show its tabs and name it.
+    OpenBench {
+        project: String,
+        bench: String,
+    },
+    /// Bring a bench tab (for example the editor) to the front.
+    ShowBenchTab(String),
     ToggleSidebar,
     TogglePanel,
     ZoomIn,

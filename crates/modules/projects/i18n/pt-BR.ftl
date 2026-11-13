@@ -50,3 +50,5 @@ project-method-clone-description = Clona um repositório git numa pasta nova e o
 project-method-clone-result = Tarefa de clonagem aceita.
 project-method-update-description = Muda o nome, o ícone ou a cor de um projeto.
 project-method-update-result = O projeto atualizado.
+project-command-add_dialog = Abrir diálogo de adicionar pasta
+project-dialogs-title = Diálogos de projeto

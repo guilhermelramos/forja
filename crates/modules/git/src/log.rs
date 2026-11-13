@@ -40,6 +40,25 @@ pub fn log(path: &Path, limit: u32) -> Result<Vec<LogLine>, String> {
     Ok(parse_log(&text))
 }
 
+/// Commit metadata and patch for the details pane, cut to a readable size.
+pub fn show(path: &Path, hash: &str) -> Result<String, String> {
+    if hash.is_empty() || !hash.chars().all(|character| character.is_ascii_hexdigit()) {
+        return Err("invalid commit hash".to_owned());
+    }
+    let text = git(
+        path,
+        &[
+            "show",
+            "--no-color",
+            "--stat",
+            "--patch",
+            "--format=fuller",
+            hash,
+        ],
+    )?;
+    Ok(text.chars().take(40_000).collect())
+}
+
 pub fn parse_log(text: &str) -> Vec<LogLine> {
     let mut lines = Vec::new();
     for line in text.lines() {

@@ -96,6 +96,11 @@ fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
         Ok(json!({}))
     });
 
+    let active = shared.clone();
+    r.command("editor.active_file", "editor.command.active_file", move |_cx, _args| {
+        Ok(json!({ "path": active.active_tab().map(|tab| tab.path) }))
+    });
+
     let save = shared.clone();
     r.command("editor.save", "editor.command.save", move |cx, args| {
         let path = commands::active_path(cx, &save, &args)?;
@@ -459,6 +464,7 @@ fn used_keys() -> Vec<&'static str> {
         "editor.tab.title",
         "editor.tab.close",
         "editor.command.open",
+        "editor.command.active_file",
         "editor.command.save",
         "editor.command.reload",
         "editor.command.compare",

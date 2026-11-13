@@ -162,6 +162,7 @@ fn used_keys() -> Vec<&'static str> {
         "bench.dialog.create.base-hint",
         "bench.dialog.create.fetch",
         "bench.dialog.create.submit",
+        "bench.dialog.create.add-folder",
         "bench.dialog.store.title",
         "bench.dialog.store.body",
         "bench.dialog.store.delete-branch",

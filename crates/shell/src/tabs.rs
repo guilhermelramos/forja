@@ -78,6 +78,16 @@ impl TabSet {
         )
     }
 
+    /// Makes `index` visible again, even if it had been closed.
+    pub fn show(&mut self, index: usize, total: usize) -> bool {
+        if index >= total {
+            return false;
+        }
+        self.closed.retain(|closed| *closed != index);
+        self.hidden.remove(&index);
+        true
+    }
+
     /// Shows the most recently closed tab again.
     pub fn reopen(&mut self, total: usize) -> Option<usize> {
         while let Some(index) = self.closed.pop() {
@@ -123,6 +133,16 @@ mod tests {
         assert_eq!(tabs.reopen(4), Some(1));
         assert_eq!(tabs.reopen(4), None);
         assert_eq!(tabs.visible(4), vec![0, 1, 2, 3]);
+    }
+
+    #[test]
+    fn show_reopens_a_closed_tab_and_ignores_missing_indexes() {
+        let mut tabs = TabSet::default();
+        tabs.close(1, 3);
+        assert!(!tabs.is_visible(1, 3));
+        assert!(tabs.show(1, 3));
+        assert!(tabs.is_visible(1, 3));
+        assert!(!tabs.show(5, 3));
     }
 
     #[test]

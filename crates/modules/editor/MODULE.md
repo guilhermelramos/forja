@@ -8,7 +8,7 @@ arquivos da bancada.
 - namespace de contrato `file` (comando e RPC `file.open`);
 - aba `editor.tab` na bancada (ordem 15; `FORJA_BENCH_TAB=editor` a traz para a
   primeira posição em screenshots);
-- comandos próprios: `editor.save`, `editor.reload`, `editor.compare`,
+- comandos próprios: `editor.active_file`, `editor.save`, `editor.reload`, `editor.compare`,
   `editor.preview`, `editor.format`, `editor.open_external`, `editor.close`,
   `editor.find`, `editor.replace`, `editor.replace.all`, `editor.find.next`,
   `editor.find.previous`, `editor.goto.line`, `editor.wrap.toggle`,
@@ -58,6 +58,8 @@ arquivos da bancada.
 
 - Consome/atende `file.open_requested` (`FileOpenRequested`).
 - Chama `find.record_open` quando existe.
+- Chama `shell.tab.open {view_id: "editor.tab"}` quando existe, para abrir o
+  arquivo já na aba do Editor.
 - Chama `viewers.preview` e `viewers.open_external` quando existem.
 - Degrada com aviso quando o outro módulo não está carregado.
 
