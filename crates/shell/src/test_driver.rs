@@ -348,6 +348,26 @@ impl Driver {
         let Some(update) = self.tree.lock().ok().and_then(|tree| tree.clone()) else {
             return Vec::new();
         };
+        // Widgets scrolled or clipped out of their window are invisible to a person.
+        let mut parents = std::collections::HashMap::new();
+        let mut nodes = std::collections::HashMap::new();
+        for (id, node) in &update.nodes {
+            nodes.insert(*id, node);
+            for child in node.children() {
+                parents.insert(*child, *id);
+            }
+        }
+        let window_of = |mut id: accesskit::NodeId| {
+            while let Some(parent) = parents.get(&id) {
+                if let Some(node) = nodes.get(parent) {
+                    if node.role() == accesskit::Role::Window {
+                        return node.bounds();
+                    }
+                }
+                id = *parent;
+            }
+            None
+        };
         let mut out: Vec<Value> = update
             .nodes
             .iter()
@@ -360,6 +380,13 @@ impl Driver {
                     || bounds.y0 >= f64::from(window.bottom());
                 if bounds.x1 - bounds.x0 < 1.0 || bounds.y1 - bounds.y0 < 1.0 || outside {
                     return None;
+                }
+                if let Some(frame) = window_of(*id) {
+                    let centre_x = (bounds.x0 + bounds.x1) / 2.0;
+                    let centre_y = (bounds.y0 + bounds.y1) / 2.0;
+                    if centre_x < frame.x0 || centre_x > frame.x1 || centre_y < frame.y0 || centre_y > frame.y1 {
+                        return None;
+                    }
                 }
                 let name = node.label().or_else(|| node.value()).unwrap_or("").trim().to_owned();
                 let clickable = node.supports_action(accesskit::Action::Click);
