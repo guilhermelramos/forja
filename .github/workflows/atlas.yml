@@ -48,7 +48,7 @@ jobs:
 
       - name: Build forja-app and xtask (release)
         run: |
-          rustup toolchain install stable --profile minimal --no-self-update
+          rustup toolchain install
           cargo build --release -p forja-app -p xtask
 
       - name: Software OpenGL (Mesa llvmpipe) next to forja-app.exe
