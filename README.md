@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 6/40 telas documentadas · elementos citados 257/257 · completo: false
+**Progresso:** 9/40 telas documentadas · elementos citados 380/380 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -24,7 +24,7 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.dark.right-tab.extension.panels.right` | — | [png](captures/pt-BR.dark.right-tab.extension.panels.right.png) |
 | `pt-BR.dark.bench-tab.extension.panels.bench` | [página](pages/pt-BR.dark.bench-tab.extension.panels.bench.md) | [png](captures/pt-BR.dark.bench-tab.extension.panels.bench.png) |
 | `pt-BR.dark.right-tab.git.changes` | — | [png](captures/pt-BR.dark.right-tab.git.changes.png) |
-| `pt-BR.dark.bench-tab.git.history` | — | [png](captures/pt-BR.dark.bench-tab.git.history.png) |
+| `pt-BR.dark.bench-tab.git.history` | [página](pages/pt-BR.dark.bench-tab.git.history.md) | [png](captures/pt-BR.dark.bench-tab.git.history.png) |
 | `pt-BR.dark.modal.helper.profile_picker` | — | [png](captures/pt-BR.dark.modal.helper.profile_picker.png) |
 | `pt-BR.dark.rail.helper.tab` | — | [png](captures/pt-BR.dark.rail.helper.tab.png) |
 | `pt-BR.dark.modal.mcp.approval` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.modal.mcp.approval.png) |
@@ -33,13 +33,13 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.dark.modal.onboarding.wizard` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.modal.onboarding.wizard.png) |
 | `pt-BR.dark.right-tab.ports.panel` | — | [png](captures/pt-BR.dark.right-tab.ports.panel.png) |
 | `pt-BR.dark.rail.request.page` | — | [png](captures/pt-BR.dark.rail.request.page.png) |
-| `pt-BR.dark.bench-tab.review.tab` | — | [png](captures/pt-BR.dark.bench-tab.review.tab.png) |
+| `pt-BR.dark.bench-tab.review.tab` | [página](pages/pt-BR.dark.bench-tab.review.tab.md) | [png](captures/pt-BR.dark.bench-tab.review.tab.png) |
 | `pt-BR.dark.rail.routine.page` | — | [png](captures/pt-BR.dark.rail.routine.page.png) |
 | `pt-BR.dark.right-tab.search.panel` | — | [png](captures/pt-BR.dark.right-tab.search.panel.png) |
 | `pt-BR.dark.rail.skill.page` | — | [png](captures/pt-BR.dark.rail.skill.page.png) |
 | `pt-BR.dark.bench-tab.terminal.tab` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.bench-tab.terminal.tab.png) |
 | `pt-BR.dark.rail.usage.page` | — | [png](captures/pt-BR.dark.rail.usage.page.png) |
-| `pt-BR.dark.bench-tab.viewers.tab` | — | [png](captures/pt-BR.dark.bench-tab.viewers.tab.png) |
+| `pt-BR.dark.bench-tab.viewers.tab` | [página](pages/pt-BR.dark.bench-tab.viewers.tab.md) | [png](captures/pt-BR.dark.bench-tab.viewers.tab.png) |
 | `pt-BR.dark.modal.voice.overlay` | igual a [pt-BR.dark.home.default](pages/pt-BR.dark.home.default.md) | [png](captures/pt-BR.dark.modal.voice.overlay.png) |
 | `pt-BR.dark.settings.accounts` | — | [png](captures/pt-BR.dark.settings.accounts.png) |
 | `pt-BR.dark.settings.content` | — | [png](captures/pt-BR.dark.settings.content.png) |
