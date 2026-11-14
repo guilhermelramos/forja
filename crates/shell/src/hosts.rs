@@ -181,6 +181,23 @@ fn bind(registrar: &mut Registrar<'_>, id: &'static str, title: &'static str, ke
 }
 
 fn register_appearance(registrar: &mut Registrar<'_>) {
+    for (id, title, mode) in [
+        (
+            "appearance.theme.light",
+            "appearance.command.theme-light",
+            "light",
+        ),
+        (
+            "appearance.theme.dark",
+            "appearance.command.theme-dark",
+            "dark",
+        ),
+    ] {
+        registrar.command(id, title, move |cx, _| {
+            cx.set_setting("appearance.theme.mode", SettingValue::Text(mode.to_owned()))?;
+            Ok(json!({ "mode": mode }))
+        });
+    }
     let specs = [
         choice(
             "appearance.theme.mode",
@@ -405,4 +422,40 @@ fn choice(
         help,
     )
     .order(order)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use forja_kernel::{Args, Runtime, RuntimeOptions};
+
+    #[test]
+    fn theme_commands_change_the_mode() {
+        let dir = std::env::temp_dir().join(format!("forja-theme-test-{}", std::process::id()));
+        let mut runtime = Runtime::new(
+            hosts(),
+            RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: None,
+                wake: None,
+            },
+        )
+        .unwrap();
+        for mode in ["light", "dark"] {
+            runtime
+                .run_command(&format!("appearance.theme.{mode}"), Args::new())
+                .unwrap();
+            assert_eq!(
+                runtime
+                    .settings()
+                    .values()
+                    .get("appearance.theme.mode")
+                    .and_then(SettingValue::as_str),
+                Some(mode)
+            );
+        }
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
 }

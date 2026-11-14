@@ -17,6 +17,9 @@ fixas a partir dos slots e liga o RPC por named pipe.
 - modais só aparecem com `Ctx::open_modal`; `poll` pode abri-los sozinho;
 - Bigorna com busca fuzzy, grupos, histórico, modo comando, atalhos visíveis
   e linhas de `View::anvil_hits`;
+- A Bigorna oferece a escolha de página para `shell.rail.open` e pede título para
+  `muster.run`; os comandos `appearance.theme.light` e `appearance.theme.dark`
+  alteram o modo. O menu de abas permite alcançar contribuições fora da faixa visível.
 - gera Ajustes a partir do schema de cada módulo;
 - executa os atalhos do keymap; Ctrl+K, Ctrl+Shift+P, Ctrl+P, Ctrl+Vírgula,
   Ctrl+Shift+B, setas entre abas e Ctrl+1..0 funcionam com o texto focado;

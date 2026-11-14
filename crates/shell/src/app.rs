@@ -115,6 +115,8 @@ pub struct ForjaApp {
     pub(crate) anvil_query: String,
     pub(crate) anvil_query_seen: String,
     pub(crate) anvil_selected: usize,
+    pub(crate) anvil_rail_select: bool,
+    pub(crate) anvil_muster_title: bool,
     pub(crate) anvil_group: usize,
     pub(crate) anvil_history: Vec<String>,
     pub(crate) focus_anvil: bool,
@@ -227,6 +229,8 @@ impl ForjaApp {
             anvil_query: String::new(),
             anvil_query_seen: String::new(),
             anvil_selected: 0,
+            anvil_rail_select: false,
+            anvil_muster_title: false,
             anvil_group: 0,
             anvil_history,
             focus_anvil: false,
@@ -335,6 +339,8 @@ impl ForjaApp {
             AnvilMode::Files => 3,
         };
         if !already {
+            self.anvil_rail_select = false;
+            self.anvil_muster_title = false;
             self.anvil_query.clear();
             self.anvil_query_seen.clear();
             self.anvil_selected = 0;
@@ -359,8 +365,24 @@ impl ForjaApp {
 
     pub(crate) fn run_command(&mut self, id: &str) {
         self.active_crumb_checked = None;
+        if id == "terminal.toggle"
+            && self.rail_page.is_none()
+            && self.bench_views.get(self.active_tab).is_some_and(|view| view.id == "terminal.tab")
+            && self.tabs.is_visible(self.active_tab, self.bench_views.len())
+        {
+            actions::push(actions::Action::CloseTab);
+            return;
+        }
         match self.runtime.run_command(id, Args::new()) {
-            Ok(_) => self.status = None,
+            Ok(_) => {
+                self.status = None;
+                if matches!(id, "terminal.open" | "terminal.search" | "terminal.toggle") {
+                    actions::push(actions::Action::ShowBenchTab("terminal.tab".to_owned()));
+                }
+                if id == "diff.open" {
+                    actions::push(actions::Action::ShowBenchTab("diff.tab".to_owned()));
+                }
+            }
             Err(error) => {
                 let title = self
                     .runtime
