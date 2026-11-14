@@ -179,7 +179,9 @@ impl View for EditorView {
         if find.open {
             self.find_bar(ui, cx, &tab, &mut find, muted, danger);
         }
-        self.handle_keys(ui, cx, &tab);
+        if ui.ctx().memory(|memory| memory.top_modal_layer().is_none()) {
+            self.handle_keys(ui, cx, &tab);
+        }
         self.status_line(ui, cx, &tab, &find, muted);
         if tab.preview_mode && self.preview_open {
             let document = tab.preview.clone();

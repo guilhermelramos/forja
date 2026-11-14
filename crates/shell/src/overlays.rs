@@ -73,9 +73,25 @@ impl ForjaApp {
 
     /// Window opened by `help.keymap`; lists every resolved binding.
     pub(crate) fn keymap_window(&mut self, ctx: &egui::Context) {
+        let focused_id = egui::Id::new("forja.keymap.initial_focus");
         if !self.keymap_open {
+            ctx.data_mut(|data| data.remove_temp::<bool>(focused_id));
             return;
         }
+        let layer = egui::Id::new("forja.keymap.keyboard");
+        if forja_ui_kit::consume_layer_escape(ctx, layer) {
+            self.keymap_open = false;
+            return;
+        }
+        let focus_close = forja_ui_kit::keyboard_layer_active(ctx, layer)
+            && ctx.data_mut(|data| {
+                if data.get_temp::<bool>(focused_id).unwrap_or(false) {
+                    false
+                } else {
+                    data.insert_temp(focused_id, true);
+                    true
+                }
+            });
         let mut open = self.keymap_open;
         let title = self.text("shell.keymap.title");
         let close_label = self.text("shell.window.close-dialog");
@@ -86,7 +102,8 @@ impl ForjaApp {
             .resizable(true)
             .default_width(560.0)
             .show(ctx, |ui| {
-                if forja_ui_kit::window_header(ui, &title, &close_label) {
+                forja_ui_kit::register_keyboard_layer(ui, layer);
+                if forja_ui_kit::window_header_with_focus(ui, &title, &close_label, focus_close) {
                     open = false;
                 }
                 let muted = self.paint(self.tokens.color.text_muted);
@@ -147,8 +164,6 @@ impl ForjaApp {
 
     fn settings_body(&mut self, ui: &mut egui::Ui, section: Option<&str>, focus_search: bool) {
         // Com `--settings`, a seção própria do módulo (se houver) substitui as linhas dele.
-        let section_has_view = section
-            .is_some_and(|module| self.settings_views.iter().any(|view| view.module == module));
         let hint = self.text("shell.settings.search");
         let search = text_field(ui, &mut self.settings_query, &hint);
         if focus_search {
@@ -157,10 +172,15 @@ impl ForjaApp {
         ui.add_space(6.0);
 
         // Only the rows scroll: the search stays on top and the window fits the screen.
-        egui::ScrollArea::vertical()
-            .auto_shrink([false, true])
+        let query = self.settings_query.trim().to_lowercase();
+        let section_has_view = query.is_empty() && section
+            .is_some_and(|module| self.settings_views.iter().any(|view| view.module == module));
+        let mut scroll = egui::ScrollArea::vertical().auto_shrink([false, true]);
+        if search.changed() {
+            scroll = scroll.vertical_scroll_offset(0.0);
+        }
+        scroll
             .show(ui, |ui| {
-                let query = self.settings_query.trim().to_lowercase();
                 let specs = self.runtime.registry().settings().to_vec();
                 let modules = self.runtime.registry().modules().to_vec();
                 let values: BTreeMap<String, SettingValue> =
@@ -169,11 +189,7 @@ impl ForjaApp {
                 let mut by_module: BTreeMap<String, Vec<SettingSpec>> = BTreeMap::new();
                 for spec in specs {
                     let label = self.text(&spec.label_key).to_lowercase();
-                    let help = self.text(&spec.help_key).to_lowercase();
-                    let matches = query.is_empty()
-                        || spec.key.to_lowercase().contains(&query)
-                        || label.contains(&query)
-                        || help.contains(&query);
+                    let matches = setting_matches(&query, &spec.key, &label);
                     let in_section =
                         section.is_none_or(|module| spec.module() == module && !section_has_view);
                     if matches && in_section {
@@ -185,7 +201,7 @@ impl ForjaApp {
                 }
 
                 // Com `--settings`, a lista pode estar vazia de propósito: a seção do módulo é que aparece.
-                if by_module.is_empty() && section.is_none() {
+                if by_module.is_empty() && (section.is_none() || !query.is_empty()) {
                     ui.label(
                         RichText::new(self.text("shell.settings.empty"))
                             .color(self.paint(self.tokens.color.text_muted)),
@@ -209,7 +225,7 @@ impl ForjaApp {
                         });
                 }
 
-                if !self.settings_views.is_empty() {
+                if query.is_empty() && !self.settings_views.is_empty() {
                     ui.separator();
                     for view in self.settings_views.iter_mut() {
                         if section.is_some_and(|only| view.module != only) {
@@ -541,6 +557,14 @@ pub(crate) fn humanize_setting_error_for(
     )
 }
 
+fn setting_matches(query: &str, key: &str, label: &str) -> bool {
+    query.is_empty()
+        || key.to_lowercase().contains(query)
+        || label.match_indices(query).any(|(index, _)| {
+            label[..index].chars().next_back().is_none_or(|c| !c.is_alphanumeric())
+        })
+}
+
 fn format_number_limit(value: f64) -> String {
     let text = format!("{value:.2}");
     text.trim_end_matches('0').trim_end_matches('.').to_owned()
@@ -561,6 +585,14 @@ fn parse_hex_color(value: &str) -> Option<[u8; 3]> {
 mod tests {
     use super::*;
     use forja_kernel::i18n::Locale;
+
+    #[test]
+    fn settings_search_matches_labels_and_keys_at_word_boundaries() {
+        assert!(setting_matches("tema", "appearance.theme", "tema escuro"));
+        assert!(setting_matches("fonte", "editor.font", "tamanho da fonte"));
+        assert!(!setting_matches("tema", "browser.system", "login no sistema"));
+        assert!(!setting_matches("tema", "integration.jira", "jira"));
+    }
 
     #[test]
     fn focused_row_inside_the_scroll_area_is_revealed() {

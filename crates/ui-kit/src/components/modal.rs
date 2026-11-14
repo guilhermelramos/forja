@@ -99,6 +99,11 @@ fn dialog_body(
 
 /// Cabeçalho de janela com botão de fechar localizado (substitui o `.open(&mut open)` padrão do egui).
 pub fn window_header(ui: &mut Ui, title: &str, close_label: &str) -> bool {
+    window_header_with_focus(ui, title, close_label, false)
+}
+
+/// Window header that can place initial keyboard focus on its close button.
+pub fn window_header_with_focus(ui: &mut Ui, title: &str, close_label: &str, focus_close: bool) -> bool {
     let tokens = paint::tokens(ui);
     let metrics = tokens.metrics();
     let mut close = false;
@@ -114,6 +119,9 @@ pub fn window_header(ui: &mut Ui, title: &str, close_label: &str) -> bool {
             response.widget_info(|| {
                 egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), close_label)
             });
+            if focus_close {
+                response.request_focus();
+            }
             if response.clicked() {
                 close = true;
             }
@@ -172,6 +180,47 @@ mod tests {
             modal_explicit_close(ctx, &mut open, "Guia", |_ui| {});
         });
         assert!(open, "the backdrop closed an explicit-close modal");
+    }
+
+    #[test]
+    fn explicit_close_modal_blocks_background_clicks() {
+        let ctx = test_ctx();
+        let mut open = true;
+        let mut background_clicks = 0;
+        click_backdrop(&ctx, |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                if ui.allocate_rect(ctx.content_rect(), egui::Sense::click()).clicked() {
+                    background_clicks += 1;
+                }
+            });
+            modal_explicit_close(ctx, &mut open, "Guia", |_ui| {});
+        });
+        assert!(open);
+        assert_eq!(background_clicks, 0);
+    }
+
+    #[test]
+    fn focused_window_header_closes_with_enter() {
+        let ctx = test_ctx();
+        let mut closed = false;
+        for frame in 0..3 {
+            let mut raw = frame_input();
+            if frame == 2 {
+                raw.events.push(egui::Event::Key {
+                    key: egui::Key::Enter,
+                    physical_key: None,
+                    pressed: true,
+                    repeat: false,
+                    modifiers: egui::Modifiers::NONE,
+                });
+            }
+            let _ = ctx.run(raw, |ctx| {
+                egui::Window::new("Window").show(ctx, |ui| {
+                    closed |= window_header_with_focus(ui, "Window", "Close", frame == 1);
+                });
+            });
+        }
+        assert!(closed);
     }
 
     #[test]
