@@ -4,7 +4,7 @@ use crate::steps::{steps, Step};
 use crate::Shared;
 use forja_kernel::ui_contract::egui;
 use forja_kernel::{Args, Ctx, SettingValue};
-use forja_ui_kit::{button, modal, select, text_field, toggle, ButtonKind};
+use forja_ui_kit::{button, modal_explicit_close, select, text_field, toggle, ButtonKind};
 use serde_json::Value;
 
 pub struct WizardView {
@@ -32,7 +32,9 @@ impl forja_kernel::ui_contract::View for WizardView {
         if open {
             let title = cx.t("onboarding.title");
             let state = self.state.clone();
-            modal(ui.ctx(), &mut open, &title, |ui| {
+            // O clique fora não fecha: o guia só termina por Escape ou pelo
+            // botão de fechar, para um clique perdido não descartá-lo.
+            modal_explicit_close(ui.ctx(), &mut open, &title, |ui| {
                 render(ui, cx, &state);
             });
         }
@@ -144,6 +146,15 @@ fn render(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
                     let _ = cx.run_command("notify.show", args);
                 }
             }
+            if ui
+                .push_id("close", |ui| {
+                    button(ui, ButtonKind::Ghost, &cx.t("onboarding.close"))
+                })
+                .inner
+                .clicked()
+            {
+                state.dismiss();
+            }
         })
     });
 }
@@ -236,17 +247,22 @@ fn folder(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
     }
 }
 
-fn helpers(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
-    if state.helpers_text().is_none() {
-        match cx.run_command("helper.detect", Args::new()) {
-            Ok(value) => state.set_helpers(summarize(&value)),
-            Err(error) => state.set_helpers(error.to_string()),
-        }
-    }
+fn helpers(ui: &mut egui::Ui, cx: &mut Ctx<'_>, _state: &Shared) {
     ui.label(cx.t("onboarding.helpers.lead"));
-    if let Some(text) = state.helpers_text() {
-        ui.label(text);
-    }
+    let text = if cx.registry().command("helper.list").is_some() {
+        match cx.run_command("helper.list", Args::new()) {
+            Ok(value) => format_helpers(cx, &value),
+            Err(_) => cx.t("onboarding.helpers.unavailable"),
+        }
+    } else if cx.registry().command("helper.detect").is_some() {
+        match cx.run_command("helper.detect", Args::new()) {
+            Ok(value) => format_helpers(cx, &value),
+            Err(_) => cx.t("onboarding.helpers.unavailable"),
+        }
+    } else {
+        cx.t("onboarding.helpers.none")
+    };
+    ui.label(text);
 }
 
 /// `true` quando o módulo `import` existe e tem itens do Harbor a decidir.
@@ -280,11 +296,19 @@ fn import(ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
                     let text_of = |name: &str| item.get(name).and_then(Value::as_str).unwrap_or("");
                     let id = text_of("id").to_owned();
                     let kind = text_of("kind");
-                    let label = text_of("label");
+                    let label = if kind == "theme" {
+                        match text_of("label") {
+                            "dark" => cx.t("onboarding.theme.dark"),
+                            "light" => cx.t("onboarding.theme.light"),
+                            other => other.to_owned(),
+                        }
+                    } else {
+                        text_of("label").to_owned()
+                    };
                     let detail = text_of("detail");
                     // Tema e fonte repetem o valor no rótulo; notas mostram só a primeira linha.
                     let show_detail = !detail.is_empty()
-                        && detail != label
+                        && detail != text_of("label")
                         && !matches!(kind, "notes" | "theme" | "font");
                     let mut text = format!("{} · {label}", cx.t(&format!("import.kind.{kind}")));
                     if show_detail {
@@ -395,27 +419,75 @@ fn flag(cx: &Ctx<'_>, key: &str, default: bool) -> bool {
         .unwrap_or(default)
 }
 
-fn summarize(value: &Value) -> String {
-    if let Some(text) = value.as_str() {
-        return text.to_owned();
-    }
+#[derive(Debug, PartialEq, Eq)]
+enum HelperSummary {
+    Detecting,
+    Found(Vec<String>),
+    None,
+}
+
+fn summarize_helpers(value: &Value) -> HelperSummary {
+    let detecting = value
+        .get("detecting")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
     let list = value
         .get("helpers")
         .or_else(|| value.get("profiles"))
         .and_then(Value::as_array);
     if let Some(list) = list {
-        let names: Vec<&str> = list
+        let names: Vec<String> = list
             .iter()
+            .filter(|item| item.get("installed").and_then(Value::as_bool) != Some(false))
             .filter_map(|item| {
                 item.as_str()
                     .or_else(|| item.get("name").and_then(Value::as_str))
                     .or_else(|| item.get("id").and_then(Value::as_str))
+                    .map(str::to_owned)
             })
             .collect();
-        if names.is_empty() {
-            return value.to_string();
+        if !names.is_empty() {
+            return HelperSummary::Found(names);
         }
-        return names.join(", ");
     }
-    value.to_string()
+    if detecting {
+        HelperSummary::Detecting
+    } else {
+        HelperSummary::None
+    }
+}
+
+fn format_helpers(cx: &Ctx<'_>, value: &Value) -> String {
+    match summarize_helpers(value) {
+        HelperSummary::Detecting => cx.t("onboarding.helpers.detecting"),
+        HelperSummary::Found(names) => {
+            cx.t_args("onboarding.helpers.found", &[("names", &names.join(", "))])
+        }
+        HelperSummary::None => cx.t("onboarding.helpers.none"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn summarize_helpers_never_leaks_started_json() {
+        assert_eq!(summarize_helpers(&json!({ "started": true })), HelperSummary::None);
+        assert_eq!(
+            summarize_helpers(&json!({ "detecting": true, "profiles": [] })),
+            HelperSummary::Detecting
+        );
+        assert_eq!(
+            summarize_helpers(&json!({
+                "detecting": false,
+                "profiles": [
+                    { "id": "claude-code", "name": "Claude Code", "installed": false },
+                    { "id": "codex", "name": "Codex", "installed": true }
+                ]
+            })),
+            HelperSummary::Found(vec!["Codex".to_owned()])
+        );
+    }
 }

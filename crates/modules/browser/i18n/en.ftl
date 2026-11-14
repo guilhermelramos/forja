@@ -66,3 +66,4 @@ setting-browser-tabs-restore-label = Restore pages
 setting-browser-tabs-restore-help = Reopens pages from the last session.
 setting-browser-auth-open_external-label = Sign in with system browser
 setting-browser-auth-open_external-help = Opens sign-in flows in the system browser.
+browser-window-close = Close window

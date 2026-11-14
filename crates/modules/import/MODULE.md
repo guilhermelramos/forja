@@ -39,6 +39,9 @@ Nada além disso. Tokens e segredos do Harbor nunca são lidos: só os campos li
 ## Caminhos
 
 - Harbor: `%APPDATA%\Harbor`, ou `FORJA_HARBOR_DIR` (testes e capturas). Somente leitura.
+  Em execução de teste (`--test-driver`, `--screenshot`) ou com dados isolados
+  (`FORJA_DATA_DIR`), o Harbor real da máquina não é lido; só `FORJA_HARBOR_DIR`
+  fornece uma origem nesse caso.
 - Conteúdo: `FORJA_CONTENT_DIR` ou `~/.forja`.
 
 ## Contratos
@@ -53,4 +56,4 @@ Nada além disso. Tokens e segredos do Harbor nunca são lidos: só os campos li
 cargo test -p forja-module-import
 ```
 
-Fixtures em `tests/fixtures/harbor/` (dados inventados, no formato do Harbor). Os testes cobrem o mapeamento de cada item, arquivo corrompido, nada escrito fora de `user_dir` e o Harbor intacto, e executar duas vezes sem duplicar.
+Fixtures em `tests/fixtures/harbor/` (dados inventados, no formato do Harbor). Os testes cobrem o mapeamento de cada item, arquivo corrompido, nada escrito fora de `user_dir` e o Harbor intacto, executar duas vezes sem duplicar, e a resolução da origem: `FORJA_HARBOR_DIR` vence, e uma execução isolada nunca cai em `%APPDATA%\Harbor`.

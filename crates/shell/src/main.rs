@@ -72,6 +72,11 @@ fn run() -> i32 {
     if flags.screenshot.is_some() {
         std::env::set_var("FORJA_SCREENSHOT", "1");
     }
+    if flags.test_driver {
+        // Módulos que leem dados da máquina (import) precisam saber que esta
+        // execução é de teste, mesmo antes da janela existir.
+        std::env::set_var("FORJA_TEST_DRIVER", "1");
+    }
     set_app_user_model_id();
 
     let isolated = flags.screenshot.is_some();

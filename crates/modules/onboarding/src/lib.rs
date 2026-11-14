@@ -211,6 +211,10 @@ impl Module for OnboardingModule {
             "onboarding.folder.placeholder",
             "onboarding.folder.pick",
             "onboarding.helpers.lead",
+            "onboarding.helpers.detecting",
+            "onboarding.helpers.found",
+            "onboarding.helpers.none",
+            "onboarding.helpers.unavailable",
             "onboarding.notices.lead",
             "onboarding.notices.toast",
             "onboarding.notices.windows",
@@ -221,6 +225,7 @@ impl Module for OnboardingModule {
             "onboarding.back",
             "onboarding.next",
             "onboarding.finish",
+            "onboarding.close",
             "onboarding.done.title",
             "onboarding.done.body",
         ] {

@@ -21,6 +21,9 @@ Nada no kernel. Este crate não é um módulo. O shell chama `apply` e desenha c
   `consume_layer_escape(ctx, id)` antes de desenhar. O Tab fica na camada do
   topo e Escape fecha apenas ela; um menu aberto recebe Escape primeiro. Use um
   `id` estável e diferente para cada janela simultânea.
+- `modal` fecha no véu ou no Escape. `modal_explicit_close` usa a mesma camada,
+  mas ignora o clique no véu: fecha só por Escape, botão de fechar ou
+  `Ui::close` — para fluxos guiados que não podem sumir por engano.
 - Densidade `comfortable` (controle 32 px) ou `compact` (24 px). Grade de 4 px.
 
 ## Como testar

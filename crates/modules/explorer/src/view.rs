@@ -94,12 +94,15 @@ impl View for ExplorerView {
                     ui.label(egui::RichText::new(name).strong());
                 }
                 ui.add(
-                    egui::Label::new(egui::RichText::new(root.display().to_string()).weak())
-                        .truncate(),
+                    egui::Label::new(
+                        egui::RichText::new(
+                            forja_kernel::paths::clean_path(&root).display().to_string(),
+                        )
+                        .weak(),
+                    )
+                    .truncate(),
                 );
-                if let Some(notice) = &frame.notice {
-                    ui.label(egui::RichText::new(notice).weak());
-                }
+                render_notice(ui, cx, &self.shared, frame.notice.as_deref());
                 ui.separator();
                 egui::ScrollArea::vertical()
                     .auto_shrink([false, false])
@@ -109,9 +112,7 @@ impl View for ExplorerView {
             }
         }
         if frame.root.is_none() {
-            if let Some(notice) = &frame.notice {
-                ui.label(egui::RichText::new(notice).weak());
-            }
+            render_notice(ui, cx, &self.shared, frame.notice.as_deref());
         }
 
         self.dialogs(ui.ctx(), cx);
@@ -119,6 +120,21 @@ impl View for ExplorerView {
             self.run(cx, request);
         }
     }
+}
+
+fn render_notice(ui: &mut egui::Ui, cx: &Ctx<'_>, shared: &Shared, notice: Option<&str>) {
+    let Some(notice) = notice else {
+        return;
+    };
+    ui.horizontal_wrapped(|ui| {
+        ui.label(egui::RichText::new(notice).weak());
+        if forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE)
+            .on_hover_text(cx.t("explorer.notice.dismiss"))
+            .clicked()
+        {
+            crate::state::lock(shared).notice = None;
+        }
+    });
 }
 
 impl ExplorerView {

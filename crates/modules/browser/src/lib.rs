@@ -483,6 +483,7 @@ fn used_keys() -> Vec<&'static str> {
         "browser.view.close-tab",
         "browser.view.history",
         "browser.view.downloads",
+        "browser.window.close",
         "browser.view.downloaded",
         "browser.view.error",
         "browser.view.loading",

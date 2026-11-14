@@ -241,7 +241,10 @@ pub(crate) fn load_log(cx: &mut Ctx<'_>, state: &Shared) {
         return;
     }
     match log::log(Path::new(&path), 200) {
-        Ok(lines) => state.set_commits(&path, lines),
+        Ok(lines) => {
+            state.set_error(None);
+            state.set_commits(&path, lines);
+        }
         Err(error) => state.set_error(Some(error)),
     }
 }
@@ -271,7 +274,10 @@ fn load_blame(cx: &mut Ctx<'_>, state: &Shared, path: &str, file: &str) {
         return;
     }
     match log::blame(Path::new(path), file) {
-        Ok(lines) => state.set_blame(path, file, lines),
+        Ok(lines) => {
+            state.set_error(None);
+            state.set_blame(path, file, lines);
+        }
         Err(error) => state.set_error(Some(error)),
     }
 }

@@ -165,14 +165,15 @@ impl FindView {
             return;
         }
         let layer = egui::Id::new("forja.find.picker.keyboard");
-        if forja_ui_kit::keyboard_layer_active(ctx, layer)
-            && !egui::Popup::is_any_open(ctx)
-            && ctx.input_mut(|input| input.consume_key(egui::Modifiers::NONE, egui::Key::Escape))
-        {
+        if forja_ui_kit::consume_layer_escape(ctx, layer) {
             commands::close_picker(&self.shared);
             restore_picker_focus(ctx);
             return;
         }
+        // Typing must always reach the query, even after Tab moved the focus to
+        // the window close button or a result row.
+        let search_id = egui::Id::new("forja.find.picker.search");
+        focus_search_when_typing(ctx, search_id);
         // Rebuilds the listing if the bench changed or the listing is old (throttled inside).
         commands::ensure_index(cx, &self.shared);
         let mut window_open = true;
@@ -180,17 +181,23 @@ impl FindView {
         let mut focus_now = focus;
         let mut actions: Vec<Action> = Vec::new();
         let title = cx.t("find.picker.title");
+        let close_label = cx.t("find.picker.close");
         let hint = cx.t("find.picker.hint");
-        egui::Window::new(title)
-            .open(&mut window_open)
+        egui::Window::new(&title)
+            .id(egui::Id::new("forja.find.picker"))
+            .title_bar(false)
             .collapsible(false)
             .resizable(false)
             .default_width(520.0)
             .anchor(egui::Align2::CENTER_TOP, [0.0, 80.0])
             .show(ctx, |ui| {
                 forja_ui_kit::register_keyboard_layer(ui, layer);
+                if forja_ui_kit::window_header(ui, &title, &close_label) {
+                    window_open = false;
+                }
                 let edit = ui.add(
                     egui::TextEdit::singleline(&mut text)
+                        .id(search_id)
                         .hint_text(hint)
                         .desired_width(f32::INFINITY),
                 );
@@ -269,6 +276,30 @@ impl FindView {
     }
 }
 
+/// True for events that change the search text. Tab, arrows, Enter and Escape
+/// keep their navigation meaning.
+fn wants_search_input(event: &egui::Event) -> bool {
+    match event {
+        egui::Event::Text(text) => !text.is_empty(),
+        egui::Event::Paste(text) => !text.is_empty(),
+        egui::Event::Key {
+            key: egui::Key::Backspace | egui::Key::Delete,
+            pressed: true,
+            ..
+        } => true,
+        _ => false,
+    }
+}
+
+/// Moves the focus to the picker query before the text edit is drawn, so the
+/// same frame's text event is inserted instead of being dropped.
+fn focus_search_when_typing(ctx: &egui::Context, search_id: egui::Id) {
+    let typing = ctx.input(|input| input.events.iter().any(wants_search_input));
+    if typing && !ctx.memory(|memory| memory.has_focus(search_id)) {
+        ctx.memory_mut(|memory| memory.request_focus(search_id));
+    }
+}
+
 fn restore_picker_focus(ctx: &egui::Context) {
     let focused = ctx.data_mut(|data| {
         data.remove_temp::<Option<egui::Id>>(egui::Id::new("forja.find.return_focus"))
@@ -309,5 +340,37 @@ fn open_row(shared: &Shared, cx: &mut Ctx<'_>, which: Which, row: Option<usize>)
     };
     if let Some(rel) = rel {
         commands::open_result(cx, shared, &rel, line);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn typed(text: &str) -> egui::RawInput {
+        let mut raw = egui::RawInput::default();
+        raw.events.push(egui::Event::Text(text.to_owned()));
+        raw
+    }
+
+    #[test]
+    fn typing_moves_focus_from_the_close_button_to_the_query() {
+        let ctx = egui::Context::default();
+        let search = egui::Id::new("forja.find.test.search");
+        let mut text = String::new();
+        let _ = ctx.run(egui::RawInput::default(), |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                ui.button("Close window").request_focus();
+            });
+        });
+        assert!(!ctx.memory(|memory| memory.has_focus(search)));
+        let _ = ctx.run(typed("main"), |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                focus_search_when_typing(ctx, search);
+                ui.add(egui::TextEdit::singleline(&mut text).id(search));
+            });
+        });
+        assert_eq!(text, "main", "the first typed key was lost");
+        assert!(ctx.memory(|memory| memory.has_focus(search)));
     }
 }

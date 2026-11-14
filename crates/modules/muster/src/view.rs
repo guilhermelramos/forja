@@ -7,7 +7,7 @@ use crate::model::{
 use crate::state::{self, Shared};
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::{Args, Ctx};
-use forja_ui_kit::{applied_tokens, button, progress_bar, text_field, ButtonKind};
+use forja_ui_kit::{applied_tokens, button, icon_button, progress_bar, text_field, ButtonKind, CLOSE};
 use serde_json::json;
 use std::time::{Duration, Instant};
 
@@ -76,6 +76,12 @@ pub const USED_KEYS: &[&str] = &[
     "muster-kind-reply",
     "muster-kind-handoff",
     "muster-kind-alert",
+    "muster-error-choose-assignment",
+    "muster-error-disabled",
+    "muster-error-unavailable",
+    "muster-error-not-found",
+    "muster-error-command",
+    "muster-notice-dismiss",
 ];
 
 #[derive(Default)]
@@ -166,12 +172,19 @@ impl MusterView {
         if let Some(notice) = &snap.notice {
             ui.label(egui::RichText::new(cx.t(notice)).weak());
         }
-        if let Some(notice) = &self.notice {
-            ui.label(
-                egui::RichText::new(notice).color(
-                    applied_tokens(ui.ctx()).color.danger.to_color32(),
-                ),
-            );
+        if let Some(notice) = self.notice.clone() {
+            ui.horizontal_wrapped(|ui| {
+                ui.label(
+                    egui::RichText::new(notice)
+                        .color(applied_tokens(ui.ctx()).color.danger.to_color32()),
+                );
+                if icon_button(ui, CLOSE)
+                    .on_hover_text(cx.t("muster.notice.dismiss"))
+                    .clicked()
+                {
+                    self.notice = None;
+                }
+            });
         }
         if !snap.loaded {
             ui.label(egui::RichText::new(cx.t("muster.page-loading")).weak());
@@ -202,6 +215,7 @@ impl MusterView {
                     }
                     match cx.run_command("muster.run", args) {
                         Ok(value) => {
+                            self.notice = None;
                             self.selected = value
                                 .get("id")
                                 .and_then(serde_json::Value::as_str)
@@ -211,7 +225,7 @@ impl MusterView {
                             self.run_objective.clear();
                             self.run_budget.clear();
                         }
-                        Err(error) => self.notice = Some(error.to_string()),
+                        Err(error) => self.set_error(cx, &error.to_string()),
                     }
                 }
                 if button(ui, ButtonKind::Ghost, &cx.t("muster.cancel")).clicked() {
@@ -338,7 +352,7 @@ impl MusterView {
                 args.insert("run", json!(run.id));
                 match cx.run_command("muster.plan.approve", args) {
                     Ok(_) => self.notice = None,
-                    Err(error) => self.notice = Some(error.to_string()),
+                    Err(error) => self.set_error(cx, &error.to_string()),
                 }
             }
             if run.budget_usd > 0.0 {
@@ -369,7 +383,7 @@ impl MusterView {
                     args.insert("budget_usd", json!(budget.max(0.0)));
                     match cx.run_command("muster.budget.set", args) {
                         Ok(_) => self.notice = None,
-                        Err(error) => self.notice = Some(error.to_string()),
+                        Err(error) => self.set_error(cx, &error.to_string()),
                     }
                 }
             }
@@ -389,7 +403,7 @@ impl MusterView {
                             self.notice = None;
                             self.spend_input.clear();
                         }
-                        Err(error) => self.notice = Some(error.to_string()),
+                        Err(error) => self.set_error(cx, &error.to_string()),
                     }
                 }
             }
@@ -414,12 +428,13 @@ impl MusterView {
                 args.insert("deps", json!(self.task_deps));
                 match cx.run_command("muster.task", args) {
                     Ok(_) => {
+                        self.notice = None;
                         self.new_task = false;
                         self.task_title.clear();
                         self.task_spec.clear();
                         self.task_deps.clear();
                     }
-                    Err(error) => self.notice = Some(error.to_string()),
+                    Err(error) => self.set_error(cx, &error.to_string()),
                 }
             }
         });
@@ -481,7 +496,7 @@ impl MusterView {
                 args.insert("new_bench", json!(self.new_bench));
                 match cx.run_command("muster.start", args) {
                     Ok(_) => self.notice = None,
-                    Err(error) => self.notice = Some(error.to_string()),
+                    Err(error) => self.set_error(cx, &error.to_string()),
                 }
             }
             if !task.spec.is_empty() {
@@ -516,8 +531,9 @@ impl MusterView {
                 if button(ui, ButtonKind::Ghost, &cx.t("muster.focus")).clicked() {
                     let mut args = Args::new();
                     args.insert("terminal_id", json!(terminal));
-                    if let Err(error) = cx.run_command("helper.focus", args) {
-                        self.notice = Some(error.to_string());
+                    match cx.run_command("helper.focus", args) {
+                        Ok(_) => self.notice = None,
+                        Err(error) => self.set_error(cx, &error.to_string()),
                     }
                 }
             }
@@ -571,10 +587,11 @@ impl MusterView {
                     args.insert("body", json!(self.reply_body));
                     match cx.run_command("muster.reply", args) {
                         Ok(_) => {
+                            self.notice = None;
                             self.reply_to = None;
                             self.reply_body.clear();
                         }
-                        Err(error) => self.notice = Some(error.to_string()),
+                        Err(error) => self.set_error(cx, &error.to_string()),
                     }
                 }
             }
@@ -623,7 +640,7 @@ impl MusterView {
         text_field(ui, &mut self.note_body, &cx.t("muster.note-hint"));
         if button(ui, ButtonKind::Primary, &cx.t("muster.send")).clicked() {
             let Some(target) = self.note_target.clone() else {
-                self.notice = Some("escolha uma atribuição".to_owned());
+                self.notice = Some(cx.t("muster.error.choose-assignment"));
                 return;
             };
             let mut args = Args::new();
@@ -631,8 +648,11 @@ impl MusterView {
             args.insert("body", json!(self.note_body));
             args.insert("from", json!("coordinator"));
             match cx.run_command("muster.note", args) {
-                Ok(_) => self.note_body.clear(),
-                Err(error) => self.notice = Some(error.to_string()),
+                Ok(_) => {
+                    self.notice = None;
+                    self.note_body.clear();
+                }
+                Err(error) => self.set_error(cx, &error.to_string()),
             }
         }
     }
@@ -733,6 +753,30 @@ impl View for MusterTick {
         self.last = Instant::now();
         commands::flush_pending(cx, &self.shared);
     }
+}
+
+impl MusterView {
+    fn set_error(&mut self, cx: &Ctx<'_>, raw: &str) {
+        self.notice = Some(humanize_error(cx, raw));
+    }
+}
+
+pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> String {
+    let trimmed = raw.trim();
+    let lower = trimmed.to_ascii_lowercase();
+    if lower.contains("disabled") || lower.contains("desativad") {
+        return cx.t("muster.error.disabled");
+    }
+    if lower.contains("unknown command") || lower.contains("unavailable") || lower.contains("indispon") {
+        return cx.t_args("muster.error.unavailable", &[("detail", trimmed)]);
+    }
+    if lower.contains("not found") || lower.contains("nao encontrado") || lower.contains("não encontrado") {
+        return cx.t_args("muster.error.not-found", &[("detail", trimmed)]);
+    }
+    if lower.contains("ajudante") || lower.contains("plano") || lower.contains("teto") || lower.contains("bancada") {
+        return trimmed.to_owned();
+    }
+    cx.t_args("muster.error.command", &[("detail", trimmed)])
 }
 
 fn note_kind_label(cx: &Ctx<'_>, kind: NoteKind) -> String {

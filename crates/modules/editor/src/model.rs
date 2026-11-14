@@ -451,7 +451,7 @@ pub fn toggle_comment(text: &str, first: usize, last: usize, prefix: &str) -> St
 }
 
 pub fn line_count(text: &str) -> usize {
-    text.lines().count().max(1)
+    text.split('\n').count().max(1)
 }
 
 #[cfg(test)]
@@ -629,6 +629,7 @@ mod tests {
         let text = "aé\nb\nc";
         assert_eq!(char_index_for_line(text, 2), 3);
         assert_eq!(line_of_char(text, 4), 2);
+        assert!(line_of_char("hello\n", 6) <= line_count("hello\n"));
         assert_eq!(byte_to_char("aé", 3), 2);
         assert_eq!(line_span(text, 2), (4, 6));
         assert_eq!(byte_for_char("aé\nb", 2), 3);

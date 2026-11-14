@@ -6,7 +6,10 @@ notify-method-show-description = Mostra um aviso na janela e, quando o catálogo
 notify-method-show-result = Se o aviso, a notificação do Windows e o som foram enviados.
 notify-toasts-title = Avisos
 notify-center-title = Notificações
-notify-center-count = { $count } avisos
+notify-center-count = { $count ->
+    [1] { $count } aviso
+   *[other] { $count } avisos
+}
 notify-center-empty = Nenhum aviso ainda.
 notify-toast-dismiss = ×
 setting-notifications-toast-enabled-label = Avisos na tela

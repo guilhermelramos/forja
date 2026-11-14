@@ -118,7 +118,7 @@ pub fn existing_folder(path: &str) -> Result<PathBuf, String> {
     if !canonical.is_dir() {
         return Err("path is not a folder".to_owned());
     }
-    Ok(canonical)
+    Ok(forja_kernel::paths::clean_path(canonical))
 }
 
 pub fn display_name(path: &Path) -> String {

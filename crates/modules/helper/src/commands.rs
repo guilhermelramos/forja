@@ -24,10 +24,10 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
             .or_else(|| current_bench(cx));
         ensure(cx, &list_core, bench.clone()).map_err(error)?;
         maybe_detect(cx, &list_core);
-        let profiles = list_core
-            .with_state(|state| profile_infos(state))
+        let (detecting, profiles) = list_core
+            .with_state(|state| (state.detecting, profile_infos(state)))
             .map_err(error)?;
-        Ok(json!({ "profiles": profiles }))
+        Ok(json!({ "detecting": detecting, "profiles": profiles }))
     });
 
     let detect_core = Arc::clone(core);
