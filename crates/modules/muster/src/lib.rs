@@ -200,6 +200,16 @@ mod tests {
     }
 
     #[test]
+    fn run_rejects_whitespace_titles() {
+        let dir = temp_dir();
+        let mut runtime = runtime(&dir);
+        let error = runtime.call_method("muster.run", Map::from_iter([("title".into(), json!("  \t  "))])).unwrap_err();
+        assert!(error.message.contains("Digite um título"));
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
     fn contract_and_rpc_flow_degrades_without_helper() {
         let dir = temp_dir();
         let mut runtime = runtime(&dir);

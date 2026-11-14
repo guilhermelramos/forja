@@ -134,3 +134,4 @@ muster-spend = Custo (US$)
 muster-spend-hint = valor gasto
 muster-spend-add = Registrar custo
 muster-error-bench-pending = Crie a bancada primeiro e aguarde ficar pronta antes de iniciar a tarefa.
+muster-error-empty-title = Digite um título para o mutirão.

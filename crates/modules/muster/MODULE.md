@@ -9,7 +9,8 @@ Starting with `new_bench` is refused until bench creation has a completion and
 failure contract; create the bench first, wait for readiness, and pass its path.
 
 Mutirão: coordena tarefas entre bancadas e ajudantes. Estado persistido em
-`<dados>/modules/muster.json`.
+`<dados>/modules/muster.json`. `muster.run` exige um título que contenha
+caracteres além de espaços.
 
 ## O que registra
 

@@ -86,6 +86,7 @@ impl ForjaApp {
             self.text("shell.anvil.group.settings"),
         ];
         let tokens = self.tokens.clone();
+        let results_height = (ctx.content_rect().height() - 360.0).clamp(80.0, 240.0);
         let modal = egui::Window::new(title)
             .collapsible(false)
             .resizable(false)
@@ -93,7 +94,11 @@ impl ForjaApp {
             .anchor(Align2::CENTER_TOP, egui::vec2(0.0, 72.0))
             .show(ctx, |ui| {
                 forja_ui_kit::register_keyboard_layer(ui, layer);
-                let hint = self.text("shell.anvil.search");
+                let hint = self.text(if self.anvil_muster_title {
+                    "shell.anvil.muster-title"
+                } else {
+                    "shell.anvil.search"
+                });
                 let search = text_field(ui, &mut self.anvil_query, &hint);
                 ui.ctx()
                     .data_mut(|data| data.insert_temp(search_id, search.id));
@@ -102,13 +107,21 @@ impl ForjaApp {
                     self.focus_anvil = false;
                 }
                 ui.add_space(6.0);
-                let mut index = self.active_group();
-                let refs: Vec<&str> = group_labels.iter().map(String::as_str).collect();
-                forja_ui_kit::segmented(ui, &mut index, &refs);
-                if index != self.anvil_group || self.anvil_query.trim_start().starts_with('>') {
-                    self.anvil_group = index;
-                    if let Some(stripped) = self.anvil_query.trim_start().strip_prefix('>') {
-                        self.anvil_query = stripped.trim_start().to_owned();
+                if self.anvil_rail_select {
+                    ui.label(self.text("shell.anvil.choose-rail"));
+                }
+                if self.anvil_muster_title {
+                    ui.label(self.text("shell.anvil.muster-title"));
+                }
+                if !self.anvil_rail_select && !self.anvil_muster_title {
+                    let mut index = self.active_group();
+                    let refs: Vec<&str> = group_labels.iter().map(String::as_str).collect();
+                    forja_ui_kit::segmented(ui, &mut index, &refs);
+                    if index != self.anvil_group || self.anvil_query.trim_start().starts_with('>') {
+                        self.anvil_group = index;
+                        if let Some(stripped) = self.anvil_query.trim_start().strip_prefix('>') {
+                            self.anvil_query = stripped.trim_start().to_owned();
+                        }
                     }
                 }
                 if active
@@ -139,7 +152,23 @@ impl ForjaApp {
                 let run = search_active
                     && ui.input_mut(|input| input.consume_key(keys.run.0, keys.run.1));
                 if run || keep {
-                    if hits.is_empty() {
+                    if self.anvil_muster_title {
+                        if !self.anvil_query.trim().is_empty() {
+                            let mut args = serde_json::Map::new();
+                            args.insert(
+                                "title".into(),
+                                Value::String(self.anvil_query.trim().to_owned()),
+                            );
+                            chosen = Some((
+                                HitKind::Action {
+                                    command: "muster.run".into(),
+                                    args,
+                                },
+                                false,
+                            ));
+                        }
+                        search.request_focus();
+                    } else if hits.is_empty() {
                         search.request_focus();
                     } else {
                         let index = self.anvil_selected.min(hits.len() - 1);
@@ -147,35 +176,45 @@ impl ForjaApp {
                     }
                 }
                 ui.add_space(4.0);
-                egui::ScrollArea::vertical()
-                    .max_height(360.0)
-                    .show(ui, |ui| {
-                        if hits.is_empty() {
-                            ui.label(RichText::new(self.text(empty_key)).color(muted(&tokens)));
-                        }
-                        for (row, hit) in hits.iter().enumerate() {
-                            let response = anvil_row(ui, &tokens, hit, row == self.anvil_selected);
-                            if response.clicked() {
-                                self.anvil_selected = row;
-                                chosen = Some((hit.kind.clone(), false));
+                if !self.anvil_muster_title {
+                    egui::ScrollArea::vertical()
+                        .max_height(results_height)
+                        .show(ui, |ui| {
+                            if hits.is_empty() {
+                                ui.label(RichText::new(self.text(empty_key)).color(muted(&tokens)));
                             }
-                        }
-                    });
-                if !self.anvil_views.is_empty()
+                            for (row, hit) in hits.iter().enumerate() {
+                                let response =
+                                    anvil_row(ui, &tokens, hit, row == self.anvil_selected);
+                                if response.clicked() {
+                                    self.anvil_selected = row;
+                                    chosen = Some((hit.kind.clone(), false));
+                                }
+                            }
+                        });
+                }
+                if !self.anvil_muster_title
+                    && !self.anvil_rail_select
+                    && !self.anvil_views.is_empty()
                     && self
                         .anvil_views
                         .iter()
                         .any(|view| !view.view.provides_anvil_hits())
                 {
                     ui.separator();
-                    for view in self.anvil_views.iter_mut() {
-                        if view.view.provides_anvil_hits() {
-                            continue;
-                        }
-                        let module = view.module.clone();
-                        let mut cx = self.runtime.ctx(&module);
-                        ui.push_id(&view.id, |ui| view.view.ui(ui, &mut cx));
-                    }
+                    egui::ScrollArea::vertical()
+                        .id_salt("forja.anvil.sources")
+                        .max_height(60.0)
+                        .show(ui, |ui| {
+                            for view in self.anvil_views.iter_mut() {
+                                if view.view.provides_anvil_hits() {
+                                    continue;
+                                }
+                                let module = view.module.clone();
+                                let mut cx = self.runtime.ctx(&module);
+                                ui.push_id(&view.id, |ui| view.view.ui(ui, &mut cx));
+                            }
+                        });
                 }
                 ui.add_space(6.0);
                 ui.label(
@@ -229,6 +268,24 @@ impl ForjaApp {
             .trim()
             .to_owned();
         let query = raw.to_lowercase();
+        if self.anvil_rail_select {
+            return self
+                .rail_views
+                .iter()
+                .filter_map(|view| {
+                    let title = self.text(&view.title_key);
+                    let score = best_score(&query, &title, &view.id)?;
+                    Some(Hit {
+                        kind: rail_hit(&view.id),
+                        title,
+                        detail: view.id.clone(),
+                        icon: view.icon_glyph.clone(),
+                        chord: String::new(),
+                        score,
+                    })
+                })
+                .collect();
+        }
         self.runtime.set_anvil_query(&raw);
         let group = self.active_group();
         let mut hits = Vec::new();
@@ -268,7 +325,12 @@ impl ForjaApp {
                 detail: id.to_owned(),
                 icon: None,
                 chord: self.chord_for(id),
-                score,
+                score: score
+                    + if matches!(id, "appearance.theme.light" | "appearance.theme.dark") {
+                        30
+                    } else {
+                        0
+                    },
             });
         }
     }
@@ -416,6 +478,22 @@ impl ForjaApp {
     }
 
     fn run_hit(&mut self, kind: HitKind, keep_open: bool) {
+        if matches!(&kind, HitKind::Command(command) if command == "muster.run") {
+            self.anvil_muster_title = true;
+            self.anvil_query.clear();
+            self.anvil_query_seen.clear();
+            self.anvil_selected = 0;
+            self.focus_anvil = true;
+            return;
+        }
+        if matches!(&kind, HitKind::Command(command) if command == "shell.rail.open") {
+            self.anvil_rail_select = true;
+            self.anvil_query.clear();
+            self.anvil_query_seen.clear();
+            self.anvil_selected = 0;
+            self.focus_anvil = true;
+            return;
+        }
         let id = history_id(&kind);
         self.remember(&id);
         if !keep_open {
@@ -438,7 +516,18 @@ impl ForjaApp {
                 self.settings_query = key;
             }
             HitKind::Action { command, args } => {
-                let _ = self.runtime.run_command(&command, Args::from_map(args));
+                match self.runtime.run_command(&command, Args::from_map(args)) {
+                    Ok(_) if command == "muster.run" => {
+                        crate::actions::push(crate::actions::Action::OpenRail("muster.page".into()))
+                    }
+                    Ok(_) => {}
+                    Err(error) => {
+                        self.status = Some(self.text_args(
+                            "shell.command.failed",
+                            &[("id", &command), ("message", &error.to_string())],
+                        ))
+                    }
+                }
             }
         }
     }
@@ -460,6 +549,15 @@ impl ForjaApp {
             },
             |_, _| {},
         );
+    }
+}
+
+fn rail_hit(view_id: &str) -> HitKind {
+    let mut args = serde_json::Map::new();
+    args.insert("view_id".into(), Value::String(view_id.to_owned()));
+    HitKind::Action {
+        command: "shell.rail.open".into(),
+        args,
     }
 }
 
@@ -665,6 +763,18 @@ fn paint(color: Color) -> egui::Color32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rail_choice_supplies_the_selected_view() {
+        let HitKind::Action { command, args } = rail_hit("helper.page") else {
+            panic!("expected rail action");
+        };
+        assert_eq!(command, "shell.rail.open");
+        assert_eq!(
+            args.get("view_id"),
+            Some(&Value::String("helper.page".into()))
+        );
+    }
 
     #[test]
     fn fuzzy_prefers_a_word_start_and_rejects_missing_letters() {

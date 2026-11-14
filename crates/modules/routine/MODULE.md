@@ -24,6 +24,7 @@ perdidos, histórico e a página "Rotinas".
 ## O que registra
 
 - Aba `routine.page` no slot `bench_tab` (ordem 40), título "Rotinas".
+- O editor abre em uma janela rolável com posse do teclado; Escape cancela o rascunho.
 - Passo `routine.tick` no slot `status_bar`: avança o agendador a cada segundo, mesmo com a aba
   fechada, e mostra quantas rotinas rodam.
 - Comandos: `routine.save` (grava ou edita; validação devolve um código, não uma exceção),

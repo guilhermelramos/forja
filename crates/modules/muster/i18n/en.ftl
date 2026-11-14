@@ -134,3 +134,4 @@ muster-spend = Cost (USD)
 muster-spend-hint = amount spent
 muster-spend-add = Record cost
 muster-error-bench-pending = Create the bench first and wait until it is ready before starting the task.
+muster-error-empty-title = Enter a title for the muster.
