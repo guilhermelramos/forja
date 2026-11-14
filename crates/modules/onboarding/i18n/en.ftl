@@ -34,6 +34,7 @@ onboarding-check-notices = Notifications reviewed
 onboarding-back = Back
 onboarding-next = Next
 onboarding-finish = Finish
+onboarding-close = Close
 onboarding-done-title = Forja is ready
 onboarding-done-body = You can open this guide again from Settings.
 setting-onboarding-projects-dir-label = Project folder

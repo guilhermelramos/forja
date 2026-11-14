@@ -21,10 +21,7 @@ impl ForjaApp {
             !was_open
         });
         let layer = egui::Id::new("forja.settings.keyboard");
-        if forja_ui_kit::keyboard_layer_active(ctx, layer)
-            && !egui::Popup::is_any_open(ctx)
-            && ctx.input_mut(|input| input.consume_key(egui::Modifiers::NONE, egui::Key::Escape))
-        {
+        if forja_ui_kit::consume_layer_escape(ctx, layer) {
             self.settings_open = false;
             self.settings_section = None;
             ctx.data_mut(|data| {
@@ -211,6 +208,7 @@ impl ForjaApp {
                         ui.push_id(&view.id, |ui| view.view.ui(ui, &mut cx));
                     }
                 }
+                reveal_focused_control(ui);
             });
     }
 
@@ -401,6 +399,27 @@ impl ForjaApp {
     }
 }
 
+/// Scrolls the settings list when Tab/Shift+Tab moves the focus to a control
+/// that is outside the visible area. Only a real focus change scrolls, so a
+/// manual scroll is never fought.
+fn reveal_focused_control(ui: &egui::Ui) {
+    let Some(focused) = ui.memory(|memory| memory.focused()) else {
+        return;
+    };
+    let last_focus = egui::Id::new("forja.settings.last_focus");
+    if ui.data(|data| data.get_temp::<egui::Id>(last_focus)) == Some(focused) {
+        return;
+    }
+    ui.data_mut(|data| data.insert_temp(last_focus, focused));
+    let Some(response) = ui.ctx().read_response(focused) else {
+        return;
+    };
+    // Controls outside this scroll area (search, close) must not move it.
+    if ui.min_rect().contains(response.rect.center()) {
+        response.scroll_to_me(None);
+    }
+}
+
 pub(crate) fn choice_label_for(
     i18n: &forja_kernel::I18n,
     setting_key: &str,
@@ -510,6 +529,31 @@ fn parse_hex_color(value: &str) -> Option<[u8; 3]> {
 mod tests {
     use super::*;
     use forja_kernel::i18n::Locale;
+
+    #[test]
+    fn focused_row_inside_the_scroll_area_is_revealed() {
+        let ctx = egui::Context::default();
+        let mut offset = 0.0;
+        for _ in 0..4 {
+            let _ = ctx.run(egui::RawInput::default(), |ctx| {
+                egui::CentralPanel::default().show(ctx, |ui| {
+                    let output = egui::ScrollArea::vertical()
+                        .max_height(100.0)
+                        .show(ui, |ui| {
+                            for row in 0..40 {
+                                let response = ui.button(format!("row {row}"));
+                                if row == 35 {
+                                    response.request_focus();
+                                }
+                            }
+                            reveal_focused_control(ui);
+                        });
+                    offset = output.state.offset.y;
+                });
+            });
+        }
+        assert!(offset > 0.0, "the focused row stayed out of view");
+    }
 
     #[test]
     fn every_choice_option_has_translated_label_in_both_locales() {
