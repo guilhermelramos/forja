@@ -170,6 +170,7 @@ fn used_keys() -> Vec<&'static str> {
         "git.changes.blame-empty",
         "git.history.empty",
         "git.history.empty-hint",
+        "git.history.branch",
         "git.history.load",
         "git.history.author",
         "git.history.time",

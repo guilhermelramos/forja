@@ -507,3 +507,39 @@ fn sleep_respects_stop_helpers_setting() {
     assert_eq!(closes.lock().unwrap().len(), 1);
     let _ = std::fs::remove_dir_all(root);
 }
+
+#[test]
+fn unborn_repo_is_detected_before_opening_a_bench() {
+    let root = temp_dir("unborn");
+    std::fs::create_dir_all(&root).unwrap();
+    let path = root.join("vazio");
+    std::fs::create_dir_all(&path).unwrap();
+    git(&path, &["init", "-b", "main"]);
+    assert!(!crate::git::has_commits(&path));
+    assert!(!crate::git::has_remote(&path));
+    std::fs::write(path.join("a.txt"), "a\n").unwrap();
+    git(&path, &["add", "a.txt"]);
+    git(&path, &["commit", "-m", "primeiro"]);
+    assert!(crate::git::has_commits(&path));
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
+fn failed_creation_keeps_the_form_and_shows_the_error() {
+    use crate::state::{CreateForm, Dialog};
+    let shared = Shared::new();
+    shared.set_dialog(Dialog::Create(CreateForm {
+        name: "teste-agentes".to_owned(),
+        creating: true,
+        ..CreateForm::default()
+    }));
+    shared.finish_create(Some("git fetch failed".to_owned()));
+    let Dialog::Create(form) = shared.dialog() else {
+        panic!("the create dialog must stay open after a failure");
+    };
+    assert_eq!(form.name, "teste-agentes");
+    assert!(!form.creating);
+    assert_eq!(form.error.as_deref(), Some("git fetch failed"));
+    shared.finish_create(None);
+    assert!(matches!(shared.dialog(), Dialog::None));
+}

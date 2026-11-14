@@ -42,7 +42,11 @@ módulo `diff` da onda C2.
 - **Histórico:** `git log --graph --pretty=format:…` é devolvido em linhas com
   o prefixo ASCII do grafo e o commit opcional. A view pinta o grafo em
   monoespaçado; ao selecionar um commit, carrega `git show` em segundo plano e
-  mostra autor, e-mail, horário, estatísticas e o patch.
+  mostra autor, e-mail, horário, estatísticas e o patch. Toda escrita ou
+  atualização explícita invalida o cache, então o commit recém-criado aparece na
+  hora; o topo informa a branch do histórico.
+- **Erros:** uma falha de pull, push ou outra operação fica no painel até ser
+  fechada. A atualização periódica de status não apaga mais essa mensagem.
 - **Blame:** `git blame --line-porcelain` vira linhas com hash, autor, horário
   e conteúdo. O campo aceita um caminho relativo à bancada e começa com o
   arquivo ativo do editor (`editor.active_file`).

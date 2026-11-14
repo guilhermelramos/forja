@@ -77,6 +77,7 @@ impl View for ProjectsView {
                 forja_ui_kit::ButtonKind::Secondary,
                 &cx.t("project.sidebar.create"),
             )
+            .on_hover_text(cx.t("project.sidebar.create-hint"))
             .clicked()
             {
                 dialog = Dialog::Create(ProjectForm::default());

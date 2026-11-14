@@ -38,6 +38,10 @@ Módulo `bench` (pasta `benches`): worktrees git, etapas e os scripts do
 - `bench.create` calcula nome, caminho e branch, cria o worktree e dispara o
   evento `bench.created`. As abas iniciais são abertas com `terminal.open`; se
   o terminal não existir, a criação continua e a dica aparece na tela.
+- O diálogo de criação só fecha quando o worktree fica pronto. Se o projeto não
+  tem commit, se a pasta não é um repositório git ou se o worktree falha, o
+  diálogo continua aberto com o nome digitado e o erro completo. Projeto sem
+  remote não tenta `fetch`: não há o que buscar e a bancada é criada.
 - `bench.store` roda o desmonte aprovado, remove o worktree, mantém ou apaga a
   branch e marca o registro como arquivado. É destrutivo e nunca remove a
   bancada principal.

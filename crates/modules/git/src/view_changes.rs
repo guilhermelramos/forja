@@ -542,6 +542,15 @@ fn unstage(cx: &mut Ctx<'_>, path: &str, files: &[String]) {
 
 pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> String {
     let trimmed = raw.trim();
+    if trimmed == "no-remote" {
+        return cx.t("git.error.no-remote");
+    }
+    if trimmed == "nothing-to-abort" {
+        return cx.t("git.error.nothing-to-abort");
+    }
+    if let Some(branch) = trimmed.strip_prefix("protected:") {
+        return cx.t_args("git.error.protected", &[("branch", branch)]);
+    }
     if trimmed == "no file selected" {
         return cx.t("git.error.no-file");
     }
@@ -564,7 +573,7 @@ pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> String {
     if lower.contains("rejected") || lower.contains("failed to push") || lower.contains("non-fast-forward") {
         return cx.t_args("git.error.push-rejected", &[("detail", trimmed)]);
     }
-    if lower.contains("no upstream branch") || lower.contains("has no upstream") {
+    if lower.contains("no upstream branch") || lower.contains("has no upstream") || lower.contains("no tracking information") {
         return cx.t_args("git.error.no-upstream", &[("detail", trimmed)]);
     }
     if lower.contains("authentication failed")
@@ -607,6 +616,12 @@ mod tests {
         let msg = humanize_error(&cx, "fatal: not a git repository (or any parent)");
         assert!(msg.contains("repositório Git"), "{msg}");
         assert!(msg.contains("not a git repository"), "{msg}");
+        assert!(humanize_error(
+            &cx,
+            "git pull --ff-only failed: There is no tracking information for the current branch."
+        )
+        .contains("branch remoto"));
+        assert!(humanize_error(&cx, "no-remote").contains("remote configurado"));
         assert_eq!(humanize_error(&cx, "no file selected"), "Selecione ao menos um arquivo.");
         let _ = std::fs::remove_dir_all(dir);
     }

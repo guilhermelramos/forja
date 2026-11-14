@@ -310,14 +310,24 @@ fn render_card(
                         .color(c32(tokens.color.spark)),
                 );
             }
-            ui.add(
+            let title = ui.add(
                 egui::Label::new(
                     egui::RichText::new(&card.bench.name)
                         .strong()
                         .color(c32(tokens.color.text)),
                 )
-                .truncate(),
+                .truncate()
+                .sense(egui::Sense::click()),
             );
+            if title.on_hover_text(cx.t("board.action.open")).clicked() {
+                let mut args = Map::new();
+                args.insert("bench_id".to_owned(), json!(card.bench.bench_id));
+                if let Err(error) = cx.run_command("bench.activate", Args::from_map(args)) {
+                    state.set_error(Some(error.to_string()));
+                } else {
+                    state.request_refresh();
+                }
+            }
             ui.add(
                 egui::Label::new(
                     egui::RichText::new(stage_label)

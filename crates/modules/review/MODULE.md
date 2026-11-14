@@ -27,6 +27,9 @@ threads de revisão, merge e texto gerado pelo ajudante.
 - Ao abrir um PR, a bancada vai para `review` quando `bench.stage.pr_open` não
   for `never`; ao mesclar, vai para `ready` quando `bench.stage.pr_merge` não for
   `never`.
+- O formulário "Novo pull request" mostra rótulo e campo para a branch de origem
+  (somente leitura), título e descrição. Abrir sem título mantém o formulário e
+  mostra o motivo no topo da aba.
 - `review.generate { kind, bench_path }` executa o modo headless do perfil do
   ajudante (`prompt.headless` / `headless_stdin` do TOML). `kind` aceita
   `commit`, `pr` e `branch`; o diff fica limitado a 12 mil caracteres.

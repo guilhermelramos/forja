@@ -344,6 +344,9 @@ pub fn push(
 }
 
 pub fn pull(path: &Path) -> Result<String, String> {
+    if !has_remote(path) {
+        return Err("no-remote".to_owned());
+    }
     git(path, &["pull", "--ff-only"])
 }
 

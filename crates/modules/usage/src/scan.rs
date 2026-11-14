@@ -64,7 +64,7 @@ pub struct ScanStats {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 struct Fingerprint {
     len: u64,
-    modified_ms: u128,
+    modified_ns: u128,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -285,11 +285,11 @@ fn fingerprint(path: &Path) -> Option<Fingerprint> {
     let metadata = std::fs::metadata(path).ok()?;
     Some(Fingerprint {
         len: metadata.len(),
-        modified_ms: metadata
+        modified_ns: metadata
             .modified()
             .ok()
             .and_then(|time| time.duration_since(std::time::UNIX_EPOCH).ok())
-            .map(|duration| duration.as_millis())
+            .map(|duration| duration.as_nanos())
             .unwrap_or(0),
     })
 }
@@ -375,13 +375,13 @@ mod tests {
         assert_eq!(second.parsed_files, 0);
         std::fs::write(
             &file,
-            "{\"type\":\"assistant\",\"sessionId\":\"s1\",\"timestamp\":\"2026-11-10T10:00:00Z\",\"message\":{\"model\":\"m\",\"usage\":{\"input_tokens\":20,\"output_tokens\":2}}}\n",
+            "{\"type\":\"assistant\",\"sessionId\":\"s1\",\"timestamp\":\"2026-11-10T10:00:00Z\",\"message\":{\"model\":\"m\",\"usage\":{\"input_tokens\":200,\"output_tokens\":2}}}\n",
         )
         .unwrap();
         let third = cache.scan(&roots);
         assert_eq!(third.parsed_files, 1);
         let summary = cache.summary_at(1_762_000_000_000);
-        assert_eq!(summary.total.total_tokens, 22);
+        assert_eq!(summary.total.total_tokens, 202);
         let _ = std::fs::remove_dir_all(dir);
     }
 }
