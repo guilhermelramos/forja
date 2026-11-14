@@ -40,9 +40,10 @@ mod tokens;
 pub use apply::{applied_tokens, apply};
 pub use color::{contrast_ratio, luminance, Color};
 pub use components::{
-    button, card, context_menu, empty_state, icon_menu, list, menu_panel, modal, modal_preview,
-    page_heading, progress_bar, segmented, select, stage_badge, tabs, text_field, toast, toggle,
-    tree, virtual_table, ButtonKind, Column, ListItem, MenuItem, Stage, ToastKind, TreeNode,
+    button, card, context_menu, empty_state, icon_menu, list, menu_panel, modal,
+    modal_explicit_close, modal_preview, page_heading, progress_bar, segmented, select,
+    stage_badge, tabs, text_field, toast, toggle, tree, virtual_table, ButtonKind, Column,
+    ListItem, MenuItem, Stage, ToastKind, TreeNode,
 };
 pub use eframe::egui;
 pub use fonts::{install_fonts, FontError};

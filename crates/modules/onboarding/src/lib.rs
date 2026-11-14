@@ -221,6 +221,7 @@ impl Module for OnboardingModule {
             "onboarding.back",
             "onboarding.next",
             "onboarding.finish",
+            "onboarding.close",
             "onboarding.done.title",
             "onboarding.done.body",
         ] {

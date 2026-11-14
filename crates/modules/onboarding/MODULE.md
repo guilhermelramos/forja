@@ -12,6 +12,8 @@ Primeiro uso da Forja. O cartão abre sozinho enquanto não for concluído, e de
 
 Idioma (`i18n.language.mode`), tema (`appearance.theme.mode`), pasta de projetos, importação do Harbor (`import.harbor.*`, depois da pasta; aparece só se o módulo `import` existe e há itens pendentes), detecção de ajudantes (`helper.detect`, pulada se o comando não existe), avisos (`notifications.toast.enabled` e `notifications.os.enabled`) e uma checklist. Ao concluir, tenta `notify.show`.
 
+O cartão não fecha por clique fora: um clique no véu é ignorado para não descartar o guia por engano nem vazar para o controle atrás. Ele fecha pelo botão **Fechar** ou por Escape.
+
 `FORJA_SCREENSHOT=1` impede a abertura automática, para os screenshots do shell não ficarem cobertos. `--open onboarding` chama o comando e força o cartão.
 
 `FORJA_ONBOARDING_STEP=<índice>` abre o cartão direto num passo, pelo índice da sequência (captura de tela; `3` é o passo de importação quando ele aparece).
