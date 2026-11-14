@@ -23,30 +23,30 @@ $verdicts = @(Get-Content $VerdictsPath | Where-Object { $_.Trim() } |
 
 function Get-LiveIssue([int]$Number) {
     $issue = & gh issue view $Number -R $Repository `
-        --json state,labels,comments,url,title,body | ConvertFrom-Json
+        --json state,closedAt,labels,comments,url,title,body | ConvertFrom-Json
     if ($LASTEXITCODE -ne 0) { throw "could not read issue #$Number" }
+    if ($issue.state -eq "CLOSED") {
+        # A closed issue is only a re-check target when the verifier closed it.
+        $issue | Add-Member -NotePropertyName closeActor `
+            -NotePropertyValue (Get-IssueCloseActor $Repository $Number) -Force
+    }
     return $issue
 }
 
 function Test-LatestCorrection($Issue, $Result) {
-    $comments = @($Issue.comments | Sort-Object { [DateTimeOffset]$_.createdAt })
-    $latestCorrection = $comments |
-        Where-Object {
-            $_.author.login -eq $owner -and
-            ($_.body.StartsWith("Corrigido na main") -or
-             $_.body.StartsWith("Tratado na main") -or
-             $_.body.StartsWith("Concluído na main"))
-        } |
-        Select-Object -Last 1
-    if (-not $latestCorrection -or $latestCorrection.id -ne $Result.correction.id -or
-        $latestCorrection.body -ne $Result.correction.body) {
-        return $false
-    }
-    $lastComment = $comments | Select-Object -Last 1
-    if ($lastComment -and $lastComment.body.StartsWith("Verificado:") -and
-        [DateTimeOffset]$lastComment.createdAt -ge [DateTimeOffset]$latestCorrection.createdAt) {
-        return $false
-    }
+    $pending = Get-PendingVerification $Issue $owner
+    if ($null -eq $pending) { return $false }
+    return (
+        $pending.correction.id -eq $Result.correction.id -and
+        $pending.correction.body -eq $Result.correction.body
+    )
+}
+
+function Test-ClosedByPerson($Issue, [int]$Number) {
+    if ($Issue.state -ne "CLOSED") { return $false }
+    if ([string]$Issue.closeActor -eq $script:BotCloseActor) { return $false }
+    $who = if ($Issue.closeActor) { $Issue.closeActor } else { "unknown" }
+    Write-Host "skip #${Number}: issue was closed by $who, not github-actions[bot]; it will not be reopened or changed"
     return $true
 }
 
@@ -63,20 +63,47 @@ foreach ($result in $verdicts) {
         continue
     }
 
-    # A model can write `fixed` while its own evidence says the behavior did
-    # not work. Evidence wins: downgrade before touching the issue.
+    # The structured expectations list decides a `fixed` verdict. The word
+    # heuristic is only a log hint for legacy verdicts without a list.
     $reportedVerdict = $verdict
-    $verdict = Get-EffectiveVerdict $verdict $result.steps $result.actual
+    $expectations = @(Get-VerificationExpectations $result.expectations)
+    $rawExpectations = $result.PSObject.Properties['expectations']
+    if ($null -ne $rawExpectations -and $null -ne $rawExpectations.Value -and
+        @($rawExpectations.Value).Count -gt 0 -and $expectations.Count -eq 0) {
+        Write-Warning "#${number}: malformed expectations list was ignored"
+    }
+
+    $verdict = Get-EffectiveVerdict $verdict $result.expectations
     $downgraded = $verdict -ne $reportedVerdict
     if ($downgraded) {
-        Write-Warning "#${number}: '$reportedVerdict' has failure evidence; treating as '$verdict'"
+        $failedItems = @($expectations | Where-Object { -not $_.ok } |
+            ForEach-Object { $_.item }) -join "; "
+        Write-Warning "#${number}: '$reportedVerdict' has false expectation(s) '$failedItems'; treating as '$verdict'"
+    } elseif ($reportedVerdict -eq "fixed" -and $expectations.Count -gt 0) {
+        if (Test-VerdictEvidenceFailure $result.steps $result.actual) {
+            Write-Host "#${number}: word heuristic matched a failure phrase, but every structured expectation is ok; keeping 'fixed'"
+        }
+    } elseif ($reportedVerdict -eq "fixed") {
+        $hint = if (Test-VerdictEvidenceFailure $result.steps $result.actual) {
+            " (the word heuristic would have matched)"
+        } else {
+            ""
+        }
+        Write-Warning "#${number}: 'fixed' has no structured expectations; legacy verdict accepted$hint"
     }
 
     $issue = Get-LiveIssue $number
-    if ($issue.state -ne "OPEN") {
-        Write-Host "skip #${number}: issue is closed; it will not be reopened or changed"
+    if (Test-ClosedByPerson $issue $number) { continue }
+    $pending = Get-PendingVerification $issue $owner
+    if ($null -eq $pending) {
+        if ($issue.state -ne "OPEN") {
+            Write-Host "skip #${number}: issue is closed and has no correction after the close"
+        } else {
+            Write-Host "skip #${number}: correction changed or a newer verdict exists"
+        }
         continue
     }
+    $isRecheck = [bool]$pending.recheck
     $labels = @($issue.labels | ForEach-Object { $_.name })
     if (-not ($labels | Where-Object { $_ -in @("playtest", "explore", "ideia") })) {
         Write-Host "skip #${number}: verification label was removed"
@@ -97,13 +124,24 @@ foreach ($result in $verdicts) {
         "cannot_reproduce" { "Verificado: não foi possível reproduzir" }
     }
     $stepLines = @($result.steps | ForEach-Object { "- $_" }) -join "`n"
+    $expectationLines = if ($expectations.Count -gt 0) {
+        $lines = @($expectations | ForEach-Object {
+            $mark = if ($_.ok) { "x" } else { " " }
+            "- [$mark] $($_.item) — $($_.observed)"
+        }) -join "`n"
+        "`nExpectativas:`n$lines"
+    } else {
+        ""
+    }
     $runUrl = $env:GITHUB_SERVER_URL
     if ($env:GITHUB_REPOSITORY -and $env:GITHUB_RUN_ID) {
         $runUrl = "$runUrl/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
     }
     if (-not $runUrl) { $runUrl = "rodada local" }
     $downgradeNote = if ($downgraded) {
-        "`nO veredito automático dizia '$reportedVerdict', mas a evidência registra uma falha; por isso foi tratado como '$verdict'."
+        $failedItems = @($expectations | Where-Object { -not $_.ok } |
+            ForEach-Object { $_.item }) -join "; "
+        "`nO veredito automático dizia '$reportedVerdict', mas a lista estruturada registra falha em: $failedItems."
     } else {
         ""
     }
@@ -113,6 +151,7 @@ $prefix
 
 Passos e evidência:
 $stepLines
+$expectationLines
 $windowLine
 Esperado: $($result.expected)
 Observado: $($result.actual)$downgradeNote
@@ -121,9 +160,27 @@ Rodada: $runUrl
 
     if ($DryRun) {
         $action = switch ($verdict) {
-            "fixed" { "would close the issue with this comment" }
-            "still_broken" { "would comment and add label 'reaberto'" }
-            "cannot_reproduce" { "would comment and add label 'verificar-manual'" }
+            "fixed" {
+                if ($isRecheck) {
+                    "would comment on the closed issue confirming the fix"
+                } else {
+                    "would close the issue with this comment"
+                }
+            }
+            "still_broken" {
+                if ($isRecheck) {
+                    "would reopen the issue, comment, and add label 'reaberto'"
+                } else {
+                    "would comment and add label 'reaberto'"
+                }
+            }
+            "cannot_reproduce" {
+                if ($isRecheck) {
+                    "would reopen the issue, comment, and add label 'verificar-manual'"
+                } else {
+                    "would comment and add label 'verificar-manual'"
+                }
+            }
         }
         Write-Host "DRY RUN #$number ($verdict): $action"
         Write-Host $comment
@@ -132,11 +189,27 @@ Rodada: $runUrl
 
     # Re-read immediately before a write so a manual close during verification is respected.
     $issue = Get-LiveIssue $number
-    if ($issue.state -ne "OPEN" -or $issue.title -ne $result.issueTitle -or
+    if (Test-ClosedByPerson $issue $number) { continue }
+    $pending = Get-PendingVerification $issue $owner
+    if ($null -eq $pending -or $issue.title -ne $result.issueTitle -or
         $issue.body -ne $result.issueBody -or -not (Test-LatestCorrection $issue $result)) {
         Write-Host "skip #${number}: issue state or correction changed before update"
         continue
     }
+    $isRecheck = [bool]$pending.recheck
+
+    if ($isRecheck) {
+        if ($verdict -eq "fixed") {
+            gh issue comment $number -R $Repository --body $comment
+            if ($LASTEXITCODE -ne 0) { throw "could not comment on closed issue #$number" }
+            Write-Host "commented on closed #$number after fixed re-verification"
+            continue
+        }
+        gh issue reopen $number -R $Repository
+        if ($LASTEXITCODE -ne 0) { throw "could not reopen issue #$number" }
+        Write-Host "reopened #$number after '$verdict'"
+    }
+
     if ($verdict -eq "fixed") {
         gh issue close $number -R $Repository --comment $comment
         if ($LASTEXITCODE -ne 0) { throw "could not close issue #$number with its verdict" }

@@ -9,7 +9,7 @@ Agentes de IA gratuitos usam a Forja **ao vivo, como uma pessoa**: olham a tela,
    - Cada ação responde depois que a interface assentou, só com o que **apareceu**, **sumiu**, **mudou** ou é novo.
    - Tudo é registrado em `FORJA_TEST_LOG` (JSONL).
    - Seletores nativos de pasta e arquivo respondem sozinhos (`FORJA_TEST_PICK_DIR`, `FORJA_TEST_PICK_FILE`; veja `crates/kernel/src/test_pick.rs`).
-2. **`forja-mcp --player --findings <arquivo>`** expõe ao agente só as ferramentas de usuário: `ui_look`, `ui_click`, `ui_type`, `ui_key`, `ui_scroll` e `ui_wait`. `ui_look` é compacto (agrupa repetidos, corta nomes longos e omite retângulos de elementos não acionáveis). A ferramenta `report_finding` grava um achado com passos, esperado e ocorrido. `--max-steps <n>` limita as ações de uma sessão.
+2. **`forja-mcp --player --findings <arquivo>`** expõe ao agente só as ferramentas de usuário: `ui_look`, `ui_click`, `ui_type`, `ui_key`, `ui_scroll` e `ui_wait`. `ui_look` é compacto (agrupa repetidos, corta nomes longos e omite retângulos de elementos não acionáveis). A ferramenta `report_finding` grava um achado com passos, esperado e ocorrido; nos vereditos ela também grava a lista estruturada `expectations`. `--max-steps <n>` limita as ações de uma sessão.
 3. **`playtest/run.ps1`**:
    - cria a pasta de dados isolada;
    - abre o app;
@@ -69,11 +69,17 @@ O CI (`.github/workflows/ci.yml`, job `regressions`) executa todas as regressõe
 
 ## Verificar correções de issues
 
-O workflow `.github/workflows/verify.yml` seleciona até 8 issues abertas, da
-mais antiga para a mais nova, com o rótulo `playtest`, `explore` ou `ideia` e
-um comentário do dono do repositório iniciado por `Corrigido na main`,
-`Tratado na main` ou `Concluído na main`. Ele ignora uma issue cujo comentário
-mais recente já seja um veredito, a menos que exista uma correção posterior.
+O workflow `.github/workflows/verify.yml` seleciona até 8 issues, da mais antiga
+para a mais nova, com o rótulo `playtest`, `explore` ou `ideia` e um comentário
+do dono do repositório iniciado por `Corrigido na main`, `Tratado na main` ou
+`Concluído na main`. A issue entra quando a correção mais nova é posterior ao
+veredito mais novo; o comentário decisivo não precisa ser o último da thread.
+Issues fechadas também entram quando **já tinham um veredito**, a correção foi
+postada depois do fechamento e o **último evento de fechamento** foi do
+`github-actions[bot]` (consultado em `gh api repos/OWNER/REPO/issues/N/events`).
+Se a issue foi fechada por uma pessoa, ela é ignorada com uma linha de log e
+**nunca é reaberta**, nem com `still_broken`. Foi o caso da #13, fechada pela
+conta `guilhermelramos` 13 segundos antes do comentário novo.
 
 No runner Windows, `playtest/verify.ps1` abre uma instância limpa de
 `forja-app --test-driver` para cada tentativa, com pasta de dados isolada,
@@ -84,32 +90,41 @@ tamanho da janela é o citado pela issue ou pelo comentário de correção
 
 O OpenCode só recebe as ferramentas do `forja-mcp --player`; o modelo deve chamar
 `report_finding` com `VEREDITO: fixed`, `VEREDITO: still_broken` ou
-`VEREDITO: cannot_reproduce`. `fixed` exige que **todos** os comportamentos
-esperados da issue funcionem no mesmo tamanho, idioma e tema citados; qualquer
-item que não funcione vira `still_broken`, e condições impossíveis de montar
-viram `cannot_reproduce`. O padrão usa modelos gratuitos no OpenRouter e
-`VERIFY_MODELS` permite trocar a lista, aceitando apenas ids que terminem em
-`-free` ou `:free`. Configure `OPENROUTER_API_KEY` nos secrets do repositório;
-`VERIFY_MODELS` pode ser definido como variável do repositório.
+`VEREDITO: cannot_reproduce` e com a lista estruturada
+`expectations: [{ item, ok, observed }]`. `fixed` exige que **todos** os itens
+tenham `ok: true`; qualquer item falso vira `still_broken`, e condições
+impossíveis de montar viram `cannot_reproduce`. A lista é a fonte do veredito:
+o script não rebaixa mais por palavras, porque frases como "Não abriu nenhuma
+janela de Ajustes" podem descrever o comportamento esperado. O padrão usa
+modelos gratuitos no OpenRouter e `VERIFY_MODELS` permite trocar a lista,
+aceitando apenas ids que terminem em `-free` ou `:free`. Configure
+`OPENROUTER_API_KEY` nos secrets do repositório; `VERIFY_MODELS` pode ser
+definido como variável do repositório.
 
-O job final `apply` só age sobre issues que continuam abertas e cuja correção
-continua sendo a mesma. `fixed` fecha com comentário e evidências; os outros
-dois resultados comentam e aplicam `reaberto` ou `verificar-manual`. Um `fixed`
-cuja evidência contenha sinais de falha (`não teve efeito`, `não funcionou`,
-`não abriu`, `falhou`, `sem efeito`, `did not`, `no effect`) é rebaixado para
-`still_broken`. A opção `-DryRun` mostra o que o script faria sem alterar
-issues:
+O job final `apply` só age sobre issues com correção pendente. `fixed` fecha a
+issue com comentário e evidências; se a issue já estava fechada por um pedido de
+re-verificação, apenas comenta a confirmação. Os outros dois resultados
+comentam e aplicam `reaberto` ou `verificar-manual`, reabrindo antes quando for
+uma re-verificação de issue fechada **pelo bot**; issue fechada por pessoa é
+pulada sem comentário, rótulo ou `gh issue reopen`. Um `fixed` sem a lista
+estruturada é aceito como veredito legado, mas a heurística de palavras (`não
+teve efeito`, `não funcionou`, `não abriu`, `falhou`, `sem efeito`, `did not`,
+`no effect`) fica registrada apenas como aviso no log e não rebaixa o resultado.
+A opção `-DryRun` mostra o que o script faria sem alterar issues:
 
 ```powershell
 ./playtest/apply-verdicts.ps1 -VerdictsPath verification-out/verdicts.jsonl -DryRun
 ```
 
-As regras de tamanho e de veredito têm testes de fixture que rodam sem abrir o
-app:
+As regras de tamanho, de veredito e de seleção têm testes de fixture que rodam
+sem abrir o app nem tocar no GitHub. O teste de seleção usa o histórico real da
+#13 (fechada por pessoa) e uma variante fechada pelo bot, e roda o
+`apply-verdicts.ps1 -DryRun` contra as duas:
 
 ```powershell
 ./playtest/test-window-size.ps1
 ./playtest/test-verdicts.ps1
+./playtest/test-selection.ps1
 ```
 
 As opções de CLI e os controles de ferramentas seguem a documentação oficial

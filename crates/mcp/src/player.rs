@@ -136,11 +136,19 @@ impl<B: Backend> Player<B> {
         let Some(path) = &self.findings else {
             return error_content("this server was started without --findings");
         };
+        let expectations = match arguments.get("expectations") {
+            None | Some(Value::Null) => Value::Null,
+            Some(value) => match normalize_expectations(value) {
+                Ok(value) => value,
+                Err(message) => return error_content(&message),
+            },
+        };
         let line = json!({
             "title": title,
             "kind": arguments.get("kind").and_then(Value::as_str).unwrap_or("bug"),
             "severity": arguments.get("severity").and_then(Value::as_str).unwrap_or("medium"),
             "steps": arguments.get("steps").cloned().unwrap_or(Value::Null),
+            "expectations": expectations,
             "expected": arguments.get("expected").cloned().unwrap_or(Value::Null),
             "actual": arguments.get("actual").cloned().unwrap_or(Value::Null),
             "screen": arguments.get("screen").cloned().unwrap_or(Value::Null),
@@ -159,6 +167,38 @@ impl<B: Backend> Player<B> {
 
 fn is_action(tool: &str) -> bool {
     matches!(tool, "ui_click" | "ui_type" | "ui_key" | "ui_scroll" | "ui_wait")
+}
+
+/// Validates the verifier's `expectations` list before it reaches the JSONL
+/// file: every entry needs a non-empty item, a boolean `ok` and an observation.
+fn normalize_expectations(value: &Value) -> Result<Value, String> {
+    let Some(items) = value.as_array() else {
+        return Err("expectations must be an array of {item, ok, observed}".to_owned());
+    };
+    let mut normalized = Vec::with_capacity(items.len());
+    for (index, entry) in items.iter().enumerate() {
+        let item = entry
+            .get("item")
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .unwrap_or("");
+        if item.is_empty() {
+            return Err(format!("expectations[{index}].item is required"));
+        }
+        let Some(ok) = entry.get("ok").and_then(Value::as_bool) else {
+            return Err(format!("expectations[{index}].ok must be true or false"));
+        };
+        let observed = entry
+            .get("observed")
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .unwrap_or("");
+        if observed.is_empty() {
+            return Err(format!("expectations[{index}].observed is required"));
+        }
+        normalized.push(json!({ "item": item, "ok": ok, "observed": observed }));
+    }
+    Ok(Value::Array(normalized))
 }
 
 fn success_content(text: String, result: &Value) -> Value {
@@ -527,7 +567,7 @@ fn tools() -> Vec<Value> {
         }),
         json!({
             "name": "report_finding",
-            "description": "Registra um bug, falha de usabilidade ou observação, com passos para reproduzir.",
+            "description": "Registra um bug, falha de usabilidade ou observação, com passos para reproduzir. Em um veredito, inclua expectations com cada comportamento esperado e ok=true|false.",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -535,6 +575,19 @@ fn tools() -> Vec<Value> {
                     "kind": { "type": "string", "enum": ["bug", "usability", "accessibility", "text", "crash", "observation"] },
                     "severity": { "type": "string", "enum": ["low", "medium", "high", "critical"] },
                     "steps": { "type": "array", "items": { "type": "string" } },
+                    "expectations": {
+                        "type": "array",
+                        "description": "Comportamentos esperados do veredito; fixed só é aceito se todos tiverem ok=true.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "item": { "type": "string" },
+                                "ok": { "type": "boolean" },
+                                "observed": { "type": "string" }
+                            },
+                            "required": ["item", "ok", "observed"]
+                        }
+                    },
                     "expected": { "type": "string" },
                     "actual": { "type": "string" },
                     "screen": { "type": "string", "description": "Em que tela aconteceu." }
@@ -645,6 +698,9 @@ mod tests {
         assert_eq!(names, ["ui_look", "ui_click", "ui_type", "ui_key", "ui_scroll", "ui_wait", "report_finding"]);
         let look = &reply["result"]["tools"][0]["inputSchema"]["properties"];
         assert!(look.get("region").is_some() && look.get("filter").is_some());
+        let report = &reply["result"]["tools"][6]["inputSchema"]["properties"];
+        let expectation = &report["expectations"]["items"];
+        assert_eq!(expectation["required"], json!(["item", "ok", "observed"]));
     }
 
     #[test]
@@ -757,6 +813,62 @@ mod tests {
         let saved = std::fs::read_to_string(&path).unwrap();
         assert!(saved.contains("Aba cortada"));
         let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn report_writes_structured_expectations() {
+        let path = std::env::temp_dir().join(format!("forja-player-expectations-{}.jsonl", std::process::id()));
+        let _ = std::fs::remove_file(&path);
+        let player = Player::new(Fake, Some(path.clone()));
+        let reply = call_tool(
+            &player,
+            "report_finding",
+            json!({
+                "title": "VEREDITO: fixed",
+                "kind": "observation",
+                "severity": "low",
+                "steps": ["Abri o Quadro e cliquei no cartão"],
+                "expectations": [
+                    { "item": "O cartão abre a bancada", "ok": true, "observed": "A bancada abriu" },
+                    { "item": "A janela de Ajustes não abre", "ok": true, "observed": "Não abriu nenhuma janela de Ajustes" }
+                ],
+                "expected": "O cartão abre a bancada",
+                "actual": "A bancada abriu e nenhuma janela de Ajustes apareceu",
+                "screen": "Quadro"
+            }),
+        );
+        assert_eq!(reply["result"]["isError"], false);
+        let saved = std::fs::read_to_string(&path).unwrap();
+        let finding: Value = serde_json::from_str(saved.lines().next().unwrap()).unwrap();
+        assert_eq!(finding["expectations"][0]["item"], "O cartão abre a bancada");
+        assert_eq!(finding["expectations"][0]["ok"].as_bool(), Some(true));
+        assert_eq!(
+            finding["expectations"][1]["observed"],
+            "Não abriu nenhuma janela de Ajustes"
+        );
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn report_rejects_malformed_expectations() {
+        let path = std::env::temp_dir().join(format!("forja-player-bad-expectations-{}.jsonl", std::process::id()));
+        let _ = std::fs::remove_file(&path);
+        let player = Player::new(Fake, Some(path.clone()));
+        let reply = call_tool(
+            &player,
+            "report_finding",
+            json!({
+                "title": "VEREDITO: fixed",
+                "steps": ["testei"],
+                "expected": "funciona",
+                "actual": "funcionou",
+                "expectations": [{ "item": "funciona", "ok": "sim", "observed": "funcionou" }]
+            }),
+        );
+        assert_eq!(reply["result"]["isError"], true);
+        let text = reply["result"]["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("expectations[0].ok"));
+        assert!(!path.exists());
     }
 
     #[test]
