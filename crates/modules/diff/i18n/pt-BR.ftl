@@ -1,4 +1,6 @@
 diff-name = Diferenças
+diff-comparison-heading = Comparação
+diff-error-comparison = A comparação deve usar o formato base...HEAD.
 diff-tab-title = Diferenças
 diff-command-open = Abrir diferenças
 diff-command-refresh = Atualizar diferenças

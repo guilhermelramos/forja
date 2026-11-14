@@ -104,6 +104,31 @@ pub fn diff(path: &Path, file: &str, staged: bool) -> Result<FileDiff, String> {
     })
 }
 
+/// Builds the same unified diff from a selected base through `HEAD`.
+pub fn diff_comparison(path: &Path, file: &str, base_commit: &str) -> Result<FileDiff, String> {
+    let range = format!("{base_commit}...HEAD");
+    let text = git(
+        path,
+        &[
+            "-c",
+            "core.quotepath=false",
+            "diff",
+            "--no-color",
+            "--no-ext-diff",
+            "--unified=3",
+            &range,
+            "--",
+            file,
+        ],
+    )?;
+    Ok(FileDiff {
+        path: file.to_owned(),
+        staged: false,
+        binary: text.contains("Binary files") || text.contains("GIT binary patch"),
+        hunks: parse_hunks(&text),
+    })
+}
+
 pub fn parse_hunks(text: &str) -> Vec<Hunk> {
     let mut hunks = Vec::new();
     let mut current: Option<Hunk> = None;

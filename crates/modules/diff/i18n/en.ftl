@@ -1,4 +1,6 @@
 diff-name = Diff
+diff-comparison-heading = Comparison
+diff-error-comparison = The comparison must use the base...HEAD form.
 diff-tab-title = Changes
 diff-command-open = Open changes
 diff-command-refresh = Refresh changes

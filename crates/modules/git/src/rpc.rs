@@ -1,14 +1,15 @@
+use crate::comparison;
 use crate::diff;
 use crate::engine;
 use crate::helpers::{files_from, required, setting_list, setting_str, spawn_op, truthy, unit};
 use crate::log;
 use crate::state::Shared;
 use forja_contracts::GitStatusChanged;
+use forja_kernel::Registrar;
 use forja_kernel::forja_protocol::{
     Method, MethodEffect, ParamKind, ParamSchema, ResultSchema, RpcError,
 };
-use forja_kernel::Registrar;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 pub(crate) fn register_rpc(r: &mut Registrar<'_>, shared: &Shared) {
     let s = shared.clone();
     r.rpc(
@@ -51,6 +52,7 @@ pub(crate) fn register_rpc(r: &mut Registrar<'_>, shared: &Shared) {
             .param(ParamSchema::required("path", ParamKind::String))
             .param(ParamSchema::required("file", ParamKind::String).alias("arquivo"))
             .param(ParamSchema::optional("staged", ParamKind::Boolean))
+            .param(ParamSchema::optional("comparison", ParamKind::String))
             .result(ResultSchema::new("git.method.diff.result")),
         move |_cx, params| {
             let path = required(&params, "path")?;
@@ -59,8 +61,11 @@ pub(crate) fn register_rpc(r: &mut Registrar<'_>, shared: &Shared) {
                 .get("staged")
                 .and_then(Value::as_bool)
                 .unwrap_or(false);
-            let diff =
-                diff::diff(std::path::Path::new(path), file, staged).map_err(RpcError::app)?;
+            let diff = match params.get("comparison").and_then(Value::as_str) {
+                Some(range) => comparison::diff_file(std::path::Path::new(path), file, range),
+                None => diff::diff(std::path::Path::new(path), file, staged),
+            }
+            .map_err(RpcError::app)?;
             Ok(serde_json::to_value(diff).unwrap_or(Value::Null))
         },
     );

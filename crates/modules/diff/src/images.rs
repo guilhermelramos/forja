@@ -53,6 +53,46 @@ pub fn load(bench: &str, file: &str, staged: bool) -> Pair {
     }
 }
 
+pub fn load_comparison(bench: &str, file: &str, base: &str) -> Pair {
+    let base_ref = format!("{base}^{{commit}}");
+    let old_ref = git_output(
+        bench,
+        &["rev-parse", "--verify", "--end-of-options", &base_ref],
+    )
+    .ok()
+    .and_then(|hash| String::from_utf8(hash).ok())
+    .map(|hash| format!("{}:{file}", hash.trim()));
+    let new_ref = git_output(bench, &["rev-parse", "--verify", "HEAD^{commit}"])
+        .ok()
+        .and_then(|hash| String::from_utf8(hash).ok())
+        .map(|hash| format!("{}:{file}", hash.trim()));
+    let old = old_ref
+        .as_deref()
+        .and_then(|reference| git_output(bench, &["show", reference]).ok());
+    let new = new_ref
+        .as_deref()
+        .and_then(|reference| git_output(bench, &["show", reference]).ok());
+    Pair {
+        old: old.as_deref().and_then(decode),
+        new: new.as_deref().and_then(decode),
+        old_bytes: old.as_ref().map(Vec::len).unwrap_or(0),
+        new_bytes: new.as_ref().map(Vec::len).unwrap_or(0),
+    }
+}
+
+fn git_output(bench: &str, args: &[&str]) -> Result<Vec<u8>, ()> {
+    let output = Command::new("git")
+        .arg("-C")
+        .arg(bench)
+        .args(args)
+        .env("GIT_TERMINAL_PROMPT", "0")
+        .stdin(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+        .map_err(|_| ())?;
+    output.status.success().then_some(output.stdout).ok_or(())
+}
+
 fn decode(bytes: &[u8]) -> Option<ColorImage> {
     let decoded = image::load_from_memory(bytes).ok()?.to_rgba8();
     Some(ColorImage::from_rgba_unmultiplied(

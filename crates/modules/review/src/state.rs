@@ -2,6 +2,7 @@
 
 use crate::api::Target;
 use crate::parse::{Check, PullRequest, Thread};
+use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 
@@ -21,6 +22,39 @@ pub struct Snapshot {
     pub pr: Option<PullRequest>,
     pub checks: Vec<Check>,
     pub threads: Vec<Thread>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct Comparison {
+    pub branch: String,
+    pub head: String,
+    pub base: Option<String>,
+    pub base_commit: Option<String>,
+    pub remote: bool,
+    #[serde(default)]
+    pub branches: Vec<String>,
+    pub ahead: u32,
+    #[serde(default)]
+    pub commits: Vec<ComparisonCommit>,
+    #[serde(default)]
+    pub files: Vec<ComparisonFile>,
+    pub additions: u32,
+    pub deletions: u32,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct ComparisonCommit {
+    pub short: String,
+    pub title: String,
+    pub author: String,
+    pub time: i64,
+}
+
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct ComparisonFile {
+    pub path: String,
+    pub additions: Option<u32>,
+    pub deletions: Option<u32>,
 }
 
 #[derive(Default, Clone)]
@@ -47,6 +81,9 @@ pub struct State {
     pub busy: bool,
     pub loading: bool,
     pub generated: Option<Generated>,
+    pub comparison: Option<Comparison>,
+    pub comparison_loading: bool,
+    pub comparison_error: Option<String>,
 }
 
 #[derive(Clone)]
@@ -65,7 +102,9 @@ impl Shared {
         if let Ok(mut state) = self.0.lock() {
             state.target = Some(snapshot.target);
             state.branch = snapshot.branch.clone();
-            state.base = snapshot.base.clone();
+            if state.base.is_empty() {
+                state.base = snapshot.base.clone();
+            }
             state.pr = snapshot.pr.clone();
             state.checks = snapshot.checks;
             state.threads = snapshot.threads;
@@ -91,6 +130,10 @@ impl Shared {
                 state.threads.clear();
                 state.logs.clear();
                 state.branch.clear();
+                state.base.clear();
+                state.comparison = None;
+                state.comparison_loading = false;
+                state.comparison_error = None;
                 state.loading = false;
             }
             state.bench = bench;
@@ -121,6 +164,31 @@ impl Shared {
             state.loading = loading;
             state.busy = loading;
             state.status = None;
+        }
+    }
+
+    pub fn set_comparison_loading(&self, loading: bool) {
+        if let Ok(mut state) = self.0.lock() {
+            state.comparison_loading = loading;
+            state.comparison_error = None;
+        }
+    }
+
+    pub fn set_comparison(&self, comparison: Comparison) {
+        if let Ok(mut state) = self.0.lock() {
+            state.branch = comparison.branch.clone();
+            state.base = comparison.base.clone().unwrap_or_default();
+            state.comparison = Some(comparison);
+            state.comparison_loading = false;
+            state.comparison_error = None;
+        }
+    }
+
+    pub fn set_comparison_error(&self, error: Option<String>) {
+        if let Ok(mut state) = self.0.lock() {
+            state.comparison = None;
+            state.comparison_error = error;
+            state.comparison_loading = false;
         }
     }
 

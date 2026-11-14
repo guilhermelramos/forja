@@ -5,9 +5,9 @@ use crate::api::{self, MergeOptions, Provider, PullRequestInput, Target};
 use crate::client::Client;
 use crate::fixtures;
 use crate::parse;
-use crate::state::{Generated, Shared, Snapshot};
+use crate::state::{Comparison, Generated, Shared, Snapshot};
 use forja_kernel::{Args, Ctx, KernelError, Result, SettingValue};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::path::Path;
 use std::process::{Command, Stdio};
 
@@ -17,6 +17,10 @@ pub fn refresh(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value> 
     } else {
         bench_path(cx, shared, args)?
     };
+    let compare_base = shared
+        .with(|state| (!state.base.trim().is_empty()).then(|| state.base.clone()))
+        .flatten();
+    start_comparison(cx, shared, &bench, compare_base.as_deref());
     let github = host(cx, Provider::GitHub);
     let gitlab = host(cx, Provider::GitLab);
     let network = cx.run_command("network.proxy", Args::new()).ok();
@@ -24,15 +28,62 @@ pub fn refresh(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value> 
     state.set_loading(true);
     cx.spawn(
         move || load(&bench, &github, &gitlab, network.as_ref()),
-        move |cx, result| match result {
-            Ok(snapshot) => {
-                state.apply(snapshot);
-                let _ = cx;
-            }
+        move |_cx, result| match result {
+            Ok(snapshot) => state.apply(snapshot),
+            Err(error) if error.contains("no origin remote") => state.set_status(None),
             Err(error) => state.set_status(Some(error)),
         },
     );
     Ok(json!({ "pending": true }))
+}
+
+pub fn start_comparison(cx: &mut Ctx<'_>, shared: &Shared, bench: &str, base: Option<&str>) {
+    let matching = shared
+        .with(|state| {
+            state
+                .comparison
+                .as_ref()
+                .is_some_and(|comparison| base.map(str::trim) == comparison.base.as_deref())
+        })
+        .unwrap_or(false);
+    if !matching {
+        shared.set_comparison_loading(true);
+    }
+    let mut args = Args::new();
+    args.insert("path", json!(bench));
+    if let Some(base) = base {
+        args.insert("base", json!(base));
+    }
+    if let Err(error) = cx.run_command("git.compare", args) {
+        shared.set_comparison_error(Some(error.to_string()));
+    }
+}
+
+pub fn comparison_changed(cx: &mut Ctx<'_>, shared: &Shared, bench: &str) {
+    if shared.bench().as_deref() != Some(bench) {
+        return;
+    }
+    let mut args = Args::new();
+    args.insert("path", json!(bench));
+    match cx.run_command("git.compare.result", args) {
+        Ok(value) => {
+            if let Some(error) = value.get("error").and_then(Value::as_str) {
+                shared.set_comparison_error(Some(error.to_owned()));
+            } else if let Some(value) = value.get("comparison").filter(|value| !value.is_null()) {
+                match serde_json::from_value::<Comparison>(value.clone()) {
+                    Ok(comparison) => shared.set_comparison(comparison),
+                    Err(error) => shared.set_comparison_error(Some(error.to_string())),
+                }
+            } else if value
+                .get("loading")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+            {
+                shared.set_comparison_loading(true);
+            }
+        }
+        Err(error) => shared.set_comparison_error(Some(error.to_string())),
+    }
 }
 
 fn load(
@@ -85,6 +136,32 @@ fn load(
 
 pub fn create(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value> {
     let bench = bench_path(cx, shared, args)?;
+    let create_block = shared
+        .with(|state| {
+            if state.comparison_loading {
+                return Some(cx.t("review.summary.loading"));
+            }
+            let Some(comparison) = &state.comparison else {
+                return Some(cx.t("review.summary.choose-base"));
+            };
+            if comparison.base.as_deref() != Some(state.base.trim()) {
+                return Some(cx.t("review.summary.choose-base"));
+            }
+            if comparison.base.is_none() {
+                return Some(cx.t("review.summary.choose-base"));
+            }
+            if comparison.ahead == 0 {
+                return Some(cx.t("review.summary.nothing-to-send"));
+            }
+            if !comparison.remote {
+                return Some(cx.t("review.summary.remote-missing"));
+            }
+            None
+        })
+        .flatten();
+    if let Some(reason) = create_block {
+        return Err(KernelError::Message(reason));
+    }
     let (title, body, base, draft, reviewers, labels) = shared
         .with(|state| {
             (

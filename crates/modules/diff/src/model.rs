@@ -17,6 +17,8 @@ pub struct GitFile {
     pub untracked: bool,
     #[serde(default)]
     pub conflict: bool,
+    #[serde(default)]
+    pub comparison: bool,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -27,6 +29,8 @@ pub struct Changes {
     pub upstream: Option<String>,
     #[serde(default)]
     pub detached: bool,
+    #[serde(default)]
+    pub comparison: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]

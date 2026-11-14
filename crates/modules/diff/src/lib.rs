@@ -13,7 +13,7 @@ mod state;
 mod view;
 
 use crate::state::Shared;
-use forja_contracts::{names, BenchActivated, GitStatusChanged};
+use forja_contracts::{BenchActivated, GitComparisonChanged, GitStatusChanged, names};
 use forja_kernel::forja_protocol::{
     Method, MethodEffect, ParamKind, ParamSchema, ResultSchema, RpcError,
 };
@@ -58,6 +58,7 @@ impl Module for DiffModule {
 
         r.contract_event::<BenchActivated>(names::BENCH_ACTIVATED);
         r.contract_event::<GitStatusChanged>(names::GIT_STATUS_CHANGED);
+        r.contract_event::<GitComparisonChanged>(names::GIT_COMPARISON_CHANGED);
         let bench_state = self.state.clone();
         r.subscribe(move |_cx, event: &BenchActivated| {
             bench_state.set_bench(Some(event.0.path.clone()));
@@ -67,6 +68,18 @@ impl Module for DiffModule {
         r.subscribe(move |_cx, event: &GitStatusChanged| {
             if status_state.bench().as_deref() == Some(event.bench_path.as_str()) {
                 status_state.set_stale(true);
+            }
+        });
+        let comparison_state = self.state.clone();
+        r.subscribe(move |cx, event: &GitComparisonChanged| {
+            if comparison_state.bench().as_deref() == Some(event.bench_path.as_str())
+                && comparison_state
+                    .comparison()
+                    .as_deref()
+                    .and_then(commands::comparison_base)
+                    == event.base.as_deref()
+            {
+                let _ = commands::refresh(cx, &comparison_state, &Args::new());
             }
         });
 
@@ -85,13 +98,16 @@ impl Module for DiffModule {
             let bench = commands::bench_path(cx, &select, &args)?;
             let file = args.required_str("file")?.to_owned();
             let staged = args.bool("staged").unwrap_or(false);
-            commands::select(cx, &select, &bench, &file, staged)
+            let comparison = select.comparison();
+            commands::select(cx, &select, &bench, &file, staged, comparison.as_deref())
         });
 
         let send = self.state.clone();
-        r.command("diff.send_notes", "diff.command.send_notes", move |cx, args| {
-            commands::send_notes(cx, &send, &args)
-        });
+        r.command(
+            "diff.send_notes",
+            "diff.command.send_notes",
+            move |cx, args| commands::send_notes(cx, &send, &args),
+        );
 
         register_rpc(r, &self.state);
 
@@ -145,11 +161,7 @@ fn register_settings(r: &mut Registrar<'_>) {
         (
             "diff.notes.send_mode",
             SettingKind::Choice {
-                options: vec![
-                    "append".to_owned(),
-                    "replace".to_owned(),
-                    "ask".to_owned(),
-                ],
+                options: vec!["append".to_owned(), "replace".to_owned(), "ask".to_owned()],
             },
             SettingValue::Text("append".to_owned()),
         ),
@@ -200,7 +212,9 @@ fn register_rpc(r: &mut Registrar<'_>, shared: &Shared) {
                 .get("staged")
                 .and_then(Value::as_bool)
                 .unwrap_or(false);
-            commands::select(cx, &file, &bench, path, staged).map_err(rpc_error)
+            let comparison = file.comparison();
+            commands::select(cx, &file, &bench, path, staged, comparison.as_deref())
+                .map_err(rpc_error)
         },
     );
 
@@ -271,6 +285,8 @@ fn used_keys() -> Vec<&'static str> {
         "diff.image.loading",
         "diff.image.missing",
         "diff.error.no-bench",
+        "diff.comparison.heading",
+        "diff.error.comparison",
         "diff.method.changes.description",
         "diff.method.changes.result",
         "diff.method.file.description",
@@ -283,8 +299,8 @@ fn used_keys() -> Vec<&'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use forja_kernel::{contract, Module, ModuleManifest, Runtime, RuntimeOptions};
-    use serde_json::{json, Map};
+    use forja_kernel::{Module, ModuleManifest, Runtime, RuntimeOptions, contract};
+    use serde_json::{Map, json};
     use std::path::Path;
 
     fn temp_dir() -> std::path::PathBuf {
@@ -407,7 +423,10 @@ mod tests {
         let value = runtime.run_command("diff.open", Args::new()).unwrap();
         assert_eq!(value["files"], 2);
         let value = runtime
-            .call_method("diff.file", Map::from_iter([("file".to_owned(), json!("src/a.rs"))]))
+            .call_method(
+                "diff.file",
+                Map::from_iter([("file".to_owned(), json!("src/a.rs"))]),
+            )
             .unwrap();
         assert_eq!(value["hunks"], 1);
         let _ = std::fs::remove_dir_all(dir);
@@ -421,10 +440,7 @@ mod tests {
         shared.set_bench(Some("C:/bench".to_owned()));
         shared.add_note("src/a.rs", 12, "usar o e-mail");
         let mut runtime = Runtime::new(
-            vec![
-                Box::new(module),
-                Box::new(FakeTerminal),
-            ],
+            vec![Box::new(module), Box::new(FakeTerminal)],
             RuntimeOptions {
                 data_dir: Some(dir.clone()),
                 user_dir: Some(dir.join("user")),
