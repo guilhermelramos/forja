@@ -58,7 +58,10 @@ Publica:
 - Histórico (`history.rs`): por bancada, em `%APPDATA%\Forja\modules\find.json`.
   É lido e gravado em tarefas, com gravação atômica.
 - O picker desenha a própria janela, controlada por um flag de abertura, porque o
-  slot `modal` do shell fica sempre aberto.
+  slot `modal` do shell fica sempre aberto. A camada de teclado prende o Tab à
+  janela, e Escape a fecha. Texto digitado com o foco em qualquer controle dela
+  (inclusive o botão de fechar) volta para o campo de busca antes de o quadro
+  desenhar, então a primeira letra não se perde.
 
 ## Como testar
 
