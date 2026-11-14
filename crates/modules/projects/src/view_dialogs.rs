@@ -16,6 +16,10 @@ pub(crate) fn render_dialog(
     match dialog {
         Dialog::None => {}
         Dialog::Remove { project_id, name } => {
+            let layer = egui::Id::new("forja.projects.remove.keyboard");
+            if forja_ui_kit::consume_layer_escape(ctx, layer) {
+                return Dialog::None;
+            }
             let mut close = false;
             let mut remove = false;
             egui::Window::new(cx.t("project.dialog.remove.title"))
@@ -24,6 +28,7 @@ pub(crate) fn render_dialog(
                 .resizable(false)
                 .default_width(360.0)
                 .show(ctx, |ui| {
+                    forja_ui_kit::register_keyboard_layer(ui, layer);
                     ui.label(cx.t_args("project.dialog.remove.body", &[("name", name)]));
                     ui.add_space(8.0);
                     ui.horizontal(|ui| {
@@ -270,6 +275,10 @@ pub(crate) fn render_dialog(
             }
         }
         Dialog::Edit(form) => {
+            let layer = egui::Id::new("forja.projects.edit.keyboard");
+            if forja_ui_kit::consume_layer_escape(ctx, layer) {
+                return Dialog::None;
+            }
             let mut close = false;
             let mut submit = false;
             egui::Window::new(cx.t("project.dialog.edit.title"))
@@ -278,6 +287,7 @@ pub(crate) fn render_dialog(
                 .resizable(false)
                 .default_width(380.0)
                 .show(ctx, |ui| {
+                    forja_ui_kit::register_keyboard_layer(ui, layer);
                     forja_ui_kit::text_field(ui, &mut form.name, &cx.t("project.field.name-hint"));
                     ui.horizontal(|ui| {
                         ui.add_sized([52.0, 28.0], egui::TextEdit::singleline(&mut form.icon));
