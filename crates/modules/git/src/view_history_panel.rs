@@ -11,6 +11,13 @@ pub(crate) fn render_history(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared
         return;
     };
     let lines = state.commits();
+    if let Some(branch) = state.report().and_then(|report| report.summary.branch) {
+        ui.label(
+            egui::RichText::new(cx.t_args("git.history.branch", &[("branch", &branch)]))
+                .small()
+                .color(c32(tokens.color.text_muted)),
+        );
+    }
     if lines.is_empty() {
         forja_ui_kit::empty_state(ui, forja_ui_kit::ARCHIVE, &cx.t("git.history.empty"), None);
         return;

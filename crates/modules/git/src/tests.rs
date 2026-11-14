@@ -187,8 +187,26 @@ fn publish_and_abort_without_remote_or_merge_have_clear_outcomes() {
     std::fs::create_dir_all(&root).unwrap();
     let work = repo(&root);
     assert_eq!(engine::publish(&work).unwrap_err(), "no-remote");
+    assert_eq!(engine::pull(&work).unwrap_err(), "no-remote");
     assert_eq!(engine::abort(&work).unwrap_err(), "nothing-to-abort");
     let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
+fn status_refresh_keeps_operation_errors_visible() {
+    let state = Shared::new();
+    state.set_error(Some("pull failed".to_owned()));
+    state.set_report(engine::StatusReport::default());
+    assert_eq!(state.error().as_deref(), Some("pull failed"));
+}
+
+#[test]
+fn mutations_invalidate_the_cached_history() {
+    let state = Shared::new();
+    state.set_commits("C:/bancada", Vec::new());
+    assert!(state.log_for("C:/bancada"));
+    state.invalidate_log();
+    assert!(!state.log_for("C:/bancada"));
 }
 
 #[test]

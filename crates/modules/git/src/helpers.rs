@@ -11,6 +11,7 @@ pub(crate) fn refresh_now(
 ) -> forja_kernel::Result<Value> {
     let report = engine::status(std::path::Path::new(&path)).map_err(kernel_error)?;
     shared.set_report(report.clone());
+    shared.invalidate_log();
     cx.emit(&GitStatusChanged {
         bench_path: path,
         summary: report.summary.clone(),
@@ -69,20 +70,9 @@ where
                     text
                 }));
             }
-            Err(error) => {
-                let message = if error == "no-remote" {
-                    cx.t("git.error.no-remote")
-                } else if error == "nothing-to-abort" {
-                    cx.t("git.error.nothing-to-abort")
-                } else {
-                    match error.strip_prefix("protected:") {
-                        Some(branch) => cx.t_args("git.error.protected", &[("branch", branch)]),
-                        None => error,
-                    }
-                };
-                state.set_error(Some(message));
-            }
+            Err(error) => state.set_error(Some(error)),
         }
+        state.invalidate_log();
         refresh_async(cx, &state);
     });
 }

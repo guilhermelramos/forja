@@ -80,7 +80,8 @@ impl Shared {
             state.report = Some(report);
             state.last_refresh = Some(Instant::now());
             state.refreshing = false;
-            state.error = None;
+            // An operation error stays visible until it is dismissed; a
+            // successful status refresh must not erase it.
         }
     }
 
@@ -149,6 +150,14 @@ impl Shared {
             .lock()
             .map(|state| state.log_for.as_deref() == Some(path))
             .unwrap_or(false)
+    }
+
+    /// Forces the next History draw to read the log again after a commit,
+    /// pull, rebase or explicit refresh changed HEAD.
+    pub fn invalidate_log(&self) {
+        if let Ok(mut state) = self.0.lock() {
+            state.log_for = None;
+        }
     }
 
     pub fn blame(&self) -> Vec<BlameLine> {
