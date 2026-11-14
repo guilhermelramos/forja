@@ -2,6 +2,7 @@
 
 mod actions;
 mod anvil;
+mod anvil_ask;
 mod anvil_keys;
 mod app;
 mod appearance;

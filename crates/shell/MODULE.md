@@ -20,7 +20,12 @@ fixas a partir dos slots e liga o RPC por named pipe.
 - A Bigorna oferece a escolha de página para `shell.rail.open` e pede título para
   `muster.run`; os comandos `appearance.theme.light` e `appearance.theme.dark`
   alteram o modo. O menu de abas permite alcançar contribuições fora da faixa visível.
-- gera Ajustes a partir do schema de cada módulo;
+- Comandos que declaram `CommandField` (bancada, projeto, etapa, nome) pedem o
+  valor na própria Bigorna: lista filtrável lida de outro comando ou texto no
+  campo de busca. O mecanismo é genérico (`anvil_ask.rs`); o módulo só diz qual
+  comando devolve as opções e quais campos ler.
+- gera Ajustes a partir do schema de cada módulo; a busca recebe o foco ao abrir,
+  a roda/barra e PageUp/PageDown rolam a lista e Tab revela o controle focado;
 - executa os atalhos do keymap; Ctrl+K, Ctrl+Shift+P, Ctrl+P, Ctrl+Vírgula,
   Ctrl+Shift+B, setas entre abas e Ctrl+1..0 funcionam com o texto focado;
 - abas da bancada: próxima/anterior, fechar (Ctrl+W e Ctrl+Shift+W em qualquer
@@ -53,6 +58,7 @@ chaves `notifications.*`.
 | `src/appearance.rs` | tema, densidade, zoom e idioma |
 | `src/layout.rs` | regiões do produto |
 | `src/anvil.rs` | Bigorna |
+| `src/anvil_ask.rs` | valores que faltam, perguntados na Bigorna |
 | `src/overlays.rs` | Ajustes gerados |
 | `src/theme.rs` | tokens a partir do modo e da densidade |
 | `src/system.rs` | tema e idioma do Windows |

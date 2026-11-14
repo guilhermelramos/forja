@@ -161,3 +161,7 @@ setting-bench-stage-pr-merge-help = Defines whether the bench moves to ready whe
 setting-bench-stage-archive-on_ready-label = Archive on ready
 setting-bench-stage-archive-on_ready-help = Archives the bench automatically when it reaches ready.
 bench-dialog-create-add-folder = Add folder
+bench-ask-bench = Which bench?
+bench-ask-project = Which project?
+bench-ask-name = Bench name
+bench-ask-stage = Move to which stage?

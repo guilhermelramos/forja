@@ -1,5 +1,6 @@
 //! Bigorna: fuzzy search across commands, benches, files and settings.
 
+use crate::anvil_ask::Ask;
 use crate::anvil_keys::AnvilKeys;
 use crate::app::ForjaApp;
 use eframe::egui::{self, Align2, FontId, RichText, Sense};
@@ -19,6 +20,8 @@ pub(crate) enum HitKind {
         command: String,
         args: serde_json::Map<String, Value>,
     },
+    /// One option of the value the Anvil is currently asking for.
+    Ask(usize),
 }
 
 struct Hit {
@@ -44,6 +47,7 @@ impl ForjaApp {
             active && !was_active
         });
         let keys = AnvilKeys::from_keymap(self.runtime.keymap());
+        let ask = self.anvil_ask.clone();
         let search_id = egui::Id::new("forja.anvil.search_id");
         let search_focused = ctx
             .data(|data| data.get_temp::<egui::Id>(search_id))
@@ -58,6 +62,15 @@ impl ForjaApp {
             && !egui::Popup::is_any_open(ctx)
             && ctx.input_mut(|input| input.consume_key(keys.close.0, keys.close.1))
         {
+            // Escape first backs out of the current question, keeping the
+            // Anvil open on the command list.
+            if self.anvil_ask.take().is_some() {
+                self.anvil_query.clear();
+                self.anvil_query_seen.clear();
+                self.anvil_selected = 0;
+                self.focus_anvil = true;
+                return;
+            }
             self.anvil_open = false;
             restore_focus(ctx);
             return;
@@ -74,10 +87,20 @@ impl ForjaApp {
         }
         let hits = self.collect_hits();
         let mut chosen: Option<(HitKind, bool)> = None;
+        let mut ask_submit: Option<String> = None;
         let mut cycle = 0i32;
         let title = self.text("shell.anvil.title");
-        let footer = self.text("shell.anvil.footer");
+        let footer = self.text(if ask.is_some() {
+            "shell.anvil.ask-footer"
+        } else {
+            "shell.anvil.footer"
+        });
         let empty_key = self.empty_key();
+        let ask_prompt = ask
+            .as_ref()
+            .and_then(Ask::field)
+            .map(|field| self.text(field.label_key));
+        let ask_is_text = ask.as_ref().is_some_and(Ask::is_text);
         let group_labels = [
             self.text("shell.anvil.group.all"),
             self.text("shell.anvil.group.commands"),
@@ -96,6 +119,8 @@ impl ForjaApp {
                 forja_ui_kit::register_keyboard_layer(ui, layer);
                 let hint = self.text(if self.anvil_muster_title {
                     "shell.anvil.muster-title"
+                } else if ask.is_some() {
+                    "shell.anvil.ask-search"
                 } else {
                     "shell.anvil.search"
                 });
@@ -107,13 +132,16 @@ impl ForjaApp {
                     self.focus_anvil = false;
                 }
                 ui.add_space(6.0);
+                if let Some(prompt) = &ask_prompt {
+                    ui.label(RichText::new(prompt).strong());
+                }
                 if self.anvil_rail_select {
                     ui.label(self.text("shell.anvil.choose-rail"));
                 }
                 if self.anvil_muster_title {
                     ui.label(self.text("shell.anvil.muster-title"));
                 }
-                if !self.anvil_rail_select && !self.anvil_muster_title {
+                if !self.anvil_rail_select && !self.anvil_muster_title && ask.is_none() {
                     let mut index = self.active_group();
                     let refs: Vec<&str> = group_labels.iter().map(String::as_str).collect();
                     forja_ui_kit::segmented(ui, &mut index, &refs);
@@ -152,7 +180,20 @@ impl ForjaApp {
                 let run = search_active
                     && ui.input_mut(|input| input.consume_key(keys.run.0, keys.run.1));
                 if run || keep {
-                    if self.anvil_muster_title {
+                    if ask.is_some() {
+                        if ask_is_text {
+                            let value = self.anvil_query.trim().to_owned();
+                            if !value.is_empty() {
+                                ask_submit = Some(value);
+                            }
+                            search.request_focus();
+                        } else if hits.is_empty() {
+                            search.request_focus();
+                        } else {
+                            let index = self.anvil_selected.min(hits.len() - 1);
+                            chosen = Some((hits[index].kind.clone(), keep));
+                        }
+                    } else if self.anvil_muster_title {
                         if !self.anvil_query.trim().is_empty() {
                             let mut args = serde_json::Map::new();
                             args.insert(
@@ -176,7 +217,12 @@ impl ForjaApp {
                     }
                 }
                 ui.add_space(4.0);
-                if !self.anvil_muster_title {
+                if ask_is_text {
+                    ui.label(
+                        RichText::new(self.text("shell.anvil.ask-text-hint"))
+                            .color(muted(&tokens)),
+                    );
+                } else if !self.anvil_muster_title {
                     egui::ScrollArea::vertical()
                         .max_height(results_height)
                         .show(ui, |ui| {
@@ -193,7 +239,8 @@ impl ForjaApp {
                             }
                         });
                 }
-                if !self.anvil_muster_title
+                if ask.is_none()
+                    && !self.anvil_muster_title
                     && !self.anvil_rail_select
                     && !self.anvil_views.is_empty()
                     && self
@@ -231,10 +278,17 @@ impl ForjaApp {
             self.anvil_group = (self.anvil_group as i32 + cycle).rem_euclid(count) as usize;
         }
         if let Some((kind, keep)) = chosen {
-            if !keep {
-                restore_focus(ctx);
+            if let HitKind::Ask(index) = kind {
+                self.apply_ask_choice(index);
+            } else {
+                if !keep {
+                    restore_focus(ctx);
+                }
+                self.run_hit(kind, keep);
             }
-            self.run_hit(kind, keep);
+        }
+        if let Some(value) = ask_submit {
+            self.apply_ask_value(value);
         }
     }
 
@@ -247,6 +301,9 @@ impl ForjaApp {
     }
 
     fn empty_key(&self) -> &'static str {
+        if self.anvil_ask.is_some() {
+            return "shell.anvil.ask-empty";
+        }
         match self.active_group() {
             2 if self.runtime.registry().command("bench.list").is_none() => {
                 "shell.anvil.benches-missing"
@@ -268,6 +325,9 @@ impl ForjaApp {
             .trim()
             .to_owned();
         let query = raw.to_lowercase();
+        if self.anvil_ask.is_some() {
+            return self.ask_hits(&query);
+        }
         if self.anvil_rail_select {
             return self
                 .rail_views
@@ -305,6 +365,41 @@ impl ForjaApp {
         let show_recent = self.setting_bool("anvil.history.show_recent", true);
         apply_history_boost(&mut hits, &self.anvil_history, &query, show_recent);
         hits.sort_by(|a, b| b.score.cmp(&a.score).then_with(|| a.title.cmp(&b.title)));
+        hits.truncate(40);
+        if self.anvil_selected >= hits.len() {
+            self.anvil_selected = hits.len().saturating_sub(1);
+        }
+        hits
+    }
+
+    /// Options of the current question. An empty query keeps the source order
+    /// (pinned and recent benches first); typing filters by both label and detail.
+    fn ask_hits(&mut self, query: &str) -> Vec<Hit> {
+        let Some(ask) = &self.anvil_ask else {
+            return Vec::new();
+        };
+        if ask.is_text() {
+            return Vec::new();
+        }
+        let mut hits: Vec<Hit> = ask
+            .options
+            .iter()
+            .enumerate()
+            .filter_map(|(index, option)| {
+                let score = best_score(query, &option.label, &option.detail)?;
+                Some(Hit {
+                    kind: HitKind::Ask(index),
+                    title: option.label.clone(),
+                    detail: option.detail.clone(),
+                    icon: None,
+                    chord: String::new(),
+                    score,
+                })
+            })
+            .collect();
+        if !query.is_empty() {
+            hits.sort_by(|a, b| b.score.cmp(&a.score).then_with(|| a.title.cmp(&b.title)));
+        }
         hits.truncate(40);
         if self.anvil_selected >= hits.len() {
             self.anvil_selected = hits.len().saturating_sub(1);
@@ -492,6 +587,23 @@ impl ForjaApp {
             self.focus_anvil = true;
             return;
         }
+        // A command that needs context asks for it in the Anvil instead of
+        // failing with a missing-argument error.
+        match &kind {
+            HitKind::Command(command) if self.start_ask(command) => return,
+            HitKind::Action { command, args }
+                if args.is_empty()
+                    && self
+                        .runtime
+                        .registry()
+                        .command(command)
+                        .is_some_and(|spec| !spec.fields.is_empty()) =>
+            {
+                self.start_ask(command);
+                return;
+            }
+            _ => {}
+        }
         let id = history_id(&kind);
         self.remember(&id);
         if !keep_open {
@@ -513,6 +625,7 @@ impl ForjaApp {
                 self.settings_open = true;
                 self.settings_query = key;
             }
+            HitKind::Ask(_) => {}
             HitKind::Action { command, args } => {
                 match self.runtime.run_command(&command, Args::from_map(args)) {
                     Ok(_) if command == "muster.run" => {
@@ -594,6 +707,7 @@ fn history_id(kind: &HitKind) -> String {
             let path = args.get("path").and_then(Value::as_str).unwrap_or("");
             format!("action:{command}:{path}")
         }
+        HitKind::Ask(index) => format!("ask:{index}"),
     }
 }
 
@@ -740,7 +854,7 @@ fn right_label(hit: &Hit) -> &str {
         return &hit.chord;
     }
     match hit.kind {
-        HitKind::File(_) | HitKind::Action { .. } => &hit.detail,
+        HitKind::File(_) | HitKind::Action { .. } | HitKind::Ask(_) => &hit.detail,
         HitKind::Command(_) | HitKind::Bench(_) | HitKind::Setting(_) => "",
     }
 }

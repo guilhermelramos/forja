@@ -34,7 +34,9 @@ pub mod ui;
 pub mod ui_contract;
 
 pub use args::{Args, CommandId};
-pub use commands::{Availability, AvailabilityContext, CommandSpec};
+pub use commands::{
+    Availability, AvailabilityContext, CommandField, CommandFieldKind, CommandSpec,
+};
 pub use error::{KernelError, Result};
 pub use events::{EventBus, EventSignature};
 pub use i18n::{BundleSource, I18n, Locale};

@@ -117,6 +117,8 @@ pub struct ForjaApp {
     pub(crate) anvil_selected: usize,
     pub(crate) anvil_rail_select: bool,
     pub(crate) anvil_muster_title: bool,
+    /// Missing command values being asked in the Anvil, one field at a time.
+    pub(crate) anvil_ask: Option<crate::anvil_ask::Ask>,
     pub(crate) anvil_group: usize,
     pub(crate) anvil_history: Vec<String>,
     pub(crate) focus_anvil: bool,
@@ -231,6 +233,7 @@ impl ForjaApp {
             anvil_selected: 0,
             anvil_rail_select: false,
             anvil_muster_title: false,
+            anvil_ask: None,
             anvil_group: 0,
             anvil_history,
             focus_anvil: false,
@@ -341,6 +344,7 @@ impl ForjaApp {
         if !already {
             self.anvil_rail_select = false;
             self.anvil_muster_title = false;
+            self.anvil_ask = None;
             self.anvil_query.clear();
             self.anvil_query_seen.clear();
             self.anvil_selected = 0;
@@ -364,6 +368,11 @@ impl ForjaApp {
     }
 
     pub(crate) fn run_command(&mut self, id: &str) {
+        self.run_command_args(id, Args::new());
+    }
+
+    /// Runs a command with values collected by the Anvil or supplied by a module.
+    pub(crate) fn run_command_args(&mut self, id: &str, args: Args) {
         self.active_crumb_checked = None;
         if id == "terminal.toggle"
             && self.rail_page.is_none()
@@ -373,7 +382,7 @@ impl ForjaApp {
             actions::push(actions::Action::CloseTab);
             return;
         }
-        match self.runtime.run_command(id, Args::new()) {
+        match self.runtime.run_command(id, args) {
             Ok(_) => {
                 self.status = None;
                 if matches!(id, "terminal.open" | "terminal.search" | "terminal.toggle") {
@@ -682,7 +691,11 @@ impl ForjaApp {
             }
         }
         for id in fired {
-            self.run_command(&id);
+            // A command that needs context asks for it in the Anvil instead of
+            // failing with a missing-argument error.
+            if !self.start_ask(&id) {
+                self.run_command(&id);
+            }
         }
     }
 
