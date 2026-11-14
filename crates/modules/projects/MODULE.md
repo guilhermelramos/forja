@@ -25,6 +25,9 @@ projetos. O arquivo do módulo fica em `<dados>/modules/project.json`.
    ordem 20) com filtro, agrupamento, ordenação, fixar e lido/não lido.
 3. Se o módulo de bancadas não estiver carregado, `bench.list` falha, a lateral
    mostra uma dica e o resto do módulo continua funcionando.
+4. O botão da lateral se chama "Novo projeto" e explica no tooltip que bancadas
+   nascem no Quadro; "Novo" sozinho abria o diálogo de projeto e confundia quem
+   procurava uma bancada.
 
 ## Regras
 

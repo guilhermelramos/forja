@@ -117,10 +117,17 @@ struct Created {
 fn run_create(job: CreateJob) -> Result<Created, String> {
     let project_path = Path::new(&job.project.path);
     git::ensure_repo(project_path)?;
+    if !git::has_commits(project_path) {
+        return Err("no-commits".to_owned());
+    }
     let mut warnings = Vec::new();
     if job.fetch {
-        if let Err(error) = git::fetch(project_path) {
-            warnings.push(error);
+        // A project created by "Novo" starts with no remote; there is nothing
+        // to fetch and the creation must continue instead of failing later.
+        if git::has_remote(project_path) {
+            if let Err(error) = git::fetch(project_path) {
+                warnings.push(error);
+            }
         }
     }
     let base = git::resolve_base(project_path, &job.base_mode)?;
@@ -183,11 +190,19 @@ fn finish_create(cx: &mut Ctx<'_>, shared: &Shared, result: Result<Created, Stri
     let created = match result {
         Ok(created) => created,
         Err(error) => {
-            shared.set_error(Some(error.clone()));
-            notify(cx, cx.t("bench.notify.create-failed.title"), error, "error");
+            let message = humanize_error(cx, &error);
+            shared.finish_create(Some(message.clone()));
+            shared.set_error(Some(message.clone()));
+            notify(
+                cx,
+                cx.t("bench.notify.create-failed.title"),
+                message,
+                "error",
+            );
             return;
         }
     };
+    shared.finish_create(None);
     let record = created.record.clone();
     if let Err(error) = shared.mutate(cx, |file| {
         if file.find(&record.bench_id).is_none() {
@@ -254,3 +269,11 @@ fn finish_create(cx: &mut Ctx<'_>, shared: &Shared, result: Result<Created, Stri
     }
 }
 
+/// Turns the low-level creation errors into the same text the dialog shows.
+pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> String {
+    match raw.trim() {
+        "bench name is required" => cx.t("bench.error.name-required"),
+        "no-commits" => cx.t("bench.error.no-commits"),
+        other => cx.t_args("bench.error.create", &[("detail", other)]),
+    }
+}

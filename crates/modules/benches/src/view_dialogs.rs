@@ -111,6 +111,15 @@ impl View for DialogsView {
                         });
                         forja_ui_kit::toggle(ui, &mut fetch, &cx.t("bench.dialog.create.fetch"));
                         form.fetch = Some(fetch);
+                        if form.creating {
+                            ui.horizontal(|ui| {
+                                ui.spinner();
+                                ui.label(
+                                    egui::RichText::new(cx.t("bench.dialog.create.creating"))
+                                        .small(),
+                                );
+                            });
+                        }
                         if let Some(error) = &form.error {
                             ui.label(
                                 egui::RichText::new(error).small().color(c32(
@@ -120,53 +129,67 @@ impl View for DialogsView {
                         }
                         ui.add_space(8.0);
                         ui.horizontal(|ui| {
-                            if forja_ui_kit::button(
-                                ui,
-                                forja_ui_kit::ButtonKind::Primary,
-                                &cx.t("bench.dialog.create.submit"),
-                            )
-                            .clicked()
+                            if !form.creating
+                                && forja_ui_kit::button(
+                                    ui,
+                                    forja_ui_kit::ButtonKind::Primary,
+                                    &cx.t("bench.dialog.create.submit"),
+                                )
+                                .clicked()
                             {
                                 submit = true;
                             }
-                            if forja_ui_kit::button(
-                                ui,
-                                forja_ui_kit::ButtonKind::Ghost,
-                                &cx.t("bench.dialog.cancel"),
-                            )
-                            .clicked()
+                            if !form.creating
+                                && forja_ui_kit::button(
+                                    ui,
+                                    forja_ui_kit::ButtonKind::Ghost,
+                                    &cx.t("bench.dialog.cancel"),
+                                )
+                                .clicked()
                             {
                                 cancel = true;
                             }
                         });
                     });
+                let mut save_form = true;
                 if add_folder {
+                    save_form = false;
                     self.state.set_dialog(Dialog::None);
                     if let Err(error) = cx.run_command("project.add_dialog", Args::new()) {
                         self.state.set_error(Some(error.to_string()));
                     }
                 } else if submit {
-                    match service::create(
-                        cx,
-                        &self.state,
-                        &form.project_id,
-                        &form.name,
-                        Some(form.base.as_str()).filter(|value| !value.trim().is_empty()),
-                        None,
-                        form.fetch,
-                    ) {
-                        Ok(_) => {
-                            self.state.set_dialog(Dialog::None);
-                            // The card must show up without waiting for the board timer.
-                            let _ = cx.run_command("board.refresh", Args::new());
+                    form.error = None;
+                    if form.name.trim().is_empty() {
+                        form.error = Some(cx.t("bench.error.name-required"));
+                    } else {
+                        form.creating = true;
+                        match service::create(
+                            cx,
+                            &self.state,
+                            &form.project_id,
+                            &form.name,
+                            Some(form.base.as_str()).filter(|value| !value.trim().is_empty()),
+                            None,
+                            form.fetch,
+                        ) {
+                            Ok(_) => {
+                                // The worker closes the dialog on success; the
+                                // board refresh shows the card as soon as it exists.
+                                let _ = cx.run_command("board.refresh", Args::new());
+                            }
+                            Err(error) => {
+                                form.creating = false;
+                                form.error = Some(crate::create::humanize_error(cx, &error));
+                            }
                         }
-                        Err(error) => form.error = Some(error),
                     }
                 } else if cancel {
+                    save_form = false;
                     self.state.set_dialog(Dialog::None);
-                } else {
-                    let next_dialog = Dialog::Create(form.clone());
-                    self.state.set_dialog(next_dialog);
+                }
+                if save_form {
+                    self.state.set_dialog(Dialog::Create(form.clone()));
                 }
             }
             Dialog::Store(form) => {
@@ -227,6 +250,7 @@ impl View for DialogsView {
                             }
                         });
                     });
+                let mut keep = true;
                 if submit {
                     match service::store(
                         cx,
@@ -235,12 +259,17 @@ impl View for DialogsView {
                         Some(form.delete_branch),
                         Some(form.force),
                     ) {
-                        Ok(()) => self.state.set_dialog(Dialog::None),
+                        Ok(()) => {
+                            keep = false;
+                            self.state.set_dialog(Dialog::None);
+                        }
                         Err(error) => form.error = Some(error),
                     }
                 } else if cancel {
+                    keep = false;
                     self.state.set_dialog(Dialog::None);
-                } else {
+                }
+                if keep {
                     self.state.set_dialog(Dialog::Store(form.clone()));
                 }
             }
@@ -318,14 +347,20 @@ impl View for DialogsView {
                             }
                         });
                     });
+                let mut keep = true;
                 if submit {
                     match service::approve(cx, &self.state, &form.project_id, Some("both")) {
-                        Ok(_) => self.state.set_dialog(Dialog::None),
+                        Ok(_) => {
+                            keep = false;
+                            self.state.set_dialog(Dialog::None);
+                        }
                         Err(error) => form.error = Some(error),
                     }
                 } else if cancel {
+                    keep = false;
                     self.state.set_dialog(Dialog::None);
-                } else {
+                }
+                if keep {
                     self.state.set_dialog(Dialog::Approve(form.clone()));
                 }
             }

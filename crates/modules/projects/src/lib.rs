@@ -252,6 +252,7 @@ impl Module for ProjectsModule {
             "project.sidebar.empty",
             "project.sidebar.add",
             "project.sidebar.create",
+            "project.sidebar.create-hint",
             "project.sidebar.clone",
             "project.sidebar.remove",
             "project.sidebar.edit",

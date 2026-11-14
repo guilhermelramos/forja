@@ -20,6 +20,8 @@ pub struct CreateForm {
     pub base: String,
     pub fetch: Option<bool>,
     pub error: Option<String>,
+    /// O trabalho assíncrono começou; o diálogo só fecha quando ele termina.
+    pub creating: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -153,6 +155,21 @@ impl Shared {
     pub fn set_dialog(&self, dialog: Dialog) {
         if let Ok(mut state) = self.0.lock() {
             state.dialog = dialog;
+        }
+    }
+
+    /// Closes the create dialog when the worktree is ready, or keeps it open
+    /// with the full error and the typed values when creation fails.
+    pub fn finish_create(&self, error: Option<String>) {
+        if let Ok(mut state) = self.0.lock() {
+            let Dialog::Create(form) = &mut state.dialog else {
+                return;
+            };
+            form.creating = false;
+            match error {
+                Some(error) => form.error = Some(error),
+                None => state.dialog = Dialog::None,
+            }
         }
     }
 
