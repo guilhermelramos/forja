@@ -169,7 +169,22 @@ mod tests {
     use std::path::PathBuf;
     use std::sync::Arc;
 
-    fn temp_dir() -> PathBuf {
+    struct TempGuard(PathBuf);
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            for attempt in 0..20 {
+                if std::fs::remove_dir_all(&self.0).is_ok() || !self.0.exists() {
+                    return;
+                }
+                if attempt < 19 {
+                    std::thread::sleep(std::time::Duration::from_millis(15));
+                }
+            }
+        }
+    }
+
+    fn temp_dir() -> TempGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-muster-module-{}-{}",
             std::process::id(),
@@ -179,7 +194,7 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        dir
+        TempGuard(dir)
     }
 
     fn runtime_with(dir: &std::path::Path, shared: Shared) -> Runtime {
@@ -202,17 +217,15 @@ mod tests {
     #[test]
     fn run_rejects_whitespace_titles() {
         let dir = temp_dir();
-        let mut runtime = runtime(&dir);
+        let mut runtime = runtime(&dir.0);
         let error = runtime.call_method("muster.run", Map::from_iter([("title".into(), json!("  \t  "))])).unwrap_err();
         assert!(error.message.contains("Digite um título"));
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
     fn contract_and_rpc_flow_degrades_without_helper() {
         let dir = temp_dir();
-        let mut runtime = runtime(&dir);
+        let mut runtime = runtime(&dir.0);
         contract::assert_ok(runtime.registry(), runtime.i18n());
         runtime
             .set_setting(
@@ -246,7 +259,7 @@ mod tests {
                 "muster.start",
                 Map::from_iter([
                     ("task".to_owned(), json!(task_id)),
-                    ("bench_path".to_owned(), json!(dir.display().to_string())),
+                    ("bench_path".to_owned(), json!(dir.0.display().to_string())),
                 ]),
             )
             .expect_err("helper is absent");
@@ -260,8 +273,6 @@ mod tests {
             .call_method("muster.inbox", Map::new())
             .expect("inbox");
         assert_eq!(inbox["notes"], json!([]));
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     struct StubShell {
@@ -296,8 +307,8 @@ mod tests {
                 }),
             ],
             RuntimeOptions {
-                data_dir: Some(dir.clone()),
-                user_dir: Some(dir.join("user")),
+                data_dir: Some(dir.0.clone()),
+                user_dir: Some(dir.0.join("user")),
                 locale: Some("pt-BR".to_owned()),
                 wake: None,
             },
@@ -307,14 +318,12 @@ mod tests {
             .run_command("muster.open", forja_kernel::Args::new())
             .expect("open");
         assert_eq!(calls.lock().unwrap().as_slice(), ["muster.page"]);
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
     fn plan_approval_and_budget_gate_starting() {
         let dir = temp_dir();
-        let mut runtime = runtime(&dir);
+        let mut runtime = runtime(&dir.0);
         let run = runtime
             .call_method(
                 "muster.run",
@@ -342,7 +351,7 @@ mod tests {
                 "muster.start",
                 Map::from_iter([
                     ("task".to_owned(), json!(task_id)),
-                    ("bench_path".to_owned(), json!(dir.display().to_string())),
+                    ("bench_path".to_owned(), json!(dir.0.display().to_string())),
                 ]),
             )
             .expect_err("plan is pending");
@@ -369,19 +378,17 @@ mod tests {
                 "muster.start",
                 Map::from_iter([
                     ("task".to_owned(), json!(task_id)),
-                    ("bench_path".to_owned(), json!(dir.display().to_string())),
+                    ("bench_path".to_owned(), json!(dir.0.display().to_string())),
                 ]),
             )
             .expect_err("budget is exhausted");
         assert!(error.message.contains("teto"), "{}", error.message);
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
     fn disabled_muster_rejects_new_runs() {
         let dir = temp_dir();
-        let mut runtime = runtime(&dir);
+        let mut runtime = runtime(&dir.0);
         runtime.set_setting("muster.mode.enabled", SettingValue::Bool(false)).unwrap();
         assert!(runtime.call_method("muster.run", Map::from_iter([
             ("title".to_owned(), json!("Run")),
@@ -390,27 +397,23 @@ mod tests {
         assert!(runtime.call_method("muster.run", Map::from_iter([
             ("title".to_owned(), json!("Run")),
         ])).is_ok());
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
     fn dispatch_rejects_new_bench_until_creation_can_be_awaited() {
         let dir = temp_dir();
-        let mut runtime = runtime(&dir);
+        let mut runtime = runtime(&dir.0);
         let result = runtime.call_method("muster.start", Map::from_iter([
             ("task".to_owned(), json!("task-1")),
             ("new_bench".to_owned(), json!(true)),
         ])).unwrap_err();
         assert!(result.message.contains("bancada"), "{}", result.message);
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
     fn max_tasks_limits_the_plan() {
         let dir = temp_dir();
-        let mut runtime = runtime(&dir);
+        let mut runtime = runtime(&dir.0);
         runtime
             .set_setting("muster.plan.max_tasks", SettingValue::Integer(1))
             .unwrap();
@@ -440,15 +443,13 @@ mod tests {
             )
             .expect_err("max tasks reached");
         assert!(error.message.contains("limite"), "{}", error.message);
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
     fn handoff_with_evidence_marks_task_delivered() {
         let dir = temp_dir();
         let shared = state::new_shared();
-        let mut runtime = runtime_with(&dir, shared.clone());
+        let mut runtime = runtime_with(&dir.0, shared.clone());
         let run = runtime
             .call_method(
                 "muster.run",
@@ -509,21 +510,31 @@ mod tests {
             .unwrap();
         assert_eq!(status["tasks"][0]["state"], "delivered");
         assert_eq!(status["runs"][0]["state"], "done");
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
     fn raw_muster_errors_are_humanized() {
         let dir = temp_dir();
-        let mut runtime = runtime(&dir);
+        let mut runtime = runtime(&dir.0);
         let cx = runtime.ctx("muster");
         let disabled = view::humanize_error(&cx, "muster is disabled");
         assert!(disabled.contains("desativado"), "{disabled}");
         let cmd = view::humanize_error(&cx, "command `muster.run` failed");
         assert!(cmd.contains("Não foi possível concluir"), "{cmd}");
         assert!(cmd.contains("muster.run"), "{cmd}");
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn strips_internal_command_prefixes_from_errors() {
+        let dir = temp_dir();
+        let mut runtime = runtime(&dir.0);
+        let cx = runtime.ctx("muster");
+        let msg = view::humanize_error(
+            &cx,
+            "command `muster.start` failed: não foi possível abrir o ajudante: command `helper.launch` failed: O ajudante Claude Code não está instalado.",
+        );
+        assert!(!msg.contains("muster.start"), "{msg}");
+        assert!(!msg.contains("helper.launch"), "{msg}");
+        assert!(msg.contains("não está instalado"), "{msg}");
     }
 }

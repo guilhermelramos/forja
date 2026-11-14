@@ -74,6 +74,9 @@ fn menu_row(ui: &mut Ui, item: &MenuItem<'_>) -> Response {
     let metrics = tokens.metrics();
     let width = ui.available_width().max(160.0);
     let (rect, response) = ui.allocate_exact_size(egui::vec2(width, metrics.row), Sense::click());
+    response.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), item.label)
+    });
     if response.hovered() {
         ui.painter().rect_filled(
             rect,

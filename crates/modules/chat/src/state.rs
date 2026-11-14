@@ -5,6 +5,7 @@ use crate::profile::{self, ChatProfile};
 use crate::runner::{self, Turn};
 use crate::stream::StreamEvent;
 use crate::transcript::{self, Format, TranscriptTail};
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
@@ -120,8 +121,16 @@ impl ChatSession {
 
     /// Inicia um turno agora.
     pub fn start_prompt(&mut self, prompt: String) -> Result<(), String> {
+        profile::turn_args(
+            &self.profile,
+            self.session_id.as_deref(),
+            &self.permission,
+            self.model.as_deref(),
+            self.effort.as_deref(),
+        )?;
+        self.push_user(&prompt);
         let environment = profile::turn_env(&self.profile, &self.permission);
-        let turn = runner::start_turn(
+        let turn = match runner::start_turn(
             &self.profile,
             &self.bench_path,
             self.session_id.as_deref(),
@@ -130,8 +139,15 @@ impl ChatSession {
             self.model.as_deref(),
             self.effort.as_deref(),
             &environment,
-        )?;
-        self.push_user(&prompt);
+        ) {
+            Ok(turn) => turn,
+            Err(error) => {
+                self.status = SessionStatus::Error;
+                self.error = Some(error.clone());
+                self.last_event_at = Instant::now();
+                return Err(error);
+            }
+        };
         self.turn = Some(TurnHandle {
             turn,
             started: Instant::now(),
@@ -315,6 +331,14 @@ pub struct ChatState {
     pub active: Option<ChatSession>,
     /// Prévia já semeada.
     pub preview_seeded: bool,
+    /// Perfis compatíveis detectados como instalados.
+    pub installed_helpers: BTreeSet<String>,
+    /// Comandos sugeridos de instalação por perfil.
+    pub install_hints: BTreeMap<String, String>,
+    /// Se a detecção já foi sincronizada pelo menos uma vez.
+    pub detection_known: bool,
+    /// Se o usuário escolheu manualmente um ajudante no seletor.
+    pub user_picked_profile: bool,
 }
 
 impl ChatState {
@@ -330,6 +354,27 @@ impl ChatState {
     /// Perfil por id.
     pub fn profile(&self, id: &str) -> Option<&ChatProfile> {
         self.profiles.iter().find(|profile| profile.id == id)
+    }
+
+    /// Indica se um perfil está instalado conforme a última detecção.
+    pub fn is_installed(&self, profile_id: &str) -> bool {
+        self.installed_helpers.contains(profile_id)
+    }
+
+    /// Escolhe o perfil padrão entre os que suportam chat e estão instalados.
+    pub fn pick_installed_default(&self, preferred: &str) -> Option<String> {
+        if preferred != "auto"
+            && self.is_installed(preferred)
+            && self
+                .profile(preferred)
+                .is_some_and(ChatProfile::supports_stream)
+        {
+            return Some(preferred.to_owned());
+        }
+        self.profiles
+            .iter()
+            .find(|profile| profile.supports_stream() && self.is_installed(&profile.id))
+            .map(|profile| profile.id.clone())
     }
 
     /// Abre uma sessão, mantendo ou não a anterior.

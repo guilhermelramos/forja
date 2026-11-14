@@ -50,6 +50,13 @@ pub struct Runtime {
     locale_setting_changed: bool,
 }
 
+impl Drop for Runtime {
+    fn drop(&mut self) {
+        self.tasks
+            .wait_inflight(std::time::Duration::from_millis(250));
+    }
+}
+
 impl Runtime {
     /// Validates the registry, loads settings and keymaps and wires events.
     pub fn new(
@@ -817,15 +824,31 @@ mod tests {
         }
     }
 
-    fn temp_dir(label: &str) -> PathBuf {
-        std::env::temp_dir().join(format!(
+    struct TempGuard(PathBuf);
+
+    impl std::ops::Deref for TempGuard {
+        type Target = Path;
+
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn temp_dir(label: &str) -> TempGuard {
+        TempGuard(std::env::temp_dir().join(format!(
             "forja-runtime-{label}-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_nanos()
-        ))
+        )))
     }
 
     fn runtime(dir: &Path) -> Runtime {
@@ -863,7 +886,6 @@ mod tests {
             .unwrap();
         runtime.flush_settings();
         assert!(dir.join("settings.toml").exists());
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -882,7 +904,6 @@ mod tests {
             .handle_rpc_line(r#"{"jsonrpc":"2.0","id":7,"method":"meta.methods","params":{}}"#)
             .expect("reply");
         assert!(reply.contains("\"id\":7"));
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     struct KeyModule;
@@ -932,7 +953,6 @@ mod tests {
             .find(|binding| binding.binding.command.as_str() == "keytest.run")
             .expect("binding");
         assert_eq!(binding.binding.chord.to_string(), "Ctrl+Alt+Shift+K");
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -979,7 +999,6 @@ mod tests {
             .warnings()
             .iter()
             .any(|warning| warning.contains("cannot bind `keytest.run`")));
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -1006,7 +1025,6 @@ mod tests {
         assert!(!runtime.modal_is_open("onboarding.wizard"));
         runtime.set_anvil_query("main");
         assert_eq!(runtime.anvil_query(), "main");
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -1036,7 +1054,6 @@ mod tests {
                     .expect("task did not signal completion");
             }
         }
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -1063,7 +1080,7 @@ mod tests {
         let mut runtime = Runtime::new(
             vec![Box::new(I18nTestModule)],
             RuntimeOptions {
-                data_dir: Some(dir.clone()),
+                data_dir: Some(dir.to_path_buf()),
                 user_dir: Some(dir.join("user")),
                 locale: Some("pt-BR".into()),
                 wake: None,
@@ -1085,6 +1102,5 @@ mod tests {
             .expect("switch back to pt_BR");
         assert!(runtime.take_locale_setting_changed());
         assert_eq!(runtime.i18n().locale(), Locale::PtBr);
-        let _ = std::fs::remove_dir_all(dir);
     }
 }

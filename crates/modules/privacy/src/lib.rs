@@ -442,15 +442,38 @@ mod tests {
     use serde_json::Map;
     use std::path::PathBuf;
 
-    fn temp_dir(label: &str) -> PathBuf {
-        std::env::temp_dir().join(format!(
+    struct TempGuard(PathBuf);
+
+    impl std::ops::Deref for TempGuard {
+        type Target = std::path::Path;
+
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            for attempt in 0..20 {
+                if std::fs::remove_dir_all(&self.0).is_ok() || !self.0.exists() {
+                    return;
+                }
+                if attempt < 19 {
+                    std::thread::sleep(std::time::Duration::from_millis(15));
+                }
+            }
+        }
+    }
+
+    fn temp_dir(label: &str) -> TempGuard {
+        TempGuard(std::env::temp_dir().join(format!(
             "forja-privacy-{label}-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_nanos()
-        ))
+        )))
     }
 
     fn runtime(dir: &std::path::Path) -> Runtime {
@@ -482,7 +505,6 @@ mod tests {
         assert_eq!(value["assistant_share_workspace"], "ask");
         assert_eq!(value["browser_clear_on_exit"], false);
         assert_eq!(value["browser_cookies_days"], 30);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -508,7 +530,6 @@ mod tests {
         let value = rt.run_command("privacy.redact", args).unwrap();
         assert_eq!(value["redacted"], false);
         assert_eq!(value["text"], "token=abc123");
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -522,7 +543,6 @@ mod tests {
         assert_eq!(value["clear_after_s"], 0);
         assert_eq!(schedule_after(0), None);
         assert_eq!(schedule_after(30), Some(30));
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -554,6 +574,5 @@ mod tests {
         params.insert("idle_min".into(), json!(1));
         let value = rt.call_method("privacy.secrets.status", params).unwrap();
         assert_eq!(value["backend"], "file");
-        let _ = std::fs::remove_dir_all(dir);
     }
 }

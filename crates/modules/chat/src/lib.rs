@@ -6,6 +6,7 @@
 
 mod clipboard;
 mod diff_mode;
+mod helper_picker;
 mod model;
 mod profile;
 mod runner;
@@ -106,6 +107,15 @@ impl Module for ChatModule {
             "chat.view.diff-applied",
             "chat.view.todos",
             "chat.view.thinking",
+            "chat.view.helper-picker",
+            "chat.view.not-installed",
+            "chat.view.none-installed",
+            "chat.view.install-guide",
+            "chat.view.open-helpers",
+            "chat.view.copy-install",
+            "chat.view.copied",
+            "chat.view.error-not-found",
+            "chat.view.error-launch",
         ] {
             r.uses_i18n(key);
         }
@@ -413,7 +423,15 @@ mod tests {
     use forja_kernel::{contract, Runtime, RuntimeOptions};
     use std::path::PathBuf;
 
-    fn temp_dir(label: &str) -> PathBuf {
+    struct TempGuard(PathBuf);
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn temp_guard(label: &str) -> TempGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-chat-{label}-{}-{}",
             std::process::id(),
@@ -423,7 +441,7 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        dir
+        TempGuard(dir)
     }
 
     fn runtime(dir: &std::path::Path) -> Runtime {
@@ -443,8 +461,9 @@ mod tests {
 
     #[test]
     fn contract_and_open_send_degrade_without_runner() {
-        let dir = temp_dir("rpc");
-        let mut runtime = runtime(&dir);
+        let guard = temp_guard("rpc");
+        let dir = &guard.0;
+        let mut runtime = runtime(dir);
         contract::assert_ok(runtime.registry(), runtime.i18n());
         let opened = runtime
             .call_method(
@@ -482,13 +501,12 @@ mod tests {
             .call_method("chat.cancel", Map::new())
             .expect("cancel");
         assert_eq!(cancel, json!({}));
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
     fn chat_open_rejects_an_untrusted_project_profile_with_full_permissions() {
-        let dir = temp_dir("untrusted-profile");
+        let guard = temp_guard("untrusted-profile");
+        let dir = &guard.0;
         let bench = dir.join("bench");
         let profiles = bench.join(".forja").join("helpers");
         std::fs::create_dir_all(&profiles).unwrap();
@@ -497,7 +515,7 @@ mod tests {
             "id = \"claude-code\"\nname = \"Project profile\"\n[start]\ncommand = \"claude\"\n[permissions.full]\nargs = [\"--unsafe-mode\"]\n",
         )
         .unwrap();
-        let mut runtime = runtime(&dir);
+        let mut runtime = runtime(dir);
         let error = runtime
             .call_method(
                 "chat.open",
@@ -509,7 +527,42 @@ mod tests {
             )
             .expect_err("project profile needs trust approval");
         assert!(error.message.contains("trust approval"));
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn failed_start_prompt_records_user_message_and_error_status() {
+        let guard = temp_guard("failed-start");
+        let dir = &guard.0;
+        let mut profile = crate::profile::ChatProfile::parse(
+            crate::profile::builtin_text("claude-code").unwrap(),
+            None,
+            false,
+        )
+        .unwrap();
+        profile.start.command = "definitely-missing-forja-chat-binary".to_owned();
+        let mut session = state::ChatSession::new(profile, dir.clone(), "ask".to_owned());
+        let error = session
+            .start_prompt("olá".to_owned())
+            .expect_err("missing binary should fail");
+        assert!(error.starts_with("executable-not-found:"), "{error}");
+        assert_eq!(session.status, crate::model::SessionStatus::Error);
+        assert_eq!(session.messages.len(), 1);
+        assert_eq!(session.messages[0].role, crate::model::ChatRole::User);
+        assert!(session.error.is_some());
+    }
+
+    #[test]
+    fn opencode_stream_parses_session_text_and_tool_use() {
+        let events: Vec<_> = [
+            r#"{"type":"step_start","timestamp":100,"sessionID":"ses_abc","part":{"type":"step-start"}}"#,
+            r#"{"type":"text","timestamp":101,"sessionID":"ses_abc","part":{"type":"text","text":"oi tudo bem"}}"#,
+            r#"{"type":"tool_use","timestamp":102,"sessionID":"ses_abc","part":{"tool":"bash","state":{"status":"completed","input":{"cmd":"ls"},"output":"ok"}}}"#,
+        ]
+        .into_iter()
+        .flat_map(|line| stream::parse_stream_line("opencode", line))
+        .collect();
+        assert!(events.iter().any(|e| matches!(e, stream::StreamEvent::SessionId(id) if id == "ses_abc")));
+        assert!(events.iter().any(|e| matches!(e, stream::StreamEvent::Message(m) if m.summary() == "oi tudo bem")));
+        assert!(events.iter().any(|e| matches!(e, stream::StreamEvent::Message(m) if m.role == crate::model::ChatRole::Tool)));
     }
 }

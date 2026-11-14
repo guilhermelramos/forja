@@ -649,12 +649,26 @@ mod tests {
         assert!(offset > 0.0, "PageDown did not move the settings list");
     }
 
+    struct TempGuard(std::path::PathBuf);
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
     #[test]
     fn every_choice_option_has_translated_label_in_both_locales() {
-        let dir = std::env::temp_dir().join(format!("forja-shell-choices-{}", std::process::id()));
-        let mut runtime =
-            crate::app::build_runtime(Some("pt-BR".into()), Some(dir.clone()), Some(dir.join("u")), true)
-                .expect("runtime");
+        let dir = TempGuard(
+            std::env::temp_dir().join(format!("forja-shell-choices-{}", std::process::id())),
+        );
+        let mut runtime = crate::app::build_runtime(
+            Some("pt-BR".into()),
+            Some(dir.0.clone()),
+            Some(dir.0.join("u")),
+            true,
+        )
+        .expect("runtime");
         assert!(
             runtime.warnings().is_empty(),
             "unexpected i18n/runtime warnings: {:?}",
@@ -684,15 +698,20 @@ mod tests {
             }
         }
         assert!(missing.is_empty(), "untranslated choice options: {missing:?}");
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
     fn bounds_hint_and_humanized_setting_errors_show_limits() {
-        let dir = std::env::temp_dir().join(format!("forja-shell-bounds-{}", std::process::id()));
-        let runtime =
-            crate::app::build_runtime(Some("pt-BR".into()), Some(dir.clone()), Some(dir.join("u")), true)
-                .expect("runtime");
+        let dir = TempGuard(
+            std::env::temp_dir().join(format!("forja-shell-bounds-{}", std::process::id())),
+        );
+        let runtime = crate::app::build_runtime(
+            Some("pt-BR".into()),
+            Some(dir.0.clone()),
+            Some(dir.0.join("u")),
+            true,
+        )
+        .expect("runtime");
         assert_eq!(
             bounds_hint_for(runtime.i18n(), Some("8".into()), Some("32".into())),
             Some("Aceito: 8 a 32".to_owned())
@@ -709,6 +728,5 @@ mod tests {
         );
         assert!(color_err.contains("#RRGGBB"), "{color_err}");
         assert!(!color_err.starts_with("invalid setting:"), "{color_err}");
-        let _ = std::fs::remove_dir_all(dir);
     }
 }

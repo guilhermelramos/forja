@@ -433,14 +433,16 @@ fn start(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kernel
     let opened = match opened {
         Ok(value) => value,
         Err(error) => {
+            let reason = match error {
+                KernelError::Command { message, .. } => message,
+                other => other.to_string(),
+            };
             with(shared, |state| {
-                state
-                    .store
-                    .launch_failed(&assignment.id, &error.to_string())
+                state.store.launch_failed(&assignment.id, &reason)
             });
             state::persist(cx, shared);
             return Err(KernelError::Message(format!(
-                "não foi possível abrir o ajudante: {error}"
+                "não foi possível abrir o ajudante: {reason}"
             )));
         }
     };

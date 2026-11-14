@@ -34,9 +34,94 @@ pub fn parse_stream_line(profile_id: &str, line: &str) -> Vec<StreamEvent> {
     };
     if profile_id == "codex" {
         parse_codex_event(&value)
+    } else if profile_id == "opencode" {
+        parse_opencode_event(&value)
     } else {
         parse_claude_event(&value)
     }
+}
+
+fn parse_opencode_event(value: &Value) -> Vec<StreamEvent> {
+    let mut events = Vec::new();
+    if let Some(session_id) = value
+        .get("sessionID")
+        .or_else(|| value.get("session_id"))
+        .and_then(Value::as_str)
+    {
+        if !session_id.is_empty() {
+            events.push(StreamEvent::SessionId(session_id.to_owned()));
+        }
+    }
+    let kind = value.get("type").and_then(Value::as_str).unwrap_or("");
+    let timestamp = parse_timestamp(value.get("timestamp"));
+    let part = value.get("part");
+    match kind {
+        "text" => {
+            if let Some(text) = part
+                .and_then(|item| item.get("text"))
+                .and_then(Value::as_str)
+                .filter(|text| !text.is_empty())
+            {
+                events.push(StreamEvent::Message(ChatMessage {
+                    role: ChatRole::Assistant,
+                    blocks: vec![crate::model::ChatBlock::Text(text.to_owned())],
+                    timestamp_ms: timestamp,
+                    usage: None,
+                }));
+            }
+        }
+        "tool_use" => {
+            if let Some(part) = part {
+                let name = part
+                    .get("tool")
+                    .and_then(Value::as_str)
+                    .unwrap_or("tool")
+                    .to_owned();
+                let state = part.get("state");
+                let input = state
+                    .and_then(|item| item.get("input"))
+                    .map(|value| value.to_string())
+                    .unwrap_or_default();
+                let output = state
+                    .and_then(|item| item.get("output"))
+                    .and_then(Value::as_str)
+                    .map(str::to_owned);
+                let status = match state.and_then(|item| item.get("status")).and_then(Value::as_str)
+                {
+                    Some("error") => crate::model::ToolStatus::Error,
+                    Some("completed") => crate::model::ToolStatus::Ok,
+                    _ => crate::model::ToolStatus::Running,
+                };
+                events.push(StreamEvent::Message(ChatMessage {
+                    role: ChatRole::Tool,
+                    blocks: vec![crate::model::ChatBlock::ToolCall {
+                        name,
+                        input,
+                        output,
+                        status,
+                    }],
+                    timestamp_ms: timestamp,
+                    usage: None,
+                }));
+            }
+        }
+        "step_finish" => {
+            if let Some(tokens) = part.and_then(|item| item.get("tokens")) {
+                events.push(StreamEvent::Usage(usage_from_value(tokens)));
+            }
+        }
+        "error" => {
+            if let Some(message) = value
+                .get("error")
+                .and_then(|error| error.get("message").and_then(Value::as_str).or_else(|| error.as_str()))
+                .or_else(|| value.get("message").and_then(Value::as_str))
+            {
+                events.push(StreamEvent::Error(message.to_owned()));
+            }
+        }
+        _ => {}
+    }
+    events
 }
 
 fn parse_claude_event(value: &Value) -> Vec<StreamEvent> {

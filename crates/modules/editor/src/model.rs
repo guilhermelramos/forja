@@ -458,7 +458,31 @@ pub fn line_count(text: &str) -> usize {
 mod tests {
     use super::*;
 
-    fn temp(name: &str) -> std::path::PathBuf {
+    struct TempDirGuard {
+        dir: std::path::PathBuf,
+        path: std::path::PathBuf,
+    }
+
+    impl std::ops::Deref for TempDirGuard {
+        type Target = std::path::PathBuf;
+        fn deref(&self) -> &Self::Target {
+            &self.path
+        }
+    }
+
+    impl AsRef<std::path::Path> for TempDirGuard {
+        fn as_ref(&self) -> &std::path::Path {
+            &self.path
+        }
+    }
+
+    impl Drop for TempDirGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.dir);
+        }
+    }
+
+    fn temp(name: &str) -> TempDirGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-editor-{name}-{}-{}",
             std::process::id(),
@@ -468,7 +492,8 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        dir.join("a.txt")
+        let path = dir.join("a.txt");
+        TempDirGuard { dir, path }
     }
 
     #[test]
@@ -512,23 +537,25 @@ mod tests {
 
     #[test]
     fn save_rejects_a_file_outside_the_resolved_bench() {
-        let root = std::env::temp_dir().join(format!(
-            "forja-editor-root-{}-{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-        ));
-        let bench = root.join("bench");
+        let root = TempDirGuard {
+            dir: std::env::temp_dir().join(format!(
+                "forja-editor-root-{}-{}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            )),
+            path: std::path::PathBuf::new(),
+        };
+        let bench = root.dir.join("bench");
         std::fs::create_dir_all(&bench).unwrap();
-        let outside = root.join("outside.txt");
+        let outside = root.dir.join("outside.txt");
         std::fs::write(&outside, "preserve me\n").unwrap();
 
         let result = save_file_in_root(&bench, &outside, "overwrite", &SaveOptions::default());
         assert!(result.is_err());
         assert_eq!(std::fs::read_to_string(&outside).unwrap(), "preserve me\n");
-        let _ = std::fs::remove_dir_all(root);
     }
 
     #[test]

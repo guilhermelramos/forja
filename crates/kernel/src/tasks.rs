@@ -8,7 +8,8 @@
 use crate::runtime::Ctx;
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Condvar, Mutex};
+use std::time::{Duration, Instant};
 
 pub type Wake = Arc<dyn Fn() + Send + Sync>;
 
@@ -30,6 +31,23 @@ struct Inner {
     next: AtomicU64,
     queue: Mutex<VecDeque<Completion>>,
     wake: Mutex<Wake>,
+    inflight: Mutex<usize>,
+    done_signal: Condvar,
+}
+
+struct InflightGuard {
+    inner: Arc<Inner>,
+}
+
+impl Drop for InflightGuard {
+    fn drop(&mut self) {
+        if let Ok(mut count) = self.inner.inflight.lock() {
+            *count = count.saturating_sub(1);
+            if *count == 0 {
+                self.inner.done_signal.notify_all();
+            }
+        }
+    }
 }
 
 /// Cloneable handle stored in the registry-side services and in `Ctx`.
@@ -51,6 +69,8 @@ impl Tasks {
                 next: AtomicU64::new(1),
                 queue: Mutex::new(VecDeque::new()),
                 wake: Mutex::new(Arc::new(|| {})),
+                inflight: Mutex::new(0),
+                done_signal: Condvar::new(),
             }),
         }
     }
@@ -72,9 +92,15 @@ impl Tasks {
         let id = TaskId(self.inner.next.fetch_add(1, Ordering::SeqCst));
         let module_id = module_id.to_owned();
         let inner = Arc::clone(&self.inner);
+        if let Ok(mut count) = inner.inflight.lock() {
+            *count += 1;
+        }
         let spawned = std::thread::Builder::new()
             .name(format!("forja-{id}"))
             .spawn(move || {
+                let _guard = InflightGuard {
+                    inner: Arc::clone(&inner),
+                };
                 let result = work();
                 let completion = Completion {
                     module_id,
@@ -88,9 +114,32 @@ impl Tasks {
                 }
             });
         if let Err(error) = spawned {
+            let _ = InflightGuard {
+                inner: Arc::clone(&self.inner),
+            };
             panic!("forja task thread could not start: {error}");
         }
         id
+    }
+
+    pub(crate) fn wait_inflight(&self, timeout: Duration) {
+        let deadline = Instant::now() + timeout;
+        let Ok(mut count) = self.inner.inflight.lock() else {
+            return;
+        };
+        while *count > 0 {
+            let remaining = deadline.saturating_duration_since(Instant::now());
+            if remaining.is_zero() {
+                break;
+            }
+            let Ok((next, result)) = self.inner.done_signal.wait_timeout(count, remaining) else {
+                break;
+            };
+            count = next;
+            if result.timed_out() {
+                break;
+            }
+        }
     }
 
     pub(crate) fn take_completed(&self) -> Vec<Completion> {

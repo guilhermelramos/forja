@@ -598,7 +598,22 @@ mod tests {
     use std::path::Path;
     use std::sync::Arc;
 
-    fn temp_dir() -> std::path::PathBuf {
+    struct TempGuard(std::path::PathBuf);
+
+    impl std::ops::Deref for TempGuard {
+        type Target = std::path::PathBuf;
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn temp_dir() -> TempGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-editor-{}-{}",
             std::process::id(),
@@ -608,7 +623,7 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        dir
+        TempGuard(dir)
     }
 
     fn runtime(dir: &Path) -> Runtime {
@@ -666,7 +681,6 @@ mod tests {
         assert!(keys.contains(&"editor.save.final_newline"));
         assert!(keys.contains(&"editor.search.whole_word"));
         assert!(keys.len() >= 24);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -705,7 +719,6 @@ mod tests {
         wait_until(&mut runtime, || !shared.active_tab().unwrap().dirty);
         let bytes = std::fs::read(&path).unwrap();
         assert_eq!(bytes, b"um\r\ndois\r\ntres\r\n");
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -721,7 +734,6 @@ mod tests {
             )
             .unwrap();
         assert!(value.is_object());
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -741,7 +753,6 @@ mod tests {
         assert!(!restored.dirty);
         runtime.run_command("editor.redo", Args::new()).unwrap();
         assert_ne!(shared.active_tab().unwrap().content, original);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -775,7 +786,6 @@ mod tests {
             shared.active_tab().unwrap().content,
             "fn somar() {}\n"
         );
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -807,7 +817,6 @@ mod tests {
             .flatten()
             .unwrap();
         assert!(candidates.candidates.iter().any(|word| word == "total"));
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -830,7 +839,6 @@ mod tests {
             .status()
             .unwrap()
             .contains("clipboard"));
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -854,7 +862,6 @@ mod tests {
         runtime
             .set_setting("editor.markdown.preview", SettingValue::Bool(true))
             .unwrap();
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     fn runtime_with_module(dir: &Path, module: EditorModule) -> Runtime {
@@ -903,7 +910,6 @@ mod tests {
         wait_until(&mut runtime, || shared.status().is_some());
         assert_eq!(std::fs::read_to_string(&outside).unwrap(), "preserve me\n");
         assert!(shared.status().unwrap().contains("inside the active bench"));
-        let _ = std::fs::remove_dir_all(dir);
     }
 }
 

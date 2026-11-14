@@ -1,14 +1,17 @@
 //! Aba "Ajudante (chat)" e composer.
 
 use crate::diff_mode::DiffMode;
+use crate::helper_picker;
 use crate::model::{
     filter_mentions, ChatBlock, ChatMessage, ChatRole, ChatUsage, SessionStatus, ToolStatus,
 };
+use crate::profile::ChatProfile;
 use crate::state::{ChatSession, ChatState};
 use crate::Shared;
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::{Args, Ctx};
 use serde_json::json;
+use std::collections::BTreeSet;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
@@ -20,6 +23,7 @@ pub struct ChatView {
     selected_mention: usize,
     show_mentions: bool,
     attach_error: Option<String>,
+    copied_hint: bool,
 }
 
 impl ChatView {
@@ -31,6 +35,7 @@ impl ChatView {
             selected_mention: 0,
             show_mentions: false,
             attach_error: None,
+            copied_hint: false,
         }
     }
 
@@ -75,14 +80,38 @@ impl ChatView {
         session.status = SessionStatus::Idle;
     }
 
-    fn draw_header(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, session: &mut ChatSession) {
+    fn draw_header(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        session: &mut ChatSession,
+        profiles: &[ChatProfile],
+        installed: &BTreeSet<String>,
+        preview: bool,
+    ) -> Option<String> {
+        let mut switch_to = None;
+        let is_installed = preview || installed.contains(&session.profile.id);
         ui.horizontal(|ui| {
-            ui.heading(&session.profile.name);
-            let (label, color) = match session.status {
-                SessionStatus::Idle => (cx.t("chat.view.idle"), egui::Color32::from_rgb(0x6C, 0xC4, 0x8A)),
-                SessionStatus::Working => (cx.t("chat.view.working"), egui::Color32::from_rgb(0x6F, 0xA8, 0xDC)),
-                SessionStatus::Cancelled => (cx.t("chat.view.cancelled"), egui::Color32::from_rgb(0xFF, 0xC1, 0x4D)),
-                SessionStatus::Error => (cx.t("chat.view.error"), egui::Color32::from_rgb(0xE5, 0x53, 0x4B)),
+            switch_to = helper_picker::draw_helper_switcher(
+                ui,
+                cx,
+                &session.profile.id,
+                &session.profile.name,
+                profiles,
+                installed,
+            );
+            let (label, color) = if !is_installed && matches!(session.status, SessionStatus::Idle) {
+                (
+                    cx.t("chat.view.not-installed"),
+                    egui::Color32::from_rgb(0xFF, 0xC1, 0x4D),
+                )
+            } else {
+                match session.status {
+                    SessionStatus::Idle => (cx.t("chat.view.idle"), egui::Color32::from_rgb(0x6C, 0xC4, 0x8A)),
+                    SessionStatus::Working => (cx.t("chat.view.working"), egui::Color32::from_rgb(0x6F, 0xA8, 0xDC)),
+                    SessionStatus::Cancelled => (cx.t("chat.view.cancelled"), egui::Color32::from_rgb(0xFF, 0xC1, 0x4D)),
+                    SessionStatus::Error => (cx.t("chat.view.error"), egui::Color32::from_rgb(0xE5, 0x53, 0x4B)),
+                }
             };
             ui.label(egui::RichText::new(label).color(color).strong());
             if matches!(session.status, SessionStatus::Working) {
@@ -170,16 +199,37 @@ impl ChatView {
                 ui.label(egui::RichText::new(session_id).weak());
             }
         });
+        switch_to
     }
 
-    fn draw_composer(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, session: &mut ChatSession) {
+    fn draw_composer(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        session: &mut ChatSession,
+        installed: bool,
+        install_hint: Option<&str>,
+        any_installed: bool,
+    ) {
         ui.separator();
+        if !installed {
+            helper_picker::draw_uninstalled_banner(
+                ui,
+                cx,
+                &session.profile.id,
+                &session.profile.name,
+                install_hint,
+                any_installed,
+                &mut self.copied_hint,
+            );
+        }
         if let Some(error) = self
             .attach_error
             .clone()
             .or_else(|| session.error.clone())
         {
-            ui.label(egui::RichText::new(error).color(egui::Color32::from_rgb(0xE5, 0x53, 0x4B)));
+            let shown = helper_picker::humanize_error(cx, &session.profile.name, &error);
+            ui.label(egui::RichText::new(shown).color(egui::Color32::from_rgb(0xE5, 0x53, 0x4B)));
         }
         if let Some(notice) = &session.notice {
             ui.label(egui::RichText::new(notice).weak());
@@ -230,7 +280,10 @@ impl ChatView {
                     if ui.button(cx.t("chat.view.cancel")).clicked() {
                         cancel = true;
                     }
-                } else if ui.button(cx.t("chat.view.send")).clicked() {
+                } else if ui
+                    .add_enabled(installed, egui::Button::new(cx.t("chat.view.send")))
+                    .clicked()
+                {
                     send = true;
                 }
             });
@@ -252,6 +305,7 @@ impl ChatView {
             self.paste_clipboard_image(cx);
         }
         if enter_sends
+            && installed
             && response.has_focus()
             && ui.input(|input| input.key_pressed(egui::Key::Enter) && !input.modifiers.shift)
         {
@@ -272,7 +326,10 @@ impl ChatView {
                         self.composer.clear();
                         self.attach_error = None;
                     }
-                    Err(error) => self.attach_error = Some(error),
+                    Err(_) => {
+                        self.composer.clear();
+                        self.attach_error = None;
+                    }
                 }
             }
         }
@@ -530,20 +587,7 @@ impl View for ChatView {
             Err(_) => return,
         };
         state.ensure_profiles(Some(&bench));
-        if state.active.is_none() {
-            let profile_id = state
-                .profiles
-                .iter()
-                .find(|profile| profile.supports_stream())
-                .map(|profile| profile.id.clone())
-                .unwrap_or_else(|| "claude-code".to_owned());
-            let permission = cx
-                .setting("helper.default.permissions")
-                .and_then(|value| value.as_str())
-                .unwrap_or("ask")
-                .to_owned();
-            let _ = state.open(&bench, &profile_id, None, permission);
-        }
+        helper_picker::sync_helpers(cx, &mut state, &bench);
         if !state.preview_seeded {
             if let Some(session) = &mut state.active {
                 if std::env::var_os("FORJA_CHAT_PREVIEW").is_some() {
@@ -558,7 +602,8 @@ impl View for ChatView {
         self.poll_idle(cx);
         self.maybe_load_lists(cx);
 
-        let (messages, header, collapse_output, show_calls, diff_mode) = {
+        let preview = std::env::var_os("FORJA_CHAT_PREVIEW").is_some();
+        let (messages, header, profiles, installed_helpers, install_hint, any_installed, collapse_output, show_calls, diff_mode) = {
             let Ok(state) = core.state.lock() else {
                 return;
             };
@@ -574,6 +619,14 @@ impl View for ChatView {
                     session_id: session.session_id.clone(),
                     usage: session.usage,
                 },
+                state.profiles.clone(),
+                state.installed_helpers.clone(),
+                state.install_hints.get(&session.profile.id).cloned(),
+                preview
+                    || state
+                        .profiles
+                        .iter()
+                        .any(|p| p.supports_stream() && state.installed_helpers.contains(&p.id)),
                 cx.setting("chat.tools.collapse_output")
                     .and_then(|value| value.as_bool())
                     .unwrap_or(true),
@@ -595,22 +648,51 @@ impl View for ChatView {
                 .as_ref()
                 .is_some_and(|session| matches!(session.status, SessionStatus::Working))
         };
+        let mut switch_profile = None;
         egui::TopBottomPanel::top("forja-chat-header")
             .resizable(false)
             .show_inside(ui, |ui| {
                 ui.label(egui::RichText::new(cx.t("chat.view.title")).weak());
                 if let Ok(mut state) = core.state.lock() {
                     if let Some(session) = &mut state.active {
-                        self.draw_header(ui, cx, session);
+                        switch_profile = self.draw_header(
+                            ui,
+                            cx,
+                            session,
+                            &profiles,
+                            &installed_helpers,
+                            preview,
+                        );
                     }
                 }
             });
+        if let Some(target_id) = switch_profile {
+            let permission = cx
+                .setting("helper.default.permissions")
+                .and_then(|value| value.as_str())
+                .unwrap_or("ask")
+                .to_owned();
+            if let Ok(mut state) = core.state.lock() {
+                state.user_picked_profile = true;
+                let _ = state.open(&bench, &target_id, None, permission);
+            }
+            self.copied_hint = false;
+            self.attach_error = None;
+        }
         egui::TopBottomPanel::bottom("forja-chat-composer")
             .resizable(false)
             .show_inside(ui, |ui| {
                 if let Ok(mut state) = core.state.lock() {
                     if let Some(session) = &mut state.active {
-                        self.draw_composer(ui, cx, session);
+                        let installed = preview || installed_helpers.contains(&session.profile.id);
+                        self.draw_composer(
+                            ui,
+                            cx,
+                            session,
+                            installed,
+                            install_hint.as_deref(),
+                            any_installed,
+                        );
                     }
                 }
             });

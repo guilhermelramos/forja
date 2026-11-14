@@ -10,6 +10,7 @@ mod hooks;
 mod launch;
 mod picker;
 mod profile;
+mod profile_cards;
 mod profile_data;
 mod rpc;
 mod status;
@@ -60,12 +61,16 @@ pub struct HelperState {
     pub detection: BTreeMap<String, detect::Detection>,
     /// Runs ativos por id de terminal.
     pub runs: BTreeMap<String, status::Run>,
+    /// Última bancada usada por perfil.
+    pub last_benches: BTreeMap<String, String>,
     /// Preferências e consentimentos persistidos.
     pub file: store::HelperFile,
     /// Bancada da última carga.
     pub loaded_for: Option<std::path::PathBuf>,
     /// Detecção em andamento.
     pub detecting: bool,
+    /// Quantas vezes a detecção terminou nesta sessão.
+    pub detect_runs: u64,
     /// O computador está sendo mantido acordado.
     pub hook_results: BTreeMap<String, Result<hooks::HookStatus, String>>,
     pub hook_busy: bool,
@@ -158,14 +163,32 @@ impl Module for HelperModule {
             "helper.view.working",
             "helper.view.needs-you",
             "helper.view.finished",
+            "helper.view.failed",
             "helper.view.idle",
             "helper.view.unknown",
             "helper.view.installed",
             "helper.view.not-installed",
             "helper.view.detect",
+            "helper.view.detecting",
+            "helper.view.detect-summary",
+            "helper.view.installed-section",
+            "helper.view.installed-empty",
+            "helper.view.not-installed-section",
+            "helper.view.show-not-installed",
+            "helper.view.hide-not-installed",
+            "helper.view.search-hint",
+            "helper.view.how-to-install",
+            "helper.view.copy-command",
+            "helper.view.copied",
+            "helper.view.open-docs",
+            "helper.view.last-bench",
+            "helper.view.chat-action",
+            "helper.view.default-badge",
+            "helper.view.set-default",
             "helper.view.focus",
             "helper.view.bench",
             "helper.view.duration",
+            "helper.launch.not-installed",
             "helper.settings.title",
             "helper.settings.profiles",
             "helper.settings.enabled",
@@ -398,7 +421,22 @@ mod tests {
     use serde_json::{json, Map};
     use std::path::PathBuf;
 
-    fn temp_dir(label: &str) -> PathBuf {
+    struct TempDirGuard(PathBuf);
+
+    impl Drop for TempDirGuard {
+        fn drop(&mut self) {
+            for attempt in 0..20 {
+                if std::fs::remove_dir_all(&self.0).is_ok() || !self.0.exists() {
+                    return;
+                }
+                if attempt < 19 {
+                    std::thread::sleep(std::time::Duration::from_millis(15));
+                }
+            }
+        }
+    }
+
+    fn temp_guard(label: &str) -> TempDirGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-helper-module-{label}-{}-{}",
             std::process::id(),
@@ -408,7 +446,7 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        dir
+        TempDirGuard(dir)
     }
 
     fn runtime(dir: &std::path::Path, core: Shared) -> Runtime {
@@ -439,7 +477,8 @@ mod tests {
                 });
             }
         }
-        let dir = temp_dir("exit-notification");
+        let dir = temp_guard("exit-notification");
+        let dir = &dir.0;
         let core = Arc::new(Core::new());
         let calls = Arc::new(std::sync::Mutex::new(Vec::new()));
         let mut runtime = Runtime::new(vec![Box::new(HelperModule { core: Arc::clone(&core) }), Box::new(NotifyStub(Arc::clone(&calls)))], RuntimeOptions {
@@ -464,9 +503,10 @@ mod tests {
 
     #[test]
     fn contract_rpc_list_and_missing_terminal() {
-        let dir = temp_dir("rpc");
+        let dir = temp_guard("rpc");
+        let dir = &dir.0;
         let core = Arc::new(Core::new());
-        let mut runtime = runtime(&dir, Arc::clone(&core));
+        let mut runtime = runtime(dir, Arc::clone(&core));
         contract::assert_ok(runtime.registry(), runtime.i18n());
         assert!(runtime.registry().method("helper.hooks.consent").is_none());
         assert!(runtime.registry().command("helper.hooks.consent").is_some());
@@ -494,9 +534,10 @@ mod tests {
 
     #[test]
     fn hook_status_returns_pending_then_delivers_background_result() {
-        let dir = temp_dir("hook-async");
+        let dir = temp_guard("hook-async");
+        let dir = &dir.0;
         let core = Arc::new(Core::new());
-        let mut runtime = runtime(&dir, Arc::clone(&core));
+        let mut runtime = runtime(dir, Arc::clone(&core));
         let mut profile = profile::Profile::parse(
             r#"id = "claude-code"
 name = "Test"
@@ -576,7 +617,8 @@ events = ["Stop"]
 
     #[test]
     fn chat_mode_calls_chat_open_and_send() {
-        let dir = temp_dir("chat-mode");
+        let dir = temp_guard("chat-mode");
+        let dir = &dir.0;
         let calls = Arc::new(std::sync::Mutex::new(Vec::new()));
         let mut runtime = Runtime::new(
             vec![
@@ -624,9 +666,10 @@ events = ["Stop"]
 
     #[test]
     fn hook_payload_requires_the_per_run_token_before_updating_status() {
-        let dir = temp_dir("hook");
+        let dir = temp_guard("hook");
+        let dir = &dir.0;
         let core = Arc::new(Core::new());
-        let mut runtime = runtime(&dir, Arc::clone(&core));
+        let mut runtime = runtime(dir, Arc::clone(&core));
         core.with_state(|state| {
             state.runs.insert(
                 "terminal-1".to_owned(),
@@ -727,7 +770,8 @@ events = ["Stop"]
 
     #[test]
     fn launch_default_and_focus_without_terminal_id_work() {
-        let dir = temp_dir("launch-default-focus");
+        let dir = temp_guard("launch-default-focus");
+        let dir = &dir.0;
         let core = Arc::new(Core::new());
         let calls = Arc::new(std::sync::Mutex::new(Vec::new()));
         let mut runtime = Runtime::new(
@@ -773,7 +817,140 @@ events = ["Stop"]
         assert_eq!(calls.last().unwrap().1["terminal_id"], "term-default");
         drop(calls);
         drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn failed_exit_marks_run_failed_in_status() {
+        let dir = temp_guard("failed-status");
+        let core = Arc::new(Core::new());
+        let mut runtime = runtime(&dir.0, Arc::clone(&core));
+        core.state.lock().unwrap().runs.insert(
+            "t-fail".into(),
+            status::Run {
+                terminal_id: "t-fail".into(),
+                profile_id: "claude-code".into(),
+                bench_path: dir.0.display().to_string(),
+                started_at: chrono::Utc::now().to_rfc3339(),
+                hook_token: String::new(),
+                status: HelperStatus::Working,
+                last_event: None,
+            },
+        );
+        runtime.emit(&TerminalExited {
+            terminal: forja_contracts::TerminalRef {
+                terminal_id: "t-fail".into(),
+                bench_path: dir.0.display().to_string(),
+                title: String::new(),
+            },
+            exit_code: Some(1),
+        });
+        let status = runtime
+            .call_method("helper.status", Map::new())
+            .expect("helper.status");
+        assert_eq!(status["runs"][0]["status"], json!("finished"));
+        assert_eq!(status["runs"][0]["failed"], true);
+    }
+
+    #[test]
+    fn launch_rejects_uninstalled_helper_before_opening_terminal() {
+        let dir = temp_guard("launch-missing");
+        let core = Arc::new(Core::new());
+        let calls = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(HelperModule {
+                    core: Arc::clone(&core),
+                }),
+                Box::new(StubTerminal {
+                    calls: Arc::clone(&calls),
+                }),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.0.clone()),
+                user_dir: Some(dir.0.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .unwrap();
+        core.with_state(|state| {
+            state
+                .detection
+                .insert("claude-code".to_owned(), detect::Detection::default());
+        })
+        .unwrap();
+        let error = runtime
+            .call_method(
+                "helper.launch",
+                Map::from_iter([("profile_id".to_owned(), json!("claude-code"))]),
+            )
+            .expect_err("uninstalled helper must fail");
+        assert!(error.message.contains("não está instalado"), "{}", error.message);
+        assert!(calls.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn focus_opens_terminal_tab_in_shell() {
+        struct StubShell(Arc<std::sync::Mutex<Vec<(String, serde_json::Value)>>>);
+        impl Module for StubShell {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("shell", "helper.name", "0.0.0")
+            }
+            fn register(&mut self, r: &mut Registrar<'_>) {
+                let calls = Arc::clone(&self.0);
+                r.command("shell.tab.open", "helper.name", move |_, args| {
+                    calls
+                        .lock()
+                        .unwrap()
+                        .push(("shell.tab.open".to_owned(), args.into_json()));
+                    Ok(json!({ "opening": true }))
+                });
+            }
+        }
+        let dir = temp_guard("focus-tab");
+        let core = Arc::new(Core::new());
+        let calls = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(HelperModule {
+                    core: Arc::clone(&core),
+                }),
+                Box::new(StubTerminal {
+                    calls: Arc::clone(&calls),
+                }),
+                Box::new(StubShell(Arc::clone(&calls))),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.0.clone()),
+                user_dir: Some(dir.0.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .unwrap();
+        core.state.lock().unwrap().runs.insert(
+            "term-focus".into(),
+            status::Run {
+                terminal_id: "term-focus".into(),
+                profile_id: "claude-code".into(),
+                bench_path: dir.0.display().to_string(),
+                started_at: chrono::Utc::now().to_rfc3339(),
+                hook_token: String::new(),
+                status: HelperStatus::Working,
+                last_event: None,
+            },
+        );
+        let focused = runtime
+            .call_method(
+                "helper.focus",
+                Map::from_iter([("terminal_id".to_owned(), json!("term-focus"))]),
+            )
+            .expect("helper.focus");
+        assert_eq!(focused["focused"], true);
+        let calls = calls.lock().unwrap();
+        assert_eq!(calls[0].0, "shell.tab.open");
+        assert_eq!(calls[0].1["view_id"], "terminal.tab");
+        assert_eq!(calls[1].0, "terminal.focus");
     }
 }
 

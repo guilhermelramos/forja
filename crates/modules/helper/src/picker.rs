@@ -80,18 +80,28 @@ mod tests {
     use super::PICKER_VIEW;
     use forja_kernel::{Module, Runtime, RuntimeOptions};
 
+    struct TempGuard(std::path::PathBuf);
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
     #[test]
     fn launch_profile_command_opens_the_chooser_modal() {
-        let dir = std::env::temp_dir().join(format!("forja-helper-picker-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&dir);
+        let dir = TempGuard(
+            std::env::temp_dir().join(format!("forja-helper-picker-{}", std::process::id())),
+        );
+        let _ = std::fs::remove_dir_all(&dir.0);
         let modules: Vec<Box<dyn Module>> = vec![Box::new(crate::HelperModule {
             core: std::sync::Arc::new(crate::Core::new()),
         })];
         let mut runtime = Runtime::new(
             modules,
             RuntimeOptions {
-                data_dir: Some(dir.clone()),
-                user_dir: Some(dir.join("user")),
+                data_dir: Some(dir.0.clone()),
+                user_dir: Some(dir.0.join("user")),
                 locale: Some("en".to_owned()),
                 wake: None,
             },
@@ -102,6 +112,5 @@ mod tests {
             .run_command("helper.launch.profile", forja_kernel::Args::new())
             .expect("command runs");
         assert!(runtime.modal_is_open(PICKER_VIEW));
-        let _ = std::fs::remove_dir_all(&dir);
     }
 }

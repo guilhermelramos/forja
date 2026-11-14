@@ -83,11 +83,27 @@ impl Module for FakeBench {
     }
 }
 
+struct TempGuard(PathBuf);
+
+impl Drop for TempGuard {
+    fn drop(&mut self) {
+        for attempt in 0..20 {
+            if std::fs::remove_dir_all(&self.0).is_ok() || !self.0.exists() {
+                return;
+            }
+            if attempt < 19 {
+                std::thread::sleep(std::time::Duration::from_millis(15));
+            }
+        }
+    }
+}
+
 struct Harness {
     runtime: Runtime,
     shared: Shared,
     calls: Arc<Mutex<Calls>>,
     dir: PathBuf,
+    _guard: TempGuard,
 }
 
 fn dir(label: &str) -> PathBuf {
@@ -131,7 +147,8 @@ fn harness(label: &str, helper: bool, bench: bool) -> Harness {
         runtime,
         shared,
         calls,
-        dir,
+        dir: dir.clone(),
+        _guard: TempGuard(dir),
     }
 }
 

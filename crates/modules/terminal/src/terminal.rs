@@ -66,6 +66,7 @@ pub struct Terminal {
     pub shell: String,
     /// Argumentos fixos.
     pub args: String,
+    launch_env: BTreeMap<String, String>,
     pty: Option<PtyProcess>,
     spawning: Option<mpsc::Receiver<Result<PtyProcess, String>>>,
     pending_input: Vec<Vec<u8>>,
@@ -140,6 +141,7 @@ impl Terminal {
             dir,
             shell: shell.program,
             args: shell.arguments,
+            launch_env: environment,
             pty: None,
             spawning: Some(receiver),
             pending_input: Vec::new(),
@@ -184,11 +186,21 @@ impl Terminal {
                     self.spawning = None;
                     self.error = Some(error);
                     self.pending_input.clear();
+                    if !self.exit_reported {
+                        self.exit_reported = true;
+                        self.dirty = true;
+                        events.push(TerminalEvent::Exited(Some(1)));
+                    }
                 }
                 Err(mpsc::TryRecvError::Disconnected) => {
                     self.spawning = None;
                     self.error = Some("terminal launch worker stopped".to_owned());
                     self.pending_input.clear();
+                    if !self.exit_reported {
+                        self.exit_reported = true;
+                        self.dirty = true;
+                        events.push(TerminalEvent::Exited(Some(1)));
+                    }
                 }
                 Err(mpsc::TryRecvError::Empty) => {}
             }
@@ -310,6 +322,29 @@ impl Terminal {
         self.spawning = None;
         self.pending_input.clear();
         self.preview_alive = true;
+    }
+
+    /// Tenta iniciar novamente o processo com o mesmo comando e pasta.
+    pub fn retry(&mut self) {
+        if self.alive() {
+            return;
+        }
+        self.error = None;
+        self.exit_reported = false;
+        self.pending_input.clear();
+        let (sender, receiver) = mpsc::channel();
+        let program = self.shell.clone();
+        let arguments = self.args.clone();
+        let cwd = self.dir.clone();
+        let env = self.launch_env.clone();
+        std::thread::Builder::new()
+            .name("forja-terminal-retry".to_owned())
+            .spawn(move || {
+                let result = PtyProcess::spawn_with_env(&program, &arguments, &cwd, &env);
+                let _ = sender.send(result);
+            })
+            .ok();
+        self.spawning = Some(receiver);
     }
 
     /// Título mostrado na aba.

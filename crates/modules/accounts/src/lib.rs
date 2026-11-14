@@ -357,7 +357,23 @@ mod tests {
     use forja_kernel::{contract, Runtime, RuntimeOptions};
     use serde_json::Map;
 
-    fn temp_dir() -> std::path::PathBuf {
+    struct TempGuard(std::path::PathBuf);
+
+    impl std::ops::Deref for TempGuard {
+        type Target = std::path::Path;
+
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn temp_dir() -> TempGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-accounts-{}-{}",
             std::process::id(),
@@ -367,7 +383,7 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        dir
+        TempGuard(dir)
     }
 
     fn runtime(dir: &std::path::Path) -> Runtime {
@@ -388,7 +404,6 @@ mod tests {
         let dir = temp_dir();
         let runtime = runtime(&dir);
         contract::assert_ok(runtime.registry(), runtime.i18n());
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -420,7 +435,6 @@ mod tests {
             &runtime.run_command("accounts.list", Args::new()).unwrap(),
             &id
         ));
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -435,7 +449,6 @@ mod tests {
         args.insert("profile_id", json!("claude-code"));
         args.insert("id", json!(id));
         assert!(runtime.run_command("accounts.remove", args).is_err());
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -446,7 +459,6 @@ mod tests {
             .call_method("accounts.list", Map::new())
             .expect("accounts.list");
         assert!(value["profiles"].as_array().is_some());
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     fn value_has_account(value: &Value, id: &str) -> bool {

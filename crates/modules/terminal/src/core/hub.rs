@@ -36,6 +36,7 @@ impl Hub {
             contract_content: false,
             pending_close: None,
             pending_recipe: None,
+            pending_trust_recipe: None,
             helper_terminals: std::collections::BTreeSet::new(),
             pending_paste: None,
             pending_link: None,
@@ -626,22 +627,36 @@ impl Hub {
                 },
             )?;
         } else if let Some(target) = target {
-            if self
-                .focused_terminal()
-                .is_none_or(|terminal| !same_path(&terminal.dir, &target))
-            {
+            if self.focused_terminal().is_none_or(|terminal| {
+                !same_path(&terminal.dir, &target)
+                    || !terminal.alive()
+                    || self.helper_terminals.contains(&terminal.id)
+            }) {
                 self.open(
                     settings,
                     OpenRequest {
                         cwd: Some(target),
+                        title: Some(recipe.title_en.clone()),
                         ..OpenRequest::default()
                     },
                 )?;
             }
+        } else if self.focused_terminal().is_none_or(|terminal| {
+            !terminal.alive() || self.helper_terminals.contains(&terminal.id)
+        }) {
+            self.open(
+                settings,
+                OpenRequest {
+                    cwd: self.bench_path.clone(),
+                    title: Some(recipe.title_en.clone()),
+                    ..OpenRequest::default()
+                },
+            )?;
         }
         let terminal = self
             .focused_terminal_mut()
             .ok_or_else(|| "no terminal is open".to_owned())?;
+        terminal.focus_request = true;
         terminal.send(&recipe.command, enter);
         Ok(())
     }

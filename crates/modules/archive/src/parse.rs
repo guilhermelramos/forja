@@ -395,7 +395,25 @@ mod tests {
     use super::*;
     use std::path::PathBuf;
 
-    fn fixture(name: &str, content: &str) -> PathBuf {
+    struct FixtureGuard {
+        dir: PathBuf,
+        path: PathBuf,
+    }
+
+    impl std::ops::Deref for FixtureGuard {
+        type Target = Path;
+        fn deref(&self) -> &Self::Target {
+            &self.path
+        }
+    }
+
+    impl Drop for FixtureGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.dir);
+        }
+    }
+
+    fn fixture(name: &str, content: &str) -> FixtureGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-archive-parse-{}-{}",
             std::process::id(),
@@ -407,7 +425,7 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join(name);
         std::fs::write(&path, content).unwrap();
-        path
+        FixtureGuard { dir, path }
     }
 
     #[test]

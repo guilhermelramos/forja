@@ -141,3 +141,5 @@ muster-error-unavailable = O serviço ou comando necessário não está disponí
 muster-error-not-found = Item do mutirão não encontrado (detalhe: { $detail }).
 muster-error-command = Não foi possível concluir a ação no Mutirão (detalhe: { $detail }).
 muster-notice-dismiss = Fechar aviso
+muster-profile-auto = Automático (instalado)
+muster-profile-not-installed = não instalado

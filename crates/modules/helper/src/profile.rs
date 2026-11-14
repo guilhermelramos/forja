@@ -517,17 +517,25 @@ mod tests {
             .all(|profile| profile.source_path.exists() || profile.layer == Some(Layer::Builtin)));
     }
 
+    struct TempGuard(PathBuf);
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
     #[test]
     fn project_risk_requires_trust() {
-        let dir = std::env::temp_dir().join(format!(
+        let dir = TempGuard(std::env::temp_dir().join(format!(
             "forja-helper-profile-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_nanos()
-        ));
-        let helpers = dir.join(".forja").join("helpers");
+        )));
+        let helpers = dir.0.join(".forja").join("helpers");
         std::fs::create_dir_all(&helpers).unwrap();
         std::fs::write(
             helpers.join("custom.toml"),
@@ -566,7 +574,7 @@ events = ["Stop"]
 "#,
         )
         .unwrap();
-        let denied = load_all(Some(&dir), |_| false);
+        let denied = load_all(Some(&dir.0), |_| false);
         let custom = denied
             .iter()
             .find(|profile| profile.id == "custom")
@@ -578,14 +586,13 @@ events = ["Stop"]
             .find(|profile| profile.id == "hooked")
             .unwrap()
             .trusted);
-        let allowed = load_all(Some(&dir), |_| true);
+        let allowed = load_all(Some(&dir.0), |_| true);
         assert!(allowed.iter().find(|profile| profile.id == "custom").unwrap().trusted);
         assert!(allowed
             .iter()
             .find(|profile| profile.id == "hooked")
             .unwrap()
             .trusted);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]

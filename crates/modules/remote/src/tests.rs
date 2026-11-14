@@ -39,15 +39,32 @@ fn dir() -> PathBuf {
     dir
 }
 
+struct TempGuard(PathBuf);
+
+impl Drop for TempGuard {
+    fn drop(&mut self) {
+        for attempt in 0..20 {
+            if std::fs::remove_dir_all(&self.0).is_ok() || !self.0.exists() {
+                return;
+            }
+            if attempt < 19 {
+                std::thread::sleep(std::time::Duration::from_millis(15));
+            }
+        }
+    }
+}
+
 struct Harness {
     runtime: Runtime,
     shared: Shared,
     opened: Arc<Mutex<Vec<Value>>>,
     dir: PathBuf,
+    _guard: TempGuard,
 }
 
 fn harness(label: &str) -> Harness {
-    let dir = dir().join(label);
+    let base = dir();
+    let dir = base.join(label);
     let opened = Arc::new(Mutex::new(Vec::new()));
     let module = RemoteModule::new();
     let shared = Arc::clone(&module.shared);
@@ -66,6 +83,7 @@ fn harness(label: &str) -> Harness {
         shared,
         opened,
         dir,
+        _guard: TempGuard(base),
     }
 }
 

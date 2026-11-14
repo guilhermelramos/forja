@@ -443,7 +443,29 @@ mod tests {
     use serde_json::Map;
     use std::path::PathBuf;
 
-    fn temp_dir() -> PathBuf {
+    struct TempGuard(PathBuf);
+
+    impl std::ops::Deref for TempGuard {
+        type Target = PathBuf;
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            for attempt in 0..20 {
+                if std::fs::remove_dir_all(&self.0).is_ok() || !self.0.exists() {
+                    return;
+                }
+                if attempt < 19 {
+                    std::thread::sleep(std::time::Duration::from_millis(15));
+                }
+            }
+        }
+    }
+
+    fn temp_dir() -> TempGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-mcp-module-{}-{}",
             std::process::id(),
@@ -453,7 +475,7 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        dir
+        TempGuard(dir)
     }
 
     struct StubModule {
@@ -552,7 +574,6 @@ mod tests {
             .iter()
             .all(|client| client["snippet"].as_str().unwrap().contains("forja-mcp")));
         drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -600,7 +621,6 @@ mod tests {
         assert_eq!(decided["status"], "approved");
         assert_eq!(decided["approved"], true);
         drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -622,7 +642,6 @@ mod tests {
         assert_eq!(request["approved"], true);
         assert!(!runtime.modal_is_open("mcp.approval"));
         drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -636,6 +655,5 @@ mod tests {
         assert_eq!(tools["enabled"], false);
         assert_eq!(tools["tools"], json!([]));
         drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 }

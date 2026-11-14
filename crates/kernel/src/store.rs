@@ -10,6 +10,10 @@ use serde::Serialize;
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::Duration;
+
+static NEXT_TMP_ID: AtomicU64 = AtomicU64::new(0);
 
 /// Writes `bytes` to a temporary sibling, syncs it and renames it over `path`.
 pub fn write_atomic_bytes(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
@@ -17,23 +21,35 @@ pub fn write_atomic_bytes(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
         std::io::Error::new(std::io::ErrorKind::InvalidInput, "missing parent directory")
     })?;
     fs::create_dir_all(parent)?;
-    let tmp = path.with_extension(format!(
-        "tmp-{}-{}",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|duration| duration.as_millis())
-            .unwrap_or(0)
-    ));
+    let seq = NEXT_TMP_ID.fetch_add(1, Ordering::Relaxed);
+    let tmp = path.with_extension(format!("tmp-{}-{seq}", std::process::id()));
     let result = (|| {
         let mut file = fs::File::create(&tmp)?;
         file.write_all(bytes)?;
         file.sync_all()?;
         drop(file);
-        fs::rename(&tmp, path)
+        for attempt in 0..8 {
+            match fs::rename(&tmp, path) {
+                Ok(()) => return Ok(()),
+                Err(error)
+                    if attempt < 7 && error.kind() == std::io::ErrorKind::PermissionDenied =>
+                {
+                    std::thread::sleep(Duration::from_millis(5));
+                }
+                Err(error) => return Err(error),
+            }
+        }
+        unreachable!()
     })();
     if result.is_err() {
-        let _ = fs::remove_file(&tmp);
+        for attempt in 0..8 {
+            if fs::remove_file(&tmp).is_ok() || !tmp.exists() {
+                break;
+            }
+            if attempt < 7 {
+                std::thread::sleep(Duration::from_millis(5));
+            }
+        }
     }
     result
 }

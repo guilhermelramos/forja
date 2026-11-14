@@ -420,7 +420,8 @@ impl SettingsSnapshot {
 
 /// Serializes writes on one background thread so the UI never blocks on disk.
 pub(crate) struct SettingsWriter {
-    sender: std::sync::mpsc::Sender<SettingsWrite>,
+    sender: Option<std::sync::mpsc::Sender<SettingsWrite>>,
+    thread: Option<std::thread::JoinHandle<()>>,
 }
 
 struct SettingsWrite {
@@ -431,7 +432,7 @@ struct SettingsWrite {
 impl SettingsWriter {
     pub(crate) fn start() -> Self {
         let (sender, receiver) = std::sync::mpsc::channel::<SettingsWrite>();
-        std::thread::Builder::new()
+        let thread = std::thread::Builder::new()
             .name("forja-settings-writer".into())
             .spawn(move || {
                 while let Ok(message) = receiver.recv() {
@@ -444,28 +445,43 @@ impl SettingsWriter {
                 }
             })
             .expect("settings writer thread starts");
-        Self { sender }
+        Self {
+            sender: Some(sender),
+            thread: Some(thread),
+        }
     }
 
     pub(crate) fn submit(&self, snapshot: SettingsSnapshot) {
-        let _ = self.sender.send(SettingsWrite {
-            snapshot,
-            ack: None,
-        });
+        if let Some(sender) = &self.sender {
+            let _ = sender.send(SettingsWrite {
+                snapshot,
+                ack: None,
+            });
+        }
     }
 
     /// Waits until every queued write is done. Used by tests and shutdown.
     pub(crate) fn flush(&self, snapshot: SettingsSnapshot) {
         let (ack, wait) = std::sync::mpsc::channel();
-        if self
-            .sender
-            .send(SettingsWrite {
-                snapshot,
-                ack: Some(ack),
-            })
-            .is_ok()
-        {
-            let _ = wait.recv_timeout(std::time::Duration::from_secs(5));
+        if let Some(sender) = &self.sender {
+            if sender
+                .send(SettingsWrite {
+                    snapshot,
+                    ack: Some(ack),
+                })
+                .is_ok()
+            {
+                let _ = wait.recv_timeout(std::time::Duration::from_secs(5));
+            }
+        }
+    }
+}
+
+impl Drop for SettingsWriter {
+    fn drop(&mut self) {
+        self.sender.take();
+        if let Some(thread) = self.thread.take() {
+            let _ = thread.join();
         }
     }
 }

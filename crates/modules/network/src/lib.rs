@@ -256,15 +256,38 @@ mod tests {
     use forja_kernel::{contract, Args, Runtime, RuntimeOptions};
     use std::path::PathBuf;
 
-    fn temp_dir(label: &str) -> PathBuf {
-        std::env::temp_dir().join(format!(
+    struct TempGuard(PathBuf);
+
+    impl std::ops::Deref for TempGuard {
+        type Target = std::path::Path;
+
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            for attempt in 0..20 {
+                if std::fs::remove_dir_all(&self.0).is_ok() || !self.0.exists() {
+                    return;
+                }
+                if attempt < 19 {
+                    std::thread::sleep(std::time::Duration::from_millis(15));
+                }
+            }
+        }
+    }
+
+    fn temp_dir(label: &str) -> TempGuard {
+        TempGuard(std::env::temp_dir().join(format!(
             "forja-network-{label}-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_nanos()
-        ))
+        )))
     }
 
     fn runtime(dir: &std::path::Path) -> Runtime {
@@ -292,7 +315,6 @@ mod tests {
         assert_eq!(policy.timeout_s, 30);
         assert!(!policy.offline);
         assert_eq!(policy.auth, "none");
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -341,6 +363,5 @@ mod tests {
         assert_eq!(blocked["allowed"], false);
         assert_eq!(blocked["reason"], "offline");
 
-        let _ = std::fs::remove_dir_all(dir);
     }
 }

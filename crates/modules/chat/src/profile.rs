@@ -179,7 +179,7 @@ impl ChatProfile {
 
     /// Suporta stream-json.
     pub fn supports_stream(&self) -> bool {
-        matches!(self.id.as_str(), "claude-code" | "codex")
+        matches!(self.id.as_str(), "claude-code" | "codex" | "opencode")
     }
 }
 
@@ -268,6 +268,8 @@ pub fn turn_args(
     }
     let mut args = if profile.id == "codex" {
         vec!["exec".to_owned(), "--json".to_owned()]
+    } else if profile.id == "opencode" {
+        vec!["run".to_owned(), "--format".to_owned(), "json".to_owned()]
     } else {
         vec![
             "-p".to_owned(),
@@ -317,6 +319,9 @@ pub fn turn_args(
             .collect();
         if profile.id == "codex" && resume.first().is_some_and(|token| token == "exec") {
             // `turn_args` já começa com `exec --json`.
+            resume.remove(0);
+        } else if profile.id == "opencode" && resume.first().is_some_and(|token| token == "run") {
+            // `turn_args` já começa com `run --format json`.
             resume.remove(0);
         }
         args.extend(resume);

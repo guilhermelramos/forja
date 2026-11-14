@@ -225,7 +225,22 @@ mod tests {
     use super::*;
     use forja_kernel::{contract, Runtime, RuntimeOptions};
 
-    fn temp_dir() -> std::path::PathBuf {
+    struct TempGuard(std::path::PathBuf);
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            for attempt in 0..20 {
+                if std::fs::remove_dir_all(&self.0).is_ok() || !self.0.exists() {
+                    return;
+                }
+                if attempt < 19 {
+                    std::thread::sleep(std::time::Duration::from_millis(15));
+                }
+            }
+        }
+    }
+
+    fn temp_dir() -> TempGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-usage-{}-{}",
             std::process::id(),
@@ -235,7 +250,7 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        dir
+        TempGuard(dir)
     }
 
     fn runtime(dir: &std::path::Path) -> Runtime {
@@ -254,7 +269,7 @@ mod tests {
     #[test]
     fn contract_and_settings_match_the_catalog() {
         let dir = temp_dir();
-        let runtime = runtime(&dir);
+        let runtime = runtime(&dir.0);
         contract::assert_ok(runtime.registry(), runtime.i18n());
         let keys: Vec<&str> = runtime
             .registry()
@@ -268,7 +283,6 @@ mod tests {
         assert!(keys.contains(&"usage.budget.daily_usd"));
         assert!(keys.contains(&"usage.budget.monthly_usd"));
         assert!(keys.contains(&"usage.display.status_bar"));
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -287,7 +301,7 @@ mod tests {
     #[test]
     fn spend_rpc_exposes_the_muster_contract() {
         let dir = temp_dir();
-        let mut runtime = runtime(&dir);
+        let mut runtime = runtime(&dir.0);
         let mut params = serde_json::Map::new();
         params.insert("period".to_owned(), json!("all"));
         params.insert("project".to_owned(), json!("C:/work/forja"));
@@ -299,6 +313,5 @@ mod tests {
         assert!(value["usd"].is_number());
         assert!(value["projects"].is_array());
         assert!(value["pending"].is_boolean());
-        let _ = std::fs::remove_dir_all(dir);
     }
 }

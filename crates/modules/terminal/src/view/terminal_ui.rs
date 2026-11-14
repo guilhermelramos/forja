@@ -11,7 +11,7 @@ use crate::panes::tree::{PaneId, SplitDir, TerminalId};
 use crate::settings::TermSettings;
 use crate::terminal::Terminal;
 use crate::theme::Palette;
-use forja_kernel::ui_contract::egui::{self, Color32, FontId, Rect, RichText};
+use forja_kernel::ui_contract::egui::{self, FontId, Rect, RichText};
 use forja_ui_kit::applied_tokens;
 use std::collections::HashMap;
 
@@ -47,9 +47,7 @@ pub(super) fn draw_terminal(
         draw_paste_bar(ui, terminal, texts, pending_paste);
     }
     if let Some(error) = terminal.error.clone() {
-        ui.horizontal(|ui| {
-            ui.label(RichText::new(&error).color(Color32::LIGHT_RED));
-        });
+        draw_error_banner(ui, terminal, &error, texts, actions);
     }
     let Some(body) = body_after(ui, body) else {
         return;
@@ -504,6 +502,61 @@ fn context_menu(
             _ => {}
         }
         ui.close();
+    });
+}
+
+fn draw_error_banner(
+    ui: &mut egui::Ui,
+    terminal: &mut Terminal,
+    raw_error: &str,
+    texts: &UiText,
+    actions: &mut Vec<ViewAction>,
+) {
+    let tokens = applied_tokens(ui.ctx());
+    let lower = raw_error.to_ascii_lowercase();
+    let not_found = lower.contains("os error 2")
+        || lower.contains("cannot find the file")
+        || lower.contains("não pode encontrar o arquivo")
+        || lower.contains("not found");
+    let (title, body) = if not_found {
+        (
+            texts.error_not_found_title.as_str(),
+            texts
+                .error_not_found_body
+                .replace("{ $program }", &terminal.shell)
+                .replace("{$program}", &terminal.shell),
+        )
+    } else {
+        (texts.error_launch.as_str(), texts.error_launch_body.clone())
+    };
+    ui.group(|ui| {
+        ui.horizontal_wrapped(|ui| {
+            ui.label(RichText::new(title).strong().color(c32(tokens.color.danger)));
+            ui.label(RichText::new(&body).weak());
+        });
+        ui.horizontal(|ui| {
+            if forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Secondary,
+                &texts.error_retry,
+            )
+            .clicked()
+            {
+                terminal.retry();
+            }
+            if forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Ghost,
+                &texts.error_settings,
+            )
+            .clicked()
+            {
+                actions.push(ViewAction::OpenSettings);
+            }
+        });
+        ui.collapsing(&texts.error_details, |ui| {
+            ui.label(RichText::new(raw_error).monospace().weak());
+        });
     });
 }
 

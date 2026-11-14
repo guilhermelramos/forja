@@ -82,7 +82,16 @@ pub const USED_KEYS: &[&str] = &[
     "muster-error-not-found",
     "muster-error-command",
     "muster-notice-dismiss",
+    "muster.profile-auto",
+    "muster.profile-not-installed",
 ];
+
+#[derive(Clone)]
+struct HelperOption {
+    id: String,
+    name: String,
+    installed: bool,
+}
 
 #[derive(Default)]
 struct Snapshot {
@@ -126,6 +135,8 @@ pub struct MusterView {
     reply_to: Option<String>,
     reply_body: String,
     notice: Option<String>,
+    helper_options: Vec<HelperOption>,
+    last_helper_sync: Option<Instant>,
 }
 
 impl MusterView {
@@ -152,7 +163,46 @@ impl MusterView {
             reply_to: None,
             reply_body: String::new(),
             notice: None,
+            helper_options: Vec::new(),
+            last_helper_sync: None,
         }
+    }
+
+    fn sync_helpers(&mut self, cx: &mut Ctx<'_>) {
+        let should_refresh = self
+            .last_helper_sync
+            .is_none_or(|last| last.elapsed() >= Duration::from_secs(2));
+        if !should_refresh {
+            return;
+        }
+        self.last_helper_sync = Some(Instant::now());
+        if cx.registry().command("helper.list").is_none() {
+            return;
+        }
+        let Ok(value) = cx.run_command("helper.list", Args::new()) else {
+            return;
+        };
+        let Some(items) = value.get("profiles").and_then(serde_json::Value::as_array) else {
+            return;
+        };
+        let mut parsed: Vec<HelperOption> = items
+            .iter()
+            .filter_map(|item| {
+                let id = item.get("id").and_then(serde_json::Value::as_str)?.to_owned();
+                let name = item
+                    .get("name")
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or(&id)
+                    .to_owned();
+                let installed = item
+                    .get("installed")
+                    .and_then(serde_json::Value::as_bool)
+                    .unwrap_or(false);
+                Some(HelperOption { id, name, installed })
+            })
+            .collect();
+        parsed.sort_by_key(|option| (!option.installed, option.name.to_lowercase()));
+        self.helper_options = parsed;
     }
 
     fn header(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snapshot) {
@@ -278,13 +328,47 @@ impl MusterView {
         if self.new_task {
             self.new_task_form(ui, cx, &run.id);
         }
+        self.sync_helpers(cx);
         ui.horizontal_wrapped(|ui| {
             ui.label(egui::RichText::new(cx.t("muster.profile")).small().weak());
-            ui.add(
-                egui::TextEdit::singleline(&mut self.profile)
-                    .hint_text("claude-code / codex / auto")
-                    .desired_width(130.0),
-            );
+            let auto_label = cx.t("muster.profile-auto");
+            let not_installed = cx.t("muster.profile-not-installed");
+            let selected_label = if self.profile.trim().is_empty() {
+                auto_label.clone()
+            } else if let Some(found) = self.helper_options.iter().find(|opt| opt.id == self.profile)
+            {
+                if found.installed {
+                    found.name.clone()
+                } else {
+                    format!("{} ({not_installed})", found.name)
+                }
+            } else {
+                self.profile.clone()
+            };
+            egui::ComboBox::from_id_salt("muster-profile-picker")
+                .selected_text(selected_label)
+                .width(190.0)
+                .show_ui(ui, |ui| {
+                    if ui
+                        .selectable_label(self.profile.trim().is_empty(), &auto_label)
+                        .clicked()
+                    {
+                        self.profile.clear();
+                    }
+                    for option in &self.helper_options {
+                        let label = if option.installed {
+                            option.name.clone()
+                        } else {
+                            format!("{} ({not_installed})", option.name)
+                        };
+                        if ui
+                            .selectable_label(self.profile == option.id, label)
+                            .clicked()
+                        {
+                            self.profile = option.id.clone();
+                        }
+                    }
+                });
             ui.label(egui::RichText::new(cx.t("muster.bench")).small().weak());
             ui.add(
                 egui::TextEdit::singleline(&mut self.bench)
@@ -516,18 +600,18 @@ impl MusterView {
     }
 
     fn assignment_row(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, assignment: &Assignment) {
-        ui.horizontal(|ui| {
+        let bench_label = std::path::Path::new(&assignment.bench_path)
+            .file_name()
+            .and_then(|name| name.to_str())
+            .filter(|name| !name.is_empty())
+            .unwrap_or(&assignment.bench_path);
+        ui.horizontal_wrapped(|ui| {
             ui.label(
                 egui::RichText::new(assignment_state_label(cx, assignment.state))
                     .color(assignment_state_color(ui, assignment.state)),
             );
             ui.label(egui::RichText::new(&assignment.profile_id).monospace());
-            ui.label(egui::RichText::new(&assignment.bench_path).weak());
             if let Some(terminal) = &assignment.terminal_id {
-                ui.label(
-                    egui::RichText::new(format!("{} {terminal}", cx.t("muster.terminal")))
-                        .weak(),
-                );
                 if button(ui, ButtonKind::Ghost, &cx.t("muster.focus")).clicked() {
                     let mut args = Args::new();
                     args.insert("terminal_id", json!(terminal));
@@ -536,7 +620,27 @@ impl MusterView {
                         Err(error) => self.set_error(cx, &error.to_string()),
                     }
                 }
+                ui.label(
+                    egui::RichText::new(format!("{} {terminal}", cx.t("muster.terminal")))
+                        .weak(),
+                );
+            } else if assignment.session_id.is_some()
+                && button(ui, ButtonKind::Ghost, &cx.t("muster.focus")).clicked()
+            {
+                if cx.registry().command("shell.bench.focus").is_some() {
+                    let mut focus_bench = Args::new();
+                    focus_bench.insert("path", json!(assignment.bench_path));
+                    let _ = cx.run_command("shell.bench.focus", focus_bench);
+                }
+                let mut open_chat = Args::new();
+                open_chat.insert("view_id", json!("chat.tab"));
+                match cx.run_command("shell.tab.open", open_chat) {
+                    Ok(_) => self.notice = None,
+                    Err(error) => self.set_error(cx, &error.to_string()),
+                }
             }
+            ui.label(egui::RichText::new(bench_label).weak())
+                .on_hover_text(&assignment.bench_path);
             if let Some(session) = &assignment.session_id {
                 ui.label(
                     egui::RichText::new(format!("{} {session}", cx.t("muster.session")))
@@ -761,8 +865,39 @@ impl MusterView {
     }
 }
 
+fn strip_command_wrappers(raw: &str) -> String {
+    let mut text = raw.trim().to_owned();
+    loop {
+        let mut changed = false;
+        if let Some(rest) = text.strip_prefix("command `") {
+            if let Some(pos) = rest.find("` failed: ") {
+                text = rest[pos + "` failed: ".len()..].trim().to_owned();
+                changed = true;
+            }
+        }
+        if let Some(idx) = text.find(": command `") {
+            let after = &text[idx + ": command `".len()..];
+            if let Some(pos) = after.find("` failed: ") {
+                let prefix = &text[..idx];
+                let inner = after[pos + "` failed: ".len()..].trim();
+                text = if prefix.trim().is_empty() {
+                    inner.to_owned()
+                } else {
+                    format!("{prefix}: {inner}")
+                };
+                changed = true;
+            }
+        }
+        if !changed {
+            break;
+        }
+    }
+    text
+}
+
 pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> String {
-    let trimmed = raw.trim();
+    let stripped = strip_command_wrappers(raw);
+    let trimmed = stripped.trim();
     let lower = trimmed.to_ascii_lowercase();
     if lower.contains("disabled") || lower.contains("desativad") {
         return cx.t("muster.error.disabled");
