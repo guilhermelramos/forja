@@ -38,6 +38,7 @@ browser-view-zoom = Zoom
 browser-view-home-title = Forja
 browser-view-home-body = Digite um endereço acima para abrir uma página. Portas locais da bancada também abrem aqui.
 browser-view-hidden = A página fica oculta enquanto um painel ou janela estiver por cima.
+browser-view-unfocused = O navegador embutido fica oculto quando a janela está sem foco ou fora da tela. Clique na janela para exibir a página.
 browser-view-no-window = A janela da Forja não foi encontrada para o navegador embutido.
 browser-history-title = Histórico
 browser-history-empty = Nenhuma página visitada ainda.

@@ -141,3 +141,5 @@ muster-error-unavailable = The required service or command is unavailable (detai
 muster-error-not-found = Muster item not found (detail: { $detail }).
 muster-error-command = Could not complete the Muster action (detail: { $detail }).
 muster-notice-dismiss = Dismiss notice
+muster-profile-auto = Auto (installed)
+muster-profile-not-installed = not installed

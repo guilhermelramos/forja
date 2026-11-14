@@ -104,9 +104,22 @@ pub(crate) fn update_run_by_id(
     update_run_inner(cx, core, terminal_id, status, event, false);
 }
 
+/// Verdadeiro quando o run encerrou com falha de processo.
+pub(crate) fn is_failed(run: &Run) -> bool {
+    run.last_event.as_deref() == Some("process failed")
+}
+
 pub(crate) fn update_exited_run(cx: &mut Ctx<'_>, core: &Shared, terminal: &TerminalRef, code: Option<i32>) {
-    update_run_inner(cx, core, &terminal.terminal_id, HelperStatus::Finished,
-        Some("process exited".to_owned()), code.is_some_and(|code| code != 0));
+    let failed = code.is_some_and(|code| code != 0);
+    let event = if failed { "process failed" } else { "process exited" };
+    update_run_inner(
+        cx,
+        core,
+        &terminal.terminal_id,
+        HelperStatus::Finished,
+        Some(event.to_owned()),
+        failed,
+    );
 }
 
 fn update_run_inner(

@@ -412,18 +412,26 @@ events = ["PreToolUse", "Notification", "Stop"]
         assert!(error.contains("consent"));
     }
 
+    struct TempGuard(std::path::PathBuf);
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
     #[test]
     fn install_and_remove_only_managed_entries() {
-        let dir = std::env::temp_dir().join(format!(
+        let dir = TempGuard(std::env::temp_dir().join(format!(
             "forja-helper-hooks-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_nanos()
-        ));
-        std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join("settings.json");
+        )));
+        std::fs::create_dir_all(&dir.0).unwrap();
+        let path = dir.0.join("settings.json");
         std::fs::write(
             &path,
             r#"{"keep":true,"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"other"}]}]}}"#,
@@ -450,7 +458,6 @@ events = ["PreToolUse", "Notification", "Stop"]
             root["hooks"]["PreToolUse"][0]["hooks"][0]["command"],
             "other"
         );
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]

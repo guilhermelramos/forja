@@ -18,18 +18,26 @@ fn wide(text: &str) -> Vec<u16> {
     text.encode_utf16().chain(Some(0)).collect()
 }
 
+struct TempGuard(PathBuf);
+
+impl Drop for TempGuard {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
+}
+
 #[test]
 fn fake_cmd_profile_receives_prompt_through_conpty() {
-    let dir = std::env::temp_dir().join(format!(
+    let dir = TempGuard(std::env::temp_dir().join(format!(
         "forja-helper-conpty-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos()
-    ));
-    std::fs::create_dir_all(&dir).unwrap();
-    let script = dir.join("fake-agent.cmd");
+    )));
+    std::fs::create_dir_all(&dir.0).unwrap();
+    let script = dir.0.join("fake-agent.cmd");
     std::fs::write(
         &script,
         "@echo off\r\necho PROMPT_RECEIVED=%*\r\nexit /b 0\r\n",
@@ -63,15 +71,14 @@ args = []
             ..LaunchRequest::default()
         },
         "ask",
-        dir.clone(),
+        dir.0.clone(),
         &ProfileOverride::default(),
     )
     .unwrap();
     assert!(plan.args_text().contains("hello from forja"));
-    let output = run_in_conpty(&plan.program, &plan.args_text(), &dir);
+    let output = run_in_conpty(&plan.program, &plan.args_text(), &dir.0);
     assert!(output.contains("hello from forja"), "{output}");
     assert!(output.contains("PROMPT_RECEIVED"), "{output}");
-    let _ = std::fs::remove_dir_all(dir);
 }
 
 fn run_in_conpty(program: &str, arguments: &str, cwd: &Path) -> String {

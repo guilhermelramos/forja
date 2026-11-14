@@ -70,6 +70,14 @@ pub struct UiText {
     pub recipe_scope_project: String,
     pub link_title: String,
     pub error_launch: String,
+    pub close: String,
+    pub failed: String,
+    pub error_not_found_title: String,
+    pub error_not_found_body: String,
+    pub error_launch_body: String,
+    pub error_retry: String,
+    pub error_settings: String,
+    pub error_details: String,
     pub locale: String,
 }
 
@@ -124,6 +132,17 @@ impl UiText {
             recipe_scope_project: cx.t("terminal.view.recipe-scope-project"),
             link_title: cx.t("terminal.view.link-title"),
             error_launch: cx.t("terminal.view.error-launch"),
+            close: cx.t("terminal.view.close"),
+            failed: cx.t("terminal.view.failed"),
+            error_not_found_title: cx.t("terminal.view.error-not-found-title"),
+            error_not_found_body: cx.t_args(
+                "terminal.view.error-not-found-body",
+                &[("program", "{ $program }")],
+            ),
+            error_launch_body: cx.t("terminal.view.error-launch-body"),
+            error_retry: cx.t("terminal.view.error-retry"),
+            error_settings: cx.t("terminal.view.error-settings"),
+            error_details: cx.t("terminal.view.error-details"),
             locale: cx.i18n().locale().id().to_owned(),
         }
     }
@@ -133,6 +152,8 @@ impl UiText {
 pub enum ViewAction {
     /// Abrir um link confirmado.
     OpenLink(Link),
+    /// Abrir os ajustes do aplicativo.
+    OpenSettings,
 }
 
 /// Aba da bancada com todos os painéis de terminal.
@@ -274,6 +295,9 @@ impl TerminalView {
     fn apply(&self, action: ViewAction, cx: &mut Ctx<'_>, settings: &TermSettings) {
         match action {
             ViewAction::OpenLink(link) => open_link(cx, link, settings),
+            ViewAction::OpenSettings => {
+                let _ = cx.run_command("settings.open", Args::new());
+            }
         }
     }
 }
@@ -483,7 +507,14 @@ impl View for RecipeView {
                     Ok(()) => self.error = None,
                     Err(error) => self.error = Some(error),
                 },
-                Err(error) => self.error = Some(error),
+                Err(error) => {
+                    if recipe.scope == "project" {
+                        let _ = self
+                            .core
+                            .with_hub(|hub| hub.pending_trust_recipe = Some(recipe));
+                    }
+                    self.error = Some(error);
+                }
             }
         }
         if let Some(error) = &self.error {

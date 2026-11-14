@@ -6,11 +6,12 @@
 
 use forja_kernel::ui_contract::egui;
 use std::{
-    ffi::c_void,
+    collections::BTreeMap,
+    ffi::{c_void, OsStr},
     fs::File,
     io::{Read, Write},
     os::windows::io::FromRawHandle,
-    path::Path,
+    path::{Path, PathBuf},
     ptr,
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -143,8 +144,7 @@ impl PtyProcess {
             startup.lpAttributeList = attributes;
             startup.StartupInfo.dwFlags = STARTF_USESTDHANDLES;
             let mut process_info = PROCESS_INFORMATION::default();
-            let mut command =
-                wide(&format!("\"{}\" {}", program.replace('"', ""), arguments));
+            let mut command = wide(&resolve_launch_command(program, arguments, environment));
             let directory = wide(&cwd.display().to_string());
 
             let mut job = CreateJobObjectW(ptr::null(), ptr::null());
@@ -374,4 +374,153 @@ pub fn environment_block(
     }
     block.push(0);
     block
+}
+
+fn resolve_launch_command(
+    program: &str,
+    arguments: &str,
+    environment: &BTreeMap<String, String>,
+) -> String {
+    let path_value = env_override(environment, "PATH").or_else(|| std::env::var_os("PATH"));
+    let pathext_value =
+        env_override(environment, "PATHEXT").or_else(|| std::env::var_os("PATHEXT"));
+    let resolved = resolve_executable(program, path_value.as_deref(), pathext_value.as_deref());
+    let chosen = resolved
+        .as_deref()
+        .map(|path| path.display().to_string())
+        .unwrap_or_else(|| program.to_owned());
+    let cleaned = chosen.replace('"', "");
+    let args = arguments.trim();
+    let ext = resolved
+        .as_deref()
+        .and_then(|path| path.extension())
+        .and_then(|value| value.to_str())
+        .map(str::to_ascii_lowercase)
+        .unwrap_or_default();
+    if ext == "cmd" || ext == "bat" {
+        let inner = if args.is_empty() {
+            format!("\"{cleaned}\"")
+        } else {
+            format!("\"{cleaned}\" {args}")
+        };
+        let comspec = env_override(environment, "COMSPEC")
+            .or_else(|| std::env::var_os("COMSPEC"))
+            .map(|value| value.to_string_lossy().into_owned())
+            .filter(|value| !value.trim().is_empty())
+            .unwrap_or_else(|| "cmd.exe".to_owned());
+        return format!("\"{}\" /d /s /c \"{inner}\"", comspec.replace('"', ""));
+    }
+    if ext == "ps1" {
+        return if args.is_empty() {
+            format!("powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File \"{cleaned}\"")
+        } else {
+            format!(
+                "powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File \"{cleaned}\" {args}"
+            )
+        };
+    }
+    if args.is_empty() {
+        format!("\"{cleaned}\"")
+    } else {
+        format!("\"{cleaned}\" {args}")
+    }
+}
+
+fn env_override(environment: &BTreeMap<String, String>, name: &str) -> Option<std::ffi::OsString> {
+    environment
+        .iter()
+        .find(|(key, _)| key.eq_ignore_ascii_case(name))
+        .map(|(_, value)| std::ffi::OsString::from(value))
+}
+
+fn resolve_executable(
+    name: &str,
+    path: Option<&OsStr>,
+    extensions: Option<&OsStr>,
+) -> Option<PathBuf> {
+    let candidate = Path::new(name);
+    let mut suffixes = Vec::new();
+    let pathext = extensions
+        .map(|value| value.to_string_lossy().into_owned())
+        .unwrap_or_else(|| ".COM;.EXE;.BAT;.CMD;.PS1".to_owned());
+    for extension in pathext.split(';') {
+        let extension = extension.trim();
+        if !extension.is_empty() {
+            suffixes.push(extension.to_ascii_lowercase());
+            suffixes.push(extension.to_ascii_uppercase());
+        }
+    }
+    for suffix in [".exe", ".cmd", ".ps1"] {
+        suffixes.push(suffix.to_owned());
+    }
+    suffixes.push(String::new());
+    suffixes.dedup();
+    if candidate.components().count() > 1 {
+        if let Some(ext) = candidate.extension().and_then(|e| e.to_str()) {
+            if !ext.is_empty() {
+                return candidate.is_file().then(|| candidate.to_path_buf());
+            }
+        }
+        for suffix in &suffixes {
+            let file = if suffix.is_empty() {
+                candidate.to_path_buf()
+            } else {
+                PathBuf::from(format!("{}{suffix}", candidate.display()))
+            };
+            if file.is_file() {
+                return Some(file);
+            }
+        }
+        return None;
+    }
+    for directory in std::env::split_paths(path.unwrap_or_default()) {
+        for suffix in &suffixes {
+            let file = if suffix.is_empty() {
+                name.to_owned()
+            } else {
+                format!("{name}{suffix}")
+            };
+            let full = directory.join(file);
+            if full.is_file() {
+                return Some(full);
+            }
+        }
+    }
+    None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct TempGuard(PathBuf);
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[test]
+    fn resolves_npm_cmd_shim_with_cmd_wrapper() {
+        let dir = std::env::temp_dir().join(format!(
+            "forja-conpty-shim-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let guard = TempGuard(dir);
+        std::fs::write(guard.0.join("opencode"), "#!/bin/sh\n").unwrap();
+        std::fs::write(guard.0.join("opencode.cmd"), "@echo conpty_shim_ok\r\n").unwrap();
+        let mut env = BTreeMap::new();
+        env.insert("PATH".to_owned(), guard.0.display().to_string());
+        env.insert("PATHEXT".to_owned(), ".COM;.EXE;.BAT;.CMD".to_owned());
+        let cmd = resolve_launch_command("opencode", "--version", &env);
+        assert!(cmd.contains("cmd.exe") || cmd.to_ascii_lowercase().contains("cmd.exe"), "{cmd}");
+        assert!(cmd.contains("opencode.cmd"), "{cmd}");
+        assert!(cmd.contains("--version"), "{cmd}");
+    }
 }

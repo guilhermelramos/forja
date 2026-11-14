@@ -38,6 +38,7 @@ browser-view-zoom = Zoom
 browser-view-home-title = Forja
 browser-view-home-body = Type an address above to open a page. Local bench ports open here too.
 browser-view-hidden = The page is hidden while a panel or window is on top.
+browser-view-unfocused = The embedded browser is hidden while the window is unfocused or off-screen. Focus the window to show the page.
 browser-view-no-window = The Forja window was not found for the embedded browser.
 browser-history-title = History
 browser-history-empty = No pages visited yet.

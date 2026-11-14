@@ -6,15 +6,28 @@ use crate::recipes::Recipe;
 use forja_kernel::ui_contract::egui::{self, Color32, FontId, Rect, Sense};
 use forja_ui_kit::{Color, MenuItem, Tokens};
 
-pub(super) fn tab_chip(
-    ui: &mut egui::Ui,
-    tokens: &Tokens,
-    title: &str,
-    alive: bool,
-    selected: bool,
-    terminal: TerminalId,
-    texts: &UiText,
-) -> (egui::Response, bool) {
+pub(super) struct TabChip<'a> {
+    pub(super) tokens: &'a Tokens,
+    pub(super) title: &'a str,
+    pub(super) alive: bool,
+    pub(super) has_error: bool,
+    pub(super) is_helper: bool,
+    pub(super) selected: bool,
+    pub(super) terminal: TerminalId,
+    pub(super) texts: &'a UiText,
+}
+
+pub(super) fn tab_chip(ui: &mut egui::Ui, chip: &TabChip<'_>) -> (egui::Response, bool) {
+    let TabChip {
+        tokens,
+        title,
+        alive,
+        has_error,
+        is_helper,
+        selected,
+        terminal,
+        texts,
+    } = *chip;
     let font = FontId::proportional(12.5);
     let text_color = if selected {
         c32(tokens.color.text)
@@ -26,6 +39,17 @@ pub(super) fn tab_chip(
         .layout_no_wrap(title.to_owned(), font.clone(), text_color);
     let width = (galley.size().x + 48.0).min(230.0);
     let (rect, response) = ui.allocate_exact_size(egui::vec2(width, 22.0), Sense::click());
+    let status_word = if has_error {
+        &texts.failed
+    } else if alive {
+        &texts.running
+    } else {
+        &texts.exited
+    };
+    let chip_label = format!("{title} · {status_word}");
+    response.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::WidgetType::Button, true, chip_label.clone())
+    });
     let hovered = response.hovered();
     if selected || hovered {
         ui.painter().rect_filled(
@@ -38,14 +62,21 @@ pub(super) fn tab_chip(
             },
         );
     }
+    let dot_color = if has_error {
+        c32(tokens.color.danger)
+    } else if alive {
+        if is_helper {
+            c32(tokens.color.accent)
+        } else {
+            c32(tokens.color.ok)
+        }
+    } else {
+        c32(tokens.color.text_muted)
+    };
     ui.painter().circle_filled(
         egui::pos2(rect.left() + 8.0, rect.center().y),
         3.0,
-        if alive {
-            c32(tokens.color.ok)
-        } else {
-            c32(tokens.color.text_muted)
-        },
+        dot_color,
     );
     let text_rect = Rect::from_min_max(
         egui::pos2(rect.left() + 16.0, rect.top()),
@@ -67,6 +98,10 @@ pub(super) fn tab_chip(
         ui.id().with(("terminal-tab-close", terminal)),
         Sense::click(),
     );
+    let close_label = format!("{} {title}", texts.close);
+    close.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::WidgetType::Button, true, close_label.clone())
+    });
     if hovered || close.hovered() {
         if close.hovered() {
             ui.painter()
@@ -80,12 +115,7 @@ pub(super) fn tab_chip(
             c32(tokens.color.text_muted),
         );
     }
-    let tooltip = if alive {
-        texts.running.clone()
-    } else {
-        texts.exited.clone()
-    };
-    (response.on_hover_text(tooltip), close.clicked())
+    (response.on_hover_text(chip_label), close.clicked())
 }
 
 /// Menu "Receitas" com o componente de menu do ui-kit. Escolher uma receita a marca para rodar.

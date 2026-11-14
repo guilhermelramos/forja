@@ -396,6 +396,7 @@ impl View for BrowserView {
                 self.apply_pending(cx, &tab);
             }
         }
+        let active_summary = self.state.active().map(|tab| (tab.title, tab.url));
         let active_id = self.state.active().map(|tab| tab.id);
         self.persist_tabs(cx);
         self.native
@@ -406,12 +407,28 @@ impl View for BrowserView {
                 native.set_bounds(bounds);
             }
         }
-        if !show {
-            ui.label(
-                egui::RichText::new(cx.t("browser.view.hidden"))
-                    .small()
-                    .color(muted),
-            );
+        if !show && rect.width() > 40.0 && rect.height() > 40.0 {
+            let reason = if !focused || minimized {
+                cx.t("browser.view.unfocused")
+            } else {
+                cx.t("browser.view.hidden")
+            };
+            let notice_rect = rect.shrink(24.0);
+            ui.scope_builder(egui::UiBuilder::new().max_rect(notice_rect), |ui| {
+                ui.add_space((notice_rect.height() * 0.3).max(8.0));
+                ui.vertical_centered(|ui| {
+                    if let Some((title, url)) = &active_summary {
+                        if !title.is_empty() {
+                            ui.label(egui::RichText::new(title).strong());
+                        }
+                        if !url.is_empty() {
+                            ui.label(egui::RichText::new(url).small().color(muted));
+                        }
+                        ui.add_space(6.0);
+                    }
+                    ui.label(egui::RichText::new(reason).small().color(muted));
+                });
+            });
         }
         self.history_window(ui, cx, muted);
         if let Some(notice) = self.state.with(|state| state.notice.clone()).flatten() {

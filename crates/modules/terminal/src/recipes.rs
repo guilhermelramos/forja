@@ -301,22 +301,30 @@ command = "cargo test"
         assert_eq!(recipes[1].scope, "global");
     }
 
+    struct TempGuard(PathBuf);
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
     #[test]
     fn project_recipes_carry_the_exact_file_content_and_hash() {
-        let dir = std::env::temp_dir().join(format!(
+        let dir = TempGuard(std::env::temp_dir().join(format!(
             "forja-terminal-recipes-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_nanos()
-        ));
-        let recipes_dir = dir.join(".forja").join("recipes");
+        )));
+        let recipes_dir = dir.0.join(".forja").join("recipes");
         std::fs::create_dir_all(&recipes_dir).unwrap();
         let text = "[[recipe]]\nid = \"trusted\"\ntitle = \"Trusted\"\ncommand = \"echo ok\"\nscope = \"project\"\n";
         let file = recipes_dir.join("trusted.toml");
         std::fs::write(&file, text).unwrap();
-        let recipes = load(Some(&dir));
+        let recipes = load(Some(&dir.0));
         let recipe = recipes
             .iter()
             .find(|recipe| recipe.id == "trusted")
@@ -325,19 +333,18 @@ command = "cargo test"
         assert_eq!(recipe.content, text);
         assert_eq!(recipe.content_hash, sha256_hex(text));
         assert!(recipe.source_path.ends_with("trusted.toml"));
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[cfg(windows)]
     #[test]
     fn project_junctions_show_the_canonical_origin_and_reject_external_targets() {
-        let base = std::env::temp_dir().join(format!(
+        let base = TempGuard(std::env::temp_dir().join(format!(
             "forja-recipe-junction-{}-{}", std::process::id(),
             std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
-        ));
-        let project = base.join("project");
+        )));
+        let project = base.0.join("project");
         let inside = project.join("actual");
-        let outside = base.join("outside");
+        let outside = base.0.join("outside");
         std::fs::create_dir_all(project.join(".forja")).unwrap();
         std::fs::create_dir_all(&inside).unwrap();
         std::fs::create_dir_all(&outside).unwrap();
@@ -362,8 +369,7 @@ command = "cargo test"
         found.clear();
         read_layer(&link, Some(&project), &mut found);
         assert!(found.is_empty(), "external junction must be refused");
-        std::fs::remove_dir(&link).unwrap();
-        std::fs::remove_dir_all(base).unwrap();
+        let _ = std::fs::remove_dir(&link);
     }
 
     #[test]

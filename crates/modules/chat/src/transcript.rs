@@ -923,18 +923,26 @@ mod tests {
             .any(|message| message.blocks.iter().any(|block| matches!(block, ChatBlock::Thinking(_)))));
     }
 
+    struct TempGuard(std::path::PathBuf);
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
     #[test]
     fn tail_reads_only_complete_new_lines() {
-        let dir = std::env::temp_dir().join(format!(
+        let dir = TempGuard(std::env::temp_dir().join(format!(
             "forja-chat-tail-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_nanos()
-        ));
-        std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join("session.jsonl");
+        )));
+        std::fs::create_dir_all(&dir.0).unwrap();
+        let path = dir.0.join("session.jsonl");
         let first = r#"{"type":"user","message":{"content":"one"},"timestamp":"2026-11-12T00:00:00Z"}"#;
         std::fs::write(&path, format!("{first}\n")).unwrap();
         let mut tail = TranscriptTail::new();
@@ -947,6 +955,5 @@ mod tests {
         let added = tail.poll(Format::Claude, &path);
         assert_eq!(added.len(), 1);
         assert_eq!(added[0].summary(), "two");
-        let _ = std::fs::remove_dir_all(dir);
     }
 }

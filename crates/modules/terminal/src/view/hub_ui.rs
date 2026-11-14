@@ -1,6 +1,6 @@
 //! Chrome da aba de terminal: abas, divisores e confirmações.
 
-use super::chrome::{c32, icon_button, recipes_menu, shell_menu, tab_chip};
+use super::chrome::{c32, icon_button, recipes_menu, shell_menu, tab_chip, TabChip};
 use super::terminal_ui::draw_terminal;
 use super::{UiText, ViewAction};
 use crate::core::{CloseTarget, Hub, PendingPaste};
@@ -14,7 +14,7 @@ use forja_kernel::ui_contract::egui::{
     self, Rect, RichText, Sense, Stroke, UiBuilder,
 };
 use forja_ui_kit::{applied_tokens, Tokens};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 /// Controle que só o hub pode executar depois de desenhar a árvore.
 pub(super) enum Control {
@@ -104,6 +104,7 @@ pub fn draw(
             &mut run_recipe,
             wsl,
             &recipes,
+            &hub.helper_terminals,
             &mut hub.pending_link,
             &mut hub.pending_paste,
         );
@@ -131,7 +132,12 @@ pub fn draw(
                     hub.notice = Some(error);
                 }
             }
-            Err(error) => hub.notice = Some(error),
+            Err(error) => {
+                if recipe.scope == "project" {
+                    hub.pending_trust_recipe = Some(recipe);
+                }
+                hub.notice = Some(error);
+            }
         }
     }
     for control in controls {
@@ -180,6 +186,7 @@ fn draw_node(
     run_recipe: &mut Option<Recipe>,
     wsl: &[String],
     recipes: &[Recipe],
+    helper_terminals: &BTreeSet<TerminalId>,
     pending_link: &mut Option<(TerminalId, Link)>,
     pending_paste: &mut Option<PendingPaste>,
 ) {
@@ -271,6 +278,7 @@ fn draw_node(
                 run_recipe,
                 wsl,
                 recipes,
+                helper_terminals,
                 pending_link,
                 pending_paste,
             );
@@ -293,6 +301,7 @@ fn draw_node(
                 run_recipe,
                 wsl,
                 recipes,
+                helper_terminals,
                 pending_link,
                 pending_paste,
             );
@@ -329,12 +338,16 @@ fn draw_node(
                             let selected = index == *active;
                             let (response, close) = tab_chip(
                                 ui,
-                                tokens,
-                                &terminal.title(),
-                                terminal.alive(),
-                                selected,
-                                *terminal_id,
-                                texts,
+                                &TabChip {
+                                    tokens,
+                                    title: &terminal.title(),
+                                    alive: terminal.alive(),
+                                    has_error: terminal.error.is_some(),
+                                    is_helper: helper_terminals.contains(terminal_id),
+                                    selected,
+                                    terminal: *terminal_id,
+                                    texts,
+                                },
                             );
                             if close || response.middle_clicked() {
                                 close_tab = Some(*terminal_id);

@@ -68,22 +68,32 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
             .str("terminal_id")
             .filter(|id| !id.trim().is_empty())
             .map(str::to_owned);
-        let terminal_id = match explicit {
-            Some(id) => Some(id),
-            None => focus_core
-                .with_state(|state| {
+        let target = focus_core
+            .with_state(|state| {
+                if let Some(id) = explicit {
+                    let bench = state.runs.get(&id).map(|run| run.bench_path.clone());
+                    Some((id, bench))
+                } else {
                     state
                         .runs
                         .values()
                         .filter(|run| !matches!(run.status, HelperStatus::Finished))
                         .max_by(|a, b| a.started_at.cmp(&b.started_at))
-                        .map(|run| run.terminal_id.clone())
-                })
-                .map_err(error)?,
-        };
-        let Some(terminal_id) = terminal_id else {
+                        .map(|run| (run.terminal_id.clone(), Some(run.bench_path.clone())))
+                }
+            })
+            .map_err(error)?;
+        let Some((terminal_id, bench_path)) = target else {
             return Ok(json!({ "focused": false }));
         };
+        if let Some(path) = bench_path.as_deref() {
+            focus_bench_in_shell(cx, path);
+        }
+        if cx.registry().command("shell.tab.open").is_some() {
+            let mut open = Args::new();
+            open.insert("view_id", json!("terminal.tab"));
+            let _ = cx.run_command("shell.tab.open", open);
+        }
         let mut call = Args::new();
         call.insert("terminal_id", json!(terminal_id));
         let focused = cx.run_command("terminal.focus", call).is_ok();
@@ -114,6 +124,7 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
                             "bench_path": run.bench_path,
                             "started_at": run.started_at,
                             "status": run.status,
+                            "failed": status::is_failed(run),
                             "last_event": run.last_event,
                         })
                     })
@@ -373,10 +384,21 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
         .to_owned();
     let selected = core.with_state(|state| {
         let installed = |id: &str| {
-            state
-                .detection
-                .get(id)
-                .is_some_and(|detection| detection.executable.is_some())
+            if let Some(detection) = state.detection.get(id) {
+                detection.executable.is_some()
+            } else {
+                state
+                    .profiles
+                    .iter()
+                    .find(|profile| profile.id == id)
+                    .is_some_and(|profile| {
+                        profile
+                            .detect
+                            .executables
+                            .iter()
+                            .any(|name| detect::resolve(name).is_some())
+                    })
+            }
         };
         let profile = match &request.profile_id {
             Some(id) => state
@@ -386,13 +408,12 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
                 .cloned(),
             None => profile::pick_default(&state.profiles, installed, &default_profile).cloned(),
         };
-        let profile = profile.ok_or_else(|| {
-            "no installed helper profile matches helper.default.profile".to_owned()
-        })?;
+        let profile = profile.ok_or_else(|| cx.t("helper.view.installed-empty"))?;
         let overrides = state.overrides(&profile.id);
-        Ok::<_, String>((profile, overrides))
+        let detected = state.detection.get(&profile.id).cloned();
+        Ok::<_, String>((profile, overrides, detected))
     })?;
-    let (profile, overrides) = selected?;
+    let (profile, overrides, detected) = selected?;
     if overrides.disabled {
         return Err(format!("helper profile `{}` is disabled", profile.id));
     }
@@ -443,6 +464,9 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
             "mode": "chat"
         }));
     }
+    if cx.registry().command("terminal.open").is_none() {
+        return Err("terminal module is not available; helper.launch needs terminal.open".to_owned());
+    }
     let mut plan = launch::build(
         &profile,
         &request,
@@ -450,6 +474,13 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
         bench.clone(),
         &overrides,
     )?;
+    let resolved = match detected {
+        Some(detection) => detection.executable,
+        None => detect::resolve(&plan.program),
+    };
+    if resolved.is_none() {
+        return Err(cx.t_args("helper.launch.not-installed", &[("name", &profile.name)]));
+    }
     inject_account_env(cx, &profile.id, &mut plan);
     let hook_token = if profile.hooks.supported {
         let token = hooks::new_run_token()?;
@@ -488,6 +519,9 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
     };
     core.with_state(|state| {
         state.runs.insert(terminal_id.clone(), run.clone());
+        state
+            .last_benches
+            .insert(profile.id.clone(), bench.display().to_string());
         state.refresh_awake();
     })?;
     let _ = cx.emit(&HelperStatusChanged {
@@ -591,10 +625,13 @@ fn profile_infos(state: &HelperState) -> Vec<Value> {
                 "id": profile.id,
                 "name": profile.name,
                 "maker": profile.maker,
+                "site": profile.site,
                 "status": profile.status,
                 "installed": detection.is_some_and(|d| d.executable.is_some()),
                 "executable": detection.and_then(|d| d.executable.as_ref()).map(|p| p.display().to_string()),
                 "version": detection.and_then(|d| d.version.clone()),
+                "install_hint": detect::install_hint(&profile.id),
+                "last_bench": state.last_benches.get(&profile.id),
                 "enabled": !overrides.disabled,
                 "default": default_id.as_deref() == Some(profile.id.as_str()),
                 "permissions": profile.permissions.keys().collect::<Vec<_>>(),
@@ -610,13 +647,57 @@ fn profile_infos(state: &HelperState) -> Vec<Value> {
         .collect()
 }
 
-fn maybe_detect(cx: &mut Ctx<'_>, core: &Shared) {
+pub(crate) fn maybe_detect(cx: &mut Ctx<'_>, core: &Shared) {
     let should = core
-        .with_state(|state| state.detection.is_empty() && !state.detecting)
+        .with_state(|state| state.detection.is_empty() && state.detect_runs == 0 && !state.detecting)
         .unwrap_or(false);
     if should {
         start_detection(cx, core);
     }
+}
+
+fn focus_bench_in_shell(cx: &mut Ctx<'_>, bench_path: &str) {
+    if cx.registry().command("shell.bench.focus").is_none() {
+        return;
+    }
+    let Ok(benches_val) = cx.run_command("bench.list", Args::new()) else {
+        return;
+    };
+    let Ok(projects_val) = cx.run_command("project.list", Args::new()) else {
+        return;
+    };
+    let target = std::path::Path::new(bench_path);
+    let Some(benches) = benches_val.get("benches").and_then(Value::as_array) else {
+        return;
+    };
+    let Some(projects) = projects_val.get("projects").and_then(Value::as_array) else {
+        return;
+    };
+    let Some(bench) = benches.iter().find(|entry| {
+        entry
+            .get("path")
+            .and_then(Value::as_str)
+            .is_some_and(|path| std::path::Path::new(path) == target)
+    }) else {
+        return;
+    };
+    let Some(bench_name) = bench.get("name").and_then(Value::as_str) else {
+        return;
+    };
+    let Some(project_id) = bench.get("project_id").and_then(Value::as_str) else {
+        return;
+    };
+    let Some(project_name) = projects
+        .iter()
+        .find(|entry| entry.get("id").and_then(Value::as_str) == Some(project_id))
+        .and_then(|entry| entry.get("name").and_then(Value::as_str))
+    else {
+        return;
+    };
+    let mut focus = Args::new();
+    focus.insert("project", json!(project_name));
+    focus.insert("bench", json!(bench_name));
+    let _ = cx.run_command("shell.bench.focus", focus);
 }
 
 fn start_detection(cx: &mut Ctx<'_>, core: &Shared) {
@@ -637,6 +718,7 @@ fn start_detection(cx: &mut Ctx<'_>, core: &Shared) {
             if let Ok(mut state) = owned.state.lock() {
                 state.detection = detections;
                 state.detecting = false;
+                state.detect_runs += 1;
             }
         },
     );

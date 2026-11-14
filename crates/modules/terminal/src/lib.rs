@@ -28,10 +28,12 @@ use commands::register_commands;
 use core::Core;
 use forja_contracts::names;
 use forja_contracts::{
-    FileOpenRequested, HelperStatus, HelperStatusChanged, TerminalBell, TerminalCommandFinished, TerminalExited, TerminalTitleChanged,
+    FileOpenRequested, HelperStatus, HelperStatusChanged, TerminalBell, TerminalCommandFinished,
+    TerminalExited, TerminalTitleChanged, TrustDecided, TrustKind,
 };
 use forja_kernel::{Module, ModuleManifest, Registrar, Slot};
 use rpc::register_rpc;
+use settings::TermSettings;
 use settings_registry::register_settings;
 use std::sync::Arc;
 use view::{RecipeView, TerminalView};
@@ -120,6 +122,14 @@ impl Module for TerminalModule {
             "terminal.view.maximize",
             "terminal.view.equalize",
             "terminal.recipes.empty",
+            "terminal.view.failed",
+            "terminal.view.recipe-declined",
+            "terminal.view.error-not-found-title",
+            "terminal.view.error-not-found-body",
+            "terminal.view.error-launch-body",
+            "terminal.view.error-retry",
+            "terminal.view.error-settings",
+            "terminal.view.error-details",
         ] {
             r.uses_i18n(key);
         }
@@ -162,6 +172,43 @@ fn register_events(r: &mut Registrar<'_>, core: &Shared) {
     r.contract_event::<TerminalCommandFinished>(names::TERMINAL_COMMAND_FINISHED);
     r.contract_event::<TerminalTitleChanged>(names::TERMINAL_TITLE_CHANGED);
     r.contract_event::<FileOpenRequested>(names::FILE_OPEN_REQUESTED);
+    r.contract_event::<TrustDecided>(names::TRUST_DECIDED);
+    let trust_core = Arc::clone(core);
+    r.subscribe(move |cx, event: &TrustDecided| {
+        if event.kind != TrustKind::Recipe {
+            return;
+        }
+        let settings = TermSettings::from_ctx(cx);
+        let locale = cx.i18n().locale().id().to_owned();
+        let pending = trust_core
+            .with_hub(|hub| {
+                hub.notice = None;
+                let matches = hub.pending_trust_recipe.as_ref().is_some_and(|recipe| {
+                    recipe.source_path == event.source_path
+                        && recipe.content_hash == event.content_hash
+                });
+                if !matches {
+                    return None;
+                }
+                let recipe = hub.pending_trust_recipe.take()?;
+                if event.approved {
+                    if settings.recipe_confirm {
+                        hub.pending_recipe = Some(recipe);
+                    } else if let Err(error) = hub.run_recipe(&recipe, &settings) {
+                        hub.notice = Some(error);
+                    }
+                    None
+                } else {
+                    Some(recipe.title(&locale).to_owned())
+                }
+            })
+            .ok()
+            .flatten();
+        if let Some(title) = pending {
+            let declined = cx.t_args("terminal.view.recipe-declined", &[("recipe", &title)]);
+            let _ = trust_core.with_hub(|hub| hub.notice = Some(declined));
+        }
+    });
 }
 
 #[cfg(test)]
@@ -172,7 +219,22 @@ mod tests {
     use std::path::{Path, PathBuf};
     use std::time::{Duration, Instant};
 
-    fn temp_dir(label: &str) -> PathBuf {
+    struct TempGuard(PathBuf);
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            for attempt in 0..40 {
+                if std::fs::remove_dir_all(&self.0).is_ok() || !self.0.exists() {
+                    return;
+                }
+                if attempt < 39 {
+                    std::thread::sleep(Duration::from_millis(25));
+                }
+            }
+        }
+    }
+
+    fn temp_guard(label: &str) -> TempGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-terminal-{label}-{}-{}",
             std::process::id(),
@@ -182,7 +244,7 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        dir
+        TempGuard(dir)
     }
 
     fn runtime(dir: &Path) -> Runtime {
@@ -202,7 +264,8 @@ mod tests {
 
     #[test]
     fn helper_status_events_update_close_guard() {
-        let dir = temp_dir("helper-events");
+        let guard = temp_guard("helper-events");
+        let dir = &guard.0;
         let core = Arc::new(Core::new());
         let mut runtime = Runtime::new(vec![Box::new(TerminalModule { core: Arc::clone(&core) })],
             RuntimeOptions { data_dir: Some(dir.clone()), user_dir: Some(dir.join("user")), locale: None, wake: None }).unwrap();
@@ -212,14 +275,13 @@ mod tests {
         assert!(core.with_hub(|hub| hub.helper_terminals.contains(&17)).unwrap());
         runtime.emit(&event(HelperStatus::Finished));
         assert!(!core.with_hub(|hub| hub.helper_terminals.contains(&17)).unwrap());
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
     fn contract_and_rpc_open_send_read() {
-        let dir = temp_dir("rpc");
-        let mut runtime = runtime(&dir);
+        let guard = temp_guard("rpc");
+        let dir = &guard.0;
+        let mut runtime = runtime(dir);
         contract::assert_ok(runtime.registry(), runtime.i18n());
         let open = runtime
             .call_method(
@@ -266,7 +328,106 @@ mod tests {
             .call_method("terminal.list", Map::new())
             .expect("list");
         assert_eq!(list["terminals"].as_array().map(Vec::len), Some(1));
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn trust_decided_runs_pending_project_recipe() {
+        let guard = temp_guard("recipe-trust");
+        let dir = &guard.0;
+        let core = Arc::new(Core::new());
+        let mut runtime = Runtime::new(
+            vec![Box::new(TerminalModule {
+                core: Arc::clone(&core),
+            })],
+            RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .unwrap();
+        runtime
+            .set_setting("terminal.recipes.confirm", forja_kernel::SettingValue::Bool(false))
+            .unwrap();
+        let recipe = crate::recipes::Recipe {
+            id: "check".to_owned(),
+            title_en: "Check".to_owned(),
+            title_pt: "Verificar".to_owned(),
+            command: "echo recipe_ran_ok".to_owned(),
+            directory: String::new(),
+            enter: true,
+            scope: "project".to_owned(),
+            source_path: dir.join("check.toml").display().to_string(),
+            content: "command = \"echo ok\"".to_owned(),
+            content_hash: "abc123".to_owned(),
+        };
+        core.with_hub(|hub| {
+            hub.bench_path = Some(dir.clone());
+            hub.notice = Some("A receita precisa de aprovação".to_owned());
+            hub.pending_trust_recipe = Some(recipe.clone());
+        })
+        .unwrap();
+        runtime.emit(&TrustDecided {
+            request_id: "req-1".to_owned(),
+            kind: TrustKind::Recipe,
+            source_path: recipe.source_path.clone(),
+            content_hash: recipe.content_hash.clone(),
+            approved: true,
+            decided_at: "2026-01-01T00:00:00Z".to_owned(),
+        });
+        let state = core
+            .with_hub(|hub| (hub.notice.clone(), hub.pending_trust_recipe.clone(), hub.terminals.len()))
+            .unwrap();
+        assert!(state.0.is_none());
+        assert!(state.1.is_none());
+        assert_eq!(state.2, 1);
+    }
+
+    #[test]
+    fn spawn_failure_emits_exited_event_and_marks_not_alive() {
+        let guard = temp_guard("spawn-fail");
+        let dir = &guard.0;
+        let core = Arc::new(Core::new());
+        let settings = TermSettings::default();
+        let opened = core
+            .with_hub(|hub| {
+                hub.open(
+                    &settings,
+                    crate::core::OpenRequest {
+                        cwd: Some(dir.clone()),
+                        command: Some("definitely-missing-forja-binary-xyz".to_owned()),
+                        args: Some(String::new()),
+                        title: Some("Missing".to_owned()),
+                        ..crate::core::OpenRequest::default()
+                    },
+                )
+            })
+            .unwrap()
+            .unwrap();
+        let deadline = Instant::now() + Duration::from_secs(5);
+        let mut saw_exit = false;
+        let mut error_text = None;
+        while Instant::now() < deadline {
+            let (events, err, alive) = core
+                .with_hub(|hub| {
+                    let events = hub.poll(Instant::now(), &settings, None);
+                    let terminal = hub.terminal(opened).unwrap();
+                    (events, terminal.error.clone(), terminal.alive())
+                })
+                .unwrap();
+            if events
+                .iter()
+                .any(|event| event.kind == crate::core::HubEventKind::Exited && event.exit_code == Some(1))
+            {
+                saw_exit = true;
+                error_text = err;
+                assert!(!alive);
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        }
+        assert!(saw_exit, "expected Exited(Some(1)) on spawn failure");
+        assert!(error_text.is_some());
     }
 }

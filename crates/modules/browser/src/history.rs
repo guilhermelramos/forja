@@ -83,13 +83,25 @@ fn now_ms() -> u64 {
 mod tests {
     use super::*;
 
-    fn temp_path(name: &str) -> std::path::PathBuf {
+    struct TempDirGuard {
+        dir: std::path::PathBuf,
+        path: std::path::PathBuf,
+    }
+
+    impl Drop for TempDirGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.dir);
+        }
+    }
+
+    fn temp_path(name: &str) -> TempDirGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-browser-history-{name}-{}",
             std::process::id()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        dir.join("history.json")
+        let path = dir.join("history.json");
+        TempDirGuard { dir, path }
     }
 
     #[test]
@@ -119,11 +131,10 @@ mod tests {
 
     #[test]
     fn saves_and_loads_json() {
-        let path = temp_path("roundtrip");
+        let guard = temp_path("roundtrip");
         let mut history = History::default();
         history.add("https://example.test", "Example");
-        history.save(&path).unwrap();
-        assert_eq!(History::load(&path), history);
-        let _ = std::fs::remove_dir_all(path.parent().unwrap());
+        history.save(&guard.path).unwrap();
+        assert_eq!(History::load(&guard.path), history);
     }
 }

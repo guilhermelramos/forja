@@ -152,6 +152,8 @@ pub struct Hub {
     pub pending_close: Option<PendingClose>,
     /// Receita aguardando confirmação (`terminal.recipes.confirm`).
     pub pending_recipe: Option<Recipe>,
+    /// Receita aguardando decisão de confiança (`trust`).
+    pub pending_trust_recipe: Option<Recipe>,
     /// Colagem aguardando confirmação.
     pub pending_paste: Option<PendingPaste>,
     /// Link aguardando confirmação, com o terminal de origem.
@@ -224,7 +226,22 @@ mod tests {
     use super::*;
     use crate::panes::tree::SplitDir;
 
-    fn temp_dir(label: &str) -> PathBuf {
+    struct TempGuard(PathBuf);
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            for attempt in 0..20 {
+                if std::fs::remove_dir_all(&self.0).is_ok() || !self.0.exists() {
+                    return;
+                }
+                if attempt < 19 {
+                    std::thread::sleep(std::time::Duration::from_millis(15));
+                }
+            }
+        }
+    }
+
+    fn temp_guard(label: &str) -> TempGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-terminal-{label}-{}-{}",
             std::process::id(),
@@ -234,12 +251,13 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        dir
+        TempGuard(dir)
     }
 
     #[test]
     fn pane_tree_operations_keep_ids_stable() {
-        let dir = temp_dir("panes");
+        let guard = temp_guard("panes");
+        let dir = &guard.0;
         let mut hub = Hub::new(dir.clone(), None);
         let settings = TermSettings::default();
         let first = hub.open(&settings, OpenRequest::default()).unwrap();
@@ -257,12 +275,12 @@ mod tests {
         for terminal in hub.terminals.values_mut() {
             terminal.stop();
         }
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
     fn helper_close_policy_is_independent_of_generic_terminal_confirmation() {
-        let dir = temp_dir("helper-close");
+        let guard = temp_guard("helper-close");
+        let dir = &guard.0;
         let mut hub = Hub::new(dir.clone(), None);
         let mut settings = TermSettings { close_confirm_running: false, ..TermSettings::default() };
         let id = hub.open(&settings, OpenRequest::default()).unwrap();
@@ -273,12 +291,12 @@ mod tests {
         settings.helper_close_confirm_running = false;
         assert!(!hub.request_close(CloseTarget::Tab(hub.focused, id), &settings));
         assert!(!hub.terminals.contains_key(&id));
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
     fn persistence_roundtrips_layout_and_text() {
-        let dir = temp_dir("persist");
+        let guard = temp_guard("persist");
+        let dir = &guard.0;
         let mut hub = Hub::new(dir.clone(), None);
         let settings = TermSettings::default();
         let id = hub.open(&settings, OpenRequest::default()).unwrap();
@@ -299,12 +317,12 @@ mod tests {
         for terminal in hub.terminals.values_mut() {
             terminal.stop();
         }
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
     fn preview_seeds_visible_text() {
-        let dir = temp_dir("preview");
+        let guard = temp_guard("preview");
+        let dir = &guard.0;
         let mut hub = Hub::new(dir.clone(), Some("split".to_owned()));
         let settings = TermSettings::default();
         hub.seed_preview(&settings);
@@ -319,13 +337,14 @@ mod tests {
         for terminal in hub.terminals.values_mut() {
             terminal.stop();
         }
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
     fn list_filters_by_folder() {
-        let dir = temp_dir("list");
-        let other = temp_dir("list-other");
+        let guard = temp_guard("list");
+        let other_guard = temp_guard("list-other");
+        let dir = &guard.0;
+        let other = &other_guard.0;
         let mut hub = Hub::new(dir.clone(), None);
         let settings = TermSettings::default();
         hub.open(
@@ -349,7 +368,5 @@ mod tests {
         for terminal in hub.terminals.values_mut() {
             terminal.stop();
         }
-        let _ = std::fs::remove_dir_all(dir);
-        let _ = std::fs::remove_dir_all(other);
     }
 }

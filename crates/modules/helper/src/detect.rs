@@ -49,13 +49,31 @@ pub fn detect_all(profiles: &[Profile]) -> BTreeMap<String, Detection> {
         .collect()
 }
 
+/// Procura um executável no PATH e PATHEXT do processo atual.
+pub fn resolve(name: &str) -> Option<PathBuf> {
+    resolve_in(
+        name,
+        std::env::var_os("PATH").as_deref(),
+        std::env::var_os("PATHEXT").as_deref(),
+    )
+}
+
+/// Comando oficial sugerido para instalar o CLI quando não estiver presente.
+pub fn install_hint(profile_id: &str) -> Option<&'static str> {
+    match profile_id {
+        "aider" => Some("python -m pip install -U aider-chat"),
+        "claude-code" => Some("npm install -g @anthropic-ai/claude-code"),
+        "codex" => Some("npm install -g @openai/codex"),
+        "gemini" => Some("npm install -g @google/gemini-cli"),
+        "opencode" => Some("npm install -g opencode-ai"),
+        _ => None,
+    }
+}
+
 /// Procura um executável no PATH com as extensões do Windows.
 pub fn resolve_in(name: &str, path: Option<&OsStr>, extensions: Option<&OsStr>) -> Option<PathBuf> {
     let candidate = Path::new(name);
-    if candidate.components().count() > 1 {
-        return candidate.is_file().then(|| candidate.to_path_buf());
-    }
-    let mut suffixes = vec![String::new()];
+    let mut suffixes = Vec::new();
     let pathext = extensions
         .map(|value| value.to_string_lossy().into_owned())
         .unwrap_or_else(|| ".COM;.EXE;.BAT;.CMD;.PS1".to_owned());
@@ -70,7 +88,26 @@ pub fn resolve_in(name: &str, path: Option<&OsStr>, extensions: Option<&OsStr>) 
     for suffix in [".exe", ".cmd", ".ps1"] {
         suffixes.push(suffix.to_owned());
     }
+    suffixes.push(String::new());
     suffixes.dedup();
+    if candidate.components().count() > 1 {
+        if let Some(ext) = candidate.extension().and_then(|e| e.to_str()) {
+            if !ext.is_empty() {
+                return candidate.is_file().then(|| candidate.to_path_buf());
+            }
+        }
+        for suffix in &suffixes {
+            let file = if suffix.is_empty() {
+                candidate.to_path_buf()
+            } else {
+                PathBuf::from(format!("{}{suffix}", candidate.display()))
+            };
+            if file.is_file() {
+                return Some(file);
+            }
+        }
+        return None;
+    }
     for directory in std::env::split_paths(path.unwrap_or_default()) {
         for suffix in &suffixes {
             let file = if suffix.is_empty() {
@@ -88,9 +125,8 @@ pub fn resolve_in(name: &str, path: Option<&OsStr>, extensions: Option<&OsStr>) 
 }
 
 fn run_version(executable: &Path, args: &[String]) -> Result<String, String> {
-    let mut command = Command::new(executable);
+    let mut command = version_command(executable, args);
     command
-        .args(args)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
@@ -117,24 +153,66 @@ fn run_version(executable: &Path, args: &[String]) -> Result<String, String> {
     }
 }
 
+fn version_command(executable: &Path, args: &[String]) -> Command {
+    let ext = executable
+        .extension()
+        .and_then(|value| value.to_str())
+        .map(str::to_ascii_lowercase)
+        .unwrap_or_default();
+    if matches!(ext.as_str(), "cmd" | "bat") {
+        let comspec = std::env::var_os("COMSPEC").unwrap_or_else(|| "cmd.exe".into());
+        let mut command = Command::new(comspec);
+        command.arg("/d").arg("/c").arg(executable).args(args);
+        return command;
+    }
+    if ext == "ps1" {
+        let mut command = Command::new("powershell.exe");
+        command
+            .arg("-NoLogo")
+            .arg("-NoProfile")
+            .arg("-ExecutionPolicy")
+            .arg("Bypass")
+            .arg("-File")
+            .arg(executable)
+            .args(args);
+        return command;
+    }
+    let mut command = Command::new(executable);
+    command.args(args);
+    command
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::profile::Layer;
 
+    struct TempGuard(PathBuf);
+    impl TempGuard {
+        fn new(label: &str) -> Self {
+            let dir = std::env::temp_dir().join(format!(
+                "forja-helper-{label}-{}-{}",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos()
+            ));
+            std::fs::create_dir_all(&dir).unwrap();
+            Self(dir)
+        }
+    }
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
     #[test]
     fn finds_an_executable_through_a_fake_path() {
-        let dir = std::env::temp_dir().join(format!(
-            "forja-helper-detect-{}-{}",
-            std::process::id(),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_nanos()
-        ));
-        std::fs::create_dir_all(&dir).unwrap();
-        std::fs::write(dir.join("fake-helper.cmd"), "@echo off\r\n").unwrap();
-        let path = std::ffi::OsString::from(dir.display().to_string());
+        let guard = TempGuard::new("detect");
+        std::fs::write(guard.0.join("fake-helper.cmd"), "@echo off\r\n").unwrap();
+        let path = std::ffi::OsString::from(guard.0.display().to_string());
         let resolved = resolve_in(
             "fake-helper",
             Some(&path),
@@ -143,7 +221,20 @@ mod tests {
         assert!(resolved.is_some());
         assert!(resolved.unwrap().ends_with("fake-helper.cmd"));
         assert!(resolve_in("missing-helper", Some(&path), None).is_none());
-        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn prefers_cmd_shim_over_extensionless_posix_script() {
+        let guard = TempGuard::new("npm-shim");
+        std::fs::write(guard.0.join("opencode"), "#!/bin/sh\necho posix\n").unwrap();
+        std::fs::write(guard.0.join("opencode.cmd"), "@echo off\r\n").unwrap();
+        let path = std::ffi::OsString::from(guard.0.display().to_string());
+        let resolved = resolve_in(
+            "opencode",
+            Some(&path),
+            Some(&std::ffi::OsString::from(".COM;.EXE;.BAT;.CMD")),
+        );
+        assert_eq!(resolved, Some(guard.0.join("opencode.cmd")));
     }
 
     #[test]
