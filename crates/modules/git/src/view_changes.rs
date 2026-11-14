@@ -621,6 +621,7 @@ mod tests {
             "git pull --ff-only failed: There is no tracking information for the current branch."
         )
         .contains("branch remoto"));
+        assert!(humanize_error(&cx, "no-remote").contains("remote configurado"));
         assert_eq!(humanize_error(&cx, "no file selected"), "Selecione ao menos um arquivo.");
         let _ = std::fs::remove_dir_all(dir);
     }
