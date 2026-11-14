@@ -126,7 +126,7 @@ O módulo oferece a lista no menu Receitas do terminal e na Bigorna. A receita
 roda no terminal focado; quando `directory` aponta para outra pasta da bancada,
 abre um terminal nela. Receitas de projeto passam por `trust.check` antes de
 executar; sem aprovação do hash exato, `trust.request` abre o modal e a receita
-espera a decisão. Receitas da camada do projeto usam a origem can�nica no modal e s� s�o carregadas quando o destino resolvido permanece dentro da bancada; links externos s�o recusados. Receitas globais continuam executando direto.
+espera a decisão. Receitas da camada do projeto usam a origem can�nica no modal e s� s�o carregadas quando o destino resolvido permanece dentro da bancada; links externos s�o recusados. Receitas globais continuam executando direto.
 
 ## Shells
 
@@ -164,9 +164,10 @@ divisões e busca. Sem a variável, o comportamento é o normal.
   crates de outros módulos.
 - Tenta `bench.current` uma vez para descobrir a bancada e degrada em silêncio
   quando o módulo de bancadas não está presente.
-- `terminal.toggle` cria/foca o terminal da aba; o shell ainda não expõe um
-  comando para trocar a aba ativa, então ele não alterna a visibilidade global
-  da aba.
+- `terminal.toggle` cria/foca o terminal quando ele não existe. O shell, dono da
+  aba da bancada, mostra a aba ao abrir/focar o terminal e fecha a aba quando o
+  atalho chega com o terminal ativo; assim `Ctrl+Backtick` alterna a
+  visibilidade sem o módulo conhecer o layout global.
 
 ## Como testar
 

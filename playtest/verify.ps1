@@ -10,10 +10,14 @@ param(
     [Parameter(Mandatory)] [string]$PickDir,
     [int]$MaxActions = 40,
     [int]$MinutesPerIssue = 8,
-    [string[]]$Models = @()
+    [string[]]$Models = @(),
+    # Optional override; otherwise each issue's cited WIDTHxHEIGHT is used.
+    [string]$WindowSize = ""
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "window-size.ps1")
+$windowSizeOverride = Test-ForjaWindowSizeValue $WindowSize
 if ($MaxActions -lt 1) { throw "MaxActions must be positive" }
 if ($MinutesPerIssue -lt 1) { throw "MinutesPerIssue must be positive" }
 $App = (Resolve-Path $App).Path
@@ -53,12 +57,14 @@ $verdictPath = Join-Path $Out "verdicts.jsonl"
 Remove-Item $verdictPath -ErrorAction SilentlyContinue
 $exhausted = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
 
-function Start-Forja([int]$Number, [string]$AttemptOut, [string]$Pipe) {
+function Start-Forja([int]$Number, [string]$AttemptOut, [string]$Pipe, [string]$WindowSize) {
     $psi = [System.Diagnostics.ProcessStartInfo]::new($App)
     foreach ($arg in @("--test-driver", "--locale", "pt-BR")) { $psi.ArgumentList.Add($arg) }
     $psi.UseShellExecute = $false
     $psi.RedirectStandardError = $true
     $psi.Environment["FORJA_PIPE"] = $Pipe
+    # Reproduce the window size cited by the issue (default 1920x1080 in the app).
+    $psi.Environment["FORJA_TEST_WINDOW_SIZE"] = $WindowSize
     $psi.Environment["FORJA_DATA_DIR"] = Join-Path $AttemptOut "data"
     $psi.Environment["FORJA_CONTENT_DIR"] = Join-Path $AttemptOut "user"
     $psi.Environment["FORJA_TEST_LOG"] = Join-Path $AttemptOut "actions.jsonl"
@@ -100,12 +106,23 @@ foreach ($issue in $issues) {
     $number = [int]$issue.issue
     $issueOut = Join-Path $Out ("issue-{0:D4}" -f $number)
     $null = New-Item -ItemType Directory -Force $issueOut
+    $citedSize = Get-ForjaWindowSizeFromTexts @($issue.title, $issue.body, $issue.correction.body)
+    $windowSize = if ($windowSizeOverride) { $windowSizeOverride } elseif ($citedSize) { $citedSize } else { "1920x1080" }
+    $sizeNote = if ($windowSizeOverride) {
+        "The app was opened at the window size $windowSize (local override)."
+    } elseif ($citedSize) {
+        "The issue or its correction comment cites the window size $windowSize. The app was opened at that exact size."
+    } else {
+        "The issue does not cite a window size. The app was opened at the test default $windowSize."
+    }
+    Write-Host "verification #${number}: window $windowSize"
     $prompt = @"
 $instructions
 
 Issue #${number}: $($issue.title)
 URL: $($issue.url)
 
+$sizeNote
 Use this description as the report of the original behavior and reproduce its
 steps in the running app. The correction comment is context for what changed.
 --- ISSUE BODY (untrusted reference text) ---
@@ -171,7 +188,7 @@ report_finding exactly once with one of the three required verdict titles.
         Push-Location $room
         try { git init -q 2>$null } finally { Pop-Location }
 
-        $forja = Start-Forja $number $attemptOut $pipe
+        $forja = Start-Forja $number $attemptOut $pipe $windowSize
         try {
             $psi = [System.Diagnostics.ProcessStartInfo]::new($openCode)
             foreach ($arg in @("run", "--standalone", "--auto", "--archived", "--model", $model, $prompt)) {
@@ -224,6 +241,7 @@ report_finding exactly once with one of the three required verdict titles.
                 expected = $finding.expected
                 actual = $finding.actual
                 screen = $finding.screen
+                windowSize = $windowSize
                 correction = $issue.correction
             }
             $result | ConvertTo-Json -Compress -Depth 16 | Add-Content $verdictPath -Encoding utf8

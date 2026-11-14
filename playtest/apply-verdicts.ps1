@@ -9,6 +9,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "verdict-rules.ps1")
 if (-not $Repository) { throw "Repository is required (OWNER/REPO)" }
 if (-not (Test-Path $VerdictsPath)) {
     Write-Host "no verdict file; nothing to apply"
@@ -62,6 +63,15 @@ foreach ($result in $verdicts) {
         continue
     }
 
+    # A model can write `fixed` while its own evidence says the behavior did
+    # not work. Evidence wins: downgrade before touching the issue.
+    $reportedVerdict = $verdict
+    $verdict = Get-EffectiveVerdict $verdict $result.steps $result.actual
+    $downgraded = $verdict -ne $reportedVerdict
+    if ($downgraded) {
+        Write-Warning "#${number}: '$reportedVerdict' has failure evidence; treating as '$verdict'"
+    }
+
     $issue = Get-LiveIssue $number
     if ($issue.state -ne "OPEN") {
         Write-Host "skip #${number}: issue is closed; it will not be reopened or changed"
@@ -92,14 +102,20 @@ foreach ($result in $verdicts) {
         $runUrl = "$runUrl/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
     }
     if (-not $runUrl) { $runUrl = "rodada local" }
+    $downgradeNote = if ($downgraded) {
+        "`nO veredito automático dizia '$reportedVerdict', mas a evidência registra uma falha; por isso foi tratado como '$verdict'."
+    } else {
+        ""
+    }
+    $windowLine = if ($result.windowSize) { "Janela: $($result.windowSize)`n" } else { "" }
     $comment = @"
 $prefix
 
 Passos e evidência:
 $stepLines
-
+$windowLine
 Esperado: $($result.expected)
-Observado: $($result.actual)
+Observado: $($result.actual)$downgradeNote
 Rodada: $runUrl
 "@
 
