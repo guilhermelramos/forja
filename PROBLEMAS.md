@@ -720,3 +720,35 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - O texto "Click to type" (~1565,1023) é exibido em cinza escuro sobre fundo escuro, com contraste baixo.
 - Nenhum elemento ultrapassa os limites da janela (1920×1080); na variante pt-BR havia uma aba fora da borda, o que não ocorre aqui por causa da largura maior.
 
+## [en.dark.settings.helper](pages/en.dark.settings.helper.md)
+
+- A árvore lista conteúdo do modal até y≈3624, muito além do retângulo da janela "Settings" (termina em y=496) e da altura da imagem (1080 px); os cartões abaixo de Amp só são acessíveis rolando, e o único indicador é uma barra de rolagem de 2 px ((1015,167)–(1017,487)).
+- "Enabled" (Cline CLI) (398,1064)–(465,1096) ultrapassa a borda inferior da imagem e "Cline CLI" (337,1071)–(390,1090) é cortado nela.
+- Botão de tema/sol (1741,5)–(1773,37) sem nome acessível.
+- Quatro controles sem nome em (444,113)–(581,145) (barra do painel central, sob o modal).
+- Todos os TextInput ("Search settings", "Extra arguments", "Environment") sem nome acessível ou rótulo associado.
+- Oito cartões exibem "Loading…" persistente no estado de hooks (GitHub Copilot CLI, Crush, Gemini CLI, Goose, Kimi Code CLI, Kiro CLI, OpenCode, Qwen Code).
+- Caminhos absolutos misturam separadores "\" e "/" (ex.: "C:\Users\runneradmin\.gemini/config/hooks.json").
+- O botão "Settings" do trilho esquerdo permanece marcado=False enquanto a tela de ajustes está aberta.
+- Cantos de redimensionamento do modal com retângulos parcialmente acima do topo declarado da janela ((319,49)–(339,69) e (1016,49)–(1036,69), contra topo em y=58).
+- As abas centrais "Terminal" a "History" e o "More tabs" do centro ficam encobertos pelo modal aberto.
+
+## [en.dark.settings.import](pages/en.dark.settings.import.md)
+
+- O diálogo "Settings" cobre as abas "Editor", "Browser", "Changes", "Preview", "Bench", "Review" e "History" (e parte de "More tabs" e "Extension panels" centrais); esperado num modal, mas a sobreposição não é indicada por sombra/contraste suficientes nas bordas.
+- Vários controles sem nome acessível: o alternador de tema (1741,5), os quatro botões-ícone da barra do terminal (444–581,113), o campo de busca do diálogo, o item de navegação do diálogo (328,118)–(404,140) com seu ícone (385,121)–(401,137) e os divisores/alças, dificultando o uso por leitor de tela.
+- A faixa sem nome (339,51)–(1018,67) sobrepõe a linha de abas da área central atrás do diálogo.
+- O aviso "Click to type" (visível em ~(1535,1023), dentro da região sem nome (328,150)–(1604,1036)) não aparece como elemento nomeado na árvore de acessibilidade.
+- O item de navegação do diálogo (328,118)–(404,140) fica sob o campo de busca, sem texto legível na imagem.
+
+## [en.dark.settings.mcp](pages/en.dark.settings.mcp.md)
+
+- O conteúdo da janela modal "Settings" excede o retângulo declarado (328,58)–(1026,496): o snippet do "OpenCode" tem retângulo até y=544 e o aviso final até y=571; na imagem o snippet aparece cortado na borda inferior do modal e o aviso não é visível (é preciso rolar).
+- A aba "Extension panels" (973,52)–(1099,84) é parcialmente coberta pela janela modal: só o trecho "…ion panels" do texto fica visível.
+- O botão "More tabs" da área central (324,50)–(411,85) é parcialmente coberto pela barra de título do modal.
+- A janela modal "Settings" sobrepõe a barra de ferramentas central: "+", os quatro botões sem nome (444–581,113), "Recipes" e "Shell" ficam ocultos atrás dela.
+- O campo de busca do modal é um TextInput sem nome acessível (só o texto de apoio "Search settings" é visível).
+- Botões sem nome acessível: o alternador de tema (ícone de sol, (1741,5)) e os quatro botões de ícone da barra do terminal ((444,113)–(581,145)).
+- Ícones registrados apenas como "(ícone)" ((168,161) e (1756,117)) sem texto alternativo descritivo.
+- Textos secundários ("Server · on: 52", "Helper setup" e os estados vazios) em cinza médio sobre fundo escuro, com contraste aparentemente baixo.
+

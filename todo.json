@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 12,
-  "widgets_total": 3116,
-  "widgets_covered": 2964,
+  "states_done": 15,
+  "widgets_total": 3293,
+  "widgets_covered": 3141,
   "complete": false,
   "stale": [
     {
@@ -708,21 +708,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "en.dark.settings.helper",
-      "png": "captures/en.dark.settings.helper.png",
-      "tree": "captures/en.dark.settings.helper.json"
-    },
-    {
-      "state": "en.dark.settings.import",
-      "png": "captures/en.dark.settings.import.png",
-      "tree": "captures/en.dark.settings.import.json"
-    },
-    {
-      "state": "en.dark.settings.mcp",
-      "png": "captures/en.dark.settings.mcp.png",
-      "tree": "captures/en.dark.settings.mcp.json"
-    },
     {
       "state": "en.dark.settings.onboarding",
       "png": "captures/en.dark.settings.onboarding.png",
