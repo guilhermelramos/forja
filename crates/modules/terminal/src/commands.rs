@@ -6,12 +6,47 @@ use crate::requests::{open_request, parse_id};
 use crate::settings::TermSettings;
 use crate::Shared;
 use forja_kernel::ui_contract::egui;
-use forja_kernel::{KernelError, Registrar};
+use forja_kernel::{Args, Ctx, KernelError, Registrar};
 use serde_json::json;
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
 
 pub(super) fn register_commands(r: &mut Registrar<'_>, core: &Shared) {
+    let recipe_core = Arc::clone(core);
+    r.command("terminal.recipe.run", "terminal.command.recipe-run", move |cx, args| {
+        let id = args.required_str("recipe_id")?;
+        let hash = args.required_str("content_hash")?;
+        let bench = recipe_bench(cx);
+        let bench_text = bench.as_ref().map(|path| path.to_string_lossy().into_owned());
+        if args.str("bench_path") != bench_text.as_deref() {
+            return Err(KernelError::Message(cx.t("terminal.view.recipe-stale")));
+        }
+        let recipe = recipe_core.with_hub(|hub| {
+            hub.recipes.iter().find(|recipe| recipe.id == id && recipe.content_hash == hash).cloned()
+        }).map_err(command_error)?
+            .ok_or_else(|| KernelError::Message(cx.t("terminal.view.recipe-stale")))?;
+        crate::recipe_trust::approve(cx, &recipe).map_err(command_error)?;
+        let settings = TermSettings::from_ctx(cx);
+        let worker = Arc::clone(&recipe_core);
+        let completion = Arc::clone(&recipe_core);
+        cx.spawn(move || worker.with_hub(|hub| {
+            if bench.is_some() && hub.bench_path != bench {
+                hub.set_bench(bench.clone());
+            }
+            if hub.focused_terminal().is_none() && settings.recipe_program().is_none() {
+                hub.open(&settings, OpenRequest { cwd: bench, ..OpenRequest::default() })?;
+            }
+            hub.run_recipe(&recipe, &settings)
+        }).and_then(|result| result), move |cx, result| {
+            if result.is_err() {
+                let notice = cx.t("terminal.view.recipe-failed");
+                let _ = completion.with_hub(|hub| hub.notice = Some(notice));
+            }
+        });
+        Ok(json!({ "pending": true }))
+    });
+
     let open_core = Arc::clone(core);
     r.command("terminal.open", "terminal.command.open", move |cx, args| {
         let settings = TermSettings::from_ctx(cx);
@@ -313,6 +348,11 @@ pub(super) fn register_commands(r: &mut Registrar<'_>, core: &Shared) {
                 .map_err(command_error)
         });
     }
+}
+
+pub(super) fn recipe_bench(cx: &mut Ctx<'_>) -> Option<PathBuf> {
+    cx.run_command("bench.current", Args::new()).ok()
+        .and_then(|value| value.get("path").and_then(serde_json::Value::as_str).map(PathBuf::from))
 }
 
 

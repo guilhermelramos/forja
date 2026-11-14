@@ -107,6 +107,9 @@ impl ForjaApp {
         self.anvil_query.clear();
         self.anvil_query_seen.clear();
         self.anvil_selected = 0;
+        self.anvil_selection_explicit = false;
+        self.anvil_selection_id = None;
+        self.anvil_selection_missing = false;
         self.focus_anvil = true;
         self.load_ask_options();
         true
@@ -153,6 +156,9 @@ impl ForjaApp {
             self.anvil_query.clear();
             self.anvil_query_seen.clear();
             self.anvil_selected = 0;
+            self.anvil_selection_explicit = false;
+            self.anvil_selection_id = None;
+            self.anvil_selection_missing = false;
             self.focus_anvil = true;
             self.load_ask_options();
             return;
