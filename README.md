@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 29/160 telas documentadas · elementos citados 3757/3910 · completo: false
+**Progresso:** 31/160 telas documentadas · elementos citados 3933/4089 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -154,9 +154,9 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.dark.settings.trust` | [página](pages/en.dark.settings.trust.md) | [png](captures/en.dark.settings.trust.png) |
 | `en.dark.settings.voice` | [página](pages/en.dark.settings.voice.md) | [png](captures/en.dark.settings.voice.png) |
 | `en.light.home.default` | [página](pages/en.light.home.default.md) | [png](captures/en.light.home.default.png) |
-| `en.light.open.anvil` | — | [png](captures/en.light.open.anvil.png) |
-| `en.light.open.onboarding` | — | [png](captures/en.light.open.onboarding.png) |
-| `en.light.open.toast` | — | [png](captures/en.light.open.toast.png) |
+| `en.light.open.anvil` | [página](pages/en.light.open.anvil.md) | [png](captures/en.light.open.anvil.png) |
+| `en.light.open.onboarding` | [página](pages/en.light.open.onboarding.md) | [png](captures/en.light.open.onboarding.png) |
+| `en.light.open.toast` | [página](pages/en.light.open.toast.md) | [png](captures/en.light.open.toast.png) |
 | `en.light.rail.archive.tab` | — | [png](captures/en.light.rail.archive.tab.png) |
 | `en.light.modal.bench.dialogs` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.modal.bench.dialogs.png) |
 | `en.light.bench-tab.bench.detail` | [página](pages/en.light.bench-tab.bench.detail.md) | [png](captures/en.light.bench-tab.bench.detail.png) |

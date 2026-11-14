@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 29,
-  "widgets_total": 3910,
-  "widgets_covered": 3757,
+  "states_done": 31,
+  "widgets_total": 4089,
+  "widgets_covered": 3933,
   "complete": false,
   "stale": [
     {
@@ -715,24 +715,21 @@
       "widgets_not_mentioned": [
         "No bench is active.\nCreate a bench, or pick one in the sidebar or board."
       ]
-    }
-  ],
-  "missing": [
+    },
     {
       "state": "en.light.open.anvil",
       "png": "captures/en.light.open.anvil.png",
-      "tree": "captures/en.light.open.anvil.json"
-    },
-    {
-      "state": "en.light.open.onboarding",
-      "png": "captures/en.light.open.onboarding.png",
-      "tree": "captures/en.light.open.onboarding.json"
-    },
-    {
-      "state": "en.light.open.toast",
-      "png": "captures/en.light.open.toast.png",
-      "tree": "captures/en.light.open.toast.json"
-    },
+      "tree": "captures/en.light.open.anvil.json",
+      "page": "pages/en.light.open.anvil.md",
+      "capture_changed": false,
+      "widgets_not_mentioned": [
+        "Allow process requests",
+        "Check gofmt formatting  ·  project",
+        "Format code with Ruff  ·  project"
+      ]
+    }
+  ],
+  "missing": [
     {
       "state": "en.light.rail.archive.tab",
       "png": "captures/en.light.rail.archive.tab.png",

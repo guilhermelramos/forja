@@ -799,6 +799,35 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Três botões "More tabs" são exibidos mesmo com todas as abas visíveis em suas faixas — o painel esquerdo tem uma única aba ("Projects") — o que aparenta redundância visual/funcional.
 - Estados com pixels idênticos a esta captura incluem os modais bench.dialogs, counter.poller, mcp.approval, notify.toasts, onboarding.wizard, project.dialogs e voice.overlay, além de bench-tab.terminal.tab e right-tab.explorer.panel: nessas capturas nenhum diálogo, aviso, sobreposição ou painel de explorer diferente aparece renderizado.
 
+## [en.light.open.anvil](pages/en.light.open.anvil.md)
+
+- Vários elementos têm retângulos além dos limites da captura (1920×1080): as linhas e chips da lista da Bigorna se estendem até y=1812 (ex.: "Author name" (650,1780)–(1270,1812)) — do "Review bench changes" (y=580) em diante nada é renderizado, primeiro porque fica abaixo da borda da janela da Bigorna (que termina em y=585) e depois porque fica fora da imagem.
+- Sobreposição de retângulos dentro da Bigorna: "Prepare PR description" (650,500)–(1270,532) e "Refactor for clarity" (650,540)–(1270,572) sobrepõem a seção "Terminal recipes" e o chip "Build Go packages  ·  project" sem aparecerem na tela (retângulos de lista dessincronizados).
+- A aba "Recipes" (584,113)–(655,145) é cortada pela borda esquerda da janela da Bigorna e "Shell" (658,113)–(711,145) fica totalmente oculta atrás dela; as abas "Extension panels" e "Helper (chat)" (y 52–84) têm sua borda inferior coberta pela janela (que começa em y=72) e aparecem esmaecidas.
+- Botões de abas com nomes ambíguos para leitores de tela: três botões "More tabs" e dois botões "Changes" com o mesmo nome.
+- Elementos interativos sem nome acessível: o botão de alternar tema (ícone de sol, (1741,5)–(1773,37)), o campo de busca da Bigorna, as linhas de resultado da busca, os quatro ícones da barra de ferramentas do terminal ((444,113)–(581,145)), a aba "pwsh" e seus elementos internos, e os dois divisores laterais.
+- Os rótulos de ícone dos estados vazios aparecem apenas como "(ícone)", sem nome descritivo.
+- As barras de rolagem das listas têm apenas 2 px de largura ((1268,220)–(1270,460), (890,482)–(892,546) e (890,509)–(892,573)), muito finas e de baixo contraste.
+- O rótulo "No project" (11,12)–(77,31) tem 66 px de largura, menos do que o texto visível ocupa na imagem, indicando retângulo acessível menor que o renderizado.
+
+## [en.light.open.onboarding](pages/en.light.open.onboarding.md)
+
+- O botão de alternar tema (ícone de sol, (1741,5)–(1773,37)) está sem nome acessível.
+- Os quatro botões de ícone da barra do terminal — encerrar (X), limpar, dividir e buscar — ((444,113)–(476,145), (479,113)–(511,145), (514,113)–(546,145), (549,113)–(581,145)) estão sem nome acessível.
+- A aba de sessão "pwsh" ((328,118)–(404,140)) e seu X de fechar ((385,121)–(401,137)) estão sem nome acessível.
+- O elemento associado à seleção de idioma está sem nome acessível e tem tamanho zero ((960,540)–(960,540)).
+- Três botões compartilham o mesmo nome acessível "More tabs" ((64,50)–(151,85), (324,50)–(411,85) e (1632,50)–(1719,85)), sem indicar a qual faixa de abas pertencem.
+- A dica "Click to type", no canto inferior direito do terminal, é pequena e está em cinza-claro sobre fundo branco — baixo contraste.
+
+## [en.light.open.toast](pages/en.light.open.toast.md)
+
+- O botão de alternância de tema (1741,5)–(1773,37) e os quatro botões de ícone da barra do terminal ((444,113) a (581,145)) não têm nome acessível.
+- Os dois divisores arrastáveis ((304,42)–(320,1048) e (1612,42)–(1628,1048)) recebem foco por teclado, mas não têm nome acessível.
+- Há dois botões nomeados apenas "×" (fechar janela em (1875,5) e fechar toast em (1870,983)), o que os torna ambíguos para leitores de tela.
+- Três botões compartilham o nome "More tabs" ((64,50), (324,50) e (1632,50)) sem indicar a qual painel pertencem.
+- O texto "Click to type", visível no canto inferior direito da área do terminal, não aparece na árvore de acessibilidade.
+- Elemento de dimensão zero (960,540)–(960,540) sem nome na área central.
+
 ## [en.light.bench-tab.bench.detail](pages/en.light.bench-tab.bench.detail.md)
 
 - O botão de tema na barra superior (1741,5)–(1773,37) é um Unknown sem nome acessível; só é identificável pelo ícone de sol.
