@@ -142,10 +142,7 @@ impl RoutinesView {
         }
     }
 
-    fn editor(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
-        let Some(mut draft) = self.draft.take() else {
-            return;
-        };
+    fn editor_body(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, draft: &mut Draft) {
         ui.separator();
         ui.label(egui::RichText::new(cx.t("routine-editor-title")).strong());
         text_field(ui, &mut draft.name, &cx.t("routine-field-name"));
@@ -231,11 +228,16 @@ impl RoutinesView {
         text_field(ui, &mut draft.precheck, &cx.t("routine-field-precheck"));
         text_field(ui, &mut draft.tolerance, &cx.t("routine-field-tolerance"));
 
-        self.preview(ui, cx, &draft);
+        self.preview(ui, cx, draft);
+    }
 
+    /// Rodapé fixo do diálogo: o erro de validação não esconde Salvar/Cancelar.
+    fn editor_footer(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, draft: &Draft) -> bool {
         if let Some(error) = &self.draft_error {
             ui.colored_label(egui::Color32::from_rgb(0xE5, 0x53, 0x4B), cx.t(error));
         }
+        ui.add_space(4.0);
+        ui.separator();
         let mut keep = true;
         ui.horizontal(|ui| {
             if button(ui, ButtonKind::Primary, &cx.t("routine-save")).clicked() {
@@ -265,9 +267,7 @@ impl RoutinesView {
                 self.draft_error = None;
             }
         });
-        if keep {
-            self.draft = Some(draft);
-        }
+        keep
     }
 
     /// Os próximos disparos com a agenda como está digitada.
@@ -348,18 +348,31 @@ impl View for RoutinesView {
                 self.draft_error = None;
                 return;
             }
+            let Some(mut draft) = self.draft.take() else {
+                return;
+            };
+            let available = (context.content_rect().height() - 120.0).max(240.0);
+            let body_height = (available - 140.0).max(160.0);
+            let mut keep = true;
             egui::Window::new(cx.t("routine-editor-title"))
                 .id(egui::Id::new("routine.editor"))
                 .collapsible(false)
                 .resizable(false)
                 .default_width(500.0)
+                .max_height(available)
                 .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
                 .show(&context, |ui| {
                     forja_ui_kit::register_keyboard_layer(ui, layer);
                     egui::ScrollArea::vertical()
-                        .max_height((context.content_rect().height() - 120.0).max(200.0))
-                        .show(ui, |ui| self.editor(ui, cx));
+                        .id_salt("routine.editor.body")
+                        .auto_shrink([false, true])
+                        .max_height(body_height)
+                        .show(ui, |ui| self.editor_body(ui, cx, &mut draft));
+                    keep = self.editor_footer(ui, cx, &draft);
                 });
+            if keep {
+                self.draft = Some(draft);
+            }
         }
     }
 }
