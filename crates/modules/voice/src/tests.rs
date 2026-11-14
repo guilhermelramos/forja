@@ -8,12 +8,37 @@ use forja_kernel::{contract, Args, Runtime, RuntimeOptions};
 use serde_json::{json, Map, Value};
 use std::path::PathBuf;
 
-fn temp_dir(name: &str) -> PathBuf {
+struct TempGuard(PathBuf);
+
+impl std::ops::Deref for TempGuard {
+    type Target = PathBuf;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Drop for TempGuard {
+    fn drop(&mut self) {
+        for attempt in 0..20 {
+            if std::fs::remove_dir_all(&self.0).is_ok() || !self.0.exists() {
+                return;
+            }
+            if attempt < 19 {
+                std::thread::sleep(std::time::Duration::from_millis(15));
+            }
+        }
+    }
+}
+
+fn temp_dir(name: &str) -> TempGuard {
     let nanos = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|duration| duration.as_nanos())
         .unwrap_or(0);
-    std::env::temp_dir().join(format!("forja-voice-module-{name}-{}-{nanos}", std::process::id()))
+    TempGuard(std::env::temp_dir().join(format!(
+        "forja-voice-module-{name}-{}-{nanos}",
+        std::process::id()
+    )))
 }
 
 /// Runtime com o módulo e backends falsos. Devolve também o registro de teclas para inspeção.
@@ -51,7 +76,6 @@ fn the_module_passes_the_kernel_contract() {
     let dir = temp_dir("contract");
     let (runtime, _input) = runtime(&dir);
     contract::assert_ok(runtime.registry(), runtime.i18n());
-    let _ = std::fs::remove_dir_all(dir);
 }
 
 #[test]
@@ -61,7 +85,6 @@ fn dictation_is_refused_while_voice_is_off() {
     let error = runtime.run_command("voice.dictate", Args::new()).expect_err("off by default");
     assert!(error.to_string().contains("voice-error-disabled"), "{error}");
     assert!(input.0.lock().unwrap().is_empty(), "no key may be sent while voice is off");
-    let _ = std::fs::remove_dir_all(dir);
 }
 
 #[test]
@@ -78,7 +101,6 @@ fn a_toggle_sends_win_h_on_each_press() {
         winkeys::win_h(),
         "the sequence is Win+H"
     );
-    let _ = std::fs::remove_dir_all(dir);
 }
 
 #[test]
@@ -99,7 +121,6 @@ fn a_hold_starts_on_press_and_stops_on_release() {
         .run_command("voice.hold", args(json!({ "phase": "tap" })))
         .expect_err("phase checked");
     assert!(error.to_string().contains("press or release"), "{error}");
-    let _ = std::fs::remove_dir_all(dir);
 }
 
 #[test]
@@ -113,7 +134,6 @@ fn the_whisper_engine_is_listed_but_not_available_for_dictation() {
     let error = runtime.run_command("voice.dictate", Args::new()).expect_err("not available");
     assert!(error.to_string().contains("voice-error-engine"), "{error}");
     assert!(input.0.lock().unwrap().is_empty());
-    let _ = std::fs::remove_dir_all(dir);
 }
 
 #[test]
@@ -128,7 +148,6 @@ fn inserting_needs_the_explicit_confirmation_flag() {
         )
         .expect_err("not confirmed");
     assert!(error.to_string().contains("voice-error-confirm"), "{error}");
-    let _ = std::fs::remove_dir_all(dir);
 }
 
 #[test]
@@ -143,7 +162,6 @@ fn confirmed_insert_with_no_transcript_has_nothing_to_send() {
         )
         .expect_err("empty");
     assert!(error.to_string().contains("voice-error-nothing"), "{error}");
-    let _ = std::fs::remove_dir_all(dir);
 }
 
 #[test]
@@ -154,7 +172,6 @@ fn an_unknown_insert_target_is_refused() {
         .run_command("voice.insert", args(json!({ "target": "planilha", "confirmed": true })))
         .expect_err("unknown target");
     assert!(error.to_string().contains("terminal, editor or chat"), "{error}");
-    let _ = std::fs::remove_dir_all(dir);
 }
 
 #[test]
@@ -165,7 +182,6 @@ fn an_empty_key_is_refused_before_it_reaches_the_vault() {
         .run_command("voice.key.save", args(json!({ "key": "   " })))
         .expect_err("empty key");
     assert!(error.to_string().contains("voice-error-empty-key"), "{error}");
-    let _ = std::fs::remove_dir_all(dir);
 }
 
 #[test]
@@ -175,7 +191,6 @@ fn transcribing_without_a_recording_has_nothing_to_send() {
     enable(&mut runtime);
     let error = runtime.run_command("voice.transcribe", Args::new()).expect_err("no capture");
     assert!(error.to_string().contains("voice-error-nothing"), "{error}");
-    let _ = std::fs::remove_dir_all(dir);
 }
 
 #[test]
@@ -185,5 +200,4 @@ fn stopping_without_a_recording_says_so() {
     enable(&mut runtime);
     let error = runtime.run_command("voice.record.stop", Args::new()).expect_err("not recording");
     assert!(error.to_string().contains("voice-error-not-recording"), "{error}");
-    let _ = std::fs::remove_dir_all(dir);
 }

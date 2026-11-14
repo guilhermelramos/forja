@@ -1011,7 +1011,23 @@ mod tests {
     use serde_json::Map;
     use std::time::Duration;
 
-    fn temp_dir(label: &str) -> PathBuf {
+    struct TempGuard(PathBuf);
+
+    impl std::ops::Deref for TempGuard {
+        type Target = Path;
+
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn temp_dir(label: &str) -> TempGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-ext-state-{label}-{}-{}",
             std::process::id(),
@@ -1021,7 +1037,7 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        dir
+        TempGuard(dir)
     }
 
     fn runtime(dir: &Path) -> Runtime {
@@ -1164,7 +1180,6 @@ mod tests {
         );
         assert!(items.iter().any(|item| item["id"] == "day-summary"
             && item["settings"].as_array().is_some_and(|settings| !settings.is_empty())));
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -1209,7 +1224,6 @@ forja.ui.panel({ id = "fresh", title = "Fresh", slot = "right_panel", tree = { f
         assert_eq!(item["commands"][0]["id"], "ext.fresh.hello");
         assert_eq!(item["settings"][0]["name"], "who");
         assert_eq!(item["panels"][0]["id"], "fresh");
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -1279,6 +1293,5 @@ forja.ui.panel({ id = "fresh", title = "Fresh", slot = "right_panel", tree = { f
             .expect("hashy");
         assert_eq!(item["state"], "active");
         assert_eq!(item["dev"], true);
-        let _ = std::fs::remove_dir_all(dir);
     }
 }

@@ -558,7 +558,22 @@ mod tests {
     use forja_kernel::{contract, Runtime, RuntimeOptions};
     use std::path::PathBuf;
 
-    fn temp_dir(label: &str) -> PathBuf {
+    struct TempGuard(PathBuf);
+
+    impl std::ops::Deref for TempGuard {
+        type Target = PathBuf;
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn temp_dir(label: &str) -> TempGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-archive-{label}-{}-{}",
             std::process::id(),
@@ -568,7 +583,7 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        dir
+        TempGuard(dir)
     }
 
     fn runtime(dir: &std::path::Path) -> Runtime {
@@ -616,8 +631,6 @@ mod tests {
             )
             .expect_err("confirmation is required");
         assert!(missing.message.contains("confirmation"));
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]

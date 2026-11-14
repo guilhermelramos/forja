@@ -91,7 +91,30 @@ impl Module for FakeHelper {
     }
 }
 
-fn dir(label: &str) -> PathBuf {
+struct TempGuard(PathBuf);
+
+impl std::ops::Deref for TempGuard {
+    type Target = Path;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Drop for TempGuard {
+    fn drop(&mut self) {
+        for attempt in 0..20 {
+            if std::fs::remove_dir_all(&self.0).is_ok() || !self.0.exists() {
+                return;
+            }
+            if attempt < 19 {
+                std::thread::sleep(std::time::Duration::from_millis(15));
+            }
+        }
+    }
+}
+
+fn dir(label: &str) -> TempGuard {
     let dir = std::env::temp_dir().join(format!(
         "forja-request-{label}-{}-{}",
         std::process::id(),
@@ -101,7 +124,7 @@ fn dir(label: &str) -> PathBuf {
             .unwrap_or(0)
     ));
     std::fs::create_dir_all(&dir).unwrap();
-    dir
+    TempGuard(dir)
 }
 
 fn runtime(data: &Path, async_mode: bool, with_bench: bool) -> (Runtime, Arc<Mutex<Calls>>) {
@@ -174,7 +197,6 @@ fn contract_holds_for_the_module_alone() {
     let data = dir("contract");
     let (runtime, _) = runtime(&data, false, false);
     contract::assert_ok(runtime.registry(), runtime.i18n());
-    let _ = std::fs::remove_dir_all(data);
 }
 
 #[test]
@@ -199,7 +221,6 @@ fn forjar_creates_the_bench_from_the_request_and_starts_the_helper() {
     assert_eq!(calls.launch[0]["from_request"]["counter"], "local");
     assert_eq!(calls.launch[0]["initial_context"], "request");
     drop(calls);
-    let _ = std::fs::remove_dir_all(data);
 }
 
 #[test]
@@ -226,7 +247,6 @@ fn forjar_waits_for_bench_created_when_the_bench_is_not_ready() {
     assert_eq!(calls.launch.len(), 1);
     assert_eq!(calls.launch[0]["bench_path"], "C:/bench/chegou");
     drop(calls);
-    let _ = std::fs::remove_dir_all(data);
 }
 
 #[test]
@@ -239,7 +259,6 @@ fn forjar_degrades_when_the_bench_module_is_missing() {
         .unwrap();
     assert_eq!(result["forged"], false);
     assert_eq!(result["reason"], "bench_unavailable");
-    let _ = std::fs::remove_dir_all(data);
 }
 
 #[test]
@@ -250,7 +269,6 @@ fn forjar_refuses_a_request_that_is_not_in_the_list() {
         .run_command("request.forge", args(&[("counter", json!("github")), ("key", json!("#999"))]))
         .unwrap_err();
     assert!(error.to_string().contains("not in the list"));
-    let _ = std::fs::remove_dir_all(data);
 }
 
 #[test]
@@ -273,7 +291,6 @@ fn the_rpc_lists_the_visible_requests_as_json() {
         runtime.call_method("request.list", bad),
         Err(RpcError { .. })
     ));
-    let _ = std::fs::remove_dir_all(data);
 }
 
 #[test]
@@ -284,7 +301,6 @@ fn local_requests_are_written_to_the_store_folder() {
     let text = std::fs::read_to_string(store_file(&data)).unwrap();
     assert!(text.contains("LOCAL-1"));
     assert!(text.contains("Guardar no disco"));
-    let _ = std::fs::remove_dir_all(data);
 }
 
 #[test]
@@ -300,7 +316,6 @@ fn empty_titles_and_comments_are_refused_without_saving() {
         .run_command("request.local.create", args(&[("title", json!("   "))]))
         .is_err());
     assert!(!store_file(&data).exists());
-    let _ = std::fs::remove_dir_all(data);
 }
 
 #[test]
@@ -358,7 +373,6 @@ fn without_a_project_the_refresh_is_recorded_so_frames_do_not_retry() {
     let value = runtime.run_command("request.list", Args::new()).unwrap();
     assert_eq!(value["refreshed"], true, "the attempt is remembered even with no project");
     assert_eq!(value["items"], json!([]));
-    let _ = std::fs::remove_dir_all(data);
 }
 
 #[test]
@@ -393,7 +407,6 @@ fn rpc_local_create_and_forge_work_end_to_end() {
     assert_eq!(forged["forged"], true);
     assert_eq!(forged["helper"], true);
     assert_eq!(calls.lock().unwrap().launch.len(), 1);
-    let _ = std::fs::remove_dir_all(data);
 }
 
 #[test]
@@ -417,5 +430,4 @@ fn assign_self_and_default_filter_settings_apply() {
         .run_command("request.local.create", args(&[("title", json!("Sem dono"))]))
         .unwrap();
     assert_eq!(created["mine"], false);
-    let _ = std::fs::remove_dir_all(data);
 }

@@ -144,7 +144,15 @@ mod tests {
     use super::*;
     use forja_kernel::{contract, Runtime, RuntimeOptions};
 
-    fn temp_dir() -> std::path::PathBuf {
+    struct TempGuard(std::path::PathBuf);
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn temp_dir() -> TempGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-usage-{}-{}",
             std::process::id(),
@@ -154,7 +162,7 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        dir
+        TempGuard(dir)
     }
 
     fn runtime(dir: &std::path::Path) -> Runtime {
@@ -173,7 +181,7 @@ mod tests {
     #[test]
     fn contract_and_settings_match_the_catalog() {
         let dir = temp_dir();
-        let runtime = runtime(&dir);
+        let runtime = runtime(&dir.0);
         contract::assert_ok(runtime.registry(), runtime.i18n());
         let keys: Vec<&str> = runtime
             .registry()
@@ -185,7 +193,6 @@ mod tests {
         assert_eq!(keys.len(), 2);
         assert!(keys.contains(&"usage.cost.track"));
         assert!(keys.contains(&"usage.display.status_bar"));
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
