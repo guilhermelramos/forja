@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 20/160 telas documentadas · elementos citados 3395/3548 · completo: false
+**Progresso:** 23/160 telas documentadas · elementos citados 3518/3671 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -162,10 +162,10 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.light.bench-tab.bench.detail` | [página](pages/en.light.bench-tab.bench.detail.md) | [png](captures/en.light.bench-tab.bench.detail.png) |
 | `en.light.rail.board.page` | — | [png](captures/en.light.rail.board.page.png) |
 | `en.light.bench-tab.browser.tab` | [página](pages/en.light.bench-tab.browser.tab.md) | [png](captures/en.light.bench-tab.browser.tab.png) |
-| `en.light.bench-tab.chat.tab` | — | [png](captures/en.light.bench-tab.chat.tab.png) |
+| `en.light.bench-tab.chat.tab` | [página](pages/en.light.bench-tab.chat.tab.md) | [png](captures/en.light.bench-tab.chat.tab.png) |
 | `en.light.modal.counter.poller` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.modal.counter.poller.png) |
-| `en.light.bench-tab.diff.tab` | — | [png](captures/en.light.bench-tab.diff.tab.png) |
-| `en.light.bench-tab.editor.tab` | — | [png](captures/en.light.bench-tab.editor.tab.png) |
+| `en.light.bench-tab.diff.tab` | [página](pages/en.light.bench-tab.diff.tab.md) | [png](captures/en.light.bench-tab.diff.tab.png) |
+| `en.light.bench-tab.editor.tab` | [página](pages/en.light.bench-tab.editor.tab.md) | [png](captures/en.light.bench-tab.editor.tab.png) |
 | `en.light.right-tab.explorer.panel` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.right-tab.explorer.panel.png) |
 | `en.light.rail.extension.page` | — | [png](captures/en.light.rail.extension.page.png) |
 | `en.light.right-tab.extension.panels.right` | — | [png](captures/en.light.right-tab.extension.panels.right.png) |

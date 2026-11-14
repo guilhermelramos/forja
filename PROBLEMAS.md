@@ -809,3 +809,29 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - As faixas de abas dependem de "More tabs": no painel central só "Browser" fica visível e as demais nove abas ficam escondidas atrás do menu suspenso.
 - Baixo contraste relativo nos textos de estado vazio ("No project yet…", "No active bench…") e nas abas inativas, em cinza claro sobre fundo creme.
 
+## [en.light.bench-tab.chat.tab](pages/en.light.bench-tab.chat.tab.md)
+
+- Botão-ícone de tema (sol, 1741,5–1773,37) sem nome acessível (papel Unknown).
+- TextInput (1249,145–1397,168) e MultilineTextInput (332,978–1600,1038) sem nome acessível.
+- Divisores verticais (304,42) e (1612,42) e a imagem do logotipo (12,50) sem nome acessível.
+- Rótulos de ícone em (1756,117) e (168,161) sem nome acessível.
+- O campo do cabeçalho do chat mostra o valor técnico "ANTHROPIC_MODEL" sem rótulo visível nem nome acessível que explique sua função.
+- O rótulo do rodapé do chat termina com um separador "·" solto ("Claude Code · D:\a\forja\forja ·").
+- Os três grupos de abas exibem o botão "More tabs" mesmo com todas as abas visíveis (no grupo central cabem as 10 abas de 419 a 1202), tornando-o redundante.
+
+## [en.light.bench-tab.diff.tab](pages/en.light.bench-tab.diff.tab.md)
+
+- Botão da barra superior sem nome acessível em (1741,5)–(1773,37) (ícone de sol, alternador de tema); os dois divisores verticais, o logo do trilho e os ícones de estado vazio também não têm nome acessível.
+- Três botões com o mesmo nome acessível "More tabs" (64–151, 324–411 e 1632–1719) e o nome "Changes" repetido em faixas diferentes (aba ativa do painel central em 419–496 e aba do painel direito em 1778–1855), sem contexto que os distinga para leitor de tela.
+- A caixa "Ignore whitespace" (marcado=False) é desenhada como um círculo vazio, semelhante a um botão de opção, em vez do quadrado com marca usado em "Collapse unchanged", o que confunde o tipo do controle.
+- Mensagens de estado vazio em cinza itálico ("Pick a file to see its diff.", "No repository changes loaded. Press Refresh.", "No project yet. Add an existing folder or create a new one.") têm contraste menor que o texto padrão.
+- "Clear" desativado com contraste reduzido (esperado para estado desabilitado).
+
+## [en.light.bench-tab.editor.tab](pages/en.light.bench-tab.editor.tab.md)
+
+- Botão sem nome acessível: o ícone de tema na barra superior (1741,5)–(1773,37) é um Unknown clicável sem rótulo.
+- Ícones/imagens sem alternativa textual: o logotipo (12,50)–(40,78) e os ícones de estado vazio (1756,117) e (168,161) aparecem como "(sem nome acessível)".
+- Divisores verticais (304,42)–(320,1048) e (1612,42)–(1628,1048) são Unknown sem nome acessível, o que dificulta identificação por leitor de tela.
+- Textos de estado vazio em cinza ("Open a file in the explorer or press Ctrl+P.", "No project yet. Add an existing folder or create a new one.", "No active bench. Open a bench to see its files.") têm contraste reduzido sobre o fundo claro.
+- Diferenças em relação à referência (pt-BR.dark), por capturarem janelas de tamanhos distintos (1920×1080 vs 1024×768): nesta variante não há sobreposição de abas nem elementos fora da janela — na referência, as abas do grupo direito se sobrepunham e "Ajudante (chat)" ficava fora da largura; aqui o grupo direito mostra apenas "Files" e "Changes", e as abas excedentes ficam sob os botões "More tabs".
+
