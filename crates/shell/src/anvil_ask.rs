@@ -92,10 +92,14 @@ impl ForjaApp {
         let Some(spec) = self.runtime.registry().command(command) else {
             return false;
         };
-        if spec.fields.is_empty() {
+        let fields = if spec.fields.is_empty() && command == "terminal.focus" {
+            vec![terminal_focus_field()]
+        } else {
+            spec.fields.clone()
+        };
+        if fields.is_empty() {
             return false;
         }
-        let fields = spec.fields.clone();
         self.anvil_open = true;
         self.anvil_ask = Some(Ask::new(command, fields));
         self.anvil_rail_select = false;
@@ -165,6 +169,22 @@ impl ForjaApp {
     }
 }
 
+// The terminal command also serves RPC callers that already supply an id.
+// The Anvil must collect one when invoked without arguments.
+fn terminal_focus_field() -> CommandField {
+    CommandField {
+        arg: "terminal_id",
+        label_key: "terminal.command.focus",
+        kind: CommandFieldKind::Choice {
+            command: "terminal.list",
+            list: "terminals",
+            label: "title",
+            value: "terminal_id",
+            detail: Some("bench_path"),
+        },
+    }
+}
+
 /// Reads the options of a question from the result of its source command.
 fn ask_options(
     result: &Value,
@@ -208,6 +228,21 @@ fn ask_options(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn terminal_focus_asks_for_an_existing_terminal_id() {
+        let field = terminal_focus_field();
+        let mut ask = Ask::new("terminal.focus", vec![field]);
+        let result = serde_json::json!({"terminals": [
+            {"terminal_id": "7", "title": "Shell", "bench_path": "project"}
+        ]});
+        ask.options = ask_options(&result, "terminals", "title", "terminal_id", Some("bench_path"));
+        assert_eq!(ask.options[0].value, "7");
+        assert!(ask.push_value("7"));
+        let (command, args) = ask.finish();
+        assert_eq!(command, "terminal.focus");
+        assert_eq!(args["terminal_id"], "7");
+    }
 
     #[test]
     fn ask_collects_every_field_in_order_before_running() {

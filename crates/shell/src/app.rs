@@ -385,8 +385,11 @@ impl ForjaApp {
         match self.runtime.run_command(id, args) {
             Ok(_) => {
                 self.status = None;
-                if matches!(id, "terminal.open" | "terminal.search" | "terminal.toggle") {
+                if matches!(id, "terminal.open" | "terminal.search" | "terminal.toggle" | "terminal.focus") {
                     actions::push(actions::Action::ShowBenchTab("terminal.tab".to_owned()));
+                }
+                if matches!(id, "helper.list" | "helper.status") {
+                    actions::push(actions::Action::OpenRail("helper.tab".to_owned()));
                 }
                 if id == "diff.open" {
                     actions::push(actions::Action::ShowBenchTab("diff.tab".to_owned()));
@@ -612,12 +615,14 @@ impl ForjaApp {
     }
 
     fn handle_shortcuts(&mut self, ctx: &egui::Context) {
-        // An open shell window owns the keyboard; background tab and navigation
-        // commands must not run through it.
-        if self.anvil_open
-            || self.settings_open
-            || self.keymap_open
-            || ctx.memory(|memory| memory.top_modal_layer().is_some())
+        // Only the Anvil shortcuts may open above these shell windows. Other
+        // modal layers, including dialogs and popups, keep exclusive control.
+        let shell_window_active = (self.settings_open
+            && forja_ui_kit::keyboard_layer_active(ctx, egui::Id::new("forja.settings.keyboard")))
+            || (self.keymap_open
+                && forja_ui_kit::keyboard_layer_active(ctx, egui::Id::new("forja.keymap.keyboard")));
+        if self.anvil_open || egui::Popup::is_any_open(ctx)
+            || (ctx.memory(|memory| memory.top_modal_layer().is_some()) && !shell_window_active)
         {
             return;
         }
@@ -647,6 +652,11 @@ impl ForjaApp {
             .is_some_and(|view| view.module == "browser")
             && self.rail_page.is_none();
         for (id, chord) in bindings {
+            if (self.settings_open || self.keymap_open)
+                && (!shell_window_active || !is_anvil_shortcut(&id))
+            {
+                continue;
+            }
             let always = matches!(
                 id.as_str(),
                 "anvil.open"
@@ -820,6 +830,10 @@ impl eframe::App for ForjaApp {
     }
 }
 
+fn is_anvil_shortcut(id: &str) -> bool {
+    matches!(id, "anvil.open" | "anvil.command_mode" | "find.file")
+}
+
 fn chord_pressed(ctx: &egui::Context, chord: &KeyChord) -> bool {
     let Some(key) = egui_key(&chord.key) else {
         return false;
@@ -831,7 +845,13 @@ fn chord_pressed(ctx: &egui::Context, chord: &KeyChord) -> bool {
         mac_cmd: chord.meta,
         command: chord.ctrl || chord.meta,
     };
-    ctx.input_mut(|input| input.consume_key(modifiers, key))
+    ctx.input_mut(|input| {
+        let matching_shift = input.events.iter().any(|event| {
+            matches!(event, egui::Event::Key { key: event_key, pressed: true, modifiers: event_modifiers, .. }
+                if *event_key == key && event_modifiers.shift == chord.shift)
+        });
+        matching_shift && input.consume_key(modifiers, key)
+    })
 }
 
 fn shortcut_scope_applies(scope: &Scope, active_module: Option<&str>) -> bool {
@@ -896,6 +916,31 @@ pub fn build_runtime(
 #[cfg(test)]
 mod shortcut_tests {
     use super::*;
+
+    #[test]
+    fn shell_windows_allow_only_anvil_shortcuts() {
+        assert!(is_anvil_shortcut("anvil.open"));
+        assert!(is_anvil_shortcut("find.file"));
+        assert!(!is_anvil_shortcut("editor.delete_line"));
+        assert!(!is_anvil_shortcut("tab.close"));
+    }
+
+    #[test]
+    fn shifted_chord_does_not_trigger_unshifted_shortcut() {
+        let ctx = egui::Context::default();
+        let mut raw = egui::RawInput::default();
+        raw.events.push(egui::Event::Key {
+            key: egui::Key::K,
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: egui::Modifiers { ctrl: true, shift: true, command: true, ..Default::default() },
+        });
+        let _ = ctx.run(raw, |ctx| {
+            assert!(!chord_pressed(ctx, &KeyChord::parse("Ctrl+K").unwrap()));
+            assert!(chord_pressed(ctx, &KeyChord::parse("Ctrl+Shift+K").unwrap()));
+        });
+    }
 
     #[test]
     fn shortcuts_only_apply_to_the_active_surface() {

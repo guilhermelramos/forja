@@ -725,6 +725,26 @@ mod tests {
     }
 
     #[test]
+    fn line_deletion_can_be_undone_and_redone() {
+        let dir = temp_dir();
+        let module = EditorModule::new();
+        let shared = module.state.clone();
+        let mut runtime = runtime_with_module(&dir, module);
+        let path = "C:\\temp\\line.txt";
+        let original = "first\nsecond\n";
+        shared.open(path.to_owned(), original.to_owned(), model::Eol::Lf, model::Encoding::Utf8, true);
+        runtime.run_command("editor.delete_line", Args::new()).unwrap();
+        assert_ne!(shared.active_tab().unwrap().content, original);
+        runtime.run_command("editor.undo", Args::new()).unwrap();
+        let restored = shared.active_tab().unwrap();
+        assert_eq!(restored.content, original);
+        assert!(!restored.dirty);
+        runtime.run_command("editor.redo", Args::new()).unwrap();
+        assert_ne!(shared.active_tab().unwrap().content, original);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
     fn undo_and_rename_commands_act_on_the_open_buffer() {
         let dir = temp_dir();
         let module = EditorModule::new();
