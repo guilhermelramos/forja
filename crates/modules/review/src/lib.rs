@@ -228,6 +228,8 @@ fn used_keys() -> Vec<&'static str> {
         "review.create.generate",
         "review.create.open",
         "review.create.branch",
+        "review.create.source-label",
+        "review.error.title-required",
         "review.pr.title",
         "review.pr.open",
         "review.pr.draft",

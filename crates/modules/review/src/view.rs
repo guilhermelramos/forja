@@ -125,7 +125,17 @@ impl ReviewView {
         ui.add_space(8.0);
         ui.label(egui::RichText::new(cx.t("review.create.title")).strong());
         ui.label(
-            egui::RichText::new(cx.t_args("review.create.branch", &[("branch", &state.branch)]))
+            egui::RichText::new(cx.t("review.create.source-label"))
+                .small()
+                .color(muted),
+        );
+        let mut source = state.branch.clone();
+        ui.add_enabled(
+            false,
+            egui::TextEdit::singleline(&mut source).desired_width(f32::INFINITY),
+        );
+        ui.label(
+            egui::RichText::new(cx.t("review-pr-title"))
                 .small()
                 .color(muted),
         );
@@ -133,6 +143,11 @@ impl ReviewView {
             egui::TextEdit::singleline(&mut form.title)
                 .hint_text(cx.t("review.pr.title"))
                 .desired_width(f32::INFINITY),
+        );
+        ui.label(
+            egui::RichText::new(cx.t("review.create.body"))
+                .small()
+                .color(muted),
         );
         ui.add(
             egui::TextEdit::multiline(&mut form.body)
@@ -175,14 +190,21 @@ impl ReviewView {
         )
         .clicked()
         {
-            let mut args = Args::new();
-            args.insert("title", json!(form.title));
-            args.insert("body", json!(form.body));
-            args.insert("base", json!(form.base));
-            args.insert("draft", json!(form.draft));
-            args.insert("reviewers", json!(form.reviewers));
-            args.insert("labels", json!(form.labels));
-            let _ = cx.run_command("review.pr.create", args);
+            if form.title.trim().is_empty() {
+                self.state
+                    .set_status(Some(cx.t("review.error.title-required")));
+            } else {
+                let mut args = Args::new();
+                args.insert("title", json!(form.title));
+                args.insert("body", json!(form.body));
+                args.insert("base", json!(form.base));
+                args.insert("draft", json!(form.draft));
+                args.insert("reviewers", json!(form.reviewers));
+                args.insert("labels", json!(form.labels));
+                if let Err(error) = cx.run_command("review.pr.create", args) {
+                    self.state.set_status(Some(error.to_string()));
+                }
+            }
         }
     }
 
