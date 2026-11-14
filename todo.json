@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 50,
-  "widgets_total": 2646,
-  "widgets_covered": 2646,
+  "states_done": 3,
+  "widgets_total": 2736,
+  "widgets_covered": 2584,
   "complete": false,
   "stale": [
     {
@@ -11,7 +11,9 @@
       "tree": "captures/pt-BR.dark.bench-tab.bench.detail.json",
       "page": "pages/pt-BR.dark.bench-tab.bench.detail.md",
       "capture_changed": true,
-      "widgets_not_mentioned": []
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
     },
     {
       "state": "pt-BR.dark.bench-tab.browser.tab",
@@ -19,7 +21,9 @@
       "tree": "captures/pt-BR.dark.bench-tab.browser.tab.json",
       "page": "pages/pt-BR.dark.bench-tab.browser.tab.md",
       "capture_changed": true,
-      "widgets_not_mentioned": []
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
     },
     {
       "state": "pt-BR.dark.bench-tab.chat.tab",
@@ -27,7 +31,9 @@
       "tree": "captures/pt-BR.dark.bench-tab.chat.tab.json",
       "page": "pages/pt-BR.dark.bench-tab.chat.tab.md",
       "capture_changed": true,
-      "widgets_not_mentioned": []
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
     },
     {
       "state": "pt-BR.dark.bench-tab.diff.tab",
@@ -35,7 +41,9 @@
       "tree": "captures/pt-BR.dark.bench-tab.diff.tab.json",
       "page": "pages/pt-BR.dark.bench-tab.diff.tab.md",
       "capture_changed": true,
-      "widgets_not_mentioned": []
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
     },
     {
       "state": "pt-BR.dark.bench-tab.editor.tab",
@@ -43,7 +51,9 @@
       "tree": "captures/pt-BR.dark.bench-tab.editor.tab.json",
       "page": "pages/pt-BR.dark.bench-tab.editor.tab.md",
       "capture_changed": true,
-      "widgets_not_mentioned": []
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
     },
     {
       "state": "pt-BR.dark.bench-tab.extension.panels.bench",
@@ -51,7 +61,9 @@
       "tree": "captures/pt-BR.dark.bench-tab.extension.panels.bench.json",
       "page": "pages/pt-BR.dark.bench-tab.extension.panels.bench.md",
       "capture_changed": true,
-      "widgets_not_mentioned": []
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
     },
     {
       "state": "pt-BR.dark.bench-tab.git.history",
@@ -59,7 +71,9 @@
       "tree": "captures/pt-BR.dark.bench-tab.git.history.json",
       "page": "pages/pt-BR.dark.bench-tab.git.history.md",
       "capture_changed": true,
-      "widgets_not_mentioned": []
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
     },
     {
       "state": "pt-BR.dark.bench-tab.review.tab",
@@ -67,7 +81,9 @@
       "tree": "captures/pt-BR.dark.bench-tab.review.tab.json",
       "page": "pages/pt-BR.dark.bench-tab.review.tab.md",
       "capture_changed": true,
-      "widgets_not_mentioned": []
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
     },
     {
       "state": "pt-BR.dark.bench-tab.viewers.tab",
@@ -75,7 +91,9 @@
       "tree": "captures/pt-BR.dark.bench-tab.viewers.tab.json",
       "page": "pages/pt-BR.dark.bench-tab.viewers.tab.md",
       "capture_changed": true,
-      "widgets_not_mentioned": []
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
     },
     {
       "state": "pt-BR.dark.home.default",
@@ -83,7 +101,9 @@
       "tree": "captures/pt-BR.dark.home.default.json",
       "page": "pages/pt-BR.dark.home.default.md",
       "capture_changed": true,
-      "widgets_not_mentioned": []
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
     },
     {
       "state": "pt-BR.dark.modal.helper.profile_picker",
@@ -91,25 +111,603 @@
       "tree": "captures/pt-BR.dark.modal.helper.profile_picker.json",
       "page": "pages/pt-BR.dark.modal.helper.profile_picker.md",
       "capture_changed": true,
-      "widgets_not_mentioned": []
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.open.anvil",
+      "png": "captures/pt-BR.dark.open.anvil.png",
+      "tree": "captures/pt-BR.dark.open.anvil.json",
+      "page": "pages/pt-BR.dark.open.anvil.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Aba anterior",
+        "Abas iniciais",
+        "Abortar rebase ou merge",
+        "Abrir Mutirão",
+        "Abrir a Bigorna",
+        "Abrir arquivo",
+        "Abrir atalhos",
+        "Abrir diferenças",
+        "Abrir diálogo de adicionar pasta",
+        "Abrir diálogo de aprovação de scripts",
+        "Abrir diálogo de guardar bancada",
+        "Abrir diálogo de nova bancada",
+        "Abrir links com",
+        "Abrir maximizada",
+        "Abrir no app padrão",
+        "Abrir no navegador",
+        "Abrir no navegador do sistema",
+        "Abrir no visualizador",
+        "Abrir o primeiro uso",
+        "Abrir os ajustes",
+        "Abrir ou fechar um pedido do GitHub",
+        "Abrir ou fechar um pedido do GitLab",
+        "Abrir ou fechar um pedido do Linear",
+        "Abrir pull request",
+        "Abrir página do trilho",
+        "Abrir sessão de chat",
+        "Abrir terminal",
+        "Mais abas",
+        "Revisar segurança do diff",
+        "Tema claro"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.open.onboarding",
+      "png": "captures/pt-BR.dark.open.onboarding.png",
+      "tree": "captures/pt-BR.dark.open.onboarding.json",
+      "page": "pages/pt-BR.dark.open.onboarding.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Fechar",
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.open.toast",
+      "png": "captures/pt-BR.dark.open.toast.png",
+      "tree": "captures/pt-BR.dark.open.toast.json",
+      "page": "pages/pt-BR.dark.open.toast.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.rail.archive.tab",
+      "png": "captures/pt-BR.dark.rail.archive.tab.png",
+      "tree": "captures/pt-BR.dark.rail.archive.tab.json",
+      "page": "pages/pt-BR.dark.rail.archive.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Mais abas",
+        "Nenhuma sessão salva ainda.",
+        "Voltar à bancada"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.rail.board.page",
+      "png": "captures/pt-BR.dark.rail.board.page.png",
+      "tree": "captures/pt-BR.dark.rail.board.page.json",
+      "page": "pages/pt-BR.dark.rail.board.page.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Mais abas",
+        "Voltar à bancada"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.rail.extension.page",
+      "png": "captures/pt-BR.dark.rail.extension.page.png",
+      "tree": "captures/pt-BR.dark.rail.extension.page.json",
+      "page": "pages/pt-BR.dark.rail.extension.page.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Mais abas",
+        "Voltar à bancada"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.rail.helper.tab",
+      "png": "captures/pt-BR.dark.rail.helper.tab.png",
+      "tree": "captures/pt-BR.dark.rail.helper.tab.json",
+      "page": "pages/pt-BR.dark.rail.helper.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Mais abas",
+        "Voltar à bancada"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.rail.muster.page",
+      "png": "captures/pt-BR.dark.rail.muster.page.png",
+      "tree": "captures/pt-BR.dark.rail.muster.page.json",
+      "page": "pages/pt-BR.dark.rail.muster.page.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Mais abas",
+        "Voltar à bancada"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.rail.request.page",
+      "png": "captures/pt-BR.dark.rail.request.page.png",
+      "tree": "captures/pt-BR.dark.rail.request.page.json",
+      "page": "pages/pt-BR.dark.rail.request.page.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Mais abas",
+        "Voltar à bancada"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.rail.routine.page",
+      "png": "captures/pt-BR.dark.rail.routine.page.png",
+      "tree": "captures/pt-BR.dark.rail.routine.page.json",
+      "page": "pages/pt-BR.dark.rail.routine.page.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Mais abas",
+        "Voltar à bancada"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.rail.skill.page",
+      "png": "captures/pt-BR.dark.rail.skill.page.png",
+      "tree": "captures/pt-BR.dark.rail.skill.page.json",
+      "page": "pages/pt-BR.dark.rail.skill.page.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Mais abas",
+        "Voltar à bancada"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.rail.usage.page",
+      "png": "captures/pt-BR.dark.rail.usage.page.png",
+      "tree": "captures/pt-BR.dark.rail.usage.page.json",
+      "page": "pages/pt-BR.dark.rail.usage.page.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "2026-11-14",
+        "Mais abas",
+        "Voltar à bancada"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.right-tab.extension.panels.right",
+      "png": "captures/pt-BR.dark.right-tab.extension.panels.right.png",
+      "tree": "captures/pt-BR.dark.right-tab.extension.panels.right.json",
+      "page": "pages/pt-BR.dark.right-tab.extension.panels.right.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.right-tab.git.changes",
+      "png": "captures/pt-BR.dark.right-tab.git.changes.png",
+      "tree": "captures/pt-BR.dark.right-tab.git.changes.json",
+      "page": "pages/pt-BR.dark.right-tab.git.changes.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.right-tab.ports.panel",
+      "png": "captures/pt-BR.dark.right-tab.ports.panel.png",
+      "tree": "captures/pt-BR.dark.right-tab.ports.panel.json",
+      "page": "pages/pt-BR.dark.right-tab.ports.panel.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.right-tab.search.panel",
+      "png": "captures/pt-BR.dark.right-tab.search.panel.png",
+      "tree": "captures/pt-BR.dark.right-tab.search.panel.json",
+      "page": "pages/pt-BR.dark.right-tab.search.panel.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.settings.accounts",
+      "png": "captures/pt-BR.dark.settings.accounts.png",
+      "tree": "captures/pt-BR.dark.settings.accounts.json",
+      "page": "pages/pt-BR.dark.settings.accounts.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Fechar janela",
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.settings.content",
+      "png": "captures/pt-BR.dark.settings.content.png",
+      "tree": "captures/pt-BR.dark.settings.content.json",
+      "page": "pages/pt-BR.dark.settings.content.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Fechar janela",
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.settings.counter_github",
+      "png": "captures/pt-BR.dark.settings.counter_github.png",
+      "tree": "captures/pt-BR.dark.settings.counter_github.json",
+      "page": "pages/pt-BR.dark.settings.counter_github.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.settings.counter_gitlab",
+      "png": "captures/pt-BR.dark.settings.counter_gitlab.png",
+      "tree": "captures/pt-BR.dark.settings.counter_gitlab.json",
+      "page": "pages/pt-BR.dark.settings.counter_gitlab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Fechar janela",
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.settings.counter_jira",
+      "png": "captures/pt-BR.dark.settings.counter_jira.png",
+      "tree": "captures/pt-BR.dark.settings.counter_jira.json",
+      "page": "pages/pt-BR.dark.settings.counter_jira.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Fechar janela",
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.settings.counter_linear",
+      "png": "captures/pt-BR.dark.settings.counter_linear.png",
+      "tree": "captures/pt-BR.dark.settings.counter_linear.json",
+      "page": "pages/pt-BR.dark.settings.counter_linear.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Fechar janela",
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.settings.helper",
+      "png": "captures/pt-BR.dark.settings.helper.png",
+      "tree": "captures/pt-BR.dark.settings.helper.json",
+      "page": "pages/pt-BR.dark.settings.helper.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Fechar janela",
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.settings.import",
+      "png": "captures/pt-BR.dark.settings.import.png",
+      "tree": "captures/pt-BR.dark.settings.import.json",
+      "page": "pages/pt-BR.dark.settings.import.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Fechar janela",
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.settings.mcp",
+      "png": "captures/pt-BR.dark.settings.mcp.png",
+      "tree": "captures/pt-BR.dark.settings.mcp.json",
+      "page": "pages/pt-BR.dark.settings.mcp.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Fechar janela",
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.settings.onboarding",
+      "png": "captures/pt-BR.dark.settings.onboarding.png",
+      "tree": "captures/pt-BR.dark.settings.onboarding.json",
+      "page": "pages/pt-BR.dark.settings.onboarding.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Fechar janela",
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.settings.remote",
+      "png": "captures/pt-BR.dark.settings.remote.png",
+      "tree": "captures/pt-BR.dark.settings.remote.json",
+      "page": "pages/pt-BR.dark.settings.remote.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Fechar janela",
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.settings.trust",
+      "png": "captures/pt-BR.dark.settings.trust.png",
+      "tree": "captures/pt-BR.dark.settings.trust.json",
+      "page": "pages/pt-BR.dark.settings.trust.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Fechar janela",
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "pt-BR.dark.settings.voice",
+      "png": "captures/pt-BR.dark.settings.voice.png",
+      "tree": "captures/pt-BR.dark.settings.voice.json",
+      "page": "pages/pt-BR.dark.settings.voice.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Fechar janela",
+        "Mais abas"
+      ]
+    },
+    {
+      "state": "en.dark.bench-tab.bench.detail",
+      "png": "captures/en.dark.bench-tab.bench.detail.png",
+      "tree": "captures/en.dark.bench-tab.bench.detail.json",
+      "page": "pages/en.dark.bench-tab.bench.detail.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.bench-tab.browser.tab",
+      "png": "captures/en.dark.bench-tab.browser.tab.png",
+      "tree": "captures/en.dark.bench-tab.browser.tab.json",
+      "page": "pages/en.dark.bench-tab.browser.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.bench-tab.chat.tab",
+      "png": "captures/en.dark.bench-tab.chat.tab.png",
+      "tree": "captures/en.dark.bench-tab.chat.tab.json",
+      "page": "pages/en.dark.bench-tab.chat.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.bench-tab.diff.tab",
+      "png": "captures/en.dark.bench-tab.diff.tab.png",
+      "tree": "captures/en.dark.bench-tab.diff.tab.json",
+      "page": "pages/en.dark.bench-tab.diff.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.bench-tab.editor.tab",
+      "png": "captures/en.dark.bench-tab.editor.tab.png",
+      "tree": "captures/en.dark.bench-tab.editor.tab.json",
+      "page": "pages/en.dark.bench-tab.editor.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.bench-tab.extension.panels.bench",
+      "png": "captures/en.dark.bench-tab.extension.panels.bench.png",
+      "tree": "captures/en.dark.bench-tab.extension.panels.bench.json",
+      "page": "pages/en.dark.bench-tab.extension.panels.bench.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.bench-tab.git.history",
+      "png": "captures/en.dark.bench-tab.git.history.png",
+      "tree": "captures/en.dark.bench-tab.git.history.json",
+      "page": "pages/en.dark.bench-tab.git.history.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.bench-tab.review.tab",
+      "png": "captures/en.dark.bench-tab.review.tab.png",
+      "tree": "captures/en.dark.bench-tab.review.tab.json",
+      "page": "pages/en.dark.bench-tab.review.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.bench-tab.viewers.tab",
+      "png": "captures/en.dark.bench-tab.viewers.tab.png",
+      "tree": "captures/en.dark.bench-tab.viewers.tab.json",
+      "page": "pages/en.dark.bench-tab.viewers.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.home.default",
+      "png": "captures/en.dark.home.default.png",
+      "tree": "captures/en.dark.home.default.json",
+      "page": "pages/en.dark.home.default.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.modal.helper.profile_picker",
+      "png": "captures/en.dark.modal.helper.profile_picker.png",
+      "tree": "captures/en.dark.modal.helper.profile_picker.json",
+      "page": "pages/en.dark.modal.helper.profile_picker.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.open.anvil",
+      "png": "captures/en.dark.open.anvil.png",
+      "tree": "captures/en.dark.open.anvil.json",
+      "page": "pages/en.dark.open.anvil.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Abort rebase or merge",
+        "Accent color",
+        "Accept agent hooks",
+        "Activate bench",
+        "Add an account",
+        "Add task",
+        "Address bar",
+        "Allow network requests",
+        "Allow outside-project requests",
+        "Allow process requests",
+        "Anvil command mode",
+        "Apply chat changes",
+        "Apply quick fix",
+        "Apply suggestion",
+        "Approval timeout (s)",
+        "Approve extension",
+        "Approve forja.toml scripts",
+        "Approve plan",
+        "Approve the plan",
+        "Archive on ready",
+        "Archive size limit (GB)",
+        "Ask again when a risky item changes",
+        "Ask where to save",
+        "Assign to me",
+        "Attachment size limit (MB)",
+        "Author email",
+        "Author name",
+        "Dark theme",
+        "Light theme",
+        "More tabs",
+        "Write tests for file"
+      ]
+    },
+    {
+      "state": "en.dark.open.onboarding",
+      "png": "captures/en.dark.open.onboarding.png",
+      "tree": "captures/en.dark.open.onboarding.json",
+      "page": "pages/en.dark.open.onboarding.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.open.toast",
+      "png": "captures/en.dark.open.toast.png",
+      "tree": "captures/en.dark.open.toast.json",
+      "page": "pages/en.dark.open.toast.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.rail.archive.tab",
+      "png": "captures/en.dark.rail.archive.tab.png",
+      "tree": "captures/en.dark.rail.archive.tab.json",
+      "page": "pages/en.dark.rail.archive.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Back to bench",
+        "More tabs",
+        "No sessions saved yet."
+      ]
+    },
+    {
+      "state": "en.dark.rail.board.page",
+      "png": "captures/en.dark.rail.board.page.png",
+      "tree": "captures/en.dark.rail.board.page.json",
+      "page": "pages/en.dark.rail.board.page.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Back to bench",
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.rail.extension.page",
+      "png": "captures/en.dark.rail.extension.page.png",
+      "tree": "captures/en.dark.rail.extension.page.json",
+      "page": "pages/en.dark.rail.extension.page.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Back to bench",
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.rail.helper.tab",
+      "png": "captures/en.dark.rail.helper.tab.png",
+      "tree": "captures/en.dark.rail.helper.tab.json",
+      "page": "pages/en.dark.rail.helper.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Back to bench",
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.rail.muster.page",
+      "png": "captures/en.dark.rail.muster.page.png",
+      "tree": "captures/en.dark.rail.muster.page.json",
+      "page": "pages/en.dark.rail.muster.page.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Back to bench",
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.rail.request.page",
+      "png": "captures/en.dark.rail.request.page.png",
+      "tree": "captures/en.dark.rail.request.page.json",
+      "page": "pages/en.dark.rail.request.page.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Back to bench",
+        "More tabs"
+      ]
+    },
+    {
+      "state": "en.dark.rail.routine.page",
+      "png": "captures/en.dark.rail.routine.page.png",
+      "tree": "captures/en.dark.rail.routine.page.json",
+      "page": "pages/en.dark.rail.routine.page.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Back to bench",
+        "More tabs"
+      ]
     }
   ],
   "missing": [
-    {
-      "state": "en.dark.rail.skill.page",
-      "png": "captures/en.dark.rail.skill.page.png",
-      "tree": "captures/en.dark.rail.skill.page.json"
-    },
-    {
-      "state": "en.dark.rail.usage.page",
-      "png": "captures/en.dark.rail.usage.page.png",
-      "tree": "captures/en.dark.rail.usage.page.json"
-    },
-    {
-      "state": "en.dark.right-tab.extension.panels.right",
-      "png": "captures/en.dark.right-tab.extension.panels.right.png",
-      "tree": "captures/en.dark.right-tab.extension.panels.right.json"
-    },
     {
       "state": "en.dark.right-tab.git.changes",
       "png": "captures/en.dark.right-tab.git.changes.png",

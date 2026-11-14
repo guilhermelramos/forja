@@ -536,6 +536,14 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - O logotipo do app (imagem em 12,50) e os três ícones de estado vazio (1116,114), (168,158) e (632,202) estão sem nome acessível.
 - A instrução "Put a folder with extension.toml and init.lua in ~/.forja/extensions." é exposta com papel de Botão; semanticamente é um texto de ajuda, o que pode confundir leitores de tela.
 
+## [en.dark.right-tab.extension.panels.right](pages/en.dark.right-tab.extension.panels.right.md)
+
+- Nome acessível "(ícone)" no rótulo da pasta do estado vazio (168,161)–(196,189): texto em português na variante em inglês (vazamento de i18n) e sem valor descritivo.
+- Botão de tema (sol) na barra superior (1741,5)–(1773,37) sem nome acessível; idem nos ícones de fechar/dividir/maximizar/busca do terminal, na aba "pwsh", na bolinha de status, nos dois divisores verticais e na área de conteúdo do terminal.
+- Botões de janela nomeados apenas com os símbolos "–", "□" e "×", sem rótulos descritivos.
+- As três faixas de abas exibem o botão "More tabs" mesmo com poucas abas visíveis ("Projects" à esquerda; "Terminal" a "Helper (chat)" no centro; "Extension panels" e "Files" à direita), sem indicação de quais abas estariam ocultas no menu de estouro.
+- Diferença em relação à referência pt-BR (constato, não defeito): as sobreposições de abas e a aba ativa fora da janela descritas na referência não ocorrem nesta variante; o estado declarado (slot direito "Extension panels" ativo e visível) confere com a imagem.
+
 ## [en.dark.bench-tab.extension.panels.bench](pages/en.dark.bench-tab.extension.panels.bench.md)
 
 - Estouro de largura: o botão "Extension panels" do painel direito (1240,50)–(1366,82) tem retângulo além da largura da janela (1280 px) e fica cortado ou invisível.
@@ -603,4 +611,22 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - O texto da aba "Extension panels" do painel esquerdo (211,50)–(337,82) é cortado visualmente pela área central, aparecendo como "Extension pa" na captura.
 - Botões-ícone do trilho ("Board", "Helpers", "Muster", "Requests", "Skills", "Usage", "Extensions", "Archive") dependem exclusivamente de ícone na interface; o nome acessível existe na árvore, mas não há rótulo visível nem dica na tela.
 - Os três ícones ilustrativos dos estados vazios, a logomarca, o ícone de tema e os divisores são expostos como "(sem nome acessível)", sem descrição para leitores de tela.
+
+## [en.dark.rail.skill.page](pages/en.dark.rail.skill.page.md)
+
+- O campo de busca "Search skills" é um TextInput sem nome acessível; o texto de sugestão só aparece visualmente.
+- O ícone de alternância de tema na barra superior (1741,5)–(1773,37) é um elemento clicável sem nome acessível; a função só é identificável pela imagem.
+- Os dois botões de abas recolhidas têm o mesmo nome acessível ("More tabs"), um em cada painel; leitores de tela não distinguem qual painel cada um controla.
+- Os botões "Files" (1727,52)–(1778,84) e "Changes" (1778,52)–(1855,84) têm retângulos que se tocam em x=1778, sem folga entre eles.
+- Os divisores verticais são elementos sem nome acessível.
+- Os três ícones de estado vazio aparecem como rótulos "(ícone)" sem descrição de texto alternativo.
+- Nenhum texto cortado ou fora da janela: todos os retângulos estão dentro de 1920×1080 px.
+
+## [en.dark.rail.usage.page](pages/en.dark.rail.usage.page.md)
+
+- O botão de alternância de tema na barra superior (1741,5)–(1773,37) não tem nome acessível (apenas ícone de sol).
+- Os botões de janela usam os símbolos "–", "□" e "×" como nome acessível, em vez de rótulos descritivos ("Minimize", "Maximize", "Close").
+- O logotipo do app (12,50)–(40,78) é uma imagem sem nome acessível.
+- As demais abas dos painéis esquerdo e direito (equivalentes a "Bancadas", "Painéis de extensões", "Busca" e "Portas" do pt-BR) não aparecem na árvore de acessibilidade nesta variante; somente os botões "More tabs" que as agrupam.
+- O botão "Back to bench" é exibido no topo da área central mesmo sem bancada ativa, enquanto o painel direito mostra "No active bench. Open a bench to see its files.".
 
