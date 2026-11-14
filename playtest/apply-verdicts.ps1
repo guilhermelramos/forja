@@ -25,6 +25,11 @@ function Get-LiveIssue([int]$Number) {
     $issue = & gh issue view $Number -R $Repository `
         --json state,closedAt,labels,comments,url,title,body | ConvertFrom-Json
     if ($LASTEXITCODE -ne 0) { throw "could not read issue #$Number" }
+    if ($issue.state -eq "CLOSED") {
+        # A closed issue is only a re-check target when the verifier closed it.
+        $issue | Add-Member -NotePropertyName closeActor `
+            -NotePropertyValue (Get-IssueCloseActor $Repository $Number) -Force
+    }
     return $issue
 }
 
@@ -35,6 +40,14 @@ function Test-LatestCorrection($Issue, $Result) {
         $pending.correction.id -eq $Result.correction.id -and
         $pending.correction.body -eq $Result.correction.body
     )
+}
+
+function Test-ClosedByPerson($Issue, [int]$Number) {
+    if ($Issue.state -ne "CLOSED") { return $false }
+    if ([string]$Issue.closeActor -eq $script:BotCloseActor) { return $false }
+    $who = if ($Issue.closeActor) { $Issue.closeActor } else { "unknown" }
+    Write-Host "skip #${Number}: issue was closed by $who, not github-actions[bot]; it will not be reopened or changed"
+    return $true
 }
 
 foreach ($result in $verdicts) {
@@ -80,6 +93,7 @@ foreach ($result in $verdicts) {
     }
 
     $issue = Get-LiveIssue $number
+    if (Test-ClosedByPerson $issue $number) { continue }
     $pending = Get-PendingVerification $issue $owner
     if ($null -eq $pending) {
         if ($issue.state -ne "OPEN") {
@@ -175,6 +189,7 @@ Rodada: $runUrl
 
     # Re-read immediately before a write so a manual close during verification is respected.
     $issue = Get-LiveIssue $number
+    if (Test-ClosedByPerson $issue $number) { continue }
     $pending = Get-PendingVerification $issue $owner
     if ($null -eq $pending -or $issue.title -ne $result.issueTitle -or
         $issue.body -ne $result.issueBody -or -not (Test-LatestCorrection $issue $result)) {

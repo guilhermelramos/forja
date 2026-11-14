@@ -49,6 +49,23 @@ foreach ($listedIssue in ($listedByNumber.Values | Sort-Object { [DateTimeOffset
         --json number,title,body,state,labels,comments,url,closedAt | ConvertFrom-Json
     if ($LASTEXITCODE -ne 0) { throw "could not read issue #$($listedIssue.number)" }
 
+    $candidate = Get-PendingCorrection $detail $owner
+    if ($null -eq $candidate) { continue }
+
+    if ($detail.state -eq 'CLOSED') {
+        if ($null -eq $candidate.lastVerdict -or -not $detail.closedAt -or
+            [DateTimeOffset]$candidate.correction.createdAt -le [DateTimeOffset]$detail.closedAt) {
+            continue
+        }
+        $closeActor = Get-IssueCloseActor $Repository ([int]$detail.number)
+        if ($closeActor -ne $script:BotCloseActor) {
+            $who = if ($closeActor) { $closeActor } else { 'unknown' }
+            Write-Host "skip #$($detail.number): closed by $who, not github-actions[bot]; not re-checking"
+            continue
+        }
+        $detail | Add-Member -NotePropertyName closeActor -NotePropertyValue $closeActor -Force
+    }
+
     $pending = Get-PendingVerification $detail $owner
     if ($null -eq $pending) { continue }
 

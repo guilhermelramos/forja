@@ -60,5 +60,28 @@
   "number": 13,
   "state": "OPEN",
   "title": "[playtest] Comandos de terminal (terminal.open / terminal.search) silenciosamente n├úo fazem nada; terminal fica irrecuper├ível pelo teclado",
-  "url": "https://github.com/guilhermelramos/forja/issues/13"
+  "url": "https://github.com/guilhermelramos/forja/issues/13",
+  "events": [
+    {
+      "event": "closed",
+      "actor": {
+        "login": "github-actions[bot]"
+      },
+      "created_at": "2026-11-14T16:14:40Z"
+    },
+    {
+      "event": "reopened",
+      "actor": {
+        "login": "guilhermelramos"
+      },
+      "created_at": "2026-11-14T16:16:33Z"
+    },
+    {
+      "event": "closed",
+      "actor": {
+        "login": "guilhermelramos"
+      },
+      "created_at": "2026-11-14T16:50:59Z"
+    }
+  ]
 }

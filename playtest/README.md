@@ -74,10 +74,12 @@ para a mais nova, com o rótulo `playtest`, `explore` ou `ideia` e um comentári
 do dono do repositório iniciado por `Corrigido na main`, `Tratado na main` ou
 `Concluído na main`. A issue entra quando a correção mais nova é posterior ao
 veredito mais novo; o comentário decisivo não precisa ser o último da thread.
-Issues fechadas também entram quando **já tinham um veredito** e a correção foi
-postada depois do fechamento: é um pedido de re-verificação (foi o caso da #13,
-fechada 13 segundos antes do comentário novo). Issues fechadas manualmente antes
-do primeiro veredito continuam fechadas.
+Issues fechadas também entram quando **já tinham um veredito**, a correção foi
+postada depois do fechamento e o **último evento de fechamento** foi do
+`github-actions[bot]` (consultado em `gh api repos/OWNER/REPO/issues/N/events`).
+Se a issue foi fechada por uma pessoa, ela é ignorada com uma linha de log e
+**nunca é reaberta**, nem com `still_broken`. Foi o caso da #13, fechada pela
+conta `guilhermelramos` 13 segundos antes do comentário novo.
 
 No runner Windows, `playtest/verify.ps1` abre uma instância limpa de
 `forja-app --test-driver` para cada tentativa, com pasta de dados isolada,
@@ -103,18 +105,21 @@ O job final `apply` só age sobre issues com correção pendente. `fixed` fecha 
 issue com comentário e evidências; se a issue já estava fechada por um pedido de
 re-verificação, apenas comenta a confirmação. Os outros dois resultados
 comentam e aplicam `reaberto` ou `verificar-manual`, reabrindo antes quando for
-uma re-verificação de issue fechada. Um `fixed` sem a lista estruturada é aceito
-como veredito legado, mas a heurística de palavras (`não teve efeito`, `não
-funcionou`, `não abriu`, `falhou`, `sem efeito`, `did not`, `no effect`) fica
-registrada apenas como aviso no log e não rebaixa o resultado. A opção `-DryRun`
-mostra o que o script faria sem alterar issues:
+uma re-verificação de issue fechada **pelo bot**; issue fechada por pessoa é
+pulada sem comentário, rótulo ou `gh issue reopen`. Um `fixed` sem a lista
+estruturada é aceito como veredito legado, mas a heurística de palavras (`não
+teve efeito`, `não funcionou`, `não abriu`, `falhou`, `sem efeito`, `did not`,
+`no effect`) fica registrada apenas como aviso no log e não rebaixa o resultado.
+A opção `-DryRun` mostra o que o script faria sem alterar issues:
 
 ```powershell
 ./playtest/apply-verdicts.ps1 -VerdictsPath verification-out/verdicts.jsonl -DryRun
 ```
 
 As regras de tamanho, de veredito e de seleção têm testes de fixture que rodam
-sem abrir o app nem tocar no GitHub:
+sem abrir o app nem tocar no GitHub. O teste de seleção usa o histórico real da
+#13 (fechada por pessoa) e uma variante fechada pelo bot, e roda o
+`apply-verdicts.ps1 -DryRun` contra as duas:
 
 ```powershell
 ./playtest/test-window-size.ps1

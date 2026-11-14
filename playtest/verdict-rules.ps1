@@ -11,6 +11,7 @@ $script:CorrectionPrefixes = @(
 )
 
 $script:VerdictPrefix = 'Verificado:'
+$script:BotCloseActor = 'github-actions[bot]'
 
 $script:VerdictFailureSignals = @(
     'não teve efeito',
@@ -97,11 +98,9 @@ function Find-LatestVerdictComment([object[]]$Comments) {
     return $matches[-1]
 }
 
-# An issue awaits verification when its newest owner correction is newer than
-# its newest verdict. Closed issues are included only when the correction was
-# posted after the close: that is the coordinator asking for a re-check after a
-# previous verdict closed the issue.
-function Get-PendingVerification([object]$Issue, [string]$Owner) {
+# An issue has something to verify when its newest owner correction is newer
+# than its newest verdict. This ignores the issue state and the close actor.
+function Get-PendingCorrection([object]$Issue, [string]$Owner) {
     if ($null -eq $Issue) { return $null }
     $comments = @(Get-SortedComments $Issue)
     $correction = Find-LatestCorrectionComment $comments $Owner
@@ -113,25 +112,57 @@ function Get-PendingVerification([object]$Issue, [string]$Owner) {
         return $null
     }
 
+    return [pscustomobject]@{
+        correction = $correction
+        lastVerdict = $lastVerdict
+    }
+}
+
+# Returns the pending correction for an open issue, or for a closed issue that
+# already had a verdict, was closed by github-actions[bot], and got a newer
+# correction after the close. The caller must resolve `closeActor` first with
+# Get-IssueCloseActor. An issue closed by a person is never a re-check.
+function Get-PendingVerification([object]$Issue, [string]$Owner) {
+    $pending = Get-PendingCorrection $Issue $Owner
+    if ($null -eq $pending) { return $null }
+
     $state = [string]$Issue.state
     $recheck = $false
     if ($state -eq 'CLOSED') {
-        # A closed issue is only re-checked when it already had a verdict and a
-        # new correction arrives after the close. Issues closed manually before
-        # their first correction stay closed.
-        if ($null -eq $lastVerdict) { return $null }
+        # A closed issue is only re-checked when the verifier closed it and a
+        # new correction arrives after the close. Issues closed manually (even
+        # before their first correction) stay closed.
+        if ($null -eq $pending.lastVerdict) { return $null }
         if (-not $Issue.closedAt) { return $null }
-        if ([DateTimeOffset]$correction.createdAt -le [DateTimeOffset]$Issue.closedAt) {
+        if ([DateTimeOffset]$pending.correction.createdAt -le [DateTimeOffset]$Issue.closedAt) {
             return $null
         }
+        if ([string]$Issue.closeActor -ne $script:BotCloseActor) { return $null }
         $recheck = $true
     } elseif ($state -ne 'OPEN') {
         return $null
     }
 
     return [pscustomobject]@{
-        correction = $correction
-        lastVerdict = $lastVerdict
+        correction = $pending.correction
+        lastVerdict = $pending.lastVerdict
         recheck = $recheck
     }
+}
+
+function Get-LastCloseActor([object[]]$Events) {
+    $closes = @($Events | Where-Object { $_ -and $_.event -eq 'closed' } |
+        Sort-Object { [DateTimeOffset]$_.created_at })
+    if (-not $closes.Count) { return $null }
+    return [string]$closes[-1].actor.login
+}
+
+# Reads the issue event timeline and returns the actor of the last `closed`
+# event. `--slurp` is required because GitHub paginates the event list.
+function Get-IssueCloseActor([string]$Repository, [int]$Number) {
+    $slurped = & gh api "repos/$Repository/issues/$Number/events?per_page=100" --paginate --slurp
+    if ($LASTEXITCODE -ne 0) { throw "could not read events for issue #$Number" }
+    $events = @()
+    foreach ($page in @($slurped | ConvertFrom-Json)) { $events += @($page) }
+    return Get-LastCloseActor $events
 }

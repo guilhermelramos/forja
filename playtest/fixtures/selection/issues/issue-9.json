@@ -45,5 +45,12 @@
   "number": 9,
   "state": "CLOSED",
   "title": "[playtest] Rotinas: formul├írio 'Nova rotina' fica cortado ÔÇö painel central estreito e sobreposto pelo painel direito",
-  "url": "https://github.com/guilhermelramos/forja/issues/9"
+  "url": "https://github.com/guilhermelramos/forja/issues/9",
+  "events": {
+    "event": "closed",
+    "actor": {
+      "login": "github-actions[bot]"
+    },
+    "created_at": "2026-11-14T16:14:37Z"
+  }
 }
