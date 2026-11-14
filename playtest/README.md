@@ -4,16 +4,18 @@ Agentes de IA gratuitos usam a Forja **ao vivo, como uma pessoa**: olham a tela,
 
 ## Como funciona
 1. **`forja-app --test-driver`**: só com essa opção, o app responde aos métodos `ui.*` pelo pipe local.
-   - `ui.snapshot` devolve os elementos visíveis a partir da árvore de acessibilidade: nome, papel, estado e retângulo de cada um.
+   - `ui.snapshot` devolve os elementos visíveis a partir da árvore de acessibilidade: nome, papel, estado e retângulo de cada um. `region` limita a uma parte (`cima`, `baixo`, `esquerda`, `direita`, `centro` ou o nome de uma janela) e `filter` a nomes/papéis que contenham o texto.
    - `ui.click`, `ui.type`, `ui.key` e `ui.scroll` viram **eventos reais de mouse e teclado** dentro do egui, um passo por quadro.
-   - Cada ação responde depois que a interface assentou, com o que **apareceu** e o que **sumiu**.
+   - Cada ação responde depois que a interface assentou, só com o que **apareceu**, **sumiu**, **mudou** ou é novo.
    - Tudo é registrado em `FORJA_TEST_LOG` (JSONL).
    - Seletores nativos de pasta e arquivo respondem sozinhos (`FORJA_TEST_PICK_DIR`, `FORJA_TEST_PICK_FILE`; veja `crates/kernel/src/test_pick.rs`).
-2. **`forja-mcp --player --findings <arquivo>`** expõe ao agente só as ferramentas de usuário: `ui_look`, `ui_click`, `ui_type`, `ui_key`, `ui_scroll` e `ui_wait`. A ferramenta `report_finding` grava um achado com passos, esperado e ocorrido.
+2. **`forja-mcp --player --findings <arquivo>`** expõe ao agente só as ferramentas de usuário: `ui_look`, `ui_click`, `ui_type`, `ui_key`, `ui_scroll` e `ui_wait`. `ui_look` é compacto (agrupa repetidos, corta nomes longos e omite retângulos de elementos não acionáveis). A ferramenta `report_finding` grava um achado com passos, esperado e ocorrido. `--max-steps <n>` limita as ações de uma sessão.
 3. **`playtest/run.ps1`**:
    - cria a pasta de dados isolada;
    - abre o app;
    - roda sessões do OpenCode até o prazo, com `INSTRUCTIONS.md`, a missão, o resumo da sessão anterior e os achados já registrados;
+   - roda o OpenCode com um diretório de configuração só do teste, sem skills, plugins ou MCP globais da máquina;
+   - limita cada sessão a `-MaxSteps` ações (padrão 40) e passa à próxima um **resumo estruturado** (telas visitadas, testado, achados, a seguir) em vez do texto final cru;
    - se o app cair, isso vira achado `crash` e o app é reaberto.
 4. **`.github/workflows/playtest.yml`**:
    - roda a cada 3 horas, com um job por missão em `playtest/missions/`;

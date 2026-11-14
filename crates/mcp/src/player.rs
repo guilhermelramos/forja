@@ -5,24 +5,49 @@
 //! when the app runs with `forja-app --test-driver`. Nothing else in the app
 //! catalog is exposed. `report_finding` appends a bug or observation to the
 //! JSONL file given with `--findings <path>`.
+//!
+//! Replies are small on purpose. An action sends the action, what appeared or
+//! disappeared and only the widgets that are new or changed; it never repeats
+//! the whole screen, which the agent already has from its last `ui_look`.
+//! `ui_look` shows the screen compact, optionally limited by `region` or
+//! `filter`. `--max-steps` caps the actions of one session.
 
 use crate::{Backend, BackendError};
 use serde_json::{json, Value};
+use std::cell::Cell;
 use std::io::Write as _;
 use std::path::PathBuf;
 
-/// Lines of the widget list sent back to the model per call.
-const MAX_VIEW_LINES: usize = 250;
+/// Lines of a full screen sent back to the model per `ui_look`.
+const MAX_LOOK_LINES: usize = 110;
+/// New or changed widgets printed after an action.
+const MAX_CHANGED_LINES: usize = 24;
+/// A widget name longer than this is cut in the text the model reads.
+const MAX_NAME_CHARS: usize = 60;
 
 /// MCP server for play tests.
 pub struct Player<B> {
     backend: B,
     findings: Option<PathBuf>,
+    steps: Cell<usize>,
+    max_steps: Option<usize>,
 }
 
 impl<B: Backend> Player<B> {
     pub fn new(backend: B, findings: Option<PathBuf>) -> Self {
-        Self { backend, findings }
+        Self {
+            backend,
+            findings,
+            steps: Cell::new(0),
+            max_steps: None,
+        }
+    }
+
+    /// Caps the actions (`ui_click`, `ui_type`, `ui_key`, `ui_scroll` and
+    /// `ui_wait`) of one session. Looking and reporting have no cap.
+    pub fn with_max_steps(mut self, max_steps: Option<usize>) -> Self {
+        self.max_steps = max_steps.filter(|max| *max > 0);
+        self
     }
 
     /// Handles one JSON-RPC line; `None` for notifications.
@@ -43,7 +68,7 @@ impl<B: Backend> Player<B> {
                 "protocolVersion": params.get("protocolVersion").and_then(Value::as_str).unwrap_or(crate::LATEST_PROTOCOL),
                 "capabilities": { "tools": { "listChanged": false } },
                 "serverInfo": { "name": "forja-player", "version": env!("CARGO_PKG_VERSION") },
-                "instructions": "Ferramentas para usar a Forja como uma pessoa: ui_look, ui_click, ui_type, ui_key, ui_scroll, ui_wait e report_finding."
+                "instructions": "Ferramentas para usar a Forja como uma pessoa: ui_look, ui_click, ui_type, ui_key, ui_scroll, ui_wait e report_finding. As ações respondem só o que mudou; ui_look mostra a tela."
             })),
             "ping" => Ok(json!({})),
             "tools/list" => Ok(json!({ "tools": tools() })),
@@ -74,8 +99,31 @@ impl<B: Backend> Player<B> {
             "ui_wait" => "ui.wait",
             _ => return error_content(&format!("unknown tool {name}")),
         };
-        match self.backend.call(method, arguments) {
-            Ok(result) => success_content(name, &result),
+        if is_action(name) {
+            if let Some(max) = self.max_steps {
+                if self.steps.get() >= max {
+                    return error_content(&format!(
+                        "Limite de {max} ações desta sessão atingido. Pare de usar o app e escreva \
+                         agora o resumo estruturado: telas visitadas, o que foi testado, achados e \
+                         o que tentaria em seguida."
+                    ));
+                }
+                self.steps.set(self.steps.get() + 1);
+            }
+        }
+        match self.backend.call(method, arguments.clone()) {
+            Ok(result) => {
+                let mut text = response_text(name, &arguments, &result);
+                if is_action(name) {
+                    if let Some(max) = self.max_steps {
+                        let left = max.saturating_sub(self.steps.get());
+                        if left <= 3 {
+                            text.push_str(&format!("Ações restantes: {left}.\n"));
+                        }
+                    }
+                }
+                success_content(text, &result)
+            }
             Err(BackendError { code, message }) => error_content(&format!("{code}: {message}")),
         }
     }
@@ -109,48 +157,11 @@ impl<B: Backend> Player<B> {
     }
 }
 
-fn success_content(tool: &str, result: &Value) -> Value {
-    let mut text = String::new();
-    if let Some(clicked) = result.pointer("/action/clicked") {
-        text.push_str(&format!(
-            "Ação: clique em #{} {} \"{}\"\n",
-            clicked["id"],
-            clicked["role"].as_str().unwrap_or(""),
-            clicked["name"].as_str().unwrap_or("")
-        ));
-    }
-    let list = |key: &str| -> String {
-        result["changes"][key]
-            .as_array()
-            .map(|items| {
-                items
-                    .iter()
-                    .filter_map(Value::as_str)
-                    .map(|item| item.replace('\n', " / "))
-                    .collect::<Vec<_>>()
-                    .join(" | ")
-            })
-            .unwrap_or_default()
-    };
-    if tool != "ui_look" {
-        text.push_str(&format!("Apareceu: {}\nSumiu: {}\n", list("appeared"), list("disappeared")));
-    }
-    text.push_str(&format!(
-        "Janela {}x{} px. Elementos (#id papel \"nome\" (x0,y0)-(x1,y1) [estado]):\n",
-        result["window"]["width"], result["window"]["height"]
-    ));
-    let view = result["view"].as_str().unwrap_or("");
-    let total = view.lines().count();
-    for line in view.lines().take(MAX_VIEW_LINES) {
-        text.push_str(line);
-        text.push('\n');
-    }
-    if total > MAX_VIEW_LINES {
-        text.push_str(&format!(
-            "... mais {} elementos abaixo (role a tela com ui_scroll para vê-los).\n",
-            total - MAX_VIEW_LINES
-        ));
-    }
+fn is_action(tool: &str) -> bool {
+    matches!(tool, "ui_click" | "ui_type" | "ui_key" | "ui_scroll" | "ui_wait")
+}
+
+fn success_content(text: String, result: &Value) -> Value {
     let mut content = vec![json!({ "type": "text", "text": text })];
     if let Some(png) = result["png_base64"].as_str() {
         content.push(json!({ "type": "image", "data": png, "mimeType": "image/png" }));
@@ -160,6 +171,305 @@ fn success_content(tool: &str, result: &Value) -> Value {
 
 fn error_content(message: &str) -> Value {
     json!({ "content": [{ "type": "text", "text": message }], "isError": true })
+}
+
+fn response_text(tool: &str, arguments: &Value, result: &Value) -> String {
+    if tool == "ui_look" {
+        look_text(result)
+    } else {
+        action_text(tool, arguments, result)
+    }
+}
+
+/// The whole screen, compact: grouped repeats, short names, `@x,y` only for
+/// widgets that can be acted on.
+fn look_text(result: &Value) -> String {
+    let elements = result["elements"].as_array().map(Vec::as_slice).unwrap_or(&[]);
+    let mut text = String::new();
+    if let Some(region) = result.get("region").filter(|region| !region.is_null()) {
+        let rect = region["rect"].as_array();
+        let at = |index: usize| rect.and_then(|rect| rect.get(index)).and_then(Value::as_f64).unwrap_or(0.0);
+        text.push_str(&format!(
+            "Região \"{}\" ({:.0}x{:.0} @{:.0},{:.0}): {} elementos.\n",
+            region["label"].as_str().unwrap_or("?"),
+            (at(2) - at(0)).max(0.0),
+            (at(3) - at(1)).max(0.0),
+            at(0),
+            at(1),
+            elements.len()
+        ));
+    } else {
+        text.push_str(&format!(
+            "Tela {:.0}x{:.0}: {} elementos.\n",
+            result["window"]["width"].as_f64().unwrap_or(0.0),
+            result["window"]["height"].as_f64().unwrap_or(0.0),
+            elements.len()
+        ));
+    }
+    if let Some(filter) = result.get("filter").and_then(Value::as_str) {
+        text.push_str(&format!("Filtro: \"{filter}\".\n"));
+    }
+    text.push_str(&format!("@x,y = acionável; nomes até {MAX_NAME_CHARS} caracteres.\n"));
+    if elements.is_empty() {
+        text.push_str("Nenhum elemento; tente outro region ou filter.\n");
+        return text;
+    }
+    let mut lines: Vec<(String, usize)> = Vec::new();
+    let mut index = 0;
+    while index < elements.len() {
+        let mut count = 1;
+        if !is_editable(&elements[index]) {
+            while index + count < elements.len() && same_widget(&elements[index], &elements[index + count]) {
+                count += 1;
+            }
+        }
+        lines.push((widget_line(&elements[index], count, false), count));
+        index += count;
+    }
+    let mut hidden = 0;
+    for (line_index, (line, count)) in lines.iter().enumerate() {
+        if line_index >= MAX_LOOK_LINES {
+            hidden += count;
+            continue;
+        }
+        text.push_str(line);
+        text.push('\n');
+    }
+    if hidden > 0 {
+        text.push_str(&format!(
+            "... mais {hidden} elementos (use ui_look com region ou filter).\n"
+        ));
+    }
+    text
+}
+
+/// An action and its diff. No full screen here.
+fn action_text(tool: &str, arguments: &Value, result: &Value) -> String {
+    let mut text = String::new();
+    match tool {
+        "ui_click" => {
+            if let Some(clicked) = result.pointer("/action/clicked") {
+                text.push_str(&format!(
+                    "Clique: #{} {} {}\n",
+                    clicked["id"],
+                    clicked["role"].as_str().unwrap_or("?"),
+                    display_name(clicked)
+                ));
+            } else if let Some(at) = result.pointer("/action/at").and_then(Value::as_array) {
+                let at = |index: usize| at.get(index).and_then(Value::as_f64).unwrap_or(0.0);
+                text.push_str(&format!("Clique em ({:.0}, {:.0}).\n", at(0), at(1)));
+            } else {
+                text.push_str("Clique feito.\n");
+            }
+        }
+        "ui_scroll" => {
+            let dy = arguments["dy"].as_f64().unwrap_or(-300.0);
+            if let Some(clicked) = result.pointer("/action/clicked") {
+                text.push_str(&format!(
+                    "Rolagem sobre #{} {} {} (dy {dy:.0}).\n",
+                    clicked["id"],
+                    clicked["role"].as_str().unwrap_or("?"),
+                    display_name(clicked)
+                ));
+            } else {
+                text.push_str(&format!("Rolagem (dy {dy:.0}).\n"));
+            }
+        }
+        "ui_type" => {
+            let typed = arguments["text"].as_str().unwrap_or("");
+            text.push_str(&format!(
+                "Digitou: \"{}\" ({} caracteres).\n",
+                clip(typed, 80),
+                typed.chars().count()
+            ));
+        }
+        "ui_key" => {
+            text.push_str(&format!(
+                "Tecla: {}.\n",
+                arguments["keys"].as_str().unwrap_or("?")
+            ));
+        }
+        "ui_wait" => {
+            text.push_str(&format!(
+                "Esperou {} ms.\n",
+                arguments["ms"].as_u64().unwrap_or(500)
+            ));
+        }
+        _ => {}
+    }
+    let appeared = change_names(result, "appeared", "appeared_more");
+    let disappeared = change_names(result, "disappeared", "disappeared_more");
+    if let Some(line) = &appeared {
+        text.push_str(&format!("Apareceu: {line}\n"));
+    }
+    if let Some(line) = &disappeared {
+        text.push_str(&format!("Sumiu: {line}\n"));
+    }
+    if appeared.is_none() && disappeared.is_none() {
+        text.push_str("Apareceu/Sumiu: nada.\n");
+    }
+    let new = element_list(result, "new");
+    let changed = element_list(result, "changed");
+    let new_more = result["changes"]["new_more"].as_u64().unwrap_or(0);
+    let changed_more = result["changes"]["changed_more"].as_u64().unwrap_or(0);
+    if !new.is_empty() {
+        text.push_str(&format!("Novos ({}):\n", new.len() as u64 + new_more));
+        for element in new.iter().take(MAX_CHANGED_LINES) {
+            text.push_str("  ");
+            text.push_str(&widget_line(element, 1, true));
+            text.push('\n');
+        }
+        if new_more > 0 {
+            text.push_str(&format!("  ... +{new_more} (use ui_look para ver)\n"));
+        }
+    }
+    if !changed.is_empty() {
+        text.push_str(&format!("Alterados ({}):\n", changed.len() as u64 + changed_more));
+        for element in changed.iter().take(MAX_CHANGED_LINES) {
+            text.push_str("  ");
+            text.push_str(&widget_line(element, 1, true));
+            text.push('\n');
+        }
+        if changed_more > 0 {
+            text.push_str(&format!("  ... +{changed_more} (use ui_look para ver)\n"));
+        }
+    }
+    if new.is_empty() && changed.is_empty() {
+        text.push_str("Nenhum elemento novo ou alterado.\n");
+    }
+    // After typing, say where the text went when the diff does not show it.
+    if tool == "ui_type" {
+        if let Some(focus) = result.get("focus").filter(|focus| !focus.is_null()) {
+            let in_diff = new
+                .iter()
+                .chain(changed.iter())
+                .any(|element| element["id"] == focus["id"]);
+            if !in_diff {
+                text.push_str(&format!(
+                    "Foco: #{} {} {}\n",
+                    focus["id"],
+                    focus["role"].as_str().unwrap_or("?"),
+                    display_name(focus)
+                ));
+            }
+        }
+    }
+    text
+}
+
+fn element_list<'a>(result: &'a Value, key: &str) -> &'a [Value] {
+    result["changes"][key].as_array().map(Vec::as_slice).unwrap_or(&[])
+}
+
+fn change_names(result: &Value, key: &str, more_key: &str) -> Option<String> {
+    let items = result["changes"][key].as_array()?;
+    if items.is_empty() {
+        return None;
+    }
+    let names: Vec<String> = items
+        .iter()
+        .filter_map(Value::as_str)
+        .map(|name| clip(name, 40))
+        .collect();
+    let more = result["changes"][more_key].as_u64().unwrap_or(0);
+    Some(if more > 0 {
+        format!("{} (+{more})", names.join(" | "))
+    } else {
+        names.join(" | ")
+    })
+}
+
+/// One compact line: `#id [×N] Role "name" = "value" @x,y [tags]`.
+/// `always_position` is used by diffs, where the task asks for the position
+/// of every new or changed widget; a full look omits it when nothing can be
+/// done with the widget.
+fn widget_line(element: &Value, count: usize, always_position: bool) -> String {
+    let mut line = format!("#{}", element["id"]);
+    if count > 1 {
+        line.push_str(&format!(" ×{count}"));
+    }
+    line.push(' ');
+    line.push_str(element["role"].as_str().unwrap_or("?"));
+    line.push(' ');
+    line.push_str(&display_name(element));
+    if let Some(value) = element["value"].as_str().filter(|value| !value.is_empty()) {
+        line.push_str(&format!(" = \"{}\"", clip(value, 40)));
+    }
+    if always_position || element["clickable"].as_bool() == Some(true) || is_editable(element) {
+        line.push_str(&format!(" @{}", position(element)));
+    }
+    let tags = state_tags(element);
+    if !tags.is_empty() {
+        line.push_str(&format!(" [{}]", tags.join(" ")));
+    }
+    line
+}
+
+fn display_name(element: &Value) -> String {
+    let name = element["name"].as_str().unwrap_or("").trim();
+    if name.is_empty() {
+        "(sem nome)".to_owned()
+    } else if name.chars().all(|c| ('\u{E000}'..='\u{F8FF}').contains(&c)) {
+        "(ícone)".to_owned()
+    } else {
+        format!("\"{}\"", clip(name, MAX_NAME_CHARS))
+    }
+}
+
+fn position(element: &Value) -> String {
+    let rect = element["rect"].as_array();
+    let value = |index: usize| {
+        rect.and_then(|rect| rect.get(index))
+            .and_then(Value::as_f64)
+            .unwrap_or(0.0)
+    };
+    format!("{:.0},{:.0}", value(0), value(1))
+}
+
+fn state_tags(element: &Value) -> Vec<&'static str> {
+    let mut tags = Vec::new();
+    if has_state(element, "focused") {
+        tags.push("foco");
+    }
+    if has_state(element, "selected") {
+        tags.push("sel");
+    }
+    if has_state(element, "disabled") {
+        tags.push("desab");
+    }
+    if is_editable(element) {
+        tags.push("edita");
+    }
+    tags
+}
+
+fn has_state(element: &Value, state: &str) -> bool {
+    element["state"]
+        .as_array()
+        .is_some_and(|states| states.iter().any(|value| value.as_str() == Some(state)))
+}
+
+fn is_editable(element: &Value) -> bool {
+    element["editable"].as_bool() == Some(true)
+}
+
+/// Widgets that would look the same on one line, even at different positions.
+fn same_widget(left: &Value, right: &Value) -> bool {
+    ["role", "name", "value", "state", "clickable", "editable"]
+        .iter()
+        .all(|key| left[*key] == right[*key])
+}
+
+fn clip(text: &str, max: usize) -> String {
+    let text = text.replace('\n', " / ");
+    if text.chars().count() <= max {
+        text
+    } else {
+        format!(
+            "{}…",
+            text.chars().take(max.saturating_sub(1)).collect::<String>()
+        )
+    }
 }
 
 fn target_schema() -> Value {
@@ -181,33 +491,37 @@ fn tools() -> Vec<Value> {
     vec![
         json!({
             "name": "ui_look",
-            "description": "Mostra o que está na tela agora: cada elemento com #id, papel, nome, posição e estado. Use image=true para receber também a captura.",
-            "inputSchema": { "type": "object", "properties": { "image": { "type": "boolean" } } },
+            "description": "Mostra a tela de forma compacta (#id, papel, nome, posição, estado). Use só ao chegar numa tela nova. region limita a uma parte (cima, baixo, esquerda, direita, centro ou nome de uma janela) e filter mostra só nomes/papéis com o texto. image=true traz a captura.",
+            "inputSchema": { "type": "object", "properties": {
+                "image": { "type": "boolean" },
+                "region": { "type": "string", "description": "Parte da tela: cima, baixo, esquerda, direita, centro ou o nome de uma janela aberta." },
+                "filter": { "type": "string", "description": "Mostra só elementos cujo nome ou papel contém este texto." }
+            } },
             "annotations": { "readOnlyHint": true }
         }),
         json!({
             "name": "ui_click",
-            "description": "Clica num elemento como uma pessoa (move o mouse, aperta e solta). Indique target (nome), id, ou x e y. Responde o que apareceu e sumiu e a tela nova.",
+            "description": "Clica num elemento como uma pessoa (move o mouse, aperta e solta). Indique target (nome), id, ou x e y. Responde só o que apareceu/sumiu e os elementos novos ou alterados.",
             "inputSchema": { "type": "object", "properties": click }
         }),
         json!({
             "name": "ui_type",
-            "description": "Digita texto no campo que está com foco (clique no campo antes). \\n vira Enter.",
+            "description": "Digita texto no campo que está com foco (clique no campo antes). \\n vira Enter. Responde o campo alterado, não a tela.",
             "inputSchema": { "type": "object", "properties": { "text": { "type": "string" } }, "required": ["text"] }
         }),
         json!({
             "name": "ui_key",
-            "description": "Aperta uma tecla ou atalho, ex.: \"Enter\", \"Escape\", \"Tab\", \"Ctrl+K\", \"Ctrl+Shift+P\", \"ArrowDown\".",
+            "description": "Aperta uma tecla ou atalho, ex.: \"Enter\", \"Escape\", \"Tab\", \"Ctrl+K\", \"Ctrl+Shift+P\", \"ArrowDown\". Responde só o que mudou.",
             "inputSchema": { "type": "object", "properties": { "keys": { "type": "string" } }, "required": ["keys"] }
         }),
         json!({
             "name": "ui_scroll",
-            "description": "Rola a roda do mouse sobre um elemento ou ponto.",
+            "description": "Rola a roda do mouse sobre um elemento ou ponto e responde só o que mudou.",
             "inputSchema": { "type": "object", "properties": scroll }
         }),
         json!({
             "name": "ui_wait",
-            "description": "Espera (ms, até 20000) para tarefas em segundo plano terminarem e mostra a tela.",
+            "description": "Espera (ms, até 20000) para tarefas em segundo plano terminarem e mostra só o que mudou.",
             "inputSchema": { "type": "object", "properties": { "ms": { "type": "integer" } } },
             "annotations": { "readOnlyHint": true }
         }),
@@ -234,24 +548,88 @@ fn tools() -> Vec<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
 
     struct Fake;
+
     impl Backend for Fake {
         fn call(&self, method: &str, params: Value) -> Result<Value, BackendError> {
             match method {
                 "ui.click" => Ok(json!({
                     "window": { "width": 100, "height": 50 },
-                    "changes": { "appeared": ["Bigorna"], "disappeared": [] },
-                    "view": "#1 Button \"Ok\" (0,0)-(10,10) [clicável]\n",
-                    "action": { "clicked": { "id": 1, "role": "Button", "name": params["target"] } }
+                    "changes": {
+                        "appeared": ["Bigorna"], "disappeared": [],
+                        "appeared_more": 0, "disappeared_more": 0,
+                        "new": [{
+                            "id": 7, "role": "MenuItem", "name": "Renomear",
+                            "rect": [300, 120, 360, 140], "clickable": true, "editable": false, "state": []
+                        }, {
+                            "id": 8, "role": "Window", "name": "Dialogo",
+                            "rect": [100, 100, 400, 300], "clickable": false, "editable": false, "state": []
+                        }],
+                        "changed": [],
+                        "new_more": 0, "changed_more": 0
+                    },
+                    "elements": [
+                        { "id": 1, "role": "Button", "name": "Ok", "rect": [0, 0, 10, 10],
+                          "clickable": true, "editable": false, "state": [] },
+                        { "id": 9, "role": "Label", "name": "Botão distante", "rect": [0, 40, 50, 50],
+                          "clickable": false, "editable": false, "state": [] }
+                    ],
+                    "action": { "clicked": { "id": 1, "role": "Button", "name": params["target"],
+                        "rect": [0, 0, 10, 10], "clickable": true, "editable": false, "state": [] } }
+                })),
+                "ui.snapshot" => Ok(screen(&params)),
+                "ui.wait" => Ok(json!({
+                    "window": { "width": 100, "height": 50 },
+                    "changes": { "appeared": [], "disappeared": [], "appeared_more": 0,
+                        "disappeared_more": 0, "new": [], "changed": [], "new_more": 0, "changed_more": 0 },
+                    "elements": []
                 })),
                 _ => Err(BackendError::new("app_error", "no")),
             }
         }
     }
 
-    fn call(player: &Player<Fake>, body: Value) -> Value {
+    fn screen(params: &Value) -> Value {
+        let mut result = json!({
+            "window": { "width": 1280, "height": 800 },
+            "changes": { "appeared": [], "disappeared": [], "appeared_more": 0,
+                "disappeared_more": 0, "new": [], "changed": [], "new_more": 0, "changed_more": 0 },
+            "elements": [
+                { "id": 1, "role": "Button", "name": "Ok", "rect": [0, 0, 10, 10],
+                  "clickable": true, "editable": false, "state": [] },
+                { "id": 2, "role": "TextInput", "name": "Busca", "value": "abc",
+                  "rect": [200, 20, 300, 44], "clickable": true, "editable": true, "state": ["focused"] },
+                { "id": 3, "role": "Image", "name": "\u{E000}", "rect": [0, 60, 16, 76],
+                  "clickable": true, "editable": false, "state": [] },
+                { "id": 4, "role": "Image", "name": "\u{E000}", "rect": [20, 60, 36, 76],
+                  "clickable": true, "editable": false, "state": [] },
+                { "id": 5, "role": "Image", "name": "\u{E000}", "rect": [40, 60, 56, 76],
+                  "clickable": true, "editable": false, "state": [] },
+                { "id": 6, "role": "Label", "name": "x".repeat(200),
+                  "rect": [0, 80, 100, 90], "clickable": false, "editable": false, "state": [] }
+            ]
+        });
+        if let Some(region) = params.get("region") {
+            result["region"] = json!({ "label": region, "rect": [0, 0, 640, 400] });
+        }
+        if let Some(filter) = params.get("filter") {
+            result["filter"] = filter.clone();
+        }
+        result
+    }
+
+    fn call<B: Backend>(player: &Player<B>, body: Value) -> Value {
         serde_json::from_str(&player.handle_line(&body.to_string()).unwrap()).unwrap()
+    }
+
+    fn call_tool<B: Backend>(player: &Player<B>, name: &str, arguments: Value) -> Value {
+        call(
+            player,
+            json!({ "jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                    "params": { "name": name, "arguments": arguments } }),
+        )
     }
 
     #[test]
@@ -265,19 +643,104 @@ mod tests {
             .map(|tool| tool["name"].as_str().unwrap())
             .collect();
         assert_eq!(names, ["ui_look", "ui_click", "ui_type", "ui_key", "ui_scroll", "ui_wait", "report_finding"]);
+        let look = &reply["result"]["tools"][0]["inputSchema"]["properties"];
+        assert!(look.get("region").is_some() && look.get("filter").is_some());
     }
 
     #[test]
-    fn click_reports_changes_and_errors_are_tool_errors() {
+    fn click_reports_the_action_and_only_the_change() {
         let player = Player::new(Fake, None);
-        let reply = call(&player, json!({ "jsonrpc": "2.0", "id": 2, "method": "tools/call",
-            "params": { "name": "ui_click", "arguments": { "target": "Ok" } } }));
+        let reply = call_tool(&player, "ui_click", json!({ "target": "Ok" }));
         let text = reply["result"]["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("Clique: #1 Button \"Ok\""));
         assert!(text.contains("Apareceu: Bigorna"));
-        assert!(text.contains("#1 Button"));
-        let reply = call(&player, json!({ "jsonrpc": "2.0", "id": 3, "method": "tools/call",
-            "params": { "name": "ui_key", "arguments": { "keys": "Enter" } } }));
+        assert!(text.contains("Novos (2):"));
+        assert!(text.contains("#7 MenuItem \"Renomear\" @300,120"));
+        // A new non-clickable widget still reports where it is.
+        assert!(text.contains("#8 Window \"Dialogo\" @100,100"));
+        // The full screen from the last look is neither repeated nor truncated into the reply.
+        assert!(!text.contains("Elementos ("));
+        assert!(!text.contains("Botão distante"));
+        assert!(text.len() < 600, "action reply was {} chars", text.len());
+    }
+
+    #[test]
+    fn look_is_compact_and_groups_repeated_widgets() {
+        let player = Player::new(Fake, None);
+        let reply = call_tool(&player, "ui_look", json!({}));
+        let text = reply["result"]["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("Tela 1280x800: 6 elementos."));
+        assert!(text.contains("#3 ×3 Image (ícone) @0,60"));
+        assert!(text.contains("#2 TextInput \"Busca\" = \"abc\" @200,20 [foco edita]"));
+        assert!(text.contains("nomes até 60 caracteres"));
+        assert!(!text.contains("(0,0)-(10,10)"));
+        // A 200-char name is cut.
+        assert!(!text.contains(&"x".repeat(200)));
+        assert!(text.contains('…'));
+    }
+
+    #[test]
+    fn look_sends_region_and_filter_to_the_app() {
+        struct Capture {
+            calls: Mutex<Vec<(String, Value)>>,
+        }
+        impl Backend for Capture {
+            fn call(&self, method: &str, params: Value) -> Result<Value, BackendError> {
+                self.calls.lock().unwrap().push((method.to_owned(), params.clone()));
+                Ok(screen(&params))
+            }
+        }
+        let player = Player::new(
+            Capture {
+                calls: Mutex::new(Vec::new()),
+            },
+            None,
+        );
+        let reply = call_tool(
+            &player,
+            "ui_look",
+            json!({ "region": "janela de cima", "filter": "Busca" }),
+        );
+        let text = reply["result"]["content"][0]["text"].as_str().unwrap();
+        assert!(text.contains("Região \"janela de cima\""));
+        assert!(text.contains("Filtro: \"Busca\""));
+        let calls = player.backend.calls.lock().unwrap();
+        assert_eq!(calls[0].0, "ui.snapshot");
+        assert_eq!(calls[0].1["region"], "janela de cima");
+        assert_eq!(calls[0].1["filter"], "Busca");
+    }
+
+    #[test]
+    fn errors_are_tool_errors() {
+        let player = Player::new(Fake, None);
+        let reply = call_tool(&player, "ui_key", json!({ "keys": "Enter" }));
         assert_eq!(reply["result"]["isError"], true);
+    }
+
+    #[test]
+    fn step_budget_stops_actions_and_keeps_looks_and_reports() {
+        let path = std::env::temp_dir().join(format!("forja-player-budget-{}.jsonl", std::process::id()));
+        let _ = std::fs::remove_file(&path);
+        let player = Player::new(Fake, Some(path.clone())).with_max_steps(Some(1));
+        let first = call_tool(&player, "ui_click", json!({ "target": "Ok" }));
+        assert_eq!(first["result"]["isError"], false);
+        let second = call_tool(&player, "ui_click", json!({ "target": "Ok" }));
+        assert_eq!(second["result"]["isError"], true);
+        assert!(second["result"]["content"][0]["text"]
+            .as_str()
+            .unwrap()
+            .contains("Limite de 1 ações"));
+        // Looking and reporting still work after the budget is spent.
+        assert_eq!(call_tool(&player, "ui_look", json!({}))["result"]["isError"], false);
+        assert_eq!(
+            call_tool(
+                &player,
+                "report_finding",
+                json!({ "title": "t", "steps": [], "expected": "a", "actual": "b" })
+            )["result"]["isError"],
+            false
+        );
+        let _ = std::fs::remove_file(&path);
     }
 
     #[test]
@@ -285,9 +748,11 @@ mod tests {
         let path = std::env::temp_dir().join(format!("forja-player-findings-{}.jsonl", std::process::id()));
         let _ = std::fs::remove_file(&path);
         let player = Player::new(Fake, Some(path.clone()));
-        let reply = call(&player, json!({ "jsonrpc": "2.0", "id": 4, "method": "tools/call",
-            "params": { "name": "report_finding", "arguments": {
-                "title": "Aba cortada", "steps": ["abrir"], "expected": "texto inteiro", "actual": "cortado" } } }));
+        let reply = call_tool(
+            &player,
+            "report_finding",
+            json!({ "title": "Aba cortada", "steps": ["abrir"], "expected": "texto inteiro", "actual": "cortado" }),
+        );
         assert_eq!(reply["result"]["isError"], false);
         let saved = std::fs::read_to_string(&path).unwrap();
         assert!(saved.contains("Aba cortada"));
