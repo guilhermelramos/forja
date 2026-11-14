@@ -683,6 +683,7 @@ impl EditorView {
                                 egui::text::CCursor::new(index),
                             )));
                             edit.store(ui.ctx(), id);
+                            self.state.set_cursor_line(line);
                         }
                         if pending_match {
                             self.select_find_match(ui, tab, find);

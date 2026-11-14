@@ -44,3 +44,6 @@ board-card-helper-working = Trabalhando
 board-card-helper-idle = Parado
 board-card-helper-finished = Concluído
 board-card-helper-unknown = Estado desconhecido
+board-action-move = Mover etapa
+board-action-move-to = Mover para { $stage }
+board-action-move-back = Voltar para { $stage }

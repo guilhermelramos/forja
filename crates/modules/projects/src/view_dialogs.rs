@@ -90,6 +90,14 @@ pub(crate) fn render_dialog(
         }
         Dialog::Add(form) | Dialog::Create(form) => {
             let creating = creating_form;
+            let layer = egui::Id::new(if creating {
+                "forja.projects.create.keyboard"
+            } else {
+                "forja.projects.add.keyboard"
+            });
+            if forja_ui_kit::consume_layer_escape(ctx, layer) {
+                return Dialog::None;
+            }
             let title = if creating {
                 cx.t("project.dialog.create.title")
             } else {
@@ -107,6 +115,7 @@ pub(crate) fn render_dialog(
                 .resizable(false)
                 .default_width(420.0)
                 .show(ctx, |ui| {
+                    forja_ui_kit::register_keyboard_layer(ui, layer);
                     ui.label(
                         egui::RichText::new(cx.t(if creating {
                             "project.field.new-path"
@@ -211,6 +220,10 @@ pub(crate) fn render_dialog(
             }
         }
         Dialog::Clone(clone) => {
+            let layer = egui::Id::new("forja.projects.clone.keyboard");
+            if forja_ui_kit::consume_layer_escape(ctx, layer) {
+                return Dialog::None;
+            }
             let mut close = false;
             let mut submit = false;
             egui::Window::new(cx.t("project.dialog.clone.title"))
@@ -219,6 +232,7 @@ pub(crate) fn render_dialog(
                 .resizable(false)
                 .default_width(440.0)
                 .show(ctx, |ui| {
+                    forja_ui_kit::register_keyboard_layer(ui, layer);
                     ui.label(
                         egui::RichText::new(cx.t("project.field.url"))
                             .small()

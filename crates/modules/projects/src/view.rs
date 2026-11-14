@@ -17,6 +17,39 @@ impl ProjectsView {
     }
 }
 
+/// Project dialogs live in the modal slot so they open from any screen,
+/// including the board's "Add folder" action.
+pub struct ProjectsDialogs {
+    state: Shared,
+}
+
+impl ProjectsDialogs {
+    pub fn new(state: Shared) -> Self {
+        Self { state }
+    }
+}
+
+impl View for ProjectsDialogs {
+    fn poll(&mut self, cx: &mut Ctx<'_>) {
+        self.state.ensure_loaded(cx);
+        if matches!(self.state.dialog(), Dialog::None) {
+            cx.close_modal("project.dialogs");
+        } else {
+            cx.open_modal("project.dialogs");
+        }
+    }
+
+    fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
+        let mut dialog = self.state.dialog();
+        if matches!(dialog, Dialog::None) {
+            return;
+        }
+        let mut next = render_dialog(ui.ctx(), &mut dialog, cx, &self.state);
+        std::mem::swap(&mut dialog, &mut next);
+        self.state.set_dialog(dialog);
+    }
+}
+
 impl View for ProjectsView {
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         self.state.ensure_loaded(cx);
@@ -128,6 +161,11 @@ impl View for ProjectsView {
                     );
                     if name.clicked() {
                         self.state.toggle_expanded(&project.id);
+                        // A project click also makes its main bench active so
+                        // the title and the bench-dependent panels follow it.
+                        if let Some(bench_id) = main_bench(cx, &project.id) {
+                            bench_activation = Some(bench_id);
+                        }
                     }
                     name.context_menu(|ui| {
                         if forja_ui_kit::button(
@@ -225,8 +263,6 @@ impl View for ProjectsView {
             }
         }
 
-        let mut next = render_dialog(ui.ctx(), &mut dialog, cx, &self.state);
-        std::mem::swap(&mut dialog, &mut next);
         self.state.set_dialog(dialog);
     }
 }
@@ -283,6 +319,23 @@ pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> String {
         return cx.t_args("project.error.save", &[("detail", detail.trim())]);
     }
     cx.t_args("project.error.generic", &[("detail", trimmed)])
+}
+
+/// Bench that represents the checkout of the project itself.
+fn main_bench(cx: &mut Ctx<'_>, project_id: &str) -> Option<String> {
+    let mut args = Map::new();
+    args.insert("project_id".to_owned(), json!(project_id));
+    args.insert("include_archived".to_owned(), json!(false));
+    let value = cx.run_command("bench.list_cards", Args::from_map(args)).ok()?;
+    value
+        .get("benches")?
+        .as_array()?
+        .iter()
+        .find(|card| card.get("is_main").and_then(serde_json::Value::as_bool) == Some(true))?
+        .get("bench")
+        .and_then(|bench| bench.get("bench_id"))
+        .and_then(serde_json::Value::as_str)
+        .map(str::to_owned)
 }
 
 fn benches_for(cx: &mut Ctx<'_>, project_id: &str) -> Result<Vec<BenchRef>, String> {

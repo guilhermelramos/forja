@@ -176,3 +176,4 @@ setting-editor-search-whole_word-label = Whole word
 setting-editor-search-whole_word-help = Matches whole words only.
 setting-editor-markdown-preview-label = Markdown preview
 setting-editor-markdown-preview-help = Opens a preview when editing a Markdown file.
+editor-command-active_file = File open in the editor

@@ -314,3 +314,5 @@ setting-update-check-frequency-option-startup = On startup
 setting-update-check-frequency-option-daily = Daily
 setting-update-check-frequency-option-weekly = Weekly
 setting-voice-input-language-option-auto = Automatic (system)
+shell-command-bench-focus = Show the active bench
+shell-command-tab-open = Bring a bench tab to the front

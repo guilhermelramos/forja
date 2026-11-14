@@ -314,3 +314,5 @@ setting-update-check-frequency-option-startup = Ao iniciar
 setting-update-check-frequency-option-daily = Diária
 setting-update-check-frequency-option-weekly = Semanal
 setting-voice-input-language-option-auto = Automático (sistema)
+shell-command-bench-focus = Mostrar a bancada ativa
+shell-command-tab-open = Trazer uma aba da bancada para a frente

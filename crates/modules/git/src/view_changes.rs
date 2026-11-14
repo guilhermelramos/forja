@@ -43,10 +43,9 @@ impl View for ChangesView {
             cx.t("git.changes.tab.blame"),
         ];
         let label_refs: Vec<&str> = labels.iter().map(String::as_str).collect();
-        if forja_ui_kit::tabs(ui, &mut tab, &label_refs).clicked() {
-            self.state.set_selected_tab(tab);
-        }
-        if tab != self.state.selected_tab() {
+        let before = tab;
+        forja_ui_kit::tabs(ui, &mut tab, &label_refs);
+        if tab != before {
             self.state.set_selected_tab(tab);
         }
         ui.separator();
@@ -189,7 +188,11 @@ fn refresh_async(cx: &mut Ctx<'_>, state: &Shared) {
 fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &mut bool) {
     let tokens = forja_ui_kit::applied_tokens(ui.ctx());
     let Some(path) = state.path() else {
-        let message = format!("{}\n{}", cx.t("git.changes.empty"), cx.t("git.changes.empty-hint"));
+        let message = format!(
+            "{}\n{}",
+            cx.t("git.changes.empty"),
+            cx.t("git.changes.empty-hint")
+        );
         forja_ui_kit::empty_state(ui, forja_ui_kit::BOARD, &message, None);
         return;
     };
@@ -318,10 +321,9 @@ fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &m
             state.set_commit_message(String::new());
         }
         if small(ui, &cx.t("git.changes.generate")) {
-            let mut args = Map::new();
-            args.insert("kind".to_owned(), json!("commit"));
-            args.insert("bench_path".to_owned(), json!(path));
-            let _ = run(cx, "review.generate", args);
+            if let Err(error) = generate_message(cx, &path, state) {
+                state.set_error(Some(error));
+            }
         }
         if small(ui, &cx.t("git.changes.commit-all")) {
             let mut args = Map::new();
@@ -486,6 +488,42 @@ pub(crate) fn run(
     map: Map<String, Value>,
 ) -> forja_kernel::Result<Value> {
     cx.run_command(id, Args::from_map(map))
+}
+
+/// Asks the review module to generate a commit message, but explains first
+/// when there is no installed helper to run the generation.
+pub(crate) fn generate_message(cx: &mut Ctx<'_>, path: &str, state: &Shared) -> Result<(), String> {
+    let mut helper_args = Map::new();
+    helper_args.insert("bench_path".to_owned(), json!(path));
+    let profiles = cx
+        .run_command("helper.list", Args::from_map(helper_args))
+        .ok()
+        .and_then(|value| value.get("profiles").and_then(Value::as_array).cloned())
+        .unwrap_or_default();
+    let installed = profiles.iter().any(|profile| {
+        profile
+            .get("installed")
+            .and_then(Value::as_bool)
+            .unwrap_or(false)
+            && profile
+                .get("enabled")
+                .and_then(Value::as_bool)
+                .unwrap_or(true)
+    });
+    if !installed {
+        return Err(cx.t("git.generate.no-helper"));
+    }
+    let mut args = Map::new();
+    args.insert("kind".to_owned(), json!("commit"));
+    args.insert("bench_path".to_owned(), json!(path));
+    match run(cx, "review.generate", args) {
+        Ok(_) => {
+            state.set_notice(Some(cx.t("git.generate.running")));
+            Ok(())
+        }
+        Err(forja_kernel::KernelError::UnknownCommand(_)) => Err(cx.t("git.generate.no-review")),
+        Err(error) => Err(error.to_string()),
+    }
 }
 
 fn stage(cx: &mut Ctx<'_>, path: &str, files: &[String]) {

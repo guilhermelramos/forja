@@ -358,7 +358,16 @@ pub fn sync(path: &Path, set_upstream: bool) -> Result<String, String> {
 }
 
 pub fn publish(path: &Path) -> Result<String, String> {
+    if !has_remote(path) {
+        return Err("no-remote".to_owned());
+    }
     push(path, false, true, true)
+}
+
+fn has_remote(path: &Path) -> bool {
+    git(path, &["remote"])
+        .map(|remotes| !remotes.trim().is_empty())
+        .unwrap_or(false)
 }
 
 pub fn rebase(path: &Path, base: Option<&str>) -> Result<String, String> {
@@ -373,8 +382,10 @@ pub fn abort(path: &Path) -> Result<String, String> {
     if git(path, &["rebase", "--abort"]).is_ok() {
         return Ok("rebase aborted".to_owned());
     }
-    git(path, &["merge", "--abort"])?;
-    Ok("merge aborted".to_owned())
+    if git(path, &["merge", "--abort"]).is_ok() {
+        return Ok("merge aborted".to_owned());
+    }
+    Err("nothing-to-abort".to_owned())
 }
 
 pub fn conflicts(path: &Path) -> Result<Vec<String>, String> {

@@ -8,7 +8,28 @@ use std::collections::BTreeMap;
 
 impl ForjaApp {
     pub(crate) fn settings_window(&mut self, ctx: &egui::Context) {
+        let focus_id = egui::Id::new("forja.settings.was_open");
         if !self.settings_open {
+            ctx.data_mut(|data| {
+                data.remove_temp::<bool>(focus_id);
+            });
+            return;
+        }
+        let focus_search = ctx.data_mut(|data| {
+            let was_open = data.get_temp::<bool>(focus_id).unwrap_or(false);
+            data.insert_temp(focus_id, true);
+            !was_open
+        });
+        let layer = egui::Id::new("forja.settings.keyboard");
+        if forja_ui_kit::keyboard_layer_active(ctx, layer)
+            && !egui::Popup::is_any_open(ctx)
+            && ctx.input_mut(|input| input.consume_key(egui::Modifiers::NONE, egui::Key::Escape))
+        {
+            self.settings_open = false;
+            self.settings_section = None;
+            ctx.data_mut(|data| {
+                data.remove_temp::<bool>(focus_id);
+            });
             return;
         }
         let mut open = self.settings_open;
@@ -22,18 +43,22 @@ impl ForjaApp {
             .default_width(680.0)
             .max_height((ctx.content_rect().height() - 120.0).max(240.0))
             .show(ctx, |ui| {
+                forja_ui_kit::register_keyboard_layer(ui, layer);
                 if forja_ui_kit::window_header(ui, &title, &close_label) {
                     open = false;
                 }
-                self.settings_contents(ui);
+                self.settings_contents(ui, focus_search);
             });
         if let Some(modal) = modal {
             self.slot_rects
                 .insert("settings".into(), modal.response.rect);
         }
         self.settings_open = open;
-        if !open {
+        if !self.settings_open {
             self.settings_section = None;
+            ctx.data_mut(|data| {
+                data.remove_temp::<bool>(focus_id);
+            });
         }
     }
 
@@ -90,31 +115,36 @@ impl ForjaApp {
                     ui.label(RichText::new(self.text("shell.keymap.empty")).color(muted));
                     return;
                 }
-                egui::ScrollArea::vertical().max_height(520.0).show(ui, |ui| {
-                    for (chord, title, scope) in rows {
-                        ui.horizontal(|ui| {
-                            ui.label(RichText::new(chord).monospace());
-                            ui.label(title);
-                            ui.label(RichText::new(scope).small().color(muted));
-                        });
-                    }
-                });
+                egui::ScrollArea::vertical()
+                    .max_height(520.0)
+                    .show(ui, |ui| {
+                        for (chord, title, scope) in rows {
+                            ui.horizontal(|ui| {
+                                ui.label(RichText::new(chord).monospace());
+                                ui.label(title);
+                                ui.label(RichText::new(scope).small().color(muted));
+                            });
+                        }
+                    });
             });
         self.keymap_open = open;
     }
 
-    fn settings_contents(&mut self, ui: &mut egui::Ui) {
+    fn settings_contents(&mut self, ui: &mut egui::Ui, focus_search: bool) {
         // `--settings <módulo>` (captura): só a seção desse módulo; sem o flag, tudo como antes.
         let section = self.settings_section.clone();
-        self.settings_body(ui, section.as_deref());
+        self.settings_body(ui, section.as_deref(), focus_search);
     }
 
-    fn settings_body(&mut self, ui: &mut egui::Ui, section: Option<&str>) {
+    fn settings_body(&mut self, ui: &mut egui::Ui, section: Option<&str>, focus_search: bool) {
         // Com `--settings`, a seção própria do módulo (se houver) substitui as linhas dele.
-        let section_has_view =
-            section.is_some_and(|module| self.settings_views.iter().any(|view| view.module == module));
+        let section_has_view = section
+            .is_some_and(|module| self.settings_views.iter().any(|view| view.module == module));
         let hint = self.text("shell.settings.search");
-        text_field(ui, &mut self.settings_query, &hint);
+        let search = text_field(ui, &mut self.settings_query, &hint);
+        if focus_search {
+            search.request_focus();
+        }
         ui.add_space(6.0);
 
         // Only the rows scroll: the search stays on top and the window fits the screen.
@@ -124,7 +154,8 @@ impl ForjaApp {
                 let query = self.settings_query.trim().to_lowercase();
                 let specs = self.runtime.registry().settings().to_vec();
                 let modules = self.runtime.registry().modules().to_vec();
-                let values: BTreeMap<String, SettingValue> = self.runtime.settings().values().clone();
+                let values: BTreeMap<String, SettingValue> =
+                    self.runtime.settings().values().clone();
 
                 let mut by_module: BTreeMap<String, Vec<SettingSpec>> = BTreeMap::new();
                 for spec in specs {
@@ -134,7 +165,8 @@ impl ForjaApp {
                         || spec.key.to_lowercase().contains(&query)
                         || label.contains(&query)
                         || help.contains(&query);
-                    let in_section = section.is_none_or(|module| spec.module() == module && !section_has_view);
+                    let in_section =
+                        section.is_none_or(|module| spec.module() == module && !section_has_view);
                     if matches && in_section {
                         by_module
                             .entry(spec.module().to_owned())
@@ -152,7 +184,8 @@ impl ForjaApp {
                 }
 
                 for (module_id, mut module_specs) in by_module {
-                    module_specs.sort_by(|a, b| a.order.cmp(&b.order).then_with(|| a.key.cmp(&b.key)));
+                    module_specs
+                        .sort_by(|a, b| a.order.cmp(&b.order).then_with(|| a.key.cmp(&b.key)));
                     let name = modules
                         .iter()
                         .find(|manifest| manifest.id == module_id)
@@ -181,7 +214,12 @@ impl ForjaApp {
             });
     }
 
-    fn setting_row(&mut self, ui: &mut egui::Ui, spec: &SettingSpec, current: Option<&SettingValue>) {
+    fn setting_row(
+        &mut self,
+        ui: &mut egui::Ui,
+        spec: &SettingSpec,
+        current: Option<&SettingValue>,
+    ) {
         ui.push_id(&spec.key, |ui| {
             ui.horizontal(|ui| {
                 let label_text = self.text(&spec.label_key);
@@ -195,7 +233,12 @@ impl ForjaApp {
                         let checkbox = ui.checkbox(&mut value, "");
                         let state = value;
                         checkbox.widget_info(|| {
-                            egui::WidgetInfo::selected(egui::WidgetType::Checkbox, true, state, &label_text)
+                            egui::WidgetInfo::selected(
+                                egui::WidgetType::Checkbox,
+                                true,
+                                state,
+                                &label_text,
+                            )
                         });
                         if checkbox.changed() {
                             changed = Some(SettingValue::Bool(value));
@@ -261,18 +304,19 @@ impl ForjaApp {
                             .and_then(SettingValue::as_str)
                             .unwrap_or("")
                             .to_owned();
-                        let mut value = original.clone();
-                        let selected_label = self.choice_label(&spec.key, &value);
-                        egui::ComboBox::from_id_salt(&spec.key)
-                            .selected_text(selected_label)
-                            .show_ui(ui, |ui| {
-                                for option in options {
-                                    let option_label = self.choice_label(&spec.key, option);
-                                    ui.selectable_value(&mut value, option.clone(), option_label);
-                                }
-                            });
-                        if value != original {
-                            changed = Some(SettingValue::Text(value));
+                        let mut index = options
+                            .iter()
+                            .position(|option| option == &original)
+                            .unwrap_or(0);
+                        let labels: Vec<String> = options
+                            .iter()
+                            .map(|option| self.choice_label(&spec.key, option))
+                            .collect();
+                        let label_refs: Vec<&str> = labels.iter().map(String::as_str).collect();
+                        if forja_ui_kit::select(ui, &mut index, &label_refs).changed() {
+                            if let Some(value) = options.get(index) {
+                                changed = Some(SettingValue::Text(value.clone()));
+                            }
                         }
                     }
                 }

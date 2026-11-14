@@ -12,7 +12,7 @@ use crate::shell_module::ShellModule;
 use crate::tabs::TabSet;
 use crate::tray::{self, TrayAction};
 use eframe::egui::{self, Key, Modifiers, ViewportCommand};
-use forja_kernel::keymap::KeyChord;
+use forja_kernel::keymap::{KeyChord, Scope};
 use forja_kernel::settings::SettingValue;
 use forja_kernel::store::LoadResult;
 use forja_kernel::ui::Slot;
@@ -94,6 +94,8 @@ pub struct ForjaApp {
     pub(crate) top_views: Vec<ViewInstance>,
     /// Rail view shown in the center. `None` keeps the bench tabs.
     pub(crate) rail_page: Option<String>,
+    /// Project and bench names of the last activation, shown in the top bar.
+    pub(crate) active_bench: Option<(String, String)>,
     pub(crate) rail_icons: BTreeMap<String, egui::TextureHandle>,
     pub(crate) active_tab: usize,
     pub(crate) tabs: TabSet,
@@ -209,6 +211,7 @@ impl ForjaApp {
             anvil_views,
             top_views,
             rail_page: None,
+            active_bench: None,
             rail_icons: BTreeMap::new(),
             active_tab,
             tabs: TabSet::default(),
@@ -453,6 +456,19 @@ impl ForjaApp {
                         self.status = Some(format!("rail page `{view_id}` not found"));
                     }
                 }
+                actions::Action::OpenBench { project, bench } => {
+                    self.active_bench = Some((project, bench));
+                    self.rail_page = None;
+                    self.tabs.show(self.active_tab, self.bench_views.len());
+                }
+                actions::Action::ShowBenchTab(view_id) => {
+                    if let Some(index) = self.bench_views.iter().position(|view| view.id == view_id)
+                    {
+                        self.tabs.show(index, self.bench_views.len());
+                        self.active_tab = index;
+                        self.rail_page = None;
+                    }
+                }
                 actions::Action::ToggleSidebar => {
                     let visible = self.setting_bool("appearance.sidebar.visible", true);
                     let _ = self
@@ -490,7 +506,8 @@ impl ForjaApp {
                     }
                 }
                 actions::Action::PreviousTab => {
-                    if let Some(index) = self.tabs.previous(self.active_tab, self.bench_views.len()) {
+                    if let Some(index) = self.tabs.previous(self.active_tab, self.bench_views.len())
+                    {
                         self.active_tab = index;
                         self.rail_page = None;
                     }
@@ -564,12 +581,27 @@ impl ForjaApp {
     }
 
     fn handle_shortcuts(&mut self, ctx: &egui::Context) {
+        // An open shell window owns the keyboard; background tab and navigation
+        // commands must not run through it.
+        if self.anvil_open
+            || self.settings_open
+            || self.keymap_open
+            || ctx.memory(|memory| memory.top_modal_layer().is_some())
+        {
+            return;
+        }
         let text_busy = ctx.wants_keyboard_input();
+        let active_module = self
+            .bench_views
+            .get(self.active_tab)
+            .filter(|_| self.rail_page.is_none())
+            .map(|view| view.module.as_str());
         let bindings: Vec<(String, KeyChord)> = self
             .runtime
             .keymap()
             .bindings()
             .iter()
+            .filter(|resolved| shortcut_scope_applies(&resolved.binding.scope, active_module))
             .map(|resolved| {
                 (
                     resolved.binding.command.as_str().to_owned(),
@@ -613,10 +645,7 @@ impl ForjaApp {
                     | "tab.switch_10"
             );
             if browser_surface
-                && matches!(
-                    id.as_str(),
-                    "tab.close" | "tab.reopen" | "tab.switch_10"
-                )
+                && matches!(id.as_str(), "tab.close" | "tab.reopen" | "tab.switch_10")
             {
                 continue;
             }
@@ -695,17 +724,23 @@ impl ForjaApp {
 impl eframe::App for ForjaApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let closing = ctx.input(|input| input.viewport().close_requested());
-        if self.screenshot.is_none() && self.setting_bool("appearance.window.remember_geometry", true)
+        if self.screenshot.is_none()
+            && self.setting_bool("appearance.window.remember_geometry", true)
             && (closing || self.geometry_checked.elapsed() >= std::time::Duration::from_secs(1))
         {
             self.geometry_checked = Instant::now();
-            if let Some(geometry) = ctx.input(|input| crate::window_geometry::Geometry::from_viewport(input.viewport())) {
+            if let Some(geometry) =
+                ctx.input(|input| crate::window_geometry::Geometry::from_viewport(input.viewport()))
+            {
                 self.geometry_writer.record(&mut self.runtime, geometry);
             }
         }
         let hiding_in_tray = self.setting_bool("app.tray.enabled", false) && !self.quitting;
-        if closing && !self.geometry_close_allowed && !hiding_in_tray
-            && self.screenshot.is_none() && self.setting_bool("appearance.window.remember_geometry", true)
+        if closing
+            && !self.geometry_close_allowed
+            && !hiding_in_tray
+            && self.screenshot.is_none()
+            && self.setting_bool("appearance.window.remember_geometry", true)
         {
             ctx.send_viewport_cmd(ViewportCommand::CancelClose);
             self.geometry_close_pending = true;
@@ -764,6 +799,16 @@ fn chord_pressed(ctx: &egui::Context, chord: &KeyChord) -> bool {
     ctx.input_mut(|input| input.consume_key(modifiers, key))
 }
 
+fn shortcut_scope_applies(scope: &Scope, active_module: Option<&str>) -> bool {
+    match scope {
+        Scope::Global => true,
+        Scope::Bench => active_module.is_some(),
+        Scope::Editor => active_module == Some("editor"),
+        Scope::Terminal => active_module == Some("terminal"),
+        Scope::Custom(name) => active_module == Some(name.as_str()),
+    }
+}
+
 fn egui_key(name: &str) -> Option<Key> {
     match name {
         "BracketLeft" => Some(Key::OpenBracket),
@@ -811,4 +856,26 @@ pub fn build_runtime(
             wake: None,
         },
     )
+}
+
+#[cfg(test)]
+mod shortcut_tests {
+    use super::*;
+
+    #[test]
+    fn shortcuts_only_apply_to_the_active_surface() {
+        assert!(shortcut_scope_applies(&Scope::Global, None));
+        assert!(shortcut_scope_applies(&Scope::Editor, Some("editor")));
+        assert!(!shortcut_scope_applies(&Scope::Editor, Some("terminal")));
+        assert!(shortcut_scope_applies(&Scope::Terminal, Some("terminal")));
+        assert!(!shortcut_scope_applies(&Scope::Terminal, None));
+        assert!(!shortcut_scope_applies(
+            &Scope::Custom("anvil".into()),
+            Some("editor")
+        ));
+        assert!(shortcut_scope_applies(
+            &Scope::Custom("browser".into()),
+            Some("browser")
+        ));
+    }
 }

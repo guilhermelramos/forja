@@ -2,7 +2,7 @@ use crate::service;
 use crate::state::{Dialog, Shared};
 use crate::view::{c32, field_label};
 use forja_kernel::ui_contract::{egui, View};
-use forja_kernel::Ctx;
+use forja_kernel::{Args, Ctx};
 pub struct DialogsView {
     state: Shared,
 }
@@ -14,6 +14,15 @@ impl DialogsView {
 }
 
 impl View for DialogsView {
+    fn poll(&mut self, cx: &mut Ctx<'_>) {
+        self.state.ensure_loaded(cx);
+        if matches!(self.state.dialog(), Dialog::None) {
+            cx.close_modal("bench.dialogs");
+        } else {
+            cx.open_modal("bench.dialogs");
+        }
+    }
+
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         let _ = ui;
         self.state.ensure_loaded(cx);
@@ -33,6 +42,7 @@ impl View for DialogsView {
                 }
                 let mut submit = false;
                 let mut cancel = false;
+                let mut add_folder = false;
                 let title = cx.t("bench.dialog.create.title");
                 egui::Window::new(title)
                     .id(egui::Id::new("forja.bench.create"))
@@ -45,6 +55,27 @@ impl View for DialogsView {
                             ui.label(egui::RichText::new(cx.t("bench.notice.no-projects")).color(
                                 c32(forja_ui_kit::applied_tokens(ui.ctx()).color.text_muted),
                             ));
+                            ui.add_space(8.0);
+                            ui.horizontal(|ui| {
+                                if forja_ui_kit::button(
+                                    ui,
+                                    forja_ui_kit::ButtonKind::Primary,
+                                    &cx.t("bench.dialog.create.add-folder"),
+                                )
+                                .clicked()
+                                {
+                                    add_folder = true;
+                                }
+                                if forja_ui_kit::button(
+                                    ui,
+                                    forja_ui_kit::ButtonKind::Ghost,
+                                    &cx.t("bench.dialog.cancel"),
+                                )
+                                .clicked()
+                                {
+                                    cancel = true;
+                                }
+                            });
                             return;
                         }
                         ui.label(egui::RichText::new(cx.t("bench.dialog.create.project")).small());
@@ -109,7 +140,12 @@ impl View for DialogsView {
                             }
                         });
                     });
-                if submit {
+                if add_folder {
+                    self.state.set_dialog(Dialog::None);
+                    if let Err(error) = cx.run_command("project.add_dialog", Args::new()) {
+                        self.state.set_error(Some(error.to_string()));
+                    }
+                } else if submit {
                     match service::create(
                         cx,
                         &self.state,
@@ -119,7 +155,11 @@ impl View for DialogsView {
                         None,
                         form.fetch,
                     ) {
-                        Ok(_) => self.state.set_dialog(Dialog::None),
+                        Ok(_) => {
+                            self.state.set_dialog(Dialog::None);
+                            // The card must show up without waiting for the board timer.
+                            let _ = cx.run_command("board.refresh", Args::new());
+                        }
                         Err(error) => form.error = Some(error),
                     }
                 } else if cancel {

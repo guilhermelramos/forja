@@ -16,6 +16,8 @@ struct State {
     blame_file: String,
     selected_tab: usize,
     selected_commit: Option<String>,
+    commit_detail: Option<(String, Result<String, String>)>,
+    commit_detail_loading: Option<String>,
     commit_message: String,
     busy: bool,
     refreshing: bool,
@@ -59,6 +61,9 @@ impl Shared {
                 state.report = None;
                 state.commits.clear();
                 state.log_for = None;
+                state.selected_commit = None;
+                state.commit_detail = None;
+                state.commit_detail_loading = None;
                 state.blame.clear();
                 state.blame_for = None;
                 state.last_refresh = None;
@@ -209,6 +214,51 @@ impl Shared {
     pub fn set_selected_commit(&self, hash: Option<String>) {
         if let Ok(mut state) = self.0.lock() {
             state.selected_commit = hash;
+        }
+    }
+
+    pub fn commit_detail(&self, hash: &str) -> Option<Result<String, String>> {
+        self.0.lock().ok().and_then(|state| {
+            state
+                .commit_detail
+                .as_ref()
+                .filter(|(cached, _)| cached == hash)
+                .map(|(_, detail)| detail.clone())
+        })
+    }
+
+    pub fn commit_detail_loading(&self, hash: &str) -> bool {
+        self.0
+            .lock()
+            .ok()
+            .and_then(|state| state.commit_detail_loading.clone())
+            .as_deref()
+            == Some(hash)
+    }
+
+    /// Reserves the load for `hash`; false when it is already loaded or loading.
+    pub fn begin_commit_detail(&self, hash: &str) -> bool {
+        let Ok(mut state) = self.0.lock() else {
+            return false;
+        };
+        if state
+            .commit_detail
+            .as_ref()
+            .is_some_and(|(cached, _)| cached == hash)
+            || state.commit_detail_loading.as_deref() == Some(hash)
+        {
+            return false;
+        }
+        state.commit_detail_loading = Some(hash.to_owned());
+        true
+    }
+
+    pub fn finish_commit_detail(&self, hash: &str, result: Result<String, String>) {
+        if let Ok(mut state) = self.0.lock() {
+            if state.commit_detail_loading.as_deref() == Some(hash) {
+                state.commit_detail_loading = None;
+            }
+            state.commit_detail = Some((hash.to_owned(), result));
         }
     }
 

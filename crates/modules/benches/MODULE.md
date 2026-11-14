@@ -11,7 +11,8 @@ Módulo `bench` (pasta `benches`): worktrees git, etapas e os scripts do
   `bench.refresh` e `bench.script.approve`.
 - Comandos de interface `bench.create_dialog`, `bench.store_dialog` e
   `bench.approve_dialog`; os diálogos são desenhados pela view
-  `bench.dialogs` no painel direito, sem janela vazia quando não há diálogo.
+  `bench.dialogs` no slot modal, aberta por `poll` só quando há diálogo. Sem
+  projeto, o diálogo de criação explica o que falta e oferece "Adicionar pasta".
 - Atalhos `bench.create` (`Ctrl+Shift+N`), `bench.next` / `bench.previous`
   (`Alt+PageDown` / `Alt+PageUp`) e `bench.switch_1..10` (`Alt+1..0`).
 - Eventos de contrato `bench.activated`, `bench.created`, `bench.stored`,
@@ -25,6 +26,8 @@ Módulo `bench` (pasta `benches`): worktrees git, etapas e os scripts do
 
 - A bancada principal é o checkout original. `bench.list` cria o registro dela
   na primeira leitura, sem rodar git.
+- `bench.activate` emite `bench.activated` e chama `shell.bench.focus`, quando
+  existe, para o shell sair da página do trilho e mostrar as abas da bancada.
 - `bench.refresh` lê `git worktree list --porcelain`, atualiza branches e junta
   worktrees externos. Worktrees que sumiram ficam arquivados, nunca apagados
   pelo refresh.

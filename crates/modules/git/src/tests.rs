@@ -161,6 +161,69 @@ fn log_and_blame_are_readable() {
 }
 
 #[test]
+fn commit_show_returns_metadata_and_patch() {
+    let root = temp_dir("show");
+    std::fs::create_dir_all(&root).unwrap();
+    let work = repo(&root);
+    let lines = log::log(&work, 20).unwrap();
+    let hash = lines
+        .iter()
+        .filter_map(|line| line.commit.as_ref())
+        .next()
+        .unwrap()
+        .hash
+        .clone();
+    let shown = log::show(&work, &hash).unwrap();
+    assert!(shown.contains("primeiro"));
+    assert!(shown.contains("a.txt"));
+    assert!(shown.contains("@@"));
+    assert!(log::show(&work, "--help").is_err());
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
+fn publish_and_abort_without_remote_or_merge_have_clear_outcomes() {
+    let root = temp_dir("outcomes");
+    std::fs::create_dir_all(&root).unwrap();
+    let work = repo(&root);
+    assert_eq!(engine::publish(&work).unwrap_err(), "no-remote");
+    assert_eq!(engine::abort(&work).unwrap_err(), "nothing-to-abort");
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
+fn generate_without_a_helper_explains_what_is_missing() {
+    let root = temp_dir("generate");
+    std::fs::create_dir_all(&root).unwrap();
+    let work = repo(&root);
+    let mut runtime = runtime(&root);
+    let shared = Shared::new();
+    let mut ctx = runtime.ctx("git");
+    let error = crate::view_changes::generate_message(&mut ctx, &work.to_string_lossy(), &shared)
+        .unwrap_err();
+    assert!(error.contains("Nenhum ajudante instalado"), "{error}");
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
+fn editor_paths_are_made_relative_to_the_bench() {
+    let bench = "C:/bancadas/projeto";
+    assert_eq!(
+        crate::view_history_panel::relative_to_bench(bench, "C:/bancadas/projeto/src/main.rs")
+            .as_deref(),
+        Some("src/main.rs")
+    );
+    assert_eq!(
+        crate::view_history_panel::relative_to_bench(bench, "src/main.rs").as_deref(),
+        Some("src/main.rs")
+    );
+    assert_eq!(
+        crate::view_history_panel::relative_to_bench(bench, "C:/outro/main.rs"),
+        None
+    );
+}
+
+#[test]
 fn diff_has_hunks() {
     let root = temp_dir("diff");
     std::fs::create_dir_all(&root).unwrap();
