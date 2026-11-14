@@ -1817,6 +1817,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "forja-explore"
+version = "0.1.0"
+dependencies = [
+ "forja-protocol",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "forja-hook"
 version = "0.1.0"
 dependencies = [

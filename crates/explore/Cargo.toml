@@ -1,0 +1,16 @@
+[package]
+name = "forja-explore"
+description = "Coverage-guided UI explorer and regression runner for Forja."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "forja-explore"
+path = "src/main.rs"
+
+[dependencies]
+forja-protocol = { path = "../protocol" }
+serde.workspace = true
+serde_json.workspace = true

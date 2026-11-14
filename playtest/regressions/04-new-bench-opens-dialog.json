@@ -1,0 +1,16 @@
+{
+  "title": "Nova bancada abre o diálogo",
+  "issue": 4,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.click", "target": "Bancada" },
+    { "m": "ui.click", "target": "Nova bancada" }
+  ],
+  "expect": [
+    { "window_count": 1, "appeared": ["Criar bancada", "Branch base"], "present": ["Criar bancada", "Branch base", "Buscar a base antes de criar"] }
+  ]
+}

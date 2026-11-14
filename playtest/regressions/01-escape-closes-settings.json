@@ -1,0 +1,14 @@
+{
+  "title": "Escape fecha Ajustes",
+  "issue": 8,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Ajustes" },
+    { "m": "ui.key", "keys": "Escape" }
+  ],
+  "expect": [
+    { "step": 1, "window_count": 1, "present": ["Fechar janela", "Bigorna"] },
+    { "window_count": 0, "absent": ["Fechar janela", "Limite do histórico"] }
+  ]
+}

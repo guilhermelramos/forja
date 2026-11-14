@@ -33,3 +33,30 @@ cargo build -p forja-app -p forja-mcp
 ## Configuração
 - Variável `PLAYTEST_MODELS` (opcional): modelos separados por vírgula, alternados por sessão. O padrão é `opencode/glm-5.3-flash-free,opencode/deepseek-v4.1-flash-free`.
 - Secret `OPENCODE_API_KEY` (opcional): só se os modelos gratuitos passarem a exigir login.
+
+## Explorador sem IA (`forja-explore`)
+O binário `forja-explore` (`crates/explore`) dirige `forja-app --test-driver` sem modelo de IA, com escolha guiada por cobertura (assinatura de tela = hash dos papéis/nomes visíveis, priorização de elementos ainda não acionados, entradas difíceis em campos editáveis, atalhos de `forja-app --dump-catalog`, `Escape`, `Tab`, rolagem e retorno à tela inicial).
+
+Após cada ação, verifica seis invariantes:
+1. app vivo e resposta em `< 10 s` (senão registra `crash` ou `hang` com os últimos passos e reabre);
+2. texto visível sem tradução comparando com todos os `i18n/{en,pt-BR}.ftl` do repositório;
+3. erro técnico cru na tela (`failed`, `error:`, `os error`, `invalid setting`, crases com ids internos, `{"`, `\\?\`);
+4. elemento fora dos limites da janela ou abas da mesma faixa sobrepostas;
+5. `Escape` com janela aberta fecha exatamente uma (`Window`);
+6. elemento clicável sem nome acessível (uma vez por tela).
+
+```powershell
+cargo build -p forja-app -p forja-explore
+./target/debug/forja-explore.exe --app target/debug/forja-app.exe --minutes 10 --seed 1 --locale pt-BR --out explore-out
+```
+
+O workflow `.github/workflows/explore.yml` roda 6 exploradores em paralelo de hora em hora (sementes e locales `pt-BR`/`en`), guarda achados (`findings.jsonl`) e trilhas (`trail.jsonl`) como artefatos e abre issues com os rótulos `playtest` e `explore` via `playtest/report.ps1`.
+
+## Regressões gravadas (`playtest/regressions/`)
+Cada arquivo JSON em `playtest/regressions/` descreve um fluxo reproduzível no formato do `drive.ps1` e suas expectativas (`appeared`, `present`, `present_contains`, `absent`, `absent_contains`, `window_count`, `window_count_min`, `window_count_max`, com `step` opcional):
+
+```powershell
+./target/debug/forja-explore.exe --app target/debug/forja-app.exe --replay playtest/regressions
+```
+
+O CI (`.github/workflows/ci.yml`, job `regressions`) executa todas as regressões em um app limpo por arquivo e falha se alguma expectativa não bater.
