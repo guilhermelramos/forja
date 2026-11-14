@@ -1,0 +1,17 @@
+{
+  "title": "Os Ajustes rolam até o fim",
+  "issue": 6,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Ajustes" },
+    { "m": "ui.scroll", "x": 1000, "y": 450, "dy": -6000 },
+    { "m": "ui.scroll", "x": 1000, "y": 450, "dy": -6000 },
+    { "m": "ui.scroll", "x": 1000, "y": 450, "dy": -6000 },
+    { "m": "ui.scroll", "x": 1000, "y": 450, "dy": -6000 },
+    { "m": "ui.scroll", "x": 1000, "y": 450, "dy": -6000 }
+  ],
+  "expect": [
+    { "window_count": 1, "present": ["Linear", "Jira", "GitLab"], "absent": ["Limite do histórico"] }
+  ]
+}

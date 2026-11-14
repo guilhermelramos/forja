@@ -30,3 +30,34 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Provenance
         run: cargo xtask provenance
+
+  regressions:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      CARGO_TERM_COLOR: never
+      MESA_VERSION: "26.2.4"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - name: Rust toolchain (rust-toolchain.toml)
+        run: rustup toolchain install
+      - name: Build forja-app and forja-explore
+        run: cargo build -p forja-app -p forja-explore
+      - name: Software OpenGL (Mesa llvmpipe)
+        run: |
+          $url = "https://github.com/pal1000/mesa-dist-win/releases/download/$env:MESA_VERSION/mesa3d-$env:MESA_VERSION-release-msvc.7z"
+          Invoke-WebRequest $url -OutFile mesa.7z
+          7z x mesa.7z -omesa -y | Out-Null
+          foreach ($dll in 'opengl32.dll', 'libgallium_wgl.dll', 'libglapi.dll') {
+            if (Test-Path "mesa\x64\$dll") { Copy-Item "mesa\x64\$dll" target\debug\ }
+          }
+          "GALLIUM_DRIVER=llvmpipe" >> $env:GITHUB_ENV
+      - name: Screen at 1920x1080
+        continue-on-error: true
+        run: Set-DisplayResolution -Width 1920 -Height 1080 -Force
+      - name: Run recorded UI regressions
+        run: ./target/debug/forja-explore.exe --app target/debug/forja-app.exe --replay playtest/regressions

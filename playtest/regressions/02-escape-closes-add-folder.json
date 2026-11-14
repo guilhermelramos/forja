@@ -1,0 +1,13 @@
+{
+  "title": "Escape fecha Adicionar pasta",
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.key", "keys": "Escape" }
+  ],
+  "expect": [
+    { "step": 1, "window_count": 1, "present": ["Escolher…", "Adicionar"] },
+    { "window_count": 0, "absent": ["Escolher…", "Cor (#RRGGBB)"] }
+  ]
+}

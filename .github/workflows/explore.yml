@@ -1,0 +1,124 @@
+# Coverage-guided UI exploration without AI (`forja-explore`).
+# Runs on an hourly schedule across 6 seed/locale slots (never cancelling
+# in-progress runs) and files deduplicated issues via playtest/report.ps1.
+name: Explore
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "Minutos de exploração por slot"
+        default: "320"
+
+permissions:
+  contents: read
+
+jobs:
+  explore:
+    runs-on: windows-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        slot:
+          - { id: "pt-1", seed: 101, locale: "pt-BR" }
+          - { id: "pt-2", seed: 202, locale: "pt-BR" }
+          - { id: "pt-3", seed: 303, locale: "pt-BR" }
+          - { id: "en-1", seed: 404, locale: "en" }
+          - { id: "en-2", seed: 505, locale: "en" }
+          - { id: "en-3", seed: 606, locale: "en" }
+    concurrency:
+      group: explore-${{ matrix.slot.id }}
+      cancel-in-progress: false
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      CARGO_TERM_COLOR: never
+      MESA_VERSION: "26.2.4"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build forja-app and forja-explore (release)
+        run: |
+          rustup toolchain install
+          cargo build --release -p forja-app -p forja-explore
+
+      - name: Software OpenGL (Mesa llvmpipe)
+        run: |
+          $url = "https://github.com/pal1000/mesa-dist-win/releases/download/$env:MESA_VERSION/mesa3d-$env:MESA_VERSION-release-msvc.7z"
+          Invoke-WebRequest $url -OutFile mesa.7z
+          7z x mesa.7z -omesa -y | Out-Null
+          foreach ($dll in 'opengl32.dll', 'libgallium_wgl.dll', 'libglapi.dll') {
+            if (Test-Path "mesa\x64\$dll") { Copy-Item "mesa\x64\$dll" target\release\ }
+          }
+          "GALLIUM_DRIVER=llvmpipe" >> $env:GITHUB_ENV
+
+      - name: Screen at 1920x1080
+        continue-on-error: true
+        run: Set-DisplayResolution -Width 1920 -Height 1080 -Force
+
+      - name: Sample project
+        run: ./playtest/seed.ps1
+
+      - name: Explore (${{ matrix.slot.id }})
+        run: |
+          ./target/release/forja-explore.exe `
+            --app target/release/forja-app.exe `
+            --minutes ([int]"${{ inputs.minutes || '320' }}") `
+            --seed ${{ matrix.slot.seed }} `
+            --locale ${{ matrix.slot.locale }} `
+            --pick-dir C:\playground\exemplo `
+            --out explore-out
+
+      - name: Upload findings and trails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: explore-${{ matrix.slot.id }}
+          path: |
+            explore-out/findings.jsonl
+            explore-out/trail.jsonl
+            explore-out/actions.jsonl
+            explore-out/app-stderr.txt
+          retention-days: 30
+          if-no-files-found: warn
+
+  report:
+    needs: explore
+    if: always()
+    runs-on: ubuntu-latest
+    concurrency:
+      group: explore-report
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          path: explore-results
+          pattern: explore-*
+      - name: Open issues for new findings
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          ./playtest/report.ps1 `
+            -In explore-results `
+            -MaxIssues 12 `
+            -Report report.md `
+            -Labels @("playtest", "explore") `
+            -TitlePrefix "[explore]" `
+            -SourceNote "Registrado pelo explorador automático (forja-explore, sem IA) usando a Forja ao vivo."
+          Get-Content report.md | Add-Content $env:GITHUB_STEP_SUMMARY
