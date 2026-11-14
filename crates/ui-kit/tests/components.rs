@@ -101,6 +101,47 @@ fn select_reports_no_change_when_it_only_opens() {
     assert!(!changed);
 }
 
+fn press(key: egui::Key) -> Vec<Event> {
+    vec![
+        Event::Key {
+            key,
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: Default::default(),
+        },
+        Event::Key {
+            key,
+            physical_key: None,
+            pressed: false,
+            repeat: false,
+            modifiers: Default::default(),
+        },
+    ]
+}
+
+#[test]
+fn select_changes_value_with_tab_space_arrows_and_enter() {
+    let tokens = Tokens::brasa_dark();
+    let ctx = context();
+    let mut selected = 0usize;
+    let changed = Cell::new(false);
+    let mut draw = |ui: &mut egui::Ui| {
+        let response = select(ui, &mut selected, &OPTIONS);
+        if response.changed() {
+            changed.set(true);
+        }
+    };
+    frame(&ctx, &tokens, Vec::new(), &mut draw);
+    frame(&ctx, &tokens, press(egui::Key::Tab), &mut draw);
+    frame(&ctx, &tokens, press(egui::Key::Space), &mut draw);
+    frame(&ctx, &tokens, press(egui::Key::ArrowDown), &mut draw);
+    frame(&ctx, &tokens, press(egui::Key::ArrowDown), &mut draw);
+    frame(&ctx, &tokens, press(egui::Key::Enter), &mut draw);
+    assert_eq!(selected, 2, "ArrowDown moves the highlight and Enter picks it");
+    assert!(changed.get(), "the response reports the keyboard choice");
+}
+
 #[test]
 fn page_heading_returns_what_the_actions_return_and_places_them_on_the_right() {
     let tokens = Tokens::brasa_dark();

@@ -1,8 +1,8 @@
 //! Campo de texto e seletor.
 
 use eframe::egui::{
-    self, Align2, Color32, CornerRadius, Margin, Popup, PopupKind, Response, Sense, Stroke,
-    StrokeKind, TextEdit, Ui,
+    self, Align2, Color32, CornerRadius, EventFilter, Key, Margin, Modifiers, Popup, PopupKind,
+    Response, Sense, SetOpenCommand, Stroke, StrokeKind, TextEdit, Ui,
 };
 
 use crate::paint::{self, body_font, chevron, hover_fill, paint_text, painter_for};
@@ -90,17 +90,82 @@ pub fn select(ui: &mut Ui, selected: &mut usize, options: &[&str]) -> Response {
         tokens.color.accent.to_color32(),
     );
 
+    // Keyboard: click or Tab focuses the trigger; Space/Enter opens the list;
+    // arrows move the highlight; Enter picks it; Escape closes the list.
+    if response.clicked() {
+        response.request_focus();
+    }
+    let popup_id = Popup::default_response_id(&response);
+    let was_open = Popup::is_id_open(ui.ctx(), popup_id);
+    let highlight_id = response.id.with("highlight");
+    // `clicked()` also reports the keyboard's synthetic click on Space/Enter,
+    // so only a real pointer click toggles the popup here.
+    let pointer_click = response.clicked_by(egui::PointerButton::Primary);
+    let mut open = pointer_click.then_some(SetOpenCommand::Toggle);
+    if response.has_focus()
+        && !was_open
+        && open.is_none()
+        && ui.input_mut(|input| {
+            input.consume_key(Modifiers::NONE, Key::Enter)
+                || input.consume_key(Modifiers::NONE, Key::Space)
+        })
+    {
+        open = Some(SetOpenCommand::Bool(true));
+    }
+    if was_open || open.is_some() {
+        // Vertical arrows belong to the list, not to focus navigation.
+        ui.memory_mut(|memory| {
+            memory.set_focus_lock_filter(
+                response.id,
+                EventFilter {
+                    vertical_arrows: true,
+                    ..Default::default()
+                },
+            );
+        });
+    }
+    if !was_open && open.is_some() {
+        ui.ctx()
+            .data_mut(|data| data.insert_temp(highlight_id, *selected));
+    }
     Popup::from_response(&response)
         .kind(PopupKind::Menu)
         .layout(egui::Layout::top_down_justified(egui::Align::Min))
         .width(rect.width())
         .gap(4.0)
-        .open_memory(response.clicked().then_some(egui::SetOpenCommand::Toggle))
+        .open_memory(open)
         .show(|ui| {
+            if options.is_empty() {
+                return;
+            }
+            let mut highlight = ui
+                .ctx()
+                .data(|data| data.get_temp::<usize>(highlight_id).unwrap_or(*selected))
+                .min(options.len() - 1);
+            if ui.input_mut(|input| input.consume_key(Modifiers::NONE, Key::ArrowDown)) {
+                highlight = (highlight + 1).min(options.len() - 1);
+            }
+            if ui.input_mut(|input| input.consume_key(Modifiers::NONE, Key::ArrowUp)) {
+                highlight = highlight.saturating_sub(1);
+            }
+            let enter = ui.input_mut(|input| input.consume_key(Modifiers::NONE, Key::Enter));
+            let mut picked = None;
             for (index, option) in options.iter().enumerate() {
-                if menu_row(ui, option, index == *selected).clicked() {
-                    *selected = index;
+                if menu_row(ui, option, index == highlight).clicked() {
+                    picked = Some(index);
                 }
+            }
+            if enter {
+                picked = Some(highlight);
+            }
+            if let Some(index) = picked {
+                *selected = index;
+                ui.ctx()
+                    .data_mut(|data| data.insert_temp(highlight_id, index));
+                Popup::close_id(ui.ctx(), popup_id);
+            } else {
+                ui.ctx()
+                    .data_mut(|data| data.insert_temp(highlight_id, highlight));
             }
         });
     // A escolha só vem do popup: marcamos a resposta quando o índice muda.
