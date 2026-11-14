@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 18/160 telas documentadas · elementos citados 3266/3418 · completo: false
+**Progresso:** 20/160 telas documentadas · elementos citados 3395/3548 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -152,16 +152,16 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.dark.settings.onboarding` | [página](pages/en.dark.settings.onboarding.md) | [png](captures/en.dark.settings.onboarding.png) |
 | `en.dark.settings.remote` | [página](pages/en.dark.settings.remote.md) | [png](captures/en.dark.settings.remote.png) |
 | `en.dark.settings.trust` | [página](pages/en.dark.settings.trust.md) | [png](captures/en.dark.settings.trust.png) |
-| `en.dark.settings.voice` | — | [png](captures/en.dark.settings.voice.png) |
+| `en.dark.settings.voice` | [página](pages/en.dark.settings.voice.md) | [png](captures/en.dark.settings.voice.png) |
 | `en.light.home.default` | — | [png](captures/en.light.home.default.png) |
 | `en.light.open.anvil` | — | [png](captures/en.light.open.anvil.png) |
 | `en.light.open.onboarding` | — | [png](captures/en.light.open.onboarding.png) |
 | `en.light.open.toast` | — | [png](captures/en.light.open.toast.png) |
 | `en.light.rail.archive.tab` | — | [png](captures/en.light.rail.archive.tab.png) |
 | `en.light.modal.bench.dialogs` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.modal.bench.dialogs.png) |
-| `en.light.bench-tab.bench.detail` | — | [png](captures/en.light.bench-tab.bench.detail.png) |
+| `en.light.bench-tab.bench.detail` | [página](pages/en.light.bench-tab.bench.detail.md) | [png](captures/en.light.bench-tab.bench.detail.png) |
 | `en.light.rail.board.page` | — | [png](captures/en.light.rail.board.page.png) |
-| `en.light.bench-tab.browser.tab` | — | [png](captures/en.light.bench-tab.browser.tab.png) |
+| `en.light.bench-tab.browser.tab` | [página](pages/en.light.bench-tab.browser.tab.md) | [png](captures/en.light.bench-tab.browser.tab.png) |
 | `en.light.bench-tab.chat.tab` | — | [png](captures/en.light.bench-tab.chat.tab.png) |
 | `en.light.modal.counter.poller` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.modal.counter.poller.png) |
 | `en.light.bench-tab.diff.tab` | — | [png](captures/en.light.bench-tab.diff.tab.png) |

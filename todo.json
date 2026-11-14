@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 18,
-  "widgets_total": 3418,
-  "widgets_covered": 3266,
+  "states_done": 20,
+  "widgets_total": 3548,
+  "widgets_covered": 3395,
   "complete": false,
   "stale": [
     {
@@ -705,24 +705,19 @@
         "Back to bench",
         "More tabs"
       ]
-    }
-  ],
-  "missing": [
-    {
-      "state": "en.dark.settings.voice",
-      "png": "captures/en.dark.settings.voice.png",
-      "tree": "captures/en.dark.settings.voice.json"
     },
     {
       "state": "en.light.bench-tab.bench.detail",
       "png": "captures/en.light.bench-tab.bench.detail.png",
-      "tree": "captures/en.light.bench-tab.bench.detail.json"
-    },
-    {
-      "state": "en.light.bench-tab.browser.tab",
-      "png": "captures/en.light.bench-tab.browser.tab.png",
-      "tree": "captures/en.light.bench-tab.browser.tab.json"
-    },
+      "tree": "captures/en.light.bench-tab.bench.detail.json",
+      "page": "pages/en.light.bench-tab.bench.detail.md",
+      "capture_changed": false,
+      "widgets_not_mentioned": [
+        "No bench is active.\nCreate a bench, or pick one in the sidebar or board."
+      ]
+    }
+  ],
+  "missing": [
     {
       "state": "en.light.bench-tab.chat.tab",
       "png": "captures/en.light.bench-tab.chat.tab.png",

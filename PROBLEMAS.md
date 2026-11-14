@@ -780,3 +780,32 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Nomes repetidos em elementos distintos: "More tabs" (3 botões), "Changes" (2 abas) e "Settings" (janela, rótulo e botão), o que dificulta a identificação por leitores de tela.
 - Textos secundários em cinza médio sobre fundo escuro ("Pending requests: 0", "Nothing approved yet.", "No project yet. Add an existing folder or create a new one.", "No active bench. Open a bench to see its files." e o aviso "Click to type") têm baixo contraste.
 
+## [en.dark.settings.voice](pages/en.dark.settings.voice.md)
+
+- Conteúdo da modal cortado: o PasswordInput da chave (337,476)–(665,499) passa do retângulo da janela "Settings" (328,58)–(1026,496) e o placeholder "Paste the key here" aparece truncado na base.
+- Os botões "Save key" (337,507)–(414,539) e "Delete key" (422,507)–(511,539) ficam abaixo do retângulo da modal e não são visíveis na captura — ações essenciais fora da área da janela.
+- A barra de ferramentas central ("+", quatro botões-ícone sem nome, "Recipes" e "Shell", y 113–145) e as abas "Terminal" a "History" (y 52–84) estão inteiramente atrás da modal; "Extension panels" (973,52)–(1099,84) fica parcialmente coberta por ela.
+- O botão "More tabs" central (324,50)–(411,85) fica quase todo encoberto pela modal.
+- TextInput de busca de ajustes (337,121)–(1017,153) e PasswordInput da chave (337,476)–(665,499) não têm nome acessível; dependem apenas do placeholder.
+- Vários botões-ícone sem nome acessível: barra de ferramentas central (444–581, y 113–145), ícone de aba do terminal (328,118)–(404,140) e elemento dentro do campo de busca (385,121)–(401,137), o que impede identificação por leitor de tela.
+- O botão "Settings" do trilho permanece marcado=False enquanto a janela "Settings" está aberta em foco, inconsistência de estado de seleção.
+- Textos secundários e placeholders em cinza médio sobre fundo escuro apresentam contraste baixo (por exemplo "No key saved.", "Search settings", "Paste the key here").
+
+## [en.light.bench-tab.bench.detail](pages/en.light.bench-tab.bench.detail.md)
+
+- O botão de tema na barra superior (1741,5)–(1773,37) é um Unknown sem nome acessível; só é identificável pelo ícone de sol.
+- As duas divisórias verticais (304,42)–(320,1048) e (1612,42)–(1628,1048), o logo do trilho (12,50)–(40,78) e os três ícones de estado vazio estão sem nome acessível, o que reduz a navegabilidade por leitor de tela.
+- Três botões compartilham o mesmo nome acessível "More tabs" em painéis diferentes, sem contexto na árvore que os distinga.
+
+## [en.light.bench-tab.browser.tab](pages/en.light.bench-tab.browser.tab.md)
+
+- Texto não traduzido no idioma "en": a URL inicial "forja://inicio" usa o português ("inicio"); o esperado seria algo como "forja://home".
+- O aviso "The page is hidden while a panel or window is on top." (324,1048)–(609,1064) começa exatamente na borda da barra de status (y=1048), invadindo visualmente a faixa onde ficam "Ready" e "56 modules".
+- Botões de janela nomeados apenas por símbolo: "–", "□" e "×", sem nomes acessíveis descritivos (Minimize/Maximize/Close).
+- Botão "x" do chip tem nome não descritivo (letra minúscula isolada); o botão "R" da barra de navegação também não indica "Reload".
+- O botão "More tabs" aparece três vezes com o mesmo nome, sem indicar a qual faixa de abas pertence.
+- Nomes duplicados sem diferenciação: "History" (aba do painel central e botão do navegador), "Changes" (painéis central e direito) e os dois rótulos "(ícone)".
+- Elementos sem nome acessível: alternador de tema (1741,5)–(1773,37), os dois divisores verticais, o logotipo (12,50)–(40,78) e os dois rótulos "(ícone)".
+- As faixas de abas dependem de "More tabs": no painel central só "Browser" fica visível e as demais nove abas ficam escondidas atrás do menu suspenso.
+- Baixo contraste relativo nos textos de estado vazio ("No project yet…", "No active bench…") e nas abas inativas, em cinza claro sobre fundo creme.
+
