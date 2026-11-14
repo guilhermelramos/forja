@@ -34,6 +34,7 @@ onboarding-check-notices = Avisos revisados
 onboarding-back = Voltar
 onboarding-next = Avançar
 onboarding-finish = Concluir
+onboarding-close = Fechar
 onboarding-done-title = A Forja está pronta
 onboarding-done-body = Dá para abrir este guia de novo pelos Ajustes.
 setting-onboarding-projects-dir-label = Pasta de projetos

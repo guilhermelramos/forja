@@ -14,6 +14,10 @@ struct RailPage {
     png: Option<Arc<[u8]>>,
 }
 
+fn panel_max_width(available: f32, reserved: f32) -> f32 {
+    (available - reserved).clamp(180.0, 480.0)
+}
+
 impl ForjaApp {
     pub(crate) fn top_bar(&mut self, ctx: &egui::Context) {
         let height = self.tokens.metrics().control + 8.0;
@@ -360,6 +364,7 @@ impl ForjaApp {
 
     fn sidebar(&mut self, ctx: &egui::Context) {
         let width = self.setting_number("appearance.sidebar.width", 260.0) as f32;
+        let max_width = panel_max_width(ctx.available_rect().width(), 680.0);
         let frame = egui::Frame::NONE
             .fill(self.paint(self.tokens.color.surface))
             .inner_margin(Margin::symmetric(12, 8));
@@ -370,7 +375,7 @@ impl ForjaApp {
             .collect();
         let sidebar = egui::SidePanel::left("forja.sidebar")
             .default_width(width)
-            .width_range(180.0..=480.0)
+            .width_range(180.0..=max_width)
             .resizable(true)
             .show_separator_line(true)
             .frame(frame)
@@ -388,7 +393,14 @@ impl ForjaApp {
                     ui.heading(self.text("shell.sidebar.title"));
                     ui.add_space(4.0);
                 }
-                let index = Self::slot_tabs(ui, &titles, self.sidebar_tab, "forja.sidebar.tabs");
+                let index = Self::slot_tabs(
+                    ui,
+                    &titles,
+                    self.sidebar_tab,
+                    "forja.sidebar.tabs",
+                    &self.text("shell.tabs.more"),
+                    &self.tokens.metrics(),
+                );
                 self.sidebar_tab = index;
                 self.paint_view(ui, true, index);
             });
@@ -408,8 +420,10 @@ impl ForjaApp {
             .iter()
             .map(|view| self.text(&view.title_key))
             .collect();
+        let max_width = panel_max_width(ctx.available_rect().width(), 480.0);
         let panel = egui::SidePanel::right("forja.right")
             .default_width(300.0)
+            .width_range(180.0..=max_width)
             .resizable(true)
             .show_separator_line(true)
             .frame(frame)
@@ -421,7 +435,14 @@ impl ForjaApp {
                     );
                     return;
                 }
-                let index = Self::slot_tabs(ui, &titles, self.right_tab, "forja.right.tabs");
+                let index = Self::slot_tabs(
+                    ui,
+                    &titles,
+                    self.right_tab,
+                    "forja.right.tabs",
+                    &self.text("shell.tabs.more"),
+                    &self.tokens.metrics(),
+                );
                 self.right_tab = index;
                 self.paint_view(ui, false, index);
             });
@@ -440,6 +461,16 @@ impl ForjaApp {
         let response = egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
             if let Some(page) = self.rail_page.clone() {
                 if self.rail_views.iter().any(|view| view.id == page) {
+                    if button(
+                        ui,
+                        ButtonKind::Ghost,
+                        &self.text("shell.rail.back-to-bench"),
+                    )
+                    .clicked()
+                    {
+                        self.rail_page = None;
+                        return;
+                    }
                     if let Some(view) = self.rail_views.iter_mut().find(|view| view.id == page) {
                         let module = view.module.clone();
                         let mut cx = self.runtime.ctx(&module);
@@ -461,12 +492,18 @@ impl ForjaApp {
                 });
                 return;
             }
-            let refs: Vec<&str> = titles.iter().map(String::as_str).collect();
             let mut selected = visible
                 .iter()
                 .position(|index| *index == self.active_tab)
                 .unwrap_or(0);
-            forja_ui_kit::tabs(ui, &mut selected, &refs);
+            selected = Self::slot_tabs(
+                ui,
+                &titles,
+                selected,
+                "forja.bench.tabs",
+                &self.text("shell.tabs.more"),
+                &self.tokens.metrics(),
+            );
             let active = visible.get(selected).copied().unwrap_or(visible[0]);
             self.active_tab = active;
             ui.add_space(8.0);
@@ -481,16 +518,70 @@ impl ForjaApp {
     }
 
     /// Tab strip when a slot has more than one contribution. Returns the kept index.
-    fn slot_tabs(ui: &mut egui::Ui, titles: &[String], mut selected: usize, id: &str) -> usize {
+    fn slot_tabs(
+        ui: &mut egui::Ui,
+        titles: &[String],
+        mut selected: usize,
+        id: &str,
+        more: &str,
+        metrics: &forja_ui_kit::Metrics,
+    ) -> usize {
         if titles.len() < 2 {
+            if let Some(title) = titles.first() {
+                forja_ui_kit::tabs(ui, &mut selected, &[title.as_str()]);
+            }
             return 0;
         }
         if selected >= titles.len() {
             selected = 0;
         }
-        let refs: Vec<&str> = titles.iter().map(String::as_str).collect();
-        egui::ScrollArea::horizontal().id_salt(id).show(ui, |ui| {
-            forja_ui_kit::tabs(ui, &mut selected, &refs);
+        ui.push_id(id, |ui| {
+            ui.horizontal(|ui| {
+                ui.menu_button(more, |ui| {
+                    for (index, title) in titles.iter().enumerate() {
+                        if ui.selectable_label(selected == index, title).clicked() {
+                            selected = index;
+                            ui.close();
+                        }
+                    }
+                });
+                let mut remaining = ui.available_width();
+                let mut shown = Vec::new();
+                for index in
+                    std::iter::once(selected).chain((0..titles.len()).filter(|i| *i != selected))
+                {
+                    let width = ui.fonts_mut(|fonts| {
+                        fonts
+                            .layout_no_wrap(
+                                titles[index].clone(),
+                                egui::FontId::proportional(metrics.body),
+                                egui::Color32::WHITE,
+                            )
+                            .size()
+                            .x
+                    });
+                    let width = (width + metrics.pad_x * 2.0).max(metrics.control);
+                    if width <= remaining {
+                        remaining -= width;
+                        shown.push(index);
+                    }
+                }
+                if !shown.contains(&selected) {
+                    ui.add(egui::Label::new(&titles[selected]).truncate())
+                        .on_hover_text(&titles[selected]);
+                } else {
+                    let refs: Vec<&str> =
+                        shown.iter().map(|index| titles[*index].as_str()).collect();
+                    let mut chosen = shown
+                        .iter()
+                        .position(|index| *index == selected)
+                        .unwrap_or(usize::MAX);
+                    forja_ui_kit::tabs(ui, &mut chosen, &refs);
+                    if let Some(index) = shown.get(chosen) {
+                        selected = *index;
+                    }
+                }
+            })
         });
         ui.add_space(8.0);
         selected
@@ -538,5 +629,19 @@ impl ForjaApp {
                     ui.push_id(&view.id, |ui| view.view.ui(ui, &mut cx));
                 });
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::panel_max_width;
+
+    #[test]
+    fn side_panels_leave_room_for_the_center() {
+        let after_rail = 1280.0 - 52.0;
+        let sidebar = panel_max_width(after_rail, 680.0);
+        let right = panel_max_width(after_rail - sidebar, 480.0);
+        assert!(after_rail - sidebar - right >= 480.0);
+        assert_eq!(panel_max_width(4000.0, 480.0), 480.0);
     }
 }

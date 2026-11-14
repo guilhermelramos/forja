@@ -134,6 +134,7 @@ muster-spend = Cost (USD)
 muster-spend-hint = amount spent
 muster-spend-add = Record cost
 muster-error-bench-pending = Create the bench first and wait until it is ready before starting the task.
+muster-error-empty-title = Enter a title for the muster.
 muster-error-choose-assignment = Choose an assignment before sending the note.
 muster-error-disabled = Muster is disabled in settings.
 muster-error-unavailable = The required service or command is unavailable (detail: { $detail }).

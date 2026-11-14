@@ -30,7 +30,8 @@ impl Backend for ProtocolBackend {
 }
 
 fn main() {
-    // `--player [--findings <file>]`: only the play-test tools (needs `forja-app --test-driver`).
+    // `--player [--findings <file>] [--max-steps <n>]`: only the play-test
+    // tools (needs `forja-app --test-driver`).
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.first().map(String::as_str) == Some("--player") {
         let findings = args
@@ -38,7 +39,13 @@ fn main() {
             .position(|arg| arg == "--findings")
             .and_then(|index| args.get(index + 1))
             .map(std::path::PathBuf::from);
-        let player = forja_mcp::player::Player::new(ProtocolBackend, findings);
+        let max_steps = args
+            .iter()
+            .position(|arg| arg == "--max-steps")
+            .and_then(|index| args.get(index + 1))
+            .and_then(|value| value.parse::<usize>().ok());
+        let player =
+            forja_mcp::player::Player::new(ProtocolBackend, findings).with_max_steps(max_steps);
         serve(|line| player.handle_line(line));
         return;
     }

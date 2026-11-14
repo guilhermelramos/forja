@@ -32,6 +32,10 @@ projetos. O arquivo do módulo fica em `<dados>/modules/project.json`.
 - `project.remove` só remove a entrada; a pasta e o repositório ficam no disco.
 - `project.create` cria uma pasta vazia e roda `git init`; `project.clone` roda
   `git clone`. Os dois são assíncronos e devolvem `{pending: true}`.
+- Todos os diálogos (Adicionar pasta, Novo projeto, Clonar, Editar e Remover)
+  registram a camada de teclado: o Tab fica na janela e Escape fecha.
+- Adicionar pasta e Novo projeto focam o campo "Pasta" ao abrir; Enter nesse
+  campo confirma o diálogo, então o formulário funciona só com teclado.
 - Ícone é um texto curto (emoji ou letra) e cor é `#RRGGBB`.
 - O id é estável, derivado do caminho normalizado; re-adicionar o mesmo caminho
   não duplica o projeto.

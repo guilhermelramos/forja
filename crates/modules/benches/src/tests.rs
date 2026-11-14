@@ -101,6 +101,38 @@ fn contract_passes_without_other_modules() {
 }
 
 #[test]
+fn commands_that_need_context_declare_what_the_anvil_asks() {
+    let root = temp_dir("ask-fields");
+    let runtime = runtime(&root, None);
+    let fields = |id: &str| {
+        runtime
+            .registry()
+            .command(id)
+            .unwrap_or_else(|| panic!("command {id} is registered"))
+            .fields
+            .iter()
+            .map(|field| field.arg)
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(fields("bench.activate"), ["bench_id"]);
+    assert_eq!(fields("bench.create"), ["project_id", "name"]);
+    assert_eq!(fields("bench.stage.set"), ["bench_id", "stage"]);
+    assert_eq!(fields("bench.store"), ["bench_id"]);
+    assert_eq!(fields("bench.script.approve"), ["project_id"]);
+    assert!(fields("bench.refresh").is_empty());
+    let activate = &runtime.registry().command("bench.activate").unwrap().fields[0];
+    assert!(matches!(
+        activate.kind,
+        forja_kernel::CommandFieldKind::Choice {
+            command: "bench.list",
+            value: "bench_id",
+            ..
+        }
+    ));
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
 fn create_store_and_stage_transitions() {
     let root = temp_dir("lifecycle");
     std::fs::create_dir_all(&root).unwrap();

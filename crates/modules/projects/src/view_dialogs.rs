@@ -45,6 +45,10 @@ pub(crate) fn render_dialog(
     match dialog {
         Dialog::None => {}
         Dialog::Remove { project_id, name } => {
+            let layer = egui::Id::new("forja.projects.remove.keyboard");
+            if forja_ui_kit::consume_layer_escape(ctx, layer) {
+                return Dialog::None;
+            }
             let mut close = false;
             let mut remove = false;
             egui::Window::new(cx.t("project.dialog.remove.title"))
@@ -53,6 +57,7 @@ pub(crate) fn render_dialog(
                 .resizable(false)
                 .default_width(360.0)
                 .show(ctx, |ui| {
+                    forja_ui_kit::register_keyboard_layer(ui, layer);
                     ui.label(cx.t_args("project.dialog.remove.body", &[("name", name)]));
                     ui.add_space(8.0);
                     ui.horizontal(|ui| {
@@ -98,6 +103,14 @@ pub(crate) fn render_dialog(
             if forja_ui_kit::consume_layer_escape(ctx, layer) {
                 return Dialog::None;
             }
+            // The first field takes the keyboard as soon as the dialog opens,
+            // so typing and Tab never leak to the window behind it.
+            let focus_key = egui::Id::new(if creating {
+                "forja.projects.create.focus"
+            } else {
+                "forja.projects.add.focus"
+            });
+            let focus_path = !ctx.data(|data| data.get_temp::<bool>(focus_key).unwrap_or(false));
             let title = if creating {
                 cx.t("project.dialog.create.title")
             } else {
@@ -125,7 +138,14 @@ pub(crate) fn render_dialog(
                         .small()
                         .color(tokens.color.text_muted.forja_color()),
                     );
-                    forja_ui_kit::text_field(ui, &mut form.path, "C:\\dev\\projeto");
+                    let path = forja_ui_kit::text_field(ui, &mut form.path, "C:\\dev\\projeto");
+                    if focus_path {
+                        path.request_focus();
+                        ctx.data_mut(|data| data.insert_temp(focus_key, true));
+                    }
+                    if path.lost_focus() && ui.input(|input| input.key_pressed(egui::Key::Enter)) {
+                        submit = true;
+                    }
                     if ui
                         .add(egui::Button::new(cx.t("project.action.choose")).frame(false))
                         .clicked()
@@ -290,6 +310,10 @@ pub(crate) fn render_dialog(
             }
         }
         Dialog::Edit(form) => {
+            let layer = egui::Id::new("forja.projects.edit.keyboard");
+            if forja_ui_kit::consume_layer_escape(ctx, layer) {
+                return Dialog::None;
+            }
             let mut close = false;
             let mut submit = false;
             egui::Window::new(cx.t("project.dialog.edit.title"))
@@ -298,6 +322,7 @@ pub(crate) fn render_dialog(
                 .resizable(false)
                 .default_width(380.0)
                 .show(ctx, |ui| {
+                    forja_ui_kit::register_keyboard_layer(ui, layer);
                     forja_ui_kit::text_field(ui, &mut form.name, &cx.t("project.field.name-hint"));
                     ui.horizontal(|ui| {
                         ui.add_sized([52.0, 28.0], egui::TextEdit::singleline(&mut form.icon));

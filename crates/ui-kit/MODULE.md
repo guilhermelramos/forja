@@ -17,10 +17,16 @@ Nada no kernel. Este crate não é um módulo. O shell chama `apply` e desenha c
   `ARCHIVE`, `SKILLS`, `SETTINGS`, `SEARCH`, `CLOSE`, `SPLIT_RIGHT`, `SPLIT_DOWN`, `THEME`).
 - `TerminalTheme::load_dir` lê `content/themes/*.toml`.
 - Componentes recebem o rótulo. Não há string de produto embutida.
+- `select` abre com clique, Space ou Enter no gatilho focado; as setas movem o
+  destaque da lista, Enter escolhe e Escape fecha. As opções abertas aparecem na
+  árvore de acessibilidade como botões.
 - Janelas flutuantes chamam `register_keyboard_layer(ui, id)` a cada quadro e
   `consume_layer_escape(ctx, id)` antes de desenhar. O Tab fica na camada do
   topo e Escape fecha apenas ela; um menu aberto recebe Escape primeiro. Use um
   `id` estável e diferente para cada janela simultânea.
+- `modal` fecha no véu ou no Escape. `modal_explicit_close` usa a mesma camada,
+  mas ignora o clique no véu: fecha só por Escape, botão de fechar ou
+  `Ui::close` — para fluxos guiados que não podem sumir por engano.
 - Densidade `comfortable` (controle 32 px) ou `compact` (24 px). Grade de 4 px.
 
 ## Como testar

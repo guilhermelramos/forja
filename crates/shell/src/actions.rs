@@ -1,7 +1,5 @@
 //! Actions the shell chrome performs. Host modules push; the window drains.
 
-use std::sync::Mutex;
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AnvilMode {
     All,
@@ -36,19 +34,53 @@ pub enum Action {
     SwitchTab(usize),
 }
 
-static QUEUE: Mutex<Vec<Action>> = Mutex::new(Vec::new());
+#[cfg(not(test))]
+mod queue {
+    use super::Action;
+    use std::sync::Mutex;
 
-pub fn push(action: Action) {
-    if let Ok(mut queue) = QUEUE.lock() {
-        queue.push(action);
+    static QUEUE: Mutex<Vec<Action>> = Mutex::new(Vec::new());
+
+    pub(super) fn push(action: Action) {
+        if let Ok(mut queue) = QUEUE.lock() {
+            queue.push(action);
+        }
+    }
+
+    pub(super) fn drain() -> Vec<Action> {
+        match QUEUE.lock() {
+            Ok(mut queue) => std::mem::take(&mut *queue),
+            Err(_) => Vec::new(),
+        }
     }
 }
 
-pub fn drain() -> Vec<Action> {
-    match QUEUE.lock() {
-        Ok(mut queue) => std::mem::take(&mut *queue),
-        Err(_) => Vec::new(),
+/// Tests run in parallel in the same process, so a global queue would let one
+/// test drain another one's actions. Each test thread gets its own queue.
+#[cfg(test)]
+mod queue {
+    use super::Action;
+    use std::cell::RefCell;
+
+    std::thread_local! {
+        static QUEUE: RefCell<Vec<Action>> = const { RefCell::new(Vec::new()) };
     }
+
+    pub(super) fn push(action: Action) {
+        QUEUE.with(|queue| queue.borrow_mut().push(action));
+    }
+
+    pub(super) fn drain() -> Vec<Action> {
+        QUEUE.with(|queue| std::mem::take(&mut *queue.borrow_mut()))
+    }
+}
+
+pub fn push(action: Action) {
+    queue::push(action);
+}
+
+pub fn drain() -> Vec<Action> {
+    queue::drain()
 }
 
 pub fn dispatch(id: &str) {

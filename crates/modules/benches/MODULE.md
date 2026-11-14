@@ -13,6 +13,10 @@ Módulo `bench` (pasta `benches`): worktrees git, etapas e os scripts do
   `bench.approve_dialog`; os diálogos são desenhados pela view
   `bench.dialogs` no slot modal, aberta por `poll` só quando há diálogo. Sem
   projeto, o diálogo de criação explica o que falta e oferece "Adicionar pasta".
+- Os comandos que precisam de `bench_id`, `project_id` ou `stage` declaram
+  `CommandField`s: na Bigorna o valor sai de uma lista filtrável (`bench.list`,
+  `project.list`, `bench.stage.list`) ou é digitado (`name`), em vez de falhar
+  com argumento ausente.
 - Atalhos `bench.create` (`Ctrl+Shift+N`), `bench.next` / `bench.previous`
   (`Alt+PageDown` / `Alt+PageUp`) e `bench.switch_1..10` (`Alt+1..0`).
 - Eventos de contrato `bench.activated`, `bench.created`, `bench.stored`,

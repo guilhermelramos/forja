@@ -50,6 +50,7 @@ pub const USED_KEYS: &[&str] = &[
     "muster.notify.handoff-title",
     "muster.notify.handoff-body",
     "muster.error.bench-pending",
+    "muster.error.empty-title",
     "muster-task-pending",
     "muster-task-running",
     "muster-task-delivered",
@@ -248,6 +249,10 @@ fn register_rpc(r: &mut Registrar<'_>, shared: &Shared) {
 }
 
 fn run(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, KernelError> {
+    let title = args.required_str("title")?.trim();
+    if title.is_empty() {
+        return Err(KernelError::Message(cx.t("muster.error.empty-title")));
+    }
     if !cx
         .setting("muster.mode.enabled")
         .and_then(SettingValue::as_bool)
@@ -257,7 +262,6 @@ fn run(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, KernelEr
     }
     state::ensure_loaded(cx, shared);
     ensure_writable(shared)?;
-    let title = args.required_str("title")?;
     let objective = args.str("objective").unwrap_or_default();
     let coordinator = args.str("coordinator").unwrap_or("coordinator");
     let bench_path = args.str("bench_path").map(str::to_owned);

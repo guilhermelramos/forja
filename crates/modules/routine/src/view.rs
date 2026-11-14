@@ -338,9 +338,29 @@ impl View for RoutinesView {
         self.header(ui, cx, &snap);
         egui::ScrollArea::vertical().id_salt("routine.page").show(ui, |ui| {
             self.list(ui, cx, &snap);
-            self.editor(ui, cx);
             self.history(ui, cx, &snap);
         });
+        if self.draft.is_some() {
+            let context = ui.ctx().clone();
+            let layer = egui::Id::new("routine.editor.keyboard");
+            if forja_ui_kit::consume_layer_escape(&context, layer) {
+                self.draft = None;
+                self.draft_error = None;
+                return;
+            }
+            egui::Window::new(cx.t("routine-editor-title"))
+                .id(egui::Id::new("routine.editor"))
+                .collapsible(false)
+                .resizable(false)
+                .default_width(500.0)
+                .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
+                .show(&context, |ui| {
+                    forja_ui_kit::register_keyboard_layer(ui, layer);
+                    egui::ScrollArea::vertical()
+                        .max_height((context.content_rect().height() - 120.0).max(200.0))
+                        .show(ui, |ui| self.editor(ui, cx));
+                });
+        }
     }
 }
 

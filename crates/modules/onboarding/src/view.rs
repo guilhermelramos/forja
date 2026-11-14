@@ -4,7 +4,7 @@ use crate::steps::{steps, Step};
 use crate::Shared;
 use forja_kernel::ui_contract::egui;
 use forja_kernel::{Args, Ctx, SettingValue};
-use forja_ui_kit::{button, modal, select, text_field, toggle, ButtonKind};
+use forja_ui_kit::{button, modal_explicit_close, select, text_field, toggle, ButtonKind};
 use serde_json::Value;
 
 pub struct WizardView {
@@ -32,7 +32,9 @@ impl forja_kernel::ui_contract::View for WizardView {
         if open {
             let title = cx.t("onboarding.title");
             let state = self.state.clone();
-            modal(ui.ctx(), &mut open, &title, |ui| {
+            // O clique fora não fecha: o guia só termina por Escape ou pelo
+            // botão de fechar, para um clique perdido não descartá-lo.
+            modal_explicit_close(ui.ctx(), &mut open, &title, |ui| {
                 render(ui, cx, &state);
             });
         }
@@ -143,6 +145,15 @@ fn render(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
                     args.insert("level", Value::String("success".into()));
                     let _ = cx.run_command("notify.show", args);
                 }
+            }
+            if ui
+                .push_id("close", |ui| {
+                    button(ui, ButtonKind::Ghost, &cx.t("onboarding.close"))
+                })
+                .inner
+                .clicked()
+            {
+                state.dismiss();
             }
         })
     });

@@ -134,6 +134,7 @@ muster-spend = Custo (US$)
 muster-spend-hint = valor gasto
 muster-spend-add = Registrar custo
 muster-error-bench-pending = Crie a bancada primeiro e aguarde ficar pronta antes de iniciar a tarefa.
+muster-error-empty-title = Digite um título para o mutirão.
 muster-error-choose-assignment = Escolha uma atribuição antes de enviar o recado.
 muster-error-disabled = O Mutirão está desativado nos ajustes.
 muster-error-unavailable = O serviço ou comando necessário não está disponível (detalhe: { $detail }).

@@ -15,13 +15,44 @@ pub const SETTINGS_FILE: &str = "settings.json";
 
 /// Pasta padrão do Harbor: `%APPDATA%\Harbor`. `FORJA_HARBOR_DIR` substitui
 /// (usado por testes e capturas, que nunca tocam o Harbor de verdade).
+///
+/// Em execução de teste (`--test-driver`, `--screenshot`) ou com dados
+/// isolados por `FORJA_DATA_DIR`, a pasta real do Harbor não é lida: só uma
+/// origem explícita em `FORJA_HARBOR_DIR` é usada.
 pub fn default_source_dir() -> Option<PathBuf> {
-    if let Some(path) = std::env::var_os("FORJA_HARBOR_DIR").filter(|v| !v.is_empty()) {
-        return Some(PathBuf::from(path));
+    source_dir(
+        env_path("FORJA_HARBOR_DIR"),
+        isolated_run(),
+        env_path("APPDATA").map(|appdata| appdata.join("Harbor")),
+    )
+}
+
+/// Uma origem explícita vence sempre; sem ela, uma execução isolada não pode
+/// enxergar o Harbor da máquina.
+fn source_dir(
+    harbor_override: Option<PathBuf>,
+    isolated: bool,
+    machine_harbor: Option<PathBuf>,
+) -> Option<PathBuf> {
+    if harbor_override.is_some() {
+        return harbor_override;
     }
-    std::env::var_os("APPDATA")
-        .filter(|v| !v.is_empty())
-        .map(|appdata| PathBuf::from(appdata).join("Harbor"))
+    if isolated {
+        return None;
+    }
+    machine_harbor
+}
+
+fn isolated_run() -> bool {
+    ["FORJA_DATA_DIR", "FORJA_TEST_DRIVER", "FORJA_SCREENSHOT"]
+        .iter()
+        .any(|name| env_path(name).is_some())
+}
+
+fn env_path(name: &str) -> Option<PathBuf> {
+    std::env::var_os(name)
+        .filter(|value| !value.is_empty())
+        .map(PathBuf::from)
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -228,5 +259,76 @@ mod tests {
         let json = br#"{"projects": [], "notes": "", "token": "should-not-matter"}"#;
         let session: Session = serde_json::from_slice(json).unwrap();
         assert!(session.projects.is_empty());
+    }
+
+    #[test]
+    fn explicit_harbor_wins_even_in_an_isolated_run() {
+        let harbor = PathBuf::from("C:/fixtures/Harbor");
+        assert_eq!(
+            source_dir(Some(harbor.clone()), true, Some(PathBuf::from("C:/AppData/Harbor"))),
+            Some(harbor)
+        );
+    }
+
+    #[test]
+    fn isolated_runs_never_read_the_machine_harbor() {
+        let machine = Some(PathBuf::from("C:/AppData/Harbor"));
+        assert_eq!(source_dir(None, true, machine), None);
+    }
+
+    #[test]
+    fn normal_runs_use_the_appdata_harbor() {
+        let machine = PathBuf::from("C:/AppData/Harbor");
+        assert_eq!(source_dir(None, false, Some(machine.clone())), Some(machine));
+        assert_eq!(source_dir(None, false, None), None);
+    }
+
+    #[test]
+    fn isolated_data_dir_hides_the_real_harbor() {
+        use std::sync::Mutex;
+        static ENV_LOCK: Mutex<()> = Mutex::new(());
+        let _guard = ENV_LOCK.lock().unwrap_or_else(|poison| poison.into_inner());
+        let names = [
+            "FORJA_DATA_DIR",
+            "FORJA_HARBOR_DIR",
+            "FORJA_TEST_DRIVER",
+            "FORJA_SCREENSHOT",
+            "APPDATA",
+        ];
+        let saved: Vec<(&str, Option<std::ffi::OsString>)> = names
+            .iter()
+            .map(|name| (*name, std::env::var_os(name)))
+            .collect();
+        let machine = std::env::temp_dir().join(format!(
+            "forja-import-appdata-{}",
+            std::process::id()
+        ));
+        std::env::set_var("APPDATA", &machine);
+        std::env::remove_var("FORJA_HARBOR_DIR");
+        std::env::remove_var("FORJA_DATA_DIR");
+        std::env::remove_var("FORJA_TEST_DRIVER");
+        std::env::remove_var("FORJA_SCREENSHOT");
+
+        std::env::set_var("FORJA_DATA_DIR", machine.join("data"));
+        assert_eq!(default_source_dir(), None, "isolated run read %APPDATA%");
+
+        std::env::remove_var("FORJA_DATA_DIR");
+        std::env::set_var("FORJA_TEST_DRIVER", "1");
+        assert_eq!(default_source_dir(), None, "test driver read %APPDATA%");
+
+        std::env::remove_var("FORJA_TEST_DRIVER");
+        std::env::set_var("FORJA_SCREENSHOT", "1");
+        assert_eq!(default_source_dir(), None, "screenshot read %APPDATA%");
+
+        let harbor = machine.join("Harbor");
+        std::env::set_var("FORJA_HARBOR_DIR", &harbor);
+        assert_eq!(default_source_dir(), Some(harbor.clone()));
+
+        for (name, value) in saved {
+            match value {
+                Some(value) => std::env::set_var(name, value),
+                None => std::env::remove_var(name),
+            }
+        }
     }
 }

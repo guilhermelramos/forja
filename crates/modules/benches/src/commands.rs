@@ -1,9 +1,64 @@
 use crate::service;
 use crate::state::Shared;
-use forja_kernel::Registrar;
+use forja_kernel::{CommandField, CommandFieldKind, Registrar};
 use serde_json::{json, Value};
 
 use crate::kernel_error;
+
+/// The Anvil asks for a bench from `bench.list`; the same mechanism serves
+/// every command that takes a `bench_id`.
+fn bench_field() -> CommandField {
+    CommandField {
+        arg: "bench_id",
+        label_key: "bench.ask.bench",
+        kind: CommandFieldKind::Choice {
+            command: "bench.list",
+            list: "benches",
+            label: "name",
+            value: "bench_id",
+            detail: Some("branch"),
+        },
+    }
+}
+
+/// Projects come from `project.list`, so the user never has to type an id.
+fn project_field() -> CommandField {
+    CommandField {
+        arg: "project_id",
+        label_key: "bench.ask.project",
+        kind: CommandFieldKind::Choice {
+            command: "project.list",
+            list: "projects",
+            label: "name",
+            value: "id",
+            detail: Some("path"),
+        },
+    }
+}
+
+/// Stages come from `bench.stage.list`, including project extras.
+fn stage_field() -> CommandField {
+    CommandField {
+        arg: "stage",
+        label_key: "bench.ask.stage",
+        kind: CommandFieldKind::Choice {
+            command: "bench.stage.list",
+            list: "stages",
+            label: "label",
+            value: "id",
+            detail: None,
+        },
+    }
+}
+
+fn name_field() -> CommandField {
+    CommandField {
+        arg: "name",
+        label_key: "bench.ask.name",
+        kind: CommandFieldKind::Text,
+    }
+}
+
 pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
     let s = shared.clone();
     r.command("bench.current", "bench.command.current", move |cx, _| {
@@ -34,9 +89,10 @@ pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
     );
 
     let s = shared.clone();
-    r.command(
+    r.command_asking(
         "bench.activate",
         "bench.command.activate",
+        vec![bench_field()],
         move |cx, args| {
             let id = args.required_str("bench_id")?;
             let bench = service::activate(cx, &s, id).map_err(kernel_error)?;
@@ -45,43 +101,54 @@ pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
     );
 
     let s = shared.clone();
-    r.command("bench.create", "bench.command.create", move |cx, args| {
-        let project_id = args.required_str("project_id")?;
-        let name = args.required_str("name")?;
-        let from_request = args.str("from_request").or_else(|| {
-            args.get("from_request")
-                .and_then(|value| value.get("key"))
-                .and_then(Value::as_str)
-        });
-        let bench = crate::create::create(
-            cx,
-            &s,
-            project_id,
-            name,
-            args.str("base"),
-            from_request,
-            args.bool("fetch"),
-        )
-        .map_err(kernel_error)?;
-        let mut value = serde_json::to_value(bench)?;
-        if let Some(map) = value.as_object_mut() {
-            map.insert("pending".to_owned(), json!(true));
-        }
-        Ok(value)
-    });
-
-    let s = shared.clone();
-    r.command("bench.store", "bench.command.store", move |cx, args| {
-        let id = args.required_str("bench_id")?;
-        crate::store::store(cx, &s, id, args.bool("delete_branch"), args.bool("force"))
+    r.command_asking(
+        "bench.create",
+        "bench.command.create",
+        vec![project_field(), name_field()],
+        move |cx, args| {
+            let project_id = args.required_str("project_id")?;
+            let name = args.required_str("name")?;
+            let from_request = args.str("from_request").or_else(|| {
+                args.get("from_request")
+                    .and_then(|value| value.get("key"))
+                    .and_then(Value::as_str)
+            });
+            let bench = crate::create::create(
+                cx,
+                &s,
+                project_id,
+                name,
+                args.str("base"),
+                from_request,
+                args.bool("fetch"),
+            )
             .map_err(kernel_error)?;
-        Ok(json!({ "pending": true }))
-    });
+            let mut value = serde_json::to_value(bench)?;
+            if let Some(map) = value.as_object_mut() {
+                map.insert("pending".to_owned(), json!(true));
+            }
+            Ok(value)
+        },
+    );
 
     let s = shared.clone();
-    r.command(
+    r.command_asking(
+        "bench.store",
+        "bench.command.store",
+        vec![bench_field()],
+        move |cx, args| {
+            let id = args.required_str("bench_id")?;
+            crate::store::store(cx, &s, id, args.bool("delete_branch"), args.bool("force"))
+                .map_err(kernel_error)?;
+            Ok(json!({ "pending": true }))
+        },
+    );
+
+    let s = shared.clone();
+    r.command_asking(
         "bench.stage.set",
         "bench.command.stage_set",
+        vec![bench_field(), stage_field()],
         move |cx, args| {
             let id = args.required_str("bench_id")?;
             let stage = args.required_str("stage")?;
@@ -106,32 +173,52 @@ pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
     );
 
     let s = shared.clone();
-    r.command("bench.sleep", "bench.command.sleep", move |cx, args| {
-        let id = args.required_str("bench_id")?;
-        let card = service::sleep(cx, &s, id).map_err(kernel_error)?;
-        Ok(serde_json::to_value(card)?)
-    });
+    r.command_asking(
+        "bench.sleep",
+        "bench.command.sleep",
+        vec![bench_field()],
+        move |cx, args| {
+            let id = args.required_str("bench_id")?;
+            let card = service::sleep(cx, &s, id).map_err(kernel_error)?;
+            Ok(serde_json::to_value(card)?)
+        },
+    );
 
     let s = shared.clone();
-    r.command("bench.wake", "bench.command.wake", move |cx, args| {
-        let id = args.required_str("bench_id")?;
-        let card = service::wake(cx, &s, id).map_err(kernel_error)?;
-        Ok(serde_json::to_value(card)?)
-    });
+    r.command_asking(
+        "bench.wake",
+        "bench.command.wake",
+        vec![bench_field()],
+        move |cx, args| {
+            let id = args.required_str("bench_id")?;
+            let card = service::wake(cx, &s, id).map_err(kernel_error)?;
+            Ok(serde_json::to_value(card)?)
+        },
+    );
 
     let s = shared.clone();
-    r.command("bench.pin", "bench.command.pin", move |cx, args| {
-        let id = args.required_str("bench_id")?;
-        let card = service::pin(cx, &s, id, args.bool("pinned")).map_err(kernel_error)?;
-        Ok(serde_json::to_value(card)?)
-    });
+    r.command_asking(
+        "bench.pin",
+        "bench.command.pin",
+        vec![bench_field()],
+        move |cx, args| {
+            let id = args.required_str("bench_id")?;
+            let card = service::pin(cx, &s, id, args.bool("pinned")).map_err(kernel_error)?;
+            Ok(serde_json::to_value(card)?)
+        },
+    );
 
     let s = shared.clone();
-    r.command("bench.read", "bench.command.read", move |cx, args| {
-        let id = args.required_str("bench_id")?;
-        let card = service::read(cx, &s, id, args.bool("unread")).map_err(kernel_error)?;
-        Ok(serde_json::to_value(card)?)
-    });
+    r.command_asking(
+        "bench.read",
+        "bench.command.read",
+        vec![bench_field()],
+        move |cx, args| {
+            let id = args.required_str("bench_id")?;
+            let card = service::read(cx, &s, id, args.bool("unread")).map_err(kernel_error)?;
+            Ok(serde_json::to_value(card)?)
+        },
+    );
 
     let s = shared.clone();
     r.command("bench.refresh", "bench.command.refresh", move |cx, _| {
@@ -140,9 +227,10 @@ pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
     });
 
     let s = shared.clone();
-    r.command(
+    r.command_asking(
         "bench.script.approve",
         "bench.command.script_approve",
+        vec![project_field()],
         move |cx, args| {
             let project_id = args.required_str("project_id")?;
             service::approve(cx, &s, project_id, args.str("kind")).map_err(kernel_error)
@@ -160,9 +248,10 @@ pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
     );
 
     let s = shared.clone();
-    r.command(
+    r.command_asking(
         "bench.store_dialog",
         "bench.command.store_dialog",
+        vec![bench_field()],
         move |_cx, args| {
             let id = args.required_str("bench_id")?;
             if let Some(bench) = s.find(id) {
@@ -173,9 +262,10 @@ pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
     );
 
     let s = shared.clone();
-    r.command(
+    r.command_asking(
         "bench.approve_dialog",
         "bench.command.approve_dialog",
+        vec![project_field()],
         move |cx, args| {
             let project_id = args.required_str("project_id")?;
             service::open_approve_dialog(cx, &s, project_id);

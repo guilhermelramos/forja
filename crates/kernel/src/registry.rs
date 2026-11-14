@@ -1,7 +1,7 @@
 //! Registrar and registry: the single place where modules declare everything.
 
 use crate::args::{Args, CommandId};
-use crate::commands::{Availability, CommandSpec};
+use crate::commands::{Availability, CommandField, CommandSpec};
 use crate::error::{KernelError, Result};
 use crate::events::{EventSubscription, EventSignature};
 use crate::i18n::BundleSource;
@@ -56,11 +56,42 @@ impl<'a> Registrar<'a> {
     ) where
         F: for<'c, 'd> Fn(&'d mut Ctx<'c>, Args) -> Result<Value> + Send + Sync + 'static,
     {
+        self.command_with_fields(id, title_key, availability, Vec::new(), handler);
+    }
+
+    /// Registers an always-available command that asks for these values in the
+    /// Anvil (as a filterable list or a text field) instead of failing when the
+    /// arguments are missing.
+    pub fn command_asking<F>(
+        &mut self,
+        id: &str,
+        title_key: &str,
+        fields: Vec<CommandField>,
+        handler: F,
+    ) where
+        F: for<'c, 'd> Fn(&'d mut Ctx<'c>, Args) -> Result<Value> + Send + Sync + 'static,
+    {
+        self.command_with_fields(id, title_key, Availability::Always, fields, handler);
+    }
+
+    /// Registers a command with an availability rule and the values the Anvil
+    /// should ask for when it runs without them.
+    pub fn command_with_fields<F>(
+        &mut self,
+        id: &str,
+        title_key: &str,
+        availability: Availability,
+        fields: Vec<CommandField>,
+        handler: F,
+    ) where
+        F: for<'c, 'd> Fn(&'d mut Ctx<'c>, Args) -> Result<Value> + Send + Sync + 'static,
+    {
         self.registry.commands.push(CommandSpec {
             id: CommandId::new(id),
             module: self.module_id.to_owned(),
             title_key: title_key.to_owned(),
             availability,
+            fields,
             handler: Arc::new(handler),
         });
     }

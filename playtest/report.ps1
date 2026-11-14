@@ -12,11 +12,16 @@ param(
     [string]$In = "playtest-results",
     [int]$MaxIssues = 10,
     [string]$Report = "report.md",
-    [string[]]$Labels = @("playtest"),
-    [string]$TitlePrefix = "[playtest]",
+    # Issue label and title prefix (playtest for bugs, ideia for the ideas loop).
+    [string]$Label = "playtest",
+    [string[]]$Labels = @(),
+    [string]$TitlePrefix = "",
     [string]$SourceNote = "Registrado por um testador automático (modelo gratuito via OpenCode) usando a Forja ao vivo.",
     [switch]$DryRun
 )
+
+if ($Labels.Count -eq 0) { $Labels = @($Label) }
+if (-not $TitlePrefix) { $TitlePrefix = "[$($Labels[0])]" }
 
 $ErrorActionPreference = "Stop"
 
@@ -47,9 +52,9 @@ foreach ($dir in Get-ChildItem $In -Directory -ErrorAction SilentlyContinue) {
 
 $existing = @()
 if (-not $DryRun) {
-    foreach ($label in $Labels) {
-        gh label create $label --color D93F0B --description "Achado pelos testadores automáticos" --force 2>$null | Out-Null
-        $existing += @(gh issue list --label $label --state all --limit 500 --json title | ConvertFrom-Json | ForEach-Object { $_.title -replace '^\[(playtest|explore)\]\s*', '' })
+    foreach ($lbl in $Labels) {
+        gh label create $lbl --color D93F0B --description "Achado pelos testadores automáticos" --force 2>$null | Out-Null
+        $existing += @(gh issue list --label $lbl --state all --limit 500 --json title | ConvertFrom-Json | ForEach-Object { $_.title -replace '^\[[^\]]+\]\s*', '' })
     }
     $existing = @($existing | Select-Object -Unique)
 }
@@ -78,7 +83,7 @@ foreach ($finding in $all | Sort-Object { $order[[string]$_.severity] ?? 4 }) {
         if (-not $DryRun) {
             $body | Set-Content issue-body.md -Encoding utf8
             $labelArgs = @()
-            foreach ($label in $Labels) { $labelArgs += @("--label", $label) }
+            foreach ($lbl in $Labels) { $labelArgs += @("--label", $lbl) }
             gh issue create --title "$TitlePrefix $title" @labelArgs --body-file issue-body.md | Out-Null
         }
         $existing += $title
