@@ -9,16 +9,26 @@ use std::collections::BTreeMap;
 impl ForjaApp {
     pub(crate) fn settings_window(&mut self, ctx: &egui::Context) {
         let focus_id = egui::Id::new("forja.settings.was_open");
+        let pending_focus = egui::Id::new("forja.settings.focus_pending");
         if !self.settings_open {
             ctx.data_mut(|data| {
                 data.remove_temp::<bool>(focus_id);
+                data.remove_temp::<bool>(pending_focus);
             });
             return;
         }
+        // The window must exist for one frame before the search takes the
+        // keyboard; focusing in the same frame the window is created loses it
+        // to the window itself.
         let focus_search = ctx.data_mut(|data| {
             let was_open = data.get_temp::<bool>(focus_id).unwrap_or(false);
             data.insert_temp(focus_id, true);
-            !was_open
+            if was_open {
+                data.remove_temp::<bool>(pending_focus).unwrap_or(false)
+            } else {
+                data.insert_temp(pending_focus, true);
+                false
+            }
         });
         let layer = egui::Id::new("forja.settings.keyboard");
         if forja_ui_kit::consume_layer_escape(ctx, layer) {
@@ -26,6 +36,7 @@ impl ForjaApp {
             self.settings_section = None;
             ctx.data_mut(|data| {
                 data.remove_temp::<bool>(focus_id);
+                data.remove_temp::<bool>(pending_focus);
             });
             return;
         }
@@ -55,6 +66,7 @@ impl ForjaApp {
             self.settings_section = None;
             ctx.data_mut(|data| {
                 data.remove_temp::<bool>(focus_id);
+                data.remove_temp::<bool>(pending_focus);
             });
         }
     }
