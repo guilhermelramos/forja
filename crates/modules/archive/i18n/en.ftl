@@ -38,6 +38,7 @@ archive-view-sessions = sessions
 archive-view-files = files
 archive-view-results = results
 archive-view-indexing = indexing sessions...
+archive-view-no-sessions = No sessions saved yet.
 archive-view-empty = No session matches the search.
 archive-view-resume = Resume
 archive-view-fork = Fork

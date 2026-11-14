@@ -94,6 +94,7 @@ impl Module for ArchiveModule {
             "archive.view.files",
             "archive.view.results",
             "archive.view.indexing",
+            "archive.view.no-sessions",
             "archive.view.empty",
             "archive.view.resume",
             "archive.view.fork",

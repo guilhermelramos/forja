@@ -20,19 +20,37 @@ search-button-confirm = Confirm replace
 search-status-idle = Type a term and press Enter.
 search-status-running = Searching…
 search-status-none = No results.
-search-status-results = { $matches } results in { $files } files
+search-status-results = { $matches ->
+    [one] { $matches } match
+   *[other] { $matches } matches
+} in { $files ->
+    [one] { $files } file
+   *[other] { $files } files
+}
 search-status-truncated = Results were capped: narrow the search.
 search-status-more = More results are not drawn: narrow the search.
 search-replace-title = Replace
 search-replace-hint = Replace with
-search-preview-summary = { $matches } matches in { $files } files
+search-preview-summary = { $matches ->
+    [one] { $matches } match
+   *[other] { $matches } matches
+} in { $files ->
+    [one] { $files } file
+   *[other] { $files } files
+}
 search-preview-multiline = The change spans lines and is not shown.
 search-preview-planning = Computing the preview…
 search-notice-no_bench = Open a bench first.
 search-notice-empty = Type a term to search.
 search-notice-thread = Could not start the search.
 search-notice-no_preview = Preview the replacement before applying it.
-search-notice-replaced = Replaced { $matches } matches in { $files } files.
+search-notice-replaced = Replaced { $matches ->
+    [one] { $matches } match
+   *[other] { $matches } matches
+} in { $files ->
+    [one] { $files } file
+   *[other] { $files } files
+}.
 search-notice-changed = Nothing was written: these files changed since the preview: { $files }. Preview again.
 search-notice-io = Write failed ({ $message }). Written: { $written }; restored: { $restored }.
 search-notice-error = Could not finish: { $message }

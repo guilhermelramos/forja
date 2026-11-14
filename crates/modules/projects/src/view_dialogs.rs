@@ -1,8 +1,37 @@
 use crate::state::{self, CloneForm, Dialog, ProjectForm, Shared};
-use crate::view::{parse_color, ColorExt};
+use crate::view::{humanize_error, parse_color, ColorExt};
 use forja_kernel::ui_contract::egui;
 use forja_kernel::Ctx;
 use std::path::PathBuf;
+
+fn render_dialog_error(
+    ui: &mut egui::Ui,
+    cx: &Ctx<'_>,
+    tokens: &forja_ui_kit::Tokens,
+    error: &mut Option<String>,
+) {
+    let Some(raw) = error.as_deref() else {
+        return;
+    };
+    let message = humanize_error(cx, raw);
+    let mut dismissed = false;
+    ui.horizontal_wrapped(|ui| {
+        ui.label(
+            egui::RichText::new(message)
+                .small()
+                .color(tokens.color.danger.forja_color()),
+        );
+        if forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE)
+            .on_hover_text(cx.t("project.error.dismiss"))
+            .clicked()
+        {
+            dismissed = true;
+        }
+    });
+    if dismissed {
+        *error = None;
+    }
+}
 pub(crate) fn render_dialog(
     ctx: &egui::Context,
     dialog: &mut Dialog,
@@ -49,7 +78,10 @@ pub(crate) fn render_dialog(
                 });
             if remove {
                 match shared.remove(cx, project_id) {
-                    Ok(()) => next = Some(Dialog::None),
+                    Ok(()) => {
+                        shared.set_error(None);
+                        next = Some(Dialog::None);
+                    }
                     Err(error) => shared.set_error(Some(error)),
                 }
             } else if close {
@@ -139,13 +171,7 @@ pub(crate) fn render_dialog(
                             });
                         });
                     });
-                    if let Some(error) = &form.error {
-                        ui.label(
-                            egui::RichText::new(error)
-                                .small()
-                                .color(tokens.color.danger.forja_color()),
-                        );
-                    }
+                    render_dialog_error(ui, cx, &tokens, &mut form.error);
                     ui.add_space(8.0);
                     ui.horizontal(|ui| {
                         let submit_label = if creating {
@@ -231,13 +257,7 @@ pub(crate) fn render_dialog(
                         &mut clone.form.name,
                         &cx.t("project.field.name-hint"),
                     );
-                    if let Some(error) = &clone.form.error {
-                        ui.label(
-                            egui::RichText::new(error)
-                                .small()
-                                .color(tokens.color.danger.forja_color()),
-                        );
-                    }
+                    render_dialog_error(ui, cx, &tokens, &mut clone.form.error);
                     ui.add_space(8.0);
                     ui.horizontal(|ui| {
                         if forja_ui_kit::button(
@@ -288,13 +308,7 @@ pub(crate) fn render_dialog(
                             ui.allocate_exact_size(egui::vec2(24.0, 24.0), egui::Sense::hover());
                         ui.painter().rect_filled(swatch, 4, color);
                     });
-                    if let Some(error) = &form.error {
-                        ui.label(
-                            egui::RichText::new(error)
-                                .small()
-                                .color(tokens.color.danger.forja_color()),
-                        );
-                    }
+                    render_dialog_error(ui, cx, &tokens, &mut form.error);
                     ui.add_space(8.0);
                     ui.horizontal(|ui| {
                         if forja_ui_kit::button(
@@ -325,7 +339,10 @@ pub(crate) fn render_dialog(
                     Some(&form.icon),
                     Some(&form.color),
                 ) {
-                    Ok(_) => next = Some(Dialog::None),
+                    Ok(_) => {
+                        shared.set_error(None);
+                        next = Some(Dialog::None);
+                    }
                     Err(error) => form.error = Some(error),
                 }
             } else if close {

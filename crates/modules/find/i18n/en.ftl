@@ -30,3 +30,4 @@ setting-find-grep-engine-label = Search engine
 setting-find-grep-engine-help = Engine used to search file contents.
 setting-find-grep-context-label = Search context (lines)
 setting-find-grep-context-help = Context lines around each result.
+find-picker-close = Close window
