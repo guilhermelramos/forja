@@ -1,15 +1,18 @@
-//! Módulo `usage` da Forja: consumo local de tokens dos ajudantes, lido das
-//! transcrições do Claude, Codex e OpenCode.
+//! Módulo `usage` da Forja: consumo local de tokens e custo dos ajudantes, lido
+//! das transcrições do Claude, Codex e OpenCode.
 
+mod budget;
 mod model;
 mod parse;
+mod pricing;
 mod scan;
+mod spend;
 mod state;
 mod view;
 
-use forja_kernel::forja_protocol::{Method, MethodEffect, ResultSchema};
+use forja_kernel::forja_protocol::{Method, MethodEffect, ParamKind, ParamSchema, ResultSchema};
 use forja_kernel::{
-    Module, ModuleManifest, Registrar, SettingKind, SettingSpec, SettingValue, Slot,
+    Args, Module, ModuleManifest, Registrar, SettingKind, SettingSpec, SettingValue, Slot,
 };
 use serde_json::json;
 use state::Shared;
@@ -59,6 +62,11 @@ impl Module for UsageModule {
             },
         );
 
+        let spend_state = self.state.clone();
+        r.command("usage.spend", "usage.command.spend", move |cx, args| {
+            Ok(spend::query(cx, &spend_state, &args))
+        });
+
         let rpc_state = self.state.clone();
         r.rpc(
             Method::new("usage.summary", "usage.method.summary.description")
@@ -70,6 +78,23 @@ impl Module for UsageModule {
                 serde_json::to_value(rpc_state.summary())
                     .map_err(|error| forja_kernel::forja_protocol::RpcError::app(error.to_string()))
             },
+        );
+
+        let spend_rpc_state = self.state.clone();
+        r.rpc(
+            Method::new("usage.spend", "usage.method.spend.description")
+                .effect(MethodEffect::Read)
+                .idempotent(true)
+                .param(
+                    ParamSchema::optional("project", ParamKind::String)
+                        .describe("Bench path; sums the logs from that folder and its subfolders."),
+                )
+                .param(
+                    ParamSchema::optional("period", ParamKind::String)
+                        .describe("today, last7, last30 or all (default today)."),
+                )
+                .result(ResultSchema::new("usage.method.spend.result")),
+            move |cx, params| Ok(spend::query(cx, &spend_rpc_state, &Args::from_map(params))),
         );
 
         for key in used_keys() {
@@ -104,6 +129,32 @@ fn register_settings(r: &mut Registrar<'_>) {
         "setting-usage-cost-track-label",
         "setting-usage-cost-track-help",
     ));
+    r.setting(
+        SettingSpec::new(
+            "usage.budget.daily_usd",
+            SettingKind::Number {
+                min: Some(0.0),
+                max: Some(100_000.0),
+            },
+            SettingValue::Number(0.0),
+            "setting-usage-budget-daily_usd-label",
+            "setting-usage-budget-daily_usd-help",
+        )
+        .order(10),
+    );
+    r.setting(
+        SettingSpec::new(
+            "usage.budget.monthly_usd",
+            SettingKind::Number {
+                min: Some(0.0),
+                max: Some(100_000.0),
+            },
+            SettingValue::Number(0.0),
+            "setting-usage-budget-monthly_usd-label",
+            "setting-usage-budget-monthly_usd-help",
+        )
+        .order(20),
+    );
     r.setting(SettingSpec::new(
         "usage.display.status_bar",
         SettingKind::Bool,
@@ -124,16 +175,46 @@ fn used_keys() -> Vec<&'static str> {
         "usage.total",
         "usage.input",
         "usage.output",
+        "usage.cache_read",
+        "usage.cache_write",
+        "usage.tokens",
+        "usage.filter",
         "usage.section.days",
+        "usage.section.agents",
         "usage.section.models",
         "usage.section.projects",
         "usage.section.sessions",
         "usage.status.suffix",
+        "usage.status.suffix_unpriced",
         "usage.command.refresh",
+        "usage.command.spend",
         "usage.method.summary.description",
         "usage.method.summary.result",
+        "usage.method.spend.description",
+        "usage.method.spend.result",
+        "usage.cost.value",
+        "usage.cost.partial",
+        "usage.cost.partial_note",
+        "usage.cost.unpriced",
+        "usage.empty.title",
+        "usage.empty.body",
+        "usage.empty.action",
+        "usage.pricing.errors",
+        "usage.unknown",
+        "usage.agent.claude",
+        "usage.agent.codex",
+        "usage.agent.opencode",
+        "usage.budget.day",
+        "usage.budget.month",
+        "usage.notify.budget.title",
+        "usage.notify.budget.warn",
+        "usage.notify.budget.over",
         "setting-usage-cost-track-label",
         "setting-usage-cost-track-help",
+        "setting-usage-budget-daily_usd-label",
+        "setting-usage-budget-daily_usd-help",
+        "setting-usage-budget-monthly_usd-label",
+        "setting-usage-budget-monthly_usd-help",
         "setting-usage-display-status_bar-label",
         "setting-usage-display-status_bar-help",
     ]
@@ -190,17 +271,41 @@ mod tests {
             .filter(|spec| spec.key.starts_with("usage."))
             .map(|spec| spec.key.as_str())
             .collect();
-        assert_eq!(keys.len(), 2);
+        assert_eq!(keys.len(), 4);
         assert!(keys.contains(&"usage.cost.track"));
+        assert!(keys.contains(&"usage.budget.daily_usd"));
+        assert!(keys.contains(&"usage.budget.monthly_usd"));
         assert!(keys.contains(&"usage.display.status_bar"));
     }
 
     #[test]
-    fn fixture_summary_has_days_models_and_sessions() {
+    fn fixture_summary_has_days_models_periods_and_sessions() {
         let summary = view::sample_summary();
         assert!(!summary.by_day.is_empty());
         assert!(summary.by_model.len() >= 3);
         assert!(!summary.sessions.is_empty());
         assert!(summary.total.total_tokens > 0);
+        assert_eq!(summary.periods.len(), 4);
+        assert!(summary.periods.contains_key("last7"));
+        assert!(summary.total.cost_usd > 0.0);
+        assert!(summary.total.unpriced_tokens > 0);
+    }
+
+    #[test]
+    fn spend_rpc_exposes_the_muster_contract() {
+        let dir = temp_dir();
+        let mut runtime = runtime(&dir);
+        let mut params = serde_json::Map::new();
+        params.insert("period".to_owned(), json!("all"));
+        params.insert("project".to_owned(), json!("C:/work/forja"));
+        let value = runtime
+            .call_method("usage.spend", params)
+            .expect("usage.spend is registered");
+        assert_eq!(value["period"], "all");
+        assert_eq!(value["project"], "C:/work/forja");
+        assert!(value["usd"].is_number());
+        assert!(value["projects"].is_array());
+        assert!(value["pending"].is_boolean());
+        let _ = std::fs::remove_dir_all(dir);
     }
 }

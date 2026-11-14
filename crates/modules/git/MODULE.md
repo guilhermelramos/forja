@@ -9,7 +9,11 @@ Módulo `git`: painel Mudanças, histórico com grafo, blame e sincronização.
   `git.discard`, `git.commit`, `git.push`, `git.pull`, `git.fetch`,
   `git.sync`, `git.publish`, `git.rebase`, `git.abort`, `git.conflicts`,
   `git.log` e `git.blame`.
+- Comandos assíncronos `git.compare` e `git.compare.result`, para resumir os
+  commits e arquivos entre uma base e `HEAD`.
 - Evento de contrato `git.status_changed` (`bench_path`, `summary`).
+- Evento de contrato `git.comparison_changed` (`bench_path`, `base?`) quando
+  um resumo de comparação novo fica pronto.
 - View `git.changes` no painel direito (ordem 5, para ficar visível enquanto o
   shell empilha as views) com as abas Mudanças, Histórico e Blame.
 - View `git.history` como aba de bancada (ordem 60) com o grafo e o blame em
@@ -42,7 +46,18 @@ módulo `diff` da onda C2.
 - **Histórico:** `git log --graph --pretty=format:…` é devolvido em linhas com
   o prefixo ASCII do grafo e o commit opcional. A view pinta o grafo em
   monoespaçado; ao selecionar um commit, carrega `git show` em segundo plano e
-  mostra autor, e-mail, horário, estatísticas e o patch.
+  mostra autor, e-mail, horário, estatísticas e o patch. Toda escrita ou
+  atualização explícita invalida o cache, então o commit recém-criado aparece na
+  hora; o topo informa a branch do histórico.
+- **Comparação:** `git.compare {path, base?}` lê a branch-base, o commit-base,
+  commits à frente, autores, datas, arquivos e contagens `+/-` em `Ctx::spawn`.
+  Sem base explícita, tenta `origin/HEAD`, `origin/main` e depois `main` local;
+  se não achar uma, devolve as branches disponíveis para seleção. O resultado
+  fica em `git.compare.result` e só emite `git.comparison_changed` quando muda.
+  `git.diff {path, file, comparison: "base...HEAD"}` devolve os hunks da mesma
+  comparação; sem `comparison`, preserva a leitura da árvore de trabalho.
+- **Erros:** uma falha de pull, push ou outra operação fica no painel até ser
+  fechada. A atualização periódica de status não apaga mais essa mensagem.
 - **Blame:** `git blame --line-porcelain` vira linhas com hash, autor, horário
   e conteúdo. O campo aceita um caminho relativo à bancada e começa com o
   arquivo ativo do editor (`editor.active_file`).

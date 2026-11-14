@@ -6,6 +6,7 @@
 //! handler para alimentar a interface e o CLI.
 
 mod commands;
+mod comparison;
 mod diff;
 mod engine;
 mod helpers;
@@ -20,7 +21,7 @@ mod view_history;
 mod view_history_panel;
 
 use forja_contracts::names;
-use forja_contracts::{BenchActivated, BenchStored, GitStatusChanged};
+use forja_contracts::{BenchActivated, BenchStored, GitComparisonChanged, GitStatusChanged};
 use forja_kernel::{Module, ModuleManifest, Registrar, Slot};
 use helpers::refresh_async;
 use state::Shared;
@@ -50,6 +51,7 @@ impl Module for GitModule {
         settings::settings(r);
 
         r.contract_event::<GitStatusChanged>(names::GIT_STATUS_CHANGED);
+        r.contract_event::<GitComparisonChanged>(names::GIT_COMPARISON_CHANGED);
         r.contract_event::<BenchActivated>(names::BENCH_ACTIVATED);
         r.contract_event::<BenchStored>(names::BENCH_STORED);
 
@@ -114,6 +116,8 @@ fn used_keys() -> Vec<&'static str> {
         "git.command.conflicts",
         "git.command.log",
         "git.command.blame",
+        "git.command.compare",
+        "git.command.compare-result",
         "git.changes.title",
         "git.history.title",
         "git.changes.empty",
@@ -170,6 +174,7 @@ fn used_keys() -> Vec<&'static str> {
         "git.changes.blame-empty",
         "git.history.empty",
         "git.history.empty-hint",
+        "git.history.branch",
         "git.history.load",
         "git.history.author",
         "git.history.time",

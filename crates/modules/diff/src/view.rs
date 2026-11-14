@@ -3,7 +3,7 @@
 use crate::images;
 use crate::model::{self, Row, RowKind};
 use crate::state::{Mode, Shared};
-use forja_kernel::ui_contract::{egui, View};
+use forja_kernel::ui_contract::{View, egui};
 use forja_kernel::{Args, Ctx, SettingValue};
 use serde_json::json;
 use std::collections::BTreeMap;
@@ -77,10 +77,18 @@ impl View for DiffView {
         let muted = c32(tokens.color.text_muted);
         self.toolbar(ui, cx, muted);
         if let Some(status) = self.state.status() {
-            ui.label(egui::RichText::new(status).small().color(c32(tokens.color.danger)));
+            ui.label(
+                egui::RichText::new(status)
+                    .small()
+                    .color(c32(tokens.color.danger)),
+            );
         }
         if let Some(notice) = self.state.notice() {
-            ui.label(egui::RichText::new(notice).small().color(c32(tokens.color.ok)));
+            ui.label(
+                egui::RichText::new(notice)
+                    .small()
+                    .color(c32(tokens.color.ok)),
+            );
         }
         if self.state.stale() {
             let _ = cx.run_command("diff.refresh", Args::new());
@@ -114,6 +122,16 @@ impl DiffView {
 
     fn toolbar(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, muted: egui::Color32) {
         ui.horizontal_wrapped(|ui| {
+            if let Some(comparison) = self.state.comparison() {
+                ui.label(
+                    egui::RichText::new(format!(
+                        "{}: {comparison}",
+                        cx.t("diff.comparison.heading")
+                    ))
+                    .small()
+                    .color(muted),
+                );
+            }
             for mode in [Mode::Split, Mode::Unified, Mode::Combined] {
                 let selected = self.mode == mode;
                 if ui
@@ -164,10 +182,9 @@ impl DiffView {
             let count = self.state.notes().len();
             if count > 0 {
                 ui.label(
-                    egui::RichText::new(cx.t_args(
-                        "diff.notes.count",
-                        &[("count", &count.to_string())],
-                    ))
+                    egui::RichText::new(
+                        cx.t_args("diff.notes.count", &[("count", &count.to_string())]),
+                    )
                     .small()
                     .color(muted),
                 );
@@ -213,7 +230,10 @@ impl DiffView {
             });
             return;
         };
-        let filter = self.state.with(|state| state.filter.clone()).unwrap_or_default();
+        let filter = self
+            .state
+            .with(|state| state.filter.clone())
+            .unwrap_or_default();
         let mut filter_text = filter.clone();
         ui.vertical(|ui| {
             ui.set_width(240.0);
@@ -227,11 +247,9 @@ impl DiffView {
             let selected = self.state.with(|state| state.selected.clone()).flatten();
             let bench = self.state.bench().unwrap_or_default();
             let mut grouped: BTreeMap<String, Vec<&model::GitFile>> = BTreeMap::new();
-            for file in changes
-                .files
-                .iter()
-                .filter(|file| filter.is_empty() || file.path.to_ascii_lowercase().contains(&filter))
-            {
+            for file in changes.files.iter().filter(|file| {
+                filter.is_empty() || file.path.to_ascii_lowercase().contains(&filter)
+            }) {
                 let directory = std::path::Path::new(&file.path)
                     .parent()
                     .and_then(|parent| parent.to_str())
@@ -260,6 +278,9 @@ impl DiffView {
                                 args.insert("path", json!(bench));
                                 args.insert("file", json!(file.path));
                                 args.insert("staged", json!(!file.unstaged && file.staged));
+                                if let Some(comparison) = self.state.comparison() {
+                                    args.insert("comparison", json!(comparison));
+                                }
                                 let _ = cx.run_command("diff.open", args);
                             }
                         }
@@ -281,12 +302,17 @@ impl DiffView {
             ui.horizontal(|ui| {
                 ui.label(egui::RichText::new(&diff.path).strong());
                 if diff.staged {
-                    ui.label(egui::RichText::new(cx.t("diff.staged")).small().color(muted));
+                    ui.label(
+                        egui::RichText::new(cx.t("diff.staged"))
+                            .small()
+                            .color(muted),
+                    );
                 }
             });
             if diff.binary {
                 if images::is_image(&diff.path) {
-                    if self.image_key.as_deref() != Some(diff.path.as_str()) && !self.image_loading {
+                    if self.image_key.as_deref() != Some(diff.path.as_str()) && !self.image_loading
+                    {
                         self.start_image(ui, cx, &diff);
                     }
                     self.image_area(ui, cx, muted);
@@ -344,10 +370,9 @@ impl DiffView {
             }
             RowKind::Gap => {
                 ui.label(
-                    egui::RichText::new(cx.t_args(
-                        "diff.collapsed",
-                        &[("count", &row.skipped.to_string())],
-                    ))
+                    egui::RichText::new(
+                        cx.t_args("diff.collapsed", &[("count", &row.skipped.to_string())]),
+                    )
                     .small()
                     .color(muted),
                 );
@@ -455,13 +480,22 @@ impl DiffView {
         let bench = self.state.bench().unwrap_or_default();
         let file = diff.path.clone();
         let staged = diff.staged;
+        let comparison_base = self
+            .state
+            .comparison()
+            .as_deref()
+            .and_then(crate::commands::comparison_base)
+            .map(str::to_owned);
         let context = ui.ctx().clone();
         let slot = Arc::clone(&self.image_slot);
         self.images = None;
         self.image_loading = true;
         self.image_key = Some(file.clone());
         cx.spawn(
-            move || images::load(&bench, &file, staged),
+            move || match comparison_base {
+                Some(base) => images::load_comparison(&bench, &file, &base),
+                None => images::load(&bench, &file, staged),
+            },
             move |_cx, pair| {
                 let old = pair.old.as_ref().map(|image| {
                     context.load_texture("diff-old", image.clone(), egui::TextureOptions::LINEAR)
@@ -525,7 +559,10 @@ fn image_cell(
     ui.vertical(|ui| {
         if let Some(texture) = texture {
             let scale = (240.0 / texture.size_vec2().x.max(1.0)).min(1.0);
-            ui.add(egui::Image::new((texture.id(), texture.size_vec2() * scale)));
+            ui.add(egui::Image::new((
+                texture.id(),
+                texture.size_vec2() * scale,
+            )));
         } else {
             ui.label(egui::RichText::new(cx.t("diff.image.missing")).color(muted));
         }
@@ -551,7 +588,12 @@ fn split_line(
     });
 }
 
-fn cell_text(ui: &mut egui::Ui, cell: Option<&model::Cell>, color: egui::Color32, muted: egui::Color32) {
+fn cell_text(
+    ui: &mut egui::Ui,
+    cell: Option<&model::Cell>,
+    color: egui::Color32,
+    muted: egui::Color32,
+) {
     let text = cell
         .map(|cell| format!("{:>4}  {}", cell.number, cell.text))
         .unwrap_or_default();
@@ -617,7 +659,11 @@ fn previous_change(rows: &[Row], current: Option<usize>) -> Option<usize> {
         .or(current)
 }
 
-fn status_letters(file: &model::GitFile) -> String {    let mut letters = String::new();
+fn status_letters(file: &model::GitFile) -> String {
+    if file.comparison {
+        return "Δ".to_owned();
+    }
+    let mut letters = String::new();
     letters.push(if file.staged {
         file.index.to_ascii_uppercase()
     } else {

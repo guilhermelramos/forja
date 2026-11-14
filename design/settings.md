@@ -266,7 +266,8 @@ Ajudantes cobre como um agente nasce, como é observado, o que é guardado da se
 | `voice.output.auto_read` | alternar | não — Ler toda resposta em voz alta atrapalha quem está lendo. | — | Ler respostas em voz alta · Read responses aloud | Lê automaticamente as respostas do ajudante. | `voice` |
 | `voice.privacy.keep_audio` | alternar | não — Áudio bruto é dado sensível e não é necessário depois da transcrição. | — | Guardar áudio · Keep audio | Guarda os arquivos de áudio usados na transcrição. | `voice` |
 | `usage.cost.track` | alternar | sim — Uso local ajuda a entender custo sem enviar nada para fora. | — | Registrar uso · Track usage | Registra consumo de tokens e custo por ajudante. | `usage` |
-| `usage.cost.alert_usd` | número | `25` — 25 dólares é um aviso cedo o bastante para agir; 0 desliga. | 0–1000 | Aviso de custo (US$) · Cost alert (USD) | Avisa quando o custo acumulado do dia passa desse valor; 0 desliga. | `usage` |
+| `usage.budget.daily_usd` | número | `0` — desligado até a pessoa definir um teto; 0 desliga. | 0–100000 | Limite de gasto diário (US$) · Daily spend limit (USD) | Avisa em 80% e 100% do custo estimado do dia; 0 desliga. | `usage` |
+| `usage.budget.monthly_usd` | número | `0` — desligado até a pessoa definir um teto; 0 desliga. | 0–100000 | Limite de gasto mensal (US$) · Monthly spend limit (USD) | Avisa em 80% e 100% do custo estimado do mês; 0 desliga. | `usage` |
 | `usage.display.status_bar` | alternar | sim - Custo visível evita surpresa no fim do dia. | - | Mostrar uso na barra de status · Show usage in status bar | Mostra o uso acumulado na barra de status. | `usage` |
 | `accounts.confirm.remove` | alternar | sim - A pasta guarda a sessão e as credenciais do CLI; apagar sem confirmação é irreversível. | - | Confirmar remoção de conta · Confirm account removal | Pede confirmação antes de apagar a pasta de uma conta. | `accounts` |
 

@@ -1,5 +1,6 @@
 //! Shared state for the Changes panel and the History view.
 
+use crate::comparison::ComparisonReport;
 use crate::engine::StatusReport;
 use crate::log::{BlameLine, LogLine};
 use std::sync::{Arc, Mutex};
@@ -27,6 +28,11 @@ struct State {
     error: Option<String>,
     notice: Option<String>,
     discard: Option<Vec<String>>,
+    comparison_generation: u64,
+    comparison_path: Option<String>,
+    comparison_base: Option<String>,
+    comparison_loading: bool,
+    comparison_result: Option<Result<ComparisonReport, String>>,
 }
 
 #[derive(Clone)]
@@ -67,6 +73,11 @@ impl Shared {
                 state.blame.clear();
                 state.blame_for = None;
                 state.last_refresh = None;
+                state.comparison_generation = state.comparison_generation.wrapping_add(1);
+                state.comparison_path = None;
+                state.comparison_base = None;
+                state.comparison_loading = false;
+                state.comparison_result = None;
             }
         }
     }
@@ -80,7 +91,8 @@ impl Shared {
             state.report = Some(report);
             state.last_refresh = Some(Instant::now());
             state.refreshing = false;
-            state.error = None;
+            // An operation error stays visible until it is dismissed; a
+            // successful status refresh must not erase it.
         }
     }
 
@@ -149,6 +161,14 @@ impl Shared {
             .lock()
             .map(|state| state.log_for.as_deref() == Some(path))
             .unwrap_or(false)
+    }
+
+    /// Forces the next History draw to read the log again after a commit,
+    /// pull, rebase or explicit refresh changed HEAD.
+    pub fn invalidate_log(&self) {
+        if let Ok(mut state) = self.0.lock() {
+            state.log_for = None;
+        }
     }
 
     pub fn blame(&self) -> Vec<BlameLine> {
@@ -321,6 +341,49 @@ impl Shared {
         if let Ok(mut state) = self.0.lock() {
             state.discard = value;
         }
+    }
+
+    pub fn begin_comparison(&self, path: String, base: Option<String>) -> Option<u64> {
+        let Ok(mut state) = self.0.lock() else {
+            return None;
+        };
+        if state.comparison_loading
+            && state.comparison_path.as_deref() == Some(path.as_str())
+            && state.comparison_base == base
+        {
+            return None;
+        }
+        state.comparison_generation = state.comparison_generation.wrapping_add(1);
+        state.comparison_path = Some(path);
+        state.comparison_base = base;
+        state.comparison_loading = true;
+        Some(state.comparison_generation)
+    }
+
+    pub fn finish_comparison(
+        &self,
+        generation: u64,
+        result: Result<ComparisonReport, String>,
+    ) -> Option<String> {
+        let Ok(mut state) = self.0.lock() else {
+            return None;
+        };
+        if generation != state.comparison_generation {
+            return None;
+        }
+        state.comparison_loading = false;
+        state.comparison_result = Some(result);
+        state.comparison_path.clone()
+    }
+
+    pub fn comparison(
+        &self,
+        path: &str,
+    ) -> Option<(bool, Option<Result<ComparisonReport, String>>)> {
+        self.0.lock().ok().and_then(|state| {
+            (state.comparison_path.as_deref() == Some(path))
+                .then(|| (state.comparison_loading, state.comparison_result.clone()))
+        })
     }
 }
 

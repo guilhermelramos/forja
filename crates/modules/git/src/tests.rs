@@ -1,6 +1,6 @@
 use super::*;
-use forja_kernel::{contract, Runtime, RuntimeOptions};
-use serde_json::{json, Map};
+use forja_kernel::{Args, Runtime, RuntimeOptions, contract};
+use serde_json::{Map, json};
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -70,11 +70,17 @@ fn runtime(dir: &std::path::Path) -> Runtime {
 
 fn wait(runtime: &mut Runtime, mut ready: impl FnMut(&mut Runtime) -> bool) {
     let (sender, receiver) = std::sync::mpsc::channel();
-    runtime.set_wake(std::sync::Arc::new(move || { let _ = sender.send(()); }));
+    runtime.set_wake(std::sync::Arc::new(move || {
+        let _ = sender.send(());
+    }));
     loop {
         runtime.poll_tasks();
-        if ready(runtime) { return; }
-        receiver.recv_timeout(std::time::Duration::from_secs(60)).expect("task did not signal completion");
+        if ready(runtime) {
+            return;
+        }
+        receiver
+            .recv_timeout(std::time::Duration::from_secs(60))
+            .expect("task did not signal completion");
     }
 }
 
@@ -83,6 +89,36 @@ fn contract_passes() {
     let root = temp_dir("contract");
     let runtime = runtime(&root);
     contract::assert_ok(runtime.registry(), runtime.i18n());
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
+fn compare_command_returns_its_result_after_a_background_task() {
+    let root = temp_dir("compare-task");
+    std::fs::create_dir_all(&root).unwrap();
+    let work = repo(&root);
+    std::fs::write(work.join("a.txt"), "um\ndois\ntrês\n").unwrap();
+    git(&work, &["add", "a.txt"]);
+    git(&work, &["commit", "-m", "comparação"]);
+    let path = work.to_string_lossy().into_owned();
+    let mut runtime = runtime(&root);
+    let mut args = Args::new();
+    args.insert("path", json!(path));
+    args.insert("base", json!("main"));
+    let started = runtime.run_command("git.compare", args).unwrap();
+    assert_eq!(started["pending"], true);
+
+    wait(&mut runtime, |runtime| {
+        let mut result_args = Args::new();
+        result_args.insert("path", json!(path));
+        runtime
+            .run_command("git.compare.result", result_args)
+            .is_ok_and(|result| {
+                !result["loading"].as_bool().unwrap_or(true)
+                    && result["comparison"]["ahead"].as_u64() == Some(1)
+            })
+    });
+    drop(runtime);
     let _ = std::fs::remove_dir_all(root);
 }
 
@@ -187,8 +223,26 @@ fn publish_and_abort_without_remote_or_merge_have_clear_outcomes() {
     std::fs::create_dir_all(&root).unwrap();
     let work = repo(&root);
     assert_eq!(engine::publish(&work).unwrap_err(), "no-remote");
+    assert_eq!(engine::pull(&work).unwrap_err(), "no-remote");
     assert_eq!(engine::abort(&work).unwrap_err(), "nothing-to-abort");
     let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
+fn status_refresh_keeps_operation_errors_visible() {
+    let state = Shared::new();
+    state.set_error(Some("pull failed".to_owned()));
+    state.set_report(engine::StatusReport::default());
+    assert_eq!(state.error().as_deref(), Some("pull failed"));
+}
+
+#[test]
+fn mutations_invalidate_the_cached_history() {
+    let state = Shared::new();
+    state.set_commits("C:/bancada", Vec::new());
+    assert!(state.log_for("C:/bancada"));
+    state.invalidate_log();
+    assert!(!state.log_for("C:/bancada"));
 }
 
 #[test]

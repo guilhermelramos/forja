@@ -28,6 +28,7 @@ pub mod names {
     pub const TRUST_DECIDED: &str = "trust.decided";
     pub const FILE_OPEN_REQUESTED: &str = "file.open_requested";
     pub const GIT_STATUS_CHANGED: &str = "git.status_changed";
+    pub const GIT_COMPARISON_CHANGED: &str = "git.comparison_changed";
     pub const HELPER_STATUS_CHANGED: &str = "helper.status_changed";
     pub const NOTIFY_REQUESTED: &str = "notify.requested";
     /// Resultado de qualquer operação de balcão (`counter_<nome>.*`). Payload: `CounterResult`.
@@ -215,6 +216,13 @@ pub struct GitSummary {
 pub struct GitStatusChanged {
     pub bench_path: String,
     pub summary: GitSummary,
+}
+
+/// A background branch comparison finished for a bench.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct GitComparisonChanged {
+    pub bench_path: String,
+    pub base: Option<String>,
 }
 
 /// Coarse state of a helper (coding agent) as shown on benches, the board and toasts.

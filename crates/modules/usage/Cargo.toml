@@ -1,6 +1,6 @@
 [package]
 name = "forja-module-usage"
-description = "Forja module usage: local token usage by day, model, project and session."
+description = "Forja module usage: local token and cost usage by day, helper, model, bench and session."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -13,3 +13,4 @@ linkme.workspace = true
 chrono.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+toml.workspace = true

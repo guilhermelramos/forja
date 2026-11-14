@@ -17,6 +17,10 @@ Módulo `diff` da Forja. Aba "Diferenças" da bancada.
 ## Desenho
 
 - Lê `git.changes` e `git.diff` do módulo git; nunca importa o crate dele.
+- `diff.open {comparison: "base...HEAD"}` mostra a lista e os hunks desde a
+  base escolhida; sem esse campo, mantém o comportamento da árvore de trabalho.
+- Com uma comparação ativa, `git.compare.result` fornece os arquivos e o evento
+  `git.comparison_changed` atualiza a aba depois de commits ou mudança da base.
 - Lista de arquivos agrupada por pasta, com filtro e as letras de índice/worktree.
 - Visões lado a lado, em linha e combinada; contexto configurável, recolhimento
   de trechos iguais e opção de ignorar espaços em branco.
@@ -29,14 +33,16 @@ Módulo `diff` da Forja. Aba "Diferenças" da bancada.
   ajudante. O envio prefere `helper.list` e cai para `terminal.list`; usa
   `terminal.send`. `diff.notes.send_mode` escolhe a introdução (anexar,
   substituir ou perguntar).
-- Assina `bench.activated` e `git.status_changed`; marca o estado como
+- Assina `bench.activated`, `git.status_changed` e `git.comparison_changed`; marca o estado como
   desatualizado e atualiza na próxima renderização da aba.
 
 ## Contratos
 
-- Consome `git.changes`/`git.diff`, `bench.current`, `terminal.list`/`terminal.send` e,
-  quando existir, `helper.list`.
-- Eventos de contrato: assina `bench.activated` e `git.status_changed`.
+- Consome `git.changes`/`git.diff`/`git.compare`/`git.compare.result`,
+  `bench.current`, `terminal.list`/`terminal.send` e, quando existir,
+  `helper.list`.
+- Eventos de contrato: assina `bench.activated`, `git.status_changed` e
+  `git.comparison_changed`.
 - Degrada com mensagem quando o git, a bancada ou o terminal não existem.
 
 ## Como testar

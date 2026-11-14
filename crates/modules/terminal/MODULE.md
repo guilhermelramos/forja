@@ -31,7 +31,8 @@ Nenhum arquivo passa de 600 linhas.
 - View `terminal.tab` no slot `bench_tab` (ordem 10): painéis com abas,
   divisores arrastáveis, título dinâmico (OSC 0/2) e título personalizado.
 - View `terminal.recipes` no slot `anvil_source`: lista as receitas carregadas
-  e executa a escolhida no terminal focado.
+  como resultados da Bigorna; `terminal.recipe.run` confere o retrato escolhido,
+  exige a aprovação existente para receitas de projeto e executa no terminal focado.
 
 ### Comandos
 

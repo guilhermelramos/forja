@@ -43,6 +43,7 @@ pub struct DiffState {
     pub filter: String,
     pub version: u64,
     pub stale: bool,
+    pub comparison: Option<String>,
 }
 
 #[derive(Clone)]
@@ -67,6 +68,7 @@ impl Shared {
                 state.changes = None;
                 state.diff = None;
                 state.selected = None;
+                state.comparison = None;
             }
             state.bench = bench;
         }
@@ -76,6 +78,23 @@ impl Shared {
         if let Ok(mut state) = self.0.lock() {
             state.changes = Some(changes);
         }
+    }
+
+    pub fn set_comparison(&self, comparison: Option<String>) {
+        if let Ok(mut state) = self.0.lock() {
+            state.comparison = comparison;
+            state.changes = None;
+            state.diff = None;
+            state.selected = None;
+            state.stale = true;
+        }
+    }
+
+    pub fn comparison(&self) -> Option<String> {
+        self.0
+            .lock()
+            .ok()
+            .and_then(|state| state.comparison.clone())
     }
 
     pub fn set_diff(&self, diff: FileDiff) {

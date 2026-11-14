@@ -6,12 +6,12 @@
 
 | Métrica | Valor |
 |---|---|
-| Configurações no catálogo | 310 |
-| Configurações registradas no app | 266 (266 do catálogo + 0 extras) |
-| Configurações com efeito real no código | 265 (265 do catálogo) |
+| Configurações no catálogo | 311 |
+| Configurações registradas no app | 268 (268 do catálogo + 0 extras) |
+| Configurações com efeito real no código | 267 (267 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
-| Configurações adiadas | 42 |
+| Configurações adiadas | 41 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
 | Atalhos no catálogo | 109 |
@@ -42,7 +42,6 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 - `voice.output.model_path`: Aguardando a síntese de voz local (Piper) ser aprovada como dependência.
 - `voice.output.rate`: Aguardando a síntese de voz (SAPI ou Piper) ser aprovada como dependência.
 - `voice.output.auto_read`: Aguardando a síntese de voz (SAPI ou Piper) ser aprovada como dependência.
-- `usage.cost.alert_usd`: Adiado por decisão de escopo do coordenador: o aviso de custo fica para depois da Fase F.
 - `muster.coordinator.profile`: Aguardando ciclo de vida do ajudante coordenador.
 - `muster.dispatch.target`: Aguardando contrato de conclusão e falha da criação assíncrona de bancada.
 - `muster.escalation.max_retries`: Aguardando verificação de encerramento e identidade para reenvio seguro.
@@ -248,7 +247,8 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `voice.output.auto_read` | `voice` | `-` | adiada | - | adiada |
 | `voice.privacy.keep_audio` | `voice` | `voice` | sim | ok | sim |
 | `usage.cost.track` | `usage` | `usage` | sim | ok | sim |
-| `usage.cost.alert_usd` | `usage` | `-` | adiada | - | adiada |
+| `usage.budget.daily_usd` | `usage` | `usage` | sim | ok | sim |
+| `usage.budget.monthly_usd` | `usage` | `usage` | sim | ok | sim |
 | `usage.display.status_bar` | `usage` | `usage` | sim | ok | sim |
 | `accounts.confirm.remove` | `accounts` | `accounts` | sim | ok | sim |
 | `muster.mode.enabled` | `muster` | `muster` | sim | ok | sim |

@@ -1,7 +1,10 @@
 //! Discovery, incremental cache and aggregation of local transcripts.
 
-use crate::model::{day_key, UsageRecord, UsageSession, UsageSummary, UsageTotals};
+use crate::model::{
+    day_key, UsagePeriod, UsageRecord, UsageSession, UsageSlice, UsageSummary, UsageTotals, DAY_MS,
+};
 use crate::parse;
+use crate::pricing::Pricing;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
@@ -64,7 +67,7 @@ pub struct ScanStats {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 struct Fingerprint {
     len: u64,
-    modified_ms: u128,
+    modified_ns: u128,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -113,57 +116,80 @@ impl Cache {
         stats
     }
 
-    pub fn summary_at(&self, now_ms: i64) -> UsageSummary {
+    pub fn summary_at(&self, now_ms: i64, pricing: &Pricing) -> UsageSummary {
         summarize(
             self.files.values().flat_map(|file| file.records.iter()),
             now_ms,
+            pricing,
         )
     }
 }
 
-pub fn summarize<'a>(records: impl Iterator<Item = &'a UsageRecord>, now_ms: i64) -> UsageSummary {
+pub fn summarize<'a>(
+    records: impl Iterator<Item = &'a UsageRecord>,
+    now_ms: i64,
+    pricing: &Pricing,
+) -> UsageSummary {
     let mut summary = UsageSummary::default();
     let today = day_key(now_ms);
-    let week_start = day_key(now_ms - 7 * 24 * 60 * 60 * 1000);
-    let month_start = day_key(now_ms - 30 * 24 * 60 * 60 * 1000);
+    let week_start = day_key(now_ms - 6 * DAY_MS);
+    let month_start = day_key(now_ms - 29 * DAY_MS);
+    let mut slices: BTreeMap<String, UsageSlice> = UsagePeriod::ALL
+        .iter()
+        .map(|period| (period.id().to_owned(), UsageSlice::default()))
+        .collect();
     let mut grouped: BTreeMap<(String, String), UsageSession> = BTreeMap::new();
     for record in records {
-        summary.total.add(&record.totals);
-        summary
-            .by_agent
-            .entry(record.agent.clone())
-            .or_default()
-            .add(&record.totals);
+        let mut totals = record.totals;
+        match record.cost_usd {
+            Some(cost) if cost.is_finite() && cost >= 0.0 => totals.cost_usd = cost,
+            Some(_) => totals.unpriced_tokens = totals.total_tokens,
+            None => match pricing.cost_for(&record.model, &record.totals) {
+                Some(cost) => totals.cost_usd = cost,
+                None => totals.unpriced_tokens = totals.total_tokens,
+            },
+        }
         let model = if record.model.is_empty() {
             "unknown".to_owned()
         } else {
             record.model.clone()
         };
+        summary.total.add(&totals);
+        summary
+            .by_agent
+            .entry(record.agent.clone())
+            .or_default()
+            .add(&totals);
         summary
             .by_model
             .entry(model.clone())
             .or_default()
-            .add(&record.totals);
+            .add(&totals);
         summary
             .by_project
             .entry(record.project.clone())
             .or_default()
-            .add(&record.totals);
-        if record.timestamp_ms > 0 {
-            let day = day_key(record.timestamp_ms);
-            summary
-                .by_day
-                .entry(day.clone())
-                .or_default()
-                .add(&record.totals);
-            if day == today {
-                summary.today.add(&record.totals);
-            }
-            if day >= week_start {
-                summary.last_7_days.add(&record.totals);
-            }
-            if day >= month_start {
-                summary.last_30_days.add(&record.totals);
+            .add(&totals);
+        let day = (record.timestamp_ms > 0).then(|| day_key(record.timestamp_ms));
+        if let Some(day) = &day {
+            summary.by_day.entry(day.clone()).or_default().add(&totals);
+        }
+        for period in UsagePeriod::ALL {
+            let included = match &day {
+                Some(day) => period.includes(day, &today, &week_start, &month_start),
+                None => period == UsagePeriod::All,
+            };
+            if included {
+                if let Some(slice) = slices.get_mut(period.id()) {
+                    add_to_slice(
+                        slice,
+                        day.as_deref(),
+                        &record.agent,
+                        &model,
+                        &record.project,
+                        &totals,
+                    );
+                }
             }
         }
         let session = grouped
@@ -178,25 +204,77 @@ pub fn summarize<'a>(records: impl Iterator<Item = &'a UsageRecord>, now_ms: i64
                 updated_ms: record.timestamp_ms,
                 totals: UsageTotals::default(),
             });
-        session.totals.add(&record.totals);
+        session.totals.add(&totals);
         if record.timestamp_ms > session.updated_ms {
             session.updated_ms = record.timestamp_ms;
+        }
+        if record.timestamp_ms > 0
+            && (session.started_ms == 0 || record.timestamp_ms < session.started_ms)
+        {
+            session.started_ms = record.timestamp_ms;
         }
         if !record.project.is_empty() {
             session.project = record.project.clone();
         }
         if !record.model.is_empty() {
-            session.model = model;
+            session.model = model.clone();
         }
         if !record.title.is_empty() {
             session.title = record.title.clone();
         }
     }
+    summary.today = slice_totals(&slices, UsagePeriod::Today);
+    summary.last_7_days = slice_totals(&slices, UsagePeriod::Last7);
+    summary.last_30_days = slice_totals(&slices, UsagePeriod::Last30);
+    summary.by_agent = summary_period(&slices, UsagePeriod::All).by_agent.clone();
+    summary.by_model = summary_period(&slices, UsagePeriod::All).by_model.clone();
+    summary.by_project = summary_period(&slices, UsagePeriod::All).by_project.clone();
+    summary.by_day = summary_period(&slices, UsagePeriod::All).by_day.clone();
+    summary.periods = slices;
     summary.sessions = grouped.into_values().collect();
     summary
         .sessions
         .sort_by_key(|session| std::cmp::Reverse(session.updated_ms));
     summary
+}
+
+fn add_to_slice(
+    slice: &mut UsageSlice,
+    day: Option<&str>,
+    agent: &str,
+    model: &str,
+    project: &str,
+    totals: &UsageTotals,
+) {
+    slice.totals.add(totals);
+    slice
+        .by_agent
+        .entry(agent.to_owned())
+        .or_default()
+        .add(totals);
+    slice
+        .by_model
+        .entry(model.to_owned())
+        .or_default()
+        .add(totals);
+    slice
+        .by_project
+        .entry(project.to_owned())
+        .or_default()
+        .add(totals);
+    if let Some(day) = day {
+        slice.by_day.entry(day.to_owned()).or_default().add(totals);
+    }
+}
+
+fn slice_totals(slices: &BTreeMap<String, UsageSlice>, period: UsagePeriod) -> UsageTotals {
+    summary_period(slices, period).totals
+}
+
+fn summary_period(slices: &BTreeMap<String, UsageSlice>, period: UsagePeriod) -> &UsageSlice {
+    slices
+        .get(period.id())
+        .expect("every period is initialized")
 }
 
 pub fn discover(roots: &Roots) -> Vec<(&'static str, PathBuf)> {
@@ -285,11 +363,11 @@ fn fingerprint(path: &Path) -> Option<Fingerprint> {
     let metadata = std::fs::metadata(path).ok()?;
     Some(Fingerprint {
         len: metadata.len(),
-        modified_ms: metadata
+        modified_ns: metadata
             .modified()
             .ok()
             .and_then(|time| time.duration_since(std::time::UNIX_EPOCH).ok())
-            .map(|duration| duration.as_millis())
+            .map(|duration| duration.as_nanos())
             .unwrap_or(0),
     })
 }
@@ -305,6 +383,7 @@ fn user_home() -> PathBuf {
 mod tests {
     use super::*;
     use crate::model::UsageTotals;
+    use crate::pricing::{PriceEntry, Pricing};
 
     fn record(agent: &str, session: &str, project: &str, day: i64, tokens: u64) -> UsageRecord {
         UsageRecord {
@@ -313,36 +392,80 @@ mod tests {
             project: project.into(),
             model: "model-a".into(),
             title: "Tarefa".into(),
-            timestamp_ms: 1_762_000_000_000 + day * 86_400_000,
+            timestamp_ms: 1_762_000_000_000 + day * DAY_MS,
             totals: UsageTotals {
                 input_tokens: tokens,
                 output_tokens: 0,
                 cache_read_tokens: 0,
                 cache_write_tokens: 0,
                 total_tokens: tokens,
+                cost_usd: 0.0,
+                unpriced_tokens: 0,
             },
+            cost_usd: None,
         }
     }
 
+    fn pricing() -> Pricing {
+        Pricing::for_tests(vec![PriceEntry {
+            id: "model-a".into(),
+            patterns: vec!["model-a".into()],
+            input: Some(10.0),
+            output: Some(0.0),
+            cache_read: Some(0.0),
+            cache_write: Some(0.0),
+            source: "https://example.test/pricing".into(),
+            checked: "2026-11-14".into(),
+        }])
+    }
+
     #[test]
-    fn summary_groups_today_week_month_and_sessions() {
-        let now = 1_762_000_000_000 + 10 * 86_400_000;
+    fn summary_groups_today_week_month_periods_and_sessions() {
+        let now = 1_762_000_000_000 + 10 * DAY_MS;
         let records = [
             record("claude", "a", "C:/app", 10, 100),
             record("claude", "a", "C:/app", 9, 50),
             record("codex", "b", "C:/other", 2, 25),
             record("codex", "c", "C:/other", -20, 5),
         ];
-        let summary = summarize(records.iter(), now);
+        let summary = summarize(records.iter(), now, &pricing());
         assert_eq!(summary.today.total_tokens, 100);
         assert_eq!(summary.last_7_days.total_tokens, 150);
-        assert_eq!(summary.last_30_days.total_tokens, 180);
+        assert_eq!(summary.last_30_days.total_tokens, 175);
         assert_eq!(summary.total.total_tokens, 180);
         assert_eq!(summary.by_agent["claude"].total_tokens, 150);
         assert_eq!(summary.by_project["C:/other"].total_tokens, 30);
+        assert_eq!(summary.periods["today"].totals.total_tokens, 100);
+        assert_eq!(
+            summary.periods["last7"].by_agent["claude"].total_tokens,
+            150
+        );
+        assert_eq!(summary.periods["all"].by_model["model-a"].total_tokens, 180);
         assert_eq!(summary.sessions.len(), 3);
         assert_eq!(summary.sessions[0].session_id, "a");
         assert_eq!(summary.sessions[0].totals.total_tokens, 150);
+        assert!((summary.total.cost_usd - 0.0018).abs() < 1e-9);
+    }
+
+    #[test]
+    fn reported_cost_wins_over_the_price_table() {
+        let now = 1_762_000_000_000 + 10 * DAY_MS;
+        let mut first = record("claude", "a", "C:/app", 10, 100);
+        first.cost_usd = Some(0.42);
+        let second = record("claude", "b", "C:/app", 10, 100);
+        let summary = summarize([first, second].iter(), now, &pricing());
+        assert!((summary.total.cost_usd - 0.421).abs() < 1e-9);
+        assert_eq!(summary.total.unpriced_tokens, 0);
+    }
+
+    #[test]
+    fn records_without_a_price_are_counted_as_unpriced() {
+        let now = 1_762_000_000_000 + 10 * DAY_MS;
+        let mut unknown = record("codex", "x", "C:/other", 10, 100);
+        unknown.model = "mystery".into();
+        let summary = summarize([unknown].iter(), now, &pricing());
+        assert_eq!(summary.today.unpriced_tokens, 100);
+        assert_eq!(summary.today.cost_usd, 0.0);
     }
 
     #[test]
@@ -375,13 +498,13 @@ mod tests {
         assert_eq!(second.parsed_files, 0);
         std::fs::write(
             &file,
-            "{\"type\":\"assistant\",\"sessionId\":\"s1\",\"timestamp\":\"2026-11-10T10:00:00Z\",\"message\":{\"model\":\"m\",\"usage\":{\"input_tokens\":20,\"output_tokens\":2}}}\n",
+            "{\"type\":\"assistant\",\"sessionId\":\"s1\",\"timestamp\":\"2026-11-10T10:00:00Z\",\"message\":{\"model\":\"m\",\"usage\":{\"input_tokens\":200,\"output_tokens\":2}}}\n",
         )
         .unwrap();
         let third = cache.scan(&roots);
         assert_eq!(third.parsed_files, 1);
-        let summary = cache.summary_at(1_762_000_000_000);
-        assert_eq!(summary.total.total_tokens, 22);
+        let summary = cache.summary_at(1_762_000_000_000, &Pricing::default());
+        assert_eq!(summary.total.total_tokens, 202);
         let _ = std::fs::remove_dir_all(dir);
     }
 }

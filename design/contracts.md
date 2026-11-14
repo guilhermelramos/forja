@@ -43,7 +43,7 @@ Um módulo **nunca depende do crate de outro**. Eles conversam de duas formas:
 | `editor.preview` | editor | `{path?}` | `{preview: true}`. Usa `viewers.preview`. |
 | `editor.format` | editor | `{path?}` | `{pending: true}` |
 | `editor.wrap.toggle` / `editor.close` | editor | `{path?}` | `{wrap: bool}` / `{closed: true}` |
-| `diff.open` | diff | `{path?, file?, staged?}` | `{open: true}` ou `{files, detached, upstream}` |
+| `diff.open` | diff | `{path?, file?, staged?, comparison?}` | `{open: true}` ou `{files, detached, upstream, comparison?}`. `comparison` usa `base...HEAD`; sem ele, mostra a árvore de trabalho. |
 | `diff.refresh` | diff | `{path?}` | `{files, detached, upstream}` |
 | `diff.select` | diff | `{path?, file, staged?}` | `{file, binary, hunks}` |
 | `diff.send_notes` | diff | `{terminal_id?}` | `{sent: bool, terminal_id?}`. Usa `terminal.send`; prefere `helper.list` e cai para `terminal.list`. |
@@ -54,7 +54,9 @@ Um módulo **nunca depende do crate de outro**. Eles conversam de duas formas:
 | `viewers.close` | viewers | - | `{closed: true}` |
 | `git.status` | git | `{path}` | `GitSummary` (emite `git.status_changed`) |
 | `git.changes` | git | `{path}` | `{summary, files, upstream, detached}` |
-| `git.diff` | git | `{path, file, staged?}` | `{path, staged, binary, hunks}` em JSON |
+| `git.diff` | git | `{path, file, staged?, comparison?}` | `{path, staged, binary, hunks}` em JSON. `comparison` aceita `base...HEAD`. |
+| `git.compare` | git | `{path, base?}` | `{pending: true}`; lê commits e arquivos da comparação em `Tasks` |
+| `git.compare.result` | git | `{path}` | `{loading, comparison?, error?}` |
 | `git.stage` / `git.unstage` | git | `{path, files}` | `{pending: true}` |
 | `git.discard` | git | `{path, files, confirm: true}` | `{pending: true}` (destrutivo) |
 | `git.commit` | git | `{path, message, all?}` | `{pending: true}` |
@@ -96,6 +98,8 @@ Operações de bancada e de git que podem demorar (worktree, script, rede ou vá
 processos) devolvem um aceite e concluem em segundo plano; o efeito aparece no
 evento correspondente ou na próxima leitura. `git.status`, `git.changes`,
 `git.diff`, `git.log` e `git.blame` são leituras curtas e respondem na hora.
+`git.compare` processa histórico e estatísticas em segundo plano e publica
+`git.comparison_changed` ao terminar.
 
 ## Eventos (onda C1)
 
@@ -108,6 +112,7 @@ evento correspondente ou na próxima leitura. `git.status`, `git.changes`,
 | `terminal.exited` / `terminal.bell` / `terminal.command_finished` / `terminal.title_changed` | terminal | `TerminalExited` … |
 | `file.open_requested` | terminal (links), search, diff… | `FileOpenRequested` |
 | `git.status_changed` | git | `GitStatusChanged` |
+| `git.comparison_changed` | git | `GitComparisonChanged` (`bench_path`, `base?`) |
 | `helper.status_changed` | helper (onda C2) | `HelperStatusChanged` |
 | `trust.decided` | trust | `TrustDecided` |
 | `notify.requested` | qualquer módulo | `NotifyRequested` |
@@ -612,8 +617,9 @@ Método RPC: `ports.list` (read, idempotente) devolve `{ports, scanned_at_ms, bu
 | Comando | Argumentos | Retorno |
 |---|---|---|
 | `usage.refresh` | - | `{pending: true}`; invalida e relê as transcrições |
+| `usage.spend` | `{project?, period?}` | `{period, project, matched_projects, usd, tokens, unpriced_tokens, priced, projects, scanned_at_ms, pending}`; `project` soma a pasta da bancada e as subpastas e `period` aceita `today`, `last7`, `last30` e `all` |
 
-Método RPC: `usage.summary` (read, idempotente) devolve `UsageSummary` com `today`, `last_7_days`, `last_30_days`, `total`, `by_agent`, `by_model`, `by_project`, `by_day` e `sessions`. As raízes padrão são `CLAUDE_CONFIG_DIR`/`~/.claude`, `CODEX_HOME`/`~/.codex` e as pastas do OpenCode; as homes de `accounts.roots` entram na varredura. O cache é por tamanho + mtime e a varredura roda a cada 60 s, sem bloquear a interface.
+Métodos RPC: `usage.summary` (read, idempotente) devolve `UsageSummary` com `today`, `last_7_days`, `last_30_days`, `total`, `by_agent`, `by_model`, `by_project`, `by_day`, `periods` (chaves `today`, `last7`, `last30`, `all`) e `sessions`; cada `UsageTotals` traz `cost_usd` e `unpriced_tokens`. `usage.spend` (read, idempotente) devolve o gasto do período, opcionalmente somado por bancada, para o Mutirão consultar em vez de pedir custo digitado. O custo vem do log do ajudante quando existe; senão, de `content/pricing/*.toml`, com fonte e data por entrada, e modelo sem preço aparece como "sem preço". As raízes padrão são `CLAUDE_CONFIG_DIR`/`~/.claude`, `CODEX_HOME`/`~/.codex` e as pastas do OpenCode; as homes de `accounts.roots` entram na varredura. O cache é por tamanho + mtime e a varredura roda a cada 60 s, sem bloquear a interface. `usage.budget.daily_usd` e `usage.budget.monthly_usd` avisam por `notify.show` em 80% e 100%.
 
 ### Comandos de `accounts`
 

@@ -14,11 +14,11 @@ use forja_contracts::{
     FileOpenRequested, TerminalBell, TerminalCommandFinished, TerminalExited, TerminalTitleChanged,
 };
 use forja_kernel::ui_contract::{egui, View};
-use forja_kernel::{Args, Ctx};
+use forja_kernel::{AnvilHit, Args, Ctx};
 use serde_json::json;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 /// Textos usados pela view, resolvidos antes de bloquear o hub.
@@ -444,20 +444,89 @@ fn open_external(cx: &mut Ctx<'_>, target: String) {
     );
 }
 
+struct RecipeSnapshot {
+    bench: Option<PathBuf>,
+    recipes: Vec<crate::recipes::Recipe>,
+}
+
 /// Lista de receitas contribuída à Bigorna.
 pub struct RecipeView {
     core: Shared,
     error: Option<String>,
+    requested_bench: Option<Option<PathBuf>>,
+    cached: Arc<Mutex<Option<RecipeSnapshot>>>,
 }
 
 impl RecipeView {
     /// Cria a lista ligada ao mesmo hub.
     pub fn new(core: Shared) -> Self {
-        Self { core, error: None }
+        Self { core, error: None, requested_bench: None, cached: Arc::new(Mutex::new(None)) }
     }
 }
 
 impl View for RecipeView {
+    fn provides_anvil_hits(&self) -> bool {
+        true
+    }
+
+    fn anvil_hits(&mut self, _query: &str, cx: &mut Ctx<'_>) -> Vec<AnvilHit> {
+        let settings = TermSettings::from_ctx(cx);
+        let locale = cx.i18n().locale().id().to_owned();
+        let bench = crate::commands::recipe_bench(cx);
+        let (loaded_for, mut recipes) = self.core.with_hub(|hub| {
+            (hub.bench_path.clone(), hub.recipes.clone())
+        }).unwrap_or_default();
+        let stale_fallback = self.cached.lock().ok().and_then(|cache| cache.as_ref()
+            .map(|snapshot| snapshot.bench != bench && snapshot.recipes == recipes))
+            .unwrap_or(false);
+        if recipes.is_empty() || loaded_for != bench || stale_fallback {
+            recipes = self.cached.lock().ok().and_then(|cache| cache.as_ref()
+                .filter(|snapshot| snapshot.bench == bench).map(|snapshot| snapshot.recipes.clone()))
+                .unwrap_or_default();
+            if recipes.is_empty() && self.requested_bench.as_ref() != Some(&bench) {
+                self.requested_bench = Some(bench.clone());
+                let requested = bench.clone();
+                let worker_bench = bench.clone();
+                let cache = Arc::clone(&self.cached);
+                let core = Arc::clone(&self.core);
+                cx.spawn(move || crate::recipes::load(worker_bench.as_deref()), move |cx, loaded| {
+                    if crate::commands::recipe_bench(cx) != requested { return; }
+                    let recipes = core.with_hub(|hub| {
+                        if hub.bench_path == requested && !hub.recipes.is_empty() {
+                            hub.recipes.clone()
+                        } else {
+                            hub.recipes = loaded.clone();
+                            loaded
+                        }
+                    }).unwrap_or_default();
+                    if let Ok(mut cache) = cache.lock() {
+                        *cache = Some(RecipeSnapshot { bench: requested, recipes });
+                    }
+                    cx.request_repaint();
+                });
+            }
+        }
+        recipes.into_iter().filter(|recipe| settings.recipe_listed(&recipe.scope)).map(|recipe| {
+            let scope = cx.t(if recipe.scope == "project" {
+                "terminal.view.recipe-scope-project"
+            } else {
+                "terminal.view.recipe-scope-global"
+            });
+            let mut args = serde_json::Map::new();
+            args.insert("recipe_id".into(), json!(&recipe.id));
+            args.insert("content_hash".into(), json!(&recipe.content_hash));
+            args.insert("bench_path".into(), json!(bench.as_ref().map(|path| path.to_string_lossy().into_owned())));
+            AnvilHit {
+                title: recipe.title(&locale).to_owned(),
+                detail: scope,
+                icon_glyph: None,
+                score: 0,
+                command: "terminal.recipe.run".into(),
+                args,
+            }
+        }).collect()
+    }
+
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         let settings = TermSettings::from_ctx(cx);
         let recipes = self

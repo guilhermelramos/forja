@@ -115,6 +115,8 @@ impl Module for TerminalModule {
             "terminal.view.recipe-scope-global",
             "terminal.view.recipe-scope-project",
             "terminal.view.recipe-needs-trust",
+            "terminal.view.recipe-stale",
+            "terminal.view.recipe-failed",
             "terminal.view.trust-missing",
             "terminal.view.link-title",
             "terminal.view.error-launch",
@@ -214,9 +216,11 @@ fn register_events(r: &mut Registrar<'_>, core: &Shared) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use forja_kernel::{contract, Runtime, RuntimeOptions};
+    use forja_kernel::ui_contract::View;
+    use forja_kernel::{contract, Args, Runtime, RuntimeOptions};
     use serde_json::{json, Map};
     use std::path::{Path, PathBuf};
+    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
     use std::time::{Duration, Instant};
 
     struct TempGuard(PathBuf);
@@ -260,6 +264,89 @@ mod tests {
             },
         )
         .expect("terminal module registers")
+    }
+
+    struct TestTrust {
+        approved: Arc<AtomicBool>,
+        requests: Arc<AtomicUsize>,
+    }
+
+    impl Module for TestTrust {
+        fn manifest(&self) -> ModuleManifest {
+            ModuleManifest::new("trust", "terminal.name", "0.1.0")
+        }
+
+        fn register(&mut self, r: &mut Registrar<'_>) {
+            let approved = Arc::clone(&self.approved);
+            r.command("trust.check", "terminal.command.open", move |_, _| {
+                Ok(json!({"approved": approved.load(Ordering::SeqCst)}))
+            });
+            let requests = Arc::clone(&self.requests);
+            r.command("trust.request", "terminal.command.open", move |_, _| {
+                requests.fetch_add(1, Ordering::SeqCst);
+                Ok(json!({"approved": false}))
+            });
+        }
+    }
+
+    #[test]
+    fn anvil_recipe_does_not_execute_without_trust() {
+        let dir = temp_dir("anvil-trust");
+        let core = Arc::new(Core::new());
+        let approved = Arc::new(AtomicBool::new(false));
+        let requests = Arc::new(AtomicUsize::new(0));
+        let recipe = recipes::Recipe {
+            id: "example".into(), title_pt: "Compilar exemplo".into(), title_en: "Build example".into(),
+            command: "echo forja_recipe_marker".into(), scope: "project".into(), enter: true,
+            directory: String::new(), source_path: dir.join("recipe.toml").display().to_string(),
+            content: "example".into(), content_hash: "hash-example".into(),
+        };
+        core.with_hub(|hub| hub.set_contract_content(Vec::new(), vec![recipe])).unwrap();
+        let mut runtime = Runtime::new(
+            vec![Box::new(TerminalModule { core: Arc::clone(&core) }), Box::new(TestTrust {
+                approved: Arc::clone(&approved), requests: Arc::clone(&requests),
+            })],
+            RuntimeOptions { data_dir: Some(dir.clone()), user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".into()), wake: None },
+        ).unwrap();
+        let mut args = Args::new();
+        args.insert("cwd", json!(dir.display().to_string()));
+        args.insert("command", json!("cmd.exe"));
+        let terminal = runtime.run_command("terminal.open", args).unwrap();
+        let terminal_id = terminal["terminal_id"].as_str().unwrap();
+        let mut view = RecipeView::new(Arc::clone(&core));
+        let hits = view.anvil_hits("compilar", &mut runtime.ctx("terminal"));
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0].title, "Compilar exemplo");
+        let run = |runtime: &mut Runtime| runtime.run_command(
+            &hits[0].command, Args::from_map(hits[0].args.clone()));
+        let error = run(&mut runtime).expect_err("unapproved recipe must be blocked");
+        assert!(error.to_string().contains("aprovação"));
+        assert_eq!(requests.load(Ordering::SeqCst), 1);
+        let mut stale = hits[0].args.clone();
+        stale.insert("content_hash".into(), json!("outdated"));
+        assert!(runtime.run_command(&hits[0].command, Args::from_map(stale)).is_err());
+        assert_eq!(requests.load(Ordering::SeqCst), 1);
+        let mut read_args = Args::new();
+        read_args.insert("terminal_id", json!(terminal_id));
+        std::thread::sleep(Duration::from_millis(250));
+        let output = runtime.run_command("terminal.read", read_args.clone()).unwrap();
+        assert!(!output["text"].as_str().unwrap_or_default().contains("forja_recipe_marker"));
+        approved.store(true, Ordering::SeqCst);
+        run(&mut runtime).expect("approved recipe runs");
+        let deadline = Instant::now() + Duration::from_secs(10);
+        let mut seen = false;
+        while Instant::now() < deadline {
+            let output = runtime.run_command("terminal.read", read_args.clone()).unwrap();
+            if output["text"].as_str().unwrap_or_default().contains("forja_recipe_marker") {
+                seen = true;
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(40));
+        }
+        assert!(seen, "approved recipe did not reach the terminal");
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]

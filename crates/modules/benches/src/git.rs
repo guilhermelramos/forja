@@ -36,6 +36,17 @@ pub fn ensure_repo(path: &Path) -> Result<(), String> {
     git(path, &["rev-parse", "--git-dir"]).map(|_| ())
 }
 
+/// False for a repository created by `git init` before its first commit.
+pub fn has_commits(path: &Path) -> bool {
+    git(path, &["rev-parse", "--verify", "HEAD"]).is_ok()
+}
+
+pub fn has_remote(path: &Path) -> bool {
+    git(path, &["remote"])
+        .map(|remotes| !remotes.trim().is_empty())
+        .unwrap_or(false)
+}
+
 pub fn current_branch(path: &Path) -> Result<String, String> {
     let branch = git(path, &["branch", "--show-current"])?;
     let branch = branch.trim().to_owned();
