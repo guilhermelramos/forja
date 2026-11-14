@@ -12,6 +12,8 @@ param(
     [string]$In = "playtest-results",
     [int]$MaxIssues = 10,
     [string]$Report = "report.md",
+    # Issue label and title prefix (playtest for bugs, ideia for the ideas loop).
+    [string]$Label = "playtest",
     [switch]$DryRun
 )
 
@@ -44,8 +46,8 @@ foreach ($dir in Get-ChildItem $In -Directory -ErrorAction SilentlyContinue) {
 
 $existing = @()
 if (-not $DryRun) {
-    gh label create playtest --color D93F0B --description "Achado pelos testadores automáticos" --force 2>$null | Out-Null
-    $existing = @(gh issue list --label playtest --state all --limit 500 --json title | ConvertFrom-Json | ForEach-Object { $_.title -replace '^\[playtest\]\s*', '' })
+    gh label create $Label --color D93F0B --description "Achado pelos testadores automáticos" --force 2>$null | Out-Null
+    $existing = @(gh issue list --label $Label --state all --limit 500 --json title | ConvertFrom-Json | ForEach-Object { $_.title -replace '^\[[^\]]+\]\s*', '' })
 }
 
 $order = @{ critical = 0; high = 1; medium = 2; low = 3 }
@@ -71,7 +73,7 @@ foreach ($finding in $all | Sort-Object { $order[[string]$_.severity] ?? 4 }) {
         ) -join "`n"
         if (-not $DryRun) {
             $body | Set-Content issue-body.md -Encoding utf8
-            gh issue create --title "[playtest] $title" --label playtest --body-file issue-body.md | Out-Null
+            gh issue create --title "[$Label] $title" --label $Label --body-file issue-body.md | Out-Null
         }
         $existing += $title
         $created++

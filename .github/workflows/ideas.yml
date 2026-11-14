@@ -1,0 +1,112 @@
+# Ideas loop: free-model agents use Forja live looking for improvements and
+# new ideas (not only bugs). Findings become issues labelled `ideia`.
+name: Ideias
+
+on:
+  schedule:
+    - cron: "11 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "Minutos de teste por testador"
+        default: "80"
+
+concurrency:
+  group: ideias
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  play:
+    runs-on: windows-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        mission: [ideias-produto, ideias-fluxo]
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      CARGO_TERM_COLOR: never
+      MESA_VERSION: "26.2.4"
+      OPENCODE_VERSION: "2.2.7"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build forja-app and forja-mcp (release)
+        run: |
+          rustup toolchain install
+          cargo build --release -p forja-app -p forja-mcp
+
+      - name: Software OpenGL (Mesa llvmpipe)
+        run: |
+          $url = "https://github.com/pal1000/mesa-dist-win/releases/download/$env:MESA_VERSION/mesa3d-$env:MESA_VERSION-release-msvc.7z"
+          Invoke-WebRequest $url -OutFile mesa.7z
+          7z x mesa.7z -omesa -y | Out-Null
+          foreach ($dll in 'opengl32.dll', 'libgallium_wgl.dll', 'libglapi.dll') {
+            if (Test-Path "mesa\x64\$dll") { Copy-Item "mesa\x64\$dll" target\release\ }
+          }
+          "GALLIUM_DRIVER=llvmpipe" >> $env:GITHUB_ENV
+
+      - name: Screen at 1920x1080
+        continue-on-error: true
+        run: Set-DisplayResolution -Width 1920 -Height 1080 -Force
+
+      - name: Sample project
+        run: ./playtest/seed.ps1
+
+      - name: Install OpenCode
+        run: npm install -g "@opencode/cli@$env:OPENCODE_VERSION"
+
+      - name: Play (${{ matrix.mission }})
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        run: |
+          $models = "${{ vars.PLAYTEST_MODELS || 'opencode/glm-5.3-flash-free,opencode/deepseek-v4.1-flash-free,opencode/minimax-m3.1-flash-free,opencode/mimo-v2.6-flash-free' }}" -split ','
+          ./playtest/run.ps1 -Mission "playtest/missions/${{ matrix.mission }}.md" `
+            -Minutes ([int]"${{ inputs.minutes || '80' }}") -Models $models -ModelOffset ${{ strategy.job-index }} -Out playtest-out
+
+      - name: Keep the session
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playtest-${{ matrix.mission }}
+          path: |
+            playtest-out/findings.jsonl
+            playtest-out/actions.jsonl
+            playtest-out/sessions
+            playtest-out/app-stderr.txt
+            playtest-out/usage.json
+          retention-days: 30
+          if-no-files-found: warn
+
+  report:
+    needs: play
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          path: playtest-results
+          pattern: playtest-*
+      - name: Open issues for new findings
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          ./playtest/report.ps1 -In playtest-results -MaxIssues 10 -Report report.md -Label ideia
+          Get-Content report.md | Add-Content $env:GITHUB_STEP_SUMMARY
