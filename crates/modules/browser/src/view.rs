@@ -565,10 +565,16 @@ impl BrowserView {
         }
         let mut open = true;
         let history = self.state.history();
-        egui::Window::new(cx.t("browser.history.title"))
-            .open(&mut open)
+        let title = cx.t("browser.history.title");
+        let close_label = cx.t("browser.window.close");
+        egui::Window::new(&title)
+            .id(egui::Id::new("forja.browser.history"))
+            .title_bar(false)
             .default_width(520.0)
             .show(ui.ctx(), |ui| {
+                if forja_ui_kit::window_header(ui, &title, &close_label) {
+                    open = false;
+                }
                 if history.is_empty() {
                     ui.label(egui::RichText::new(cx.t("browser.history.empty")).color(muted));
                 }

@@ -502,4 +502,18 @@ mod tests {
         drop(runtime);
         let _ = std::fs::remove_dir_all(dir);
     }
+
+    #[test]
+    fn raw_muster_errors_are_humanized() {
+        let dir = temp_dir();
+        let mut runtime = runtime(&dir);
+        let cx = runtime.ctx("muster");
+        let disabled = view::humanize_error(&cx, "muster is disabled");
+        assert!(disabled.contains("desativado"), "{disabled}");
+        let cmd = view::humanize_error(&cx, "command `muster.run` failed");
+        assert!(cmd.contains("Não foi possível concluir"), "{cmd}");
+        assert!(cmd.contains("muster.run"), "{cmd}");
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
 }

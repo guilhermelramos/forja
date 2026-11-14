@@ -85,7 +85,13 @@ impl Shared {
         }
         state.loaded = true;
         match cx.store().load::<ProjectsFile>() {
-            forja_kernel::LoadResult::Loaded(file) => state.projects = file.sorted().projects,
+            forja_kernel::LoadResult::Loaded(file) => {
+                let mut projects = file.sorted().projects;
+                for project in &mut projects {
+                    project.path = forja_kernel::paths::clean_path_str(&project.path);
+                }
+                state.projects = projects;
+            }
             forja_kernel::LoadResult::Quarantined(path) => {
                 state.error = Some(format!(
                     "project file was corrupted and moved to {}",
@@ -193,6 +199,7 @@ impl Shared {
             model::build_project(form, &canonical, state.projects.len())?
         };
         self.push_project(cx, project.clone())?;
+        self.set_error(None);
         Ok(project)
     }
 
@@ -310,6 +317,7 @@ pub fn create_folder(path: &str) -> Result<std::path::PathBuf, String> {
         ));
     }
     path.canonicalize()
+        .map(forja_kernel::paths::clean_path)
         .map_err(|error| format!("could not resolve the new folder: {error}"))
 }
 
@@ -341,5 +349,6 @@ pub fn clone_repository(url: &str, path: &str) -> Result<std::path::PathBuf, Str
         ));
     }
     path.canonicalize()
+        .map(forja_kernel::paths::clean_path)
         .map_err(|error| format!("could not resolve the clone: {error}"))
 }

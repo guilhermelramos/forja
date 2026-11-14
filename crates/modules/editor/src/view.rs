@@ -896,10 +896,16 @@ impl EditorView {
         let peek = self.state.with(|state| state.peek.clone()).flatten();
         if let Some(peek) = peek {
             let mut open = true;
-            egui::Window::new(cx.t("editor.peek.title"))
-                .open(&mut open)
+            let title = cx.t("editor.peek.title");
+            let close_label = cx.t("editor.peek.close");
+            egui::Window::new(&title)
+                .id(egui::Id::new("forja.editor.peek"))
+                .title_bar(false)
                 .default_width(460.0)
                 .show(ui.ctx(), |ui| {
+                    if forja_ui_kit::window_header(ui, &title, &close_label) {
+                        open = false;
+                    }
                     ui.label(
                         egui::RichText::new(cx.t_args(
                             "editor.peek.line",
@@ -932,10 +938,16 @@ impl EditorView {
             .flatten();
         if let Some(completion) = completion {
             let mut open = true;
-            egui::Window::new(cx.t("editor.completion.title"))
-                .open(&mut open)
+            let title = cx.t("editor.completion.title");
+            let close_label = cx.t("editor.completion.close");
+            egui::Window::new(&title)
+                .id(egui::Id::new("forja.editor.completion"))
+                .title_bar(false)
                 .default_width(260.0)
                 .show(ui.ctx(), |ui| {
+                    if forja_ui_kit::window_header(ui, &title, &close_label) {
+                        open = false;
+                    }
                     let mut chosen: Option<String> = None;
                     for candidate in &completion.candidates {
                         if ui.selectable_label(false, candidate).clicked() {
@@ -969,10 +981,16 @@ impl EditorView {
             .flatten();
         if let Some(hint) = hint {
             let mut open = true;
-            egui::Window::new(cx.t("editor.parameter.title"))
-                .open(&mut open)
+            let title = cx.t("editor.parameter.title");
+            let close_label = cx.t("editor.parameter.close");
+            egui::Window::new(&title)
+                .id(egui::Id::new("forja.editor.parameter"))
+                .title_bar(false)
                 .default_width(420.0)
                 .show(ui.ctx(), |ui| {
+                    if forja_ui_kit::window_header(ui, &title, &close_label) {
+                        open = false;
+                    }
                     ui.label(
                         egui::RichText::new(cx.t_args(
                             "editor.parameter.line",
@@ -1001,10 +1019,16 @@ impl EditorView {
         if let Some(mut rename) = rename {
             let mut open = true;
             let mut applied = false;
-            egui::Window::new(cx.t("editor.rename.title"))
-                .open(&mut open)
+            let title = cx.t("editor.rename.title");
+            let close_label = cx.t("editor.peek.close");
+            egui::Window::new(&title)
+                .id(egui::Id::new("forja.editor.rename"))
+                .title_bar(false)
                 .default_width(320.0)
                 .show(ui.ctx(), |ui| {
+                    if forja_ui_kit::window_header(ui, &title, &close_label) {
+                        open = false;
+                    }
                     ui.label(egui::RichText::new(&rename.word).monospace().color(muted));
                     ui.add(
                         egui::TextEdit::singleline(&mut rename.text)
@@ -1044,10 +1068,16 @@ impl EditorView {
 
         if self.state.with(|state| state.quick_fix).unwrap_or(false) {
             let mut open = true;
-            egui::Window::new(cx.t("editor.quick-fix.title"))
-                .open(&mut open)
+            let title = cx.t("editor.quick-fix.title");
+            let close_label = cx.t("editor.quick-fix.close");
+            egui::Window::new(&title)
+                .id(egui::Id::new("forja.editor.quick_fix"))
+                .title_bar(false)
                 .default_width(320.0)
                 .show(ui.ctx(), |ui| {
+                    if forja_ui_kit::window_header(ui, &title, &close_label) {
+                        open = false;
+                    }
                     for fix in ["trim", "newline", "spaces"] {
                         if ui
                             .selectable_label(false, cx.t(edit::quick_fix_label_key(fix)))
@@ -1086,10 +1116,16 @@ impl EditorView {
             return;
         };
         let mut open = true;
-        egui::Window::new(cx.t("editor.compare.title"))
-            .open(&mut open)
+        let title = cx.t("editor.compare.title");
+        let close_label = cx.t("editor.peek.close");
+        egui::Window::new(&title)
+            .id(egui::Id::new("forja.editor.compare"))
+            .title_bar(false)
             .default_width(760.0)
             .show(ui.ctx(), |ui| {
+                if forja_ui_kit::window_header(ui, &title, &close_label) {
+                    open = false;
+                }
                 ui.label(
                     egui::RichText::new(cx.t("editor.compare.hint"))
                         .small()

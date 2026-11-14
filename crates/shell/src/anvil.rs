@@ -407,10 +407,8 @@ impl ForjaApp {
             .keymap()
             .bindings()
             .iter()
-            .find(|binding| {
-                binding.binding.command.as_str() == command
-                    && binding.binding.scope == Scope::Global
-            })
+            .filter(|binding| binding.binding.command.as_str() == command)
+            .min_by_key(|binding| binding.binding.scope != Scope::Global)
             .map(|binding| binding.binding.chord.to_string())
             .unwrap_or_default()
     }
@@ -624,19 +622,29 @@ fn anvil_row(ui: &mut egui::Ui, tokens: &Tokens, hit: &Hit, selected: bool) -> e
         font.clone(),
         paint(tokens.color.text),
     );
-    let right = if hit.chord.is_empty() {
-        hit.detail.clone()
-    } else {
-        hit.chord.clone()
-    };
-    ui.painter().text(
-        text.right_center(),
-        Align2::RIGHT_CENTER,
-        right,
-        font,
-        paint(tokens.color.text_muted),
-    );
+    let right = right_label(hit);
+    if !right.is_empty() {
+        ui.painter().text(
+            text.right_center(),
+            Align2::RIGHT_CENTER,
+            right,
+            font,
+            paint(tokens.color.text_muted),
+        );
+    }
     response
+}
+
+/// Column on the right shows a real shortcut chord when bound, or human file/action context.
+/// Never leaks internal command, bench, or setting identifiers.
+fn right_label(hit: &Hit) -> &str {
+    if !hit.chord.is_empty() {
+        return &hit.chord;
+    }
+    match hit.kind {
+        HitKind::File(_) | HitKind::Action { .. } => &hit.detail,
+        HitKind::Command(_) | HitKind::Bench(_) | HitKind::Setting(_) => "",
+    }
 }
 
 fn muted(tokens: &Tokens) -> egui::Color32 {
@@ -701,5 +709,36 @@ mod tests {
         assert_eq!(clamp_history_limit(5.0), 10);
         assert_eq!(clamp_history_limit(100.0), 100);
         assert_eq!(clamp_history_limit(2000.0), 1000);
+    }
+
+    #[test]
+    fn right_label_hides_internal_ids_without_shortcut() {
+        let cmd = Hit {
+            kind: HitKind::Command("terminal.open".into()),
+            title: "Abrir terminal".into(),
+            detail: "terminal.open".into(),
+            chord: String::new(),
+            icon: None,
+            score: 1,
+        };
+        assert_eq!(right_label(&cmd), "");
+        let setting = Hit {
+            kind: HitKind::Setting("appearance.theme.light_name".into()),
+            title: "Tema claro".into(),
+            detail: "appearance.theme.light_name".into(),
+            chord: String::new(),
+            icon: None,
+            score: 1,
+        };
+        assert_eq!(right_label(&setting), "");
+        let bound = Hit {
+            kind: HitKind::Command("anvil.open".into()),
+            title: "Abrir Bigorna".into(),
+            detail: "anvil.open".into(),
+            chord: "Ctrl+K".into(),
+            icon: None,
+            score: 1,
+        };
+        assert_eq!(right_label(&bound), "Ctrl+K");
     }
 }

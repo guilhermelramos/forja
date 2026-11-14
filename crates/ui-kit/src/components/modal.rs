@@ -97,6 +97,32 @@ fn dialog_body(
     add_body(ui);
 }
 
+/// Cabeçalho de janela com botão de fechar localizado (substitui o `.open(&mut open)` padrão do egui).
+pub fn window_header(ui: &mut Ui, title: &str, close_label: &str) -> bool {
+    let tokens = paint::tokens(ui);
+    let metrics = tokens.metrics();
+    let mut close = false;
+    ui.horizontal(|ui| {
+        ui.label(
+            egui::RichText::new(title)
+                .font(title_font(&metrics))
+                .color(tokens.color.text.to_color32()),
+        );
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let response = crate::icon::icon_button(ui, crate::icon::CLOSE)
+                .on_hover_text(close_label);
+            response.widget_info(|| {
+                egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), close_label)
+            });
+            if response.clicked() {
+                close = true;
+            }
+        });
+    });
+    ui.separator();
+    close
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

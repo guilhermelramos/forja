@@ -248,6 +248,10 @@ impl Module for ExplorerModule {
             "explorer.notice.name_empty",
             "explorer.notice.name_invalid",
             "explorer.notice.error",
+            "explorer.notice.dismiss",
+            "explorer.error.not.found",
+            "explorer.error.permission",
+            "explorer.error.exists",
             "explorer.copy_suffix",
         ] {
             r.uses_i18n(key);

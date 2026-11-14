@@ -59,12 +59,21 @@ impl View for SettingsView {
         }
         for item in &items {
             let kind = item.get("kind").and_then(Value::as_str).unwrap_or("");
-            let label = item.get("label").and_then(Value::as_str).unwrap_or("");
+            let raw_label = item.get("label").and_then(Value::as_str).unwrap_or("");
+            let label = if kind == "theme" {
+                match raw_label {
+                    "dark" => cx.t("import.theme.dark"),
+                    "light" => cx.t("import.theme.light"),
+                    other => other.to_owned(),
+                }
+            } else {
+                raw_label.to_owned()
+            };
             let detail = item.get("detail").and_then(Value::as_str).unwrap_or("");
             let done = item.get("imported") == Some(&Value::Bool(true));
             // Tema e fonte repetem o valor no rótulo; notas mostram só a primeira linha.
             let show_detail = !detail.is_empty()
-                && detail != label
+                && detail != raw_label
                 && !matches!(kind, "notes" | "theme" | "font");
             ui.horizontal(|ui| {
                 ui.label(egui::RichText::new(cx.t(&format!("import.kind.{kind}"))).weak());

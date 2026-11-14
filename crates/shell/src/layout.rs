@@ -31,17 +31,7 @@ impl ForjaApp {
             self.text("shell.top.anvil"),
             self.chord_for("anvil.open")
         );
-        let crumb = self
-            .active_bench
-            .as_ref()
-            .map(|(project, bench)| {
-                if project == bench {
-                    project.clone()
-                } else {
-                    format!("{project} \u{00b7} {bench}")
-                }
-            })
-            .unwrap_or_else(|| self.text("shell.top.no-project"));
+        let crumb = self.active_project_crumb();
         let has_top = !self.top_views.is_empty();
         let response = egui::TopBottomPanel::top("forja.top")
             .exact_height(height)
@@ -165,6 +155,19 @@ impl ForjaApp {
                     if let Some(status) = status {
                         ui.separator();
                         ui.label(RichText::new(status).color(self.paint(self.tokens.color.danger)));
+                        let dismiss = self.text("shell.status.dismiss");
+                        let button = forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE)
+                            .on_hover_text(&dismiss);
+                        button.widget_info(|| {
+                            egui::WidgetInfo::labeled(
+                                egui::WidgetType::Button,
+                                ui.is_enabled(),
+                                &dismiss,
+                            )
+                        });
+                        if button.clicked() {
+                            self.status = None;
+                        }
                     }
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                         for view in self.status_views.iter_mut().rev() {

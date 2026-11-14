@@ -51,6 +51,7 @@ where
             return false;
         }
         state.busy = true;
+        state.notice = None;
     }
     let flag = Arc::clone(shared);
     cx.spawn(work, move |cx, value| {
@@ -88,6 +89,18 @@ fn describe(action: &Action) -> String {
     }
 }
 
+pub(crate) fn humanize_io_error(cx: &Ctx<'_>, error: &io::Error) -> String {
+    let detail = error.to_string();
+    match error.kind() {
+        io::ErrorKind::NotFound => cx.t_args("explorer.error.not.found", &[("detail", &detail)]),
+        io::ErrorKind::PermissionDenied => {
+            cx.t_args("explorer.error.permission", &[("detail", &detail)])
+        }
+        io::ErrorKind::AlreadyExists => cx.t_args("explorer.error.exists", &[("detail", &detail)]),
+        _ => cx.t_args("explorer.notice.error", &[("message", &detail)]),
+    }
+}
+
 /// Applies the result of a disk action: records it, refreshes the folders it
 /// touched, and writes the status line from `key`.
 fn finish_action(
@@ -108,7 +121,7 @@ fn finish_action(
             state.notice = Some(text);
         }
         Err(error) => {
-            let text = cx.t_args("explorer.notice.error", &[("message", &error.to_string())]);
+            let text = humanize_io_error(cx, &error);
             let mut state = lock(shared);
             for dir in &dirs {
                 state.tree.invalidate(dir);
@@ -270,14 +283,16 @@ fn replay(cx: &mut Ctx<'_>, shared: &Shared, forward: bool) -> KResult<Value> {
             }
         },
         move |cx, result: io::Result<()>| {
-            let key = match (forward, result.is_ok()) {
-                (true, true) => "explorer.notice.redone",
-                (false, true) => "explorer.notice.undone",
-                _ => "explorer.notice.error",
-            };
             let text = match &result {
-                Ok(()) => cx.t_args(key, &[("name", &describe(&back))]),
-                Err(error) => cx.t_args(key, &[("message", &error.to_string())]),
+                Ok(()) => {
+                    let key = if forward {
+                        "explorer.notice.redone"
+                    } else {
+                        "explorer.notice.undone"
+                    };
+                    cx.t_args(key, &[("name", &describe(&back))])
+                }
+                Err(error) => humanize_io_error(cx, error),
             };
             let mut state = lock(&done_shared);
             for dir in &dirs {
@@ -336,7 +351,7 @@ pub fn trash(cx: &mut Ctx<'_>, shared: &Shared, path: PathBuf) -> KResult<Value>
                 state.notice = Some(text);
             }
             Err(error) => {
-                let text = cx.t_args("explorer.notice.error", &[("message", &error.to_string())]);
+                let text = humanize_io_error(cx, &error);
                 lock(&done_shared).notice = Some(text);
             }
         },
@@ -369,10 +384,10 @@ pub fn copy_path(cx: &Ctx<'_>, shared: &Shared, path: &Path, relative: bool) -> 
             let root = state.tree.root();
             match root.and_then(|root| path.strip_prefix(root).ok()) {
                 Some(rel) => rel.to_string_lossy().replace('\\', "/"),
-                None => path.display().to_string(),
+                None => forja_kernel::paths::clean_path(path).display().to_string(),
             }
         } else {
-            path.display().to_string()
+            forja_kernel::paths::clean_path(path).display().to_string()
         }
     };
     let mut state = lock(shared);
@@ -440,8 +455,7 @@ pub fn open_file(cx: &mut Ctx<'_>, shared: &Shared, path: PathBuf, line: Option<
                 move || platform::open_default(&path),
                 move |cx, result: io::Result<()>| {
                     if let Err(error) = result {
-                        let text =
-                            cx.t_args("explorer.notice.error", &[("message", &error.to_string())]);
+                        let text = humanize_io_error(cx, &error);
                         lock(&done_shared).notice = Some(text);
                     }
                 },
@@ -449,7 +463,8 @@ pub fn open_file(cx: &mut Ctx<'_>, shared: &Shared, path: PathBuf, line: Option<
             let _ = started;
         }
         Err(error) => {
-            lock(shared).notice = Some(error.to_string());
+            let text = cx.t_args("explorer.notice.error", &[("message", &error.to_string())]);
+            lock(shared).notice = Some(text);
         }
     }
 }
@@ -645,5 +660,25 @@ mod tests {
             state.tree.is_cached(&root),
             "unrelated folders keep their listing"
         );
+    }
+
+    #[test]
+    fn io_errors_are_humanized_in_pt_br() {
+        let dir = std::env::temp_dir().join(format!("forja-explorer-err-{}", std::process::id()));
+        let mut runtime = forja_kernel::Runtime::new(
+            vec![Box::new(crate::ExplorerModule::new())],
+            forja_kernel::RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".into()),
+                wake: None,
+            },
+        )
+        .expect("runtime");
+        let cx = runtime.ctx("explorer");
+        let not_found = humanize_io_error(&cx, &io::Error::new(io::ErrorKind::NotFound, "os error 2"));
+        assert!(not_found.contains("não encontrado"), "{not_found}");
+        assert!(not_found.contains("os error 2"), "{not_found}");
+        let _ = std::fs::remove_dir_all(dir);
     }
 }

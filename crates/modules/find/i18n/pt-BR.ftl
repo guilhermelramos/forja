@@ -30,3 +30,4 @@ setting-find-grep-engine-label = Motor de busca
 setting-find-grep-engine-help = Motor usado para buscar no conteúdo dos arquivos.
 setting-find-grep-context-label = Contexto da busca (linhas)
 setting-find-grep-context-help = Linhas de contexto ao redor de cada resultado.
+find-picker-close = Fechar janela

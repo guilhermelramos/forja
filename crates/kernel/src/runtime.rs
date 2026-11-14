@@ -47,6 +47,7 @@ pub struct Runtime {
     open_modals: BTreeMap<String, Value>,
     anvil_query: String,
     viewport_focused: bool,
+    locale_setting_changed: bool,
 }
 
 impl Runtime {
@@ -176,6 +177,7 @@ impl Runtime {
             open_modals: BTreeMap::new(),
             anvil_query: String::new(),
             viewport_focused: true,
+            locale_setting_changed: false,
         })
     }
 
@@ -366,11 +368,25 @@ impl Runtime {
             return;
         };
         match key {
+            "i18n.language.mode" => {
+                self.locale_setting_changed = true;
+                match text.as_str() {
+                    "en" => self.i18n.set_locale(Locale::En),
+                    "pt_BR" => self.i18n.set_locale(Locale::PtBr),
+                    _ => {}
+                }
+            }
             "i18n.language.fallback" => self.i18n.set_fallback(Locale::parse(&text)),
             "i18n.time.format" => self.i18n.set_time_format(TimeFormat::parse(&text)),
             "i18n.date.week_start" => self.i18n.set_week_start(WeekStart::parse(&text)),
             _ => {}
         }
+    }
+
+    /// Returns true once after `i18n.language.mode` was updated at runtime so the
+    /// shell can release any startup `--locale` lock and apply live switches.
+    pub fn take_locale_setting_changed(&mut self) -> bool {
+        std::mem::take(&mut self.locale_setting_changed)
     }
 
     /// Waits for queued setting writes. Tests use it before reading the file;
@@ -1020,6 +1036,55 @@ mod tests {
                     .expect("task did not signal completion");
             }
         }
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn language_mode_setting_updates_locale_live() {
+        struct I18nTestModule;
+        impl Module for I18nTestModule {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("i18n", "i18n.name", "0.1.0")
+            }
+            fn register(&mut self, registrar: &mut Registrar<'_>) {
+                registrar.i18n("i18n-name = Language\n", "i18n-name = Idioma\n");
+                registrar.setting(SettingSpec::new(
+                    "i18n.language.mode",
+                    SettingKind::Choice {
+                        options: vec!["auto".into(), "pt_BR".into(), "en".into()],
+                    },
+                    SettingValue::Text("auto".into()),
+                    "i18n.name",
+                    "i18n.name",
+                ));
+            }
+        }
+        let dir = temp_dir("live-locale");
+        let mut runtime = Runtime::new(
+            vec![Box::new(I18nTestModule)],
+            RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".into()),
+                wake: None,
+            },
+        )
+        .expect("runtime builds");
+        assert!(!runtime.take_locale_setting_changed());
+        assert_eq!(runtime.i18n().locale(), Locale::PtBr);
+
+        runtime
+            .set_setting("i18n.language.mode", SettingValue::Text("en".into()))
+            .expect("switch to en");
+        assert!(runtime.take_locale_setting_changed());
+        assert!(!runtime.take_locale_setting_changed());
+        assert_eq!(runtime.i18n().locale(), Locale::En);
+
+        runtime
+            .set_setting("i18n.language.mode", SettingValue::Text("pt_BR".into()))
+            .expect("switch back to pt_BR");
+        assert!(runtime.take_locale_setting_changed());
+        assert_eq!(runtime.i18n().locale(), Locale::PtBr);
         let _ = std::fs::remove_dir_all(dir);
     }
 }

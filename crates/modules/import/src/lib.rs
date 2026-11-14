@@ -215,6 +215,8 @@ impl Module for ImportModule {
             "import.kind.notes",
             "import.kind.ssh",
             "import.kind.theme",
+            "import.theme.dark",
+            "import.theme.light",
             "import.kind.font",
             "import.error.corrupt",
             "import.error.unreadable",

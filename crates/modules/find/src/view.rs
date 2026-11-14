@@ -181,15 +181,20 @@ impl FindView {
         let mut focus_now = focus;
         let mut actions: Vec<Action> = Vec::new();
         let title = cx.t("find.picker.title");
+        let close_label = cx.t("find.picker.close");
         let hint = cx.t("find.picker.hint");
-        egui::Window::new(title)
-            .open(&mut window_open)
+        egui::Window::new(&title)
+            .id(egui::Id::new("forja.find.picker"))
+            .title_bar(false)
             .collapsible(false)
             .resizable(false)
             .default_width(520.0)
             .anchor(egui::Align2::CENTER_TOP, [0.0, 80.0])
             .show(ctx, |ui| {
                 forja_ui_kit::register_keyboard_layer(ui, layer);
+                if forja_ui_kit::window_header(ui, &title, &close_label) {
+                    window_open = false;
+                }
                 let edit = ui.add(
                     egui::TextEdit::singleline(&mut text)
                         .id(search_id)

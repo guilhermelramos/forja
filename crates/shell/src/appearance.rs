@@ -80,6 +80,9 @@ impl ForjaApp {
         if self.runtime.i18n().fallback() != fallback {
             self.runtime.set_fallback_locale(fallback);
         }
+        if self.runtime.take_locale_setting_changed() {
+            self.locale_locked = false;
+        }
         if !self.locale_locked {
             let mode = self.setting_text("i18n.language.mode", "auto");
             let locale = match mode.as_str() {
