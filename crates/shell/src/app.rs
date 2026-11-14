@@ -115,6 +115,9 @@ pub struct ForjaApp {
     pub(crate) anvil_query: String,
     pub(crate) anvil_query_seen: String,
     pub(crate) anvil_selected: usize,
+    pub(crate) anvil_selection_explicit: bool,
+    pub(crate) anvil_selection_id: Option<String>,
+    pub(crate) anvil_selection_missing: bool,
     pub(crate) anvil_rail_select: bool,
     pub(crate) anvil_muster_title: bool,
     /// Missing command values being asked in the Anvil, one field at a time.
@@ -231,6 +234,9 @@ impl ForjaApp {
             anvil_query: String::new(),
             anvil_query_seen: String::new(),
             anvil_selected: 0,
+            anvil_selection_explicit: false,
+            anvil_selection_id: None,
+            anvil_selection_missing: false,
             anvil_rail_select: false,
             anvil_muster_title: false,
             anvil_ask: None,
@@ -348,6 +354,9 @@ impl ForjaApp {
             self.anvil_query.clear();
             self.anvil_query_seen.clear();
             self.anvil_selected = 0;
+            self.anvil_selection_explicit = false;
+            self.anvil_selection_id = None;
+            self.anvil_selection_missing = false;
         }
     }
 

@@ -49,9 +49,9 @@ impl ForjaApp {
         let keys = AnvilKeys::from_keymap(self.runtime.keymap());
         let ask = self.anvil_ask.clone();
         let search_id = egui::Id::new("forja.anvil.search_id");
-        let search_focused = ctx
-            .data(|data| data.get_temp::<egui::Id>(search_id))
-            .is_some_and(|id| ctx.memory(|memory| memory.has_focus(id)));
+        let search_widget = ctx.data(|data| data.get_temp::<egui::Id>(search_id));
+        let search_focused = search_widget.is_some_and(|id| ctx.memory(|memory| memory.has_focus(id)));
+        refocus_search_for_text(ctx, active, search_widget);
         // TextEdit consumes Ctrl+Enter, so route the Anvil binding first.
         let keep = active
             && search_focused
@@ -68,6 +68,9 @@ impl ForjaApp {
                 self.anvil_query.clear();
                 self.anvil_query_seen.clear();
                 self.anvil_selected = 0;
+                self.anvil_selection_explicit = false;
+                self.anvil_selection_id = None;
+                self.anvil_selection_missing = false;
                 self.focus_anvil = true;
                 return;
             }
@@ -84,8 +87,11 @@ impl ForjaApp {
         if self.anvil_query != self.anvil_query_seen {
             self.anvil_query_seen.clone_from(&self.anvil_query);
             self.anvil_selected = 0;
+            self.anvil_selection_explicit = false;
+            self.anvil_selection_id = None;
+            self.anvil_selection_missing = false;
         }
-        let hits = self.collect_hits();
+        let mut hits = self.collect_hits();
         let mut chosen: Option<(HitKind, bool)> = None;
         let mut ask_submit: Option<String> = None;
         let mut cycle = 0i32;
@@ -127,6 +133,14 @@ impl ForjaApp {
                 let search = text_field(ui, &mut self.anvil_query, &hint);
                 ui.ctx()
                     .data_mut(|data| data.insert_temp(search_id, search.id));
+                if search.changed() {
+                    self.anvil_query_seen.clone_from(&self.anvil_query);
+                    self.anvil_selected = 0;
+                    self.anvil_selection_explicit = false;
+                    self.anvil_selection_id = None;
+                    self.anvil_selection_missing = false;
+                    hits = self.collect_hits();
+                }
                 if self.focus_anvil || reactivated {
                     search.request_focus();
                     self.focus_anvil = false;
@@ -146,6 +160,12 @@ impl ForjaApp {
                     let refs: Vec<&str> = group_labels.iter().map(String::as_str).collect();
                     forja_ui_kit::segmented(ui, &mut index, &refs);
                     if index != self.anvil_group || self.anvil_query.trim_start().starts_with('>') {
+                        if index != self.anvil_group {
+                            self.anvil_selected = 0;
+                            self.anvil_selection_explicit = false;
+                            self.anvil_selection_id = None;
+                            self.anvil_selection_missing = false;
+                        }
                         self.anvil_group = index;
                         if let Some(stripped) = self.anvil_query.trim_start().strip_prefix('>') {
                             self.anvil_query = stripped.trim_start().to_owned();
@@ -157,11 +177,17 @@ impl ForjaApp {
                     && !hits.is_empty()
                 {
                     self.anvil_selected = (self.anvil_selected + 1).min(hits.len() - 1);
+                    self.anvil_selection_explicit = true;
+                    self.anvil_selection_id = Some(history_id(&hits[self.anvil_selected].kind));
+                    self.anvil_selection_missing = false;
                 }
-                if active
+                if active && !hits.is_empty()
                     && ui.input_mut(|input| input.consume_key(keys.previous.0, keys.previous.1))
                 {
                     self.anvil_selected = self.anvil_selected.saturating_sub(1);
+                    self.anvil_selection_explicit = true;
+                    self.anvil_selection_id = Some(history_id(&hits[self.anvil_selected].kind));
+                    self.anvil_selection_missing = false;
                 }
                 if active
                     && ui.input_mut(|input| input.consume_key(keys.group_next.0, keys.group_next.1))
@@ -213,7 +239,11 @@ impl ForjaApp {
                         search.request_focus();
                     } else {
                         let index = self.anvil_selected.min(hits.len() - 1);
-                        chosen = Some((hits[index].kind.clone(), keep));
+                        let query = self.anvil_query.trim().trim_start_matches('>').trim().to_lowercase();
+                        if !self.anvil_selection_missing
+                            && can_run_selection(&query, &hits[index], self.anvil_selection_explicit) {
+                            chosen = Some((hits[index].kind.clone(), keep));
+                        }
                     }
                 }
                 ui.add_space(4.0);
@@ -276,6 +306,10 @@ impl ForjaApp {
         if cycle != 0 {
             let count = 5i32;
             self.anvil_group = (self.anvil_group as i32 + cycle).rem_euclid(count) as usize;
+            self.anvil_selected = 0;
+            self.anvil_selection_explicit = false;
+            self.anvil_selection_id = None;
+            self.anvil_selection_missing = false;
         }
         if let Some((kind, keep)) = chosen {
             if let HitKind::Ask(index) = kind {
@@ -364,11 +398,9 @@ impl ForjaApp {
         }
         let show_recent = self.setting_bool("anvil.history.show_recent", true);
         apply_history_boost(&mut hits, &self.anvil_history, &query, show_recent);
-        hits.sort_by(|a, b| b.score.cmp(&a.score).then_with(|| a.title.cmp(&b.title)));
+        sort_hits(&mut hits, &query);
         hits.truncate(40);
-        if self.anvil_selected >= hits.len() {
-            self.anvil_selected = hits.len().saturating_sub(1);
-        }
+        self.reconcile_selection(&hits);
         hits
     }
 
@@ -401,16 +433,31 @@ impl ForjaApp {
             hits.sort_by(|a, b| b.score.cmp(&a.score).then_with(|| a.title.cmp(&b.title)));
         }
         hits.truncate(40);
-        if self.anvil_selected >= hits.len() {
+        self.reconcile_selection(&hits);
+        hits
+    }
+
+    fn reconcile_selection(&mut self, hits: &[Hit]) {
+        if let Some(id) = self.anvil_selection_id.as_deref() {
+            if let Some(index) = selected_hit_index(hits, id) {
+                self.anvil_selected = index;
+                self.anvil_selection_missing = false;
+            } else {
+                self.anvil_selected = 0;
+                self.anvil_selection_missing = true;
+            }
+        } else if self.anvil_selected >= hits.len() {
             self.anvil_selected = hits.len().saturating_sub(1);
         }
-        hits
     }
 
     fn push_commands(&self, hits: &mut Vec<Hit>, query: &str) {
         for command in self.runtime.available_commands(Default::default()) {
             let title = self.text(&command.title_key);
             let id = command.id.as_str();
+            if id == "terminal.recipe.run" {
+                continue;
+            }
             let Some(score) = best_score(query, &title, id) else {
                 continue;
             };
@@ -576,6 +623,9 @@ impl ForjaApp {
             self.anvil_query.clear();
             self.anvil_query_seen.clear();
             self.anvil_selected = 0;
+            self.anvil_selection_explicit = false;
+            self.anvil_selection_id = None;
+            self.anvil_selection_missing = false;
             self.focus_anvil = true;
             return;
         }
@@ -584,6 +634,9 @@ impl ForjaApp {
             self.anvil_query.clear();
             self.anvil_query_seen.clear();
             self.anvil_selected = 0;
+            self.anvil_selection_explicit = false;
+            self.anvil_selection_id = None;
+            self.anvil_selection_missing = false;
             self.focus_anvil = true;
             return;
         }
@@ -631,11 +684,21 @@ impl ForjaApp {
                     Ok(_) if command == "muster.run" => {
                         crate::actions::push(crate::actions::Action::OpenRail("muster.page".into()))
                     }
+                    Ok(_) if command == "terminal.recipe.run" => {
+                        crate::actions::push(crate::actions::Action::ShowBenchTab("terminal.tab".into()))
+                    }
                     Ok(_) => {}
                     Err(error) => {
+                        let title = self.runtime.registry().command(&command)
+                            .map(|spec| self.text(&spec.title_key))
+                            .unwrap_or_else(|| command.clone());
+                        let message = match error {
+                            forja_kernel::KernelError::Command { message, .. } => message,
+                            other => other.to_string(),
+                        };
                         self.status = Some(self.text_args(
                             "shell.command.failed",
-                            &[("id", &command), ("message", &error.to_string())],
+                            &[("id", &title), ("message", &message)],
                         ))
                     }
                 }
@@ -704,11 +767,66 @@ fn history_id(kind: &HitKind) -> String {
         HitKind::File(path) => format!("file:{path}"),
         HitKind::Setting(key) => format!("setting:{key}"),
         HitKind::Action { command, args } => {
-            let path = args.get("path").and_then(Value::as_str).unwrap_or("");
+            let path = args.get("path").or_else(|| args.get("recipe_id"))
+                .and_then(Value::as_str).unwrap_or("");
             format!("action:{command}:{path}")
         }
         HitKind::Ask(index) => format!("ask:{index}"),
     }
+}
+
+fn selected_hit_index(hits: &[Hit], id: &str) -> Option<usize> {
+    hits.iter().position(|hit| history_id(&hit.kind) == id)
+}
+
+fn has_printable_text(events: &[egui::Event]) -> bool {
+    events.iter().any(|event| {
+        matches!(event, egui::Event::Text(text) if text.chars().any(|ch| !ch.is_control()))
+    })
+}
+
+fn refocus_search_for_text(ctx: &egui::Context, active: bool, search: Option<egui::Id>) {
+    if !active || egui::Popup::is_any_open(ctx)
+        || !ctx.input(|input| has_printable_text(&input.events))
+    {
+        return;
+    }
+    if let Some(id) = search {
+        ctx.memory_mut(|memory| memory.request_focus(id));
+    }
+}
+
+fn match_quality(query: &str, title: &str, detail: &str) -> u8 {
+    if query.is_empty() {
+        return 0;
+    }
+    let title = title.to_lowercase();
+    if title == query { return 5; }
+    if title.starts_with(query) { return 4; }
+    if word_starts_with(&title, query) { return 3; }
+    let detail = detail.to_lowercase();
+    if detail == query { return 2; }
+    if word_starts_with(&detail, query) { return 1; }
+    0
+}
+
+fn word_starts_with(text: &str, query: &str) -> bool {
+    text.match_indices(query).any(|(index, _)| {
+        text[..index].chars().next_back().is_none_or(|ch| !ch.is_alphanumeric())
+    })
+}
+
+fn sort_hits(hits: &mut [Hit], query: &str) {
+    hits.sort_by(|a, b| {
+        match_quality(query, &b.title, &b.detail)
+            .cmp(&match_quality(query, &a.title, &a.detail))
+            .then_with(|| b.score.cmp(&a.score))
+            .then_with(|| if query.is_empty() { a.title.cmp(&b.title) } else { std::cmp::Ordering::Equal })
+    });
+}
+
+fn can_run_selection(query: &str, hit: &Hit, explicitly_selected: bool) -> bool {
+    query.is_empty() || explicitly_selected || match_quality(query, &hit.title, &hit.detail) > 0
 }
 
 fn best_score(query: &str, title: &str, detail: &str) -> Option<i32> {
@@ -864,12 +982,12 @@ fn muted(tokens: &Tokens) -> egui::Color32 {
 }
 
 fn apply_history_boost(hits: &mut [Hit], history: &[String], query: &str, show_recent: bool) {
-    if !show_recent {
+    if !show_recent || !query.is_empty() {
         return;
     }
     for hit in hits {
         if history.iter().any(|id| id == &history_id(&hit.kind)) {
-            hit.score += if query.is_empty() { 200 } else { 15 };
+            hit.score += 200;
         }
     }
 }
@@ -885,6 +1003,74 @@ fn paint(color: Color) -> egui::Color32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn literal_matches_beat_recent_fuzzy_hits_and_fuzzy_needs_selection() {
+        let make_hit = |title: &str, score| Hit {
+            kind: HitKind::Command(title.to_owned()), title: title.to_owned(), detail: String::new(),
+            icon: None, chord: String::new(), score,
+        };
+        let mut hits = vec![make_hit("Compartilhar com ajudante", 1000), make_hit("Compilar pacotes Go", 1)];
+        sort_hits(&mut hits, "compilar");
+        assert_eq!(hits[0].title, "Compilar pacotes Go");
+        assert!(can_run_selection("compilar", &hits[0], false));
+        assert!(!can_run_selection("compilar", &hits[1], false));
+        assert!(can_run_selection("compilar", &hits[1], true));
+    }
+
+    #[test]
+    fn history_does_not_reorder_equal_prefixes_and_recipes_have_distinct_ids() {
+        let recipe = |id: &str, title: &str| {
+            let mut args = serde_json::Map::new();
+            args.insert("recipe_id".into(), Value::String(id.to_owned()));
+            Hit {
+                kind: HitKind::Action { command: "terminal.recipe.run".into(), args },
+                title: title.into(), detail: "projeto".into(), icon: None,
+                chord: String::new(), score: 100,
+            }
+        };
+        let mut hits = vec![recipe("go-build", "Compilar pacotes Go"), recipe("python-build", "Compilar pacote Python")];
+        let recent = vec![history_id(&hits[1].kind)];
+        assert_ne!(history_id(&hits[0].kind), recent[0]);
+        apply_history_boost(&mut hits, &recent, "compilar", true);
+        sort_hits(&mut hits, "compilar");
+        assert_eq!(hits[0].title, "Compilar pacotes Go");
+        let chosen = history_id(&hits[1].kind);
+        hits.swap(0, 1);
+        assert_eq!(selected_hit_index(&hits, &chosen), Some(0));
+        hits.remove(0);
+        assert_eq!(selected_hit_index(&hits, &chosen), None);
+    }
+
+    #[test]
+    fn only_printable_text_reclaims_anvil_search_focus() {
+        assert!(has_printable_text(&[egui::Event::Text("banc".into())]));
+        assert!(!has_printable_text(&[egui::Event::Text("\n".into())]));
+        assert!(!has_printable_text(&[]));
+    }
+
+    #[test]
+    fn typing_after_focusing_a_filter_reaches_the_search() {
+        let ctx = egui::Context::default();
+        let search = egui::Id::new("search");
+        let filter = egui::Id::new("filter");
+        let mut query = String::new();
+        for frame in 0..3 {
+            let mut input = egui::RawInput::default();
+            if frame == 2 {
+                input.events.push(egui::Event::Text("banc".into()));
+            }
+            let _ = ctx.run(input, |ctx| {
+                refocus_search_for_text(ctx, true, Some(search));
+                egui::CentralPanel::default().show(ctx, |ui| {
+                    ui.add(egui::TextEdit::singleline(&mut query).id(search));
+                    let response = ui.interact(ui.available_rect_before_wrap(), filter, egui::Sense::click());
+                    if frame == 1 { response.request_focus(); }
+                });
+            });
+        }
+        assert_eq!(query, "banc");
+    }
 
     #[test]
     fn rail_choice_supplies_the_selected_view() {
