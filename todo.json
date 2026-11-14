@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 26,
-  "widgets_total": 3785,
-  "widgets_covered": 3632,
+  "states_done": 29,
+  "widgets_total": 3910,
+  "widgets_covered": 3757,
   "complete": false,
   "stale": [
     {
@@ -718,21 +718,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "en.light.bench-tab.viewers.tab",
-      "png": "captures/en.light.bench-tab.viewers.tab.png",
-      "tree": "captures/en.light.bench-tab.viewers.tab.json"
-    },
-    {
-      "state": "en.light.home.default",
-      "png": "captures/en.light.home.default.png",
-      "tree": "captures/en.light.home.default.json"
-    },
-    {
-      "state": "en.light.modal.helper.profile_picker",
-      "png": "captures/en.light.modal.helper.profile_picker.png",
-      "tree": "captures/en.light.modal.helper.profile_picker.json"
-    },
     {
       "state": "en.light.open.anvil",
       "png": "captures/en.light.open.anvil.png",

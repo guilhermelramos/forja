@@ -791,6 +791,14 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - O botão "Settings" do trilho permanece marcado=False enquanto a janela "Settings" está aberta em foco, inconsistência de estado de seleção.
 - Textos secundários e placeholders em cinza médio sobre fundo escuro apresentam contraste baixo (por exemplo "No key saved.", "Search settings", "Paste the key here").
 
+## [en.light.home.default](pages/en.light.home.default.md)
+
+- Botões sem nome acessível (acessibilidade): o alternador de tema (1741,5)–(1773,37) e os quatro ícones da barra do terminal (444,113)–(581,145) não expõem nome e dependem de reconhecimento visual, sem rótulo ou tooltip acessível na árvore.
+- A pílula de sessão "pwsh" (328,118)–(404,140) e seu ponto de status (385,121)–(401,137), os dois divisores de painel (304,42)–(320,1048) e (1612,42)–(1628,1048) e a área do terminal (328,150)–(1604,1036) também não expõem nome acessível.
+- O texto "Click to type" no canto inferior direito da área do terminal (~ (1537,1017)–(1597,1029)) não corresponde a nenhum elemento da árvore de acessibilidade e tem contraste baixo (cinza claro sobre fundo claro).
+- Três botões "More tabs" são exibidos mesmo com todas as abas visíveis em suas faixas — o painel esquerdo tem uma única aba ("Projects") — o que aparenta redundância visual/funcional.
+- Estados com pixels idênticos a esta captura incluem os modais bench.dialogs, counter.poller, mcp.approval, notify.toasts, onboarding.wizard, project.dialogs e voice.overlay, além de bench-tab.terminal.tab e right-tab.explorer.panel: nessas capturas nenhum diálogo, aviso, sobreposição ou painel de explorer diferente aparece renderizado.
+
 ## [en.light.bench-tab.bench.detail](pages/en.light.bench-tab.bench.detail.md)
 
 - O botão de tema na barra superior (1741,5)–(1773,37) é um Unknown sem nome acessível; só é identificável pelo ícone de sol.
@@ -850,6 +858,15 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Nomes ambíguos para leitores de tela: três botões "More tabs", dois botões "History" (aba central e sub-aba Git, com o título Label repetindo o nome) e dois botões "Changes" (aba central e aba do painel direito); o texto "No changes." aparece duas vezes com papéis diferentes (nota do cabeçalho e estado vazio central).
 - Nenhum elemento com retângulo fora da janela (1920×1080) e nenhuma sobreposição de retângulos nesta variante — diferentemente da referência pt-BR/dark, que tinha abas além da borda e sobrepostas.
 
+## [en.light.modal.helper.profile_picker](pages/en.light.modal.helper.profile_picker.md)
+
+- O modal sobrepõe a área central: o botão "More tabs" (324,50)–(411,85), as abas "Terminal", "Editor", "Browser" e "Changes" e os botões "+", "Recipes" e "Shell" continuam na árvore de acessibilidade, mas estão invisíveis ao usuário.
+- Botão de tema na barra superior (1741,5)–(1773,37), divisores verticais, os quatro controles da barra central, a barra de título do modal, dois elementos internos do modal e a grande região de conteúdo central sem nome acessível.
+- Rótulos de ícone expostos como "(ícone)" (grade e pasta dos estados vazios), sem nome acessível descritivo.
+- Elemento de dimensão nula na árvore em (960,540)–(960,540).
+- Nomes acessíveis ambíguos por duplicação: "Changes" nomeia duas abas distintas (área central e painel direito) e "More tabs" se repete três vezes, o que dificulta a identificação por leitores de tela.
+- Mensagens de estado vazio ("No project yet..." e "No active bench...") em cinza claro sobre fundo branco, com contraste inferior ao do restante dos textos.
+
 ## [en.light.bench-tab.review.tab](pages/en.light.bench-tab.review.tab.md)
 
 - Campos de texto sem nome acessível: título (324,222), descrição (324,253), Base (360,418), Revisores (393,458) e Labels (675,458); os dois primeiros exibem placeholders ("Title", "Description") que poderiam servir de nome.
@@ -858,4 +875,9 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Três botões homônimos "More tabs" ((64,50), (324,50) e (1632,50)) sem informação que os distinga para leitor de tela.
 - Elementos interativos sem nome acessível: ícone de tema na barra superior (1741,5) e os dois divisores dos painéis (304,42) e (1612,42); os divisores só expõem a ação "focus", sem ação de arrastar/clique associada.
 - A caixa "Open as draft" é desenhada como um círculo (aspecto de botão de opção) na imagem, embora seja exposta como CheckBox.
+
+## [en.light.bench-tab.viewers.tab](pages/en.light.bench-tab.viewers.tab.md)
+
+- Botão sem nome acessível: o ícone de tema (sol) em (1741,5)–(1773,37) não tem rótulo.
+- Nomes duplicados sem contexto dificultam a desambiguação por leitores de tela: três botões "More tabs" (64–151, 324–411 e 1632–1719) e duas abas "Changes" (700–777 e 1778–1855).
 
