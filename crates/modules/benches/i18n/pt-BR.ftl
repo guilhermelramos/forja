@@ -161,3 +161,7 @@ setting-bench-stage-pr-merge-help = Define se a bancada vai para pronto quando o
 setting-bench-stage-archive-on_ready-label = Guardar ao entrar em pronto
 setting-bench-stage-archive-on_ready-help = Guarda a bancada automaticamente ao entrar na etapa pronto.
 bench-dialog-create-add-folder = Adicionar pasta
+bench-ask-bench = Qual bancada?
+bench-ask-project = Qual projeto?
+bench-ask-name = Nome da bancada
+bench-ask-stage = Mover para qual etapa?
