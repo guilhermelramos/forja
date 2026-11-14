@@ -300,6 +300,9 @@ where
     let line = shared.cursor_line();
     match change(&tab.content, line) {
         Some(next) => {
+            if next != tab.content {
+                shared.record_undo(path, tab.content);
+            }
             shared.set_content(path, next);
             shared.set_status(Some(cx.t(message_key)));
         }

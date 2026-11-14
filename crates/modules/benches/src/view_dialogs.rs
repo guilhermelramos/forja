@@ -196,60 +196,56 @@ impl View for DialogsView {
                 let mut submit = false;
                 let mut cancel = false;
                 let title = cx.t("bench.dialog.store.title");
-                egui::Window::new(title)
-                    .id(egui::Id::new("forja.bench.store"))
-                    .collapsible(false)
-                    .resizable(false)
-                    .default_width(420.0)
-                    .show(ui.ctx(), |ui| {
-                        ui.set_min_width(420.0);
-                        ui.label(cx.t_args(
-                            "bench.dialog.store.body",
-                            &[
-                                ("name", form.name.as_str()),
-                                ("branch", form.branch.as_deref().unwrap_or("\u{2014}")),
-                            ],
-                        ));
-                        ui.add_space(6.0);
-                        forja_ui_kit::toggle(
-                            ui,
-                            &mut form.delete_branch,
-                            &cx.t("bench.dialog.store.delete-branch"),
+                let mut open = true;
+                forja_ui_kit::modal_explicit_close(ui.ctx(), &mut open, &title, |ui| {
+                    ui.set_min_width(420.0);
+                    ui.label(cx.t_args(
+                        "bench.dialog.store.body",
+                        &[
+                            ("name", form.name.as_str()),
+                            ("branch", form.branch.as_deref().unwrap_or("\u{2014}")),
+                        ],
+                    ));
+                    ui.add_space(6.0);
+                    forja_ui_kit::toggle(
+                        ui,
+                        &mut form.delete_branch,
+                        &cx.t("bench.dialog.store.delete-branch"),
+                    );
+                    forja_ui_kit::toggle(
+                        ui,
+                        &mut form.force,
+                        &cx.t("bench.dialog.store.force"),
+                    );
+                    if let Some(error) = &form.error {
+                        ui.label(
+                            egui::RichText::new(error).small().color(c32(
+                                forja_ui_kit::applied_tokens(ui.ctx()).color.danger,
+                            )),
                         );
-                        forja_ui_kit::toggle(
+                    }
+                    ui.add_space(8.0);
+                    ui.horizontal(|ui| {
+                        if forja_ui_kit::button(
                             ui,
-                            &mut form.force,
-                            &cx.t("bench.dialog.store.force"),
-                        );
-                        if let Some(error) = &form.error {
-                            ui.label(
-                                egui::RichText::new(error).small().color(c32(
-                                    forja_ui_kit::applied_tokens(ui.ctx()).color.danger,
-                                )),
-                            );
+                            forja_ui_kit::ButtonKind::Danger,
+                            &cx.t("bench.dialog.store.submit"),
+                        )
+                        .clicked()
+                        {
+                            submit = true;
                         }
-                        ui.add_space(8.0);
-                        ui.horizontal(|ui| {
-                            if forja_ui_kit::button(
-                                ui,
-                                forja_ui_kit::ButtonKind::Danger,
-                                &cx.t("bench.dialog.store.submit"),
-                            )
-                            .clicked()
-                            {
-                                submit = true;
-                            }
-                            if forja_ui_kit::button(
-                                ui,
-                                forja_ui_kit::ButtonKind::Ghost,
-                                &cx.t("bench.dialog.cancel"),
-                            )
-                            .clicked()
-                            {
-                                cancel = true;
-                            }
-                        });
+                        if forja_ui_kit::button(
+                            ui,
+                            forja_ui_kit::ButtonKind::Ghost,
+                            &cx.t("bench.dialog.cancel"),
+                        )
+                        .clicked()
+                        {
+                            cancel = true;
+                        }
                     });
+                });
                 let mut keep = true;
                 if submit {
                     match service::store(
@@ -265,7 +261,7 @@ impl View for DialogsView {
                         }
                         Err(error) => form.error = Some(error),
                     }
-                } else if cancel {
+                } else if cancel || !open {
                     keep = false;
                     self.state.set_dialog(Dialog::None);
                 }
