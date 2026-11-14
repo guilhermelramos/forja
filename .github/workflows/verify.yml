@@ -1,0 +1,128 @@
+name: Verify issue fixes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "crates/**"
+  schedule:
+    - cron: "0 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      max_issues:
+        description: "Issues verificadas nesta rodada"
+        type: number
+        default: 8
+        required: false
+
+concurrency:
+  group: verify-issues
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  candidates:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+    outputs:
+      has_issues: ${{ steps.select.outputs.has_issues }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - id: select
+        name: Select open corrected issues
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          MAX_ISSUES: ${{ inputs.max_issues || '8' }}
+        run: ./playtest/select-verifications.ps1 -Repository $env:GH_REPO -MaxIssues ([int]$env:MAX_ISSUES) -Out verification-issues.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verification-issues
+          path: verification-issues.json
+          retention-days: 1
+
+  verify:
+    needs: candidates
+    if: needs.candidates.outputs.has_issues == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 100
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      CARGO_TERM_COLOR: never
+      MESA_VERSION: "26.2.4"
+      OPENCODE_VERSION: "2.2.7"
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      VERIFY_MODELS: ${{ vars.VERIFY_MODELS || 'openrouter/nvidia/nemotron-3.5-super-vl:free,openrouter/google/gemma-4-31b-it:free,openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: Swatinem/rust-cache@v2
+      - name: Build forja-app and forja-mcp (release)
+        run: |
+          rustup toolchain install
+          cargo build --release -p forja-app -p forja-mcp
+      - name: Software OpenGL (Mesa llvmpipe)
+        run: |
+          $url = "https://github.com/pal1000/mesa-dist-win/releases/download/$env:MESA_VERSION/mesa3d-$env:MESA_VERSION-release-msvc.7z"
+          Invoke-WebRequest $url -OutFile mesa.7z
+          7z x mesa.7z -omesa -y | Out-Null
+          foreach ($dll in 'opengl32.dll', 'libgallium_wgl.dll', 'libglapi.dll') {
+            if (Test-Path "mesa\x64\$dll") { Copy-Item "mesa\x64\$dll" target\release\ }
+          }
+          "GALLIUM_DRIVER=llvmpipe" >> $env:GITHUB_ENV
+      - name: Screen at 1920x1080
+        continue-on-error: true
+        run: Set-DisplayResolution -Width 1920 -Height 1080 -Force
+      - name: Sample project
+        run: ./playtest/seed.ps1 -Path "$env:TEMP\forja-verify-project"
+      - name: Install OpenCode
+        run: npm install -g "@opencode/cli@$env:OPENCODE_VERSION"
+      - uses: actions/download-artifact@v4
+        with:
+          name: verification-issues
+          path: verification-input
+      - name: Verify issues
+        run: |
+          $models = $env:VERIFY_MODELS -split ','
+          ./playtest/verify.ps1 -IssuesPath verification-input/verification-issues.json `
+            -Models $models -PickDir "$env:TEMP\forja-verify-project" `
+            -MaxActions 40 -MinutesPerIssue 8 -Out verification-out
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-results
+          path: verification-out
+          retention-days: 30
+          if-no-files-found: ignore
+
+  apply:
+    needs: [candidates, verify]
+    if: always() && needs.candidates.result == 'success' && needs.verify.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: verification-results
+          path: verification-results
+      - name: Comment, label, or close with explicit verdicts
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: ./playtest/apply-verdicts.ps1 -Repository $env:GH_REPO -VerdictsPath verification-results/verdicts.jsonl

@@ -62,3 +62,34 @@ Cada arquivo JSON em `playtest/regressions/` descreve um fluxo reproduzível no 
 ```
 
 O CI (`.github/workflows/ci.yml`, job `regressions`) executa todas as regressões em um app limpo por arquivo e falha se alguma expectativa não bater.
+
+## Verificar correções de issues
+
+O workflow `.github/workflows/verify.yml` seleciona até 8 issues abertas, da
+mais antiga para a mais nova, com o rótulo `playtest`, `explore` ou `ideia` e
+um comentário do dono do repositório iniciado por `Corrigido na main`,
+`Tratado na main` ou `Concluído na main`. Ele ignora uma issue cujo comentário
+mais recente já seja um veredito, a menos que exista uma correção posterior.
+
+No runner Windows, `playtest/verify.ps1` abre uma instância limpa de
+`forja-app --test-driver` para cada tentativa, com pasta de dados isolada,
+projeto de exemplo de `seed.ps1`, no máximo 40 ações e 8 minutos por issue. O
+OpenCode só recebe as ferramentas do `forja-mcp --player`; o modelo deve chamar
+`report_finding` com `VEREDITO: fixed`, `VEREDITO: still_broken` ou
+`VEREDITO: cannot_reproduce`. O padrão usa modelos gratuitos no OpenRouter e
+`VERIFY_MODELS` permite trocar a lista, aceitando apenas ids que terminem em
+`-free` ou `:free`. Configure `OPENROUTER_API_KEY` nos secrets do repositório;
+`VERIFY_MODELS` pode ser definido como variável do repositório.
+
+O job final `apply` só age sobre issues que continuam abertas e cuja correção
+continua sendo a mesma. `fixed` fecha com comentário e evidências; os outros
+dois resultados comentam e aplicam `reaberto` ou `verificar-manual`. A opção
+`-DryRun` mostra o que o script faria sem alterar issues:
+
+```powershell
+./playtest/apply-verdicts.ps1 -VerdictsPath verification-out/verdicts.jsonl -DryRun
+```
+
+As opções de CLI e os controles de ferramentas seguem a documentação oficial
+do [GitHub CLI para issues](https://cli.github.com/manual/gh_issue), [API do GitHub CLI](https://cli.github.com/manual/gh_api),
+[GitHub Actions](https://docs.github.com/actions) e do [OpenCode](https://opencode.ai/docs/config/), [CLI](https://opencode.ai/docs/cli/), [modelos](https://opencode.ai/docs/models/), [permissões](https://opencode.ai/docs/permissions/), [servidores MCP](https://opencode.ai/docs/mcp-servers/) e [provedores](https://opencode.ai/docs/providers/).
