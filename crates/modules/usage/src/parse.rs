@@ -23,6 +23,8 @@ pub fn parse_claude(lines: &[String], session_hint: &str, project_hint: &str) ->
     let mut session_id = session_hint.to_owned();
     let mut project = project_hint.to_owned();
     let mut title = String::new();
+    let mut last_model = String::new();
+    let mut reported_total: Option<(f64, i64)> = None;
     for line in lines {
         let Ok(value) = serde_json::from_str::<Value>(line) else {
             continue;
@@ -33,14 +35,25 @@ pub fn parse_claude(lines: &[String], session_hint: &str, project_hint: &str) ->
         if let Some(cwd) = value.get("cwd").and_then(Value::as_str) {
             project = cwd.to_owned();
         }
-        if title.is_empty() && value.get("type").and_then(Value::as_str) == Some("user") {
+        let kind = value.get("type").and_then(Value::as_str).unwrap_or("");
+        if kind == "result" {
+            if let Some(total) = total_cost(&value) {
+                let timestamp = parse_timestamp(value.get("timestamp"));
+                let replace = reported_total.is_none_or(|(current, _)| total > current);
+                if replace {
+                    reported_total = Some((total, timestamp));
+                }
+            }
+            continue;
+        }
+        if title.is_empty() && kind == "user" {
             title = value
                 .pointer("/message/content")
                 .and_then(text_content)
                 .map(|text| summarize_title(&text))
                 .unwrap_or_default();
         }
-        if value.get("type").and_then(Value::as_str) != Some("assistant") {
+        if kind != "assistant" {
             continue;
         }
         let Some(usage) = value.pointer("/message/usage") else {
@@ -52,24 +65,56 @@ pub fn parse_claude(lines: &[String], session_hint: &str, project_hint: &str) ->
             cache_read_tokens: u64_field(usage, "cache_read_input_tokens"),
             cache_write_tokens: u64_field(usage, "cache_creation_input_tokens"),
             total_tokens: 0,
+            cost_usd: 0.0,
+            unpriced_tokens: 0,
         };
         if totals.is_empty() {
             continue;
         }
         totals.total_tokens = totals.input_tokens + totals.output_tokens;
+        let model = value
+            .pointer("/message/model")
+            .and_then(Value::as_str)
+            .unwrap_or("unknown")
+            .to_owned();
+        last_model = model.clone();
         records.push(UsageRecord {
             agent: "claude".into(),
             session_id: session_id.clone(),
             project: project.clone(),
-            model: value
-                .pointer("/message/model")
-                .and_then(Value::as_str)
-                .unwrap_or("unknown")
-                .to_owned(),
+            model,
             title: title.clone(),
             timestamp_ms: parse_timestamp(value.get("timestamp")),
             totals,
+            cost_usd: message_cost(&value),
         });
+    }
+    // Claude's stream result reports the whole session cost. Keep the token
+    // records out of the price table (cost 0) and add the reported total once,
+    // so a log cost is never combined with an estimate for the same tokens.
+    if let Some((total, timestamp)) = reported_total {
+        let reported: f64 = records.iter().filter_map(|record| record.cost_usd).sum();
+        for record in &mut records {
+            if record.cost_usd.is_none() {
+                record.cost_usd = Some(0.0);
+            }
+        }
+        if total > reported + 1e-9 {
+            records.push(UsageRecord {
+                agent: "claude".into(),
+                session_id,
+                project,
+                model: if last_model.is_empty() {
+                    "unknown".into()
+                } else {
+                    last_model
+                },
+                title,
+                timestamp_ms: timestamp,
+                totals: UsageTotals::default(),
+                cost_usd: Some(total - reported),
+            });
+        }
     }
     records
 }
@@ -133,6 +178,8 @@ pub fn parse_codex(lines: &[String], session_hint: &str, project_hint: &str) -> 
                             total_tokens: current
                                 .total_tokens
                                 .saturating_sub(previous.total_tokens),
+                            cost_usd: 0.0,
+                            unpriced_tokens: 0,
                         },
                         None => current,
                     };
@@ -156,6 +203,7 @@ pub fn parse_codex(lines: &[String], session_hint: &str, project_hint: &str) -> 
                     title: title.clone(),
                     timestamp_ms: parse_timestamp(value.get("timestamp")),
                     totals,
+                    cost_usd: message_cost(&value).or_else(|| message_cost(info)),
                 });
             }
             _ => {}
@@ -165,14 +213,23 @@ pub fn parse_codex(lines: &[String], session_hint: &str, project_hint: &str) -> 
 }
 
 fn codex_totals(value: &Value) -> UsageTotals {
-    let input = u64_field(value, "input_tokens");
+    // Codex follows the OpenAI usage block: `input_tokens` already contains the
+    // cached tokens. Split them so the card and the price table never count the
+    // same token twice.
+    let cached = u64_field(value, "cached_input_tokens");
+    let input = u64_field(value, "input_tokens").saturating_sub(cached);
+    let cache_write = u64_field(value, "cache_write_input_tokens");
     let output = u64_field(value, "output_tokens");
     UsageTotals {
         input_tokens: input,
         output_tokens: output,
-        cache_read_tokens: u64_field(value, "cached_input_tokens"),
-        cache_write_tokens: u64_field(value, "cache_write_input_tokens"),
-        total_tokens: u64_field(value, "total_tokens").max(input.saturating_add(output)),
+        cache_read_tokens: cached,
+        cache_write_tokens: cache_write,
+        total_tokens: u64_field(value, "total_tokens")
+            .saturating_sub(cached)
+            .max(input.saturating_add(output)),
+        cost_usd: 0.0,
+        unpriced_tokens: 0,
     }
 }
 
@@ -245,6 +302,8 @@ fn collect_opencode(value: &Value, path: &Path, records: &mut Vec<UsageRecord>) 
                         .map(|cache| u64_field(cache, "write"))
                         .unwrap_or(0),
                     total_tokens: 0,
+                    cost_usd: 0.0,
+                    unpriced_tokens: 0,
                 };
                 totals.total_tokens = totals.input_tokens + totals.output_tokens;
                 if !totals.is_empty() {
@@ -256,6 +315,7 @@ fn collect_opencode(value: &Value, path: &Path, records: &mut Vec<UsageRecord>) 
                         title: title.clone(),
                         timestamp_ms,
                         totals,
+                        cost_usd: object.get("cost").and_then(f64_value),
                     });
                 }
             } else if let Some(id) = object.get("id").and_then(Value::as_str) {
@@ -267,6 +327,7 @@ fn collect_opencode(value: &Value, path: &Path, records: &mut Vec<UsageRecord>) 
                     title: title.clone(),
                     timestamp_ms,
                     totals: UsageTotals::default(),
+                    cost_usd: None,
                 });
             }
         }
@@ -312,6 +373,32 @@ fn u64_field(value: &Value, key: &str) -> u64 {
     value.get(key).and_then(Value::as_u64).unwrap_or(0)
 }
 
+fn f64_field(value: &Value, key: &str) -> Option<f64> {
+    value.get(key).and_then(f64_value)
+}
+
+fn f64_value(value: &Value) -> Option<f64> {
+    value
+        .as_f64()
+        .or_else(|| value.as_str().and_then(|text| text.parse::<f64>().ok()))
+}
+
+/// Cost reported for one message/event by the helper. Cumulative totals are
+/// deliberately excluded here; Claude's `result` line has its own handling.
+fn message_cost(value: &Value) -> Option<f64> {
+    ["costUSD", "cost_usd", "cost"]
+        .iter()
+        .find_map(|key| f64_field(value, key))
+        .filter(|cost| cost.is_finite() && *cost >= 0.0)
+}
+
+fn total_cost(value: &Value) -> Option<f64> {
+    ["total_cost_usd", "totalCostUsd", "costUSD"]
+        .iter()
+        .find_map(|key| f64_field(value, key))
+        .filter(|cost| cost.is_finite() && *cost >= 0.0)
+}
+
 fn parse_timestamp(value: Option<&Value>) -> i64 {
     value
         .and_then(Value::as_str)
@@ -352,6 +439,7 @@ mod tests {
         assert_eq!(records[0].title, "Fix the login retry");
         assert_eq!(records[0].totals.total_tokens, 120);
         assert_eq!(records[0].totals.cache_read_tokens, 10);
+        assert_eq!(records[0].cost_usd, None);
     }
 
     #[test]
@@ -372,6 +460,16 @@ mod tests {
     }
 
     #[test]
+    fn codex_cached_input_is_split_out_of_input_tokens() {
+        let text = r#"{"type":"session_meta","payload":{"id":"c1","cwd":"C:/work/codex"}}
+{"type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"input_tokens":1000,"cached_input_tokens":800,"output_tokens":10,"total_tokens":1010}}}}"#;
+        let records = parse_codex(&lines(text), "hint", "fallback");
+        assert_eq!(records[0].totals.input_tokens, 200);
+        assert_eq!(records[0].totals.cache_read_tokens, 800);
+        assert_eq!(records[0].totals.total_tokens, 210);
+    }
+
+    #[test]
     fn opencode_tokens_and_sessions_are_collected() {
         let text = r#"{"id":"o1","sessionID":"o1","title":"Refactor parser","modelID":"qwen","time":{"created":1762764000000},"tokens":{"input":100,"output":20,"reasoning":5,"cache":{"read":10,"write":2}}}"#;
         let records = parse_opencode(text, Path::new("x.json"));
@@ -380,5 +478,29 @@ mod tests {
         assert_eq!(records[0].title, "Refactor parser");
         assert_eq!(records[0].totals.total_tokens, 125);
         assert_eq!(records[0].totals.cache_read_tokens, 10);
+        assert_eq!(records[0].cost_usd, None);
+    }
+
+    #[test]
+    fn log_reported_cost_is_read_from_each_helper() {
+        let opencode = r#"{"id":"o1","sessionID":"o1","modelID":"qwen","cost":0.0125,"tokens":{"input":100,"output":20}}"#;
+        let records = parse_opencode(opencode, Path::new("x.json"));
+        assert_eq!(records[0].cost_usd, Some(0.0125));
+
+        let claude = r#"{"type":"assistant","sessionId":"s1","timestamp":"2026-11-10T10:00:00Z","costUSD":0.25,"message":{"model":"claude-sonnet","usage":{"input_tokens":100,"output_tokens":20}}}"#;
+        let records = parse_claude(&lines(claude), "hint", "fallback");
+        assert_eq!(records[0].cost_usd, Some(0.25));
+    }
+
+    #[test]
+    fn claude_result_total_is_added_once_without_estimating_the_tokens_again() {
+        let text = r#"{"type":"assistant","sessionId":"s1","timestamp":"2026-11-10T10:00:00Z","message":{"model":"claude-sonnet","usage":{"input_tokens":100,"output_tokens":20}}}
+{"type":"result","sessionId":"s1","timestamp":"2026-11-10T10:01:00Z","total_cost_usd":0.75}
+{"type":"result","sessionId":"s1","timestamp":"2026-11-10T10:02:00Z","total_cost_usd":0.9}"#;
+        let records = parse_claude(&lines(text), "hint", "fallback");
+        assert_eq!(records.len(), 2);
+        assert_eq!(records[0].cost_usd, Some(0.0));
+        assert_eq!(records[1].cost_usd, Some(0.9));
+        assert_eq!(records[1].model, "claude-sonnet");
     }
 }
