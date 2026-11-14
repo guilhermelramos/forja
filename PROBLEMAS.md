@@ -659,3 +659,34 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - As demais abas dos painéis esquerdo e direito (equivalentes a "Bancadas", "Painéis de extensões", "Busca" e "Portas" do pt-BR) não aparecem na árvore de acessibilidade nesta variante; somente os botões "More tabs" que as agrupam.
 - O botão "Back to bench" é exibido no topo da área central mesmo sem bancada ativa, enquanto o painel direito mostra "No active bench. Open a bench to see its files.".
 
+## [en.dark.settings.accounts](pages/en.dark.settings.accounts.md)
+
+- O conteúdo do segundo cartão é cortado pela borda inferior do modal: o aviso "helper executable not found" (354,482)–(503,498) ultrapassa o fim do modal (y=496) e aparece visualmente truncado; o botão "Add account" (550,506)–(652,538) e o campo "Name" (354,511)–(542,534) do cartão Codex ficam totalmente fora da área visível do modal, apesar de existirem na árvore.
+- O modal "Settings" (328,58)–(1026,496) se sobrepõe à barra de abas central (y 50–85) e à barra de ferramentas, escondendo os botões "More tabs" central, "+", os quatro ícones, "Recipes", "Shell" e as abas "Terminal" a "History", além de parte de "Extension panels" (só "ion panels" fica visível).
+- A aba "Terminal" está marcada como ativa (marcado=True), mas não é visível por estar sob o modal.
+- Nomes duplicados na árvore prejudicam leitores de tela: três "More tabs", dois "Changes", dois "Add account" e dois "helper executable not found".
+- Os campos de busca de ajustes e os dois campos "Name" são TextInput sem nome acessível; o rótulo visível é apenas o placeholder.
+- O alternador de tema na barra superior e vários ícones da barra de ferramentas central não têm nome acessível.
+- Os botões "Find file  Ctrl+P" e "Anvil  Ctrl+K" têm dois espaços entre o rótulo e o atalho.
+
+## [en.dark.settings.content](pages/en.dark.settings.content.md)
+
+- Botão-ícone de tema (1741,5)–(1773,37) na barra superior sem nome acessível.
+- Os três botões "More tabs" têm o mesmo nome acessível em faixas diferentes, sem indicar qual faixa representam.
+- Grupo de quatro botões-ícone sem rótulo (444–581,113–145) na faixa de terminais, totalmente encobertos pela modal.
+- A modal encobre a faixa de abas central, incluindo a aba ativa "Terminal" (marcada), e os botões "More tabs", "Recipes" e "Shell" dessa faixa.
+- A aba "Helper (chat)" (1099,52)–(1202,84) da faixa central só aparece parcialmente à direita da modal; "Extension panels" (973,52)–(1099,84) fica cortada pela borda da modal.
+- O texto visível "Click to type" no rodapé da área central (aprox. 1530,1017–1600,1030) não corresponde a nenhum elemento nomeado na árvore de acessibilidade.
+- Caminhos dos diagnósticos exibidos com separadores misturados e trecho relativo cru ("…\modules\content\../../../content\templates\…"), difíceis de ler.
+- Textos secundários em cinza médio sobre fundo escuro (por exemplo, "rev 1" e os caminhos dos diagnósticos) têm contraste baixo.
+- O rodapé da lista de diagnósticos ("missing `+++` frontmatter" em (337,472)–(499,491)) encosta na borda inferior da janela modal (496 px), sem folga visível.
+
+## [en.dark.settings.counter_github](pages/en.dark.settings.counter_github.md)
+
+- O campo de busca e o campo de token não têm nome acessível (dependem apenas dos placeholders "Search settings" e "Token").
+- O ícone de tema (sol) da barra superior, os quatro botões-ícone da barra do editor (444–581 px) e o logotipo (Image) estão sem nome acessível.
+- O modal sobrepõe o "More tabs" da área central, as abas de "Terminal" a "Extension panels" (esta só aparece como "…ion panels"), a barra de ferramentas do editor ("+", ícones, "Recipes", "Shell") e o topo da área de edição.
+- Os retângulos de controles ocultos atrás do modal, (328,118)–(404,140) e (385,121)–(401,137), se sobrepõem ao retângulo do campo de busca do próprio modal.
+- Texto "Click to type" visível na área central sem elemento correspondente na árvore de acessibilidade.
+- Textos de apoio em cinza médio sobre fundo escuro (placeholders "Search settings" e "Token", "Not connected", mensagens de estado vazio e a dica "Click to type") têm contraste baixo; os botões desativados "Connect" e "Disconnect" também perdem contraste.
+
