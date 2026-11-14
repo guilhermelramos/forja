@@ -554,6 +554,14 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Elementos sem nome acessível: alternador de tema (1101,5), os dois divisores verticais (304,42 e 972,42), as faixas dos grupos de abas e os indicadores de sublinhado — apenas "Unknown"/(sem nome acessível) na árvore; o logotipo (Image) e os ícones de estado vazio também não têm nome.
 - Botões de janela nomeados apenas pelos símbolos "–", "□" e "×", sem rótulo descritivo (minimizar/maximizar/fechar).
 
+## [en.dark.right-tab.git.changes](pages/en.dark.right-tab.git.changes.md)
+
+- Botões de janela rotulados apenas com os caracteres "–", "□" e "×" como nome acessível.
+- Vários controles sem nome acessível: alternador de tema (1741,5)–(1773,37), os quatro botões de ícone da barra do terminal (444–581), o chip "pwsh", os divisores verticais, o logotipo e a área do terminal.
+- A dica "Click to type" (≈1508,1016–1597,1028), visível na imagem dentro do terminal, não tem entrada na árvore de acessibilidade.
+- Faixas de abas dependem de botões genéricos "More tabs" (três ocorrências) para reaching abas ocultas; não fica acessível quais abas estão escondidas sem abrir o menu.
+- Abas e textos inativos em cinza médio sobre fundo escuro (por exemplo "Editor", "Browser", "Preview", "Files") têm contraste baixo.
+
 ## [en.dark.bench-tab.git.history](pages/en.dark.bench-tab.git.history.md)
 
 - Aba "Extension panels" (1240,50)–(1366,82) tem retângulo além da largura da janela (1280 px): fica parcialmente fora da área visível, aparecendo na imagem só como "Ext…".
@@ -593,6 +601,18 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Botão de alternância de tema e as duas divisórias verticais estão sem nome acessível.
 - Textos de estado vazio e subtítulo em cinza sobre fundo escuro têm contraste reduzido (por exemplo, "Tasks, helpers and notes in one place.").
 
+## [en.dark.right-tab.ports.panel](pages/en.dark.right-tab.ports.panel.md)
+
+- Botões sem nome acessível: alternância de tema (1741,5)–(1773,37) e os quatro ícones da barra do terminal (fechar, dividir, sessão e busca; (444,113)–(476,145), (479,113)–(511,145), (514,113)–(546,145), (549,113)–(581,145)).
+- O chip da sessão "pwsh" (328,118)–(404,140) e seu ponto de status (385,121)–(401,137) não têm nome acessível.
+- Os divisores (304,42)–(320,1048) e (1612,42)–(1628,1048) e o logotipo (12,50)–(40,78) não têm nome acessível.
+- A superfície do terminal (328,150)–(1604,1036) é uma grande área clicável sem nome acessível.
+- O rótulo "(ícone)" do estado vazio (168,161)–(196,189) tem um nome de acessibilidade de marcação (placeholder), sem significado.
+- Três botões compartilham o mesmo nome "More tabs" ((64,50), (324,50) e (1632,50)), o que é ambíguo para navegação por leitor de tela.
+- Vários Labels expõem ações de clique e/ou foco, papel incoerente com o tipo: "No project", "Ports", "0 listening", "Ready", "56 modules", "Notifications", "No listening TCP port was found." e "No project yet. Add an existing folder or create a new one.".
+- Três abas aparecem simultaneamente com marcado=True ("Projects", "Terminal" e "Ports"), o que torna ambíguo qual painel está de fato selecionado.
+- O pequeno indicador de giro ao lado de "Refresh" (≈(1830,118)–(1848,134)) e o texto "Click to type" no canto do terminal (≈(1536,1016)–(1596,1030)) aparecem na imagem, mas não têm elemento correspondente na árvore de acessibilidade.
+
 ## [en.dark.bench-tab.review.tab](pages/en.dark.bench-tab.review.tab.md)
 
 - O formulário "New pull request" está cortado: os campos "Title" e "Description" têm retângulos até x=1107, enquanto o painel central termina em ~972 px; ambos são cortados na borda do painel.
@@ -611,6 +631,15 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - O texto da aba "Extension panels" do painel esquerdo (211,50)–(337,82) é cortado visualmente pela área central, aparecendo como "Extension pa" na captura.
 - Botões-ícone do trilho ("Board", "Helpers", "Muster", "Requests", "Skills", "Usage", "Extensions", "Archive") dependem exclusivamente de ícone na interface; o nome acessível existe na árvore, mas não há rótulo visível nem dica na tela.
 - Os três ícones ilustrativos dos estados vazios, a logomarca, o ícone de tema e os divisores são expostos como "(sem nome acessível)", sem descrição para leitores de tela.
+
+## [en.dark.right-tab.search.panel](pages/en.dark.right-tab.search.panel.md)
+
+- Os quatro campos de texto do painel Search (busca, incluir, excluir e substituir) não têm nome acessível; só são identificáveis pelo placeholder ("Search in files", "Include: *.rs, src/**", "Exclude: target/**", "Replace with").
+- Os quatro botões-ícone da barra do terminal ((444,113)–(476,145) a (549,113)–(581,145)) e o ícone de tema da barra superior ((1741,5)–(1773,37)) são elementos Unknown sem nome acessível.
+- O chip "pwsh" ((328,118)–(404,140)) contém um segundo elemento Unknown sobreposto ((385,121)–(401,137)), duplicando a região na árvore.
+- Botões "Search", "Stop", "Preview" e "Apply" estão desativados sem tooltip; a razão só aparece no texto "Open a bench first." abaixo dos botões.
+- A dica "Click to type", visível no canto inferior direito do terminal, não aparece na árvore de acessibilidade.
+- Os nomes acessíveis "Find file  Ctrl+P" e "Anvil  Ctrl+K" contêm espaços duplos entre o rótulo e o atalho, o que pode soar truncado em leitores de tela.
 
 ## [en.dark.rail.skill.page](pages/en.dark.rail.skill.page.md)
 

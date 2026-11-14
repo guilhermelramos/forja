@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 3/160 telas documentadas · elementos citados 2584/2736 · completo: false
+**Progresso:** 6/160 telas documentadas · elementos citados 2705/2857 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -121,7 +121,7 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.dark.rail.extension.page` | [página](pages/en.dark.rail.extension.page.md) | [png](captures/en.dark.rail.extension.page.png) |
 | `en.dark.right-tab.extension.panels.right` | [página](pages/en.dark.right-tab.extension.panels.right.md) | [png](captures/en.dark.right-tab.extension.panels.right.png) |
 | `en.dark.bench-tab.extension.panels.bench` | [página](pages/en.dark.bench-tab.extension.panels.bench.md) | [png](captures/en.dark.bench-tab.extension.panels.bench.png) |
-| `en.dark.right-tab.git.changes` | — | [png](captures/en.dark.right-tab.git.changes.png) |
+| `en.dark.right-tab.git.changes` | [página](pages/en.dark.right-tab.git.changes.md) | [png](captures/en.dark.right-tab.git.changes.png) |
 | `en.dark.bench-tab.git.history` | [página](pages/en.dark.bench-tab.git.history.md) | [png](captures/en.dark.bench-tab.git.history.png) |
 | `en.dark.modal.helper.profile_picker` | [página](pages/en.dark.modal.helper.profile_picker.md) | [png](captures/en.dark.modal.helper.profile_picker.png) |
 | `en.dark.rail.helper.tab` | [página](pages/en.dark.rail.helper.tab.md) | [png](captures/en.dark.rail.helper.tab.png) |
@@ -129,12 +129,12 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.dark.rail.muster.page` | [página](pages/en.dark.rail.muster.page.md) | [png](captures/en.dark.rail.muster.page.png) |
 | `en.dark.modal.notify.toasts` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.modal.notify.toasts.png) |
 | `en.dark.modal.onboarding.wizard` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.modal.onboarding.wizard.png) |
-| `en.dark.right-tab.ports.panel` | — | [png](captures/en.dark.right-tab.ports.panel.png) |
+| `en.dark.right-tab.ports.panel` | [página](pages/en.dark.right-tab.ports.panel.md) | [png](captures/en.dark.right-tab.ports.panel.png) |
 | `en.dark.modal.project.dialogs` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.modal.project.dialogs.png) |
 | `en.dark.rail.request.page` | [página](pages/en.dark.rail.request.page.md) | [png](captures/en.dark.rail.request.page.png) |
 | `en.dark.bench-tab.review.tab` | [página](pages/en.dark.bench-tab.review.tab.md) | [png](captures/en.dark.bench-tab.review.tab.png) |
 | `en.dark.rail.routine.page` | [página](pages/en.dark.rail.routine.page.md) | [png](captures/en.dark.rail.routine.page.png) |
-| `en.dark.right-tab.search.panel` | — | [png](captures/en.dark.right-tab.search.panel.png) |
+| `en.dark.right-tab.search.panel` | [página](pages/en.dark.right-tab.search.panel.md) | [png](captures/en.dark.right-tab.search.panel.png) |
 | `en.dark.rail.skill.page` | [página](pages/en.dark.rail.skill.page.md) | [png](captures/en.dark.rail.skill.page.png) |
 | `en.dark.bench-tab.terminal.tab` | igual a [en.dark.home.default](pages/en.dark.home.default.md) | [png](captures/en.dark.bench-tab.terminal.tab.png) |
 | `en.dark.rail.usage.page` | [página](pages/en.dark.rail.usage.page.md) | [png](captures/en.dark.rail.usage.page.png) |

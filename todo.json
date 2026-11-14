@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 3,
-  "widgets_total": 2736,
-  "widgets_covered": 2584,
+  "states_done": 6,
+  "widgets_total": 2857,
+  "widgets_covered": 2705,
   "complete": false,
   "stale": [
     {
@@ -708,21 +708,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "en.dark.right-tab.git.changes",
-      "png": "captures/en.dark.right-tab.git.changes.png",
-      "tree": "captures/en.dark.right-tab.git.changes.json"
-    },
-    {
-      "state": "en.dark.right-tab.ports.panel",
-      "png": "captures/en.dark.right-tab.ports.panel.png",
-      "tree": "captures/en.dark.right-tab.ports.panel.json"
-    },
-    {
-      "state": "en.dark.right-tab.search.panel",
-      "png": "captures/en.dark.right-tab.search.panel.png",
-      "tree": "captures/en.dark.right-tab.search.panel.json"
-    },
     {
       "state": "en.dark.settings.accounts",
       "png": "captures/en.dark.settings.accounts.png",
