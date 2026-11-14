@@ -43,7 +43,7 @@ Um módulo **nunca depende do crate de outro**. Eles conversam de duas formas:
 | `editor.preview` | editor | `{path?}` | `{preview: true}`. Usa `viewers.preview`. |
 | `editor.format` | editor | `{path?}` | `{pending: true}` |
 | `editor.wrap.toggle` / `editor.close` | editor | `{path?}` | `{wrap: bool}` / `{closed: true}` |
-| `diff.open` | diff | `{path?, file?, staged?}` | `{open: true}` ou `{files, detached, upstream}` |
+| `diff.open` | diff | `{path?, file?, staged?, comparison?}` | `{open: true}` ou `{files, detached, upstream, comparison?}`. `comparison` usa `base...HEAD`; sem ele, mostra a árvore de trabalho. |
 | `diff.refresh` | diff | `{path?}` | `{files, detached, upstream}` |
 | `diff.select` | diff | `{path?, file, staged?}` | `{file, binary, hunks}` |
 | `diff.send_notes` | diff | `{terminal_id?}` | `{sent: bool, terminal_id?}`. Usa `terminal.send`; prefere `helper.list` e cai para `terminal.list`. |
@@ -54,7 +54,9 @@ Um módulo **nunca depende do crate de outro**. Eles conversam de duas formas:
 | `viewers.close` | viewers | - | `{closed: true}` |
 | `git.status` | git | `{path}` | `GitSummary` (emite `git.status_changed`) |
 | `git.changes` | git | `{path}` | `{summary, files, upstream, detached}` |
-| `git.diff` | git | `{path, file, staged?}` | `{path, staged, binary, hunks}` em JSON |
+| `git.diff` | git | `{path, file, staged?, comparison?}` | `{path, staged, binary, hunks}` em JSON. `comparison` aceita `base...HEAD`. |
+| `git.compare` | git | `{path, base?}` | `{pending: true}`; lê commits e arquivos da comparação em `Tasks` |
+| `git.compare.result` | git | `{path}` | `{loading, comparison?, error?}` |
 | `git.stage` / `git.unstage` | git | `{path, files}` | `{pending: true}` |
 | `git.discard` | git | `{path, files, confirm: true}` | `{pending: true}` (destrutivo) |
 | `git.commit` | git | `{path, message, all?}` | `{pending: true}` |
@@ -96,6 +98,8 @@ Operações de bancada e de git que podem demorar (worktree, script, rede ou vá
 processos) devolvem um aceite e concluem em segundo plano; o efeito aparece no
 evento correspondente ou na próxima leitura. `git.status`, `git.changes`,
 `git.diff`, `git.log` e `git.blame` são leituras curtas e respondem na hora.
+`git.compare` processa histórico e estatísticas em segundo plano e publica
+`git.comparison_changed` ao terminar.
 
 ## Eventos (onda C1)
 
@@ -108,6 +112,7 @@ evento correspondente ou na próxima leitura. `git.status`, `git.changes`,
 | `terminal.exited` / `terminal.bell` / `terminal.command_finished` / `terminal.title_changed` | terminal | `TerminalExited` … |
 | `file.open_requested` | terminal (links), search, diff… | `FileOpenRequested` |
 | `git.status_changed` | git | `GitStatusChanged` |
+| `git.comparison_changed` | git | `GitComparisonChanged` (`bench_path`, `base?`) |
 | `helper.status_changed` | helper (onda C2) | `HelperStatusChanged` |
 | `trust.decided` | trust | `TrustDecided` |
 | `notify.requested` | qualquer módulo | `NotifyRequested` |

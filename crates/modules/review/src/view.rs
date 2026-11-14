@@ -1,16 +1,22 @@
 //! Review tab: create a PR, watch checks, answer threads and merge.
 
+mod sections;
+
 use crate::api::Provider;
 use crate::parse::Check;
 use crate::state::{Generated, Shared, State};
-use forja_kernel::ui_contract::{egui, View};
+use chrono::TimeZone;
+use forja_kernel::ui_contract::{View, egui};
 use forja_kernel::{Args, Ctx};
 use serde_json::json;
+use std::time::{Duration, Instant};
 
 pub struct ReviewView {
     state: Shared,
     bootstrapped: bool,
     selected_check: Option<u64>,
+    comparison_debounce: Option<Instant>,
+    last_comparison_check: Option<Instant>,
 }
 
 #[derive(Clone, Default)]
@@ -29,6 +35,8 @@ impl ReviewView {
             state,
             bootstrapped: false,
             selected_check: None,
+            comparison_debounce: None,
+            last_comparison_check: None,
         }
     }
 
@@ -49,6 +57,36 @@ impl View for ReviewView {
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         self.bootstrap(cx);
         let snapshot = self.state.with(|state| state.clone()).unwrap_or_default();
+        let now = Instant::now();
+        if self
+            .last_comparison_check
+            .is_none_or(|last| now.duration_since(last) >= Duration::from_secs(5))
+        {
+            self.last_comparison_check = Some(now);
+            if let Some(bench) = &snapshot.bench {
+                crate::commands::start_comparison(
+                    cx,
+                    &self.state,
+                    bench,
+                    (!snapshot.base.trim().is_empty()).then_some(snapshot.base.as_str()),
+                );
+            }
+        }
+        ui.ctx().request_repaint_after(Duration::from_secs(5));
+        if self
+            .comparison_debounce
+            .is_some_and(|deadline| Instant::now() >= deadline)
+        {
+            self.comparison_debounce = None;
+            if let Some(bench) = &snapshot.bench {
+                crate::commands::start_comparison(
+                    cx,
+                    &self.state,
+                    bench,
+                    (!snapshot.base.trim().is_empty()).then_some(snapshot.base.as_str()),
+                );
+            }
+        }
         let tokens = forja_ui_kit::applied_tokens(ui.ctx());
         let muted = c32(tokens.color.text_muted);
         self.header(ui, cx, &snapshot, muted);
@@ -76,6 +114,203 @@ impl View for ReviewView {
 }
 
 impl ReviewView {
+    fn summary(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        state: &State,
+        base: &mut String,
+        muted: egui::Color32,
+    ) {
+        ui.group(|ui| {
+            ui.label(egui::RichText::new(cx.t("review.summary.title")).strong());
+            if state.comparison_loading {
+                ui.horizontal(|ui| {
+                    ui.spinner();
+                    ui.label(cx.t("review.summary.loading"));
+                });
+            }
+            if let Some(error) = &state.comparison_error {
+                ui.label(egui::RichText::new(error).color(muted));
+            }
+            let mut changed_base = false;
+            if let Some(comparison) = &state.comparison {
+                if !comparison.remote {
+                    ui.label(
+                        egui::RichText::new(cx.t("review.summary.remote-missing")).color(muted),
+                    );
+                }
+                ui.horizontal_wrapped(|ui| {
+                    ui.label(cx.t("review.summary.base"));
+                    ui.label(
+                        egui::RichText::new(
+                            comparison
+                                .base
+                                .clone()
+                                .unwrap_or_else(|| cx.t("review.summary.choose-base-label")),
+                        )
+                        .strong(),
+                    );
+                    if let Some(commit) = &comparison.base_commit {
+                        ui.label(
+                            egui::RichText::new(commit.chars().take(12).collect::<String>())
+                                .monospace()
+                                .small()
+                                .color(muted),
+                        );
+                    }
+                    if !comparison.branches.is_empty() {
+                        egui::ComboBox::from_id_salt("review-base-branch")
+                            .selected_text(cx.t("review.summary.choose-base-label"))
+                            .show_ui(ui, |ui| {
+                                for branch in &comparison.branches {
+                                    if ui.selectable_label(base == branch, branch).clicked() {
+                                        *base = branch.clone();
+                                        changed_base = true;
+                                    }
+                                }
+                            });
+                    }
+                });
+                if !comparison.head.is_empty() {
+                    ui.label(cx.t_args(
+                        "review.summary.head",
+                        &[(
+                            "commit",
+                            &comparison.head.chars().take(12).collect::<String>(),
+                        )],
+                    ));
+                }
+                if comparison.base.is_none() {
+                    ui.label(
+                        egui::RichText::new(cx.t("review.summary.no-base"))
+                            .small()
+                            .color(muted),
+                    );
+                } else {
+                    ui.label(cx.t_args(
+                        "review.summary.ahead",
+                        &[("count", &comparison.ahead.to_string())],
+                    ));
+                }
+                if comparison.ahead == 0 && comparison.base.is_some() {
+                    ui.label(
+                        egui::RichText::new(cx.t("review.summary.nothing-to-send")).color(muted),
+                    );
+                }
+                ui.add_space(4.0);
+                ui.label(egui::RichText::new(cx.t("review.summary.commits")).strong());
+                if comparison.commits.is_empty() {
+                    ui.label(
+                        egui::RichText::new(cx.t("review.summary.no-commits"))
+                            .small()
+                            .color(muted),
+                    );
+                } else {
+                    egui::ScrollArea::vertical()
+                        .id_salt("review-summary-commits")
+                        .max_height(180.0)
+                        .show_rows(ui, 22.0, comparison.commits.len(), |ui, rows| {
+                            for index in rows {
+                                let commit = &comparison.commits[index];
+                                ui.horizontal_wrapped(|ui| {
+                                    ui.label(egui::RichText::new(&commit.short).monospace());
+                                    ui.label(&commit.title);
+                                    ui.label(
+                                        egui::RichText::new(&commit.author).small().color(muted),
+                                    );
+                                    ui.label(
+                                        egui::RichText::new(format_commit_date(commit.time, cx))
+                                            .small()
+                                            .color(muted),
+                                    );
+                                });
+                            }
+                        });
+                }
+                ui.add_space(4.0);
+                ui.label(egui::RichText::new(cx.t("review.summary.files")).strong());
+                if comparison.files.is_empty() {
+                    ui.label(
+                        egui::RichText::new(cx.t("review.summary.no-files"))
+                            .small()
+                            .color(muted),
+                    );
+                } else {
+                    egui::ScrollArea::vertical()
+                        .id_salt("review-summary-files")
+                        .max_height(180.0)
+                        .show_rows(ui, 22.0, comparison.files.len(), |ui, rows| {
+                            for index in rows {
+                                let file = &comparison.files[index];
+                                let additions = file
+                                    .additions
+                                    .map(|count| count.to_string())
+                                    .unwrap_or_else(|| cx.t("review.summary.binary"));
+                                let deletions = file
+                                    .deletions
+                                    .map(|count| count.to_string())
+                                    .unwrap_or_else(|| cx.t("review.summary.binary"));
+                                ui.horizontal_wrapped(|ui| {
+                                    ui.label(
+                                        egui::RichText::new(format!("+{additions} / -{deletions}"))
+                                            .monospace()
+                                            .small()
+                                            .color(muted),
+                                    );
+                                    ui.label(egui::RichText::new(&file.path).monospace());
+                                });
+                            }
+                        });
+                }
+                ui.label(cx.t_args(
+                    "review.summary.total",
+                    &[
+                        ("files", &comparison.files.len().to_string()),
+                        ("additions", &comparison.additions.to_string()),
+                        ("deletions", &comparison.deletions.to_string()),
+                    ],
+                ));
+                if let Some(base) = comparison
+                    .base
+                    .as_ref()
+                    .filter(|branch| branch.as_str() == base.trim())
+                    .filter(|_| !state.comparison_loading)
+                {
+                    if forja_ui_kit::button(
+                        ui,
+                        forja_ui_kit::ButtonKind::Secondary,
+                        &cx.t("review.summary.view-diff"),
+                    )
+                    .clicked()
+                    {
+                        if let Some(bench) = &state.bench {
+                            let mut args = Args::new();
+                            args.insert("path", json!(bench));
+                            args.insert("comparison", json!(format!("{base}...HEAD")));
+                            if cx.run_command("diff.open", args).is_ok() {
+                                let mut focus = Args::new();
+                                focus.insert("view_id", json!("diff.tab"));
+                                let _ = cx.run_command("shell.tab.open", focus);
+                            }
+                        }
+                    }
+                }
+            } else if !state.comparison_loading {
+                ui.label(
+                    egui::RichText::new(cx.t("review.summary.no-base"))
+                        .small()
+                        .color(muted),
+                );
+            }
+            if changed_base {
+                self.comparison_debounce = Some(Instant::now() + Duration::from_millis(250));
+                ui.ctx().request_repaint_after(Duration::from_millis(260));
+            }
+        });
+        ui.add_space(8.0);
+    }
+
     fn header(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &State, muted: egui::Color32) {
         ui.horizontal_wrapped(|ui| {
             ui.heading(cx.t("review.tab.title"));
@@ -90,15 +325,6 @@ impl ReviewView {
                         .small()
                         .color(muted),
                 );
-            }
-            if forja_ui_kit::button(
-                ui,
-                forja_ui_kit::ButtonKind::Ghost,
-                &cx.t("review.command.refresh"),
-            )
-            .clicked()
-            {
-                let _ = cx.run_command("review.refresh", Args::new());
             }
             if state.loading {
                 ui.spinner();
@@ -123,6 +349,12 @@ impl ReviewView {
             labels: state.labels.clone(),
         };
         ui.add_space(8.0);
+        let previous_base = form.base.clone();
+        self.summary(ui, cx, state, &mut form.base, muted);
+        if form.base != previous_base {
+            self.comparison_debounce = Some(Instant::now() + Duration::from_millis(250));
+            ui.ctx().request_repaint_after(Duration::from_millis(260));
+        }
         ui.label(egui::RichText::new(cx.t("review.create.title")).strong());
         ui.label(
             egui::RichText::new(cx.t("review.create.source-label"))
@@ -157,7 +389,11 @@ impl ReviewView {
         );
         ui.horizontal(|ui| {
             ui.label(cx.t("review.create.base"));
-            ui.add(egui::TextEdit::singleline(&mut form.base).desired_width(140.0));
+            let response = ui.add(egui::TextEdit::singleline(&mut form.base).desired_width(140.0));
+            if response.changed() {
+                self.comparison_debounce = Some(Instant::now() + Duration::from_millis(250));
+                ui.ctx().request_repaint_after(Duration::from_millis(260));
+            }
             ui.checkbox(&mut form.draft, cx.t("review.create.draft"));
             if forja_ui_kit::button(
                 ui,
@@ -183,13 +419,19 @@ impl ReviewView {
             state.reviewers = form.reviewers.clone();
             state.labels = form.labels.clone();
         });
-        if forja_ui_kit::button(
-            ui,
-            forja_ui_kit::ButtonKind::Primary,
-            &cx.t("review.create.open"),
-        )
-        .clicked()
-        {
+        let disabled_reason = create_disabled_reason(state, cx);
+        let can_open = disabled_reason.is_none();
+        let response = ui.add_enabled_ui(can_open, |ui| {
+            forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Primary,
+                &cx.t("review.create.open"),
+            )
+        });
+        if let Some(reason) = disabled_reason {
+            ui.label(egui::RichText::new(reason).small().color(muted));
+        }
+        if response.inner.clicked() {
             if form.title.trim().is_empty() {
                 self.state
                     .set_status(Some(cx.t("review.error.title-required")));
@@ -205,368 +447,6 @@ impl ReviewView {
                     self.state.set_status(Some(error.to_string()));
                 }
             }
-        }
-    }
-
-    fn pr_card(
-        &mut self,
-        ui: &mut egui::Ui,
-        cx: &mut Ctx<'_>,
-        state: &State,
-        pr: &crate::parse::PullRequest,
-        muted: egui::Color32,
-    ) {
-        let tokens = forja_ui_kit::applied_tokens(ui.ctx());
-        egui::Frame::new()
-            .fill(c32(tokens.color.surface_alt))
-            .corner_radius(6)
-            .inner_margin(egui::Margin::symmetric(10, 8))
-            .show(ui, |ui| {
-                ui.horizontal_wrapped(|ui| {
-                    ui.label(
-                        egui::RichText::new(format!("#{} {}", pr.number, pr.title))
-                            .strong()
-                            .color(c32(tokens.color.text)),
-                    );
-                    let state_label = if pr.draft && pr.is_open() {
-                        cx.t("review.pr.draft")
-                    } else {
-                        pr.display_state().to_owned()
-                    };
-                    ui.label(egui::RichText::new(state_label).small().color(muted));
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if forja_ui_kit::button(
-                            ui,
-                            forja_ui_kit::ButtonKind::Ghost,
-                            &cx.t("review.pr.open-browser"),
-                        )
-                        .clicked()
-                            && !pr.url.is_empty()
-                        {
-                            let mut args = Args::new();
-                            args.insert("url", json!(pr.url));
-                            let _ = cx.run_command("browser.open", args);
-                        }
-                    });
-                });
-                ui.label(
-                    egui::RichText::new(format!("{} → {}", pr.source, pr.target))
-                        .small()
-                        .color(muted),
-                );
-                if !pr.reviewers.is_empty() {
-                    ui.label(
-                        egui::RichText::new(format!(
-                            "{}: {}",
-                            cx.t("review.pr.reviewers"),
-                            pr.reviewers.join(", ")
-                        ))
-                        .small()
-                        .color(muted),
-                    );
-                }
-                if !pr.labels.is_empty() {
-                    ui.label(
-                        egui::RichText::new(format!(
-                            "{}: {}",
-                            cx.t("review.pr.labels"),
-                            pr.labels.join(", ")
-                        ))
-                        .small()
-                        .color(muted),
-                    );
-                }
-            });
-        let _ = state;
-        ui.add_space(6.0);
-    }
-
-    fn checks(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &State, muted: egui::Color32) {
-        let tokens = forja_ui_kit::applied_tokens(ui.ctx());
-        ui.label(egui::RichText::new(cx.t("review.checks.title")).strong());
-        if state.checks.is_empty() {
-            ui.label(
-                egui::RichText::new(cx.t("review.checks.empty"))
-                    .small()
-                    .color(muted),
-            );
-            return;
-        }
-        for check in &state.checks {
-            let color = if check.failed() {
-                tokens.color.danger
-            } else if check.passed() {
-                tokens.color.ok
-            } else {
-                tokens.color.spark
-            };
-            ui.horizontal_wrapped(|ui| {
-                ui.label(egui::RichText::new(&check.name).monospace());
-                ui.label(egui::RichText::new(&check.state).small().color(c32(color)));
-                if ui
-                    .selectable_label(
-                        self.selected_check == Some(check.id),
-                        cx.t("review.checks.log"),
-                    )
-                    .clicked()
-                {
-                    self.selected_check = Some(check.id);
-                    if check.log.is_empty() {
-                        let mut args = Args::new();
-                        args.insert("id", json!(check.id));
-                        let _ = cx.run_command("review.checks.log", args);
-                    }
-                }
-                if forja_ui_kit::button(
-                    ui,
-                    forja_ui_kit::ButtonKind::Ghost,
-                    &cx.t("review.checks.rerun"),
-                )
-                .clicked()
-                {
-                    let mut args = Args::new();
-                    args.insert("id", json!(check.id));
-                    let _ = cx.run_command("review.checks.rerun", args);
-                }
-                if check.failed()
-                    && forja_ui_kit::button(
-                        ui,
-                        forja_ui_kit::ButtonKind::Secondary,
-                        &cx.t("review.checks.fix"),
-                    )
-                    .clicked()
-                {
-                    let _ = cx.run_command("review.fix", Args::new());
-                }
-            });
-            if self.selected_check == Some(check.id) {
-                let log = state
-                    .logs
-                    .get(&check.id.to_string())
-                    .cloned()
-                    .unwrap_or_else(|| check.log.clone());
-                egui::Frame::new()
-                    .fill(c32(tokens.color.bg))
-                    .corner_radius(4)
-                    .inner_margin(egui::Margin::symmetric(8, 6))
-                    .show(ui, |ui| {
-                        egui::ScrollArea::vertical()
-                            .id_salt(("review-log", check.id))
-                            .max_height(220.0)
-                            .show(ui, |ui| {
-                                if log.is_empty() {
-                                    ui.label(
-                                        egui::RichText::new(cx.t("review.checks.pending"))
-                                            .small()
-                                            .color(muted),
-                                    );
-                                } else {
-                                    ui.label(egui::RichText::new(log).monospace().small());
-                                }
-                            });
-                    });
-            }
-        }
-        ui.add_space(6.0);
-    }
-
-    fn threads(
-        &mut self,
-        ui: &mut egui::Ui,
-        cx: &mut Ctx<'_>,
-        state: &State,
-        muted: egui::Color32,
-    ) {
-        let tokens = forja_ui_kit::applied_tokens(ui.ctx());
-        ui.label(egui::RichText::new(cx.t("review.threads.title")).strong());
-        if state.threads.is_empty() {
-            ui.label(
-                egui::RichText::new(cx.t("review.threads.empty"))
-                    .small()
-                    .color(muted),
-            );
-            return;
-        }
-        for thread in &state.threads {
-            egui::Frame::new()
-                .fill(c32(tokens.color.surface))
-                .stroke(egui::Stroke::new(1.0_f32, c32(tokens.color.border)))
-                .corner_radius(6)
-                .inner_margin(egui::Margin::symmetric(8, 6))
-                .show(ui, |ui| {
-                    ui.horizontal_wrapped(|ui| {
-                        ui.label(
-                            egui::RichText::new(format!("{}:{}", thread.path, thread.line))
-                                .small()
-                                .color(muted),
-                        );
-                        if thread.resolved {
-                            ui.label(
-                                egui::RichText::new(cx.t("review.threads.resolved"))
-                                    .small()
-                                    .color(c32(tokens.color.ok)),
-                            );
-                        }
-                        if forja_ui_kit::button(
-                            ui,
-                            forja_ui_kit::ButtonKind::Ghost,
-                            &cx.t(if thread.resolved {
-                                "review.threads.unresolve"
-                            } else {
-                                "review.threads.resolve"
-                            }),
-                        )
-                        .clicked()
-                        {
-                            let mut args = Args::new();
-                            args.insert("thread_id", json!(thread.id));
-                            args.insert("resolved", json!(!thread.resolved));
-                            let _ = cx.run_command("review.thread.resolve", args);
-                        }
-                    });
-                    for comment in &thread.comments {
-                        ui.label(
-                            egui::RichText::new(format!("{}: {}", comment.author, comment.body))
-                                .small(),
-                        );
-                    }
-                    let mut draft = self.state.reply_draft(&thread.id);
-                    let response = ui.add(
-                        egui::TextEdit::singleline(&mut draft)
-                            .hint_text(cx.t("review.threads.reply"))
-                            .desired_width(f32::INFINITY),
-                    );
-                    if response.changed() {
-                        self.state.set_reply_draft(&thread.id, draft.clone());
-                    }
-                    if forja_ui_kit::button(
-                        ui,
-                        forja_ui_kit::ButtonKind::Secondary,
-                        &cx.t("review.threads.send"),
-                    )
-                    .clicked()
-                    {
-                        let mut args = Args::new();
-                        args.insert("thread_id", json!(thread.id));
-                        args.insert("body", json!(draft));
-                        let _ = cx.run_command("review.thread.reply", args);
-                    }
-                });
-            ui.add_space(4.0);
-        }
-    }
-
-    fn merge(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &State, muted: egui::Color32) {
-        let Some(pr) = &state.pr else {
-            return;
-        };
-        ui.add_space(6.0);
-        ui.label(egui::RichText::new(cx.t("review.merge.title")).strong());
-        ui.horizontal_wrapped(|ui| {
-            for (index, key) in [
-                (0, "review.merge.merge"),
-                (1, "review.merge.squash"),
-                (2, "review.merge.rebase"),
-            ] {
-                if ui
-                    .selectable_label(state.merge_method == index, cx.t(key))
-                    .clicked()
-                {
-                    self.state.with(|state| state.merge_method = index);
-                }
-            }
-        });
-        ui.horizontal_wrapped(|ui| {
-            let mut delete = state.delete_branch;
-            let mut auto = state.auto_merge;
-            if ui
-                .checkbox(&mut delete, cx.t("review.merge.delete-branch"))
-                .changed()
-            {
-                self.state.with(|state| state.delete_branch = delete);
-            }
-            if ui.checkbox(&mut auto, cx.t("review.merge.auto")).changed() {
-                self.state.with(|state| state.auto_merge = auto);
-            }
-            if forja_ui_kit::button(
-                ui,
-                forja_ui_kit::ButtonKind::Primary,
-                &cx.t("review.merge.action"),
-            )
-            .clicked()
-            {
-                let mut args = Args::new();
-                args.insert("method", json!(method_name(state.merge_method)));
-                args.insert("delete_branch", json!(state.delete_branch));
-                args.insert("auto_merge", json!(state.auto_merge));
-                let _ = cx.run_command("review.merge", args);
-            }
-        });
-        ui.label(
-            egui::RichText::new(cx.t_args("review.pr.state", &[("state", &pr.merge_state)]))
-                .small()
-                .color(muted),
-        );
-    }
-
-    fn generated(
-        &mut self,
-        ui: &mut egui::Ui,
-        cx: &mut Ctx<'_>,
-        state: &State,
-        muted: egui::Color32,
-    ) {
-        let Some(generated) = &state.generated else {
-            return;
-        };
-        let tokens = forja_ui_kit::applied_tokens(ui.ctx());
-        ui.add_space(8.0);
-        ui.horizontal(|ui| {
-            ui.label(
-                egui::RichText::new(cx.t("review.generated.title"))
-                    .strong()
-                    .color(c32(tokens.color.text)),
-            );
-            if forja_ui_kit::button(
-                ui,
-                forja_ui_kit::ButtonKind::Ghost,
-                &cx.t("review.command.copy"),
-            )
-            .clicked()
-            {
-                ui.ctx().copy_text(generated.text.clone());
-            }
-        });
-        egui::Frame::new()
-            .fill(c32(tokens.color.surface_alt))
-            .corner_radius(6)
-            .inner_margin(egui::Margin::symmetric(8, 6))
-            .show(ui, |ui| {
-                ui.label(egui::RichText::new(&generated.text).monospace().small());
-                if let (Some(title), Some(body)) = (&generated.title, &generated.body) {
-                    ui.label(egui::RichText::new(title).strong());
-                    ui.label(egui::RichText::new(body).small().color(muted));
-                }
-            });
-        if generated.kind == "pr"
-            && forja_ui_kit::button(
-                ui,
-                forja_ui_kit::ButtonKind::Secondary,
-                &cx.t("review.generated.use"),
-            )
-            .clicked()
-        {
-            self.state.with(|state| {
-                if let Some(Generated {
-                    title: Some(title),
-                    body: Some(body),
-                    ..
-                }) = &state.generated
-                {
-                    state.title = title.clone();
-                    state.body = body.clone();
-                }
-            });
         }
     }
 }
@@ -587,6 +467,39 @@ fn args_kind(kind: &str) -> Args {
 
 fn c32(color: forja_ui_kit::Color) -> egui::Color32 {
     egui::Color32::from_rgba_unmultiplied(color.r, color.g, color.b, color.a)
+}
+
+fn create_disabled_reason(state: &State, cx: &Ctx<'_>) -> Option<String> {
+    if state.comparison_loading {
+        return Some(cx.t("review.summary.loading"));
+    }
+    let Some(comparison) = &state.comparison else {
+        return Some(cx.t("review.summary.choose-base"));
+    };
+    if comparison.base.is_none() || comparison.base.as_deref() != Some(state.base.trim()) {
+        return Some(cx.t("review.summary.choose-base"));
+    }
+    if comparison.ahead == 0 {
+        return Some(cx.t("review.summary.nothing-to-send"));
+    }
+    if !comparison.remote {
+        return Some(cx.t("review.summary.remote-missing"));
+    }
+    if state.target.is_none() {
+        return Some(cx.t("review.summary.provider-unavailable"));
+    }
+    None
+}
+
+fn format_commit_date(timestamp: i64, cx: &Ctx<'_>) -> String {
+    let Some(date) = chrono::Local.timestamp_opt(timestamp, 0).single() else {
+        return timestamp.to_string();
+    };
+    let format = match cx.i18n().locale() {
+        forja_kernel::i18n::Locale::PtBr => "%d/%m/%Y %H:%M",
+        forja_kernel::i18n::Locale::En => "%b %e, %Y %H:%M",
+    };
+    date.format(format).to_string()
 }
 
 #[allow(dead_code)]

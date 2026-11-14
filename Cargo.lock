@@ -2306,6 +2306,7 @@ dependencies = [
 name = "forja-module-review"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "forja-contracts",
  "forja-counter-kit",
  "forja-kernel",

@@ -10,7 +10,7 @@ mod state;
 mod view;
 
 use crate::state::Shared;
-use forja_contracts::{names, BenchActivated};
+use forja_contracts::{BenchActivated, GitComparisonChanged, GitStatusChanged, names};
 use forja_kernel::forja_protocol::{
     Method, MethodEffect, ParamKind, ParamSchema, ResultSchema, RpcError,
 };
@@ -50,9 +50,26 @@ impl Module for ReviewModule {
         r.keymap(include_str!("../keymap.toml"));
 
         r.contract_event::<BenchActivated>(names::BENCH_ACTIVATED);
+        r.contract_event::<GitStatusChanged>(names::GIT_STATUS_CHANGED);
+        r.contract_event::<GitComparisonChanged>(names::GIT_COMPARISON_CHANGED);
         let bench_state = self.state.clone();
         r.subscribe(move |_cx, event: &BenchActivated| {
             bench_state.set_bench(Some(event.0.path.clone()));
+        });
+
+        let status_state = self.state.clone();
+        r.subscribe(move |cx, event: &GitStatusChanged| {
+            if status_state.bench().as_deref() == Some(event.bench_path.as_str()) {
+                let base = status_state
+                    .with(|state| (!state.base.trim().is_empty()).then(|| state.base.clone()))
+                    .flatten();
+                commands::start_comparison(cx, &status_state, &event.bench_path, base.as_deref());
+            }
+        });
+
+        let comparison_state = self.state.clone();
+        r.subscribe(move |cx, event: &GitComparisonChanged| {
+            commands::comparison_changed(cx, &comparison_state, &event.bench_path);
         });
 
         let refresh = self.state.clone();
@@ -229,6 +246,24 @@ fn used_keys() -> Vec<&'static str> {
         "review.create.open",
         "review.create.branch",
         "review.create.source-label",
+        "review.summary.title",
+        "review.summary.loading",
+        "review.summary.remote-missing",
+        "review.summary.base",
+        "review.summary.choose-base-label",
+        "review.summary.head",
+        "review.summary.no-base",
+        "review.summary.ahead",
+        "review.summary.nothing-to-send",
+        "review.summary.commits",
+        "review.summary.no-commits",
+        "review.summary.files",
+        "review.summary.no-files",
+        "review.summary.binary",
+        "review.summary.total",
+        "review.summary.view-diff",
+        "review.summary.choose-base",
+        "review.summary.provider-unavailable",
         "review.error.title-required",
         "review.pr.title",
         "review.pr.open",
@@ -282,7 +317,7 @@ fn used_keys() -> Vec<&'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use forja_kernel::{contract, Runtime, RuntimeOptions};
+    use forja_kernel::{Runtime, RuntimeOptions, contract};
     use serde_json::json;
 
     fn temp_dir() -> std::path::PathBuf {
