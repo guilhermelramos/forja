@@ -1,0 +1,34 @@
+{
+  "number": 64,
+  "title": "[ideia] Melhoria: clicar no t├¡tulo do cart├úo no Quadro abre Ajustes em vez da bancada",
+  "body": "**Miss├úo:** ideias-fluxo ┬À **Tipo:** observation ┬À **Gravidade:** high\n**Tela:** Quadro\n\n### Passos\n1. Abrir o Quadro\n1. Clicar no t├¡tulo do cart├úo 'revisao-api'\n1. Abre a janela 'Ajustes' (se├º├úo Mutir├úo: 'muster.dispatch.max_parallel', ajudantes, aprova├º├Áes) em vez de abrir/alternar para a bancada\n1. No Quadro n├úo h├í caminho evidente para abrir uma bancada espec├¡fica a partir do cart├úo (s├│ 'Voltar ├á bancada' no topo, que volta ├á ├║ltima)\n\n### Esperado\nClicar no cart├úo abre a bancada (a ├írea de trabalho muda para ela). Clique-direito no cart├úo = menu (Abrir, Renomear, Mover etapa, Abrir terminal, Guardar). Abrir Ajustes a partir de um cart├úo de bancada n├úo ├® um comportamento que qualquer usu├írio esperaria.\n\n### Aconteceu\nJanela de Ajustes global (com chave de configura├º├úo crua 'muster.dispatch.max_parallel' exposta) surge do nada; o usu├írio fica perdido sobre por que aquilo abriu.\n\n_Registrado por um testador autom├ítico (modelo gratuito via OpenCode) usando a Forja ao vivo. Rodada: https://github.com/guilhermelramos/forja/actions/runs/\n",
+  "state": "OPEN",
+  "createdAt": "2026-11-14T12:02:36Z",
+  "closedAt": null,
+  "labels": [
+    {
+      "id": "LA_kwDOVthgN88AAAADC16OKA",
+      "name": "ideia",
+      "description": "Achado pelos testadores autom├íticos",
+      "color": "D93F0B"
+    }
+  ],
+  "url": "https://github.com/guilhermelramos/forja/issues/64",
+  "comments": [
+    {
+      "id": "IC_kwDOVthgN88AAAABmf7oig",
+      "author": {
+        "login": "guilhermelramos"
+      },
+      "authorAssociation": "OWNER",
+      "body": "Corrigido na main (4813755, worker OpenCode), validado ao vivo com o test-driver. Aguardando confirma├º├úo dos testadores/explorador.",
+      "createdAt": "2026-11-14T14:14:07Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/guilhermelramos/forja/issues/64#issuecomment-6878587018",
+      "viewerDidAuthor": true
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "body": "**Miss├úo:** primeiros-passos ┬À **Tipo:** bug ┬À **Gravidade:** high\n**Tela:** Rotinas ÔÇö formul├írio Nova rotina (janela maximizada 1920├ù1032, tema escuro)\n\n### Passos\n1. Com a janela maximizada (1920├ù1032), ir ├á p├ígina Rotinas (├¡cone da lateral).\n1. Clicar em 'Nova rotina' para abrir o formul├írio.\n1. Observar o formul├írio: campos come├ºam em xÔëê279 e v├úo at├® xÔëê792, mas o painel central vis├¡vel termina em xÔëê340.\n\n### Esperado\nO formul├írio caberia no painel central (ou o painel cresceria/rolaria), com todos os campos e bot├Áes Salvar/Cancelar vis├¡veis.\n\n### Aconteceu\nO painel central vira uma faixa estreita; nome, agendamento e campos de comando s├úo cortados por baixo do painel Blame da direita. S├│ o in├¡cio dos campos ├® vis├¡vel; fica imposs├¡vel ler/validar o que se digita.\n\n_Registrado por um testador autom├ítico (modelo gratuito via OpenCode) usando a Forja ao vivo. Rodada: https://github.com/guilhermelramos/forja/actions/runs/\n",
+  "closedAt": "2026-11-14T16:14:37Z",
+  "comments": [
+    {
+      "id": "IC_kwDOVthgN88AAAABmWmCAA",
+      "author": {
+        "login": "guilhermelramos"
+      },
+      "authorAssociation": "OWNER",
+      "body": "Corrigido na main (6f24d67, workers Codex + OpenCode): validado ao vivo com o test-driver em 1280x800. Aguardando confirma├º├úo dos testadores.",
+      "createdAt": "2026-11-14T00:49:09Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/guilhermelramos/forja/issues/9#issuecomment-6868795904",
+      "viewerDidAuthor": true
+    },
+    {
+      "id": "IC_kwDOVthgN88AAAABmhtd6A",
+      "author": {
+        "login": "github-actions"
+      },
+      "authorAssociation": "NONE",
+      "body": "Verificado: resolvido\n\nPassos e evid├¬ncia:\n- 1. Fechei a tela de boas-vindas para acessar a barra lateral. 2. Cliquei em \"Rotinas\" na barra lateral ÔÇö a p├ígina Rotinas abriu. 3. Cliquei em \"Nova rotina\" ÔÇö o formul├írio \"Rotina\" abriu como di├ílogo centralizado. 4. Verifiquei a interface com ui_look (imagem): todos os campos (Nome, Ligada, Predefinido/Cron, agendamento, comando, pr├®-checagem, toler├óncia, pr├│ximos disparos) e os bot├Áes Salvar e Cancelar est├úo totalmente vis├¡veis, sem cortes.\n\nEsperado: O formul├írio caberia no painel central (ou cresceria/rolaria), com todos os campos e bot├Áes Salvar/Cancelar vis├¡veis.\nObservado: O di├ílogo \"Rotina\" aparece centralizado, com largura adequada e todos os campos e bot├Áes vis├¡veis. O painel direito (\"Arquivos\") n├úo sobrep├Áe nem estreita o formul├írio. Nenhum campo est├í cortado.\nRodada: https://github.com/guilhermelramos/forja/actions/runs/43613049668",
+      "createdAt": "2026-11-14T16:14:36Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/guilhermelramos/forja/issues/9#issuecomment-6880452072",
+      "viewerDidAuthor": false
+    }
+  ],
+  "createdAt": "2026-11-13T22:20:37Z",
+  "labels": [
+    {
+      "id": "LA_kwDOVthgN88AAAADCzi5MA",
+      "name": "playtest",
+      "description": "Achado pelos testadores autom├íticos",
+      "color": "D93F0B"
+    }
+  ],
+  "number": 9,
+  "state": "CLOSED",
+  "title": "[playtest] Rotinas: formul├írio 'Nova rotina' fica cortado ÔÇö painel central estreito e sobreposto pelo painel direito",
+  "url": "https://github.com/guilhermelramos/forja/issues/9"
+}

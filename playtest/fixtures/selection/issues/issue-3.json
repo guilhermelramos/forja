@@ -1,0 +1,34 @@
+{
+  "body": "**Miss├úo:** teclado ┬À **Tipo:** bug ┬À **Gravidade:** high\n**Tela:** Bigorna (busca 'trilho')\n\n### Passos\n1. Abrir a Bigorna (Ctrl+K)\n1. Digitar 'trilho' ÔÇö aparece o comando 'Abrir p├ígina do trilho' (shell.rail.open)\n1. Apertar Enter sobre o comando\n\n### Esperado\nO comando abriria uma p├ígina do trilho ou, se precisar de um argumento (view_id), mostraria um formul├írio/sele├º├úo para escolher a p├ígina.\n\n### Aconteceu\nA Bigorna fecha e a barra de status mostra o erro cru: 'O comando shell.rail.open falhou: command `shell.rail.open` failed: missing required argument `view_id`'. Nada ├® aberto e o valor nunca ├® pedido ÔÇö n├úo h├í caminho nenhum por teclado para abrir p├íginas do trilho (Quadro, Ajudantes, Rotinas, Pedidos) pela Bigorna.\n\n_Registrado por um testador autom├ítico (modelo gratuito via OpenCode) usando a Forja ao vivo. Rodada: https://github.com/guilhermelramos/forja/actions/runs/\n",
+  "closedAt": "2026-11-14T00:49:08Z",
+  "comments": [
+    {
+      "id": "IC_kwDOVthgN88AAAABmWmEhA",
+      "author": {
+        "login": "guilhermelramos"
+      },
+      "authorAssociation": "OWNER",
+      "body": "Corrigido na main (6f24d67, workers Codex + OpenCode): validado ao vivo com o test-driver em 1280x800. Aguardando confirma├º├úo dos testadores.",
+      "createdAt": "2026-11-14T00:49:12Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/guilhermelramos/forja/issues/3#issuecomment-6868796548",
+      "viewerDidAuthor": true
+    }
+  ],
+  "createdAt": "2026-11-13T22:20:30Z",
+  "labels": [
+    {
+      "id": "LA_kwDOVthgN88AAAADCzi5MA",
+      "name": "playtest",
+      "description": "Achado pelos testadores autom├íticos",
+      "color": "D93F0B"
+    }
+  ],
+  "number": 3,
+  "state": "CLOSED",
+  "title": "[playtest] Comando 'Abrir p├ígina do trilho' falha por argumento ausente e n├úo pede o valor",
+  "url": "https://github.com/guilhermelramos/forja/issues/3"
+}

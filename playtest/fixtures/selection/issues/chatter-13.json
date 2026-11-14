@@ -1,0 +1,64 @@
+{
+  "body": "**Miss├úo:** teclado ┬À **Tipo:** bug ┬À **Gravidade:** high\n**Tela:** Tela principal com modal Ajustes aberto; painel inferior sem terminal\n\n### Passos\n1. Abrir o terminal pela Bigorna ('Abrir terminal') ÔÇö painel inferior abre com aba Terminal\n1. Fechar a aba com Ctrl+Shift+W (o painel do terminal desaparece junto)\n1. Abrir a Bigorna e executar 'Abrir terminal' (terminal.open)\n1. Repetir mais uma vez; observar a tela e tamb├®m tentar 'Buscar no terminal' (terminal.search) e Ctrl+`\n\n### Esperado\nExecutar 'Abrir terminal' deveria reabrir o painel inferior com uma nova aba de terminal e dar foco ao prompt; 'Buscar no terminal' deveria abrir a busca do terminal; Ctrl+` deveria alternar o painel\n\n### Aconteceu\nNenhum efeito vis├¡vel: nenhum painel abre, nenhuma aba aparece, nada recebe foco, nenhum toast/erro. 'Buscar no terminal' tamb├®m n├úo faz nada nem informa o motivo. A Bigorna n├úo tem comando 'mostrar/alternar terminal'. Depois de fechar a(s) aba(s) do terminal, n├úo h├í NENHUM caminho de teclado para recuperar o terminal\n\n_Registrado por um testador autom├ítico (modelo gratuito via OpenCode) usando a Forja ao vivo. Rodada: https://github.com/guilhermelramos/forja/actions/runs/\n",
+  "closedAt": null,
+  "comments": [
+    {
+      "id": "IC_kwDOVthgN88AAAABmWmDDg",
+      "author": {
+        "login": "guilhermelramos"
+      },
+      "authorAssociation": "OWNER",
+      "body": "Corrigido na main (6f24d67, workers Codex + OpenCode): validado ao vivo com o test-driver em 1280x800. Aguardando confirma├º├úo dos testadores.",
+      "createdAt": "2026-11-14T00:49:10Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/guilhermelramos/forja/issues/13#issuecomment-6868796174",
+      "viewerDidAuthor": true
+    },
+    {
+      "id": "IC_kwDOVthgN88AAAABmhtgYA",
+      "author": {
+        "login": "github-actions"
+      },
+      "authorAssociation": "NONE",
+      "body": "Verificado: resolvido\n\nPassos e evid├¬ncia:\n- 1. Fechei a aba do terminal com Ctrl+Shift+W ÔÇö o painel inferior desapareceu (apareceu \"Abra um arquivo no explorador...\").\n2. Abri a Bigorna com Ctrl+K, digitei \"abrir terminal\" e cliquei em \"Abrir terminal\" ÔÇö o painel reabriu com uma nova aba \"pwsh ┬À Em execu├º├úo\" e deu foco ao prompt.\n3. Repeti: fechei com Ctrl+Shift+W, abri a Bigorna e executei \"Abrir terminal\" novamente ÔÇö o painel reabriu com mais uma aba pwsh, funcionando corretamente.\n4. Abri a Bigorna, digitei \"buscar terminal\" e cliquei em \"Buscar no terminal\" ÔÇö abriu a interface de busca do terminal com \"0 ocorr├¬ncias\", campo de texto em foco e bot├Áes Anterior/Pr├│xima.\n5. Testei o atalho Ctrl+` com o terminal em foco ÔÇö n├úo produziu efeito vis├¡vel para alternar o painel.\n\nEsperado: Executar 'Abrir terminal' deveria reabrir o painel inferior com uma nova aba de terminal e dar foco ao prompt; 'Buscar no terminal' deveria abrir a busca do terminal; Ctrl+` deveria alternar o painel.\nObservado: 'Abrir terminal' reabriu o painel com nova aba pwsh e focou o prompt (testado duas vezes, funcionou). 'Buscar no terminal' abriu a busca do terminal com campo de texto e navega├º├úo. Ctrl+` n├úo teve efeito vis├¡vel para alternar o painel.\nRodada: https://github.com/guilhermelramos/forja/actions/runs/43613049668",
+      "createdAt": "2026-11-14T16:14:39Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/guilhermelramos/forja/issues/13#issuecomment-6880452704",
+      "viewerDidAuthor": false
+    },
+    {
+      "id": "IC_kwDOVthgN88AAAABmhvSNQ",
+      "author": {
+        "login": "guilhermelramos"
+      },
+      "authorAssociation": "OWNER",
+      "body": "Reaberto pelo coordenador: o pr├│prio verificador registrou que Ctrl+` (alternar o painel do terminal) n├úo teve efeito. Corre├º├úo parcial n├úo conta como resolvida.",
+      "createdAt": "2026-11-14T16:16:32Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/guilhermelramos/forja/issues/13#issuecomment-6880481845",
+      "viewerDidAuthor": true
+    }
+  ],
+  "createdAt": "2026-11-13T22:20:42Z",
+  "labels": [
+    {
+      "id": "LA_kwDOVthgN88AAAADCzi5MA",
+      "name": "playtest",
+      "description": "Achado pelos testadores autom├íticos",
+      "color": "D93F0B"
+    }
+  ],
+  "number": 13,
+  "state": "OPEN",
+  "title": "[playtest] Comandos de terminal (terminal.open / terminal.search) silenciosamente n├úo fazem nada; terminal fica irrecuper├ível pelo teclado",
+  "url": "https://github.com/guilhermelramos/forja/issues/13"
+}

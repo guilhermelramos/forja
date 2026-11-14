@@ -133,7 +133,8 @@ $($issue.correction.body)
 --- END CORRECTION COMMENT ---
 
 Start by using ui_look. Then follow the issue's steps. Finish by calling
-report_finding exactly once with one of the three required verdict titles.
+report_finding exactly once with one of the three required verdict titles and
+the structured expectations list required by the instructions.
 "@
 
     $issueDeadline = (Get-Date).AddMinutes($MinutesPerIssue)
@@ -238,6 +239,7 @@ report_finding exactly once with one of the three required verdict titles.
                 title = $finding.title
                 kind = $finding.kind
                 steps = @($finding.steps)
+                expectations = $finding.expectations
                 expected = $finding.expected
                 actual = $finding.actual
                 screen = $finding.screen
