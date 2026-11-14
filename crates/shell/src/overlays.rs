@@ -209,6 +209,9 @@ impl ForjaApp {
                     }
                 }
                 reveal_focused_control(ui);
+                // PageUp/PageDown scroll this list. Keep it last so a nested
+                // scroll area from a module section cannot take the delta.
+                apply_page_scroll(ui);
             });
     }
 
@@ -399,6 +402,23 @@ impl ForjaApp {
     }
 }
 
+/// PageUp/PageDown scroll one screen of the settings list, like the wheel.
+fn apply_page_scroll(ui: &egui::Ui) {
+    let direction = ui.input_mut(|input| {
+        if input.consume_key(egui::Modifiers::NONE, egui::Key::PageDown) {
+            Some(1.0)
+        } else if input.consume_key(egui::Modifiers::NONE, egui::Key::PageUp) {
+            Some(-1.0)
+        } else {
+            None
+        }
+    });
+    if let Some(direction) = direction {
+        let page = ui.clip_rect().height() * 0.85;
+        ui.scroll_with_delta(egui::vec2(0.0, -direction * page));
+    }
+}
+
 /// Scrolls the settings list when Tab/Shift+Tab moves the focus to a control
 /// that is outside the visible area. Only a real focus change scrolls, so a
 /// manual scroll is never fought.
@@ -553,6 +573,36 @@ mod tests {
             });
         }
         assert!(offset > 0.0, "the focused row stayed out of view");
+    }
+
+    #[test]
+    fn page_keys_scroll_the_settings_list() {
+        let ctx = egui::Context::default();
+        let mut offset = 0.0;
+        for frame in 0..6 {
+            let mut raw = egui::RawInput::default();
+            if frame == 1 {
+                raw.events.push(egui::Event::Key {
+                    key: egui::Key::PageDown,
+                    physical_key: None,
+                    pressed: true,
+                    repeat: false,
+                    modifiers: egui::Modifiers::NONE,
+                });
+            }
+            let _ = ctx.run(raw, |ctx| {
+                egui::CentralPanel::default().show(ctx, |ui| {
+                    let output = egui::ScrollArea::vertical().max_height(100.0).show(ui, |ui| {
+                        for row in 0..40 {
+                            ui.label(format!("row {row}"));
+                        }
+                        apply_page_scroll(ui);
+                    });
+                    offset = output.state.offset.y;
+                });
+            });
+        }
+        assert!(offset > 0.0, "PageDown did not move the settings list");
     }
 
     #[test]
