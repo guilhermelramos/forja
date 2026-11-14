@@ -291,7 +291,8 @@ mod tests {
 
     #[test]
     fn anvil_recipe_does_not_execute_without_trust() {
-        let dir = temp_dir("anvil-trust");
+        let guard = temp_guard("anvil-trust");
+        let dir = &guard.0;
         let core = Arc::new(Core::new());
         let approved = Arc::new(AtomicBool::new(false));
         let requests = Arc::new(AtomicUsize::new(0));
@@ -345,8 +346,6 @@ mod tests {
             std::thread::sleep(Duration::from_millis(40));
         }
         assert!(seen, "approved recipe did not reach the terminal");
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]

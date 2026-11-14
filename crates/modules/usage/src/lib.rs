@@ -229,7 +229,14 @@ mod tests {
 
     impl Drop for TempGuard {
         fn drop(&mut self) {
-            let _ = std::fs::remove_dir_all(&self.0);
+            for attempt in 0..20 {
+                if std::fs::remove_dir_all(&self.0).is_ok() || !self.0.exists() {
+                    return;
+                }
+                if attempt < 19 {
+                    std::thread::sleep(std::time::Duration::from_millis(15));
+                }
+            }
         }
     }
 
@@ -294,7 +301,7 @@ mod tests {
     #[test]
     fn spend_rpc_exposes_the_muster_contract() {
         let dir = temp_dir();
-        let mut runtime = runtime(&dir);
+        let mut runtime = runtime(&dir.0);
         let mut params = serde_json::Map::new();
         params.insert("period".to_owned(), json!("all"));
         params.insert("project".to_owned(), json!("C:/work/forja"));
@@ -306,6 +313,5 @@ mod tests {
         assert!(value["usd"].is_number());
         assert!(value["projects"].is_array());
         assert!(value["pending"].is_boolean());
-        let _ = std::fs::remove_dir_all(dir);
     }
 }

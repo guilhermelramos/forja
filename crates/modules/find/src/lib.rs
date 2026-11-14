@@ -221,7 +221,30 @@ mod tests {
         .expect("find registers cleanly")
     }
 
-    fn temp_dir() -> std::path::PathBuf {
+    struct TempGuard(std::path::PathBuf);
+
+    impl std::ops::Deref for TempGuard {
+        type Target = std::path::Path;
+
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl Drop for TempGuard {
+        fn drop(&mut self) {
+            for attempt in 0..20 {
+                if std::fs::remove_dir_all(&self.0).is_ok() || !self.0.exists() {
+                    return;
+                }
+                if attempt < 19 {
+                    std::thread::sleep(Duration::from_millis(15));
+                }
+            }
+        }
+    }
+
+    fn temp_dir() -> TempGuard {
         let dir = std::env::temp_dir().join(format!(
             "forja-find-lib-{}-{}",
             std::process::id(),
@@ -231,7 +254,7 @@ mod tests {
                 .unwrap_or(0)
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        dir
+        TempGuard(dir)
     }
 
     #[test]
@@ -241,7 +264,6 @@ mod tests {
         contract::assert_ok(runtime.registry(), runtime.i18n());
         let value = runtime.run_command("find.file", Args::new()).unwrap();
         assert_eq!(value["open"], json!(true));
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -251,7 +273,6 @@ mod tests {
         let mut args = Args::new();
         args.insert("path", json!("C:/x/y.rs"));
         assert!(runtime.run_command("find.record_open", args).is_err());
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     /// Stands in for the benches module: answers `bench.current` with one fixed bench.
@@ -309,7 +330,7 @@ mod tests {
         let mut runtime = Runtime::new(
             vec![Box::new(module), Box::new(bench)],
             RuntimeOptions {
-                data_dir: Some(dir.clone()),
+                data_dir: Some(dir.to_path_buf()),
                 user_dir: Some(dir.join("user")),
                 locale: Some("en".to_owned()),
                 wake: None,
@@ -346,7 +367,6 @@ mod tests {
         }
         wait_until(&mut runtime, || !lock(&shared).picker.pending);
         assert_eq!(lock(&shared).picker.items.first().map(String::as_str), Some("src/lib.rs"));
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -357,7 +377,7 @@ mod tests {
         let mut runtime = Runtime::new(
             vec![Box::new(module)],
             RuntimeOptions {
-                data_dir: Some(dir.clone()),
+                data_dir: Some(dir.to_path_buf()),
                 user_dir: Some(dir.join("user")),
                 locale: Some("en".to_owned()),
                 wake: None,
@@ -373,7 +393,6 @@ mod tests {
             branch: None,
         }));
         assert_eq!(lock(&shared).root.as_deref(), Some(root.as_path()));
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]
@@ -382,6 +401,5 @@ mod tests {
         let mut runtime = runtime(&dir);
         let value = runtime.run_command("find.in_files", Args::new()).unwrap();
         assert_eq!(value["focused"], json!(false));
-        let _ = std::fs::remove_dir_all(dir);
     }
 }
