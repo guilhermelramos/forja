@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 15/160 telas documentadas · elementos citados 3141/3293 · completo: false
+**Progresso:** 18/160 telas documentadas · elementos citados 3266/3418 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -149,9 +149,9 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.dark.settings.helper` | [página](pages/en.dark.settings.helper.md) | [png](captures/en.dark.settings.helper.png) |
 | `en.dark.settings.import` | [página](pages/en.dark.settings.import.md) | [png](captures/en.dark.settings.import.png) |
 | `en.dark.settings.mcp` | [página](pages/en.dark.settings.mcp.md) | [png](captures/en.dark.settings.mcp.png) |
-| `en.dark.settings.onboarding` | — | [png](captures/en.dark.settings.onboarding.png) |
-| `en.dark.settings.remote` | — | [png](captures/en.dark.settings.remote.png) |
-| `en.dark.settings.trust` | — | [png](captures/en.dark.settings.trust.png) |
+| `en.dark.settings.onboarding` | [página](pages/en.dark.settings.onboarding.md) | [png](captures/en.dark.settings.onboarding.png) |
+| `en.dark.settings.remote` | [página](pages/en.dark.settings.remote.md) | [png](captures/en.dark.settings.remote.png) |
+| `en.dark.settings.trust` | [página](pages/en.dark.settings.trust.md) | [png](captures/en.dark.settings.trust.png) |
 | `en.dark.settings.voice` | — | [png](captures/en.dark.settings.voice.png) |
 | `en.light.home.default` | — | [png](captures/en.light.home.default.png) |
 | `en.light.open.anvil` | — | [png](captures/en.light.open.anvil.png) |

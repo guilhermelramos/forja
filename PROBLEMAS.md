@@ -752,3 +752,31 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Ícones registrados apenas como "(ícone)" ((168,161) e (1756,117)) sem texto alternativo descritivo.
 - Textos secundários ("Server · on: 52", "Helper setup" e os estados vazios) em cinza médio sobre fundo escuro, com contraste aparentemente baixo.
 
+## [en.dark.settings.onboarding](pages/en.dark.settings.onboarding.md)
+
+- Campo de busca de ajustes (TextInput em 337,121)–(1017,153) sem nome acessível; só o marcador visual "Search settings" identifica a função.
+- Botão-ícone de tema (1741,5)–(1773,37) e o logotipo (Image em 12,50)–(40,78) sem nome acessível.
+- Três botões compartilham o mesmo nome acessível "More tabs" ((64,50), (324,50) e (1632,50)), sem contexto que os distinga; o nome "Changes" também se repete (aba central em (629,52) e aba do painel direito em (1778,52)).
+- A janela "Settings" sobrepõe a faixa de abas central: a aba ativa "Terminal" (419,52)–(496,84), o "More tabs" central (324,50)–(411,85) e parte de "Extension panels" (973,52)–(1099,84) ficam encobertos; "Extension panels" aparece truncado ("ion panels").
+- Os botões "+" (407,113), "Recipes" (584,113) e "Shell" (658,113) e os quatro ícones sem nome da faixa central (444–581,113) ficam totalmente ocultos atrás da janela "Settings".
+- Os elementos (328,118)–(404,140) e (385,121)–(401,137), no interior da janela sobre a área do campo de busca, não têm nome acessível nem conteúdo visível identificável.
+
+## [en.dark.settings.remote](pages/en.dark.settings.remote.md)
+
+- O retângulo da janela modal "Settings" (328,58)–(1026,496) não contém o próprio conteúdo: o botão "Save target" (337,491)–(430,523) fica cortado pelo limite inferior e toda a seção WSL — rótulo "WSL", botão "Refresh distros" e a mensagem "Distros not read yet. Refresh to list them." (y=545–631) — cai fora da janela e não é visível nem alcançável na captura (na referência pt-BR o modal ia até y=635 e tudo cabia).
+- A aba "Extension panels" (973,52)–(1099,84) é parcialmente coberta pelo modal: só o fragmento "…ion panels" fica visível; as abas "Terminal", "Editor", "Browser", "Changes", "Preview", "Bench", "Review" e "History" ficam totalmente ocultas, assim como o botão "More tabs" central (324,50)–(411,85) fica parcialmente coberto (sobreposição esperada em modal, mas que esconde controles da tela de fundo).
+- Os botões "+", "Recipes", "Shell" e os quatro botões de ícone sem nome da barra de projetos (444–581, 113–145) ficam totalmente escondidos atrás do modal.
+- Os cinco campos de texto (busca "Search settings" e os quatro do formulário "New target") são TextInput "(sem nome acessível)": o rótulo existe apenas como texto visual/espaço reservado.
+- Vários elementos sem nome acessível: alternador de tema da barra superior, divisores verticais, faixas de cabeçalho/abas, bordas do modal, barra de rolagem do conteúdo e os quatro botões de ícone da barra de projetos; os ícones de estado vazio são registrados apenas como "(ícone)".
+- Os botões de janela da barra de título têm apenas símbolos como nome ("–", "□", "×").
+
+## [en.dark.settings.trust](pages/en.dark.settings.trust.md)
+
+- O diálogo "Settings" se sobrepõe à linha de abas da área central: as abas "Terminal" a "History" ficam encobertas e "Extension panels" aparece parcialmente cortada pelo canto do diálogo.
+- O botão "More tabs" da área central, em (324,50)–(411,85), fica praticamente todo atrás do diálogo.
+- A barra de ferramentas central ("+", os quatro ícones sem nome, "Recipes" e "Shell", y 113–145) fica inteiramente coberta pelo diálogo nesta captura.
+- O TextInput do campo de busca de ajustes (337,121)–(1017,153) não tem nome acessível, embora exiba o texto de apoio "Search settings".
+- O alternador de tema do topo (1741,5)–(1773,37) e os quatro ícones da barra central (444–581, y 113–145) não têm nome acessível.
+- Nomes repetidos em elementos distintos: "More tabs" (3 botões), "Changes" (2 abas) e "Settings" (janela, rótulo e botão), o que dificulta a identificação por leitores de tela.
+- Textos secundários em cinza médio sobre fundo escuro ("Pending requests: 0", "Nothing approved yet.", "No project yet. Add an existing folder or create a new one.", "No active bench. Open a bench to see its files." e o aviso "Click to type") têm baixo contraste.
+

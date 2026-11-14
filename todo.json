@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 15,
-  "widgets_total": 3293,
-  "widgets_covered": 3141,
+  "states_done": 18,
+  "widgets_total": 3418,
+  "widgets_covered": 3266,
   "complete": false,
   "stale": [
     {
@@ -708,21 +708,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "en.dark.settings.onboarding",
-      "png": "captures/en.dark.settings.onboarding.png",
-      "tree": "captures/en.dark.settings.onboarding.json"
-    },
-    {
-      "state": "en.dark.settings.remote",
-      "png": "captures/en.dark.settings.remote.png",
-      "tree": "captures/en.dark.settings.remote.json"
-    },
-    {
-      "state": "en.dark.settings.trust",
-      "png": "captures/en.dark.settings.trust.png",
-      "tree": "captures/en.dark.settings.trust.json"
-    },
     {
       "state": "en.dark.settings.voice",
       "png": "captures/en.dark.settings.voice.png",

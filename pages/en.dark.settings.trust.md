@@ -1,0 +1,113 @@
+---
+state: en.dark.settings.trust
+capture_sha: 844943b64bc01a21
+model: opencode/glm-5.3-flash-free
+---
+
+![Captura](../captures/en.dark.settings.trust.png)
+
+# Settings — Trust approvals
+
+Tela de configurações da Forja que mostra a seção "Trust approvals" (aprovações de confiança), exibida como diálogo modal sobre a janela principal.
+
+Variante em inglês (locale `en`) da página de referência pt-BR.dark.settings.trust, com o mesmo tema escuro e a mesma disposição: mudam apenas os textos da interface, agora em inglês — o botão "Close window", apontado como não traduzido na referência pt-BR, corresponde ao locale desta variante. A captura tem 1920×1080 (a referência, 1280×800): os painéis laterais mantêm largura praticamente fixa (~304 px à esquerda, ~292 px à direita) e o diálogo "Settings" ocupa quase a mesma posição.
+
+## Como chegar
+Abra a janela de ajustes pelo botão "Settings" na base do trilho de ícones à esquerda (ícone de engrenagem) e selecione a seção de confiança. Captura obtida com `forja-app --locale en --theme dark --settings trust`.
+
+## Regiões
+- **Barra de título superior** — (0,0)–(1920,42): rótulo "No project" à esquerda, botões "Find file  Ctrl+P" e "Anvil  Ctrl+K", alternador de tema (ícone de sol, sem nome) e os botões de janela "–", "□" e "×".
+- **Trilho à esquerda** — (0,42)–(56,1048): logotipo da Forja (imagem em (12,50)–(40,78)) e uma coluna de botões-ícone: "Board", "Helpers", "Routines", "Muster", "Requests", "Skills", "Usage", "Extensions", "Archive" e, na base, "Settings".
+- **Painel esquerdo (Projetos)** — (56,42)–(304,1048): botão "More tabs", aba "Projects" (marcada), botões "Add folder" (destaque laranja), "New" e "Clone"; ícone de pasta e mensagem de vazio "No project yet. Add an existing folder or create a new one.".
+- **Área central** — (320,42)–(1612,1048): linha de abas "Terminal" (marcada), "Editor", "Browser", "Changes", "Preview", "Bench", "Review", "History", "Extension panels" e "Helper (chat)"; botão "More tabs" e barra de ferramentas com "+", quatro ícones sem nome, "Recipes" e "Shell" atrás do diálogo; grande área de texto (328,150)–(1604,1036) com o aviso "Click to type" no canto inferior direito. Sua parte superior é coberta pelo diálogo "Settings" (328,58)–(1026,317).
+- **Diálogo "Settings"** — (328,58)–(1026,317): janela modal com título "Settings", botão "Close window" no canto, campo de busca sem nome acessível (texto de apoio "Search settings"), título "Trust approvals", contador "Pending requests: 0", ícone de engrenagem e texto "Nothing approved yet.". Nesta captura não alcança o painel direito.
+- **Painel direito** — (1628,42)–(1920,1048): botão "More tabs", abas "Files" (marcada) e "Changes"; ícone de grade e mensagem "No active bench. Open a bench to see its files.".
+- **Barra de status** — (0,1048)–(1920,1080): "Ready" (em verde) e "56 modules" à esquerda, "Notifications" à direita.
+
+## Elementos
+| Elemento | Tipo | Posição (px) | Estado | O que faz |
+|---|---|---|---|---|
+| "Find file  Ctrl+P" | Button | (99,5)–(218,37) | — | Abre a busca rápida de arquivos (atalho Ctrl+P). |
+| "Anvil  Ctrl+K" | Button | (226,5)–(327,37) | — | Abre a paleta de comandos (atalho Ctrl+K). |
+| (sem nome acessível) | Unknown | (1741,5)–(1773,37) | — | Ícone de sol: alternador de tema claro/escuro. |
+| "–" | Button | (1795,5)–(1827,37) | — | Minimiza a janela. |
+| "□" | Button | (1835,5)–(1867,37) | — | Maximiza/restaura a janela. |
+| "×" | Button | (1875,5)–(1909,37) | — | Fecha a janela do app. |
+| "No project" | Label | (11,12)–(77,31) | — | Indica que não há projeto aberto. |
+| (sem nome acessível) | Unknown | (304,42)–(320,1048) | — | Divisor vertical entre o painel esquerdo e a área central. |
+| (sem nome acessível) | Unknown | (1612,42)–(1628,1048) | — | Divisor vertical entre a área central e o painel direito. |
+| (sem nome acessível) | Unknown | (319,49)–(339,69) | — | Canto superior esquerdo do diálogo "Settings". |
+| (sem nome acessível) | Unknown | (1016,49)–(1036,69) | — | Canto superior direito do diálogo "Settings". |
+| (sem nome acessível) | Image | (12,50)–(40,78) | — | Logotipo da Forja (bigorna laranja). |
+| "More tabs" | Button | (64,50)–(151,85) | — | Abas extras do painel esquerdo. |
+| "More tabs" | Button | (324,50)–(411,85) | — | Abas extras da área central; encoberto pelo diálogo "Settings". |
+| "More tabs" | Button | (1632,50)–(1719,85) | — | Abas extras do painel direito. |
+| (sem nome acessível) | Unknown | (339,51)–(1016,67) | — | Barra de título interna do diálogo "Settings". |
+| "Projects" | Button | (159,52)–(231,84) | marcado=True | Aba ativa do painel esquerdo; mostra o painel de projetos. |
+| "Terminal" | Button | (419,52)–(496,84) | marcado=True | Aba ativa da área central; mostra o terminal. |
+| "Editor" | Button | (496,52)–(556,84) | marcado=False | Aba do editor de texto. |
+| "Browser" | Button | (556,52)–(629,84) | marcado=False | Aba do painel de navegador. |
+| "Changes" | Button | (629,52)–(706,84) | marcado=False | Aba de mudanças da área central. |
+| "Preview" | Button | (706,52)–(777,84) | marcado=False | Aba de pré-visualização. |
+| "Bench" | Button | (777,52)–(838,84) | marcado=False | Aba da visão de bancada. |
+| "Review" | Button | (838,52)–(905,84) | marcado=False | Aba de revisão. |
+| "History" | Button | (905,52)–(973,84) | marcado=False | Aba de histórico. |
+| "Extension panels" | Button | (973,52)–(1099,84) | marcado=False | Grupo de painéis de extensões da área central; início encoberto pelo diálogo. |
+| "Helper (chat)" | Button | (1099,52)–(1202,84) | marcado=False | Aba do chat com o ajudante. |
+| "Files" | Button | (1727,52)–(1778,84) | marcado=True | Aba ativa do painel direito; lista de arquivos. |
+| "Changes" | Button | (1778,52)–(1855,84) | marcado=False | Aba de mudanças pendentes do painel direito. |
+| "Settings" | Window | (328,58)–(1026,317) | foco | Diálogo modal de configurações exibindo a seção de confiança. |
+| "Close window" | Button | (985,67)–(1017,99) | — | Ícone "×" que fecha o diálogo de Settings. |
+| (sem nome acessível) | Unknown | (321,69)–(337,307) | — | Borda/pegador esquerdo do diálogo. |
+| (sem nome acessível) | Unknown | (1018,69)–(1034,307) | — | Borda/pegador direito do diálogo. |
+| "Settings" | Label | (337,71)–(403,95) | — | Título do diálogo. |
+| "Board" | Button | (8,94)–(44,130) | marcado=False | Ícone do quadro (visão geral) no trilho esquerdo. |
+| "Add folder" | Button | (64,101)–(154,133) | — | Botão destacado em laranja para adicionar uma pasta de projeto. |
+| "New" | Button | (162,101)–(213,133) | — | Cria um projeto novo. |
+| "Clone" | Button | (221,101)–(280,133) | — | Clona um projeto existente. |
+| "+" | Button | (407,113)–(441,145) | — | Abre nova aba/ação na área central; atrás do diálogo. |
+| (sem nome acessível) | Unknown | (444,113)–(476,145) | — | Ícone de ferramenta da barra central, sem nome. |
+| (sem nome acessível) | Unknown | (479,113)–(511,145) | — | Ícone de ferramenta da barra central, sem nome. |
+| (sem nome acessível) | Unknown | (514,113)–(546,145) | — | Ícone de ferramenta da barra central, sem nome. |
+| (sem nome acessível) | Unknown | (549,113)–(581,145) | — | Ícone de ferramenta da barra central, sem nome. |
+| "Recipes" | Button | (584,113)–(655,145) | — | Abre a lista de receitas; atrás do diálogo. |
+| "Shell" | Button | (658,113)–(711,145) | — | Abre o terminal shell; atrás do diálogo. |
+| (ícone) | Label | (1756,117)–(1784,145) | — | Ícone de grade do painel direito (vazio de bancada). |
+| (sem nome acessível) | Unknown | (328,118)–(404,140) | — | Rótulo interno do campo de busca de ajustes ("Search settings"). |
+| (sem nome acessível) | TextInput | (337,121)–(1017,153) | — | Campo "Search settings": filtra as seções de configuração. |
+| (sem nome acessível) | Unknown | (385,121)–(401,137) | — | Ícone de lupa do campo de busca. |
+| "Helpers" | Button | (8,138)–(44,174) | marcado=False | Ícone do painel de ajudantes no trilho esquerdo. |
+| (sem nome acessível) | Unknown | (328,150)–(1604,1036) | — | Área central de texto (terminal/entrada), com o aviso "Click to type" na base. |
+| "No active bench. Open a bench to see its files." | Label | (1644,153)–(1896,191) | — | Mensagem de vazio do painel de arquivos. |
+| (ícone) | Label | (168,161)–(196,189) | — | Ícone de pasta do painel de projetos vazio. |
+| "Trust approvals" | Label | (337,181)–(458,205) | — | Título da seção de configuração em exibição. |
+| "Routines" | Button | (8,182)–(44,218) | marcado=False | Ícone do painel de rotinas no trilho esquerdo. |
+| "No project yet. Add an existing folder or create a new one." | Label | (67,197)–(297,235) | — | Mensagem de vazio do painel de projetos. |
+| "Pending requests: 0" | Label | (337,213)–(440,229) | — | Contador de pedidos de aprovação pendentes. |
+| "Muster" | Button | (8,226)–(44,262) | marcado=False | Ícone do painel de mutirão no trilho esquerdo. |
+| (ícone) | Label | (663,253)–(691,281) | — | Ícone de engrenagem central do diálogo. |
+| "Requests" | Button | (8,270)–(44,306) | marcado=False | Ícone do painel de pedidos no trilho esquerdo. |
+| "Nothing approved yet." | Label | (608,289)–(747,308) | — | Mensagem de vazio da lista de aprovações. |
+| (sem nome acessível) | Unknown | (319,307)–(339,327) | — | Canto inferior esquerdo do diálogo. |
+| (sem nome acessível) | Unknown | (1016,307)–(1036,327) | — | Canto inferior direito do diálogo. |
+| (sem nome acessível) | Unknown | (339,309)–(1016,325) | — | Borda inferior do diálogo. |
+| "Skills" | Button | (8,314)–(44,350) | marcado=False | Ícone do painel de skills no trilho esquerdo. |
+| "Usage" | Button | (8,358)–(44,394) | marcado=False | Ícone do painel de uso no trilho esquerdo. |
+| "Extensions" | Button | (8,402)–(44,438) | marcado=False | Ícone do painel de extensões no trilho esquerdo. |
+| "Archive" | Button | (8,446)–(44,482) | marcado=False | Ícone do painel de acervo no trilho esquerdo. |
+| "Settings" | Button | (8,1004)–(44,1040) | marcado=False | Ícone que abre esta tela de Settings. |
+| "Ready" | Label | (10,1055)–(48,1074) | — | Status geral do app na barra de status. |
+| "56 modules" | Label | (70,1055)–(142,1074) | — | Quantidade de módulos carregados. |
+| "Notifications" | Label | (1808,1055)–(1886,1074) | — | Atalho para a área de notificações. |
+
+## Aparência
+Tema escuro idêntico ao da referência: fundo geral quase preto (área central e painel de projetos em cinza muito escuro), diálogo "Settings" em cinza levemente mais claro e barra de título no topo ainda mais escura. A cor de destaque é o laranja, visível no logotipo, no sublinhado das abas ativas ("Projects", "Terminal", "Files") e no botão "Add folder", que usa laranja cheio com texto escuro. O rótulo "Ready" aparece em verde na barra de status. A tipografia é uma sans-serif pequena; títulos ("Settings", "Trust approvals") em corpo e peso maiores que rótulos e mensagens de vazio; textos secundários ("Pending requests: 0", "Nothing approved yet.", avisos de vazio, "Click to type") em cinza médio, com contraste reduzido. O diálogo tem cantos arredondados e é centralizado sobre a área central; as abas são alinhadas à esquerda em linha única, e o trilho de ícones mantém coluna uniforme com passo vertical de 44 px.
+
+## Problemas encontrados
+- O diálogo "Settings" se sobrepõe à linha de abas da área central: as abas "Terminal" a "History" ficam encobertas e "Extension panels" aparece parcialmente cortada pelo canto do diálogo.
+- O botão "More tabs" da área central, em (324,50)–(411,85), fica praticamente todo atrás do diálogo.
+- A barra de ferramentas central ("+", os quatro ícones sem nome, "Recipes" e "Shell", y 113–145) fica inteiramente coberta pelo diálogo nesta captura.
+- O TextInput do campo de busca de ajustes (337,121)–(1017,153) não tem nome acessível, embora exiba o texto de apoio "Search settings".
+- O alternador de tema do topo (1741,5)–(1773,37) e os quatro ícones da barra central (444–581, y 113–145) não têm nome acessível.
+- Nomes repetidos em elementos distintos: "More tabs" (3 botões), "Changes" (2 abas) e "Settings" (janela, rótulo e botão), o que dificulta a identificação por leitores de tela.
+- Textos secundários em cinza médio sobre fundo escuro ("Pending requests: 0", "Nothing approved yet.", "No project yet. Add an existing folder or create a new one.", "No active bench. Open a bench to see its files." e o aviso "Click to type") têm baixo contraste.
