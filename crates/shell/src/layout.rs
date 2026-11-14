@@ -396,6 +396,7 @@ impl ForjaApp {
                     self.sidebar_tab,
                     "forja.sidebar.tabs",
                     &self.text("shell.tabs.more"),
+                    &self.tokens.metrics(),
                 );
                 self.sidebar_tab = index;
                 self.paint_view(ui, true, index);
@@ -437,6 +438,7 @@ impl ForjaApp {
                     self.right_tab,
                     "forja.right.tabs",
                     &self.text("shell.tabs.more"),
+                    &self.tokens.metrics(),
                 );
                 self.right_tab = index;
                 self.paint_view(ui, false, index);
@@ -497,6 +499,7 @@ impl ForjaApp {
                 selected,
                 "forja.bench.tabs",
                 &self.text("shell.tabs.more"),
+                &self.tokens.metrics(),
             );
             let active = visible.get(selected).copied().unwrap_or(visible[0]);
             self.active_tab = active;
@@ -518,6 +521,7 @@ impl ForjaApp {
         mut selected: usize,
         id: &str,
         more: &str,
+        metrics: &forja_ui_kit::Metrics,
     ) -> usize {
         if titles.len() < 2 {
             if let Some(title) = titles.first() {
@@ -528,19 +532,53 @@ impl ForjaApp {
         if selected >= titles.len() {
             selected = 0;
         }
-        let refs: Vec<&str> = titles.iter().map(String::as_str).collect();
-        ui.horizontal(|ui| {
-            ui.menu_button(more, |ui| {
-                for (index, title) in titles.iter().enumerate() {
-                    if ui.selectable_label(selected == index, title).clicked() {
-                        selected = index;
-                        ui.close();
+        ui.push_id(id, |ui| {
+            ui.horizontal(|ui| {
+                ui.menu_button(more, |ui| {
+                    for (index, title) in titles.iter().enumerate() {
+                        if ui.selectable_label(selected == index, title).clicked() {
+                            selected = index;
+                            ui.close();
+                        }
+                    }
+                });
+                let mut remaining = ui.available_width();
+                let mut shown = Vec::new();
+                for index in
+                    std::iter::once(selected).chain((0..titles.len()).filter(|i| *i != selected))
+                {
+                    let width = ui.fonts_mut(|fonts| {
+                        fonts
+                            .layout_no_wrap(
+                                titles[index].clone(),
+                                egui::FontId::proportional(metrics.body),
+                                egui::Color32::WHITE,
+                            )
+                            .size()
+                            .x
+                    });
+                    let width = (width + metrics.pad_x * 2.0).max(metrics.control);
+                    if width <= remaining {
+                        remaining -= width;
+                        shown.push(index);
                     }
                 }
-            });
-            egui::ScrollArea::horizontal().id_salt(id).show(ui, |ui| {
-                forja_ui_kit::tabs(ui, &mut selected, &refs);
-            });
+                if !shown.contains(&selected) {
+                    ui.add(egui::Label::new(&titles[selected]).truncate())
+                        .on_hover_text(&titles[selected]);
+                } else {
+                    let refs: Vec<&str> =
+                        shown.iter().map(|index| titles[*index].as_str()).collect();
+                    let mut chosen = shown
+                        .iter()
+                        .position(|index| *index == selected)
+                        .unwrap_or(usize::MAX);
+                    forja_ui_kit::tabs(ui, &mut chosen, &refs);
+                    if let Some(index) = shown.get(chosen) {
+                        selected = *index;
+                    }
+                }
+            })
         });
         ui.add_space(8.0);
         selected

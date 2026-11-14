@@ -360,6 +360,14 @@ impl ForjaApp {
     }
 
     pub(crate) fn run_command(&mut self, id: &str) {
+        if id == "terminal.toggle"
+            && self.rail_page.is_none()
+            && self.bench_views.get(self.active_tab).is_some_and(|view| view.id == "terminal.tab")
+            && self.tabs.is_visible(self.active_tab, self.bench_views.len())
+        {
+            actions::push(actions::Action::CloseTab);
+            return;
+        }
         match self.runtime.run_command(id, Args::new()) {
             Ok(_) => {
                 self.status = None;
