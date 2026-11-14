@@ -29,6 +29,7 @@ pub enum Action {
     ToggleFullscreen,
     NextTab,
     PreviousTab,
+    FocusTabs,
     CloseTab,
     ReopenTab,
     SwitchTab(usize),
@@ -99,6 +100,7 @@ pub fn dispatch(id: &str) {
         "window.fullscreen" => Action::ToggleFullscreen,
         "tab.next" => Action::NextTab,
         "tab.previous" => Action::PreviousTab,
+        "tab.focus" => Action::FocusTabs,
         "tab.close" | "tab.close_force" => Action::CloseTab,
         "tab.reopen" => Action::ReopenTab,
         "tab.switch_1" => Action::SwitchTab(1),
@@ -141,6 +143,7 @@ mod tests {
         dispatch("window.fullscreen");
         dispatch("tab.next");
         dispatch("tab.previous");
+        dispatch("tab.focus");
         dispatch("tab.close_force");
         dispatch("tab.reopen");
         dispatch("tab.switch_10");
@@ -155,6 +158,7 @@ mod tests {
                 Action::ToggleFullscreen,
                 Action::NextTab,
                 Action::PreviousTab,
+                Action::FocusTabs,
                 Action::CloseTab,
                 Action::ReopenTab,
                 Action::SwitchTab(10),

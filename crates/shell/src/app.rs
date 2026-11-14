@@ -127,6 +127,7 @@ pub struct ForjaApp {
     pub(crate) anvil_group: usize,
     pub(crate) anvil_history: Vec<String>,
     pub(crate) focus_anvil: bool,
+    pub(crate) focus_content_tab: bool,
     pub(crate) bench_cache: Vec<(String, String)>,
     pub(crate) bench_cached_at: Option<Instant>,
     pub(crate) active_crumb: Option<String>,
@@ -253,6 +254,7 @@ impl ForjaApp {
             anvil_group: 0,
             anvil_history,
             focus_anvil: false,
+            focus_content_tab: false,
             bench_cache: Vec::new(),
             bench_cached_at: None,
             active_crumb: None,
@@ -554,6 +556,12 @@ impl ForjaApp {
                 }
                 actions::Action::NextTab => {
                     if let Some(index) = self.tabs.next(self.active_tab, self.bench_views.len()) {
+                        if ctx.wants_keyboard_input() {
+                            if let Some(focused) = ctx.memory(|memory| memory.focused()) {
+                                forja_ui_kit::release_keyboard_focus(ctx, focused);
+                            }
+                            self.focus_content_tab = true;
+                        }
                         self.active_tab = index;
                         self.rail_page = None;
                     }
@@ -561,9 +569,23 @@ impl ForjaApp {
                 actions::Action::PreviousTab => {
                     if let Some(index) = self.tabs.previous(self.active_tab, self.bench_views.len())
                     {
+                        if ctx.wants_keyboard_input() {
+                            if let Some(focused) = ctx.memory(|memory| memory.focused()) {
+                                forja_ui_kit::release_keyboard_focus(ctx, focused);
+                            }
+                            self.focus_content_tab = true;
+                        }
                         self.active_tab = index;
                         self.rail_page = None;
                     }
+                }
+                actions::Action::FocusTabs => {
+                    self.rail_page = None;
+                    self.tabs.show(self.active_tab, self.bench_views.len());
+                    if let Some(focused) = ctx.memory(|memory| memory.focused()) {
+                        forja_ui_kit::release_keyboard_focus(ctx, focused);
+                    }
+                    self.focus_content_tab = true;
                 }
                 actions::Action::CloseTab => {
                     if let Some(index) = self.tabs.close(self.active_tab, self.bench_views.len()) {
@@ -692,11 +714,13 @@ impl ForjaApp {
                 fired.push(id);
             }
         }
+        let has_create_dialog = self.runtime.registry().command("bench.create_dialog").is_some();
         for id in fired {
+            let target = shortcut_target(&id, has_create_dialog);
             // A command that needs context asks for it in the Anvil instead of
             // failing with a missing-argument error.
-            if !self.start_ask(&id) {
-                self.run_command(&id);
+            if !self.start_ask(target) {
+                self.run_command(target);
             }
         }
     }
@@ -826,6 +850,14 @@ fn is_anvil_shortcut(id: &str) -> bool {
     matches!(id, "anvil.open" | "anvil.command_mode" | "find.file")
 }
 
+fn shortcut_target(id: &str, has_create_dialog: bool) -> &str {
+    if id == "bench.create" && has_create_dialog {
+        "bench.create_dialog"
+    } else {
+        id
+    }
+}
+
 /// Shortcuts that keep working while a text surface or a shell window owns the
 /// keyboard. `terminal.toggle` belongs here because `design/keymap.toml` marks
 /// it `even_in_terminal = true`.
@@ -834,6 +866,7 @@ fn always_shortcut(id: &str) -> bool {
         id,
         "anvil.open"
             | "anvil.command_mode"
+            | "bench.create"
             | "find.file"
             | "settings.open"
             | "settings.keymap"
@@ -844,6 +877,7 @@ fn always_shortcut(id: &str) -> bool {
             | "view.zoom.out"
             | "view.zoom.reset"
             | "window.fullscreen"
+            | "tab.focus"
             | "tab.next"
             | "tab.previous"
             | "tab.close_force"
@@ -955,8 +989,17 @@ mod shortcut_tests {
     #[test]
     fn terminal_toggle_works_while_the_terminal_owns_the_keyboard() {
         assert!(always_shortcut("terminal.toggle"));
+        assert!(always_shortcut("bench.create"));
+        assert!(always_shortcut("tab.focus"));
         assert!(!always_shortcut("terminal.copy"));
         assert!(!always_shortcut("editor.save"));
+    }
+
+    #[test]
+    fn bench_create_shortcut_targets_create_dialog() {
+        assert_eq!(shortcut_target("bench.create", true), "bench.create_dialog");
+        assert_eq!(shortcut_target("bench.create", false), "bench.create");
+        assert_eq!(shortcut_target("tab.focus", true), "tab.focus");
     }
 
     #[test]

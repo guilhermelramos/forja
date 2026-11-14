@@ -23,6 +23,15 @@ pub fn consume_layer_escape(ctx: &egui::Context, id: Id) -> bool {
         && ctx.input_mut(|input| input.consume_key(egui::Modifiers::NONE, egui::Key::Escape))
 }
 
+/// Releases keyboard focus held by `id` (or its active focus lock).
+pub fn release_keyboard_focus(ctx: &egui::Context, id: Id) {
+    ctx.memory_mut(|memory| {
+        if memory.has_focus(id) {
+            memory.surrender_focus(id);
+        }
+    });
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -85,6 +94,20 @@ mod tests {
             assert!(!consume_layer_escape(ctx, back));
             assert!(consume_layer_escape(ctx, front));
             assert!(!ctx.input(|input| input.key_pressed(egui::Key::Escape)));
+        });
+    }
+
+    #[test]
+    fn release_keyboard_focus_clears_focus_lock() {
+        let ctx = egui::Context::default();
+        let field = Id::new("field");
+        let _ = ctx.run(egui::RawInput::default(), |ctx| {
+            ctx.memory_mut(|memory| memory.request_focus(field));
+        });
+        let _ = ctx.run(egui::RawInput::default(), |ctx| {
+            assert!(ctx.memory(|memory| memory.has_focus(field)));
+            release_keyboard_focus(ctx, field);
+            assert!(!ctx.memory(|memory| memory.has_focus(field)));
         });
     }
 }

@@ -149,6 +149,7 @@ pub fn hosts() -> Vec<Box<dyn Module>> {
 
 fn register_tabs(registrar: &mut Registrar<'_>) {
     let bindings = [
+        ("tab.focus", "tab.command.focus", "F6"),
         ("tab.next", "tab.command.next", "Ctrl+Tab"),
         ("tab.previous", "tab.command.previous", "Ctrl+Shift+Tab"),
         ("tab.close", "tab.command.close", "Ctrl+W"),

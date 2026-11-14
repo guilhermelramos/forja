@@ -16,6 +16,21 @@ pub(crate) struct AskOption {
     pub(crate) value: String,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum AskEmptyAction {
+    CreateBench,
+    AddProject,
+}
+
+impl AskEmptyAction {
+    pub(crate) fn label_key(self) -> &'static str {
+        match self {
+            Self::CreateBench => "shell.anvil.ask-empty-new-bench",
+            Self::AddProject => "shell.anvil.ask-empty-add-project",
+        }
+    }
+}
+
 /// A command waiting for values. Fields are asked in order.
 #[derive(Clone, Debug)]
 pub(crate) struct Ask {
@@ -46,6 +61,17 @@ impl Ask {
             self.field().map(|field| &field.kind),
             Some(CommandFieldKind::Text)
         )
+    }
+
+    pub(crate) fn empty_action(&self) -> Option<AskEmptyAction> {
+        if self.is_text() || !self.options.is_empty() {
+            return None;
+        }
+        match self.field()?.arg {
+            "bench_id" => Some(AskEmptyAction::CreateBench),
+            "project_id" => Some(AskEmptyAction::AddProject),
+            _ => None,
+        }
     }
 
     fn source(
@@ -173,6 +199,30 @@ impl ForjaApp {
         self.anvil_selected = 0;
         self.run_command_args(&command, Args::from_map(args));
     }
+
+    pub(crate) fn run_ask_empty_action(&mut self, action: AskEmptyAction) {
+        self.anvil_ask = None;
+        self.anvil_query.clear();
+        self.anvil_query_seen.clear();
+        self.anvil_selected = 0;
+        self.anvil_selection_explicit = false;
+        self.anvil_selection_id = None;
+        self.anvil_selection_missing = false;
+        match action {
+            AskEmptyAction::CreateBench => {
+                if self.runtime.registry().command("bench.create_dialog").is_some() {
+                    self.anvil_open = false;
+                    self.run_command("bench.create_dialog");
+                } else {
+                    self.start_ask("bench.create");
+                }
+            }
+            AskEmptyAction::AddProject => {
+                self.anvil_open = false;
+                self.run_command("project.add_dialog");
+            }
+        }
+    }
 }
 
 // The terminal command also serves RPC callers that already supply an id.
@@ -299,5 +349,42 @@ mod tests {
         assert_eq!(options[0].value, "b1");
         assert_eq!(options[0].detail, "main");
         assert_eq!(options[1].detail, "");
+    }
+
+    #[test]
+    fn ask_empty_action_resolves_missing_bench_and_project() {
+        let bench_field = CommandField {
+            arg: "bench_id",
+            label_key: "bench.ask.bench",
+            kind: CommandFieldKind::Choice {
+                command: "bench.list",
+                list: "benches",
+                label: "name",
+                value: "bench_id",
+                detail: None,
+            },
+        };
+        let mut ask = Ask::new("bench.activate", vec![bench_field]);
+        assert_eq!(ask.empty_action(), Some(AskEmptyAction::CreateBench));
+        ask.options.push(AskOption {
+            label: "Uma".into(),
+            detail: String::new(),
+            value: "b1".into(),
+        });
+        assert_eq!(ask.empty_action(), None);
+
+        let project_field = CommandField {
+            arg: "project_id",
+            label_key: "bench.ask.project",
+            kind: CommandFieldKind::Choice {
+                command: "project.list",
+                list: "projects",
+                label: "name",
+                value: "id",
+                detail: None,
+            },
+        };
+        let ask = Ask::new("bench.create", vec![project_field]);
+        assert_eq!(ask.empty_action(), Some(AskEmptyAction::AddProject));
     }
 }

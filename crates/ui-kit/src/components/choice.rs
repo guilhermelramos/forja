@@ -111,8 +111,14 @@ pub fn tabs(ui: &mut Ui, selected: &mut usize, labels: &[&str]) -> Response {
             response.id.with(("tab", index)),
             egui::Sense::click(),
         );
-        if piece_response.clicked() {
+        let activated_by_key = piece_response.has_focus()
+            && ui.input_mut(|input| {
+                input.consume_key(egui::Modifiers::NONE, egui::Key::Enter)
+                    || input.consume_key(egui::Modifiers::NONE, egui::Key::Space)
+            });
+        if piece_response.clicked() || activated_by_key {
             *selected = index;
+            piece_response.request_focus();
         }
         let active = index == *selected;
         piece_response.widget_info(|| {
@@ -161,5 +167,65 @@ fn hover_surface(tokens: &crate::tokens::Tokens) -> Color32 {
         crate::apply::mix_color32(tokens.color.surface_alt.to_color32(), Color32::WHITE, 0.06)
     } else {
         tokens.color.surface.to_color32()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn key_input(key: egui::Key) -> egui::RawInput {
+        let mut raw = egui::RawInput::default();
+        raw.events.push(egui::Event::Key {
+            key,
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: egui::Modifiers::NONE,
+        });
+        raw
+    }
+
+    #[test]
+    fn tabs_enter_and_space_activate_focused_tab() {
+        let ctx = egui::Context::default();
+        let mut selected = 0usize;
+        let labels = ["Terminal", "Editor", "Navegador"];
+        let mut tab_ids = Vec::new();
+        let _ = ctx.run(egui::RawInput::default(), |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                let response = tabs(ui, &mut selected, &labels);
+                for index in 0..labels.len() {
+                    tab_ids.push(response.id.with(("tab", index)));
+                }
+            });
+        });
+
+        // Focus second tab ("Editor") and press Enter -> activates index 1.
+        let _ = ctx.run(egui::RawInput::default(), |ctx| {
+            ctx.memory_mut(|memory| memory.request_focus(tab_ids[1]));
+            egui::CentralPanel::default().show(ctx, |ui| {
+                let _ = tabs(ui, &mut selected, &labels);
+            });
+        });
+        let _ = ctx.run(key_input(egui::Key::Enter), |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                let _ = tabs(ui, &mut selected, &labels);
+            });
+        });
+        assert_eq!(selected, 1);
+
+        // Move focus to third tab via Tab, then press Space -> activates index 2.
+        let _ = ctx.run(key_input(egui::Key::Tab), |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                let _ = tabs(ui, &mut selected, &labels);
+            });
+        });
+        let _ = ctx.run(key_input(egui::Key::Space), |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                let _ = tabs(ui, &mut selected, &labels);
+            });
+        });
+        assert_eq!(selected, 2);
     }
 }

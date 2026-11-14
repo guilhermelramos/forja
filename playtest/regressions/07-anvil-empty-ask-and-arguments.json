@@ -1,0 +1,49 @@
+{
+  "title": "Ctrl+Shift+N, Anvil empty-ask action, and inline argument hint work (#16)",
+  "issue": 16,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.key", "keys": "Ctrl+Shift+N" },
+    { "m": "ui.click", "target": "Cancelar" },
+    { "m": "ui.key", "keys": "Ctrl+K" },
+    { "m": "ui.type", "text": "bench.stage.set bench_id=exemplo stage=forjando" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.click", "target": "Nova bancada…" },
+    { "m": "ui.click", "target": "Cancelar" }
+  ],
+  "expect": [
+    {
+      "step": 1,
+      "window_count": 1,
+      "present": ["Nova bancada", "Registre um projeto primeiro.", "Adicionar pasta", "Cancelar"]
+    },
+    {
+      "step": 2,
+      "window_count": 0,
+      "absent": ["Nova bancada"]
+    },
+    {
+      "step": 4,
+      "present": [
+        "Escolha o comando primeiro; a Bigorna pede os argumentos nos próximos passos.",
+        "Mover etapa da bancada"
+      ]
+    },
+    {
+      "step": 5,
+      "present": ["Qual bancada?", "Nada para escolher aqui.", "Nova bancada…"]
+    },
+    {
+      "step": 6,
+      "window_count": 1,
+      "present": ["Nova bancada", "Registre um projeto primeiro.", "Cancelar"],
+      "absent": ["Qual bancada?"]
+    },
+    {
+      "step": 7,
+      "window_count": 0,
+      "absent": ["Nova bancada"]
+    }
+  ]
+}

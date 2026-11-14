@@ -1,6 +1,6 @@
 //! Bigorna: fuzzy search across commands, benches, files and settings.
 
-use crate::anvil_ask::Ask;
+use crate::anvil_ask::{Ask, AskEmptyAction};
 use crate::anvil_keys::AnvilKeys;
 use crate::app::ForjaApp;
 use eframe::egui::{self, Align2, FontId, RichText, Sense};
@@ -93,6 +93,7 @@ impl ForjaApp {
         }
         let mut hits = self.collect_hits();
         let mut chosen: Option<(HitKind, bool)> = None;
+        let mut chosen_empty_action: Option<AskEmptyAction> = None;
         let mut ask_submit: Option<String> = None;
         let mut cycle = 0i32;
         let title = self.text("shell.anvil.title");
@@ -102,11 +103,16 @@ impl ForjaApp {
             "shell.anvil.footer"
         });
         let empty_key = self.empty_key();
+        let ask_empty_action = ask.as_ref().and_then(Ask::empty_action);
         let ask_prompt = ask
             .as_ref()
             .and_then(Ask::field)
             .map(|field| self.text(field.label_key));
         let ask_is_text = ask.as_ref().is_some_and(Ask::is_text);
+        let command_has_inline_args = ask.is_none()
+            && !self.anvil_rail_select
+            && !self.anvil_muster_title
+            && split_command_query_with_arguments(&self.anvil_query).is_some();
         let group_labels = [
             self.text("shell.anvil.group.all"),
             self.text("shell.anvil.group.commands"),
@@ -214,6 +220,9 @@ impl ForjaApp {
                             }
                             search.request_focus();
                         } else if hits.is_empty() {
+                            if self.anvil_query.trim().is_empty() {
+                                chosen_empty_action = ask_empty_action;
+                            }
                             search.request_focus();
                         } else {
                             let index = self.anvil_selected.min(hits.len() - 1);
@@ -239,7 +248,10 @@ impl ForjaApp {
                         search.request_focus();
                     } else {
                         let index = self.anvil_selected.min(hits.len() - 1);
-                        let query = self.anvil_query.trim().trim_start_matches('>').trim().to_lowercase();
+                        let raw_query = self.anvil_query.trim().trim_start_matches('>').trim().to_owned();
+                        let query = split_command_query_with_arguments(&raw_query)
+                            .map(|(command, _)| command.to_lowercase())
+                            .unwrap_or_else(|| raw_query.to_lowercase());
                         if !self.anvil_selection_missing
                             && can_run_selection(&query, &hits[index], self.anvil_selection_explicit) {
                             chosen = Some((hits[index].kind.clone(), keep));
@@ -247,6 +259,13 @@ impl ForjaApp {
                     }
                 }
                 ui.add_space(4.0);
+                if command_has_inline_args {
+                    ui.label(
+                        RichText::new(self.text("shell.anvil.command-arguments"))
+                            .small()
+                            .color(muted(&tokens)),
+                    );
+                }
                 if ask_is_text {
                     ui.label(
                         RichText::new(self.text("shell.anvil.ask-text-hint"))
@@ -258,6 +277,18 @@ impl ForjaApp {
                         .show(ui, |ui| {
                             if hits.is_empty() {
                                 ui.label(RichText::new(self.text(empty_key)).color(muted(&tokens)));
+                                if let Some(action) = ask_empty_action {
+                                    ui.add_space(6.0);
+                                    if forja_ui_kit::button(
+                                        ui,
+                                        forja_ui_kit::ButtonKind::Primary,
+                                        &self.text(action.label_key()),
+                                    )
+                                    .clicked()
+                                    {
+                                        chosen_empty_action = Some(action);
+                                    }
+                                }
                             }
                             for (row, hit) in hits.iter().enumerate() {
                                 let response =
@@ -311,7 +342,9 @@ impl ForjaApp {
             self.anvil_selection_id = None;
             self.anvil_selection_missing = false;
         }
-        if let Some((kind, keep)) = chosen {
+        if let Some(action) = chosen_empty_action {
+            self.run_ask_empty_action(action);
+        } else if let Some((kind, keep)) = chosen {
             if let HitKind::Ask(index) = kind {
                 self.apply_ask_choice(index);
             } else {
@@ -382,9 +415,11 @@ impl ForjaApp {
         }
         self.runtime.set_anvil_query(&raw);
         let group = self.active_group();
+        let command_query =
+            split_command_query_with_arguments(&raw).map(|(command, _)| command.to_lowercase());
         let mut hits = Vec::new();
         if group == 0 || group == 1 {
-            self.push_commands(&mut hits, &query);
+            self.push_commands(&mut hits, command_query.as_deref().unwrap_or(&query));
         }
         if group == 0 || group == 2 {
             self.push_benches(&mut hits, &query);
@@ -398,7 +433,12 @@ impl ForjaApp {
         }
         let show_recent = self.setting_bool("anvil.history.show_recent", true);
         apply_history_boost(&mut hits, &self.anvil_history, &query, show_recent);
-        sort_hits(&mut hits, &query);
+        let sort_query = if group == 0 || group == 1 {
+            command_query.as_deref().unwrap_or(&query)
+        } else {
+            &query
+        };
+        sort_hits(&mut hits, sort_query);
         hits.truncate(40);
         self.reconcile_selection(&hits);
         hits
@@ -829,6 +869,19 @@ fn can_run_selection(query: &str, hit: &Hit, explicitly_selected: bool) -> bool 
     query.is_empty() || explicitly_selected || match_quality(query, &hit.title, &hit.detail) > 0
 }
 
+/// Splits `<command> key=value ...` queries typed in the Anvil so the command
+/// stays selectable and the UI can explain that arguments are asked next.
+pub(crate) fn split_command_query_with_arguments(query: &str) -> Option<(&str, &str)> {
+    let trimmed = query.trim().trim_start_matches('>').trim();
+    let split = trimmed.find(char::is_whitespace)?;
+    let (head, rest) = trimmed.split_at(split);
+    let rest = rest.trim();
+    if head.is_empty() || !rest.contains('=') {
+        return None;
+    }
+    Some((head, rest))
+}
+
 fn best_score(query: &str, title: &str, detail: &str) -> Option<i32> {
     let title_score = fuzzy_score(query, title).map(|score| score + 5);
     let detail_score = fuzzy_score(query, detail);
@@ -1150,5 +1203,29 @@ mod tests {
             score: 1,
         };
         assert_eq!(right_label(&bound), "Ctrl+K");
+    }
+
+    #[test]
+    fn inline_key_value_arguments_keep_command_selectable() {
+        let split =
+            split_command_query_with_arguments("> bench.stage.set bench_id=exemplo stage=forjando");
+        assert_eq!(
+            split,
+            Some(("bench.stage.set", "bench_id=exemplo stage=forjando"))
+        );
+        assert_eq!(
+            split_command_query_with_arguments("Mudar etapa"),
+            None
+        );
+        let hit = Hit {
+            kind: HitKind::Command("bench.stage.set".into()),
+            title: "Mudar etapa".into(),
+            detail: "bench.stage.set".into(),
+            chord: String::new(),
+            icon: None,
+            score: 1,
+        };
+        let command = split.unwrap().0;
+        assert!(can_run_selection(command, &hit, false));
     }
 }

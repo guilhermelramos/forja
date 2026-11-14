@@ -80,6 +80,17 @@ title_en = "Previous bench"
 even_in_terminal = true
 
 [[binding]]
+id = "tab.focus"
+key = "F6"
+scope = "global"
+family = "tab"
+title_pt = "Focar abas de conteúdo"
+title_en = "Focus content tabs"
+even_in_terminal = true
+note_pt = "Sai do terminal ou editor e foca as abas de conteúdo para navegar com Tab e Shift+Tab."
+note_en = "Leaves the terminal or editor and focuses content tabs for Tab and Shift+Tab navigation."
+
+[[binding]]
 id = "tab.next"
 key = "Ctrl+Tab"
 scope = "global"

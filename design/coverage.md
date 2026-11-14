@@ -14,8 +14,8 @@
 | Configurações adiadas | 41 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
-| Atalhos no catálogo | 109 |
-| Atalhos registrados no app | 109 (109 do catálogo + 0 extras) |
+| Atalhos no catálogo | 110 |
+| Atalhos registrados no app | 110 (110 do catálogo + 0 extras) |
 | Atalhos do catálogo ausentes no app | 0 |
 | Atalhos com tecla ou escopo divergente | 0 |
 
@@ -394,6 +394,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `bench.create` | `Ctrl+Shift+N` | `global` | sim | `Ctrl+Shift+N` | ok |
 | `bench.next` | `Alt+PageDown` | `global` | sim | `Alt+PageDown` | ok |
 | `bench.previous` | `Alt+PageUp` | `global` | sim | `Alt+PageUp` | ok |
+| `tab.focus` | `F6` | `global` | sim | `F6` | ok |
 | `tab.next` | `Ctrl+Tab` | `global` | sim | `Ctrl+Tab` | ok |
 | `tab.previous` | `Ctrl+Shift+Tab` | `global` | sim | `Ctrl+Shift+Tab` | ok |
 | `tab.close` | `Ctrl+W` | `global` | sim | `Ctrl+W` | ok |

@@ -22,6 +22,7 @@ pub struct EditorView {
     goto_open: bool,
     goto_text: String,
     preview_open: bool,
+    text_focused: bool,
     auto_saved: Option<Instant>,
     /// Font choice requested from a task, so the file is read once.
     font_requested: Option<String>,
@@ -40,6 +41,7 @@ impl EditorView {
             goto_open: false,
             goto_text: String::new(),
             preview_open: true,
+            text_focused: false,
             auto_saved: None,
             font_requested: None,
             font_ready: HashSet::new(),
@@ -156,6 +158,7 @@ impl View for EditorView {
             ui.label(egui::RichText::new(status).small().color(muted));
         }
         let Some(mut tab) = self.state.active_tab() else {
+            self.text_focused = false;
             ui.add_space(24.0);
             ui.label(
                 egui::RichText::new(cx.t("editor.view.empty"))
@@ -180,10 +183,11 @@ impl View for EditorView {
             self.find_bar(ui, cx, &tab, &mut find, muted, danger);
         }
         if ui.ctx().memory(|memory| memory.top_modal_layer().is_none()) {
-            self.handle_keys(ui, cx, &tab);
+            self.handle_keys(ui, cx, &tab, &mut find);
         }
         self.status_line(ui, cx, &tab, &find, muted);
         if tab.preview_mode && self.preview_open {
+            self.text_focused = false;
             let document = tab.preview.clone();
             self.preview_area(ui, cx, document.as_ref());
         } else {
@@ -396,7 +400,13 @@ impl EditorView {
         }
     }
 
-    fn handle_keys(&mut self, ui: &egui::Ui, cx: &mut Ctx<'_>, tab: &Tab) {
+    fn handle_keys(
+        &mut self,
+        ui: &egui::Ui,
+        cx: &mut Ctx<'_>,
+        tab: &Tab,
+        find_state: &mut model::FindState,
+    ) {
         let mut save = false;
         let mut find = false;
         let mut replace = false;
@@ -495,13 +505,35 @@ impl EditorView {
             }
         }
         if escape {
+            let mut dismissed = self.goto_open || find_state.open;
+            self.goto_open = false;
+            find_state.open = false;
+            find_state.replace_open = false;
             self.state.with(|state| {
+                if state.peek.is_some()
+                    || state.completion.is_some()
+                    || state.parameter_hint.is_some()
+                    || state.rename.is_some()
+                    || state.quick_fix
+                {
+                    dismissed = true;
+                }
                 state.peek = None;
                 state.completion = None;
                 state.parameter_hint = None;
                 state.rename = None;
                 state.quick_fix = false;
             });
+            if !dismissed {
+                let id = editor_id(&tab.path);
+                let escaping_text = ui.memory(|memory| memory.has_focus(id))
+                    || (self.text_focused && ui.memory(|memory| memory.focused().is_none()));
+                if escaping_text {
+                    forja_ui_kit::release_keyboard_focus(ui.ctx(), id);
+                    let _ = cx.run_command("tab.focus", Args::new());
+                    ui.ctx().request_repaint();
+                }
+            }
         }
         if zoom != 0 {
             let current = cx
@@ -645,7 +677,8 @@ impl EditorView {
                         .layouter(&mut layouter)
                         .show(ui);
                     changed = output.response.changed();
-                    response_focused = output.response.has_focus();
+                    response_focused =
+                        output.response.has_focus() || ui.memory(|memory| memory.has_focus(id));
                     if let Some(range) = output.cursor_range {
                         let primary = range.primary.index;
                         let secondary = range.secondary.index;
@@ -703,6 +736,7 @@ impl EditorView {
         if tab.dirty {
             self.auto_save(cx, tab, response_focused);
         }
+        self.text_focused = response_focused;
     }
 
     fn auto_save(&mut self, cx: &mut Ctx<'_>, tab: &Tab, focused: bool) {
