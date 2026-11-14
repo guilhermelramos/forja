@@ -77,6 +77,8 @@ pub struct Session {
     pub right_tab: Option<String>,
     /// `--test-driver`: answers `ui.*` RPC so a play-test agent can use the app.
     pub test_driver: bool,
+    /// Background windows re-apply this logical size after creation.
+    pub test_window_size: Option<[f32; 2]>,
     pub locale_locked: bool,
 }
 
@@ -167,6 +169,14 @@ impl ForjaApp {
         session: Session,
     ) -> Self {
         let _ = forja_ui_kit::install_fonts(&creation.egui_ctx);
+        if let Some(size) = session.test_window_size {
+            // Windows clamps a window larger than the monitor at creation time.
+            // Re-applying the size here keeps test layouts at the requested
+            // logical size even when the screen is smaller.
+            creation
+                .egui_ctx
+                .send_viewport_cmd(ViewportCommand::InnerSize(egui::vec2(size[0], size[1])));
+        }
         if let Some(job) = screenshot.as_ref().filter(|job| job.ui_tree.is_some()) {
             creation.egui_ctx.enable_accesskit();
             creation.egui_ctx.add_plugin(crate::ui_tree::UiTreeCapture {
@@ -666,34 +676,7 @@ impl ForjaApp {
             {
                 continue;
             }
-            let always = matches!(
-                id.as_str(),
-                "anvil.open"
-                    | "anvil.command_mode"
-                    | "find.file"
-                    | "settings.open"
-                    | "settings.keymap"
-                    | "help.keymap"
-                    | "panel.toggle"
-                    | "view.zoom.in"
-                    | "view.zoom.out"
-                    | "view.zoom.reset"
-                    | "window.fullscreen"
-                    | "tab.next"
-                    | "tab.previous"
-                    | "tab.close_force"
-                    | "tab.reopen"
-                    | "tab.switch_1"
-                    | "tab.switch_2"
-                    | "tab.switch_3"
-                    | "tab.switch_4"
-                    | "tab.switch_5"
-                    | "tab.switch_6"
-                    | "tab.switch_7"
-                    | "tab.switch_8"
-                    | "tab.switch_9"
-                    | "tab.switch_10"
-            );
+            let always = always_shortcut(&id);
             if browser_surface
                 && matches!(id.as_str(), "tab.close" | "tab.reopen" | "tab.switch_10")
             {
@@ -843,6 +826,41 @@ fn is_anvil_shortcut(id: &str) -> bool {
     matches!(id, "anvil.open" | "anvil.command_mode" | "find.file")
 }
 
+/// Shortcuts that keep working while a text surface or a shell window owns the
+/// keyboard. `terminal.toggle` belongs here because `design/keymap.toml` marks
+/// it `even_in_terminal = true`.
+fn always_shortcut(id: &str) -> bool {
+    matches!(
+        id,
+        "anvil.open"
+            | "anvil.command_mode"
+            | "find.file"
+            | "settings.open"
+            | "settings.keymap"
+            | "help.keymap"
+            | "panel.toggle"
+            | "terminal.toggle"
+            | "view.zoom.in"
+            | "view.zoom.out"
+            | "view.zoom.reset"
+            | "window.fullscreen"
+            | "tab.next"
+            | "tab.previous"
+            | "tab.close_force"
+            | "tab.reopen"
+            | "tab.switch_1"
+            | "tab.switch_2"
+            | "tab.switch_3"
+            | "tab.switch_4"
+            | "tab.switch_5"
+            | "tab.switch_6"
+            | "tab.switch_7"
+            | "tab.switch_8"
+            | "tab.switch_9"
+            | "tab.switch_10"
+    )
+}
+
 fn chord_pressed(ctx: &egui::Context, chord: &KeyChord) -> bool {
     let Some(key) = egui_key(&chord.key) else {
         return false;
@@ -932,6 +950,13 @@ mod shortcut_tests {
         assert!(is_anvil_shortcut("find.file"));
         assert!(!is_anvil_shortcut("editor.delete_line"));
         assert!(!is_anvil_shortcut("tab.close"));
+    }
+
+    #[test]
+    fn terminal_toggle_works_while_the_terminal_owns_the_keyboard() {
+        assert!(always_shortcut("terminal.toggle"));
+        assert!(!always_shortcut("terminal.copy"));
+        assert!(!always_shortcut("editor.save"));
     }
 
     #[test]

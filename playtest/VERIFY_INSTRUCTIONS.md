@@ -18,14 +18,28 @@ ações fora do app.
 Registre exatamente um veredito com `report_finding`, `kind: "observation"`,
 `severity: "low"` e um destes títulos exatos:
 
-- `VEREDITO: fixed` — os passos não reproduzem mais o problema e o resultado
-  esperado aparece;
-- `VEREDITO: still_broken` — os passos reproduzem claramente o mesmo problema;
-- `VEREDITO: cannot_reproduce` — não foi possível avaliar de forma confiável.
+- `VEREDITO: fixed` — **todos** os comportamentos esperados da issue funcionam,
+  nas mesmas condições citadas: mesmo tamanho de janela, idioma e tema. Se a
+  issue lista vários itens (atalho, comando, foco, painel, texto), cada um
+  precisa funcionar. Uma correção parcial não é `fixed`;
+- `VEREDITO: still_broken` — qualquer item esperado ainda não funciona. Cite no
+  `actual` exatamente qual item falhou e o que aconteceu;
+- `VEREDITO: cannot_reproduce` — não foi possível montar as condições da issue
+  (tamanho, idioma, tema, dados ou passos) para avaliar com confiança. Não use
+  `fixed` quando não conseguiu testar alguma condição.
 
-No campo `steps`, liste o que você fez e cada resultado que observou. No campo
-`actual`, descreva o que aconteceu; em `expected`, resuma o comportamento
-esperado. Seja específico e use apenas evidência que veio da interface.
+Nunca escreva `fixed` se a sua própria evidência disser que algo "não teve
+efeito", "não funcionou", "não abriu", "falhou", "sem efeito", "did not" ou
+"no effect". Nesse caso o veredito é `still_broken`, mesmo que os outros itens
+tenham funcionado. A janela já foi aberta no tamanho citado pela issue; confira
+o tamanho antes de concluir. O tamanho é em pontos lógicos do layout: numa tela
+com escala de 150%, `ui_look` pode mostrar pixels físicos maiores (por exemplo,
+1280x800 lógicos aparecem como 1920x1200).
+
+No campo `steps`, liste o que você fez e cada resultado que observou, item por
+item. No campo `actual`, descreva o que aconteceu; em `expected`, resuma o
+comportamento esperado. Seja específico e use apenas evidência que veio da
+interface.
 
 Documentação oficial do OpenCode usada para restringir ferramentas e selecionar
 modelos: https://opencode.ai/docs/permissions/,

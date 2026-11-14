@@ -30,7 +30,11 @@ Crie `playtest/missions/<nome>.md` com o objetivo e os passos. Depois acrescente
 cargo build -p forja-app -p forja-mcp
 ./playtest/seed.ps1
 ./playtest/run.ps1 -Mission playtest/missions/caos.md -Minutes 15 -App target/debug/forja-app.exe -Mcp target/debug/forja-mcp.exe
+# Reproduzir uma janela específica:
+./playtest/run.ps1 -Mission playtest/missions/caos.md -WindowSize 1280x800
 ```
+
+A janela de teste em segundo plano usa 1920x1080 por padrão. `FORJA_TEST_WINDOW_SIZE=1280x800` (ou `-WindowSize` no `run.ps1`) muda o tamanho sem trazer a janela para a frente.
 
 ## Configuração
 - Variável `PLAYTEST_MODELS` (opcional): modelos separados por vírgula, alternados por sessão. O padrão é `opencode/glm-5.3-flash-free,opencode/deepseek-v4.1-flash-free`.
@@ -74,20 +78,38 @@ mais recente já seja um veredito, a menos que exista uma correção posterior.
 No runner Windows, `playtest/verify.ps1` abre uma instância limpa de
 `forja-app --test-driver` para cada tentativa, com pasta de dados isolada,
 projeto de exemplo de `seed.ps1`, no máximo 40 ações e 8 minutos por issue. O
-OpenCode só recebe as ferramentas do `forja-mcp --player`; o modelo deve chamar
+tamanho da janela é o citado pela issue ou pelo comentário de correção
+(`1280×800` ou `1280x800` viram 1280x800); sem citação, usa 1920x1080. A opção
+`-WindowSize 1280x800` força um tamanho em execuções locais.
+
+O OpenCode só recebe as ferramentas do `forja-mcp --player`; o modelo deve chamar
 `report_finding` com `VEREDITO: fixed`, `VEREDITO: still_broken` ou
-`VEREDITO: cannot_reproduce`. O padrão usa modelos gratuitos no OpenRouter e
+`VEREDITO: cannot_reproduce`. `fixed` exige que **todos** os comportamentos
+esperados da issue funcionem no mesmo tamanho, idioma e tema citados; qualquer
+item que não funcione vira `still_broken`, e condições impossíveis de montar
+viram `cannot_reproduce`. O padrão usa modelos gratuitos no OpenRouter e
 `VERIFY_MODELS` permite trocar a lista, aceitando apenas ids que terminem em
 `-free` ou `:free`. Configure `OPENROUTER_API_KEY` nos secrets do repositório;
 `VERIFY_MODELS` pode ser definido como variável do repositório.
 
 O job final `apply` só age sobre issues que continuam abertas e cuja correção
 continua sendo a mesma. `fixed` fecha com comentário e evidências; os outros
-dois resultados comentam e aplicam `reaberto` ou `verificar-manual`. A opção
-`-DryRun` mostra o que o script faria sem alterar issues:
+dois resultados comentam e aplicam `reaberto` ou `verificar-manual`. Um `fixed`
+cuja evidência contenha sinais de falha (`não teve efeito`, `não funcionou`,
+`não abriu`, `falhou`, `sem efeito`, `did not`, `no effect`) é rebaixado para
+`still_broken`. A opção `-DryRun` mostra o que o script faria sem alterar
+issues:
 
 ```powershell
 ./playtest/apply-verdicts.ps1 -VerdictsPath verification-out/verdicts.jsonl -DryRun
+```
+
+As regras de tamanho e de veredito têm testes de fixture que rodam sem abrir o
+app:
+
+```powershell
+./playtest/test-window-size.ps1
+./playtest/test-verdicts.ps1
 ```
 
 As opções de CLI e os controles de ferramentas seguem a documentação oficial

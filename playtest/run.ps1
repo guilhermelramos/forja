@@ -32,10 +32,14 @@ param(
     [string]$Mcp = "target/release/forja-mcp.exe",
     [string]$Out = "playtest-out",
     [string]$Locale = "pt-BR",
-    [string]$PickDir = "C:\playground\exemplo"
+    [string]$PickDir = "C:\playground\exemplo",
+    # Test window size. The app defaults to 1920x1080 when this is empty.
+    [string]$WindowSize = ""
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "window-size.ps1")
+$windowSizeValue = Test-ForjaWindowSizeValue $WindowSize
 $deadline = (Get-Date).AddMinutes($Minutes)
 $name = [System.IO.Path]::GetFileNameWithoutExtension($Mission)
 $Out = [System.IO.Path]::GetFullPath($Out)
@@ -44,6 +48,7 @@ $Mcp = (Resolve-Path $Mcp).Path
 New-Item -ItemType Directory -Force $Out, "$Out\sessions", "$Out\data", "$Out\user", "$Out\room", "$Out\config" | Out-Null
 $findings = Join-Path $Out "findings.jsonl"
 $pipe = "\\.\pipe\forja-play-$name-$PID"
+if ($windowSizeValue) { Write-Host "playtest[$name]: janela $windowSizeValue" }
 
 # The tester gets its own OpenCode config home: no developer skills, plugins or
 # MCP servers on top of the `forja` server. Keeps every run reproducible and
@@ -59,6 +64,7 @@ function Start-Forja {
     $psi.UseShellExecute = $false
     $psi.RedirectStandardError = $true
     $psi.Environment["FORJA_PIPE"] = $pipe
+    if ($windowSizeValue) { $psi.Environment["FORJA_TEST_WINDOW_SIZE"] = $windowSizeValue }
     $psi.Environment["FORJA_DATA_DIR"] = "$Out\data"
     $psi.Environment["FORJA_CONTENT_DIR"] = "$Out\user"
     $psi.Environment["FORJA_TEST_LOG"] = "$Out\actions.jsonl"

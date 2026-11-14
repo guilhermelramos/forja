@@ -104,6 +104,11 @@ fn run() -> i32 {
             }
         };
 
+    let background = (flags.test_driver || flags.screenshot.is_some())
+        && std::env::var("FORJA_TEST_WINDOW").as_deref() != Ok("visible");
+    // Windows may clamp the initial size to the monitor. The app re-applies this
+    // size after the window exists so the layout sees the exact logical size.
+    let test_size = background.then(test_window_size);
     let screenshot_error = Arc::new(Mutex::new(None::<String>));
     let error_slot = Arc::clone(&screenshot_error);
     let expected = flags.screenshot.clone();
@@ -122,6 +127,7 @@ fn run() -> i32 {
         bench_tab: flags.bench_tab.clone(),
         right_tab: flags.right_tab.clone(),
         test_driver: flags.test_driver,
+        test_window_size: test_size,
         locale_locked,
     };
 
@@ -143,8 +149,6 @@ fn run() -> i32 {
             }
         }
     }
-    let background = (flags.test_driver || flags.screenshot.is_some())
-        && std::env::var("FORJA_TEST_WINDOW").as_deref() != Ok("visible");
     if background {
         // Tests and captures must not interrupt whoever uses the computer: the window
         // is placed off-screen, never takes focus and has no taskbar button. It still
@@ -153,7 +157,7 @@ fn run() -> i32 {
             .with_active(false)
             .with_taskbar(false)
             .with_position([-20000.0, -20000.0])
-            .with_inner_size([1920.0, 1080.0]);
+            .with_inner_size(test_size.unwrap_or([1920.0, 1080.0]));
     } else if start_maximized(runtime.settings().values().get("appearance.window.start_maximized"), flags.screenshot.is_some()) {
         viewport = viewport.with_maximized(true);
     }
@@ -199,6 +203,35 @@ fn run() -> i32 {
 
 fn start_maximized(value: Option<&forja_kernel::SettingValue>, screenshot: bool) -> bool {
     !screenshot && value.and_then(forja_kernel::SettingValue::as_bool).unwrap_or(false)
+}
+
+/// Test windows default to 1920x1080. `FORJA_TEST_WINDOW_SIZE=1280x800`
+/// reproduces the window size cited in a play-test issue.
+fn test_window_size() -> [f32; 2] {
+    match std::env::var("FORJA_TEST_WINDOW_SIZE") {
+        Ok(value) => match parse_window_size(&value) {
+            Some(size) => size,
+            None => {
+                eprintln!(
+                    "forja-app: FORJA_TEST_WINDOW_SIZE=`{value}` is not WIDTHxHEIGHT; using 1920x1080"
+                );
+                [1920.0, 1080.0]
+            }
+        },
+        Err(_) => [1920.0, 1080.0],
+    }
+}
+
+/// Parses `WIDTHxHEIGHT`; the multiplication sign is accepted because issues
+/// often write `1280×800`.
+fn parse_window_size(value: &str) -> Option<[f32; 2]> {
+    let (width, height) = value.trim().split_once(['x', 'X', '×'])?;
+    let width: f32 = width.trim().parse().ok()?;
+    let height: f32 = height.trim().parse().ok()?;
+    if !width.is_finite() || !height.is_finite() || width < 1.0 || height < 1.0 {
+        return None;
+    }
+    Some([width, height])
 }
 
 fn dump_catalog(flags: &Flags) -> i32 {
@@ -465,6 +498,26 @@ mod tests {
         assert!(!super::start_maximized(Some(&SettingValue::Bool(true)), true));
     }
     use super::*;
+
+    #[test]
+    fn window_size_parser_accepts_x_and_multiplication_sign() {
+        assert_eq!(super::parse_window_size("1280x800"), Some([1280.0, 800.0]));
+        assert_eq!(super::parse_window_size("1280X800"), Some([1280.0, 800.0]));
+        assert_eq!(
+            super::parse_window_size(" 1280 × 800 "),
+            Some([1280.0, 800.0])
+        );
+        assert_eq!(
+            super::parse_window_size("1920x1080"),
+            Some([1920.0, 1080.0])
+        );
+        assert_eq!(super::parse_window_size("1280*800"), None);
+        assert_eq!(super::parse_window_size("1280"), None);
+        assert_eq!(super::parse_window_size("0x800"), None);
+        assert_eq!(super::parse_window_size("-1280x800"), None);
+        assert_eq!(super::parse_window_size("widex800"), None);
+        assert_eq!(super::parse_window_size(""), None);
+    }
 
     #[test]
     fn contract_runs_over_every_linked_module() {
