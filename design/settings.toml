@@ -2846,21 +2846,36 @@ label_key = "setting-usage-cost-track-label"
 help_key = "setting-usage-cost-track-help"
 
 [[setting]]
-key = "usage.cost.alert_usd"
-deferred = "Adiado por decisão de escopo do coordenador: o aviso de custo fica para depois da Fase F."
+key = "usage.budget.daily_usd"
 module = "usage"
 group = "helpers"
 type = "number"
-default = 25
+default = 0.0
 min = 0
-max = 1000
-label_pt = "Aviso de custo (US$)"
-label_en = "Cost alert (USD)"
-help_pt = "Avisa quando o custo acumulado do dia passa desse valor; 0 desliga."
-help_en = "Warns when the day's accumulated cost exceeds this value; 0 disables."
-why = "25 dólares é um aviso cedo o bastante para agir; 0 desliga."
-label_key = "setting-usage-cost-alert_usd-label"
-help_key = "setting-usage-cost-alert_usd-help"
+max = 100000
+label_pt = "Limite de gasto diário (US$)"
+label_en = "Daily spend limit (USD)"
+help_pt = "Avisa em 80% e 100% do custo estimado do dia; 0 desliga."
+help_en = "Notifies at 80% and 100% of the day's estimated cost; 0 turns it off."
+why = "Desligado até a pessoa definir um teto; 0 desliga."
+label_key = "setting-usage-budget-daily_usd-label"
+help_key = "setting-usage-budget-daily_usd-help"
+
+[[setting]]
+key = "usage.budget.monthly_usd"
+module = "usage"
+group = "helpers"
+type = "number"
+default = 0.0
+min = 0
+max = 100000
+label_pt = "Limite de gasto mensal (US$)"
+label_en = "Monthly spend limit (USD)"
+help_pt = "Avisa em 80% e 100% do custo estimado do mês; 0 desliga."
+help_en = "Notifies at 80% and 100% of the month's estimated cost; 0 turns it off."
+why = "Desligado até a pessoa definir um teto; 0 desliga."
+label_key = "setting-usage-budget-monthly_usd-label"
+help_key = "setting-usage-budget-monthly_usd-help"
 
 [[setting]]
 key = "usage.display.status_bar"

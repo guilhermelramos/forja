@@ -617,8 +617,9 @@ Método RPC: `ports.list` (read, idempotente) devolve `{ports, scanned_at_ms, bu
 | Comando | Argumentos | Retorno |
 |---|---|---|
 | `usage.refresh` | - | `{pending: true}`; invalida e relê as transcrições |
+| `usage.spend` | `{project?, period?}` | `{period, project, matched_projects, usd, tokens, unpriced_tokens, priced, projects, scanned_at_ms, pending}`; `project` soma a pasta da bancada e as subpastas e `period` aceita `today`, `last7`, `last30` e `all` |
 
-Método RPC: `usage.summary` (read, idempotente) devolve `UsageSummary` com `today`, `last_7_days`, `last_30_days`, `total`, `by_agent`, `by_model`, `by_project`, `by_day` e `sessions`. As raízes padrão são `CLAUDE_CONFIG_DIR`/`~/.claude`, `CODEX_HOME`/`~/.codex` e as pastas do OpenCode; as homes de `accounts.roots` entram na varredura. O cache é por tamanho + mtime e a varredura roda a cada 60 s, sem bloquear a interface.
+Métodos RPC: `usage.summary` (read, idempotente) devolve `UsageSummary` com `today`, `last_7_days`, `last_30_days`, `total`, `by_agent`, `by_model`, `by_project`, `by_day`, `periods` (chaves `today`, `last7`, `last30`, `all`) e `sessions`; cada `UsageTotals` traz `cost_usd` e `unpriced_tokens`. `usage.spend` (read, idempotente) devolve o gasto do período, opcionalmente somado por bancada, para o Mutirão consultar em vez de pedir custo digitado. O custo vem do log do ajudante quando existe; senão, de `content/pricing/*.toml`, com fonte e data por entrada, e modelo sem preço aparece como "sem preço". As raízes padrão são `CLAUDE_CONFIG_DIR`/`~/.claude`, `CODEX_HOME`/`~/.codex` e as pastas do OpenCode; as homes de `accounts.roots` entram na varredura. O cache é por tamanho + mtime e a varredura roda a cada 60 s, sem bloquear a interface. `usage.budget.daily_usd` e `usage.budget.monthly_usd` avisam por `notify.show` em 80% e 100%.
 
 ### Comandos de `accounts`
 

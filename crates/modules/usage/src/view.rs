@@ -1,19 +1,28 @@
 //! Rail page "Uso" and the compact status bar meter.
 
-use crate::model::{compact_tokens, UsageRecord, UsageSummary, UsageTotals};
+use crate::budget;
+use crate::model::{
+    compact_tokens, day_key, format_day, format_usd, UsagePeriod, UsageRecord, UsageSummary,
+    UsageTotals,
+};
 use crate::parse::now_ms;
+use crate::pricing::Pricing;
 use crate::scan::{summarize, Roots};
 use crate::state::Shared;
 use forja_kernel::ui_contract::{egui, View};
-use forja_kernel::{Args, Ctx, SettingValue};
+use forja_kernel::{Args, Ctx, Locale, SettingValue};
 
 pub struct UsagePage {
     shared: Shared,
+    period: UsagePeriod,
 }
 
 impl UsagePage {
     pub fn new(shared: Shared) -> Self {
-        Self { shared }
+        Self {
+            shared,
+            period: UsagePeriod::Last7,
+        }
     }
 }
 
@@ -21,6 +30,7 @@ impl View for UsagePage {
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         ensure_refresh(cx, &self.shared);
         let summary = self.shared.summary();
+        let locale = cx.i18n().locale();
         let tokens = forja_ui_kit::applied_tokens(ui.ctx());
         let muted = c32(tokens.color.text_muted);
         ui.horizontal_wrapped(|ui| {
@@ -38,6 +48,21 @@ impl View for UsagePage {
                 ui.spinner();
             }
         });
+        let mut period_index = UsagePeriod::ALL
+            .iter()
+            .position(|period| *period == self.period)
+            .unwrap_or(1);
+        let labels: Vec<String> = UsagePeriod::ALL
+            .iter()
+            .map(|period| cx.t(period.label_key()))
+            .collect();
+        let label_refs: Vec<&str> = labels.iter().map(String::as_str).collect();
+        let filter = cx.t("usage.filter");
+        ui.horizontal(|ui| {
+            ui.label(egui::RichText::new(filter).small().color(muted));
+            forja_ui_kit::segmented(ui, &mut period_index, &label_refs);
+        });
+        self.period = UsagePeriod::ALL[period_index];
         if let Some(error) = self.shared.error() {
             ui.label(
                 egui::RichText::new(error)
@@ -45,38 +70,101 @@ impl View for UsagePage {
                     .color(c32(tokens.color.danger)),
             );
         }
+        let pricing_errors = self.shared.pricing_errors();
+        if !pricing_errors.is_empty() {
+            let text = cx.t_args(
+                "usage.pricing.errors",
+                &[("count", &pricing_errors.len().to_string())],
+            );
+            ui.label(
+                egui::RichText::new(text)
+                    .small()
+                    .color(c32(tokens.color.danger)),
+            )
+            .on_hover_text(pricing_errors.join("\n"));
+        }
         ui.add_space(8.0);
         egui::ScrollArea::vertical()
             .id_salt("usage-body")
             .auto_shrink([false, false])
             .show(ui, |ui| {
-                self.totals(ui, cx, &summary, muted);
-                self.days(ui, cx, &summary);
+                if summary.total.is_empty() {
+                    self.empty(ui, cx);
+                }
+                self.totals(ui, cx, &summary, locale, muted);
+                if summary.total.is_empty() {
+                    return;
+                }
+                let slice = summary.slice(self.period);
+                self.days(ui, cx, &summary, locale);
+                self.group(
+                    ui,
+                    cx,
+                    "usage.section.agents",
+                    &slice.by_agent,
+                    slice.totals.total_tokens,
+                    locale,
+                    |name| agent_label(cx, name),
+                );
                 self.group(
                     ui,
                     cx,
                     "usage.section.models",
-                    &summary.by_model,
-                    summary.total.total_tokens,
+                    &slice.by_model,
+                    slice.totals.total_tokens,
+                    locale,
+                    |name| name.to_owned(),
                 );
                 self.group(
                     ui,
                     cx,
                     "usage.section.projects",
-                    &summary.by_project,
-                    summary.total.total_tokens,
+                    &slice.by_project,
+                    slice.totals.total_tokens,
+                    locale,
+                    |name| {
+                        if name.is_empty() {
+                            cx.t("usage.unknown")
+                        } else {
+                            name.to_owned()
+                        }
+                    },
                 );
-                self.sessions(ui, cx, &summary, muted);
+                self.sessions(ui, cx, &summary, locale, muted);
             });
     }
 }
 
 impl UsagePage {
+    fn empty(&self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
+        let title = cx.t("usage.empty.title");
+        forja_ui_kit::card(ui, Some(&title), |ui| {
+            ui.set_min_width(ui.available_width());
+            ui.add(
+                egui::Label::new(cx.t("usage.empty.body"))
+                    .wrap()
+                    .selectable(false),
+            );
+            ui.add_space(6.0);
+            if forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Secondary,
+                &cx.t("usage.empty.action"),
+            )
+            .clicked()
+            {
+                let _ = cx.run_command("usage.refresh", Args::new());
+            }
+        });
+        ui.add_space(4.0);
+    }
+
     fn totals(
         &self,
         ui: &mut egui::Ui,
         cx: &Ctx<'_>,
         summary: &UsageSummary,
+        locale: Locale,
         muted: egui::Color32,
     ) {
         let items: Vec<(String, UsageTotals)> = [
@@ -93,10 +181,19 @@ impl UsagePage {
                 let ui = &mut columns[index % 2];
                 forja_ui_kit::card(ui, Some(label), |ui| {
                     ui.set_min_width(ui.available_width());
+                    let (cost, note) = cost_lines(totals, cx, locale);
+                    ui.label(egui::RichText::new(cost).size(24.0).strong());
+                    if let Some(note) = note {
+                        ui.label(egui::RichText::new(note).small().color(muted));
+                    }
                     ui.label(
-                        egui::RichText::new(compact_tokens(totals.total_tokens))
-                            .size(24.0)
-                            .strong(),
+                        egui::RichText::new(format!(
+                            "{} {}",
+                            compact_tokens(totals.total_tokens),
+                            cx.t("usage.tokens")
+                        ))
+                        .size(16.0)
+                        .monospace(),
                     );
                     ui.label(
                         egui::RichText::new(format!(
@@ -109,14 +206,29 @@ impl UsagePage {
                         .small()
                         .color(muted),
                     );
+                    ui.label(
+                        egui::RichText::new(format!(
+                            "{} {} · {} {}",
+                            compact_tokens(totals.cache_read_tokens),
+                            cx.t("usage.cache_read"),
+                            compact_tokens(totals.cache_write_tokens),
+                            cx.t("usage.cache_write")
+                        ))
+                        .small()
+                        .color(muted),
+                    );
                 });
                 ui.add_space(4.0);
             }
         });
     }
 
-    fn days(&self, ui: &mut egui::Ui, cx: &Ctx<'_>, summary: &UsageSummary) {
-        let series = summary.day_series(14);
+    fn days(&self, ui: &mut egui::Ui, cx: &Ctx<'_>, summary: &UsageSummary, locale: Locale) {
+        let now = now_ms();
+        let series = summary.day_series(self.period, now);
+        if series.is_empty() {
+            return;
+        }
         let max = series
             .iter()
             .map(|(_, totals)| totals.total_tokens)
@@ -127,7 +239,11 @@ impl UsagePage {
             ui.set_min_width(ui.available_width());
             for (day, totals) in series {
                 ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new(day).small().monospace());
+                    ui.label(
+                        egui::RichText::new(format_day(&day, locale))
+                            .small()
+                            .monospace(),
+                    );
                     let ratio = if max == 0 {
                         0.0
                     } else {
@@ -148,12 +264,18 @@ impl UsagePage {
                             .small()
                             .color(c32(tokens.color.text_muted)),
                     );
+                    ui.label(
+                        egui::RichText::new(cost_short(&totals, cx, locale))
+                            .small()
+                            .color(c32(tokens.color.text_muted)),
+                    );
                 });
             }
         });
         ui.add_space(4.0);
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn group(
         &self,
         ui: &mut egui::Ui,
@@ -161,6 +283,8 @@ impl UsagePage {
         title: &str,
         values: &std::collections::BTreeMap<String, UsageTotals>,
         total: u64,
+        locale: Locale,
+        name_for: impl Fn(&str) -> String,
     ) {
         if values.is_empty() {
             return;
@@ -177,11 +301,12 @@ impl UsagePage {
                     (totals.total_tokens as f64 / total as f64 * 100.0).round() as u32
                 };
                 ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new(name).monospace().small());
+                    ui.label(egui::RichText::new(name_for(name)).monospace().small());
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         ui.label(
                             egui::RichText::new(format!(
-                                "{} · {share}%",
+                                "{} · {} · {share}%",
+                                cost_short(totals, cx, locale),
                                 compact_tokens(totals.total_tokens)
                             ))
                             .small(),
@@ -198,6 +323,7 @@ impl UsagePage {
         ui: &mut egui::Ui,
         cx: &Ctx<'_>,
         summary: &UsageSummary,
+        locale: Locale,
         muted: egui::Color32,
     ) {
         if summary.sessions.is_empty() {
@@ -220,7 +346,7 @@ impl UsagePage {
                     ui.label(
                         egui::RichText::new(format!(
                             "{} · {} · {}",
-                            session.agent,
+                            agent_label(cx, &session.agent),
                             if session.model.is_empty() {
                                 "?"
                             } else {
@@ -231,6 +357,18 @@ impl UsagePage {
                         .small()
                         .color(muted),
                     );
+                    ui.label(
+                        egui::RichText::new(cost_short(&session.totals, cx, locale))
+                            .small()
+                            .color(muted),
+                    );
+                    if session.updated_ms > 0 {
+                        ui.label(
+                            egui::RichText::new(format_day(&day_key(session.updated_ms), locale))
+                                .small()
+                                .color(muted),
+                        );
+                    }
                 });
                 if !session.project.is_empty() {
                     ui.label(
@@ -269,14 +407,26 @@ impl View for UsageStatus {
         if summary.total.is_empty() {
             return;
         }
+        let locale = cx.i18n().locale();
         let tokens = forja_ui_kit::applied_tokens(ui.ctx());
-        ui.label(
-            egui::RichText::new(cx.t_args(
-                "usage.status.suffix",
+        let text = if summary.today.has_unpriced() {
+            cx.t_args(
+                "usage.status.suffix_unpriced",
                 &[("tokens", &compact_tokens(summary.today.total_tokens))],
-            ))
-            .small()
-            .color(c32(tokens.color.text_muted)),
+            )
+        } else {
+            cx.t_args(
+                "usage.status.suffix",
+                &[
+                    ("cost", &format_usd(summary.today.cost_usd, locale)),
+                    ("tokens", &compact_tokens(summary.today.total_tokens)),
+                ],
+            )
+        };
+        ui.label(
+            egui::RichText::new(text)
+                .small()
+                .color(c32(tokens.color.text_muted)),
         );
     }
 }
@@ -297,17 +447,34 @@ pub fn ensure_refresh(cx: &mut Ctx<'_>, shared: &Shared) {
         return;
     };
     let accounts = account_roots(cx);
+    let user_dir = cx.user_dir().to_path_buf();
+    let project = current_project(cx);
     let shared = shared.clone();
     cx.spawn(
         move || {
             let mut cache = cache.unwrap_or_default();
             let roots = Roots::from_accounts(&accounts);
+            let (pricing, pricing_errors) = Pricing::load(&user_dir, project.as_deref());
             let stats = cache.scan(&roots);
-            let summary = cache.summary_at(now_ms());
-            (cache, summary, stats)
+            let summary = cache.summary_at(now_ms(), &pricing);
+            (cache, summary, stats, pricing_errors)
         },
-        move |_cx, (cache, summary, stats)| shared.finish_scan(cache, summary, stats),
+        move |cx, (cache, summary, stats, pricing_errors)| {
+            shared.finish_scan(cache, summary, stats, pricing_errors);
+            budget::check(cx, &shared);
+        },
     );
+}
+
+fn current_project(cx: &mut Ctx<'_>) -> Option<std::path::PathBuf> {
+    cx.run_command("bench.current", Args::new())
+        .ok()
+        .and_then(|value| {
+            value
+                .get("path")
+                .and_then(serde_json::Value::as_str)
+                .map(std::path::PathBuf::from)
+        })
 }
 
 fn account_roots(cx: &mut Ctx<'_>) -> Vec<(String, String)> {
@@ -337,11 +504,47 @@ fn fixture() -> bool {
         .unwrap_or(false)
 }
 
+fn agent_label(cx: &Ctx<'_>, agent: &str) -> String {
+    match agent {
+        "claude" => cx.t("usage.agent.claude"),
+        "codex" => cx.t("usage.agent.codex"),
+        "opencode" => cx.t("usage.agent.opencode"),
+        other => other.to_owned(),
+    }
+}
+
+fn cost_lines(totals: &UsageTotals, cx: &Ctx<'_>, locale: Locale) -> (String, Option<String>) {
+    if totals.cost_usd <= 0.0 && totals.unpriced_tokens > 0 {
+        return (cx.t("usage.cost.unpriced"), None);
+    }
+    let cost = cx.t_args(
+        "usage.cost.value",
+        &[("amount", &format_usd(totals.cost_usd, locale))],
+    );
+    let note = (totals.unpriced_tokens > 0).then(|| cx.t("usage.cost.partial_note"));
+    (cost, note)
+}
+
+fn cost_short(totals: &UsageTotals, cx: &Ctx<'_>, locale: Locale) -> String {
+    if totals.cost_usd <= 0.0 && totals.unpriced_tokens > 0 {
+        return cx.t("usage.cost.unpriced");
+    }
+    let cost = cx.t_args(
+        "usage.cost.value",
+        &[("amount", &format_usd(totals.cost_usd, locale))],
+    );
+    if totals.unpriced_tokens > 0 {
+        format!("{cost} {}", cx.t("usage.cost.partial"))
+    } else {
+        cost
+    }
+}
+
 /// Deterministic data for screenshots.
 pub fn sample_summary() -> UsageSummary {
     let now = now_ms();
     let mut records = Vec::new();
-    let models = ["claude-sonnet-4", "gpt-5", "qwen3-coder"];
+    let models = ["claude-sonnet-4-5", "gpt-5", "qwen3-coder"];
     let projects = ["C:/work/forja", "C:/work/site", "C:/work/api"];
     for day in 0..14i64 {
         let tokens = 40_000 + day * 13_000 + (day % 3) * 9_000;
@@ -358,10 +561,13 @@ pub fn sample_summary() -> UsageSummary {
                 cache_read_tokens: (tokens / 5) as u64,
                 cache_write_tokens: (tokens / 20) as u64,
                 total_tokens: (tokens + tokens / 8) as u64,
+                cost_usd: 0.0,
+                unpriced_tokens: 0,
             },
+            cost_usd: None,
         });
     }
-    summarize(records.iter(), now)
+    summarize(records.iter(), now, &Pricing::builtin())
 }
 
 fn c32(color: forja_ui_kit::Color) -> egui::Color32 {
