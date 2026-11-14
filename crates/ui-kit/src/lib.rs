@@ -51,6 +51,8 @@ pub use icon::{
     font_id as icon_font, icon_button, ARCHIVE, BOARD, CLOSE, EXTENSION, HELPERS, REQUESTS,
     ROUTINES, SEARCH, SETTINGS, SKILLS, SPLIT_DOWN, SPLIT_RIGHT, TERMINAL, THEME,
 };
-pub use keyboard_layer::{consume_layer_escape, keyboard_layer_active, register_keyboard_layer};
+pub use keyboard_layer::{
+    consume_layer_escape, keyboard_layer_active, register_keyboard_layer, release_keyboard_focus,
+};
 pub use terminal::{AnsiPalette, TerminalTheme};
 pub use tokens::{Density, Metrics, Mode, Palette, ThemeError, Tokens, GRID};

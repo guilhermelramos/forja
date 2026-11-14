@@ -1,0 +1,41 @@
+{
+  "title": "Keyboard focus reaches content tabs from terminal and activates on Enter/Space (#51)",
+  "issue": 51,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "x": 900, "y": 500 },
+    { "m": "ui.key", "keys": "F6" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Space" },
+    { "m": "ui.key", "keys": "Shift+Tab" },
+    { "m": "ui.key", "keys": "Shift+Tab" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.click", "x": 900, "y": 500 },
+    { "m": "ui.key", "keys": "Ctrl+Tab" }
+  ],
+  "expect": [
+    {
+      "step": 4,
+      "present": ["Abra um arquivo no explorador ou pressione Ctrl+P."],
+      "absent": ["Receitas", "Nova aba"]
+    },
+    {
+      "step": 6,
+      "present": ["Nova aba"],
+      "absent": ["Abra um arquivo no explorador ou pressione Ctrl+P.", "Receitas"]
+    },
+    {
+      "step": 9,
+      "present": ["Receitas"],
+      "absent": ["Abra um arquivo no explorador ou pressione Ctrl+P.", "Nova aba"]
+    },
+    {
+      "step": 11,
+      "present": ["Abra um arquivo no explorador ou pressione Ctrl+P."],
+      "absent": ["Receitas"]
+    }
+  ]
+}

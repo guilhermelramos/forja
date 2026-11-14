@@ -400,6 +400,7 @@ impl ForjaApp {
                     "forja.sidebar.tabs",
                     &self.text("shell.tabs.more"),
                     &self.tokens.metrics(),
+                    false,
                 );
                 self.sidebar_tab = index;
                 self.paint_view(ui, true, index);
@@ -442,6 +443,7 @@ impl ForjaApp {
                     "forja.right.tabs",
                     &self.text("shell.tabs.more"),
                     &self.tokens.metrics(),
+                    false,
                 );
                 self.right_tab = index;
                 self.paint_view(ui, false, index);
@@ -496,6 +498,7 @@ impl ForjaApp {
                 .iter()
                 .position(|index| *index == self.active_tab)
                 .unwrap_or(0);
+            let focus_active = std::mem::take(&mut self.focus_content_tab);
             selected = Self::slot_tabs(
                 ui,
                 &titles,
@@ -503,6 +506,7 @@ impl ForjaApp {
                 "forja.bench.tabs",
                 &self.text("shell.tabs.more"),
                 &self.tokens.metrics(),
+                focus_active,
             );
             let active = visible.get(selected).copied().unwrap_or(visible[0]);
             self.active_tab = active;
@@ -525,10 +529,15 @@ impl ForjaApp {
         id: &str,
         more: &str,
         metrics: &forja_ui_kit::Metrics,
+        focus_active: bool,
     ) -> usize {
         if titles.len() < 2 {
             if let Some(title) = titles.first() {
-                forja_ui_kit::tabs(ui, &mut selected, &[title.as_str()]);
+                let response = forja_ui_kit::tabs(ui, &mut selected, &[title.as_str()]);
+                if focus_active {
+                    ui.ctx()
+                        .memory_mut(|memory| memory.request_focus(response.id.with(("tab", 0))));
+                }
             }
             return 0;
         }
@@ -566,6 +575,7 @@ impl ForjaApp {
                         shown.push(index);
                     }
                 }
+                shown.sort_unstable();
                 if !shown.contains(&selected) {
                     ui.add(egui::Label::new(&titles[selected]).truncate())
                         .on_hover_text(&titles[selected]);
@@ -576,7 +586,12 @@ impl ForjaApp {
                         .iter()
                         .position(|index| *index == selected)
                         .unwrap_or(usize::MAX);
-                    forja_ui_kit::tabs(ui, &mut chosen, &refs);
+                    let response = forja_ui_kit::tabs(ui, &mut chosen, &refs);
+                    if focus_active && chosen < shown.len() {
+                        ui.ctx().memory_mut(|memory| {
+                            memory.request_focus(response.id.with(("tab", chosen)))
+                        });
+                    }
                     if let Some(index) = shown.get(chosen) {
                         selected = *index;
                     }

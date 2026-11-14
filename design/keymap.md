@@ -66,6 +66,7 @@ Ids seguem `<módulo>.<ação>` e podem ter um terceiro nível quando a ação �
 
 | Ação (pt-BR · en) | id | Atalho | Escopo | Observação |
 |---|---|---|---|---|
+| Focar abas de conteúdo · Focus content tabs | `tab.focus` | `F6` | `global` + terminal | Sai do terminal ou editor (onde `Esc` também libera o foco) para navegar entre as abas com `Tab`/`Shift+Tab` e ativar com `Enter`/`Espaço`. |
 | Próxima aba · Next tab | `tab.next` | `Ctrl+Tab` | `global` + terminal | — |
 | Aba anterior · Previous tab | `tab.previous` | `Ctrl+Shift+Tab` | `global` + terminal | — |
 | Fechar aba · Close tab | `tab.close` | `Ctrl+W` | `global` | No terminal, Ctrl+W vai para o shell; use Ctrl+Shift+W para fechar a aba. |
@@ -193,6 +194,7 @@ O terminal é uma superfície de texto: o shell espera receber praticamente toda
 | `Ctrl+Shift+N` | Nova bancada | nada comum | — |
 | `Alt+PageDown` | Próxima bancada | nada comum | PageDown sem Alt rola o terminal |
 | `Alt+PageUp` | Bancada anterior | nada comum | PageUp sem Alt rola o terminal |
+| `F6` | Focar abas de conteúdo | nada comum | sai do terminal para as abas sem trocar de aba |
 | `Ctrl+Tab` | Próxima aba | nada comum | Ctrl+Shift+Tab volta |
 | `Ctrl+Shift+Tab` | Aba anterior | nada comum | — |
 | `Ctrl+Shift+W` | Fechar aba em qualquer superfície | nada comum | fecha a aba mesmo com o shell focado |
