@@ -103,6 +103,14 @@ pub(crate) fn render_dialog(
             if forja_ui_kit::consume_layer_escape(ctx, layer) {
                 return Dialog::None;
             }
+            // The first field takes the keyboard as soon as the dialog opens,
+            // so typing and Tab never leak to the window behind it.
+            let focus_key = egui::Id::new(if creating {
+                "forja.projects.create.focus"
+            } else {
+                "forja.projects.add.focus"
+            });
+            let focus_path = !ctx.data(|data| data.get_temp::<bool>(focus_key).unwrap_or(false));
             let title = if creating {
                 cx.t("project.dialog.create.title")
             } else {
@@ -130,7 +138,14 @@ pub(crate) fn render_dialog(
                         .small()
                         .color(tokens.color.text_muted.forja_color()),
                     );
-                    forja_ui_kit::text_field(ui, &mut form.path, "C:\\dev\\projeto");
+                    let path = forja_ui_kit::text_field(ui, &mut form.path, "C:\\dev\\projeto");
+                    if focus_path {
+                        path.request_focus();
+                        ctx.data_mut(|data| data.insert_temp(focus_key, true));
+                    }
+                    if path.lost_focus() && ui.input(|input| input.key_pressed(egui::Key::Enter)) {
+                        submit = true;
+                    }
                     if ui
                         .add(egui::Button::new(cx.t("project.action.choose")).frame(false))
                         .clicked()

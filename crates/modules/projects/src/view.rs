@@ -42,6 +42,10 @@ impl View for ProjectsDialogs {
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         let mut dialog = self.state.dialog();
         if matches!(dialog, Dialog::None) {
+            ui.ctx().data_mut(|data| {
+                data.remove_temp::<bool>(egui::Id::new("forja.projects.add.focus"));
+                data.remove_temp::<bool>(egui::Id::new("forja.projects.create.focus"));
+            });
             return;
         }
         let mut next = render_dialog(ui.ctx(), &mut dialog, cx, &self.state);
