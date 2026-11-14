@@ -690,3 +690,33 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Texto "Click to type" visível na área central sem elemento correspondente na árvore de acessibilidade.
 - Textos de apoio em cinza médio sobre fundo escuro (placeholders "Search settings" e "Token", "Not connected", mensagens de estado vazio e a dica "Click to type") têm contraste baixo; os botões desativados "Connect" e "Disconnect" também perdem contraste.
 
+## [en.dark.settings.counter_gitlab](pages/en.dark.settings.counter_gitlab.md)
+
+- A janela "Settings" sobrepõe a barra de abas central ("Terminal", "Editor", "Browser", "Changes", "Preview", "Bench", "Review" e "History" ficam totalmente encobertas; de "Extension panels" resta só o fragmento "…ion panels" à direita do modal) e a barra de ferramentas central ("+", quatro botões-ícone sem nome, "Recipes", "Shell"); o botão "More tabs" da área central ((324,50)–(411,85)) também fica praticamente inatingível.
+- Três botões compartilham o mesmo nome acessível "More tabs" e dois compartilham "Changes" (ambiguidade para leitores de tela).
+- Quatro botões-ícone da barra de ferramentas central ((444,113), (479,113), (514,113), (549,113)) estão sem nome acessível, e o texto "Click to type" do painel central não tem elemento acessível correspondente.
+- O controle de alternância de tema ((1741,5)–(1773,37), ícone de sol) é um elemento sem nome acessível e sem papel definido (Unknown).
+- O botão "Connect" está desativado, mas com preenchimento âmbar que o faz parecer acionável; os botões desativados ("Connect", "Disconnect") têm contraste reduzido.
+- Os nomes "Find file  Ctrl+P" e "Anvil  Ctrl+K" contêm espaço duplo entre o rótulo e o atalho.
+
+## [en.dark.settings.counter_jira](pages/en.dark.settings.counter_jira.md)
+
+- Três botões com o mesmo nome acessível "More tabs" em posições distintas ((64,50), (324,50) e (1632,50)); nomes duplicados dificultam navegação e automação por acessibilidade.
+- Dois botões "Changes" com o mesmo nome acessível em painéis diferentes ((629,52) na área central e (1778,52) no painel direito).
+- Ícone clicável de tema (sol) em (1741,5)–(1773,37) sem nome acessível.
+- Vários elementos interativos sem nome acessível: campos de texto e de senha (só identificáveis pelos textos de apoio visíveis), botões de ícone em (444,113)–(581,145), alças de redimensionamento e divisórias da modal e sublinhado de aba.
+- A modal cobre a faixa de abas centrais: as abas "Terminal" a "History" ficam encobertas, "Extension panels" aparece truncada ("ion panels") e o botão "More tabs" central (324,50)–(411,85) fica invisível; os botões "+", "Recipes", "Shell" e os quatro botões de ícone (faixa y113–145) também ficam sob a modal — sobreposição esperada de uma modal, mas que reduz a legibilidade dos rótulos.
+- Os elementos sem nome (328,118)–(404,140) e (385,121)–(401,137) se sobrepõem ao campo de busca da modal.
+- Texto "Click to type" solto no canto inferior direito da área central (dica do painel de terminal vazio atrás da modal), sem elemento correspondente nomeado na árvore.
+
+## [en.dark.settings.counter_linear](pages/en.dark.settings.counter_linear.md)
+
+- A aba "Extension panels" (973,52)–(1099,84) é parcialmente encoberta pelo modal (o modal vai até x=1026); na imagem só se lê "ion panels".
+- Os botões "+", os quatro botões-ícone entre 444–581 px, "Recipes" e "Shell" (y 113–145) ficam totalmente encobertos pelo modal, sem indicação visual de sua existência.
+- Sobreposição na árvore de acessibilidade: "Helper (chat)" (1099,52)–(1202,84) se sobrepõe à faixa de abas que inclui "Extension panels".
+- Três abas aparecem marcadas simultaneamente ("Projects" no painel esquerdo, "Terminal" na área central e "Files" no painel direito), o que dificulta identificar o painel realmente ativo.
+- O TextInput de busca e o PasswordInput de token não têm nome acessível; dependem apenas do texto de sugestão ("Search settings", "Token").
+- Vários elementos sem nome acessível: botão de tema na barra de título, bordas e alças do modal, bordas das faixas de abas e os quatro botões-ícone da barra central.
+- O texto "Click to type" (~1565,1023) é exibido em cinza escuro sobre fundo escuro, com contraste baixo.
+- Nenhum elemento ultrapassa os limites da janela (1920×1080); na variante pt-BR havia uma aba fora da borda, o que não ocorre aqui por causa da largura maior.
+

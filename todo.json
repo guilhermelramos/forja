@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 9,
-  "widgets_total": 2990,
-  "widgets_covered": 2838,
+  "states_done": 12,
+  "widgets_total": 3116,
+  "widgets_covered": 2964,
   "complete": false,
   "stale": [
     {
@@ -708,21 +708,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "en.dark.settings.counter_gitlab",
-      "png": "captures/en.dark.settings.counter_gitlab.png",
-      "tree": "captures/en.dark.settings.counter_gitlab.json"
-    },
-    {
-      "state": "en.dark.settings.counter_jira",
-      "png": "captures/en.dark.settings.counter_jira.png",
-      "tree": "captures/en.dark.settings.counter_jira.json"
-    },
-    {
-      "state": "en.dark.settings.counter_linear",
-      "png": "captures/en.dark.settings.counter_linear.png",
-      "tree": "captures/en.dark.settings.counter_linear.json"
-    },
     {
       "state": "en.dark.settings.helper",
       "png": "captures/en.dark.settings.helper.png",
