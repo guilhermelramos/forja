@@ -8,7 +8,9 @@ Módulo `bench` (pasta `benches`): worktrees git, etapas e os scripts do
 - Comandos/RPC `bench.current`, `bench.list`, `bench.list_cards`,
   `bench.activate`, `bench.create`, `bench.store`, `bench.stage.set`,
   `bench.stage.list`, `bench.sleep`, `bench.wake`, `bench.pin`, `bench.read`,
-  `bench.refresh` e `bench.script.approve`.
+  `bench.refresh`, `bench.script.approve` e as consultas internas
+  `bench.preview_forge`, `bench.preview_status` e `bench.preview_cancel` usadas
+  pela confirmação de Forjar em Pedidos.
 - Comandos de interface `bench.create_dialog`, `bench.store_dialog` e
   `bench.approve_dialog`; os diálogos são desenhados pela view
   `bench.dialogs` no slot modal, aberta por `poll` só quando há diálogo. Sem

@@ -4,6 +4,7 @@
 //! qualquer comando, porque os comandos também travam o estado.
 
 use crate::commands::{self, with_state};
+use crate::forge_preview::ForgePreview;
 use crate::state::{self, Filter, Notice, NoticeKind, Shared, State};
 use forja_contracts::{RequestItem, RequestKind, RequestState};
 use forja_counter_kit::error_key;
@@ -36,6 +37,7 @@ pub struct RequestsView {
     local_open: bool,
     local_title: String,
     local_body: String,
+    forge_preview: ForgePreview,
 }
 
 impl RequestsView {
@@ -49,6 +51,7 @@ impl RequestsView {
             local_open: false,
             local_title: String::new(),
             local_body: String::new(),
+            forge_preview: ForgePreview::default(),
         }
     }
 
@@ -351,7 +354,7 @@ impl RequestsView {
             let can_forge = project_known || forja_counter_kit::fixtures_enabled();
             ui.add_enabled_ui(can_forge, |ui| {
                 if button(ui, ButtonKind::Primary, &cx.t("request-action-forge")).clicked() {
-                    let _ = commands::forge(cx, &self.shared, &item.counter, &item.key);
+                    self.forge_preview.begin(cx, &self.shared, item);
                 }
             });
             let (label, to) = if item.is_open() {
@@ -390,6 +393,7 @@ impl View for RequestsView {
         } else {
             self.list(ui, cx, &frame);
         }
+        self.forge_preview.ui(ui, cx, &self.shared);
     }
 }
 

@@ -31,8 +31,10 @@ infinito é interrompido pelo hook de instruções.
 
 ## Página e painéis
 
-- `extension.page` no trilho: estado, capacidades, aprovar/revogar, recarregar,
-  configurações, comandos, erros e log.
+- `extension.page` no trilho: instalar uma pasta em `<conteúdo do usuário>/extensions`,
+  estado, capacidades, aprovar/revogar, recarregar, configurações, comandos, erros e log.
+  A instalação copia em segundo plano e deixa extensões novas pendentes até a aprovação
+  existente por hash.
 - `extension.panels.*`: desenham a árvore declarativa em `right_panel`,
   `bench_tab` e `sidebar`.
 - `extension.commands` na Bigorna.

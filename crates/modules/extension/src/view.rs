@@ -29,6 +29,15 @@ impl ExtensionPage {
 
     fn toolbar(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         ui.horizontal_wrapped(|ui| {
+            if forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Primary,
+                &cx.t("extension.page.install"),
+            )
+            .clicked()
+            {
+                self.pick_folder(cx);
+            }
             if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &cx.t("extension.page.rescan"))
                 .clicked()
             {
@@ -37,6 +46,37 @@ impl ExtensionPage {
             ui.label(cx.t("extension.page.search"));
             forja_ui_kit::text_field(ui, &mut self.query, "");
         });
+    }
+
+    fn pick_folder(&self, cx: &mut Ctx<'_>) {
+        let core = Arc::clone(&self.core);
+        cx.spawn(
+            || {
+                forja_kernel::test_pick::folder()
+                    .unwrap_or_else(|| rfd::FileDialog::new().pick_folder())
+            },
+            move |cx, picked: Option<std::path::PathBuf>| {
+                if let Some(source) = picked {
+                    crate::install::install_from_folder(&core, cx, source);
+                }
+            },
+        );
+    }
+
+    fn install_notice(&self, ui: &mut egui::Ui) {
+        let Some(notice) = self.core.install_notice() else {
+            return;
+        };
+        let color = if notice.is_error {
+            ui.visuals().error_fg_color
+        } else {
+            ui.visuals().text_color()
+        };
+        ui.colored_label(color, notice.summary);
+        if let Some(detail) = notice.detail {
+            ui.label(egui::RichText::new(detail).weak().monospace());
+        }
+        ui.add_space(4.0);
     }
 
     fn row(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, entry: &EntrySnapshot) {
@@ -259,14 +299,16 @@ impl View for ExtensionPage {
             )),
             |_| {},
         );
+        self.install_notice(ui);
         self.toolbar(ui, cx);
         if entries.is_empty() {
             forja_ui_kit::empty_state(
                 ui,
                 forja_ui_kit::SETTINGS,
                 &cx.t("extension.page.empty"),
-                Some(&cx.t("extension.page.empty-hint")),
+                None,
             );
+            ui.label(egui::RichText::new(cx.t("extension.page.empty-hint")).weak());
             return;
         }
         let query = self.query.to_ascii_lowercase();

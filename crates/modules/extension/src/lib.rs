@@ -6,6 +6,7 @@
 
 mod approval;
 mod commands;
+mod install;
 mod manifest;
 mod runtime;
 mod state;
@@ -203,6 +204,8 @@ impl Module for ExtensionModule {
         for key in [
             "extension.page.title",
             "extension.page.count",
+            "extension.page.install",
+            "extension.page.installed",
             "extension.page.rescan",
             "extension.page.search",
             "extension.page.empty",
@@ -236,6 +239,12 @@ impl Module for ExtensionModule {
             "extension.action.show-logs",
             "extension.action.hide-logs",
             "extension.panels.empty",
+            "extension.install.error.failed",
+            "extension.install.error.not-directory",
+            "extension.install.error.missing-manifest",
+            "extension.install.error.missing-entry",
+            "extension.install.error.exists",
+            "extension.install.error.symbolic-link",
         ] {
             r.uses_i18n(key);
         }

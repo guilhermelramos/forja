@@ -300,6 +300,56 @@ pub fn forge(cx: &mut Ctx<'_>, shared: &Shared, counter: &str, key: &str) -> Res
     }
 }
 
+/// Starts an asynchronous bench preview; the view asks the bench module for its prepared result.
+pub fn start_forge_preview(
+    cx: &mut Ctx<'_>,
+    shared: &Shared,
+    preview_id: &str,
+    counter: &str,
+    key: &str,
+) -> Result<()> {
+    if !forge::bench_available(cx) {
+        return Err(KernelError::message("the bench module is not available"));
+    }
+    let item = find_item(shared, counter, key)
+        .ok_or_else(|| KernelError::message("request is not in the list"))?;
+    let project = current_project(cx, shared)
+        .ok_or_else(|| KernelError::message("open a project before forging"))?;
+    let include_title = cx
+        .setting("request.create.branch_from_title")
+        .and_then(SettingValue::as_bool)
+        .unwrap_or(true);
+    let name = forge::bench_name(&item, include_title);
+    let reference = item.request_ref();
+    let mut args = Args::new();
+    args.insert("preview_id", json!(preview_id));
+    args.insert("project_id", json!(project.id));
+    args.insert("name", json!(name));
+    args.insert("from_request", serde_json::to_value(reference)?);
+    let auto_start = cx
+        .setting("helper.launch.auto_start")
+        .and_then(SettingValue::as_bool)
+        .unwrap_or(true);
+    let helper_available = cx.registry().command("helper.launch").is_some();
+    args.insert("helper", json!(auto_start && helper_available));
+    cx.run_command("bench.preview_forge", args)?;
+    Ok(())
+}
+
+/// Polls a prepared preview without touching project files on the interface thread.
+pub fn forge_preview_status(cx: &mut Ctx<'_>, preview_id: &str) -> Result<Value> {
+    let mut args = Args::new();
+    args.insert("preview_id", json!(preview_id));
+    cx.run_command("bench.preview_status", args)
+}
+
+/// Releases a prepared or pending preview when the user cancels it.
+pub fn cancel_forge_preview(cx: &mut Ctx<'_>, preview_id: &str) {
+    let mut args = Args::new();
+    args.insert("preview_id", json!(preview_id));
+    let _ = cx.run_command("bench.preview_cancel", args);
+}
+
 /// Comentário num pedido. Para balcão, o resultado chega em `counter.result`.
 pub fn comment(cx: &mut Ctx<'_>, shared: &Shared, counter: &str, key: &str, body: &str) -> Result<Value> {
     let body = body.trim();

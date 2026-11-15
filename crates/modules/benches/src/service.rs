@@ -571,6 +571,10 @@ pub fn open_approve_dialog(cx: &mut Ctx<'_>, shared: &Shared, project_id: &str) 
 }
 
 pub(crate) fn bench_path(cx: &Ctx<'_>, project: &ProjectRef, bench_name: &str) -> PathBuf {
+    bench_root(cx, project).join(bench_name)
+}
+
+pub(crate) fn bench_root(cx: &Ctx<'_>, project: &ProjectRef) -> PathBuf {
     let location = setting_str(cx, "bench.worktree.location", "data_dir");
     let root = match location.as_str() {
         "custom" => {
@@ -594,7 +598,7 @@ pub(crate) fn bench_path(cx: &Ctx<'_>, project: &ProjectRef, bench_name: &str) -
         _ => data_dir(cx).join("bancadas"),
     };
     let project_key = model::slugify_path(&project.id);
-    root.join(project_key).join(bench_name)
+    root.join(project_key)
 }
 
 fn data_dir(cx: &Ctx<'_>) -> PathBuf {
