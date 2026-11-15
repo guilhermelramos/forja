@@ -1,0 +1,37 @@
+{
+  "title": "Comando de IA na Bigorna sem ajudante mantém paleta aberta com orientação (#141, #142)",
+  "issue": 141,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.key", "keys": "Ctrl+K" },
+    { "m": "ui.type", "text": "Explicar erro do terminal" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.click", "target": "Copiar comando" },
+    { "m": "ui.click", "target": "Escolher ou instalar ajudante" }
+  ],
+  "expect": [
+    {
+      "step": 3,
+      "window_count": 1,
+      "present_contains": [
+        "Nenhum ajudante instalado foi encontrado no PATH.",
+        "Instale um ajudante em Ajudantes",
+        "npm install -g @anthropic-ai/claude-code",
+        "Copiar comando",
+        "Escolher ou instalar ajudante"
+      ]
+    },
+    {
+      "step": 4,
+      "window_count": 1,
+      "present_contains": ["Copiado", "Escolher ou instalar ajudante"]
+    },
+    {
+      "step": 5,
+      "window_count": 0,
+      "present_contains": ["Ajudantes", "0 instalado(s) · 16 não encontrado(s)"]
+    }
+  ]
+}

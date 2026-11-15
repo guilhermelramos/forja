@@ -59,6 +59,8 @@ pub struct HelperState {
     pub profiles: Vec<profile::Profile>,
     /// Detecção por id.
     pub detection: BTreeMap<String, detect::Detection>,
+    /// Probe rápido de executável em cache antes ou na ausência da detecção completa.
+    pub probed: BTreeMap<String, Option<std::path::PathBuf>>,
     /// Runs ativos por id de terminal.
     pub runs: BTreeMap<String, status::Run>,
     /// Última bancada usada por perfil.
@@ -83,6 +85,26 @@ impl HelperState {
     /// Ajustes de um perfil.
     pub fn overrides(&self, id: &str) -> launch::ProfileOverride {
         self.file.profiles.get(id).cloned().unwrap_or_default()
+    }
+
+    /// Caminho resolvido do executável para o perfil pela fonte única de verdade.
+    pub fn executable_for(&self, id: &str) -> Option<&std::path::Path> {
+        if let Some(detection) = self.detection.get(id) {
+            return detection.executable.as_deref();
+        }
+        self.probed.get(id).and_then(|path| path.as_deref())
+    }
+
+    /// Indica se o perfil está instalado segundo a fonte única de verdade do módulo.
+    pub fn is_installed(&self, id: &str) -> bool {
+        self.executable_for(id).is_some()
+    }
+
+    /// Indica se já existe um veredito de detecção ou probe rápido para os perfis carregados.
+    pub fn has_detection_verdict(&self) -> bool {
+        self.detect_runs > 0
+            || !self.detection.is_empty()
+            || (!self.profiles.is_empty() && self.probed.len() >= self.profiles.len())
     }
 
     /// Atualiza o estado de energia conforme existem runs ativos.
@@ -177,6 +199,8 @@ impl Module for HelperModule {
             "helper.view.show-not-installed",
             "helper.view.hide-not-installed",
             "helper.view.search-hint",
+            "helper.view.clear-filter",
+            "helper.view.filter-empty",
             "helper.view.how-to-install",
             "helper.view.copy-command",
             "helper.view.copied",
@@ -951,6 +975,79 @@ events = ["Stop"]
         assert_eq!(calls[0].0, "shell.tab.open");
         assert_eq!(calls[0].1["view_id"], "terminal.tab");
         assert_eq!(calls[1].0, "terminal.focus");
+    }
+
+    #[test]
+    fn installed_truth_matches_list_launch_and_detection_precedence() {
+        let dir = temp_guard("truth-source");
+        let core = Arc::new(Core::new());
+        let calls = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(HelperModule {
+                    core: Arc::clone(&core),
+                }),
+                Box::new(StubTerminal {
+                    calls: Arc::clone(&calls),
+                }),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.0.clone()),
+                user_dir: Some(dir.0.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .unwrap();
+
+        let listed = runtime
+            .call_method("helper.list", Map::new())
+            .expect("helper.list");
+        let listed_profiles = listed["profiles"].as_array().expect("profiles array");
+        assert!(!listed_profiles.is_empty());
+
+        core.with_state(|state| {
+            assert!(state.has_detection_verdict());
+            for item in listed_profiles {
+                let id = item["id"].as_str().unwrap();
+                assert_eq!(
+                    item["installed"].as_bool().unwrap(),
+                    state.is_installed(id),
+                    "helper.list and HelperState must match for {id}"
+                );
+            }
+            state.probed.insert(
+                "claude-code".to_owned(),
+                Some(std::path::PathBuf::from("claude")),
+            );
+            state.detection.insert(
+                "claude-code".to_owned(),
+                detect::Detection::default(),
+            );
+            assert!(
+                !state.is_installed("claude-code"),
+                "explicit detection verdict must override probed cache"
+            );
+        })
+        .unwrap();
+
+        let updated = runtime
+            .call_method("helper.list", Map::new())
+            .expect("helper.list after detection override");
+        let claude = updated["profiles"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|item| item["id"] == "claude-code")
+            .unwrap();
+        assert_eq!(claude["installed"], false);
+        let error = runtime
+            .call_method(
+                "helper.launch",
+                Map::from_iter([("profile_id".to_owned(), json!("claude-code"))]),
+            )
+            .expect_err("launch must obey the same installed verdict");
+        assert!(error.message.contains("não está instalado"), "{}", error.message);
     }
 }
 

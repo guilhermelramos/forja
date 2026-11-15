@@ -1941,6 +1941,7 @@ dependencies = [
  "chrono",
  "forja-contracts",
  "forja-kernel",
+ "forja-ui-kit",
  "ignore",
  "image",
  "linkme",

@@ -10,6 +10,14 @@ use forja_ui_kit::{text_field, Color, Tokens};
 use serde_json::Value;
 use std::time::{Duration, Instant};
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct AnvilHelperNotice {
+    pub(crate) profile_name: Option<String>,
+    pub(crate) install_command: Option<String>,
+    pub(crate) any_installed: bool,
+    pub(crate) copied: bool,
+}
+
 #[derive(Clone, Debug)]
 pub(crate) enum HitKind {
     Command(String),
@@ -75,6 +83,7 @@ impl ForjaApp {
                 return;
             }
             self.anvil_open = false;
+            self.anvil_helper_notice = None;
             restore_focus(ctx);
             return;
         }
@@ -90,6 +99,7 @@ impl ForjaApp {
             self.anvil_selection_explicit = false;
             self.anvil_selection_id = None;
             self.anvil_selection_missing = false;
+            self.anvil_helper_notice = None;
         }
         let mut hits = self.collect_hits();
         let mut chosen: Option<(HitKind, bool)> = None;
@@ -122,6 +132,27 @@ impl ForjaApp {
         ];
         let tokens = self.tokens.clone();
         let results_height = (ctx.content_rect().height() - 360.0).clamp(80.0, 240.0);
+        let mut open_helpers = false;
+        let mut notice_copied = self
+            .anvil_helper_notice
+            .as_ref()
+            .is_some_and(|notice| notice.copied);
+        let notice_view = self.anvil_helper_notice.as_ref().map(|notice| {
+            let headline = match (notice.any_installed, &notice.profile_name) {
+                (true, Some(name)) => {
+                    format!("{name} · {}", self.text("shell.anvil.helper-not-installed"))
+                }
+                _ => self.text("shell.anvil.helper-none-installed"),
+            };
+            let body = self.text("shell.anvil.helper-install-guide");
+            let copy_label = self.text(if notice.copied {
+                "shell.anvil.helper-copied"
+            } else {
+                "shell.anvil.helper-copy-install"
+            });
+            let open_label = self.text("shell.anvil.helper-open-helpers");
+            (headline, body, notice.install_command.clone(), copy_label, open_label)
+        });
         let modal = egui::Window::new(title)
             .collapsible(false)
             .resizable(false)
@@ -145,6 +176,7 @@ impl ForjaApp {
                     self.anvil_selection_explicit = false;
                     self.anvil_selection_id = None;
                     self.anvil_selection_missing = false;
+                    self.anvil_helper_notice = None;
                     hits = self.collect_hits();
                 }
                 if self.focus_anvil || reactivated {
@@ -324,6 +356,19 @@ impl ForjaApp {
                             }
                         });
                 }
+                if let Some((headline, body, command, copy_label, open_label)) = &notice_view {
+                    ui.add_space(6.0);
+                    let guide = forja_ui_kit::HelperMissingGuide {
+                        headline,
+                        body,
+                        install_command: command.as_deref(),
+                        copy_label,
+                        open_helpers_label: Some(open_label.as_str()),
+                    };
+                    if forja_ui_kit::helper_missing_guide(ui, &guide, &mut notice_copied) {
+                        open_helpers = true;
+                    }
+                }
                 ui.add_space(6.0);
                 ui.label(
                     RichText::new(footer)
@@ -331,6 +376,9 @@ impl ForjaApp {
                         .size(tokens.metrics().caption),
                 );
             });
+        if let Some(notice) = self.anvil_helper_notice.as_mut() {
+            notice.copied = notice_copied;
+        }
         if let Some(modal) = modal {
             self.slot_rects.insert("anvil".into(), modal.response.rect);
         }
@@ -341,17 +389,23 @@ impl ForjaApp {
             self.anvil_selection_explicit = false;
             self.anvil_selection_id = None;
             self.anvil_selection_missing = false;
+            self.anvil_helper_notice = None;
         }
-        if let Some(action) = chosen_empty_action {
+        if open_helpers {
+            self.anvil_open = false;
+            self.anvil_helper_notice = None;
+            crate::actions::push(crate::actions::Action::OpenRail("helper.tab".into()));
+            restore_focus(ctx);
+        } else if let Some(action) = chosen_empty_action {
             self.run_ask_empty_action(action);
         } else if let Some((kind, keep)) = chosen {
             if let HitKind::Ask(index) = kind {
                 self.apply_ask_choice(index);
             } else {
-                if !keep {
+                self.run_hit(kind, keep);
+                if !keep && !self.anvil_open {
                     restore_focus(ctx);
                 }
-                self.run_hit(kind, keep);
             }
         }
         if let Some(value) = ask_submit {
@@ -657,7 +711,13 @@ impl ForjaApp {
             .unwrap_or_default()
     }
 
-    fn run_hit(&mut self, kind: HitKind, keep_open: bool) {
+    pub(crate) fn run_hit(&mut self, kind: HitKind, keep_open: bool) {
+        if let Some(notice) = self.missing_helper_for_hit(&kind) {
+            self.anvil_helper_notice = Some(notice);
+            self.anvil_open = true;
+            return;
+        }
+        self.anvil_helper_notice = None;
         if matches!(&kind, HitKind::Command(command) if command == "muster.run") {
             self.anvil_muster_title = true;
             self.anvil_query.clear();
@@ -734,6 +794,68 @@ impl ForjaApp {
                 }
             }
         }
+    }
+
+    fn missing_helper_for_hit(&mut self, kind: &HitKind) -> Option<AnvilHelperNotice> {
+        let (command, args) = match kind {
+            HitKind::Command(command) => (command.as_str(), None),
+            HitKind::Action { command, args } => (command.as_str(), Some(args)),
+            _ => return None,
+        };
+        let requested_profile_id = self.requested_helper_for_command(command, args)?;
+        self.runtime.registry().command("helper.list")?;
+        let Ok(list) = self.runtime.run_command("helper.list", Args::new()) else {
+            return None;
+        };
+        let profiles = list.get("profiles").and_then(Value::as_array)?;
+        evaluate_missing_helper(profiles, requested_profile_id.as_deref())
+    }
+
+    fn requested_helper_for_command(
+        &mut self,
+        command: &str,
+        args: Option<&serde_json::Map<String, Value>>,
+    ) -> Option<Option<String>> {
+        if matches!(
+            command,
+            "helper.launch"
+                | "helper.launch.default"
+                | "helper.launch.profile"
+                | "chat.open"
+                | "chat.send"
+        ) {
+            let profile_id = args
+                .and_then(|map| map.get("profile_id"))
+                .and_then(Value::as_str)
+                .map(str::trim)
+                .filter(|id| !id.is_empty())
+                .map(str::to_owned);
+            return Some(profile_id);
+        }
+        if command == "content.run" {
+            let content_id = args
+                .and_then(|map| map.get("id"))
+                .and_then(Value::as_str)?;
+            let list = self
+                .runtime
+                .run_command("content.commands.list", Args::new())
+                .ok()?;
+            let entry = list
+                .get("commands")
+                .and_then(Value::as_array)?
+                .iter()
+                .find(|item| item.get("id").and_then(Value::as_str) == Some(content_id))?;
+            if entry.get("run").and_then(Value::as_str) == Some("helper") {
+                let helper = entry
+                    .get("helper")
+                    .and_then(Value::as_str)
+                    .map(str::trim)
+                    .filter(|id| !id.is_empty())
+                    .map(str::to_owned);
+                return Some(helper);
+            }
+        }
+        None
     }
 
     fn remember(&mut self, id: &str) {
@@ -1043,6 +1165,63 @@ fn paint(color: Color) -> egui::Color32 {
     egui::Color32::from_rgba_unmultiplied(color.r, color.g, color.b, color.a)
 }
 
+fn evaluate_missing_helper(
+    profiles: &[Value],
+    requested_profile_id: Option<&str>,
+) -> Option<AnvilHelperNotice> {
+    let any_installed = profiles
+        .iter()
+        .any(|item| item.get("installed").and_then(Value::as_bool) == Some(true));
+    let default_hint = profiles
+        .iter()
+        .find(|item| item.get("default").and_then(Value::as_bool) == Some(true))
+        .and_then(|item| item.get("install_hint").and_then(Value::as_str))
+        .or_else(|| {
+            profiles
+                .iter()
+                .find(|item| item.get("id").and_then(Value::as_str) == Some("claude-code"))
+                .and_then(|item| item.get("install_hint").and_then(Value::as_str))
+        })
+        .or_else(|| {
+            profiles
+                .iter()
+                .find_map(|item| item.get("install_hint").and_then(Value::as_str))
+        })
+        .map(str::to_owned);
+    if let Some(id) = requested_profile_id {
+        let target = profiles
+            .iter()
+            .find(|item| item.get("id").and_then(Value::as_str) == Some(id));
+        let is_installed =
+            target.is_some_and(|item| item.get("installed").and_then(Value::as_bool) == Some(true));
+        if is_installed {
+            return None;
+        }
+        return Some(AnvilHelperNotice {
+            profile_name: target
+                .and_then(|item| item.get("name").and_then(Value::as_str))
+                .map(str::to_owned)
+                .or_else(|| Some(id.to_owned())),
+            install_command: target
+                .and_then(|item| item.get("install_hint").and_then(Value::as_str))
+                .map(str::to_owned)
+                .or(default_hint),
+            any_installed,
+            copied: false,
+        });
+    }
+    if any_installed {
+        None
+    } else {
+        Some(AnvilHelperNotice {
+            profile_name: None,
+            install_command: default_hint,
+            any_installed: false,
+            copied: false,
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1217,5 +1396,50 @@ mod tests {
         };
         let command = split.unwrap().0;
         assert!(can_run_selection(command, &hit, false));
+    }
+
+    #[test]
+    fn missing_helper_notice_handles_none_specific_and_installed_cases() {
+        let none_profiles = vec![serde_json::json!({
+            "id": "claude-code",
+            "name": "Claude Code",
+            "installed": false,
+            "default": true,
+            "install_hint": "npm install -g @anthropic-ai/claude-code"
+        })];
+        let notice = evaluate_missing_helper(&none_profiles, None).expect("notice when none installed");
+        assert!(!notice.any_installed);
+        assert_eq!(notice.profile_name, None);
+        assert_eq!(
+            notice.install_command.as_deref(),
+            Some("npm install -g @anthropic-ai/claude-code")
+        );
+
+        let mixed_profiles = vec![
+            serde_json::json!({
+                "id": "claude-code",
+                "name": "Claude Code",
+                "installed": true,
+                "default": true,
+                "install_hint": "npm install -g @anthropic-ai/claude-code"
+            }),
+            serde_json::json!({
+                "id": "codex",
+                "name": "OpenAI Codex CLI",
+                "installed": false,
+                "default": false,
+                "install_hint": "npm install -g @openai/codex"
+            }),
+        ];
+        assert_eq!(evaluate_missing_helper(&mixed_profiles, None), None);
+        assert_eq!(evaluate_missing_helper(&mixed_profiles, Some("claude-code")), None);
+        let codex_notice =
+            evaluate_missing_helper(&mixed_profiles, Some("codex")).expect("missing requested codex");
+        assert!(codex_notice.any_installed);
+        assert_eq!(codex_notice.profile_name.as_deref(), Some("OpenAI Codex CLI"));
+        assert_eq!(
+            codex_notice.install_command.as_deref(),
+            Some("npm install -g @openai/codex")
+        );
     }
 }

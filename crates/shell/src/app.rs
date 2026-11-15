@@ -124,6 +124,7 @@ pub struct ForjaApp {
     pub(crate) anvil_muster_title: bool,
     /// Missing command values being asked in the Anvil, one field at a time.
     pub(crate) anvil_ask: Option<crate::anvil_ask::Ask>,
+    pub(crate) anvil_helper_notice: Option<crate::anvil::AnvilHelperNotice>,
     pub(crate) anvil_group: usize,
     pub(crate) anvil_history: Vec<String>,
     pub(crate) focus_anvil: bool,
@@ -252,6 +253,7 @@ impl ForjaApp {
             anvil_rail_select: false,
             anvil_muster_title: false,
             anvil_ask: None,
+            anvil_helper_notice: None,
             anvil_group: 0,
             anvil_history,
             focus_anvil: false,
@@ -365,6 +367,7 @@ impl ForjaApp {
             self.anvil_rail_select = false;
             self.anvil_muster_title = false;
             self.anvil_ask = None;
+            self.anvil_helper_notice = None;
             self.anvil_query.clear();
             self.anvil_query_seen.clear();
             self.anvil_selected = 0;

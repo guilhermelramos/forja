@@ -2,7 +2,6 @@
 
 use crate::model::SessionStatus;
 use crate::profile::ChatProfile;
-use crate::runner;
 use crate::state::ChatState;
 use forja_kernel::ui_contract::egui;
 use forja_kernel::{Args, Ctx};
@@ -13,14 +12,9 @@ use std::path::Path;
 pub(crate) fn sync_helpers(cx: &mut Ctx<'_>, state: &mut ChatState, bench: &Path) {
     let mut installed = BTreeSet::new();
     let mut hints = BTreeMap::new();
-    let mut detecting = false;
-    let test_helpers_none = std::env::var_os("FORJA_TEST_HELPERS")
-        .is_some_and(|value| value.to_string_lossy().trim().eq_ignore_ascii_case("none"));
+    let mut listed = false;
     if let Ok(value) = cx.run_command("helper.list", Args::new()) {
-        detecting = value
-            .get("detecting")
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
+        listed = true;
         if let Some(items) = value.get("profiles").and_then(Value::as_array) {
             for item in items {
                 let Some(id) = item.get("id").and_then(Value::as_str) else {
@@ -35,17 +29,9 @@ pub(crate) fn sync_helpers(cx: &mut Ctx<'_>, state: &mut ChatState, bench: &Path
             }
         }
     }
-    if !test_helpers_none && installed.is_empty() && (detecting || hints.is_empty()) {
-        for profile in &state.profiles {
-            if profile.supports_stream() && runner::resolve_program(&profile.start.command).is_some()
-            {
-                installed.insert(profile.id.clone());
-            }
-        }
-    }
     state.installed_helpers = installed;
     state.install_hints = hints;
-    state.detection_known = !detecting || !state.installed_helpers.is_empty();
+    state.detection_known = listed;
 
     let preferred = cx
         .setting("helper.default.profile")
@@ -143,50 +129,39 @@ pub(crate) fn draw_helper_switcher(
 pub(crate) fn draw_uninstalled_banner(
     ui: &mut egui::Ui,
     cx: &mut Ctx<'_>,
-    profile_id: &str,
+    _profile_id: &str,
     profile_name: &str,
     hint: Option<&str>,
     any_installed: bool,
     copied_hint: &mut bool,
 ) {
-    ui.group(|ui| {
-        let headline = if any_installed {
-            format!("{profile_name} · {}", cx.t("chat.view.not-installed"))
-        } else {
-            cx.t("chat.view.none-installed")
-        };
-        ui.label(egui::RichText::new(headline).strong());
-        ui.label(egui::RichText::new(cx.t("chat.view.install-guide")).weak());
-        ui.horizontal(|ui| {
-            if let Some(command) = hint.or_else(|| fallback_install_hint(profile_id)) {
-                ui.label(egui::RichText::new(command).monospace());
-                let copy_label = if *copied_hint {
-                    cx.t("chat.view.copied")
-                } else {
-                    cx.t("chat.view.copy-install")
-                };
-                if ui.small_button(&copy_label).clicked() {
-                    ui.ctx().copy_text(command.to_owned());
-                    *copied_hint = true;
-                }
-            }
-            if cx.registry().command("shell.rail.open").is_some()
-                && ui.button(cx.t("chat.view.open-helpers")).clicked()
-            {
-                let mut args = Args::new();
-                args.insert("view_id", json!("helper.tab"));
-                let _ = cx.run_command("shell.rail.open", args);
-            }
-        });
-    });
-}
-
-pub(crate) fn fallback_install_hint(profile_id: &str) -> Option<&'static str> {
-    match profile_id {
-        "claude-code" => Some("npm install -g @anthropic-ai/claude-code"),
-        "codex" => Some("npm install -g @openai/codex"),
-        "opencode" => Some("npm install -g opencode-ai"),
-        _ => None,
+    let headline = if any_installed {
+        format!("{profile_name} · {}", cx.t("chat.view.not-installed"))
+    } else {
+        cx.t("chat.view.none-installed")
+    };
+    let body = cx.t("chat.view.install-guide");
+    let copy_label = if *copied_hint {
+        cx.t("chat.view.copied")
+    } else {
+        cx.t("chat.view.copy-install")
+    };
+    let open_helpers_label = cx
+        .registry()
+        .command("shell.rail.open")
+        .is_some()
+        .then(|| cx.t("chat.view.open-helpers"));
+    let guide = forja_ui_kit::HelperMissingGuide {
+        headline: &headline,
+        body: &body,
+        install_command: hint,
+        copy_label: &copy_label,
+        open_helpers_label: open_helpers_label.as_deref(),
+    };
+    if forja_ui_kit::helper_missing_guide(ui, &guide, copied_hint) {
+        let mut args = Args::new();
+        args.insert("view_id", json!("helper.tab"));
+        let _ = cx.run_command("shell.rail.open", args);
     }
 }
 

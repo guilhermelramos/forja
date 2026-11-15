@@ -175,6 +175,49 @@ pub fn progress_bar(ui: &mut Ui, value: f32) -> Response {
     response
 }
 
+/// Textos e estado da orientação de ajudante ausente.
+pub struct HelperMissingGuide<'a> {
+    /// Título do aviso (nenhum ou perfil específico ausente).
+    pub headline: &'a str,
+    /// Orientação curta sobre como instalar ou escolher outro ajudante.
+    pub body: &'a str,
+    /// Comando opcional de instalação em destaque.
+    pub install_command: Option<&'a str>,
+    /// Rótulo do botão de copiar o comando (ou confirmação de cópia).
+    pub copy_label: &'a str,
+    /// Rótulo do botão para abrir a página Ajudantes.
+    pub open_helpers_label: Option<&'a str>,
+}
+
+/// Desenha o bloco padrão de orientação quando falta um ajudante instalado.
+/// Devolve `true` se o usuário clicou para abrir a página de Ajudantes.
+pub fn helper_missing_guide(
+    ui: &mut Ui,
+    guide: &HelperMissingGuide<'_>,
+    copied: &mut bool,
+) -> bool {
+    let mut open_helpers = false;
+    ui.group(|ui| {
+        ui.label(egui::RichText::new(guide.headline).strong());
+        ui.label(egui::RichText::new(guide.body).weak());
+        ui.horizontal_wrapped(|ui| {
+            if let Some(command) = guide.install_command {
+                ui.label(egui::RichText::new(command).monospace());
+                if ui.small_button(guide.copy_label).clicked() {
+                    ui.ctx().copy_text(command.to_owned());
+                    *copied = true;
+                }
+            }
+            if let Some(label) = guide.open_helpers_label {
+                if crate::button(ui, crate::ButtonKind::Secondary, label).clicked() {
+                    open_helpers = true;
+                }
+            }
+        });
+    });
+    open_helpers
+}
+
 fn kind_color(tokens: &Tokens, kind: ToastKind) -> Color32 {
     match kind {
         ToastKind::Info => tokens.color.info.to_color32(),
