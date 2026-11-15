@@ -1,0 +1,21 @@
+{
+  "title": "Menu Receitas não intercepta clique em Mudanças",
+  "issue": 96,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.click", "target": "Fechar" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "id": 6810641461030805666 },
+    { "m": "ui.type", "text": "Exemplo" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 1000 },
+    { "m": "ui.click", "target": "Receitas" },
+    { "m": "ui.wait", "ms": 1000 },
+    { "m": "ui.click", "target": "Mudanças" },
+    { "m": "ui.snapshot", "view": false }
+  ],
+  "expect": [
+    { "step": 10, "absent": "Aprovar conteúdo executável", "window_count": 0 }
+  ]
+}
