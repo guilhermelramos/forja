@@ -21,8 +21,11 @@ mod view_history;
 mod view_history_panel;
 
 use forja_contracts::names;
-use forja_contracts::{BenchActivated, BenchStored, GitComparisonChanged, GitStatusChanged};
-use forja_kernel::{Module, ModuleManifest, Registrar, Slot};
+use forja_contracts::{
+    BenchActivated, BenchStored, GitComparisonChanged, GitStatusChanged, ProjectActivated,
+    ProjectRemoved,
+};
+use forja_kernel::{Args, Module, ModuleManifest, Registrar, Slot};
 use helpers::refresh_async;
 use state::Shared;
 
@@ -54,11 +57,40 @@ impl Module for GitModule {
         r.contract_event::<GitComparisonChanged>(names::GIT_COMPARISON_CHANGED);
         r.contract_event::<BenchActivated>(names::BENCH_ACTIVATED);
         r.contract_event::<BenchStored>(names::BENCH_STORED);
+        r.contract_event::<ProjectActivated>(names::PROJECT_ACTIVATED);
+        r.contract_event::<ProjectRemoved>(names::PROJECT_REMOVED);
 
         let event_state = self.state.clone();
         r.subscribe::<BenchActivated, _>(move |cx, event| {
             event_state.set_path(Some(event.0.path.clone()));
             refresh_async(cx, &event_state);
+        });
+        let project_state = self.state.clone();
+        r.subscribe::<ProjectActivated, _>(move |cx, event| {
+            let active_path = cx
+                .run_command("bench.current", Args::new())
+                .ok()
+                .and_then(|value| {
+                    let project_id = value.get("project_id")?.as_str()?;
+                    (project_id == event.0.id)
+                        .then(|| value.get("path")?.as_str().map(str::to_owned))
+                        .flatten()
+                })
+                .unwrap_or_else(|| event.0.path.clone());
+            if project_state.path().as_deref() != Some(active_path.as_str()) {
+                project_state.set_path(Some(active_path));
+                refresh_async(cx, &project_state);
+            }
+        });
+        let removed_state = self.state.clone();
+        r.subscribe::<ProjectRemoved, _>(move |cx, _event| {
+            let has_current = cx
+                .run_command("bench.current", Args::new())
+                .ok()
+                .is_some_and(|value| !value.is_null());
+            if !has_current {
+                removed_state.set_path(None);
+            }
         });
         let stored_state = self.state.clone();
         r.subscribe::<BenchStored, _>(move |_cx, event| {

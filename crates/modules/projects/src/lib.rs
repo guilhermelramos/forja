@@ -10,11 +10,13 @@ mod view;
 mod view_dialogs;
 
 use forja_contracts::names;
-use forja_contracts::{ProjectAdded, ProjectRef, ProjectRemoved};
+use forja_contracts::{BenchActivated, ProjectActivated, ProjectAdded, ProjectRef, ProjectRemoved};
 use forja_kernel::forja_protocol::{
     Method, MethodEffect, ParamKind, ParamSchema, ResultSchema, RpcError,
 };
-use forja_kernel::{Args, Module, ModuleManifest, Registrar, Slot};
+use forja_kernel::{
+    Args, CommandField, CommandFieldKind, Module, ModuleManifest, Registrar, Slot,
+};
 use serde_json::{json, Map, Value};
 use state::{CloneForm, Dialog, ProjectForm, Shared};
 
@@ -42,7 +44,44 @@ impl Module for ProjectsModule {
         r.keymap(include_str!("../keymap.toml"));
 
         r.contract_event::<ProjectAdded>(names::PROJECT_ADDED);
+        r.contract_event::<ProjectActivated>(names::PROJECT_ACTIVATED);
         r.contract_event::<ProjectRemoved>(names::PROJECT_REMOVED);
+        r.contract_event::<BenchActivated>(names::BENCH_ACTIVATED);
+
+        let bench_sync_state = self.state.clone();
+        r.subscribe::<BenchActivated, _>(move |cx, event| {
+            bench_sync_state.ensure_loaded(cx);
+            let _ = bench_sync_state.activate(cx, &event.0.project_id);
+        });
+
+        let current_state = self.state.clone();
+        r.command("project.current", "project.command.current", move |cx, _| {
+            current_state.ensure_loaded(cx);
+            Ok(serde_json::to_value(current_state.active())?)
+        });
+
+        let switch_state = self.state.clone();
+        r.command_asking(
+            "project.switch",
+            "project.command.switch",
+            vec![CommandField {
+                arg: "project_id",
+                label_key: "project.ask.project",
+                kind: CommandFieldKind::Choice {
+                    command: "project.list",
+                    list: "projects",
+                    label: "name",
+                    value: "id",
+                    detail: Some("path"),
+                },
+            }],
+            move |cx, args| {
+                switch_state.ensure_loaded(cx);
+                let id = args.required_str("project_id")?;
+                let active = switch_state.activate(cx, id).map_err(kerr)?;
+                Ok(serde_json::to_value(active)?)
+            },
+        );
 
         let list_state = self.state.clone();
         r.command("project.list", "project.command.list", move |cx, _| {
@@ -244,9 +283,43 @@ impl Module for ProjectsModule {
             },
         );
 
+        let rpc_current = self.state.clone();
+        r.rpc(
+            Method::new("project.current", "project.method.current.description")
+                .effect(MethodEffect::Read)
+                .idempotent(true)
+                .result(ResultSchema::new("project.method.current.result")),
+            move |cx, _| {
+                rpc_current.ensure_loaded(cx);
+                Ok(serde_json::to_value(rpc_current.active()).unwrap_or(Value::Null))
+            },
+        );
+
+        let rpc_switch = self.state.clone();
+        r.rpc(
+            Method::new("project.switch", "project.method.switch.description")
+                .effect(MethodEffect::Write)
+                .param(
+                    ParamSchema::required("project_id", ParamKind::String)
+                        .alias("projeto")
+                        .alias("project-id"),
+                )
+                .result(ResultSchema::new("project.method.switch.result")),
+            move |cx, params| {
+                rpc_switch.ensure_loaded(cx);
+                let id = params
+                    .get("project_id")
+                    .and_then(Value::as_str)
+                    .ok_or_else(|| RpcError::invalid_params("missing `project_id`"))?;
+                let active = rpc_switch.activate(cx, id).map_err(RpcError::app)?;
+                Ok(serde_json::to_value(active).unwrap_or(Value::Null))
+            },
+        );
+
         for key in [
             "project.name",
             "project.command.add_dialog",
+            "project.ask.project",
             "project.dialogs.title",
             "project.sidebar.title",
             "project.sidebar.empty",

@@ -19,6 +19,8 @@ pub enum Action {
         project: String,
         bench: String,
     },
+    /// Active project or bench changed; refresh the top bar project crumb.
+    RefreshProjectCrumb,
     /// Bring a bench tab (for example the editor) to the front.
     ShowBenchTab(String),
     ToggleSidebar,

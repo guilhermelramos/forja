@@ -13,7 +13,9 @@ mod watch;
 
 use crate::state::{lock, Shared, State};
 use crate::view::ExplorerView;
-use forja_contracts::{names, BenchActivated, FileOpenRequested};
+use forja_contracts::{
+    names, BenchActivated, FileOpenRequested, ProjectActivated, ProjectRemoved,
+};
 use forja_kernel::{
     Args, Ctx, KernelError, Module, ModuleManifest, Registrar, Result as KResult, SettingKind,
     SettingSpec, SettingValue, Slot,
@@ -74,9 +76,19 @@ impl Module for ExplorerModule {
         // bench. Both declarations merge with the declarations of the other modules.
         r.contract_event::<FileOpenRequested>(names::FILE_OPEN_REQUESTED);
         r.contract_event::<BenchActivated>(names::BENCH_ACTIVATED);
+        r.contract_event::<ProjectActivated>(names::PROJECT_ACTIVATED);
+        r.contract_event::<ProjectRemoved>(names::PROJECT_REMOVED);
         let shared = Arc::clone(&self.shared);
         r.subscribe(move |cx, event: &BenchActivated| {
             commands::on_bench_activated(cx, &shared, &event.0);
+        });
+        let shared_proj = Arc::clone(&self.shared);
+        r.subscribe(move |cx, event: &ProjectActivated| {
+            commands::on_project_activated(cx, &shared_proj, &event.0);
+        });
+        let shared_removed = Arc::clone(&self.shared);
+        r.subscribe(move |cx, _event: &ProjectRemoved| {
+            commands::on_project_removed(cx, &shared_removed);
         });
 
         let shared = Arc::clone(&self.shared);

@@ -48,7 +48,7 @@ pub(crate) fn render_board(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) 
         )
         .clicked()
         {
-            create_dialog(cx, None);
+            create_dialog(cx, state.active_project().as_deref());
         }
         let mut archived = prefs.show_archived;
         if forja_ui_kit::toggle(ui, &mut archived, &cx.t("board.show-archived")).changed() {

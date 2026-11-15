@@ -603,3 +603,93 @@ fn bench_errors_are_humanized_without_raw_terms() {
     assert!(!git_fail_en.summary.to_lowercase().contains("os error"));
     let _ = std::fs::remove_dir_all(root);
 }
+
+#[test]
+fn project_activation_switches_current_bench_and_default_create_project() {
+    struct MultiProjects {
+        projects: Vec<forja_contracts::ProjectRef>,
+        active: std::sync::Arc<std::sync::Mutex<String>>,
+    }
+
+    impl Module for MultiProjects {
+        fn manifest(&self) -> ModuleManifest {
+            ModuleManifest::new("project", "test.project.name", "0.1.0")
+        }
+        fn register(&mut self, r: &mut Registrar<'_>) {
+            r.i18n(
+                "test-project-name = Projects\n",
+                "test-project-name = Projetos\n",
+            );
+            r.contract_event::<forja_contracts::ProjectActivated>(
+                forja_contracts::names::PROJECT_ACTIVATED,
+            );
+            let list = self.projects.clone();
+            r.command("project.list", "test.project.name", move |_cx, _| {
+                Ok(json!({ "projects": list.clone() }))
+            });
+            let projects = self.projects.clone();
+            let active = self.active.clone();
+            r.command("project.current", "test.project.name", move |_cx, _| {
+                let id = active.lock().unwrap().clone();
+                let found = projects.iter().find(|p| p.id == id).cloned();
+                Ok(serde_json::to_value(found)?)
+            });
+        }
+    }
+
+    let root = temp_dir("switch-project");
+    let path_a = root.join("alfa");
+    let path_b = root.join("beta");
+    std::fs::create_dir_all(&path_a).unwrap();
+    std::fs::create_dir_all(&path_b).unwrap();
+    let proj_a = forja_contracts::ProjectRef {
+        id: "p-alfa".to_owned(),
+        name: "alfa".to_owned(),
+        path: path_a.display().to_string(),
+    };
+    let proj_b = forja_contracts::ProjectRef {
+        id: "p-beta".to_owned(),
+        name: "beta".to_owned(),
+        path: path_b.display().to_string(),
+    };
+    let active = std::sync::Arc::new(std::sync::Mutex::new("p-alfa".to_owned()));
+    let state = Shared::new();
+    let mut runtime = Runtime::new(
+        vec![
+            Box::new(BenchModule {
+                state: state.clone(),
+            }),
+            Box::new(MultiProjects {
+                projects: vec![proj_a.clone(), proj_b.clone()],
+                active: active.clone(),
+            }),
+        ],
+        RuntimeOptions {
+            data_dir: Some(root.join("data")),
+            user_dir: Some(root.join("user")),
+            locale: Some("pt-BR".to_owned()),
+            wake: None,
+        },
+    )
+    .expect("modules register cleanly");
+
+    let initial = runtime.call_method("bench.current", Map::new()).unwrap();
+    assert_eq!(initial["project_id"], "p-alfa");
+
+    *active.lock().unwrap() = "p-beta".to_owned();
+    {
+        let mut cx = runtime.ctx("project");
+        cx.emit(&forja_contracts::ProjectActivated(proj_b.clone()));
+    }
+    runtime.poll_tasks();
+
+    let switched = runtime.call_method("bench.current", Map::new()).unwrap();
+    assert_eq!(switched["project_id"], "p-beta");
+
+    let _ = runtime.run_command("bench.create_dialog", forja_kernel::Args::new());
+    match state.dialog() {
+        crate::state::Dialog::Create(form) => assert_eq!(form.project_id, "p-beta"),
+        other => panic!("expected create dialog for p-beta, got {other:?}"),
+    }
+    let _ = std::fs::remove_dir_all(root);
+}

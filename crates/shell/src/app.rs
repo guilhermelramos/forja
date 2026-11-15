@@ -477,6 +477,18 @@ impl ForjaApp {
         } else {
             Vec::new()
         };
+        let active_project = if self.runtime.registry().command("project.current").is_some() {
+            self.runtime
+                .run_command("project.current", Args::new())
+                .ok()
+                .and_then(|value| {
+                    let id = value.get("id").and_then(Value::as_str)?.trim().to_owned();
+                    let name = value.get("name").and_then(Value::as_str)?.trim().to_owned();
+                    (!id.is_empty() && !name.is_empty()).then_some((id, name))
+                })
+        } else {
+            None
+        };
         if self.runtime.registry().command("bench.current").is_some() {
             if let Ok(value) = self.runtime.run_command("bench.current", Args::new()) {
                 let bench_name = value
@@ -485,22 +497,36 @@ impl ForjaApp {
                     .map(str::trim)
                     .filter(|name| !name.is_empty());
                 let project_id = value.get("project_id").and_then(Value::as_str);
-                let project_name = project_id.and_then(|id| {
-                    projects.iter().find_map(|p| {
-                        (p.get("id").and_then(Value::as_str) == Some(id))
-                            .then(|| p.get("name").and_then(Value::as_str))
-                            .flatten()
-                    })
-                });
-                match (project_name, bench_name) {
-                    (Some(project), Some(bench)) if project != bench => {
-                        return Some(format!("{project} · {bench}"));
+                if let Some((active_id, active_name)) = &active_project {
+                    if project_id == Some(active_id.as_str()) {
+                        return Some(match bench_name {
+                            Some(bench) if bench != active_name => {
+                                format!("{active_name} · {bench}")
+                            }
+                            _ => active_name.clone(),
+                        });
                     }
-                    (Some(project), _) => return Some(project.to_owned()),
-                    (None, Some(bench)) => return Some(bench.to_owned()),
-                    (None, None) => {}
+                } else {
+                    let project_name = project_id.and_then(|id| {
+                        projects.iter().find_map(|p| {
+                            (p.get("id").and_then(Value::as_str) == Some(id))
+                                .then(|| p.get("name").and_then(Value::as_str))
+                                .flatten()
+                        })
+                    });
+                    match (project_name, bench_name) {
+                        (Some(project), Some(bench)) if project != bench => {
+                            return Some(format!("{project} · {bench}"));
+                        }
+                        (Some(project), _) => return Some(project.to_owned()),
+                        (None, Some(bench)) => return Some(bench.to_owned()),
+                        (None, None) => {}
+                    }
                 }
             }
+        }
+        if let Some((_, active_name)) = active_project {
+            return Some(active_name);
         }
         projects
             .first()
@@ -538,8 +564,12 @@ impl ForjaApp {
                 }
                 actions::Action::OpenBench { project, bench } => {
                     self.active_bench = Some((project, bench));
+                    self.active_crumb_checked = None;
                     self.rail_page = None;
                     self.tabs.show(self.active_tab, self.bench_views.len());
+                }
+                actions::Action::RefreshProjectCrumb => {
+                    self.active_crumb_checked = None;
                 }
                 actions::Action::ShowBenchTab(view_id) => {
                     if let Some(index) = self.bench_views.iter().position(|view| view.id == view_id)

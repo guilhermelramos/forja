@@ -4,10 +4,13 @@ Módulo `project` (pasta `projects`): as pastas que a Forja conhece.
 
 ## O que registra
 
-- Comandos e RPC `project.list`, `project.add`, `project.remove`, `project.create`,
-  `project.clone` e `project.update`; `project.add_dialog` abre o diálogo de
-  adicionar pasta a partir de qualquer tela.
-- Eventos de contrato `project.added` e `project.removed`.
+- Comandos e RPC `project.list`, `project.current`, `project.switch`,
+  `project.add`, `project.remove`, `project.create`, `project.clone` e
+  `project.update`; `project.add_dialog` abre o diálogo de adicionar pasta a
+  partir de qualquer tela.
+- Eventos de contrato `project.added`, `project.activated` e `project.removed`.
+- O projeto ativo é persistido em `project.json` (`active_id`) e mantido em
+  sincronia com `bench.activated`.
 - A view `project.sidebar` no slot `sidebar` (ordem 10): projetos com ícone, cor e
   a lista de bancadas de cada um.
 - A view `project.dialogs` no slot `modal` (ordem 20): os diálogos de projeto.
@@ -18,9 +21,10 @@ projetos. O arquivo do módulo fica em `<dados>/modules/project.json`.
 
 ## Desenho da lateral
 
-1. `project.sidebar` desenha os projetos. Ao clicar num projeto, ele chama
-   `bench.list_cards {project_id}`, ativa a bancada principal e expande a lista de
-   bancadas; ao expandir, `bench.list {project_id}` mostra as bancadas devolvidas.
+1. `project.sidebar` desenha os projetos com destaque visual e estado
+   acessível `selected` no projeto ativo. Ao clicar num projeto, ele chama
+   `project.switch` para torná-lo ativo e expande a lista de bancadas; ao
+   expandir, `bench.list {project_id}` mostra as bancadas devolvidas.
 2. O módulo `board` contribui com uma segunda view de lateral (`board.sidebar`,
    ordem 20) com filtro, agrupamento, ordenação, fixar e lido/não lido.
 3. Se o módulo de bancadas não estiver carregado, `bench.list` falha, a lateral

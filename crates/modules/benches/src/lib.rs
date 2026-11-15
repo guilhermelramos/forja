@@ -25,7 +25,10 @@ mod view;
 mod view_dialogs;
 
 use forja_contracts::names;
-use forja_contracts::{BenchActivated, BenchCreated, BenchSleepChanged, BenchStored, StageChanged};
+use forja_contracts::{
+    BenchActivated, BenchCreated, BenchSleepChanged, BenchStored, ProjectActivated, ProjectRemoved,
+    StageChanged,
+};
 use forja_kernel::{Module, ModuleManifest, Registrar, Slot};
 use state::Shared;
 
@@ -58,6 +61,17 @@ impl Module for BenchModule {
         r.contract_event::<BenchStored>(names::BENCH_STORED);
         r.contract_event::<BenchSleepChanged>(names::BENCH_SLEEP_CHANGED);
         r.contract_event::<StageChanged>(names::STAGE_CHANGED);
+        r.contract_event::<ProjectActivated>(names::PROJECT_ACTIVATED);
+        r.contract_event::<ProjectRemoved>(names::PROJECT_REMOVED);
+
+        let project_activated_state = self.state.clone();
+        r.subscribe::<ProjectActivated, _>(move |cx, event| {
+            let _ = service::activate_project(cx, &project_activated_state, &event.0.id);
+        });
+        let project_removed_state = self.state.clone();
+        r.subscribe::<ProjectRemoved, _>(move |cx, event| {
+            service::on_project_removed(cx, &project_removed_state, &event.project_id);
+        });
 
         commands::register_commands(r, &self.state);
         rpc::register_rpc(r, &self.state);

@@ -21,7 +21,7 @@ pub(crate) fn render_sidebar(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared
                 .on_hover_text(cx.t("board.action.create"))
                 .clicked()
             {
-                create_dialog(cx, None);
+                create_dialog(cx, state.active_project().as_deref());
             }
             if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, "\u{27f3}")
                 .on_hover_text(cx.t("board.action.refresh"))

@@ -77,10 +77,15 @@ fn refresh_if_needed(cx: &mut Ctx<'_>, state: &Shared) {
     }
 }
 
-fn refresh(cx: &mut Ctx<'_>, state: &Shared) {
+pub(crate) fn refresh(cx: &mut Ctx<'_>, state: &Shared) {
+    let project_id = active_project_id(cx);
+    state.set_active_project(project_id.clone());
     let mut args = Map::new();
+    if let Some(ref id) = project_id {
+        args.insert("project_id".to_owned(), json!(id));
+    }
     args.insert("include_archived".to_owned(), json!(true));
-    let cards = match cx.run_command("bench.list_cards", Args::from_map(args)) {
+    let mut cards = match cx.run_command("bench.list_cards", Args::from_map(args)) {
         Ok(value) => serde_json::from_value::<Vec<BenchCard>>(
             value.get("benches").cloned().unwrap_or(Value::Null),
         )
@@ -91,10 +96,23 @@ fn refresh(cx: &mut Ctx<'_>, state: &Shared) {
             return;
         }
     };
+    if let Some(ref id) = project_id {
+        cards.retain(|card| card.bench.project_id == *id);
+    }
     let names = project_names(cx);
-    let stages = stage_columns(cx, &cards);
+    let stages = stage_columns(cx, &cards, project_id.as_deref());
     let helpers = helper_statuses(cx, &cards);
     state.set_data(cards, stages, names, helpers);
+}
+
+fn active_project_id(cx: &mut Ctx<'_>) -> Option<String> {
+    let value = cx.run_command("project.current", Args::new()).ok()?;
+    value
+        .get("id")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|id| !id.is_empty())
+        .map(str::to_owned)
 }
 
 /// Helper status per bench, from the latest helper run of each bench folder.
@@ -162,7 +180,11 @@ fn project_names(cx: &mut Ctx<'_>) -> BTreeMap<String, String> {
         .collect()
 }
 
-fn stage_columns(cx: &mut Ctx<'_>, cards: &[BenchCard]) -> Vec<StageColumn> {
+fn stage_columns(
+    cx: &mut Ctx<'_>,
+    cards: &[BenchCard],
+    active_project: Option<&str>,
+) -> Vec<StageColumn> {
     let mut projects: Vec<String> = cards
         .iter()
         .map(|card| card.bench.project_id.clone())
@@ -171,7 +193,7 @@ fn stage_columns(cx: &mut Ctx<'_>, cards: &[BenchCard]) -> Vec<StageColumn> {
     projects.dedup();
     let mut columns: BTreeMap<String, StageColumn> = BTreeMap::new();
     if projects.is_empty() {
-        if let Some(stages) = command_stages(cx, None) {
+        if let Some(stages) = command_stages(cx, active_project) {
             for stage in stages {
                 columns.entry(stage.id.clone()).or_insert(stage);
             }
