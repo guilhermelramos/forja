@@ -1,0 +1,20 @@
+{
+  "title": "Botão Shell no Terminal abre o menu de shells em vez do diálogo Nova pasta (#119)",
+  "issue": 119,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.click", "target": "Terminal" },
+    { "m": "ui.click", "target": "Shell" }
+  ],
+  "expect": [
+    {
+      "window_count": 0,
+      "present": ["Prompt de comando", "Windows PowerShell"],
+      "absent": ["Nome da pasta", "Criar pasta"]
+    }
+  ]
+}

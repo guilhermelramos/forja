@@ -219,6 +219,7 @@ function Invoke-OpenRouterSdkTriage($Classifier, [string]$Model, [string]$Prompt
             Stdout = ""
             Stderr = ""
             Usage = $null
+            Provider = $null
         }
     }
     $process.WaitForExit()
@@ -231,16 +232,21 @@ function Invoke-OpenRouterSdkTriage($Classifier, [string]$Model, [string]$Prompt
             Stdout = ""
             Stderr = $rawErr
             Usage = $null
+            Provider = $null
         }
     }
 
     $content = $rawOut
     $usage = $null
+    $resolvedProvider = $null
     if ($process.ExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($rawOut)) {
         try {
             $envelope = $rawOut | ConvertFrom-Json -ErrorAction Stop
             if ($null -ne $envelope.PSObject.Properties["content"]) {
                 $content = [string]$envelope.content
+            }
+            if ($null -ne $envelope.PSObject.Properties["provider"] -and -not [string]::IsNullOrWhiteSpace([string]$envelope.provider)) {
+                $resolvedProvider = [string]$envelope.provider
             }
             if ($null -ne $envelope.PSObject.Properties["usage"]) {
                 $usage = $envelope.usage
@@ -256,6 +262,7 @@ function Invoke-OpenRouterSdkTriage($Classifier, [string]$Model, [string]$Prompt
         Stdout = $content
         Stderr = $rawErr
         Usage = $usage
+        Provider = $resolvedProvider
     }
 }
 
@@ -371,7 +378,12 @@ foreach ($issue in $candidates) {
                 $totalCompletionTokens += $outTok
                 $totalReasoningTokens += $reasonTok
                 $usageSamples++
-                Write-Host "  usage #${number} ($model): input=$inTok, output=$outTok, reasoning=$reasonTok"
+                $providerTag = if (-not [string]::IsNullOrWhiteSpace([string]$result.Provider)) {
+                    ", provider=$($result.Provider)"
+                } else {
+                    ""
+                }
+                Write-Host "  usage #${number} (${model}${providerTag}): input=$inTok, output=$outTok, reasoning=$reasonTok"
             }
 
             if ($combined -match $rateLimitPattern) {

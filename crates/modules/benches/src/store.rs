@@ -130,6 +130,7 @@ fn finish_store(cx: &mut Ctx<'_>, shared: &Shared, result: Result<Stored, String
             return;
         }
     };
+    shared.set_error(None);
     let path = if stored.delete_branch {
         None
     } else {

@@ -26,6 +26,7 @@ pub struct ProjectForm {
     pub name: String,
     pub icon: String,
     pub color: String,
+    pub busy: bool,
     pub error: Option<String>,
 }
 
@@ -36,6 +37,7 @@ impl Default for ProjectForm {
             name: String::new(),
             icon: model::DEFAULT_ICON.to_owned(),
             color: model::DEFAULT_COLOR.to_owned(),
+            busy: false,
             error: None,
         }
     }
@@ -158,6 +160,25 @@ impl Shared {
     pub fn set_dialog(&self, dialog: Dialog) {
         if let Ok(mut state) = self.0.lock() {
             state.dialog = dialog;
+        }
+    }
+
+    pub fn finish_dialog(&self, error: Option<String>) {
+        if let Ok(mut state) = self.0.lock() {
+            match &mut state.dialog {
+                Dialog::Create(form) => {
+                    form.busy = false;
+                    form.error = error.clone();
+                }
+                Dialog::Clone(clone) => {
+                    clone.form.busy = false;
+                    clone.form.error = error.clone();
+                }
+                _ => {}
+            }
+            if error.is_none() {
+                state.dialog = Dialog::None;
+            }
         }
     }
 

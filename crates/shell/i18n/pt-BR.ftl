@@ -52,6 +52,7 @@ shell-settings-save-failed = Não foi possível salvar o ajuste: { $message }
 shell-command-failed = Não foi possível executar { $id }: { $message }
 shell-rail-not-found = Esta página não está disponível.
 shell-status-details-title = Detalhes técnicos
+shell-status-copy = Copiar erro
 shell-slot-empty = Nada aqui ainda.
 shell-tray-show = Abrir a Forja
 shell-tray-quit = Sair
