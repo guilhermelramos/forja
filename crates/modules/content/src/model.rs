@@ -164,6 +164,8 @@ pub struct ContentRecipe {
     pub scope: String,
     pub enter: bool,
     pub directory: String,
+    /// Arquivo que marca o tipo de projeto (por exemplo `Cargo.toml`).
+    pub manifest: String,
     pub layer: Layer,
     pub source_path: String,
     pub content: String,
@@ -461,6 +463,11 @@ pub fn parse_recipes(path: &Path, layer: Layer, text: &str) -> Result<Vec<Conten
                 .and_then(toml::Value::as_str)
                 .unwrap_or_default()
                 .to_owned(),
+            manifest: table
+                .get("manifest")
+                .and_then(toml::Value::as_str)
+                .unwrap_or_default()
+                .to_owned(),
             layer,
             source_path: path.display().to_string(),
             content: text.to_owned(),
@@ -580,6 +587,16 @@ mod tests {
                 .kind,
             "interface"
         );
+    }
+
+    #[test]
+    fn recipe_keeps_the_project_manifest() {
+        let text = "[[recipe]]\nid = \"node-test\"\ntitle = \"Testes\"\ncommand = \"npm test\"\nmanifest = \"package.json\"\n";
+        let recipe = parse_recipes(Path::new("node.toml"), Layer::Builtin, text)
+            .unwrap()
+            .remove(0);
+        assert_eq!(recipe.manifest, "package.json");
+        assert_eq!(recipe.scope, "global");
     }
 
     #[test]

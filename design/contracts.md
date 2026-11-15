@@ -551,7 +551,7 @@ Módulos `content` (`crates/modules/content`) e `extension`
 | `content.run` | `{id, arguments?}` | `{id, run, warnings, result}`. Comando de projeto de risco sem `trust` abre o pedido de aprovação e responde `[trust]` |
 | `content.themes.list` | `{project_path?}` | `{revision, themes[]}` com `id`, `name`, `kind` (`terminal`/`interface`), `toml`, `layer`, `content_hash` |
 | `content.themes.ui` | `{mode?, project_path?}` | `{revision, toml?}`: tema de interface para o modo pedido |
-| `content.recipes.list` | `{project_path?}` | `{revision, recipes[]}` com `id`, `title`, `command`, `scope`, `enter`, `directory`, `layer`, `content_hash` |
+| `content.recipes.list` | `{project_path?}` | `{revision, recipes[]}` com `id`, `title`, `command`, `scope`, `enter`, `directory`, `manifest`, `layer`, `content_hash` |
 | `content.templates.list` | — | `{templates[]}` com `id`, `name`, `use`, `layer` |
 | `content.templates.get` | `{id}` | `{id, body}` |
 | `content.templates.render` | `{id, fields?}` | `{id, text}`; `{{campo}}` é trocado pelo valor |

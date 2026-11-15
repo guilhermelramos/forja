@@ -8,8 +8,8 @@
     { "m": "ui.click", "target": "Confirmar antes de rodar" },
     { "m": "ui.key", "keys": "Escape" },
     { "m": "ui.click", "target": "Receitas" },
-    { "m": "ui.scroll", "target": "Compilar pacotes Go", "dy": -900 },
-    { "m": "ui.click", "target": "Compilar workspace Rust  ·  projeto" },
+    { "m": "ui.type", "text": "Rust" },
+    { "m": "ui.click", "target": "Executar" },
     { "m": "ui.click", "target": "Aprovar este conteúdo" },
     { "m": "ui.key", "keys": "Escape" },
     { "m": "ui.snapshot" }

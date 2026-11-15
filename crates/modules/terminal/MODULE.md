@@ -17,6 +17,8 @@ RPC/CLI do contrato.
 | `src/view/` | aba de bancada, chrome, corpo do terminal, teclado e renderização |
 | `src/links.rs`, `src/search.rs` | links OSC 8/arquivo e busca no histórico |
 | `src/recipes.rs` | `recipes/*.toml` das três camadas |
+| `src/project.rs` | detecção do tipo do projeto da bancada e ordenação das receitas |
+| `src/view/recipe_picker.rs` | seletor de receitas com filtro, grupos e prévia |
 | `src/shells.rs` | detecção de shell, Git Bash, WSL, ambiente e abertura externa |
 | `src/theme.rs` | paletas de `content/themes/*.toml` |
 | `src/settings.rs`, `src/settings_registry.rs` | retrato e esquema das 24 configurações |
@@ -123,7 +125,16 @@ Lê `[[recipe]]` de `recipes/*.toml` nestas camadas, da menor para a maior
 precedência: embutida (`content/recipes`), usuária (`~/.forja/recipes`) e do
 projeto (`<bancada>/.forja/recipes`). O `id` repetido é substituído pela camada
 superior. Campos: `id`, `title` (texto ou tabela `pt-BR`/`en`), `command`,
-`scope`, `enter` e `directory`.
+`scope`, `enter`, `directory` e `manifest`.
+
+Abrir `Receitas` na barra do terminal mostra um seletor com filtro por texto,
+navegação por setas e Enter. O módulo detecta o tipo da bancada pelos
+manifestos (`Cargo.toml`, `go.mod`, `package.json`, `pyproject.toml`,
+`requirements.txt` e equivalentes) e pela extensão dos arquivos da raiz e de
+`src/`. As receitas que se aplicam ficam primeiro, agrupadas por linguagem; as
+demais vão para a seção recolhida `Outras`. Cada linha mostra o comando e a
+prévia exibe o comando exato e a pasta onde ele roda. A aprovação de confiança
+continua valendo para receitas de projeto.
 
 O módulo oferece a lista no menu Receitas do terminal e na Bigorna. A receita
 roda no terminal focado; quando `directory` aponta para outra pasta da bancada,

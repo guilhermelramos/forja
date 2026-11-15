@@ -10,6 +10,7 @@ mod core;
 mod links;
 mod panes;
 mod pty;
+mod project;
 mod recipe_trust;
 mod recipes;
 mod requests;
@@ -114,6 +115,19 @@ impl Module for TerminalModule {
             "terminal.view.recipe-empty",
             "terminal.view.recipe-scope-global",
             "terminal.view.recipe-scope-project",
+            "terminal.view.recipe-picker-filter",
+            "terminal.view.recipe-picker-project",
+            "terminal.view.recipe-picker-others",
+            "terminal.view.recipe-picker-empty",
+            "terminal.view.recipe-picker-command",
+            "terminal.view.recipe-picker-run",
+            "terminal.view.recipe-picker-hint",
+            "terminal.view.recipe-picker-untyped",
+            "terminal.view.recipe-kind-go",
+            "terminal.view.recipe-kind-node",
+            "terminal.view.recipe-kind-python",
+            "terminal.view.recipe-kind-rust",
+            "terminal.view.recipe-directory",
             "terminal.view.recipe-needs-trust",
             "terminal.view.recipe-stale",
             "terminal.view.recipe-failed",
@@ -300,7 +314,7 @@ mod tests {
         let recipe = recipes::Recipe {
             id: "example".into(), title_pt: "Compilar exemplo".into(), title_en: "Build example".into(),
             command: "echo forja_recipe_marker".into(), scope: "project".into(), enter: true,
-            directory: String::new(), source_path: dir.join("recipe.toml").display().to_string(),
+            directory: String::new(), manifest: "Cargo.toml".into(), source_path: dir.join("recipe.toml").display().to_string(),
             content: "example".into(), content_hash: "hash-example".into(),
         };
         core.with_hub(|hub| hub.set_contract_content(Vec::new(), vec![recipe])).unwrap();
@@ -443,6 +457,7 @@ mod tests {
             title_pt: "Verificar".to_owned(),
             command: "echo recipe_ran_ok".to_owned(),
             directory: String::new(),
+            manifest: "Cargo.toml".to_owned(),
             enter: true,
             scope: "project".to_owned(),
             source_path: dir.join("check.toml").display().to_string(),

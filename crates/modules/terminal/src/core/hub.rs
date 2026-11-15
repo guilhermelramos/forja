@@ -6,7 +6,8 @@ use super::{
     StoredTerminal,
 };
 use crate::panes::tree::{first_pane, PaneId, PaneNode, SplitDir, TerminalId, MAX_PANES};
-use crate::recipes::{self, Recipe};
+use crate::project::ProjectProfile;
+use crate::recipes::{self, Recipe, RecipePicker};
 use crate::settings::TermSettings;
 use crate::shells::{self, ShellCommand};
 use crate::terminal::{Terminal, TerminalEvent};
@@ -30,6 +31,8 @@ impl Hub {
             base_dir,
             project_path: None,
             recipes: Vec::new(),
+            project_profile: ProjectProfile::default(),
+            recipe_picker: RecipePicker::default(),
             themes: ThemeLibrary::load(None),
             content_loaded: false,
             content_loaded_for: None,
@@ -58,7 +61,19 @@ impl Hub {
             return;
         }
         self.bench_path = bench;
+        self.project_profile = ProjectProfile::default();
         self.reload_content();
+    }
+
+    /// Abre o seletor de receitas com o filtro limpo.
+    pub fn open_recipe_picker(&mut self) {
+        self.recipe_picker = RecipePicker {
+            open: true,
+            query: String::new(),
+            selected: 0,
+            others_open: false,
+            focus_query: true,
+        };
     }
 
     /// Quantidade de painéis visíveis na bancada.
@@ -628,6 +643,33 @@ impl Hub {
         }
     }
 
+
+    /// Pasta em que a receita roda, para a prévia do seletor.
+    ///
+    /// Repete a escolha de `run_recipe`: pasta própria da receita, pasta da
+    /// aba focada ou a bancada. Com um shell de receita, a aba nova começa na
+    /// bancada.
+    pub fn recipe_target_dir(&self, recipe: &Recipe, settings: &TermSettings) -> PathBuf {
+        if let Some(target) = self.recipe_dir(recipe) {
+            if recipe.directory.trim() == "." {
+                return self.bench_path.clone().unwrap_or(target);
+            }
+            return target;
+        }
+        if settings.recipe_program().is_some() {
+            return self
+                .bench_path
+                .clone()
+                .unwrap_or_else(|| self.base_dir.clone());
+        }
+        self.focused_terminal()
+            .filter(|terminal| {
+                terminal.alive() && !self.helper_terminals.contains(&terminal.id)
+            })
+            .map(|terminal| terminal.dir.clone())
+            .or_else(|| self.bench_path.clone())
+            .unwrap_or_else(|| self.base_dir.clone())
+    }
 
     /// Executa uma receita. Sem `terminal.recipes.shell`, roda no terminal focado;
     /// com um shell escolhido, abre uma aba nova com ele e roda ali.

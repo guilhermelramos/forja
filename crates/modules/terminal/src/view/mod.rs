@@ -3,12 +3,14 @@
 mod chrome;
 mod hub_ui;
 mod input;
+mod recipe_picker;
 mod render;
 mod terminal_ui;
 
 use crate::core::{HubEvent, HubEventKind, StoredLayout};
 use crate::Shared;
 use crate::links::Link;
+use crate::project::ProjectKind;
 use crate::settings::TermSettings;
 use forja_contracts::{
     FileOpenRequested, TerminalBell, TerminalCommandFinished, TerminalExited, TerminalTitleChanged,
@@ -69,6 +71,19 @@ pub struct UiText {
     pub recipe_empty: String,
     pub recipe_scope_global: String,
     pub recipe_scope_project: String,
+    pub recipe_picker_filter: String,
+    pub recipe_picker_project: String,
+    pub recipe_picker_others: String,
+    pub recipe_picker_empty: String,
+    pub recipe_picker_command: String,
+    pub recipe_picker_run: String,
+    pub recipe_picker_hint: String,
+    pub recipe_picker_untyped: String,
+    pub recipe_kind_go: String,
+    pub recipe_kind_node: String,
+    pub recipe_kind_python: String,
+    pub recipe_kind_rust: String,
+    pub recipe_directory: String,
     pub link_title: String,
     pub error_launch: String,
     pub close: String,
@@ -83,6 +98,16 @@ pub struct UiText {
 }
 
 impl UiText {
+    /// Nome localizado da linguagem associada à receita.
+    pub fn recipe_kind(&self, kind: ProjectKind) -> &str {
+        match kind {
+            ProjectKind::Go => &self.recipe_kind_go,
+            ProjectKind::Node => &self.recipe_kind_node,
+            ProjectKind::Python => &self.recipe_kind_python,
+            ProjectKind::Rust => &self.recipe_kind_rust,
+        }
+    }
+
     /// Resolve todas as strings com o i18n do módulo.
     pub fn new(cx: &Ctx<'_>) -> Self {
         Self {
@@ -135,6 +160,19 @@ impl UiText {
             recipe_empty: cx.t("terminal.view.recipe-empty"),
             recipe_scope_global: cx.t("terminal.view.recipe-scope-global"),
             recipe_scope_project: cx.t("terminal.view.recipe-scope-project"),
+            recipe_picker_filter: cx.t("terminal.view.recipe-picker-filter"),
+            recipe_picker_project: cx.t("terminal.view.recipe-picker-project"),
+            recipe_picker_others: cx.t("terminal.view.recipe-picker-others"),
+            recipe_picker_empty: cx.t("terminal.view.recipe-picker-empty"),
+            recipe_picker_command: cx.t("terminal.view.recipe-picker-command"),
+            recipe_picker_run: cx.t("terminal.view.recipe-picker-run"),
+            recipe_picker_hint: cx.t("terminal.view.recipe-picker-hint"),
+            recipe_picker_untyped: cx.t("terminal.view.recipe-picker-untyped"),
+            recipe_kind_go: cx.t("terminal.view.recipe-kind-go"),
+            recipe_kind_node: cx.t("terminal.view.recipe-kind-node"),
+            recipe_kind_python: cx.t("terminal.view.recipe-kind-python"),
+            recipe_kind_rust: cx.t("terminal.view.recipe-kind-rust"),
+            recipe_directory: cx.t("terminal.view.recipe-directory"),
             link_title: cx.t("terminal.view.link-title"),
             error_launch: cx.t("terminal.view.error-launch"),
             close: cx.t("terminal.view.close"),
@@ -168,6 +206,7 @@ pub struct TerminalView {
     textures: HashMap<u32, egui::TextureHandle>,
     content_revision: Option<u64>,
     content_checked: Option<Instant>,
+    project_profile_requested_for: Option<PathBuf>,
 }
 
 impl TerminalView {
@@ -179,6 +218,7 @@ impl TerminalView {
             textures: HashMap::new(),
             content_revision: None,
             content_checked: None,
+            project_profile_requested_for: None,
         }
     }
 
@@ -201,6 +241,39 @@ impl TerminalView {
                     .and_then(serde_json::Value::as_str)
                     .map(PathBuf::from)
             });
+        // A bancada pode ser aberta depois do boot da view. Detectar seus
+        // arquivos roda em uma task, sem bloquear o quadro da interface.
+        let project_root = self
+            .core
+            .with_hub(|hub| {
+                hub.set_bench(bench.clone());
+                hub.bench_path
+                    .clone()
+                    .unwrap_or_else(|| hub.base_dir.clone())
+            })
+            .ok();
+        if let Some(project_root) = project_root {
+            if self.project_profile_requested_for.as_ref() != Some(&project_root) {
+                self.project_profile_requested_for = Some(project_root.clone());
+                let requested_root = project_root.clone();
+                let core = Arc::clone(&self.core);
+                cx.spawn(
+                    move || crate::project::ProjectProfile::detect(Some(&project_root)),
+                    move |cx, profile| {
+                        let _ = core.with_hub(|hub| {
+                            let current_root = hub
+                                .bench_path
+                                .as_ref()
+                                .unwrap_or(&hub.base_dir);
+                            if current_root == &requested_root {
+                                hub.project_profile = profile;
+                            }
+                        });
+                        cx.request_repaint();
+                    },
+                );
+            }
+        }
         let mut args = Args::new();
         if let Some(bench) = &bench {
             args.insert("project_path", json!(bench.display().to_string()));

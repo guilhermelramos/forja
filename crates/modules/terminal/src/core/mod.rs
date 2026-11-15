@@ -9,7 +9,8 @@ mod util;
 
 use crate::links::Link;
 use crate::panes::tree::{PaneId, PaneNode, TerminalId};
-use crate::recipes::Recipe;
+use crate::project::ProjectProfile;
+use crate::recipes::{Recipe, RecipePicker};
 use crate::settings::TermSettings;
 use crate::shells;
 use crate::terminal::Terminal;
@@ -142,6 +143,10 @@ pub struct Hub {
     pub project_path: Option<PathBuf>,
     /// Receitas descobertas.
     pub recipes: Vec<Recipe>,
+    /// Tipo do projeto da bancada, para ordenar o seletor de receitas.
+    pub project_profile: ProjectProfile,
+    /// Estado do seletor de receitas.
+    pub recipe_picker: RecipePicker,
     /// Temas descobertos.
     pub themes: ThemeLibrary,
     content_loaded: bool,
@@ -252,6 +257,29 @@ mod tests {
         ));
         std::fs::create_dir_all(&dir).unwrap();
         TempGuard(dir)
+    }
+
+    #[test]
+    fn recipe_preview_uses_the_bench_for_the_root_directory() {
+        let guard = temp_guard("recipe-preview");
+        let dir = &guard.0;
+        let mut hub = Hub::new(dir.clone(), None);
+        hub.bench_path = Some(dir.clone());
+        let settings = TermSettings::default();
+        let recipe = crate::recipes::Recipe {
+            id: "node-test".to_owned(),
+            title_pt: "Testes".to_owned(),
+            title_en: "Tests".to_owned(),
+            command: "npm test".to_owned(),
+            scope: "project".to_owned(),
+            enter: true,
+            directory: ".".to_owned(),
+            manifest: "package.json".to_owned(),
+            source_path: String::new(),
+            content: String::new(),
+            content_hash: String::new(),
+        };
+        assert_eq!(hub.recipe_target_dir(&recipe, &settings), *dir);
     }
 
     #[test]

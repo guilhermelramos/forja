@@ -2,7 +2,6 @@
 
 use super::UiText;
 use crate::panes::tree::TerminalId;
-use crate::recipes::Recipe;
 use forja_kernel::ui_contract::egui::{self, Color32, FontId, Rect, Sense};
 use forja_ui_kit::{Color, MenuItem, Tokens};
 
@@ -118,39 +117,10 @@ pub(super) fn tab_chip(ui: &mut egui::Ui, chip: &TabChip<'_>) -> (egui::Response
     (response.on_hover_text(chip_label), close.clicked())
 }
 
-/// Menu "Receitas" com o componente de menu do ui-kit. Escolher uma receita a marca para rodar.
-pub(super) fn recipes_menu(
-    ui: &mut egui::Ui,
-    texts: &UiText,
-    recipes: &[Recipe],
-    run_recipe: &mut Option<Recipe>,
-) {
-    let labels: Vec<String> = if recipes.is_empty() {
-        vec![texts.recipe_empty.clone()]
-    } else {
-        recipes
-            .iter()
-            .map(|recipe| {
-                let scope = if recipe.scope == "project" {
-                    &texts.recipe_scope_project
-                } else {
-                    &texts.recipe_scope_global
-                };
-                format!("{}  ·  {scope}", recipe.title(&texts.locale))
-            })
-            .collect()
-    };
-    let items: Vec<MenuItem<'_>> = labels
-        .iter()
-        .map(|label| MenuItem {
-            label: label.as_str(),
-            danger: false,
-        })
-        .collect();
-    if let Some(index) = forja_ui_kit::context_menu(ui, &texts.recipes, &items) {
-        if let Some(recipe) = recipes.get(index) {
-            *run_recipe = Some(recipe.clone());
-        }
+/// Botão "Receitas" que abre o seletor com filtro, grupos e prévia.
+pub(super) fn recipes_button(ui: &mut egui::Ui, texts: &UiText, open_picker: &mut bool) {
+    if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &texts.recipes).clicked() {
+        *open_picker = true;
     }
 }
 

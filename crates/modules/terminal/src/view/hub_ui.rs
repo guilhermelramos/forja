@@ -1,6 +1,7 @@
 //! Chrome da aba de terminal: abas, divisores e confirmações.
 
-use super::chrome::{c32, icon_button, recipes_menu, shell_menu, tab_chip, TabChip};
+use super::chrome::{c32, icon_button, recipes_button, shell_menu, tab_chip, TabChip};
+use super::recipe_picker;
 use super::terminal_ui::draw_terminal;
 use super::{UiText, ViewAction};
 use crate::core::{CloseTarget, Hub, PendingPaste};
@@ -46,12 +47,6 @@ pub fn draw(
             tokens.mode == forja_ui_kit::Mode::Dark,
         )
         .with_opacity(settings.background_opacity());
-    let recipes: Vec<Recipe> = hub
-        .recipes
-        .iter()
-        .filter(|recipe| settings.recipe_listed(&recipe.scope))
-        .cloned()
-        .collect();
     if let Some(notice) = hub.notice.clone() {
         ui.horizontal(|ui| {
             ui.label(RichText::new(notice).color(c32(tokens.color.spark)));
@@ -82,6 +77,7 @@ pub fn draw(
     let mut close_targets = Vec::new();
     let mut new_tab = false;
     let mut new_tab_shell = None;
+    let mut open_picker = false;
     let mut run_recipe = None;
     if let Some(node) = &mut root {
         let rect = ui.available_rect_before_wrap();
@@ -101,9 +97,8 @@ pub fn draw(
             &mut close_targets,
             &mut new_tab,
             &mut new_tab_shell,
-            &mut run_recipe,
+            &mut open_picker,
             wsl,
-            &recipes,
             &hub.helper_terminals,
             &mut hub.pending_link,
             &mut hub.pending_paste,
@@ -124,21 +119,8 @@ pub fn draw(
             hub.notice = Some(error);
         }
     }
-    if let Some(recipe) = run_recipe {
-        match approve_recipe(&recipe) {
-            Ok(()) if settings.recipe_confirm => hub.pending_recipe = Some(recipe),
-            Ok(()) => {
-                if let Err(error) = hub.run_recipe(&recipe, settings) {
-                    hub.notice = Some(error);
-                }
-            }
-            Err(error) => {
-                if recipe.scope == "project" {
-                    hub.pending_trust_recipe = Some(recipe);
-                }
-                hub.notice = Some(error);
-            }
-        }
+    if open_picker {
+        hub.open_recipe_picker();
     }
     for control in controls {
         match control {
@@ -165,6 +147,24 @@ pub fn draw(
     }
     if hub.pending_recipe.is_some() {
         draw_recipe_modal(hub, ui.ctx(), &tokens, texts, settings);
+    }
+    // O seletor fica acima das confirmações já abertas; Escape fecha só ele.
+    recipe_picker::draw(hub, ui, texts, settings, &mut run_recipe);
+    if let Some(recipe) = run_recipe {
+        match approve_recipe(&recipe) {
+            Ok(()) if settings.recipe_confirm => hub.pending_recipe = Some(recipe),
+            Ok(()) => {
+                if let Err(error) = hub.run_recipe(&recipe, settings) {
+                    hub.notice = Some(error);
+                }
+            }
+            Err(error) => {
+                if recipe.scope == "project" {
+                    hub.pending_trust_recipe = Some(recipe);
+                }
+                hub.notice = Some(error);
+            }
+        }
     }
 }
 
@@ -202,9 +202,8 @@ fn draw_node(
     close_targets: &mut Vec<CloseTarget>,
     new_tab: &mut bool,
     new_tab_shell: &mut Option<String>,
-    run_recipe: &mut Option<Recipe>,
+    open_picker: &mut bool,
     wsl: &[String],
-    recipes: &[Recipe],
     helper_terminals: &BTreeSet<TerminalId>,
     pending_link: &mut Option<(TerminalId, Link)>,
     pending_paste: &mut Option<PendingPaste>,
@@ -291,9 +290,8 @@ fn draw_node(
                 close_targets,
                 new_tab,
                 new_tab_shell,
-                run_recipe,
+                open_picker,
                 wsl,
-                recipes,
                 helper_terminals,
                 pending_link,
                 pending_paste,
@@ -314,9 +312,8 @@ fn draw_node(
                 close_targets,
                 new_tab,
                 new_tab_shell,
-                run_recipe,
+                open_picker,
                 wsl,
-                recipes,
                 helper_terminals,
                 pending_link,
                 pending_paste,
@@ -406,7 +403,7 @@ fn draw_node(
                                     terminal.toggle_search();
                                 }
                             }
-                            recipes_menu(ui, texts, recipes, run_recipe);
+                            recipes_button(ui, texts, open_picker);
                             shell_menu(
                                 ui,
                                 texts,
@@ -480,6 +477,15 @@ fn draw_recipe_modal(
                 RichText::new(&recipe.command)
                     .monospace()
                     .color(c32(tokens.color.text_muted)),
+            );
+            ui.label(
+                RichText::new(format!(
+                    "{}: {}",
+                    texts.recipe_directory,
+                    hub.recipe_target_dir(&recipe, settings).display()
+                ))
+                .monospace()
+                .weak(),
             );
             ui.add_space(8.0);
             ui.horizontal(|ui| {
