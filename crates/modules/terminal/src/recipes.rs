@@ -24,6 +24,8 @@ pub struct Recipe {
     pub enter: bool,
     /// Pasta relativa à bancada; vazia usa a pasta do terminal.
     pub directory: String,
+    /// Arquivo que marca o tipo de projeto (por exemplo `Cargo.toml`).
+    pub manifest: String,
     /// Arquivo de origem.
     pub source_path: String,
     /// Conteudo exato do arquivo de origem.
@@ -67,6 +69,11 @@ impl Recipe {
                 .and_then(serde_json::Value::as_str)
                 .unwrap_or_default()
                 .to_owned(),
+            manifest: value
+                .get("manifest")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or_default()
+                .to_owned(),
             source_path: value
                 .get("source_path")
                 .and_then(serde_json::Value::as_str)
@@ -93,6 +100,21 @@ impl Recipe {
             &self.title_pt
         }
     }
+}
+
+/// Estado do seletor de receitas entre quadros.
+#[derive(Clone, Debug, Default)]
+pub struct RecipePicker {
+    /// O seletor está aberto.
+    pub open: bool,
+    /// Texto do campo de filtro.
+    pub query: String,
+    /// Receita destacada na lista visível.
+    pub selected: usize,
+    /// A seção "Outras" está expandida.
+    pub others_open: bool,
+    /// Pede o foco do campo de filtro no próximo quadro.
+    pub focus_query: bool,
 }
 
 /// Carrega as três camadas, da menor para a maior precedência.
@@ -221,6 +243,11 @@ pub fn parse(text: &str) -> Vec<Recipe> {
                     .and_then(toml::Value::as_str)
                     .unwrap_or("")
                     .to_owned(),
+                manifest: table
+                    .get("manifest")
+                    .and_then(toml::Value::as_str)
+                    .unwrap_or("")
+                    .to_owned(),
                 source_path: String::new(),
                 content: String::new(),
                 content_hash: String::new(),
@@ -285,6 +312,7 @@ title = { pt-BR = "Lint do workspace", en = "Workspace lint" }
 command = "cargo clippy"
 scope = "project"
 enter = false
+manifest = "Cargo.toml"
 
 [[recipe]]
 id = "test"
@@ -296,9 +324,11 @@ command = "cargo test"
         assert_eq!(recipes[0].title_pt, "Lint do workspace");
         assert_eq!(recipes[0].title_en, "Workspace lint");
         assert_eq!(recipes[0].scope, "project");
+        assert_eq!(recipes[0].manifest, "Cargo.toml");
         assert!(!recipes[0].enter);
         assert_eq!(recipes[1].title_en, "Testes");
         assert_eq!(recipes[1].scope, "global");
+        assert_eq!(recipes[1].manifest, "");
     }
 
     struct TempGuard(PathBuf);

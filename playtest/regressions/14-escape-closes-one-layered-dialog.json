@@ -9,20 +9,21 @@
     { "m": "ui.click", "target": "Adicionar" },
     { "m": "ui.click", "target": "Fechar pwsh" },
     { "m": "ui.click", "target": "Receitas" },
-    { "m": "ui.scroll", "target": "Compilar pacotes Go", "dy": -900 },
-    { "m": "ui.click", "target": "Compilar pacote Python  ·  projeto" },
+    { "m": "ui.type", "text": "pytest" },
+    { "m": "ui.click", "target": "Executar testes com pytest" },
+    { "m": "ui.click", "target": "Executar" },
     { "m": "ui.snapshot" },
     { "m": "ui.key", "keys": "Escape" },
     { "m": "ui.snapshot" }
   ],
   "expect": [
     {
-      "step": 7,
+      "step": 8,
       "present": ["Fechar terminal em execução?", "Aprovar conteúdo executável"],
       "window_count": 2
     },
     {
-      "step": 9,
+      "step": 10,
       "present": "Fechar terminal em execução?",
       "absent": "Aprovar conteúdo executável",
       "window_count": 1

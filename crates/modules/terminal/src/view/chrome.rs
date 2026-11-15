@@ -120,38 +120,10 @@ pub(super) fn tab_chip(ui: &mut egui::Ui, chip: &TabChip<'_>) -> (egui::Response
     (response.on_hover_text(chip_label), close.clicked())
 }
 
-fn recipe_label(recipe: &Recipe, texts: &UiText) -> String {
-    let scope = if recipe.scope == "project" {
-        &texts.recipe_scope_project
-    } else {
-        &texts.recipe_scope_global
-    };
-    format!("{}  ·  {scope}", recipe.title(&texts.locale))
-}
-
-/// Menu "Receitas" com o componente de menu do ui-kit. Escolher uma receita a marca para rodar.
-pub(super) fn recipes_menu(
-    ui: &mut egui::Ui,
-    texts: &UiText,
-    recipes: &[Recipe],
-    run_recipe: &mut Option<Recipe>,
-) {
-    let labels: Vec<String> = if recipes.is_empty() {
-        vec![texts.recipe_empty.clone()]
-    } else {
-        recipes.iter().map(|r| recipe_label(r, texts)).collect()
-    };
-    let items: Vec<MenuItem<'_>> = labels
-        .iter()
-        .map(|label| MenuItem {
-            label: label.as_str(),
-            danger: false,
-        })
-        .collect();
-    if let Some(index) = forja_ui_kit::context_menu(ui, &texts.recipes, &items) {
-        if let Some(recipe) = recipes.get(index) {
-            *run_recipe = Some(recipe.clone());
-        }
+/// Botão "Receitas" que abre o seletor com filtro, grupos e prévia.
+pub(super) fn recipes_button(ui: &mut egui::Ui, texts: &UiText, open_picker: &mut bool) {
+    if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &texts.recipes).clicked() {
+        *open_picker = true;
     }
 }
 
@@ -244,7 +216,7 @@ pub(super) struct HeaderOutcome {
     pub(super) focus_pane: bool,
     pub(super) new_tab: bool,
     pub(super) new_tab_shell: Option<String>,
-    pub(super) run_recipe: Option<Recipe>,
+    pub(super) open_recipe_picker: bool,
     pub(super) control: Option<HeaderControl>,
     pub(super) toggle_search: bool,
 }
@@ -379,9 +351,8 @@ enum OverflowAction {
     NewTab,
     Control(HeaderControl),
     Search,
-    RunRecipe(Recipe),
+    OpenRecipes,
     OpenShell(String),
-    None,
 }
 
 /// Cabeçalho do painel em uma linha limitada à largura disponível, com menu "Mais" para o excedente.
@@ -468,7 +439,7 @@ pub(super) fn draw_pane_header(
             outcome.toggle_search = true;
         }
         if plan.show_recipes {
-            recipes_menu(ui, texts, recipes, &mut outcome.run_recipe);
+            recipes_button(ui, texts, &mut outcome.open_recipe_picker);
         }
         if plan.show_shell {
             shell_menu(
@@ -517,19 +488,15 @@ fn draw_overflow_menu(
         }
     }
     if !plan.show_recipes {
-        if recipes.is_empty() {
-            entries.push((
-                format!("{}: {}", texts.recipes, texts.recipe_empty),
-                OverflowAction::None,
-            ));
+        let label = if recipes.is_empty() {
+            &texts.recipe_empty
         } else {
-            for recipe in recipes {
-                entries.push((
-                    format!("{}: {}", texts.recipes, recipe_label(recipe, texts)),
-                    OverflowAction::RunRecipe(recipe.clone()),
-                ));
-            }
-        }
+            &texts.recipe_picker_open
+        };
+        entries.push((
+            format!("{}: {label}", texts.recipes),
+            OverflowAction::OpenRecipes,
+        ));
     }
     if !plan.show_shell {
         for (label, id) in shell_options(texts, wsl) {
@@ -559,12 +526,11 @@ fn draw_overflow_menu(
                     outcome.control = Some(ctrl);
                 }
                 OverflowAction::Search => outcome.toggle_search = true,
-                OverflowAction::RunRecipe(recipe) => outcome.run_recipe = Some(recipe),
+                OverflowAction::OpenRecipes => outcome.open_recipe_picker = true,
                 OverflowAction::OpenShell(id) => {
                     outcome.new_tab = true;
                     outcome.new_tab_shell = Some(id);
                 }
-                OverflowAction::None => {}
             }
         }
     }

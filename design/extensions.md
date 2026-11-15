@@ -177,7 +177,10 @@ command = "cargo clippy --workspace --all-targets -- -D warnings"
 scope = "project"                    # global | project
 enter = false                        # true: runs without stopping first (recipe.execute.confirm)
 directory = "."                      # relative to the bench
+manifest = "Cargo.toml"              # optional: project type used to order the picker
 ```
+
+`manifest` names the file that marks the recipe's project type (`Cargo.toml`, `go.mod`, `package.json`, `pyproject.toml` and the other names in the terminal module). The terminal puts recipes whose manifest exists in the bench first; the rest go to the collapsed "Outras" section. Without `manifest`, the id prefix and the command program are used as a fallback.
 
 A recipe runs a shell command (`recipe.shell.default`). For that reason **a project recipe runs only after you trust the folder** (section 4.2). Before that, it appears listed and disabled, with the reason.
 

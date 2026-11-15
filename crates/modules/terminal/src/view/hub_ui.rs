@@ -1,6 +1,7 @@
 //! Chrome da aba de terminal: abas, divisores e confirmações.
 
 use super::chrome::{c32, draw_pane_header, HeaderControl, TabInfo};
+use super::recipe_picker;
 use super::terminal_ui::draw_terminal;
 use super::{UiText, ViewAction};
 use crate::core::{CloseTarget, Hub, PendingPaste};
@@ -82,6 +83,7 @@ pub fn draw(
     let mut close_targets = Vec::new();
     let mut new_tab = false;
     let mut new_tab_shell = None;
+    let mut open_picker = false;
     let mut run_recipe = None;
     if let Some(node) = &mut root {
         let rect = ui.available_rect_before_wrap();
@@ -101,7 +103,7 @@ pub fn draw(
             &mut close_targets,
             &mut new_tab,
             &mut new_tab_shell,
-            &mut run_recipe,
+            &mut open_picker,
             wsl,
             &recipes,
             &hub.helper_terminals,
@@ -124,21 +126,8 @@ pub fn draw(
             hub.notice = Some(error);
         }
     }
-    if let Some(recipe) = run_recipe {
-        match approve_recipe(&recipe) {
-            Ok(()) if settings.recipe_confirm => hub.pending_recipe = Some(recipe),
-            Ok(()) => {
-                if let Err(error) = hub.run_recipe(&recipe, settings) {
-                    hub.notice = Some(error);
-                }
-            }
-            Err(error) => {
-                if recipe.scope == "project" {
-                    hub.pending_trust_recipe = Some(recipe);
-                }
-                hub.notice = Some(error);
-            }
-        }
+    if open_picker {
+        hub.open_recipe_picker();
     }
     for control in controls {
         match control {
@@ -165,6 +154,23 @@ pub fn draw(
     }
     if hub.pending_recipe.is_some() {
         draw_recipe_modal(hub, ui.ctx(), &tokens, texts, settings);
+    }
+    recipe_picker::draw(hub, ui, texts, settings, &mut run_recipe);
+    if let Some(recipe) = run_recipe {
+        match approve_recipe(&recipe) {
+            Ok(()) if settings.recipe_confirm => hub.pending_recipe = Some(recipe),
+            Ok(()) => {
+                if let Err(error) = hub.run_recipe(&recipe, settings) {
+                    hub.notice = Some(error);
+                }
+            }
+            Err(error) => {
+                if recipe.scope == "project" {
+                    hub.pending_trust_recipe = Some(recipe);
+                }
+                hub.notice = Some(error);
+            }
+        }
     }
 }
 
@@ -206,7 +212,7 @@ fn draw_node(
     close_targets: &mut Vec<CloseTarget>,
     new_tab: &mut bool,
     new_tab_shell: &mut Option<String>,
-    run_recipe: &mut Option<Recipe>,
+    open_picker: &mut bool,
     wsl: &[String],
     recipes: &[Recipe],
     helper_terminals: &BTreeSet<TerminalId>,
@@ -295,7 +301,7 @@ fn draw_node(
                 close_targets,
                 new_tab,
                 new_tab_shell,
-                run_recipe,
+                open_picker,
                 wsl,
                 recipes,
                 helper_terminals,
@@ -318,7 +324,7 @@ fn draw_node(
                 close_targets,
                 new_tab,
                 new_tab_shell,
-                run_recipe,
+                open_picker,
                 wsl,
                 recipes,
                 helper_terminals,
@@ -382,8 +388,8 @@ fn draw_node(
                         *new_tab = true;
                         *new_tab_shell = outcome.new_tab_shell;
                     }
-                    if let Some(recipe) = outcome.run_recipe {
-                        *run_recipe = Some(recipe);
+                    if outcome.open_recipe_picker {
+                        *open_picker = true;
                     }
                     if outcome.toggle_search {
                         if let Some(terminal) =
