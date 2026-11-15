@@ -121,14 +121,18 @@ impl ChatSession {
 
     /// Inicia um turno agora.
     pub fn start_prompt(&mut self, prompt: String) -> Result<(), String> {
-        profile::turn_args(
+        if let Err(error) = profile::turn_args(
             &self.profile,
             self.session_id.as_deref(),
             &self.permission,
             self.model.as_deref(),
             self.effort.as_deref(),
-        )?;
-        self.push_user(&prompt);
+        ) {
+            self.status = SessionStatus::Error;
+            self.error = Some(error.clone());
+            self.last_event_at = Instant::now();
+            return Err(error);
+        }
         let environment = profile::turn_env(&self.profile, &self.permission);
         let turn = match runner::start_turn(
             &self.profile,
@@ -157,6 +161,7 @@ impl ChatSession {
         self.notice = None;
         self.last_event_at = Instant::now();
         self.live_from_transcript = false;
+        self.push_user(&prompt);
         Ok(())
     }
 

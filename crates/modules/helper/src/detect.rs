@@ -23,14 +23,19 @@ pub struct Detection {
 pub fn detect_all(profiles: &[Profile]) -> BTreeMap<String, Detection> {
     let path = std::env::var_os("PATH");
     let extensions = std::env::var_os("PATHEXT");
+    let helpers_disabled = helpers_disabled_for_test();
     profiles
         .iter()
         .map(|profile| {
-            let executable = profile
-                .detect
-                .executables
-                .iter()
-                .find_map(|name| resolve_in(name, path.as_deref(), extensions.as_deref()));
+            let executable = if helpers_disabled {
+                None
+            } else {
+                profile
+                    .detect
+                    .executables
+                    .iter()
+                    .find_map(|name| resolve_in(name, path.as_deref(), extensions.as_deref()))
+            };
             let mut detection = Detection {
                 executable,
                 checked_at: chrono::Utc::now().to_rfc3339(),
@@ -51,11 +56,22 @@ pub fn detect_all(profiles: &[Profile]) -> BTreeMap<String, Detection> {
 
 /// Procura um executável no PATH e PATHEXT do processo atual.
 pub fn resolve(name: &str) -> Option<PathBuf> {
+    if helpers_disabled_for_test() {
+        return None;
+    }
     resolve_in(
         name,
         std::env::var_os("PATH").as_deref(),
         std::env::var_os("PATHEXT").as_deref(),
     )
+}
+
+fn helpers_disabled_for_test() -> bool {
+    helpers_value_disables_discovery(std::env::var_os("FORJA_TEST_HELPERS").as_deref())
+}
+
+fn helpers_value_disables_discovery(value: Option<&OsStr>) -> bool {
+    value.is_some_and(|value| value.to_string_lossy().trim().eq_ignore_ascii_case("none"))
 }
 
 /// Comando oficial sugerido para instalar o CLI quando não estiver presente.
@@ -261,5 +277,13 @@ mode = "argument"
         let detection = &detections["fake"];
         assert!(detection.executable.is_none());
         assert!(!detection.checked_at.is_empty());
+    }
+
+    #[test]
+    fn test_override_recognizes_none_case_insensitively() {
+        assert!(helpers_value_disables_discovery(Some(OsStr::new("none"))));
+        assert!(helpers_value_disables_discovery(Some(OsStr::new(" NONE "))));
+        assert!(!helpers_value_disables_discovery(Some(OsStr::new("all"))));
+        assert!(!helpers_value_disables_discovery(None));
     }
 }

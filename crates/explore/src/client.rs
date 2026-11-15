@@ -181,6 +181,7 @@ pub struct AppSession {
     locale: String,
     out_dir: PathBuf,
     pick_dir: PathBuf,
+    test_helpers: Option<String>,
     restarts: u32,
 }
 
@@ -191,6 +192,7 @@ impl AppSession {
         locale: String,
         out_dir: PathBuf,
         pick_dir: PathBuf,
+        test_helpers: Option<String>,
     ) -> Result<Self, String> {
         std::fs::create_dir_all(out_dir.join("data")).map_err(|e| e.to_string())?;
         std::fs::create_dir_all(out_dir.join("user")).map_err(|e| e.to_string())?;
@@ -204,6 +206,7 @@ impl AppSession {
             locale,
             out_dir,
             pick_dir,
+            test_helpers,
             restarts: 0,
         };
         session.spawn_and_wait()?;
@@ -234,6 +237,10 @@ impl AppSession {
             .env("FORJA_TEST_PICK_DIR", &self.pick_dir)
             .env("FORJA_TEST_PICK_FILE", pick_file)
             .env("FORJA_TEST_SAVE_DIR", self.out_dir.join("downloads"))
+            .env(
+                "FORJA_TEST_HELPERS",
+                self.test_helpers.as_deref().unwrap_or(""),
+            )
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::from(stderr_file))

@@ -314,11 +314,15 @@ fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &m
         )
         .clicked()
         {
-            let mut args = Map::new();
-            args.insert("path".to_owned(), json!(path));
-            args.insert("message".to_owned(), json!(message));
-            let _ = run(cx, "git.commit", args);
-            state.set_commit_message(String::new());
+            if report.summary.staged == 0 {
+                state.set_error(Some("nothing-staged".to_owned()));
+            } else {
+                let mut args = Map::new();
+                args.insert("path".to_owned(), json!(path));
+                args.insert("message".to_owned(), json!(message));
+                args.insert("clear_message".to_owned(), json!(true));
+                let _ = run(cx, "git.commit", args);
+            }
         }
         if small(ui, &cx.t("git.changes.generate")) {
             if let Err(error) = generate_message(cx, &path, state) {
@@ -330,8 +334,8 @@ fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &m
             args.insert("path".to_owned(), json!(path));
             args.insert("message".to_owned(), json!(message));
             args.insert("all".to_owned(), json!(true));
+            args.insert("clear_message".to_owned(), json!(true));
             let _ = run(cx, "git.commit", args);
-            state.set_commit_message(String::new());
         }
     });
     ui.horizontal_wrapped(|ui| {
@@ -374,14 +378,21 @@ fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &m
                                 .small()
                                 .color(c32(color)),
                         );
-                        ui.add(
-                            egui::Label::new(
-                                egui::RichText::new(&file.path)
-                                    .small()
-                                    .color(c32(tokens.color.text)),
+                        if ui
+                            .add(
+                                egui::Label::new(
+                                    egui::RichText::new(&file.path)
+                                        .small()
+                                        .underline()
+                                        .color(c32(tokens.color.text)),
+                                )
+                                .truncate()
+                                .sense(egui::Sense::click()),
                             )
-                            .truncate(),
-                        );
+                            .clicked()
+                        {
+                            open_file_diff(cx, &path, &file.path, file.staged && !file.unstaged);
+                        }
                         if !file.staged && !file.conflict && !file.untracked && small(ui, "+") {
                             stage(cx, &path, std::slice::from_ref(&file.path));
                         }
@@ -493,6 +504,19 @@ pub(crate) fn run(
     cx.run_command(id, Args::from_map(map))
 }
 
+fn open_file_diff(cx: &mut Ctx<'_>, path: &str, file: &str, staged: bool) {
+    let mut args = Args::new();
+    args.insert("path", json!(path));
+    args.insert("file", json!(file));
+    args.insert("staged", json!(staged));
+    if cx.run_command("diff.open", args).is_err() {
+        return;
+    }
+    let mut args = Args::new();
+    args.insert("view_id", json!("diff.tab"));
+    let _ = cx.run_command("shell.tab.open", args);
+}
+
 /// Asks the review module to generate a commit message, but explains first
 /// when there is no installed helper to run the generation.
 pub(crate) fn generate_message(cx: &mut Ctx<'_>, path: &str, state: &Shared) -> Result<(), String> {
@@ -545,6 +569,9 @@ fn unstage(cx: &mut Ctx<'_>, path: &str, files: &[String]) {
 
 pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> forja_kernel::HumanError {
     let trimmed = raw.trim();
+    if trimmed == "nothing-staged" {
+        return forja_kernel::HumanError::simple(cx.t("git.error.nothing-to-commit"));
+    }
     if trimmed == "no-remote" {
         return forja_kernel::HumanError::simple(cx.t("git.error.no-remote"));
     }
@@ -569,6 +596,9 @@ pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> forja_kernel::HumanErro
     }
     if lower.contains("nothing to commit") || lower.contains("no changes added to commit") {
         return forja_kernel::HumanError::with_detail(cx.t("git.error.nothing-to-commit"), trimmed);
+    }
+    if lower.contains("nothing added to commit") {
+        return forja_kernel::HumanError::simple(cx.t("git.error.nothing-to-commit"));
     }
     if lower.contains("conflict") || lower.contains("unmerged files") {
         return forja_kernel::HumanError::with_detail(cx.t("git.error.conflict"), trimmed);
@@ -608,7 +638,28 @@ pub(crate) fn c32(color: forja_ui_kit::Color) -> egui::Color32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use forja_kernel::{Module, Runtime, RuntimeOptions};
+    use forja_kernel::{Module, ModuleManifest, Registrar, Runtime, RuntimeOptions};
+    use std::sync::{Arc, Mutex};
+
+    struct CommandProbe {
+        module_id: &'static str,
+        command_id: &'static str,
+        calls: Arc<Mutex<Vec<Value>>>,
+    }
+
+    impl Module for CommandProbe {
+        fn manifest(&self) -> ModuleManifest {
+            ModuleManifest::new(self.module_id, "git.name", "0.0.0")
+        }
+
+        fn register(&mut self, registrar: &mut Registrar<'_>) {
+            let calls = self.calls.clone();
+            registrar.command(self.command_id, "git.command.commit", move |_cx, args| {
+                calls.lock().expect("probe calls").push(args.into_json());
+                Ok(json!({}))
+            });
+        }
+    }
 
     #[test]
     fn raw_git_errors_are_humanized_with_technical_detail() {
@@ -657,11 +708,69 @@ mod tests {
                 humanize_error(&cx, "no file selected").summary,
                 "Selecione ao menos um arquivo."
             );
+            let no_stage = humanize_error(&cx, "nothing-staged");
+            assert!(
+                no_stage.summary.contains("Use Preparar tudo"),
+                "{}",
+                no_stage.summary
+            );
+            assert!(no_stage.detail.is_none());
+            let untracked_only = humanize_error(
+                &cx,
+                "git commit failed: nothing added to commit but untracked files present",
+            );
+            assert_eq!(untracked_only.summary, no_stage.summary);
+            assert!(untracked_only.detail.is_none());
         }
         runtime.set_locale(forja_kernel::Locale::En);
         let cx = runtime.ctx("git");
         let en_err = humanize_error(&cx, "git status failed: some technical issue");
         assert!(!en_err.summary.to_lowercase().contains("failed"));
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn clicking_a_changed_file_opens_its_diff_tab() {
+        let dir = std::env::temp_dir().join(format!("forja-git-open-diff-{}", std::process::id()));
+        let diff_calls = Arc::new(Mutex::new(Vec::new()));
+        let shell_calls = Arc::new(Mutex::new(Vec::new()));
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(crate::GitModule {
+                    state: Shared::new(),
+                }) as Box<dyn Module>,
+                Box::new(CommandProbe {
+                    module_id: "diff",
+                    command_id: "diff.open",
+                    calls: diff_calls.clone(),
+                }),
+                Box::new(CommandProbe {
+                    module_id: "shell",
+                    command_id: "shell.tab.open",
+                    calls: shell_calls.clone(),
+                }),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".into()),
+                wake: None,
+            },
+        )
+        .expect("runtime");
+
+        let mut cx = runtime.ctx("git");
+        open_file_diff(&mut cx, "C:/repo", "src/main.rs", true);
+        drop(cx);
+
+        assert_eq!(
+            diff_calls.lock().expect("diff calls").as_slice(),
+            &[json!({"path": "C:/repo", "file": "src/main.rs", "staged": true})]
+        );
+        assert_eq!(
+            shell_calls.lock().expect("shell calls").as_slice(),
+            &[json!({"view_id": "diff.tab"})]
+        );
         let _ = std::fs::remove_dir_all(dir);
     }
 }

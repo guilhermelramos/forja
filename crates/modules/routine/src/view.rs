@@ -145,7 +145,7 @@ impl RoutinesView {
     fn editor_body(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, draft: &mut Draft) {
         ui.separator();
         ui.label(egui::RichText::new(cx.t("routine-editor-title")).strong());
-        text_field(ui, &mut draft.name, &cx.t("routine-field-name"));
+        routine_field(ui, &mut draft.name, &cx.t("routine-field-name"));
         forja_ui_kit::toggle(ui, &mut draft.enabled, &cx.t("routine-field-enabled"));
 
         let kinds = [cx.t("routine-kind-preset"), cx.t("routine-kind-cron")];
@@ -155,7 +155,7 @@ impl RoutinesView {
         }
         match draft.schedule_kind {
             ScheduleKind::Cron => {
-                text_field(ui, &mut draft.cron, &cx.t("routine-field-cron"));
+                routine_field(ui, &mut draft.cron, &cx.t("routine-field-cron"));
             }
             ScheduleKind::Preset => {
                 let labels = [
@@ -175,7 +175,7 @@ impl RoutinesView {
                     draft.preset = [PresetKind::Hourly, PresetKind::Daily, PresetKind::Weekdays, PresetKind::Weekly][preset];
                 }
                 if draft.preset != PresetKind::Hourly {
-                    text_field(ui, &mut draft.time, &cx.t("routine-field-time"));
+                    routine_field(ui, &mut draft.time, &cx.t("routine-field-time"));
                 }
                 if draft.preset == PresetKind::Weekly {
                     let days: Vec<String> = (0..7).map(|day| cx.t(WEEKDAY_KEYS[day])).collect();
@@ -197,12 +197,12 @@ impl RoutinesView {
         match draft.target {
             TargetKind::Ask => {}
             TargetKind::Fixed => {
-                text_field(ui, &mut draft.bench_path, &cx.t("routine-field-bench_path"));
+                routine_field(ui, &mut draft.bench_path, &cx.t("routine-field-bench_path"));
             }
             TargetKind::New => {
-                text_field(ui, &mut draft.project_id, &cx.t("routine-field-project_id"));
-                text_field(ui, &mut draft.project_path, &cx.t("routine-field-project_path"));
-                text_field(ui, &mut draft.name_template, &cx.t("routine-field-name_template"));
+                routine_field(ui, &mut draft.project_id, &cx.t("routine-field-project_id"));
+                routine_field(ui, &mut draft.project_path, &cx.t("routine-field-project_path"));
+                routine_field(ui, &mut draft.name_template, &cx.t("routine-field-name_template"));
             }
         }
 
@@ -213,20 +213,27 @@ impl RoutinesView {
         }
         match draft.action {
             ActionKind::Command => {
-                text_field(ui, &mut draft.command, &cx.t("routine-field-command"));
+                routine_field(ui, &mut draft.command, &cx.t("routine-field-command"));
             }
             ActionKind::Prompt => {
-                text_field(ui, &mut draft.profile, &cx.t("routine-field-profile"));
-                ui.add(
+                routine_field(ui, &mut draft.profile, &cx.t("routine-field-profile"));
+                let response = ui.add(
                     egui::TextEdit::multiline(&mut draft.prompt)
                         .hint_text(cx.t("routine-field-prompt"))
                         .desired_width(f32::INFINITY)
                         .desired_rows(3),
                 );
+                response.widget_info(|| {
+                    egui::WidgetInfo::labeled(
+                        egui::WidgetType::TextEdit,
+                        true,
+                        cx.t("routine-field-prompt"),
+                    )
+                });
             }
         }
-        text_field(ui, &mut draft.precheck, &cx.t("routine-field-precheck"));
-        text_field(ui, &mut draft.tolerance, &cx.t("routine-field-tolerance"));
+        routine_field(ui, &mut draft.precheck, &cx.t("routine-field-precheck"));
+        routine_field(ui, &mut draft.tolerance, &cx.t("routine-field-tolerance"));
 
         self.preview(ui, cx, draft);
     }
@@ -321,6 +328,13 @@ impl RoutinesView {
             }
         });
     }
+}
+
+fn routine_field(ui: &mut egui::Ui, value: &mut String, label: &str) {
+    let response = text_field(ui, value, label);
+    response.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, true, label)
+    });
 }
 
 impl View for RoutinesView {

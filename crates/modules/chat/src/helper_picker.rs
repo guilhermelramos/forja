@@ -14,6 +14,8 @@ pub(crate) fn sync_helpers(cx: &mut Ctx<'_>, state: &mut ChatState, bench: &Path
     let mut installed = BTreeSet::new();
     let mut hints = BTreeMap::new();
     let mut detecting = false;
+    let test_helpers_none = std::env::var_os("FORJA_TEST_HELPERS")
+        .is_some_and(|value| value.to_string_lossy().trim().eq_ignore_ascii_case("none"));
     if let Ok(value) = cx.run_command("helper.list", Args::new()) {
         detecting = value
             .get("detecting")
@@ -33,7 +35,7 @@ pub(crate) fn sync_helpers(cx: &mut Ctx<'_>, state: &mut ChatState, bench: &Path
             }
         }
     }
-    if installed.is_empty() && (detecting || hints.is_empty()) {
+    if !test_helpers_none && installed.is_empty() && (detecting || hints.is_empty()) {
         for profile in &state.profiles {
             if profile.supports_stream() && runner::resolve_program(&profile.start.command).is_some()
             {

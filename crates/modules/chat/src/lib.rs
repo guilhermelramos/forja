@@ -86,6 +86,7 @@ impl Module for ChatModule {
             "chat.view.attach",
             "chat.view.attachment-too-large",
             "chat.view.send",
+            "chat.view.send-no-helper",
             "chat.view.cancel",
             "chat.view.composer-hint",
             "chat.view.files",
@@ -530,7 +531,7 @@ mod tests {
     }
 
     #[test]
-    fn failed_start_prompt_records_user_message_and_error_status() {
+    fn failed_start_prompt_preserves_the_prompt_and_sets_error_status() {
         let guard = temp_guard("failed-start");
         let dir = &guard.0;
         let mut profile = crate::profile::ChatProfile::parse(
@@ -546,8 +547,7 @@ mod tests {
             .expect_err("missing binary should fail");
         assert!(error.starts_with("executable-not-found:"), "{error}");
         assert_eq!(session.status, crate::model::SessionStatus::Error);
-        assert_eq!(session.messages.len(), 1);
-        assert_eq!(session.messages[0].role, crate::model::ChatRole::User);
+        assert!(session.messages.is_empty());
         assert!(session.error.is_some());
     }
 

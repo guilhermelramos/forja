@@ -19,6 +19,9 @@ pub struct RegressionFile {
     /// cannot reach deterministically.
     #[serde(default)]
     pub seed: Option<String>,
+    /// Test-only helper discovery override passed to the app process.
+    #[serde(default)]
+    pub test_helpers: Option<String>,
     pub steps: Vec<Map<String, Value>>,
     pub expect: Vec<Expectation>,
 }
@@ -182,6 +185,7 @@ fn run_file(
             locale,
             temp_root.clone(),
             pick_dir,
+            spec.test_helpers.clone(),
         )?;
         let mut snapshots = Vec::with_capacity(spec.steps.len());
 
@@ -380,5 +384,15 @@ mod tests {
 
         let bad: Vec<Expectation> = serde_json::from_str(r#"[{ "window_count": 1 }]"#).unwrap();
         assert!(evaluate_expectations(&bad, &snapshots).is_err());
+    }
+
+    #[test]
+    fn regression_can_override_helper_detection_for_its_app() {
+        let spec: RegressionFile = serde_json::from_str(
+            r#"{"title":"no helper","test_helpers":"none","steps":[{"m":"ui.wait"}],"expect":[]}"#,
+        )
+        .unwrap();
+
+        assert_eq!(spec.test_helpers.as_deref(), Some("none"));
     }
 }

@@ -1,0 +1,25 @@
+{
+  "title": "Opções segmentadas do diálogo de rotina respondem",
+  "issue": 118,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Rotinas" },
+    { "m": "ui.click", "target": "Nova rotina" },
+    { "m": "ui.click", "target": "Cron (5 campos)" },
+    { "m": "ui.click", "target": "Predefinido" },
+    { "m": "ui.click", "target": "De hora em hora" },
+    { "m": "ui.click", "target": "Diária" },
+    { "m": "ui.click", "target": "Semanal" },
+    { "m": "ui.click", "target": "Bancada fixa" },
+    { "m": "ui.click", "target": "Prompt para um ajudante" }
+  ],
+  "expect": [
+    { "step": 3, "present_contains": ["minuto hora dia mês dia-da-semana"] },
+    { "step": 5, "absent_contains": ["Horário (HH:MM, local)"] },
+    { "step": 6, "present_contains": ["Horário (HH:MM, local)"] },
+    { "step": 7, "present_contains": ["Seg"] },
+    { "step": 8, "present_contains": ["Pasta da bancada"] },
+    { "step": 9, "present_contains": ["Perfil do ajudante (opcional)", "Prompt"] }
+  ]
+}

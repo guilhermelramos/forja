@@ -64,6 +64,8 @@ O workflow `.github/workflows/explore.yml` roda 6 exploradores em paralelo de ho
 ## Regressões gravadas (`playtest/regressions/`)
 Cada arquivo JSON em `playtest/regressions/` descreve um fluxo reproduzível no formato do `drive.ps1` e suas expectativas (`appeared`, `present`, `present_contains`, `absent`, `absent_contains`, `window_count`, `window_count_min`, `window_count_max`, com `step` opcional). O campo opcional `seed` aponta uma pasta, relativa ao JSON, copiada para a pasta de dados antes de o app abrir; use para layouts gravados que uma sequência de cliques não alcança de forma determinística:
 
+O campo opcional `test_helpers` configura `FORJA_TEST_HELPERS` só no processo do app durante o replay. Use `"test_helpers": "none"` quando o cenário exigir nenhum ajudante instalado; a detecção e o fallback do chat ignoram executáveis reais da máquina, então o fluxo é determinístico mesmo em um computador com ajudantes instalados. Regressões sem esse campo limpam a variável herdada do ambiente do explorador.
+
 ```powershell
 ./target/debug/forja-explore.exe --app target/debug/forja-app.exe --replay playtest/regressions
 ```

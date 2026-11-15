@@ -55,6 +55,14 @@ pub(crate) fn spawn_op<F>(cx: &mut Ctx<'_>, shared: &Shared, work: F)
 where
     F: FnOnce() -> Result<String, String> + Send + 'static,
 {
+    spawn_op_with_success(cx, shared, work, || {});
+}
+
+pub(crate) fn spawn_op_with_success<F, S>(cx: &mut Ctx<'_>, shared: &Shared, work: F, on_success: S)
+where
+    F: FnOnce() -> Result<String, String> + Send + 'static,
+    S: FnOnce() + Send + 'static,
+{
     let state = shared.clone();
     state.set_busy(true);
     state.set_error(None);
@@ -63,6 +71,7 @@ where
         state.set_busy(false);
         match result {
             Ok(text) => {
+                on_success();
                 let text = text.trim().to_owned();
                 state.set_notice(Some(if text.is_empty() {
                     cx.t("git.notice.ok")
