@@ -5,7 +5,7 @@ use eframe::egui::{
     Ui,
 };
 
-use super::button::{button, ButtonKind};
+use super::button::{ButtonKind, button};
 use crate::apply::{elevation_shadow, pad_i8, radius_u8};
 use crate::paint::{self, body_font, paint_text};
 
@@ -16,6 +16,10 @@ pub struct MenuItem<'a> {
     /// Quando verdadeiro, a marca à esquerda usa `danger`.
     pub danger: bool,
 }
+
+const MENU_HEIGHT_FRACTION: f32 = 0.6;
+const MENU_MIN_HEIGHT: f32 = 160.0;
+const MENU_MAX_HEIGHT: f32 = 640.0;
 
 /// Botão que abre o menu. Devolve o índice escolhido neste quadro.
 pub fn context_menu(ui: &mut Ui, label: &str, items: &[MenuItem<'_>]) -> Option<usize> {
@@ -38,7 +42,10 @@ fn open_menu(response: &Response, items: &[MenuItem<'_>]) -> Option<usize> {
     let max_width = (screen.width() - 24.0).clamp(160.0, 420.0);
     let below = (screen.bottom() - response.rect.bottom() - 12.0).max(0.0);
     let above = (response.rect.top() - screen.top() - 12.0).max(0.0);
-    let max_height = below.max(above).clamp(160.0, (screen.height() - 24.0).max(160.0));
+    let available_height = below
+        .max(above)
+        .clamp(MENU_MIN_HEIGHT, (screen.height() - 24.0).max(MENU_MIN_HEIGHT));
+    let max_height = menu_height_limit(screen.height()).min(available_height);
     let tokens = crate::applied_tokens(&response.ctx);
     let row_height = tokens.metrics().row;
     let spacing_y = 2.0_f32;
@@ -56,18 +63,21 @@ fn open_menu(response: &Response, items: &[MenuItem<'_>]) -> Option<usize> {
                 chosen = menu_list(ui, items, width);
             } else {
                 egui::ScrollArea::vertical()
+                    .id_salt("forja-ui-kit.context-menu")
                     .max_height(max_height)
-                    .min_scrolled_height(max_height)
-                    .show_rows(ui, row_height, items.len(), |ui, range| {
-                        for index in range {
-                            if menu_row(ui, &items[index], width).clicked() {
-                                chosen = Some(index);
-                            }
-                        }
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        chosen = menu_list(ui, items, width);
                     });
             }
         });
     chosen
+}
+
+fn menu_height_limit(viewport_height: f32) -> f32 {
+    (viewport_height * MENU_HEIGHT_FRACTION)
+        .clamp(MENU_MIN_HEIGHT, MENU_MAX_HEIGHT)
+        .min(viewport_height.max(0.0))
 }
 
 /// O mesmo miolo do menu, sempre visível. Serve para a galeria e para encaixar o popup.
@@ -155,4 +165,17 @@ fn menu_row(ui: &mut Ui, item: &MenuItem<'_>, width: f32) -> Response {
         tokens.color.accent.to_color32(),
     );
     response
+}
+
+#[cfg(test)]
+mod tests {
+    use super::menu_height_limit;
+
+    #[test]
+    fn context_menu_height_tracks_small_viewports_and_caps_large_ones() {
+        assert!((menu_height_limit(720.0) - 432.0).abs() < 0.001);
+        assert_eq!(menu_height_limit(1080.0), 640.0);
+        assert_eq!(menu_height_limit(200.0), 160.0);
+        assert_eq!(menu_height_limit(100.0), 100.0);
+    }
 }

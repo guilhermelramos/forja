@@ -9,6 +9,7 @@
     { "m": "ui.click", "target": "Adicionar" },
     { "m": "ui.click", "target": "Fechar pwsh" },
     { "m": "ui.click", "target": "Receitas" },
+    { "m": "ui.scroll", "target": "Compilar pacotes Go", "dy": -900 },
     { "m": "ui.click", "target": "Compilar pacote Python  ·  projeto" },
     { "m": "ui.snapshot" },
     { "m": "ui.key", "keys": "Escape" },
@@ -16,12 +17,12 @@
   ],
   "expect": [
     {
-      "step": 6,
+      "step": 7,
       "present": ["Fechar terminal em execução?", "Aprovar conteúdo executável"],
       "window_count": 2
     },
     {
-      "step": 8,
+      "step": 9,
       "present": "Fechar terminal em execução?",
       "absent": "Aprovar conteúdo executável",
       "window_count": 1

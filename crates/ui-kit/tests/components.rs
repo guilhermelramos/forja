@@ -223,7 +223,39 @@ fn context_menu_picks_item_in_long_scrollable_list() {
             picked = Some(choice);
         }
     });
-    let at_item = text_center(&open, "Recipe item 14").expect("item 14 is visible in 720px window");
+    // Com menu_height_limit (60% de 720px = 432px), o item 14 exige rolagem prévia para ficar na área visível.
+    let inside_scroll = text_center(&open, "Recipe item 2").expect("top item is visible");
+    frame(&ctx, &tokens, vec![Event::PointerMoved(inside_scroll)], |ui| {
+        ui.add_space(40.0);
+        if let Some(choice) = context_menu(ui, "Receitas", &items) {
+            picked = Some(choice);
+        }
+    });
+    frame(&ctx, &tokens, vec![Event::MouseWheel {
+        unit: egui::MouseWheelUnit::Point,
+        delta: egui::vec2(0.0, -900.0),
+        modifiers: Default::default(),
+    }], |ui| {
+        ui.add_space(40.0);
+        if let Some(choice) = context_menu(ui, "Receitas", &items) {
+            picked = Some(choice);
+        }
+    });
+    let mut scrolled = frame(&ctx, &tokens, Vec::new(), |ui| {
+        ui.add_space(40.0);
+        if let Some(choice) = context_menu(ui, "Receitas", &items) {
+            picked = Some(choice);
+        }
+    });
+    for _ in 0..8 {
+        scrolled = frame(&ctx, &tokens, Vec::new(), |ui| {
+            ui.add_space(40.0);
+            if let Some(choice) = context_menu(ui, "Receitas", &items) {
+                picked = Some(choice);
+            }
+        });
+    }
+    let at_item = text_center(&scrolled, "Recipe item 14").expect("item 14 is visible after scroll");
     // Simula clique em dois quadros como no test_driver (press num quadro, release no seguinte).
     frame(&ctx, &tokens, vec![
         Event::PointerMoved(at_item),

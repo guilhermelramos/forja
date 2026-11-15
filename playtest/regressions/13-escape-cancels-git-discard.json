@@ -8,12 +8,13 @@
     { "m": "ui.click", "target": "Adicionar" },
     { "m": "ui.click", "target": "Diferenças" },
     { "m": "ui.click", "target": "Mudanças" },
+    { "m": "ui.wait", "ms": 1000 },
     { "m": "ui.click", "target": "↺" },
     { "m": "ui.key", "keys": "Escape" },
     { "m": "ui.snapshot" }
   ],
   "expect": [
-    { "step": 6, "present": "Descartar mudanças", "present_contains": "src/login.ts", "window_count": 1 },
-    { "step": 7, "absent": "Descartar mudanças", "present": "src/login.ts", "window_count": 0 }
+    { "step": 7, "present": "Descartar mudanças", "present_contains": "src/login.ts", "window_count": 1 },
+    { "step": 8, "absent": "Descartar mudanças", "present": "src/login.ts", "window_count": 0 }
   ]
 }
