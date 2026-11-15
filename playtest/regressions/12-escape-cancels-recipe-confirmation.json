@@ -8,13 +8,14 @@
     { "m": "ui.click", "target": "Confirmar antes de rodar" },
     { "m": "ui.key", "keys": "Escape" },
     { "m": "ui.click", "target": "Receitas" },
+    { "m": "ui.scroll", "target": "Compilar pacotes Go", "dy": -900 },
     { "m": "ui.click", "target": "Compilar workspace Rust  ·  projeto" },
     { "m": "ui.click", "target": "Aprovar este conteúdo" },
     { "m": "ui.key", "keys": "Escape" },
     { "m": "ui.snapshot" }
   ],
   "expect": [
-    { "step": 7, "present": "Rodar receita?", "window_count": 1 },
-    { "step": 8, "absent": "Rodar receita?", "window_count": 0 }
+    { "step": 8, "present": "Rodar receita?", "window_count": 1 },
+    { "step": 9, "absent": "Rodar receita?", "window_count": 0 }
   ]
 }

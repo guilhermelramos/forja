@@ -5,7 +5,7 @@ use eframe::egui::{
     Ui,
 };
 
-use super::button::{button, ButtonKind};
+use super::button::{ButtonKind, button};
 use crate::apply::{elevation_shadow, pad_i8, radius_u8};
 use crate::paint::{self, body_font, paint_text};
 
@@ -16,6 +16,10 @@ pub struct MenuItem<'a> {
     /// Quando verdadeiro, a marca à esquerda usa `danger`.
     pub danger: bool,
 }
+
+const MENU_HEIGHT_FRACTION: f32 = 0.6;
+const MENU_MIN_HEIGHT: f32 = 160.0;
+const MENU_MAX_HEIGHT: f32 = 640.0;
 
 /// Botão que abre o menu. Devolve o índice escolhido neste quadro.
 pub fn context_menu(ui: &mut Ui, label: &str, items: &[MenuItem<'_>]) -> Option<usize> {
@@ -37,9 +41,22 @@ fn open_menu(response: &Response, items: &[MenuItem<'_>]) -> Option<usize> {
         .gap(4.0)
         .open_memory(response.clicked().then_some(egui::SetOpenCommand::Toggle))
         .show(|ui| {
-            chosen = menu_list(ui, items);
+            let max_height = menu_height_limit(ui.ctx().content_rect().height());
+            egui::ScrollArea::vertical()
+                .id_salt("forja-ui-kit.context-menu")
+                .max_height(max_height)
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    chosen = menu_list(ui, items);
+                });
         });
     chosen
+}
+
+fn menu_height_limit(viewport_height: f32) -> f32 {
+    (viewport_height * MENU_HEIGHT_FRACTION)
+        .clamp(MENU_MIN_HEIGHT, MENU_MAX_HEIGHT)
+        .min(viewport_height.max(0.0))
 }
 
 /// O mesmo miolo do menu, sempre visível. Serve para a galeria e para encaixar o popup.
@@ -110,4 +127,17 @@ fn menu_row(ui: &mut Ui, item: &MenuItem<'_>) -> Response {
         tokens.color.accent.to_color32(),
     );
     response
+}
+
+#[cfg(test)]
+mod tests {
+    use super::menu_height_limit;
+
+    #[test]
+    fn context_menu_height_tracks_small_viewports_and_caps_large_ones() {
+        assert!((menu_height_limit(720.0) - 432.0).abs() < 0.001);
+        assert_eq!(menu_height_limit(1080.0), 640.0);
+        assert_eq!(menu_height_limit(200.0), 160.0);
+        assert_eq!(menu_height_limit(100.0), 100.0);
+    }
 }
