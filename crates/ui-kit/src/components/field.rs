@@ -128,6 +128,11 @@ pub fn select(ui: &mut Ui, selected: &mut usize, options: &[&str]) -> Response {
         ui.ctx()
             .data_mut(|data| data.insert_temp(highlight_id, *selected));
     }
+    let screen = ui.ctx().content_rect();
+    let below = (screen.bottom() - rect.bottom() - 12.0).max(0.0);
+    let above = (rect.top() - screen.top() - 12.0).max(0.0);
+    let max_height = below.max(above).clamp(160.0, (screen.height() - 24.0).max(160.0));
+    let row_height = paint::tokens(ui).metrics().row;
     Popup::from_response(&response)
         .kind(PopupKind::Menu)
         .layout(egui::Layout::top_down_justified(egui::Align::Min))
@@ -150,11 +155,15 @@ pub fn select(ui: &mut Ui, selected: &mut usize, options: &[&str]) -> Response {
             }
             let enter = ui.input_mut(|input| input.consume_key(Modifiers::NONE, Key::Enter));
             let mut picked = None;
-            for (index, option) in options.iter().enumerate() {
-                if menu_row(ui, option, index == highlight).clicked() {
-                    picked = Some(index);
-                }
-            }
+            egui::ScrollArea::vertical()
+                .max_height(max_height)
+                .show_rows(ui, row_height, options.len(), |ui, range| {
+                    for index in range {
+                        if menu_row(ui, options[index], index == highlight).clicked() {
+                            picked = Some(index);
+                        }
+                    }
+                });
             if enter {
                 picked = Some(highlight);
             }

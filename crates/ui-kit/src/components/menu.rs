@@ -30,25 +30,46 @@ pub fn context_menu(ui: &mut Ui, label: &str, items: &[MenuItem<'_>]) -> Option<
 /// Ícone que abre o mesmo menu. O tooltip é o nome da ação.
 pub fn icon_menu(ui: &mut Ui, glyph: &str, tooltip: &str, items: &[MenuItem<'_>]) -> Option<usize> {
     let response = crate::icon::icon_button(ui, glyph).on_hover_text(tooltip.to_owned());
+    response.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), tooltip)
+    });
     open_menu(&response, items)
 }
 
 fn open_menu(response: &Response, items: &[MenuItem<'_>]) -> Option<usize> {
     let mut chosen = None;
+    let screen = response.ctx.content_rect();
+    let max_width = (screen.width() - 24.0).clamp(160.0, 420.0);
+    let below = (screen.bottom() - response.rect.bottom() - 12.0).max(0.0);
+    let above = (response.rect.top() - screen.top() - 12.0).max(0.0);
+    let available_height = below
+        .max(above)
+        .clamp(MENU_MIN_HEIGHT, (screen.height() - 24.0).max(MENU_MIN_HEIGHT));
+    let max_height = menu_height_limit(screen.height()).min(available_height);
+    let tokens = crate::applied_tokens(&response.ctx);
+    let row_height = tokens.metrics().row;
+    let spacing_y = 2.0_f32;
+    let content_height = items.len() as f32 * (row_height + spacing_y) + 8.0;
     Popup::from_response(response)
         .kind(PopupKind::Menu)
-        .layout(egui::Layout::top_down_justified(egui::Align::Min))
+        .layout(egui::Layout::top_down(egui::Align::Min))
         .gap(4.0)
         .open_memory(response.clicked().then_some(egui::SetOpenCommand::Toggle))
         .show(|ui| {
-            let max_height = menu_height_limit(ui.ctx().content_rect().height());
-            egui::ScrollArea::vertical()
-                .id_salt("forja-ui-kit.context-menu")
-                .max_height(max_height)
-                .auto_shrink([false, false])
-                .show(ui, |ui| {
-                    chosen = menu_list(ui, items);
-                });
+            let width = menu_width(ui, items, max_width);
+            ui.set_width(width);
+            ui.spacing_mut().item_spacing.y = spacing_y;
+            if content_height <= max_height {
+                chosen = menu_list(ui, items, width);
+            } else {
+                egui::ScrollArea::vertical()
+                    .id_salt("forja-ui-kit.context-menu")
+                    .max_height(max_height)
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        chosen = menu_list(ui, items, width);
+                    });
+            }
         });
     chosen
 }
@@ -71,26 +92,41 @@ pub fn menu_panel(ui: &mut Ui, items: &[MenuItem<'_>]) -> Option<usize> {
         .shadow(elevation_shadow(2, tokens.mode))
         .inner_margin(Margin::same(pad_i8(4.0)))
         .show(ui, |ui| {
-            chosen = menu_list(ui, items);
+            let max_width = ui.available_width().clamp(160.0, 420.0);
+            let width = menu_width(ui, items, max_width);
+            chosen = menu_list(ui, items, width);
         });
     chosen
 }
 
-fn menu_list(ui: &mut Ui, items: &[MenuItem<'_>]) -> Option<usize> {
+fn menu_width(ui: &Ui, items: &[MenuItem<'_>], max_width: f32) -> f32 {
+    let tokens = paint::tokens(ui);
+    let metrics = tokens.metrics();
+    let font = body_font(&metrics);
+    let color = tokens.color.text.to_color32();
+    let widest = items
+        .iter()
+        .map(|item| paint::text_size(ui, item.label, font.clone(), color).x + 28.0)
+        .fold(160.0_f32, f32::max);
+    widest.min(max_width.max(160.0))
+}
+
+fn menu_list(ui: &mut Ui, items: &[MenuItem<'_>], width: f32) -> Option<usize> {
     let mut chosen = None;
     for (index, item) in items.iter().enumerate() {
-        if menu_row(ui, item).clicked() {
+        if menu_row(ui, item, width).clicked() {
             chosen = Some(index);
         }
     }
     chosen
 }
 
-fn menu_row(ui: &mut Ui, item: &MenuItem<'_>) -> Response {
+fn menu_row(ui: &mut Ui, item: &MenuItem<'_>, width: f32) -> Response {
     let tokens = paint::tokens(ui);
     let metrics = tokens.metrics();
-    let width = ui.available_width().max(160.0);
-    let (rect, response) = ui.allocate_exact_size(egui::vec2(width, metrics.row), Sense::click());
+    let row_width = ui.available_width().clamp(120.0, width);
+    let (rect, response) =
+        ui.allocate_exact_size(egui::vec2(row_width, metrics.row), Sense::click());
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), item.label)
     });
@@ -111,9 +147,11 @@ fn menu_row(ui: &mut Ui, item: &MenuItem<'_>) -> Response {
         egui::vec2(3.0, 12.0),
     );
     ui.painter().rect_filled(bar, CornerRadius::same(2), mark);
+    let text_rect = rect.shrink2(egui::vec2(12.0, 0.0));
+    let text_painter = ui.painter().with_clip_rect(text_rect.intersect(ui.clip_rect()));
     paint_text(
-        ui.painter(),
-        rect.shrink2(egui::vec2(12.0, 0.0)),
+        &text_painter,
+        text_rect,
         Align2::LEFT_CENTER,
         item.label,
         body_font(&metrics),

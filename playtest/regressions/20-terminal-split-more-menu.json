@@ -1,0 +1,26 @@
+{
+  "title": "Split terminal pane chrome collapses excess controls into Mais with accessible icon labels (#90, #91, #97)",
+  "issue": 90,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.click", "target": "Dividir à direita" },
+    { "m": "ui.click", "target": "Dividir à direita" },
+    { "m": "ui.click", "target": "Dividir abaixo" },
+    { "m": "ui.click", "target": "Mais" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 6,
+      "present": ["Fechar painel", "Dividir abaixo", "Mais"]
+    },
+    {
+      "step": 7,
+      "present_contains": "Receitas:"
+    }
+  ]
+}
