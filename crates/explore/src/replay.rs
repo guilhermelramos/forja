@@ -66,6 +66,8 @@ pub struct Expectation {
     pub window_count_min: Option<usize>,
     #[serde(default)]
     pub window_count_max: Option<usize>,
+    #[serde(default)]
+    pub no_geometry_issues: Option<bool>,
 }
 
 /// Runs every `*.json` regression file in `dir` against a fresh clean app instance.
@@ -319,6 +321,15 @@ pub fn evaluate_expectations(
                 ));
             }
         }
+        if exp.no_geometry_issues == Some(true) {
+            let issues = crate::invariants::geometry_issues(snap);
+            if !issues.is_empty() {
+                return Err(format!(
+                    "expectation {exp_idx} (step {target_idx}): geometry issue(s): {}",
+                    issues.join(" | ")
+                ));
+            }
+        }
     }
     Ok(())
 }
@@ -339,6 +350,7 @@ mod tests {
                 clickable: false,
                 editable: false,
                 state: vec![],
+                window_id: None,
             });
         }
         for (i, n) in names.iter().enumerate() {
@@ -350,6 +362,7 @@ mod tests {
                 clickable: true,
                 editable: false,
                 state: vec![],
+                window_id: None,
             });
         }
         Snapshot {

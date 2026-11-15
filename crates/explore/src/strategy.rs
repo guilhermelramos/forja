@@ -471,6 +471,7 @@ mod tests {
             clickable: true,
             editable: false,
             state: vec![],
+            window_id: None,
         }
     }
 
@@ -538,6 +539,7 @@ mod tests {
                 clickable: true,
                 editable: true,
                 state: vec!["focused".to_owned()],
+                window_id: None,
             }],
         };
         let mut strat = Strategy::new(9, vec![]);
