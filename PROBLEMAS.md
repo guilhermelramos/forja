@@ -591,6 +591,17 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - O estado vazio central "Nenhum mutirão ainda. Crie um para dividir o trabalho em tarefas." fica a cerca de 170 px do topo da coluna (que tem ~1006 px de altura), em vez de centrado verticalmente.
 - Textos de estado vazio e subtítulo em cinza sobre fundo claro têm contraste reduzido (por exemplo, "Tarefas, ajudantes e recados num só lugar." e "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.").
 
+## [pt-BR.light.right-tab.ports.panel](pages/pt-BR.light.right-tab.ports.panel.md)
+
+- O botão "Clonar", visível na imagem (~64,141)–(~128,173) abaixo de "Adicionar pasta", não aparece na árvore de acessibilidade desta captura (na referência escura ele existe como Button "Clonar").
+- O botão "Fechar pwsh" (385,121)–(401,137) fica inteiramente dentro da área do chip "pwsh · Em execução" (328,118)–(404,140): dois elementos clicáveis sobrepostos, fácil errar o alvo.
+- Botões sem nome acessível: alternância de tema (1741,5)–(1773,37) e os quatro ícones da barra do terminal (fechar, dividir, sessão, busca).
+- O campo de filtro (1632,145)–(1908,177) é um TextInput sem nome acessível; o placeholder não é exposto como nome.
+- Três botões com o mesmo nome "Mais abas" em painéis diferentes, ambíguos para leitor de tela.
+- O rótulo "(ícone)" do estado vazio (168,201)–(196,229) não tem nome acessível significativo.
+- "Nenhum projeto" (11,12)–(113,31), "Portas" (1632,101)–(1683,133), "0 em escuta" (1690,101)–(1754,133), "Nenhum projeto ainda..." (66,237)–(298,275), "Nenhuma porta TCP em escuta foi encontrada." (1632,243)–(1847,281) e "Notificações" (1810,1055)–(1886,1074) são Labels, mas expõem ações de clique (e alguns também foco), papel incoerente com o tipo.
+- Três abas aparecem simultaneamente com marcado=True ("Projetos", "Terminal" e "Portas"), o que torna ambíguo qual painel está de fato selecionado.
+
 ## [pt-BR.light.rail.request.page](pages/pt-BR.light.rail.request.page.md)
 
 - O botão de alternância de tema no topo direito (1741,5)–(1773,37) não tem nome acessível; é identificável apenas pelo ícone de sol.

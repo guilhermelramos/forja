@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 50/160 telas documentadas · elementos citados 5823/6228 · completo: false
+**Progresso:** 51/160 telas documentadas · elementos citados 5865/6270 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -80,7 +80,7 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.light.rail.muster.page` | [página](pages/pt-BR.light.rail.muster.page.md) | [png](captures/pt-BR.light.rail.muster.page.png) |
 | `pt-BR.light.modal.notify.toasts` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.notify.toasts.png) |
 | `pt-BR.light.modal.onboarding.wizard` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.onboarding.wizard.png) |
-| `pt-BR.light.right-tab.ports.panel` | — | [png](captures/pt-BR.light.right-tab.ports.panel.png) |
+| `pt-BR.light.right-tab.ports.panel` | [página](pages/pt-BR.light.right-tab.ports.panel.md) | [png](captures/pt-BR.light.right-tab.ports.panel.png) |
 | `pt-BR.light.modal.project.dialogs` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.project.dialogs.png) |
 | `pt-BR.light.rail.request.page` | [página](pages/pt-BR.light.rail.request.page.md) | [png](captures/pt-BR.light.rail.request.page.png) |
 | `pt-BR.light.bench-tab.review.tab` | [página](pages/pt-BR.light.bench-tab.review.tab.md) | [png](captures/pt-BR.light.bench-tab.review.tab.png) |

@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 50,
-  "widgets_total": 6228,
-  "widgets_covered": 5823,
+  "states_done": 51,
+  "widgets_total": 6270,
+  "widgets_covered": 5865,
   "complete": false,
   "stale": [
     {
@@ -1267,11 +1267,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "pt-BR.light.right-tab.ports.panel",
-      "png": "captures/pt-BR.light.right-tab.ports.panel.png",
-      "tree": "captures/pt-BR.light.right-tab.ports.panel.json"
-    },
     {
       "state": "pt-BR.light.right-tab.search.panel",
       "png": "captures/pt-BR.light.right-tab.search.panel.png",
