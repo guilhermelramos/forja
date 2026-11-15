@@ -1,6 +1,7 @@
 //! Shared port snapshot and scan pacing.
 
 use crate::model::Snapshot;
+use forja_kernel::HumanError;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -10,6 +11,7 @@ pub struct State {
     pub busy: bool,
     pub last_scan: Option<Instant>,
     pub pending_kill: Option<u32>,
+    pub human_error: Option<HumanError>,
 }
 
 #[derive(Clone)]
@@ -18,10 +20,6 @@ pub struct Shared(Arc<Mutex<State>>);
 impl Shared {
     pub fn new() -> Self {
         Self(Arc::new(Mutex::new(State::default())))
-    }
-
-    pub fn with<R>(&self, f: impl FnOnce(&mut State) -> R) -> Option<R> {
-        self.0.lock().ok().map(|mut state| f(&mut state))
     }
 
     pub fn snapshot(&self) -> Snapshot {
@@ -86,10 +84,37 @@ impl Shared {
         }
     }
 
-    pub fn set_error(&self, message: String) {
+    pub fn human_error(&self) -> Option<HumanError> {
+        self.0
+            .lock()
+            .ok()
+            .and_then(|state| state.human_error.clone())
+    }
+
+    pub fn set_human_error(&self, error: HumanError) {
         if let Ok(mut state) = self.0.lock() {
-            state.snapshot.error = Some(message);
+            state.human_error = Some(error);
         }
+    }
+
+    pub fn clear_error(&self) {
+        if let Ok(mut state) = self.0.lock() {
+            state.human_error = None;
+            state.snapshot.error = None;
+        }
+    }
+
+    pub fn is_known_system_pid(&self, pid: u32) -> bool {
+        self.0
+            .lock()
+            .map(|state| {
+                state
+                    .snapshot
+                    .ports
+                    .iter()
+                    .any(|port| port.pid == pid && port.is_system)
+            })
+            .unwrap_or(false)
     }
 
     pub fn expire(&self) {

@@ -1,7 +1,10 @@
 # forja-module-ports
 
-Painel direito **Portas**: portas TCP em escuta, processo dono, bancada provável
-pelo cwd, abrir no navegador e encerrar com confirmação.
+Painel direito **Portas**: lista compacta e agrupada por bancada das portas TCP
+em escuta da Forja (pelo diretório de trabalho ou árvore de processos do
+terminal/ajudante), filtro por texto, interruptor para exibir portas do
+sistema, abrir portas HTTP no navegador e encerrar com confirmação ou recusa
+humana para processos do sistema.
 
 ## O que registra
 
@@ -18,13 +21,20 @@ pelo cwd, abrir no navegador e encerrar com confirmação.
 
 - `ports.list` devolve `{ports, scanned_at_ms, busy, error}`. A primeira chamada
   pode vir vazia e iniciar a varredura; as próximas leem o cache.
+- Por padrão o painel exibe apenas portas associadas a bancadas/projetos da
+  Forja ou abertas na árvore de processos da Forja; o interruptor
+  "Mostrar todas as portas do sistema" revela os demais processos e serviços.
+- As portas são agrupadas por bancada (seguidas por Forja, Outros processos e
+  Sistema), com filtro por texto e botão "Abrir no navegador" apenas para portas
+  HTTP.
 - O parser de `netstat -ano` reconhece LISTENING pelo peer `0.0.0.0:0`/`[::]:0`,
-  sem ler o rótulo traduzido. `tasklist /FO CSV /NH` dá o nome do processo; CSV
-  com vírgulas entre aspas é aceito.
-- O cwd vem de leitura best-effort da PEB do processo (somente x64). Sem
-  permissão, a porta aparece sem bancada. A bancada é o maior caminho de
-  `bench.list` que contém o cwd.
-- `ports.kill {pid, port?, confirm?}` recusa PID 0, 4 e o próprio processo. Com
+  sem ler o rótulo traduzido. `tasklist /FO CSV /NH` dá o nome do processo e a
+  sessão (`Services`/`0` identifica serviços do Windows).
+- O cwd e o PID pai vêm de `NtQueryInformationProcess` (`ProcessBasicInformation`)
+  e leitura da PEB (x64); a árvore de ancestrais associa processos filhos de
+  terminais/ajudantes à bancada correspondente.
+- `ports.kill {pid, port?, confirm?}` recusa PID 0, 4, o próprio processo e
+  processos do sistema com mensagem humana (`forja_kernel::human_error`). Com
   `ports.confirm.kill` ligado, `confirm` precisa ser `true`; o painel pede a
   confirmação em dois cliques.
 - A varredura roda em `cx.spawn`, no intervalo da configuração; a barra de status
@@ -40,5 +50,7 @@ cargo run -p forja-app
 ```
 
 Os testes cobrem netstat em inglês e português, tasklist com vírgulas entre
-aspas, ordenação/deduplicação, escolha da bancada mais específica, URL local,
-recusa de encerrar o próprio processo e confirmação obrigatória.
+aspas e classificação de serviços, ordenação/deduplicação, escolha da bancada
+mais específica, inspeção da árvore de processos, heurística HTTP, agrupamento e
+filtro, URL local, recusa humana de processos do sistema/próprio processo e
+confirmação obrigatória.

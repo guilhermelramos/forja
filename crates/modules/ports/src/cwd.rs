@@ -1,45 +1,104 @@
-//! Best-effort current directory of another process.
+//! Best-effort current directory and parent PID of another process.
 //!
 //! Windows has no public `GetProcessCurrentDirectory`. On 64-bit processes we
-//! read the PEB, the process parameters and `CurrentDirectory.DosPath`, all with
-//! `ReadProcessMemory`. Access denied is normal for services: the caller gets
-//! `None` and the port stays without a bench guess.
+//! read `NtQueryInformationProcess` (`ProcessBasicInformation`, which gives both
+//! PEB address and `InheritedFromUniqueProcessId`) and `ReadProcessMemory` on
+//! `CurrentDirectory.DosPath`. Access denied is normal for services: the caller
+//! gets `None` and falls back cleanly.
 
 use std::path::PathBuf;
 
+/// Current directory and parent PID retrieved for a process.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ProcessInspection {
+    pub cwd: Option<PathBuf>,
+    pub parent_pid: Option<u32>,
+}
+
 #[cfg(windows)]
-pub fn process_cwd(pid: u32) -> Option<PathBuf> {
+pub fn inspect_process(pid: u32) -> ProcessInspection {
     if pid == 0 || pid == 4 || !cfg!(target_pointer_width = "64") {
-        return None;
+        return ProcessInspection::default();
     }
-    unsafe { read_cwd(pid) }
+    unsafe { read_inspection(pid) }
 }
 
 #[cfg(not(windows))]
-pub fn process_cwd(_pid: u32) -> Option<PathBuf> {
-    None
+pub fn inspect_process(_pid: u32) -> ProcessInspection {
+    ProcessInspection::default()
 }
 
 #[cfg(windows)]
-unsafe fn read_cwd(pid: u32) -> Option<PathBuf> {
+unsafe fn read_inspection(pid: u32) -> ProcessInspection {
     use windows_sys::Wdk::System::Threading::NtQueryInformationProcess;
     use windows_sys::Win32::Foundation::CloseHandle;
     use windows_sys::Win32::System::Diagnostics::Debug::ReadProcessMemory;
     use windows_sys::Win32::System::Threading::{
-        OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ,
+        OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_VM_READ,
     };
 
     let process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, 0, pid);
-    if process.is_null() {
-        return None;
+    if !process.is_null() {
+        let result = inspect_handle(process, Some(ReadProcessMemory), NtQueryInformationProcess);
+        let _ = CloseHandle(process);
+        return result;
     }
-    let result = read_cwd_handle(process, ReadProcessMemory, NtQueryInformationProcess);
-    let _ = CloseHandle(process);
-    result
+
+    let limited = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
+    if !limited.is_null() {
+        let result = inspect_handle(limited, None, NtQueryInformationProcess);
+        let _ = CloseHandle(limited);
+        return result;
+    }
+
+    ProcessInspection::default()
 }
 
 #[cfg(windows)]
-unsafe fn read_cwd_handle(
+unsafe fn inspect_handle(
+    process: windows_sys::Win32::Foundation::HANDLE,
+    read: Option<
+        unsafe extern "system" fn(
+            windows_sys::Win32::Foundation::HANDLE,
+            *const core::ffi::c_void,
+            *mut core::ffi::c_void,
+            usize,
+            *mut usize,
+        ) -> i32,
+    >,
+    query: unsafe extern "system" fn(
+        windows_sys::Win32::Foundation::HANDLE,
+        i32,
+        *mut core::ffi::c_void,
+        u32,
+        *mut u32,
+    ) -> i32,
+) -> ProcessInspection {
+    let mut info = [0u8; 48];
+    let mut returned = 0u32;
+    let status = query(
+        process,
+        0,
+        info.as_mut_ptr() as *mut core::ffi::c_void,
+        info.len() as u32,
+        &mut returned,
+    );
+    if status < 0 {
+        return ProcessInspection::default();
+    }
+    let parent_pid = info[40..48]
+        .try_into()
+        .ok()
+        .map(u64::from_le_bytes)
+        .and_then(|value| u32::try_from(value).ok())
+        .filter(|value| *value > 0);
+
+    let cwd = read.and_then(|read_fn| read_cwd_from_info(process, read_fn, &info));
+    ProcessInspection { cwd, parent_pid }
+}
+
+#[cfg(windows)]
+unsafe fn read_cwd_from_info(
     process: windows_sys::Win32::Foundation::HANDLE,
     read: unsafe extern "system" fn(
         windows_sys::Win32::Foundation::HANDLE,
@@ -48,25 +107,8 @@ unsafe fn read_cwd_handle(
         usize,
         *mut usize,
     ) -> i32,
-    query: unsafe extern "system" fn(
-        windows_sys::Win32::Foundation::HANDLE,
-        i32,
-        *mut core::ffi::c_void,
-        u32,
-        *mut u32,
-    ) -> i32,
+    info: &[u8; 48],
 ) -> Option<PathBuf> {
-    let mut info = [0u8; 48];
-    let status = query(
-        process,
-        0,
-        info.as_mut_ptr() as *mut core::ffi::c_void,
-        info.len() as u32,
-        std::ptr::null_mut(),
-    );
-    if status < 0 {
-        return None;
-    }
     let peb = usize::from_le_bytes(info[8..16].try_into().ok()?);
     if peb == 0 {
         return None;
@@ -140,5 +182,32 @@ unsafe fn read_pointer(
         None
     } else {
         Some(usize::from_le_bytes(buffer))
+    }
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn self_inspection_reads_cwd_and_parent_pid() {
+        let info = inspect_process(std::process::id());
+        assert!(info.cwd.is_some());
+        assert!(info.parent_pid.is_some());
+        assert_eq!(inspect_process(0), ProcessInspection::default());
+        assert_eq!(inspect_process(4), ProcessInspection::default());
+
+        let temp = std::env::temp_dir();
+        let mut child = std::process::Command::new("cmd")
+            .args(["/C", "ping -n 2 127.0.0.1 >NUL"])
+            .current_dir(&temp)
+            .spawn()
+            .expect("spawn cmd child");
+        std::thread::sleep(std::time::Duration::from_millis(150));
+        let child_info = inspect_process(child.id());
+        let _ = child.kill();
+        let _ = child.wait();
+        assert!(child_info.cwd.is_some(), "child cwd: {child_info:?}");
+        assert_eq!(child_info.parent_pid, Some(std::process::id()));
     }
 }
