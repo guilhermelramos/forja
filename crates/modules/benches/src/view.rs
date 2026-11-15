@@ -55,34 +55,41 @@ impl View for DetailView {
             .corner_radius(10)
             .inner_margin(egui::Margin::symmetric(12, 10));
         frame.show(ui, |ui| {
+            let max_w = ui.available_width().max(1.0);
+            ui.set_max_width(max_w);
             ui.horizontal(|ui| {
-                ui.label(
-                    egui::RichText::new(&bench.name)
-                        .size(17.0)
-                        .strong()
-                        .color(c32(tokens.color.text)),
-                );
-                stage_badge(ui, &stage.0, &stage.1, &tokens);
-                if bench.pinned {
-                    ui.label(egui::RichText::new("\u{2605}").color(c32(tokens.color.spark)));
-                }
-                if bench.unread {
-                    ui.label(egui::RichText::new("\u{25cf}").color(c32(tokens.color.accent)));
-                }
-                if bench.archived {
-                    ui.label(
-                        egui::RichText::new(cx.t("bench.detail.archived"))
-                            .small()
-                            .color(c32(tokens.color.text_muted)),
-                    );
-                }
-                if bench.sleeping {
-                    ui.label(
-                        egui::RichText::new(cx.t("bench.detail.sleeping"))
-                            .small()
-                            .color(c32(tokens.color.info)),
-                    );
-                }
+                ui.set_max_width(max_w);
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if bench.sleeping {
+                        ui.label(
+                            egui::RichText::new(cx.t("bench.detail.sleeping"))
+                                .small()
+                                .color(c32(tokens.color.info)),
+                        );
+                    }
+                    if bench.archived {
+                        ui.label(
+                            egui::RichText::new(cx.t("bench.detail.archived"))
+                                .small()
+                                .color(c32(tokens.color.text_muted)),
+                        );
+                    }
+                    if bench.unread {
+                        ui.label(egui::RichText::new("\u{25cf}").color(c32(tokens.color.accent)));
+                    }
+                    if bench.pinned {
+                        ui.label(egui::RichText::new("\u{2605}").color(c32(tokens.color.spark)));
+                    }
+                    stage_badge(ui, &stage.0, &stage.1, &tokens);
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                        forja_ui_kit::truncated_label(
+                            ui,
+                            &bench.name,
+                            egui::FontId::proportional(17.0),
+                            c32(tokens.color.text),
+                        );
+                    });
+                });
             });
             ui.add_space(6.0);
             detail_row(
@@ -294,7 +301,7 @@ fn dot_color(tokens: &forja_ui_kit::Tokens, dot: &str) -> egui::Color32 {
 }
 
 fn detail_row(ui: &mut egui::Ui, tokens: &forja_ui_kit::Tokens, label: &str, value: &str) {
-    ui.horizontal(|ui| {
+    ui.horizontal_top(|ui| {
         ui.add_sized(
             [110.0, 18.0],
             egui::Label::new(
@@ -303,11 +310,16 @@ fn detail_row(ui: &mut egui::Ui, tokens: &forja_ui_kit::Tokens, label: &str, val
                     .color(c32(tokens.color.text_muted)),
             ),
         );
-        ui.label(
-            egui::RichText::new(value)
-                .small()
-                .color(c32(tokens.color.text)),
-        );
+        ui.vertical(|ui| {
+            let max_w = ui.available_width().max(1.0);
+            ui.set_max_width(max_w);
+            forja_ui_kit::wrapped_label(
+                ui,
+                value,
+                egui::FontId::proportional(tokens.metrics().caption),
+                c32(tokens.color.text),
+            );
+        });
     });
 }
 

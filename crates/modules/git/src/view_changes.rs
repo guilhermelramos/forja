@@ -49,6 +49,7 @@ impl View for ChangesView {
             self.state.set_selected_tab(tab);
         }
         ui.separator();
+        messages(ui, cx, &self.state, &tokens);
         match tab {
             1 => {
                 load_log(cx, &self.state);
@@ -61,7 +62,6 @@ impl View for ChangesView {
                 render_changes(ui, cx, &self.state, &mut self.force);
             }
         }
-        messages(ui, cx, &self.state, &tokens);
     }
 }
 
@@ -358,50 +358,64 @@ fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &m
         egui::ScrollArea::vertical()
             .id_salt("git.changes.files")
             .auto_shrink([false, false])
-            .max_height(ui.available_height() - 10.0)
+            .max_height((ui.available_height() - 10.0).max(60.0))
             .show(ui, |ui| {
                 for file in &report.files {
                     ui.horizontal(|ui| {
-                        let code = format!("{}{}", file.index, file.worktree);
-                        let color = if file.conflict {
-                            tokens.color.danger
-                        } else if file.untracked {
-                            tokens.color.info
-                        } else if file.staged {
-                            tokens.color.ok
-                        } else {
-                            tokens.color.accent
-                        };
-                        ui.label(
-                            egui::RichText::new(code)
-                                .monospace()
-                                .small()
-                                .color(c32(color)),
-                        );
-                        if ui
-                            .add(
-                                egui::Label::new(
-                                    egui::RichText::new(&file.path)
-                                        .small()
-                                        .underline()
-                                        .color(c32(tokens.color.text)),
-                                )
-                                .truncate()
-                                .sense(egui::Sense::click()),
-                            )
-                            .clicked()
-                        {
-                            open_file_diff(cx, &path, &file.path, file.staged && !file.unstaged);
-                        }
-                        if !file.staged && !file.conflict && !file.untracked && small(ui, "+") {
-                            stage(cx, &path, std::slice::from_ref(&file.path));
-                        }
-                        if file.staged && small(ui, "\u{2212}") {
-                            unstage(cx, &path, std::slice::from_ref(&file.path));
-                        }
-                        if small(ui, "\u{21ba}") {
-                            state.set_discard(Some(vec![file.path.clone()]));
-                        }
+                        ui.set_max_width(ui.available_width().max(1.0));
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if small(ui, "\u{21ba}") {
+                                state.set_discard(Some(vec![file.path.clone()]));
+                            }
+                            if file.staged && small(ui, "\u{2212}") {
+                                unstage(cx, &path, std::slice::from_ref(&file.path));
+                            }
+                            if !file.staged && !file.conflict && !file.untracked && small(ui, "+")
+                            {
+                                stage(cx, &path, std::slice::from_ref(&file.path));
+                            }
+                            ui.with_layout(
+                                egui::Layout::left_to_right(egui::Align::Center),
+                                |ui| {
+                                    let code = format!("{}{}", file.index, file.worktree);
+                                    let color = if file.conflict {
+                                        tokens.color.danger
+                                    } else if file.untracked {
+                                        tokens.color.info
+                                    } else if file.staged {
+                                        tokens.color.ok
+                                    } else {
+                                        tokens.color.accent
+                                    };
+                                    ui.label(
+                                        egui::RichText::new(code)
+                                            .monospace()
+                                            .small()
+                                            .color(c32(color)),
+                                    );
+                                    let response = ui
+                                        .add(
+                                            egui::Label::new(
+                                                egui::RichText::new(&file.path)
+                                                    .small()
+                                                    .underline()
+                                                    .color(c32(tokens.color.text)),
+                                            )
+                                            .truncate()
+                                            .sense(egui::Sense::click()),
+                                        )
+                                        .on_hover_text(&file.path);
+                                    if response.clicked() {
+                                        open_file_diff(
+                                            cx,
+                                            &path,
+                                            &file.path,
+                                            file.staged && !file.unstaged,
+                                        );
+                                    }
+                                },
+                            );
+                        });
                     });
                 }
             });

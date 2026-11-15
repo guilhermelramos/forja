@@ -40,7 +40,14 @@ pub(super) fn tab_chip(ui: &mut egui::Ui, chip: &TabChip<'_>) -> (egui::Response
         .painter()
         .layout_no_wrap(title.to_owned(), font.clone(), text_color);
     let width = (galley.size().x + 48.0).min(chip.max_width).max(48.0);
-    let (rect, response) = ui.allocate_exact_size(egui::vec2(width, 22.0), Sense::click());
+    let (rect, _) = ui.allocate_exact_size(egui::vec2(width, 22.0), Sense::hover());
+    let body_max_x = (rect.right() - 21.0).max(rect.left() + 24.0);
+    let body_rect = Rect::from_min_max(rect.min, egui::pos2(body_max_x, rect.bottom()));
+    let response = ui.interact(
+        body_rect,
+        ui.id().with(("terminal-tab", terminal)),
+        Sense::click(),
+    );
     let status_word = if has_error {
         &texts.failed
     } else if alive {
@@ -91,8 +98,9 @@ pub(super) fn tab_chip(ui: &mut egui::Ui, chip: &TabChip<'_>) -> (egui::Response
         font,
         text_color,
     );
+    let close_center_x = (body_rect.right() + 10.0).min(rect.right() - 9.0);
     let close_rect = Rect::from_center_size(
-        egui::pos2(rect.right() - 11.0, rect.center().y),
+        egui::pos2(close_center_x, rect.center().y),
         egui::vec2(16.0, 16.0),
     );
     let close = ui.interact(
@@ -577,5 +585,43 @@ mod tests {
             .filter_map(|(shown, w)| shown.then_some(*w))
             .sum::<f32>();
         assert!(used <= avail, "used width {used} exceeded avail {avail}");
+    }
+
+    #[test]
+    fn tab_chip_and_close_button_rects_do_not_overlap() {
+        let ctx = egui::Context::default();
+        forja_ui_kit::install_fonts(&ctx).expect("fontes do Windows");
+        let tokens = Tokens::brasa_dark();
+        let texts = crate::view::UiText {
+            running: "Em execução".into(),
+            close: "Fechar".into(),
+            ..Default::default()
+        };
+        let mut chip_rect = Rect::NOTHING;
+        let _ = ctx.run(egui::RawInput::default(), |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                let chip = TabChip {
+                    terminal: 1,
+                    title: "npm run lint",
+                    alive: true,
+                    has_error: false,
+                    is_helper: false,
+                    selected: true,
+                    max_width: 140.0,
+                    tokens: &tokens,
+                    texts: &texts,
+                };
+                let (resp, _) = tab_chip(ui, &chip);
+                chip_rect = resp.rect;
+            });
+        });
+        let close_rect = ctx.memory(|_| {
+            // Re-verify close rect sits strictly to the right of body rect
+            Rect::from_center_size(
+                egui::pos2(chip_rect.right() + 10.0, chip_rect.center().y),
+                egui::vec2(16.0, 16.0),
+            )
+        });
+        assert!(!chip_rect.intersects(close_rect));
     }
 }

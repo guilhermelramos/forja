@@ -24,6 +24,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 /// Textos usados pela view, resolvidos antes de bloquear o hub.
+#[derive(Clone, Default)]
 pub struct UiText {
     pub search_hint: String,
     pub previous: String,

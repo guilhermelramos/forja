@@ -11,7 +11,7 @@ use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::{Args, Ctx, Locale};
 use forja_ui_kit::{
     applied_tokens, button, icon_button, modal_explicit_close, progress_bar, text_field,
-    ButtonKind, CLOSE,
+    wrapped_label, ButtonKind, CLOSE,
 };
 use serde_json::json;
 use std::collections::BTreeMap;
@@ -379,7 +379,14 @@ impl MusterView {
             );
         });
         if !run.objective.is_empty() {
-            ui.label(egui::RichText::new(&run.objective).weak());
+            let tokens = applied_tokens(ui.ctx());
+            let metrics = tokens.metrics();
+            wrapped_label(
+                ui,
+                &run.objective,
+                egui::FontId::proportional(metrics.body),
+                tokens.color.text_muted.to_color32(),
+            );
         }
     }
 
@@ -389,10 +396,12 @@ impl MusterView {
         cx: &mut Ctx<'_>,
         snap: &Snapshot,
         run: &MusterRun,
+        max_height: f32,
     ) {
         egui::ScrollArea::vertical()
             .id_salt("muster-plan-column")
             .auto_shrink([false, false])
+            .max_height(max_height)
             .show(ui, |ui| {
                 ui.set_min_width(ui.available_width());
                 ui.horizontal_wrapped(|ui| {
@@ -691,10 +700,12 @@ impl MusterView {
         cx: &mut Ctx<'_>,
         snap: &Snapshot,
         run: &MusterRun,
+        max_height: f32,
     ) {
         egui::ScrollArea::vertical()
             .id_salt("muster-assignments-column")
             .auto_shrink([false, false])
+            .max_height(max_height)
             .show(ui, |ui| {
                 ui.set_min_width(ui.available_width());
                 ui.label(egui::RichText::new(cx.t("muster.assignments")).strong());
@@ -833,10 +844,12 @@ impl MusterView {
         cx: &mut Ctx<'_>,
         snap: &Snapshot,
         run: &MusterRun,
+        max_height: f32,
     ) {
         egui::ScrollArea::vertical()
             .id_salt("muster-inbox-column")
             .auto_shrink([false, false])
+            .max_height(max_height)
             .show(ui, |ui| {
                 ui.set_min_width(ui.available_width());
                 self.cost_panel(ui, cx, snap, run);
@@ -1031,7 +1044,14 @@ impl MusterView {
     fn plan_details(&self, ui: &mut egui::Ui, cx: &Ctx<'_>, snap: &Snapshot, run: &MusterRun) {
         ui.label(egui::RichText::new(&run.title).strong());
         if !run.objective.is_empty() {
-            ui.label(egui::RichText::new(&run.objective).weak());
+            let tokens = applied_tokens(ui.ctx());
+            let metrics = tokens.metrics();
+            wrapped_label(
+                ui,
+                &run.objective,
+                egui::FontId::proportional(metrics.body),
+                tokens.color.text_muted.to_color32(),
+            );
         }
         let tasks: Vec<&Task> = snap
             .tasks
@@ -1415,25 +1435,32 @@ impl View for MusterView {
             .flatten();
         }
         let snap = snapshot(&self.shared);
-        self.header(ui, cx, &snap);
-        self.new_run_form(ui, cx);
-        self.run_list(ui, cx, &snap);
-        let selected = snap
-            .runs
-            .iter()
-            .find(|run| self.selected.as_deref() == Some(run.id.as_str()));
-        if let Some(run) = selected {
-            self.run_heading(ui, cx, run);
-            self.sync_helpers(cx);
-            self.sync_spend(cx, &snap, run);
-            ui.add_space(4.0);
-            ui.columns(3, |columns| {
-                self.plan_column(&mut columns[0], cx, &snap, run);
-                self.assignment_column(&mut columns[1], cx, &snap, run);
-                self.inbox_column(&mut columns[2], cx, &snap, run);
+        let column_height = (ui.available_height() - 200.0).clamp(240.0, 560.0);
+        egui::ScrollArea::vertical()
+            .id_salt("muster.page.scroll")
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                ui.set_max_width(ui.available_width().max(1.0));
+                self.header(ui, cx, &snap);
+                self.new_run_form(ui, cx);
+                self.run_list(ui, cx, &snap);
+                let selected = snap
+                    .runs
+                    .iter()
+                    .find(|run| self.selected.as_deref() == Some(run.id.as_str()));
+                if let Some(run) = selected {
+                    self.run_heading(ui, cx, run);
+                    self.sync_helpers(cx);
+                    self.sync_spend(cx, &snap, run);
+                    ui.add_space(4.0);
+                    ui.columns(3, |columns| {
+                        self.plan_column(&mut columns[0], cx, &snap, run, column_height);
+                        self.assignment_column(&mut columns[1], cx, &snap, run, column_height);
+                        self.inbox_column(&mut columns[2], cx, &snap, run, column_height);
+                    });
+                    self.plan_review(ui, cx, &snap, run);
+                }
             });
-            self.plan_review(ui, cx, &snap, run);
-        }
     }
 }
 

@@ -189,22 +189,113 @@ fn draw_toasts(ctx: &egui::Context, cx: &mut Ctx<'_>, state: &Shared) {
     let position = text(cx, "notifications.toast.position", "bottom_right");
     let (align, offset) = anchor(position);
     let dismiss = cx.t("notify.toast.dismiss");
+    let items: Vec<(u64, NotifyLevel, String)> = indexes
+        .into_iter()
+        .map(|index| {
+            let notice = &notices[index];
+            (notice.id, notice.level, brief(&notice.title, &notice.body))
+        })
+        .collect();
+    if let Some(id) = draw_toast_area(ctx, &items, align, offset, &dismiss) {
+        state.dismiss(id);
+    }
+}
+
+fn draw_toast_area(
+    ctx: &egui::Context,
+    items: &[(u64, NotifyLevel, String)],
+    align: Align2,
+    offset: egui::Vec2,
+    dismiss: &str,
+) -> Option<u64> {
+    let screen = ctx.content_rect();
+    let bounds = screen.shrink(8.0);
+    let area_width = 360.0_f32.min(bounds.width().max(120.0));
+    let max_height = (bounds.height() - 48.0).max(80.0);
+    let stack_height = estimate_toast_stack_height(ctx, items, area_width, dismiss).min(max_height);
+    let x = if align.x() == egui::Align::RIGHT {
+        (screen.right() + offset.x - area_width).max(bounds.left())
+    } else {
+        (screen.left() + offset.x).min((bounds.right() - area_width).max(bounds.left()))
+    };
+    let y = if align.y() == egui::Align::BOTTOM {
+        (screen.bottom() + offset.y - stack_height).max(bounds.top())
+    } else {
+        (screen.top() + offset.y).min((bounds.bottom() - stack_height).max(bounds.top()))
+    };
+    let mut dismissed = None;
     egui::Area::new(egui::Id::new("forja.notify.toasts"))
         .order(egui::Order::Foreground)
-        .anchor(align, offset)
+        .fixed_pos(egui::pos2(x, y))
+        .constrain_to(bounds)
         .show(ctx, |ui| {
-            ui.set_max_width(360.0);
-            for index in indexes {
-                let notice = &notices[index];
-                ui.horizontal(|ui| {
-                    toast(ui, kind(notice.level), &brief(&notice.title, &notice.body));
-                    if button(ui, ButtonKind::Ghost, &dismiss).clicked() {
-                        state.dismiss(notice.id);
+            ui.set_min_width(area_width);
+            ui.set_max_width(area_width);
+            egui::ScrollArea::vertical()
+                .id_salt("forja.notify.toasts.scroll")
+                .max_height(max_height)
+                .show(ui, |ui| {
+                    for (id, level, message) in items {
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+                            if button(ui, ButtonKind::Ghost, dismiss).clicked() {
+                                dismissed = Some(*id);
+                            }
+                            ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+                                let w = ui.available_width().max(1.0);
+                                ui.set_max_width(w);
+                                toast(ui, kind(*level), message);
+                            });
+                        });
+                        ui.add_space(8.0);
                     }
                 });
-                ui.add_space(8.0);
-            }
         });
+    dismissed
+}
+
+fn estimate_toast_stack_height(
+    ctx: &egui::Context,
+    items: &[(u64, NotifyLevel, String)],
+    area_width: f32,
+    dismiss: &str,
+) -> f32 {
+    let tokens = forja_ui_kit::applied_tokens(ctx);
+    let metrics = tokens.metrics();
+    let dismiss_w = ctx.fonts_mut(|fonts| {
+        fonts
+            .layout_no_wrap(
+                dismiss.to_owned(),
+                egui::FontId::proportional(metrics.body),
+                Color32::WHITE,
+            )
+            .size()
+            .x
+    }) + metrics.pad_x * 2.0
+        + 12.0;
+    let text_max = (area_width - dismiss_w - metrics.pad_x * 2.0 - 20.0).max(60.0);
+    items
+        .iter()
+        .map(|(_, _, message)| {
+            let text_h = ctx.fonts_mut(|fonts| {
+                let mut job = egui::text::LayoutJob::single_section(
+                    message.clone(),
+                    egui::TextFormat {
+                        font_id: egui::FontId::proportional(metrics.body),
+                        color: Color32::WHITE,
+                        ..Default::default()
+                    },
+                );
+                job.wrap = egui::text::TextWrapping {
+                    max_width: text_max,
+                    max_rows: usize::MAX,
+                    break_anywhere: true,
+                    ..Default::default()
+                };
+                fonts.layout_job(job).size().y
+            });
+            (text_h.max(metrics.body + 4.0) + metrics.pad_y * 2.0 + 2.0).max(metrics.row) + 12.0
+        })
+        .sum()
 }
 
 fn dismiss_key(ctx: &egui::Context) -> bool {
@@ -220,6 +311,7 @@ fn draw_center(ctx: &egui::Context, cx: &mut Ctx<'_>, state: &Shared, notices: &
     egui::Area::new(egui::Id::new("forja.notify.center"))
         .order(egui::Order::Foreground)
         .anchor(Align2::RIGHT_BOTTOM, egui::vec2(-12.0, -40.0))
+        .constrain_to(ctx.content_rect().shrink(8.0))
         .show(ctx, |ui| {
             card(ui, Some(&title), |ui| {
                 egui::ScrollArea::vertical()
@@ -377,5 +469,37 @@ mod keyboard_tests {
             assert!(!dismiss_key(ctx));
             assert!(ctx.input(|input| input.key_pressed(egui::Key::Escape)));
         });
+    }
+
+    #[test]
+    fn long_toast_fits_inside_screen_on_first_frame() {
+        for (w, h) in [(1920.0, 1080.0), (1280.0, 800.0)] {
+            let ctx = egui::Context::default();
+            forja_ui_kit::install_fonts(&ctx).expect("fontes do Windows");
+            let screen = egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(w, h));
+            let input = egui::RawInput {
+                screen_rect: Some(screen),
+                ..Default::default()
+            };
+            let items = vec![(
+                1_u64,
+                NotifyLevel::Error,
+                "Não foi possível criar a bancada: D:\\a\\forja\\forja\\a-very-long-unbreakable-path-0123456789-abcdefghijklmnopqrstuvwxyz".to_owned(),
+            )];
+            let (align, offset) = anchor("bottom_right");
+            let out = ctx.run(input, |ctx| {
+                let _ = draw_toast_area(ctx, &items, align, offset, "Fechar");
+            });
+            let area_id = egui::Id::new("forja.notify.toasts");
+            let rect = out
+                .viewport_output
+                .get(&egui::ViewportId::ROOT)
+                .and(ctx.memory(|mem| mem.area_rect(area_id)))
+                .expect("toast area rect");
+            assert!(rect.left() >= 0.0, "{w}x{h} left={}", rect.left());
+            assert!(rect.top() >= 0.0, "{w}x{h} top={}", rect.top());
+            assert!(rect.right() <= w, "{w}x{h} right={}", rect.right());
+            assert!(rect.bottom() <= h, "{w}x{h} bottom={}", rect.bottom());
+        }
     }
 }
