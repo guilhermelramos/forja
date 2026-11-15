@@ -5,7 +5,7 @@ use super::{
     CloseTarget, Hub, HubEvent, HubEventKind, OpenRequest, PendingClose, StoredLayout,
     StoredTerminal,
 };
-use crate::panes::tree::{first_pane, PaneId, PaneNode, SplitDir, TerminalId};
+use crate::panes::tree::{first_pane, PaneId, PaneNode, SplitDir, TerminalId, MAX_PANES};
 use crate::recipes::{self, Recipe};
 use crate::settings::TermSettings;
 use crate::shells::{self, ShellCommand};
@@ -59,6 +59,11 @@ impl Hub {
         }
         self.bench_path = bench;
         self.reload_content();
+    }
+
+    /// Quantidade de painéis visíveis na bancada.
+    pub fn pane_count(&self) -> usize {
+        self.root.as_ref().map_or(0, PaneNode::leaf_count)
     }
 
     /// Pasta onde novos terminais começam.
@@ -162,6 +167,9 @@ impl Hub {
         direction: SplitDir,
         settings: &TermSettings,
     ) -> Result<TerminalId, String> {
+        if self.pane_count() >= MAX_PANES {
+            return Err("terminal pane limit reached".to_owned());
+        }
         let dir = self
             .focused_terminal()
             .map(|terminal| terminal.dir.clone())
@@ -522,6 +530,9 @@ impl Hub {
         let Some(root) = layout.root else {
             return false;
         };
+        // Uma bancada gravada pode ser anterior ao limite de painéis. Fica com
+        // os primeiros para todo quadro continuar limitado. Refs #72, #74.
+        let root = root.pruned(MAX_PANES);
         let mut referenced = Vec::new();
         root.terminals(&mut referenced);
         if referenced.iter().any(|id| !stored.contains_key(id)) {
@@ -551,8 +562,15 @@ impl Hub {
             );
             self.terminals.insert(id, terminal);
         }
+        let focused = if root.leaf_ref(layout.focused).is_some() {
+            layout.focused
+        } else {
+            let mut leaves = Vec::new();
+            root.leaves(&mut leaves);
+            leaves.first().copied().unwrap_or(0)
+        };
         self.root = Some(root);
-        self.focused = layout.focused;
+        self.focused = focused;
         self.next_terminal = layout.next_terminal.max(self.next_terminal);
         self.next_pane = layout.next_pane.max(self.next_pane);
         self.auto_open_done = true;

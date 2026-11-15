@@ -11,6 +11,11 @@ pub type TerminalId = u64;
 /// Identificador estável de painel.
 pub type PaneId = u64;
 
+/// Máximo de painéis por bancada. Cada painel pinta e lê o próprio terminal,
+/// e o renderizador por software usado nos testes não mantém um quadro abaixo
+/// de 10 s acima disso. Refs #72, #74.
+pub const MAX_PANES: usize = 8;
+
 /// Orientação de uma divisão.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SplitDir {
@@ -95,6 +100,31 @@ impl PaneNode {
                 second.leaves(out);
             }
         }
+    }
+
+    /// Quantas folhas (painéis visíveis) a árvore tem.
+    pub fn leaf_count(&self) -> usize {
+        match self {
+            Self::Leaf { .. } => 1,
+            Self::Split { first, second, .. } => first.leaf_count() + second.leaf_count(),
+        }
+    }
+
+    /// Mantém as primeiras `max` folhas na ordem visual e remove o resto. Um
+    /// layout restaurado com mais painéis que [`MAX_PANES`] não pode deixar
+    /// todo quadro pesado demais. Refs #72, #74.
+    pub fn pruned(mut self, max: usize) -> Self {
+        let mut leaves = Vec::new();
+        self.leaves(&mut leaves);
+        while leaves.len() > max {
+            let Some(last) = leaves.pop() else { break };
+            let tree = std::mem::replace(&mut self, Self::leaf(0, 0));
+            match tree.remove(last) {
+                Some(tree) => self = tree,
+                None => break,
+            }
+        }
+        self
     }
 
     /// Terminais de todas as abas.
@@ -188,5 +218,21 @@ mod tests {
         root.leaves(&mut leaves);
         assert_eq!(leaves, vec![1]);
         assert!(root.remove(1).is_none());
+    }
+
+    #[test]
+    fn pruning_keeps_the_first_leaves_and_counts_them() {
+        let mut root = PaneNode::leaf(0, 10);
+        for index in 1..MAX_PANES + 4 {
+            let id = index as u64;
+            root.split(SplitDir::Rows, id, 10 + id);
+        }
+        assert_eq!(root.leaf_count(), MAX_PANES + 4);
+        root = root.pruned(MAX_PANES);
+        assert_eq!(root.leaf_count(), MAX_PANES);
+        let mut leaves = Vec::new();
+        root.leaves(&mut leaves);
+        assert_eq!(leaves.first().copied(), Some(0));
+        assert_eq!(leaves.last().copied(), Some(MAX_PANES as u64 - 1));
     }
 }

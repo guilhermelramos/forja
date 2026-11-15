@@ -18,6 +18,7 @@ terminal-view-shell = Shell
 terminal-view-new-tab = New tab
 terminal-view-split-right = Split right
 terminal-view-split-down = Split down
+terminal-view-max-panes = Terminal pane limit reached ({ $max } panes per bench).
 terminal-view-close-pane = Close pane
 terminal-view-click-to-type = Click to type
 terminal-view-empty-title = No terminal in this bench

@@ -123,6 +123,7 @@ impl Module for TerminalModule {
             "terminal.view.restart",
             "terminal.view.maximize",
             "terminal.view.equalize",
+            "terminal.view.max-panes",
             "terminal.recipes.empty",
             "terminal.view.failed",
             "terminal.view.recipe-declined",

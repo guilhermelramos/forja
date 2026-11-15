@@ -1,7 +1,7 @@
 //! Comandos do módulo terminal (Bigorna, atalhos e CLI).
 
 use crate::core::{CloseTarget, OpenRequest};
-use crate::panes::tree::SplitDir;
+use crate::panes::tree::{SplitDir, MAX_PANES};
 use crate::requests::{open_request, parse_id};
 use crate::settings::TermSettings;
 use crate::Shared;
@@ -187,6 +187,13 @@ pub(super) fn register_commands(r: &mut Registrar<'_>, core: &Shared) {
         let split_core = Arc::clone(core);
         r.command(id, title, move |cx, _| {
             let settings = TermSettings::from_ctx(cx);
+            let panes = split_core.with_hub(|hub| hub.pane_count()).unwrap_or(0);
+            if panes >= MAX_PANES {
+                let max = MAX_PANES.to_string();
+                return Err(KernelError::Message(
+                    cx.t_args("terminal.view.max-panes", &[("max", &max)]),
+                ));
+            }
             let id = split_core
                 .with_hub(|hub| hub.split(direction, &settings))
                 .map_err(command_error)?
