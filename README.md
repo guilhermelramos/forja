@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 32/160 telas documentadas · elementos citados 5092/5497 · completo: false
+**Progresso:** 35/160 telas documentadas · elementos citados 5215/5620 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -55,7 +55,7 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.dark.settings.remote` | [página](pages/pt-BR.dark.settings.remote.md) | [png](captures/pt-BR.dark.settings.remote.png) |
 | `pt-BR.dark.settings.trust` | [página](pages/pt-BR.dark.settings.trust.md) | [png](captures/pt-BR.dark.settings.trust.png) |
 | `pt-BR.dark.settings.voice` | [página](pages/pt-BR.dark.settings.voice.md) | [png](captures/pt-BR.dark.settings.voice.png) |
-| `pt-BR.light.home.default` | — | [png](captures/pt-BR.light.home.default.png) |
+| `pt-BR.light.home.default` | [página](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.home.default.png) |
 | `pt-BR.light.open.anvil` | — | [png](captures/pt-BR.light.open.anvil.png) |
 | `pt-BR.light.open.onboarding` | — | [png](captures/pt-BR.light.open.onboarding.png) |
 | `pt-BR.light.open.toast` | — | [png](captures/pt-BR.light.open.toast.png) |
@@ -83,13 +83,13 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.light.right-tab.ports.panel` | — | [png](captures/pt-BR.light.right-tab.ports.panel.png) |
 | `pt-BR.light.modal.project.dialogs` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.project.dialogs.png) |
 | `pt-BR.light.rail.request.page` | — | [png](captures/pt-BR.light.rail.request.page.png) |
-| `pt-BR.light.bench-tab.review.tab` | — | [png](captures/pt-BR.light.bench-tab.review.tab.png) |
+| `pt-BR.light.bench-tab.review.tab` | [página](pages/pt-BR.light.bench-tab.review.tab.md) | [png](captures/pt-BR.light.bench-tab.review.tab.png) |
 | `pt-BR.light.rail.routine.page` | — | [png](captures/pt-BR.light.rail.routine.page.png) |
 | `pt-BR.light.right-tab.search.panel` | — | [png](captures/pt-BR.light.right-tab.search.panel.png) |
 | `pt-BR.light.rail.skill.page` | — | [png](captures/pt-BR.light.rail.skill.page.png) |
 | `pt-BR.light.bench-tab.terminal.tab` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.bench-tab.terminal.tab.png) |
 | `pt-BR.light.rail.usage.page` | — | [png](captures/pt-BR.light.rail.usage.page.png) |
-| `pt-BR.light.bench-tab.viewers.tab` | — | [png](captures/pt-BR.light.bench-tab.viewers.tab.png) |
+| `pt-BR.light.bench-tab.viewers.tab` | [página](pages/pt-BR.light.bench-tab.viewers.tab.md) | [png](captures/pt-BR.light.bench-tab.viewers.tab.png) |
 | `pt-BR.light.modal.voice.overlay` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.voice.overlay.png) |
 | `pt-BR.light.settings.accounts` | — | [png](captures/pt-BR.light.settings.accounts.png) |
 | `pt-BR.light.settings.content` | — | [png](captures/pt-BR.light.settings.content.png) |

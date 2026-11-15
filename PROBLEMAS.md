@@ -425,6 +425,15 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - O botão "Ajustes" do trilho permanece marcado=False enquanto a janela "Ajustes" está aberta em foco, inconsistência de estado de seleção.
 - Vários botões-ícone sem nome acessível na barra de ferramentas central (444–581, 102–134), o que impede identificação por leitor de tela.
 
+## [pt-BR.light.home.default](pages/pt-BR.light.home.default.md)
+
+- Botões sem nome acessível (acessibilidade): o alternador de tema (1741,5)–(1773,37) e os quatro ícones da barra do terminal (444,113)–(581,145) não expõem nome; dependem de reconhecimento visual, sem rótulo ou tooltip acessível na árvore.
+- Elementos sem nome acessível: os dois divisores de painel ((304,42)–(320,1048) e (1612,42)–(1628,1048)) e a área de texto do terminal (328,150)–(1604,1036).
+- O botão "Fechar pwsh" (385,121)–(401,137) tem apenas 16×16 px — alvo de clique muito pequeno — e sobrepõe a pílula "pwsh · Em execução" (328,118)–(404,140) por design.
+- O texto "Clique para digitar" na área do terminal (canto inferior direito, ~(1478,1017)–(1571,1030)) não corresponde a nenhum elemento da árvore de acessibilidade.
+- Estados com pixels idênticos a esta captura incluem modais que deveriam alterar a imagem (pt-BR.light.modal.bench.dialogs, pt-BR.light.modal.counter.poller, pt-BR.light.modal.mcp.approval, pt-BR.light.modal.notify.toasts, pt-BR.light.modal.onboarding.wizard, pt-BR.light.modal.project.dialogs, pt-BR.light.modal.voice.overlay, pt-BR.light.right-tab.explorer.panel e pt-BR.light.bench-tab.terminal.tab): nessas capturas nenhum diálogo, aviso ou sobreposição aparece renderizado.
+- Nenhum elemento da árvore tem retângulo além dos limites da imagem (1920×1080) nesta variante — os cortes de abas relatados na referência escura não ocorrem aqui.
+
 ## [pt-BR.light.bench-tab.bench.detail](pages/pt-BR.light.bench-tab.bench.detail.md)
 
 - O botão de tema na barra superior (1741,5)–(1773,37) é um Unknown sem nome acessível; só é identificável pelo ícone de sol.
@@ -481,6 +490,24 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Nomes duplicados/ambíguos para leitores de tela: três botões "Mais abas"; dois botões "Histórico" (aba do painel central e sub-aba da visão Git), além do Label "Histórico"; dois Labels "Nenhuma mudança.".
 - Três Labels declarados como "(ícone)" sem nome acessível (grade do painel direito, pasta do painel de projetos e grade da área central); a Image do logotipo (12,50)–(40,78) e os dois divisores verticais (304,42)–(320,1048) e (1612,42)–(1628,1048) também não têm nome.
 - Textos secundários em cinza médio sobre fundo claro ("Nenhum projeto ainda. Adicione uma pasta ou crie um novo.", "Nenhuma mudança.", "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.") têm contraste visivelmente reduzido em relação ao texto principal.
+
+## [pt-BR.light.bench-tab.review.tab](pages/pt-BR.light.bench-tab.review.tab.md)
+
+- Campos de texto sem nome acessível: branch de origem (324,295), "Título" (324,350), "Descrição" (324,405), Base (360,570), Revisores (390,610) e Labels (672,610); os rótulos existem na tela, mas não há associação explícita entre rótulo e campo.
+- Elemento interativo sem nome acessível: ícone de tema na barra superior (1741,5)–(1773,37), que só expõe "click,focus".
+- Botões de janela "–", "□" e "×" têm apenas símbolos como nome acessível, pouco descritivos para leitores de tela.
+- Os divisores verticais (304,42)–(320,1048) e (1612,42)–(1628,1048) só expõem a ação "focus", sem ação de arrastar/redimensionar associada.
+- "Abrir pull request" está desativado com texto laranja pálido sobre fundo laranja claro, em baixo contraste.
+- O campo "Branch de origem" aparece desativado antes de qualquer interação; o motivo só é explicado longe do campo ("Não há uma base disponível. Escolha uma branch para comparar." no topo e "Escolha uma base válida para continuar." abaixo do botão), e não junto ao campo.
+- "Abrir como rascunho" e "Gerar" ficam na mesma linha do campo "Base", um agrupamento que dificulta a leitura do formulário.
+- Nenhum elemento com retângulo fora dos limites da janela (1920×1080) e nenhuma sobreposição entre abas nesta variante.
+
+## [pt-BR.light.bench-tab.viewers.tab](pages/pt-BR.light.bench-tab.viewers.tab.md)
+
+- Botão sem nome acessível: o ícone de tema claro/escuro em (1741,5)–(1773,37) é exposto como "Unknown" sem rótulo (na imagem é um ícone de sol).
+- Imagem sem nome acessível: a marca da Forja em (12,50)–(40,78) não tem rótulo.
+- Três ocorrências do botão "Mais abas" compartilham o mesmo nome sem distinção (painel esquerdo, área central e painel direito), o que dificulta a identificação por leitor de tela.
+- Nenhum texto cortado, elemento fora da janela ou sobreposição visível nesta captura.
 
 ## [en.dark.home.default](pages/en.dark.home.default.md)
 
