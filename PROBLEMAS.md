@@ -455,6 +455,27 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - A dica "Clique para digitar" no canto inferior direito do terminal (visível na imagem, sem item na árvore) está em cinza claro sobre fundo cinza claro, com contraste baixo.
 - Os botões de janela usam os símbolos "–", "□" e "×" como nome, em vez de rótulos textuais (minimizar, maximizar, fechar).
 
+## [pt-BR.light.open.toast](pages/pt-BR.light.open.toast.md)
+
+- O botão de alternância de tema (1741,5)–(1773,37) não tem nome acessível.
+- Os quatro botões de ícone da barra do terminal (444,113)–(581,145) não têm nome acessível.
+- Há dois botões nomeados apenas "×" (fechar janela em (1875,5) e fechar toast em (1870,983)), o que os torna ambíguos para leitores de tela.
+- Há três botões com o mesmo nome "Mais abas" (painéis esquerdo, central e direito), também ambíguos sem contexto de posição.
+- A área do terminal (328,150)–(1604,1036) e os dois divisores verticais não têm nome acessível nem papel definido (Unknown).
+- O texto "Clique para digitar", visível no canto inferior direito da área do terminal (~1505,1023), não aparece na árvore de acessibilidade.
+- O botão "Fechar pwsh" (385,121)–(401,137) tem apenas 16×16 px, dentro da aba "pwsh · Em execução" — alvo de clique muito pequeno e sobreposto à aba.
+- Elemento de dimensão zero (960,540)–(960,540) sem nome na área central.
+- O toast (1639,974)–(1904,1040) cobre a base do painel de arquivos; em janelas mais baixas tenderia a cobrir conteúdo.
+- Os rótulos de ícone dos estados vazios aparecem na árvore apenas como "(ícone)", sem nome descritivo.
+
+## [pt-BR.light.rail.archive.tab](pages/pt-BR.light.rail.archive.tab.md)
+
+- O texto de sugestão do campo de projeto ("parte do caminho") é cortado na borda direita do campo em (741,162)–(869,194), ficando ilegível no final.
+- Vários elementos sem nome acessível: os dois divisores verticais, o alternador de tema da barra superior, o logo, os dois campos de filtro (TextInput) e os ícones de estado vazio expostos como "Label" clicável em vez de botão, o que dificulta a navegação por leitor de telas.
+- Os botões de janela usam apenas os símbolos "–", "□" e "×" como nome acessível, sem rótulo descritivo.
+- Os dois botões "Mais abas" têm nomes genéricos e não indicam quais abas estão escondidas (no painel esquerdo, só a aba "Projetos" está visível).
+- Os três ícones de estado vazio são expostos como "Label" com ação de clique, mas sem papel de botão nem nome acessível descritivo.
+
 ## [pt-BR.light.bench-tab.bench.detail](pages/pt-BR.light.bench-tab.bench.detail.md)
 
 - O botão de tema na barra superior (1741,5)–(1773,37) é um Unknown sem nome acessível; só é identificável pelo ícone de sol.
@@ -462,6 +483,15 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Rótulos interativos expostos como Label com ação click — "Notificações" (com focus), "Pronto", "56 módulos" e as mensagens de estado vazio —, com papel incompatível com o comportamento de botão.
 - A aba "Ajudante (chat)" é renderizada em cinza mais claro que as abas vizinhas, com contraste reduzido.
 - Vários elementos da árvore estão sem nome acessível (as duas divisórias, a Image do logo e os ícones "(ícone)"), o que reduz a navegabilidade por leitor de tela.
+
+## [pt-BR.light.rail.board.page](pages/pt-BR.light.rail.board.page.md)
+
+- O Label "(ícone)" do estado vazio do quadro, em (952,1072)–(980,1100), invade a barra de status e ultrapassa a altura da janela (1080 px), ficando parcialmente invisível.
+- A mensagem "Nenhuma bancada neste quadro ainda. Crie uma para começar." (770,1108)–(1162,1127) está inteiramente abaixo da área visível e não aparece na tela.
+- O campo de filtro de bancadas (TextInput em (324,130)–(564,162)) não tem nome acessível; o rótulo visível é só a marca d'água "Filtrar bancadas".
+- O botão "Voltar à bancada" é exibido no topo da área central mesmo com o rótulo "Nenhum projeto" e nenhuma bancada ativa, indicando um estado incoerente.
+- Os dois botões "Mais abas" (paineis esquerdo e direito) não informam quais abas estão recolhidas; na referência escura as mesmas abas aparecem nomeadas.
+- Elementos sem nome acessível além do esperado: os dois divisores verticais e o ícone de tema da barra superior.
 
 ## [pt-BR.light.bench-tab.browser.tab](pages/pt-BR.light.bench-tab.browser.tab.md)
 

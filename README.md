@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 38/160 telas documentadas · elementos citados 5399/5804 · completo: false
+**Progresso:** 41/160 telas documentadas · elementos citados 5506/5911 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -58,11 +58,11 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.light.home.default` | [página](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.home.default.png) |
 | `pt-BR.light.open.anvil` | [página](pages/pt-BR.light.open.anvil.md) | [png](captures/pt-BR.light.open.anvil.png) |
 | `pt-BR.light.open.onboarding` | [página](pages/pt-BR.light.open.onboarding.md) | [png](captures/pt-BR.light.open.onboarding.png) |
-| `pt-BR.light.open.toast` | — | [png](captures/pt-BR.light.open.toast.png) |
-| `pt-BR.light.rail.archive.tab` | — | [png](captures/pt-BR.light.rail.archive.tab.png) |
+| `pt-BR.light.open.toast` | [página](pages/pt-BR.light.open.toast.md) | [png](captures/pt-BR.light.open.toast.png) |
+| `pt-BR.light.rail.archive.tab` | [página](pages/pt-BR.light.rail.archive.tab.md) | [png](captures/pt-BR.light.rail.archive.tab.png) |
 | `pt-BR.light.modal.bench.dialogs` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.bench.dialogs.png) |
 | `pt-BR.light.bench-tab.bench.detail` | [página](pages/pt-BR.light.bench-tab.bench.detail.md) | [png](captures/pt-BR.light.bench-tab.bench.detail.png) |
-| `pt-BR.light.rail.board.page` | — | [png](captures/pt-BR.light.rail.board.page.png) |
+| `pt-BR.light.rail.board.page` | [página](pages/pt-BR.light.rail.board.page.md) | [png](captures/pt-BR.light.rail.board.page.png) |
 | `pt-BR.light.bench-tab.browser.tab` | [página](pages/pt-BR.light.bench-tab.browser.tab.md) | [png](captures/pt-BR.light.bench-tab.browser.tab.png) |
 | `pt-BR.light.bench-tab.chat.tab` | [página](pages/pt-BR.light.bench-tab.chat.tab.md) | [png](captures/pt-BR.light.bench-tab.chat.tab.png) |
 | `pt-BR.light.modal.counter.poller` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.counter.poller.png) |
