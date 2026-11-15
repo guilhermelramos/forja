@@ -1,0 +1,25 @@
+{
+  "title": "Nova bancada recebe a primeira digitação (#144)",
+  "issue": 144,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.click", "target": "Quadro" },
+    { "m": "ui.click", "target": "Nova bancada" },
+    { "m": "ui.type", "text": "feature-a" },
+    { "m": "ui.click", "target": "Criar bancada" },
+    { "m": "ui.wait", "ms": 500 },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    { "step": 6, "present": "feature-a" },
+    {
+      "step": 9,
+      "present_contains": "feature-a",
+      "absent": "Informe um nome para a bancada."
+    }
+  ]
+}

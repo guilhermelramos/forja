@@ -776,7 +776,14 @@ impl ForjaApp {
             }
             HitKind::Setting(key) => {
                 self.settings_open = true;
-                self.settings_query = key;
+                let label = self
+                    .runtime
+                    .registry()
+                    .settings()
+                    .iter()
+                    .find(|spec| spec.key.as_str() == key)
+                    .map(|spec| self.text(&spec.label_key));
+                self.settings_query = setting_search_label(&key, label.as_deref());
             }
             HitKind::Ask(_) => {}
             HitKind::Action { command, args } => {
@@ -925,6 +932,13 @@ fn history_id(kind: &HitKind) -> String {
         }
         HitKind::Ask(index) => format!("ask:{index}"),
     }
+}
+
+fn setting_search_label(key: &str, label: Option<&str>) -> String {
+    label
+        .filter(|label| !label.trim().is_empty())
+        .unwrap_or(key)
+        .to_owned()
 }
 
 fn selected_hit_index(hits: &[Hit], id: &str) -> Option<usize> {
@@ -1320,6 +1334,15 @@ mod tests {
     fn history_reads_the_shell_object() {
         let value = serde_json::json!({ "anvil_history": ["command:anvil.open"] });
         assert_eq!(load_history(&value), vec!["command:anvil.open".to_owned()]);
+    }
+
+    #[test]
+    fn settings_hit_uses_its_human_label_as_the_search_query() {
+        assert_eq!(
+            setting_search_label("archive.sessions.index", Some("Indexar sessões no Acervo")),
+            "Indexar sessões no Acervo"
+        );
+        assert_eq!(setting_search_label("archive.sessions.index", None), "archive.sessions.index");
     }
 
     #[test]

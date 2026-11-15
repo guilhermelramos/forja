@@ -1,0 +1,27 @@
+{
+  "title": "Pedido local identifica os campos e aceita Enter (#149)",
+  "issue": 149,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Pedidos" },
+    { "m": "ui.wait", "ms": 500 },
+    { "m": "ui.click", "target": "Novo pedido local" },
+    { "m": "ui.snapshot" },
+    { "m": "ui.click", "x": 1000, "y": 525 },
+    { "m": "ui.type", "text": "Revisar fluxo local" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.type", "text": "Descrever o resultado esperado" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.wait", "ms": 300 },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    { "step": 4, "present": ["Título (obrigatório)", "Descrição"] },
+    {
+      "step": 11,
+      "present_contains": "Revisar fluxo local",
+      "absent": "Título (obrigatório)"
+    }
+  ]
+}
