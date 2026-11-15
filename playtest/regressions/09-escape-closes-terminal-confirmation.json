@@ -1,0 +1,15 @@
+{
+  "title": "Escape cancels closing an active terminal (#76)",
+  "issue": 76,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Fechar pwsh" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    { "step": 1, "present": "Fechar terminal em execução?", "window_count": 1 },
+    { "step": 2, "absent": "Fechar terminal em execução?", "present": "Fechar pwsh", "window_count": 0 }
+  ]
+}

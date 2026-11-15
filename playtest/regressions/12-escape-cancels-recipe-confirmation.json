@@ -1,0 +1,20 @@
+{
+  "title": "Escape cancels terminal recipe confirmation",
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Ajustes" },
+    { "m": "ui.type", "text": "rodar" },
+    { "m": "ui.click", "target": "Confirmar antes de rodar" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Receitas" },
+    { "m": "ui.click", "target": "Compilar workspace Rust  ·  projeto" },
+    { "m": "ui.click", "target": "Aprovar este conteúdo" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    { "step": 7, "present": "Rodar receita?", "window_count": 1 },
+    { "step": 8, "absent": "Rodar receita?", "window_count": 0 }
+  ]
+}

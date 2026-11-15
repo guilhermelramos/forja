@@ -30,59 +30,67 @@ impl View for ApprovalView {
         let Some(pending) = pending else {
             return;
         };
-        let mut decision = None;
-        egui::Window::new(cx.t("trust.approval.title"))
-            .id(egui::Id::new("forja-trust-approval"))
-            .collapsible(false)
-            .resizable(false)
-            .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
-            .show(ui.ctx(), |ui| {
-                ui.label(
-                    egui::RichText::new(kind_label(cx, pending.kind)).strong(),
-                );
-                ui.label(egui::RichText::new(&pending.source_path).monospace());
-                if !pending.summary.is_empty() {
-                    ui.label(&pending.summary);
-                }
-                ui.label(
-                    egui::RichText::new(format!(
-                        "{}: {}",
-                        cx.t("trust.approval.hash"),
-                        short_hash(&pending.content_hash)
-                    ))
-                    .weak(),
-                );
-                ui.add_space(8.0);
-                ui.horizontal(|ui| {
-                    if forja_ui_kit::button(
-                        ui,
-                        forja_ui_kit::ButtonKind::Primary,
-                        &cx.t("trust.approval.once"),
-                    )
-                    .clicked()
-                    {
-                        decision = Some((true, true));
+        let layer = egui::Id::new("forja-trust-approval.keyboard");
+        let mut decision = if forja_ui_kit::consume_layer_escape(ui.ctx(), layer) {
+            Some((false, true))
+        } else {
+            None
+        };
+        if decision.is_none() {
+            egui::Window::new(cx.t("trust.approval.title"))
+                .id(egui::Id::new("forja-trust-approval"))
+                .collapsible(false)
+                .resizable(false)
+                .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
+                .show(ui.ctx(), |ui| {
+                    forja_ui_kit::register_keyboard_layer(ui, layer);
+                    ui.label(
+                        egui::RichText::new(kind_label(cx, pending.kind)).strong(),
+                    );
+                    ui.label(egui::RichText::new(&pending.source_path).monospace());
+                    if !pending.summary.is_empty() {
+                        ui.label(&pending.summary);
                     }
-                    if forja_ui_kit::button(
-                        ui,
-                        forja_ui_kit::ButtonKind::Secondary,
-                        &cx.t("trust.approval.always"),
-                    )
-                    .clicked()
-                    {
-                        decision = Some((true, false));
-                    }
-                    if forja_ui_kit::button(
-                        ui,
-                        forja_ui_kit::ButtonKind::Danger,
-                        &cx.t("trust.approval.reject"),
-                    )
-                    .clicked()
-                    {
-                        decision = Some((false, false));
-                    }
+                    ui.label(
+                        egui::RichText::new(format!(
+                            "{}: {}",
+                            cx.t("trust.approval.hash"),
+                            short_hash(&pending.content_hash)
+                        ))
+                        .weak(),
+                    );
+                    ui.add_space(8.0);
+                    ui.horizontal(|ui| {
+                        if forja_ui_kit::button(
+                            ui,
+                            forja_ui_kit::ButtonKind::Primary,
+                            &cx.t("trust.approval.once"),
+                        )
+                        .clicked()
+                        {
+                            decision = Some((true, true));
+                        }
+                        if forja_ui_kit::button(
+                            ui,
+                            forja_ui_kit::ButtonKind::Secondary,
+                            &cx.t("trust.approval.always"),
+                        )
+                        .clicked()
+                        {
+                            decision = Some((true, false));
+                        }
+                        if forja_ui_kit::button(
+                            ui,
+                            forja_ui_kit::ButtonKind::Danger,
+                            &cx.t("trust.approval.reject"),
+                        )
+                        .clicked()
+                        {
+                            decision = Some((false, false));
+                        }
+                    });
                 });
-            });
+        }
         let Some((approved, session_only)) = decision else {
             return;
         };

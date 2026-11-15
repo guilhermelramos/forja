@@ -397,45 +397,51 @@ fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &m
     }
 
     if let Some(files) = state.discard() {
-        let mut open = true;
-        egui::Window::new(cx.t("git.changes.discard-title"))
-            .id(egui::Id::new("forja.git.discard"))
-            .collapsible(false)
-            .resizable(false)
-            .default_width(360.0)
-            .show(ui.ctx(), |ui| {
-                ui.label(cx.t_args("git.changes.discard-body", &[("files", &files.join(", "))]));
-                ui.add_space(8.0);
-                ui.horizontal(|ui| {
-                    if forja_ui_kit::button(
-                        ui,
-                        forja_ui_kit::ButtonKind::Danger,
-                        &cx.t("git.changes.discard-confirm"),
-                    )
-                    .clicked()
-                    {
-                        let mut args = Map::new();
-                        args.insert("path".to_owned(), json!(path));
-                        args.insert("files".to_owned(), json!(files));
-                        args.insert("confirm".to_owned(), json!(true));
-                        let _ = run(cx, "git.discard", args);
-                        state.set_discard(None);
-                        open = false;
-                    }
-                    if forja_ui_kit::button(
-                        ui,
-                        forja_ui_kit::ButtonKind::Ghost,
-                        &cx.t("git.changes.cancel"),
-                    )
-                    .clicked()
-                    {
-                        state.set_discard(None);
-                        open = false;
-                    }
-                });
-            });
-        if !open {
+        let layer = egui::Id::new("forja.git.discard.keyboard");
+        if forja_ui_kit::consume_layer_escape(ui.ctx(), layer) {
             state.set_discard(None);
+        } else {
+            let mut open = true;
+            egui::Window::new(cx.t("git.changes.discard-title"))
+                .id(egui::Id::new("forja.git.discard"))
+                .collapsible(false)
+                .resizable(false)
+                .default_width(360.0)
+                .show(ui.ctx(), |ui| {
+                    forja_ui_kit::register_keyboard_layer(ui, layer);
+                    ui.label(cx.t_args("git.changes.discard-body", &[("files", &files.join(", "))]));
+                    ui.add_space(8.0);
+                    ui.horizontal(|ui| {
+                        if forja_ui_kit::button(
+                            ui,
+                            forja_ui_kit::ButtonKind::Danger,
+                            &cx.t("git.changes.discard-confirm"),
+                        )
+                        .clicked()
+                        {
+                            let mut args = Map::new();
+                            args.insert("path".to_owned(), json!(path));
+                            args.insert("files".to_owned(), json!(files));
+                            args.insert("confirm".to_owned(), json!(true));
+                            let _ = run(cx, "git.discard", args);
+                            state.set_discard(None);
+                            open = false;
+                        }
+                        if forja_ui_kit::button(
+                            ui,
+                            forja_ui_kit::ButtonKind::Ghost,
+                            &cx.t("git.changes.cancel"),
+                        )
+                        .clicked()
+                        {
+                            state.set_discard(None);
+                            open = false;
+                        }
+                    });
+                });
+            if !open {
+                state.set_discard(None);
+            }
         }
     }
 }
