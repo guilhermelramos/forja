@@ -43,7 +43,8 @@ pub use components::{
     button, card, context_menu, empty_state, error_banner, error_notice, helper_missing_guide,
     icon_menu, list, menu_panel, modal, modal_explicit_close, modal_preview, page_heading,
     progress_bar, segmented, select, stage_badge, tabs, text_field, toast, toggle, tree,
-    virtual_table, window_header, window_header_with_focus, ButtonKind, Column, HelperMissingGuide,
+    truncated_label, virtual_table, window_header, window_header_with_focus, wrapped_label,
+    ButtonKind, Column, HelperMissingGuide,
     ListItem, MenuItem, Stage, ToastKind, TreeNode,
 };
 pub use eframe::egui;
