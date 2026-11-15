@@ -1,12 +1,13 @@
-use crate::state::{PendingMove, Shared, StageColumn};
+use crate::state::{Shared, StageColumn};
 use crate::view_shared::{
-    c32, create_dialog, dot_color, helper_status_key, save_prefs, set_stage, stage_menu,
-    stage_order, stage_parent, visible_cards, CardOptions,
+    apply_stage_move, c32, create_dialog, dot_color, helper_status_key, move_card,
+    render_helper_offer, save_prefs, stage_menu, stage_parent, visible_cards, CardOptions,
 };
 use forja_contracts::BenchCard;
 use forja_kernel::ui_contract::egui;
 use forja_kernel::{Args, Ctx, SettingValue};
 use serde_json::{json, Map};
+
 pub(crate) fn render_board(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
     let tokens = forja_ui_kit::applied_tokens(ui.ctx());
     let mut prefs = state.prefs();
@@ -16,6 +17,7 @@ pub(crate) fn render_board(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) 
     let error = state.error();
     let dragging = state.dragging();
     let pending = state.pending();
+    let helper_offer = state.helper_offer();
 
     let wip_limit = cx
         .setting("bench.stage.wip_limit")
@@ -110,13 +112,19 @@ pub(crate) fn render_board(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) 
                 )
                 .clicked()
                 {
-                    match set_stage(cx, &pending.bench_id, &pending.to, true) {
-                        Ok(()) => state.set_pending(None),
-                        Err(error) => {
-                            state.set_error(Some(error));
-                            state.set_pending(None);
-                        }
+                    if let Err(error) = apply_stage_move(
+                        cx,
+                        state,
+                        &pending.bench_id,
+                        &pending.bench_name,
+                        &pending.bench_path,
+                        &pending.to,
+                        &stages,
+                        true,
+                    ) {
+                        state.set_error(Some(error));
                     }
+                    state.set_pending(None);
                 }
                 if forja_ui_kit::button(
                     ui,
@@ -129,6 +137,15 @@ pub(crate) fn render_board(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) 
                 }
             });
         });
+    }
+    if let Some(offer) = &helper_offer {
+        if ui.input(|i| i.key_pressed(egui::Key::Escape))
+            && !egui::Popup::is_any_open(ui.ctx())
+        {
+            state.set_helper_offer(None);
+        } else {
+            render_helper_offer(ui, cx, state, &tokens, offer);
+        }
     }
 
     let visible = visible_cards(&cards, &prefs, &names);
@@ -184,28 +201,7 @@ pub(crate) fn render_board(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) 
             });
             if let Some(target) = target {
                 if let Some(card) = cards.iter().find(|card| card.bench.bench_id == bench_id) {
-                    if card.stage != target {
-                        let from_order = stage_order(&stages, &card.stage);
-                        let to_order = stage_order(&stages, &target);
-                        if to_order < from_order {
-                            let label = stages
-                                .iter()
-                                .find(|stage| stage.id == target)
-                                .map(|stage| stage.label.clone())
-                                .unwrap_or(target.clone());
-                            state.set_pending(Some(PendingMove {
-                                bench_id: bench_id.clone(),
-                                bench_name: card.bench.name.clone(),
-                                to: target,
-                                to_label: label,
-                            }));
-                        } else {
-                            match set_stage(cx, &bench_id, &target, false) {
-                                Ok(()) => state.request_refresh(),
-                                Err(error) => state.set_error(Some(error)),
-                            }
-                        }
-                    }
+                    move_card(cx, state, card, &target, &stages);
                 }
             }
             state.set_dragging(None);

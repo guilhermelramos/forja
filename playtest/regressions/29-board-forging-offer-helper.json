@@ -1,0 +1,33 @@
+{
+  "title": "Mover para Forjando no Quadro oferece ajudante ou orienta instalação (#108)",
+  "issue": 108,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.click", "target": "Quadro" },
+    { "m": "ui.click", "target": "Mover etapa" },
+    { "m": "ui.click", "target": "Mover para Forjando" },
+    { "m": "ui.key", "keys": "Escape" }
+  ],
+  "expect": [
+    {
+      "step": 6,
+      "present_contains": [
+        "entrou em Forjando, mas nenhum ajudante está instalado",
+        "Instale um ajudante para iniciar o trabalho pelo Quadro",
+        "Copiar comando",
+        "Abrir Ajudantes",
+        "Fechar"
+      ]
+    },
+    {
+      "step": 7,
+      "absent": ["Abrir Ajudantes", "Copiar comando"],
+      "absent_contains": ["entrou em Forjando, mas nenhum ajudante está instalado"]
+    }
+  ]
+}
