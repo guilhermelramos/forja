@@ -392,7 +392,14 @@ impl View for BrowserView {
                 self.last_active = Some(tab.id);
             }
             self.drain_events(cx, tab.id);
-            if self.native_for(cx, &tab, bounds) {
+            // Criar um WebView2 é trabalho de processo e COM que pode levar
+            // segundos. Só cria quando a página nativa estaria visível; uma
+            // aba escondida não pode congelar o quadro. Refs #73.
+            let has_native = self.native.iter().any(|(id, _)| *id == tab.id);
+            if !has_native && show {
+                let _ = self.native_for(cx, &tab, bounds);
+            }
+            if self.native.iter().any(|(id, _)| *id == tab.id) {
                 self.apply_pending(cx, &tab);
             }
         }
