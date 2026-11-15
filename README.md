@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 31/160 telas documentadas · elementos citados 3933/4089 · completo: false
+**Progresso:** 3/160 telas documentadas · elementos citados 3796/4200 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -157,17 +157,17 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.light.open.anvil` | [página](pages/en.light.open.anvil.md) | [png](captures/en.light.open.anvil.png) |
 | `en.light.open.onboarding` | [página](pages/en.light.open.onboarding.md) | [png](captures/en.light.open.onboarding.png) |
 | `en.light.open.toast` | [página](pages/en.light.open.toast.md) | [png](captures/en.light.open.toast.png) |
-| `en.light.rail.archive.tab` | — | [png](captures/en.light.rail.archive.tab.png) |
+| `en.light.rail.archive.tab` | [página](pages/en.light.rail.archive.tab.md) | [png](captures/en.light.rail.archive.tab.png) |
 | `en.light.modal.bench.dialogs` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.modal.bench.dialogs.png) |
 | `en.light.bench-tab.bench.detail` | [página](pages/en.light.bench-tab.bench.detail.md) | [png](captures/en.light.bench-tab.bench.detail.png) |
-| `en.light.rail.board.page` | — | [png](captures/en.light.rail.board.page.png) |
+| `en.light.rail.board.page` | [página](pages/en.light.rail.board.page.md) | [png](captures/en.light.rail.board.page.png) |
 | `en.light.bench-tab.browser.tab` | [página](pages/en.light.bench-tab.browser.tab.md) | [png](captures/en.light.bench-tab.browser.tab.png) |
 | `en.light.bench-tab.chat.tab` | [página](pages/en.light.bench-tab.chat.tab.md) | [png](captures/en.light.bench-tab.chat.tab.png) |
 | `en.light.modal.counter.poller` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.modal.counter.poller.png) |
 | `en.light.bench-tab.diff.tab` | [página](pages/en.light.bench-tab.diff.tab.md) | [png](captures/en.light.bench-tab.diff.tab.png) |
 | `en.light.bench-tab.editor.tab` | [página](pages/en.light.bench-tab.editor.tab.md) | [png](captures/en.light.bench-tab.editor.tab.png) |
 | `en.light.right-tab.explorer.panel` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.right-tab.explorer.panel.png) |
-| `en.light.rail.extension.page` | — | [png](captures/en.light.rail.extension.page.png) |
+| `en.light.rail.extension.page` | [página](pages/en.light.rail.extension.page.md) | [png](captures/en.light.rail.extension.page.png) |
 | `en.light.right-tab.extension.panels.right` | — | [png](captures/en.light.right-tab.extension.panels.right.png) |
 | `en.light.bench-tab.extension.panels.bench` | [página](pages/en.light.bench-tab.extension.panels.bench.md) | [png](captures/en.light.bench-tab.extension.panels.bench.png) |
 | `en.light.right-tab.git.changes` | — | [png](captures/en.light.right-tab.git.changes.png) |

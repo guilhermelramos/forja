@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 31,
-  "widgets_total": 4089,
-  "widgets_covered": 3933,
+  "states_done": 3,
+  "widgets_total": 4200,
+  "widgets_covered": 3796,
   "complete": false,
   "stale": [
     {
@@ -12,7 +12,8 @@
       "page": "pages/pt-BR.dark.bench-tab.bench.detail.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Mais abas",
+        "Novo projeto"
       ]
     },
     {
@@ -22,7 +23,9 @@
       "page": "pages/pt-BR.dark.bench-tab.browser.tab.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Mais abas",
+        "Novo projeto",
+        "O navegador embutido fica oculto quando a janela está sem foco ou fora da tela. Clique na janela para exibir a página."
       ]
     },
     {
@@ -32,7 +35,15 @@
       "page": "pages/pt-BR.dark.bench-tab.chat.tab.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "22 portas",
+        "Abrir Ajudantes",
+        "Copiar comando",
+        "Instale um ajudante compatível ou abra a página Ajudantes para começar.",
+        "Mais abas",
+        "Nenhum ajudante compatível com o chat foi encontrado.",
+        "Novo projeto",
+        "npm install -g @anthropic-ai/claude-code",
+        "não instalado"
       ]
     },
     {
@@ -42,7 +53,8 @@
       "page": "pages/pt-BR.dark.bench-tab.diff.tab.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Mais abas",
+        "Novo projeto"
       ]
     },
     {
@@ -52,7 +64,8 @@
       "page": "pages/pt-BR.dark.bench-tab.editor.tab.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Mais abas",
+        "Novo projeto"
       ]
     },
     {
@@ -62,7 +75,8 @@
       "page": "pages/pt-BR.dark.bench-tab.extension.panels.bench.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Mais abas",
+        "Novo projeto"
       ]
     },
     {
@@ -72,7 +86,8 @@
       "page": "pages/pt-BR.dark.bench-tab.git.history.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Mais abas",
+        "Novo projeto"
       ]
     },
     {
@@ -82,7 +97,11 @@
       "page": "pages/pt-BR.dark.bench-tab.review.tab.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Escolha uma base válida para continuar.",
+        "Mais abas",
+        "Novo projeto",
+        "Não há uma base disponível. Escolha uma branch para comparar.",
+        "Resumo do que será enviado"
       ]
     },
     {
@@ -92,7 +111,8 @@
       "page": "pages/pt-BR.dark.bench-tab.viewers.tab.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Mais abas",
+        "Novo projeto"
       ]
     },
     {
@@ -102,7 +122,10 @@
       "page": "pages/pt-BR.dark.home.default.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -112,7 +135,10 @@
       "page": "pages/pt-BR.dark.modal.helper.profile_picker.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -149,9 +175,12 @@
         "Abrir página do trilho",
         "Abrir sessão de chat",
         "Abrir terminal",
+        "Fechar pwsh",
         "Mais abas",
+        "Novo projeto",
         "Revisar segurança do diff",
-        "Tema claro"
+        "Tema claro",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -162,7 +191,10 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Fechar",
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -172,7 +204,10 @@
       "page": "pages/pt-BR.dark.open.toast.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -184,6 +219,7 @@
       "widgets_not_mentioned": [
         "Mais abas",
         "Nenhuma sessão salva ainda.",
+        "Novo projeto",
         "Voltar à bancada"
       ]
     },
@@ -195,6 +231,7 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Mais abas",
+        "Novo projeto",
         "Voltar à bancada"
       ]
     },
@@ -206,6 +243,7 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Mais abas",
+        "Novo projeto",
         "Voltar à bancada"
       ]
     },
@@ -216,7 +254,12 @@
       "page": "pages/pt-BR.dark.rail.helper.tab.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
+        "Detectando…",
+        "Instalados (0)",
         "Mais abas",
+        "Mostrar não instalados (16)",
+        "Nenhum ajudante instalado foi encontrado no PATH.",
+        "Novo projeto",
         "Voltar à bancada"
       ]
     },
@@ -228,6 +271,7 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Mais abas",
+        "Novo projeto",
         "Voltar à bancada"
       ]
     },
@@ -239,6 +283,7 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Mais abas",
+        "Novo projeto",
         "Voltar à bancada"
       ]
     },
@@ -250,6 +295,7 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Mais abas",
+        "Novo projeto",
         "Voltar à bancada"
       ]
     },
@@ -261,6 +307,7 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Mais abas",
+        "Novo projeto",
         "Voltar à bancada"
       ]
     },
@@ -271,8 +318,15 @@
       "page": "pages/pt-BR.dark.rail.usage.page.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "2026-11-14",
+        "0 cache lido · 0 cache escrito",
+        "0 tokens",
         "Mais abas",
+        "Nenhum uso registrado ainda",
+        "Novo projeto",
+        "Os números vêm das transcrições locais dos ajudantes instalados: o Claude Code lê ~/.claude/projects, o Codex lê ~/.codex/sessions e o OpenCode lê a pasta storage. Nada sai desta máquina. Rode uma sessão de um ajudante em uma bancada e clique em Atualizar; se tudo continuar zerado, confira se o CLI do ajudante está instalado e se ele já rodou ao menos uma vez.",
+        "Período",
+        "US$ 0,00",
+        "Varrer de novo",
         "Voltar à bancada"
       ]
     },
@@ -283,7 +337,10 @@
       "page": "pages/pt-BR.dark.right-tab.extension.panels.right.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -293,7 +350,10 @@
       "page": "pages/pt-BR.dark.right-tab.git.changes.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -303,7 +363,11 @@
       "page": "pages/pt-BR.dark.right-tab.ports.panel.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Mostrar todas as portas do sistema",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -313,7 +377,10 @@
       "page": "pages/pt-BR.dark.right-tab.search.panel.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -324,7 +391,10 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Fechar janela",
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -335,7 +405,10 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Fechar janela",
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -345,7 +418,10 @@
       "page": "pages/pt-BR.dark.settings.counter_github.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -356,7 +432,10 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Fechar janela",
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -367,7 +446,10 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Fechar janela",
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -378,7 +460,10 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Fechar janela",
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -389,7 +474,10 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Fechar janela",
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -400,7 +488,10 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Fechar janela",
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -411,7 +502,11 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Fechar janela",
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "Servidor · ligado: 53",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -422,7 +517,10 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Fechar janela",
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -433,7 +531,10 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Fechar janela",
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -444,7 +545,10 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Fechar janela",
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -455,7 +559,10 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Fechar janela",
-        "Mais abas"
+        "Fechar pwsh",
+        "Mais abas",
+        "Novo projeto",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -465,7 +572,8 @@
       "page": "pages/en.dark.bench-tab.bench.detail.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "More tabs"
+        "More tabs",
+        "New project"
       ]
     },
     {
@@ -475,7 +583,9 @@
       "page": "pages/en.dark.bench-tab.browser.tab.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "More tabs"
+        "More tabs",
+        "New project",
+        "The embedded browser is hidden while the window is unfocused or off-screen. Focus the window to show the page."
       ]
     },
     {
@@ -485,7 +595,15 @@
       "page": "pages/en.dark.bench-tab.chat.tab.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "More tabs"
+        "22 ports",
+        "Copy command",
+        "Install a compatible helper or open the Helpers page to get started.",
+        "More tabs",
+        "New project",
+        "No chat-compatible helper was found.",
+        "Open Helpers",
+        "not installed",
+        "npm install -g @anthropic-ai/claude-code"
       ]
     },
     {
@@ -495,7 +613,8 @@
       "page": "pages/en.dark.bench-tab.diff.tab.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "More tabs"
+        "More tabs",
+        "New project"
       ]
     },
     {
@@ -505,7 +624,8 @@
       "page": "pages/en.dark.bench-tab.editor.tab.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "More tabs"
+        "More tabs",
+        "New project"
       ]
     },
     {
@@ -515,7 +635,8 @@
       "page": "pages/en.dark.bench-tab.extension.panels.bench.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "More tabs"
+        "More tabs",
+        "New project"
       ]
     },
     {
@@ -525,7 +646,8 @@
       "page": "pages/en.dark.bench-tab.git.history.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "More tabs"
+        "More tabs",
+        "New project"
       ]
     },
     {
@@ -535,7 +657,11 @@
       "page": "pages/en.dark.bench-tab.review.tab.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "More tabs"
+        "Choose a valid base to continue.",
+        "More tabs",
+        "New project",
+        "No base is available. Choose a branch to compare.",
+        "What will be sent"
       ]
     },
     {
@@ -545,7 +671,8 @@
       "page": "pages/en.dark.bench-tab.viewers.tab.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "More tabs"
+        "More tabs",
+        "New project"
       ]
     },
     {
@@ -555,7 +682,10 @@
       "page": "pages/en.dark.home.default.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "More tabs"
+        "Close pwsh",
+        "More tabs",
+        "New project",
+        "pwsh · Running"
       ]
     },
     {
@@ -565,7 +695,10 @@
       "page": "pages/en.dark.modal.helper.profile_picker.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "More tabs"
+        "Close pwsh",
+        "More tabs",
+        "New project",
+        "pwsh · Running"
       ]
     },
     {
@@ -602,10 +735,13 @@
         "Attachment size limit (MB)",
         "Author email",
         "Author name",
+        "Close pwsh",
         "Dark theme",
         "Light theme",
         "More tabs",
-        "Write tests for file"
+        "New project",
+        "Write tests for file",
+        "pwsh · Running"
       ]
     },
     {
@@ -615,7 +751,10 @@
       "page": "pages/en.dark.open.onboarding.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "More tabs"
+        "Close pwsh",
+        "More tabs",
+        "New project",
+        "pwsh · Running"
       ]
     },
     {
@@ -625,7 +764,10 @@
       "page": "pages/en.dark.open.toast.md",
       "capture_changed": true,
       "widgets_not_mentioned": [
-        "More tabs"
+        "Close pwsh",
+        "More tabs",
+        "New project",
+        "pwsh · Running"
       ]
     },
     {
@@ -637,6 +779,7 @@
       "widgets_not_mentioned": [
         "Back to bench",
         "More tabs",
+        "New project",
         "No sessions saved yet."
       ]
     },
@@ -648,7 +791,8 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Back to bench",
-        "More tabs"
+        "More tabs",
+        "New project"
       ]
     },
     {
@@ -659,7 +803,8 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Back to bench",
-        "More tabs"
+        "More tabs",
+        "New project"
       ]
     },
     {
@@ -670,7 +815,12 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Back to bench",
-        "More tabs"
+        "Detecting…",
+        "Installed (0)",
+        "More tabs",
+        "New project",
+        "No installed helpers found on PATH.",
+        "Show not installed (16)"
       ]
     },
     {
@@ -681,7 +831,8 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Back to bench",
-        "More tabs"
+        "More tabs",
+        "New project"
       ]
     },
     {
@@ -692,7 +843,8 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Back to bench",
-        "More tabs"
+        "More tabs",
+        "New project"
       ]
     },
     {
@@ -703,7 +855,241 @@
       "capture_changed": true,
       "widgets_not_mentioned": [
         "Back to bench",
-        "More tabs"
+        "More tabs",
+        "New project"
+      ]
+    },
+    {
+      "state": "en.dark.rail.skill.page",
+      "png": "captures/en.dark.rail.skill.page.png",
+      "tree": "captures/en.dark.rail.skill.page.json",
+      "page": "pages/en.dark.rail.skill.page.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "New project"
+      ]
+    },
+    {
+      "state": "en.dark.rail.usage.page",
+      "png": "captures/en.dark.rail.usage.page.png",
+      "tree": "captures/en.dark.rail.usage.page.json",
+      "page": "pages/en.dark.rail.usage.page.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "0 cache read · 0 cache write",
+        "0 tokens",
+        "New project",
+        "No usage recorded yet",
+        "Period",
+        "Scan again",
+        "The numbers come from the local transcripts of the installed helpers: Claude Code reads ~/.claude/projects, Codex reads ~/.codex/sessions and OpenCode reads its storage folder. Nothing leaves this machine. Run a helper session in a bench and click Refresh; if everything stays at zero, check that the helper CLI is installed and has already run at least once.",
+        "US$ 0.00"
+      ]
+    },
+    {
+      "state": "en.dark.right-tab.extension.panels.right",
+      "png": "captures/en.dark.right-tab.extension.panels.right.png",
+      "tree": "captures/en.dark.right-tab.extension.panels.right.json",
+      "page": "pages/en.dark.right-tab.extension.panels.right.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.right-tab.git.changes",
+      "png": "captures/en.dark.right-tab.git.changes.png",
+      "tree": "captures/en.dark.right-tab.git.changes.json",
+      "page": "pages/en.dark.right-tab.git.changes.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.right-tab.ports.panel",
+      "png": "captures/en.dark.right-tab.ports.panel.png",
+      "tree": "captures/en.dark.right-tab.ports.panel.json",
+      "page": "pages/en.dark.right-tab.ports.panel.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "Show all system ports",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.right-tab.search.panel",
+      "png": "captures/en.dark.right-tab.search.panel.png",
+      "tree": "captures/en.dark.right-tab.search.panel.json",
+      "page": "pages/en.dark.right-tab.search.panel.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.settings.accounts",
+      "png": "captures/en.dark.settings.accounts.png",
+      "tree": "captures/en.dark.settings.accounts.json",
+      "page": "pages/en.dark.settings.accounts.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.settings.content",
+      "png": "captures/en.dark.settings.content.png",
+      "tree": "captures/en.dark.settings.content.json",
+      "page": "pages/en.dark.settings.content.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.settings.counter_github",
+      "png": "captures/en.dark.settings.counter_github.png",
+      "tree": "captures/en.dark.settings.counter_github.json",
+      "page": "pages/en.dark.settings.counter_github.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.settings.counter_gitlab",
+      "png": "captures/en.dark.settings.counter_gitlab.png",
+      "tree": "captures/en.dark.settings.counter_gitlab.json",
+      "page": "pages/en.dark.settings.counter_gitlab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.settings.counter_jira",
+      "png": "captures/en.dark.settings.counter_jira.png",
+      "tree": "captures/en.dark.settings.counter_jira.json",
+      "page": "pages/en.dark.settings.counter_jira.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.settings.counter_linear",
+      "png": "captures/en.dark.settings.counter_linear.png",
+      "tree": "captures/en.dark.settings.counter_linear.json",
+      "page": "pages/en.dark.settings.counter_linear.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.settings.helper",
+      "png": "captures/en.dark.settings.helper.png",
+      "tree": "captures/en.dark.settings.helper.json",
+      "page": "pages/en.dark.settings.helper.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.settings.import",
+      "png": "captures/en.dark.settings.import.png",
+      "tree": "captures/en.dark.settings.import.json",
+      "page": "pages/en.dark.settings.import.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.settings.mcp",
+      "png": "captures/en.dark.settings.mcp.png",
+      "tree": "captures/en.dark.settings.mcp.json",
+      "page": "pages/en.dark.settings.mcp.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "Server · on: 53",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.settings.onboarding",
+      "png": "captures/en.dark.settings.onboarding.png",
+      "tree": "captures/en.dark.settings.onboarding.json",
+      "page": "pages/en.dark.settings.onboarding.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.settings.remote",
+      "png": "captures/en.dark.settings.remote.png",
+      "tree": "captures/en.dark.settings.remote.json",
+      "page": "pages/en.dark.settings.remote.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.settings.trust",
+      "png": "captures/en.dark.settings.trust.png",
+      "tree": "captures/en.dark.settings.trust.json",
+      "page": "pages/en.dark.settings.trust.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.dark.settings.voice",
+      "png": "captures/en.dark.settings.voice.png",
+      "tree": "captures/en.dark.settings.voice.json",
+      "page": "pages/en.dark.settings.voice.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
       ]
     },
     {
@@ -711,9 +1097,125 @@
       "png": "captures/en.light.bench-tab.bench.detail.png",
       "tree": "captures/en.light.bench-tab.bench.detail.json",
       "page": "pages/en.light.bench-tab.bench.detail.md",
-      "capture_changed": false,
+      "capture_changed": true,
       "widgets_not_mentioned": [
+        "New project",
         "No bench is active.\nCreate a bench, or pick one in the sidebar or board."
+      ]
+    },
+    {
+      "state": "en.light.bench-tab.browser.tab",
+      "png": "captures/en.light.bench-tab.browser.tab.png",
+      "tree": "captures/en.light.bench-tab.browser.tab.json",
+      "page": "pages/en.light.bench-tab.browser.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "New project",
+        "The embedded browser is hidden while the window is unfocused or off-screen. Focus the window to show the page."
+      ]
+    },
+    {
+      "state": "en.light.bench-tab.chat.tab",
+      "png": "captures/en.light.bench-tab.chat.tab.png",
+      "tree": "captures/en.light.bench-tab.chat.tab.json",
+      "page": "pages/en.light.bench-tab.chat.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "22 ports",
+        "Copy command",
+        "Install a compatible helper or open the Helpers page to get started.",
+        "New project",
+        "No chat-compatible helper was found.",
+        "Open Helpers",
+        "not installed",
+        "npm install -g @anthropic-ai/claude-code"
+      ]
+    },
+    {
+      "state": "en.light.bench-tab.diff.tab",
+      "png": "captures/en.light.bench-tab.diff.tab.png",
+      "tree": "captures/en.light.bench-tab.diff.tab.json",
+      "page": "pages/en.light.bench-tab.diff.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "New project"
+      ]
+    },
+    {
+      "state": "en.light.bench-tab.editor.tab",
+      "png": "captures/en.light.bench-tab.editor.tab.png",
+      "tree": "captures/en.light.bench-tab.editor.tab.json",
+      "page": "pages/en.light.bench-tab.editor.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "New project"
+      ]
+    },
+    {
+      "state": "en.light.bench-tab.extension.panels.bench",
+      "png": "captures/en.light.bench-tab.extension.panels.bench.png",
+      "tree": "captures/en.light.bench-tab.extension.panels.bench.json",
+      "page": "pages/en.light.bench-tab.extension.panels.bench.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "New project"
+      ]
+    },
+    {
+      "state": "en.light.bench-tab.git.history",
+      "png": "captures/en.light.bench-tab.git.history.png",
+      "tree": "captures/en.light.bench-tab.git.history.json",
+      "page": "pages/en.light.bench-tab.git.history.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "New project"
+      ]
+    },
+    {
+      "state": "en.light.bench-tab.review.tab",
+      "png": "captures/en.light.bench-tab.review.tab.png",
+      "tree": "captures/en.light.bench-tab.review.tab.json",
+      "page": "pages/en.light.bench-tab.review.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Choose a valid base to continue.",
+        "New project",
+        "No base is available. Choose a branch to compare.",
+        "What will be sent"
+      ]
+    },
+    {
+      "state": "en.light.bench-tab.viewers.tab",
+      "png": "captures/en.light.bench-tab.viewers.tab.png",
+      "tree": "captures/en.light.bench-tab.viewers.tab.json",
+      "page": "pages/en.light.bench-tab.viewers.tab.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "New project"
+      ]
+    },
+    {
+      "state": "en.light.home.default",
+      "png": "captures/en.light.home.default.png",
+      "tree": "captures/en.light.home.default.json",
+      "page": "pages/en.light.home.default.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.light.modal.helper.profile_picker",
+      "png": "captures/en.light.modal.helper.profile_picker.png",
+      "tree": "captures/en.light.modal.helper.profile_picker.json",
+      "page": "pages/en.light.modal.helper.profile_picker.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
       ]
     },
     {
@@ -721,30 +1223,40 @@
       "png": "captures/en.light.open.anvil.png",
       "tree": "captures/en.light.open.anvil.json",
       "page": "pages/en.light.open.anvil.md",
-      "capture_changed": false,
+      "capture_changed": true,
       "widgets_not_mentioned": [
         "Allow process requests",
-        "Check gofmt formatting  ·  project",
-        "Format code with Ruff  ·  project"
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.light.open.onboarding",
+      "png": "captures/en.light.open.onboarding.png",
+      "tree": "captures/en.light.open.onboarding.json",
+      "page": "pages/en.light.open.onboarding.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
+      ]
+    },
+    {
+      "state": "en.light.open.toast",
+      "png": "captures/en.light.open.toast.png",
+      "tree": "captures/en.light.open.toast.json",
+      "page": "pages/en.light.open.toast.md",
+      "capture_changed": true,
+      "widgets_not_mentioned": [
+        "Close pwsh",
+        "New project",
+        "pwsh · Running"
       ]
     }
   ],
   "missing": [
-    {
-      "state": "en.light.rail.archive.tab",
-      "png": "captures/en.light.rail.archive.tab.png",
-      "tree": "captures/en.light.rail.archive.tab.json"
-    },
-    {
-      "state": "en.light.rail.board.page",
-      "png": "captures/en.light.rail.board.page.png",
-      "tree": "captures/en.light.rail.board.page.json"
-    },
-    {
-      "state": "en.light.rail.extension.page",
-      "png": "captures/en.light.rail.extension.page.png",
-      "tree": "captures/en.light.rail.extension.page.json"
-    },
     {
       "state": "en.light.rail.helper.tab",
       "png": "captures/en.light.rail.helper.tab.png",

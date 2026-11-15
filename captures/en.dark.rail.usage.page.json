@@ -5,12 +5,12 @@
   "focus": 13826925289788388,
   "nodes": [
     {
-      "id": 17653119940246746625,
-      "parent": 9209072372306598373,
+      "id": 8782200294843813120,
+      "parent": 15597218918518101534,
       "role": "TextRun",
-      "name": "2026-11-01",
+      "name": "0 tokens",
       "label": null,
-      "value": "2026-11-01",
+      "value": "0 tokens",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -19,15 +19,43 @@
       "bounds": {
         "points": [
           341.0,
-          495.5,
-          416.625,
-          510.5
+          638.0,
+          415.375,
+          657.0
         ],
         "pixels": [
           341.0,
-          496.0,
-          417.0,
-          511.0
+          638.0,
+          415.0,
+          657.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 7685871399036572417,
+      "parent": 16564612345637801385,
+      "role": "TextRun",
+      "name": "0 tokens",
+      "label": null,
+      "value": "0 tokens",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          341.0,
+          445.0,
+          415.375,
+          464.0
+        ],
+        "pixels": [
+          341.0,
+          445.0,
+          415.0,
+          464.0
         ]
       },
       "children": []
@@ -99,12 +127,12 @@
       ]
     },
     {
-      "id": 7937902728720385797,
-      "parent": 15045887806841936166,
+      "id": 7781188517825605635,
+      "parent": 14223074406190115890,
       "role": "Label",
-      "name": "0",
+      "name": "Period",
       "label": null,
-      "value": "0",
+      "value": "Period",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -114,20 +142,20 @@
       ],
       "bounds": {
         "points": [
-          592.625,
-          655.0,
-          599.09375,
-          671.0
+          324.0,
+          138.0,
+          358.0625,
+          154.0
         ],
         "pixels": [
-          593.0,
-          655.0,
-          599.0,
-          671.0
+          324.0,
+          138.0,
+          358.0,
+          154.0
         ]
       },
       "children": [
-        4826419119178014538
+        336503258098025239
       ]
     },
     {
@@ -154,34 +182,6 @@
           90.0,
           374.0,
           122.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 14462601676770350343,
-      "parent": 17979762549064939603,
-      "role": "TextRun",
-      "name": "2026-11-09",
-      "label": null,
-      "value": "2026-11-09",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          341.0,
-          815.5,
-          416.625,
-          830.5
-        ],
-        "pixels": [
-          341.0,
-          816.0,
-          417.0,
-          831.0
         ]
       },
       "children": []
@@ -263,12 +263,12 @@
       ]
     },
     {
-      "id": 16630397224573720072,
-      "parent": 11688863637716628259,
+      "id": 4642046695969991179,
+      "parent": 8140145600965021818,
       "role": "Label",
-      "name": "0",
+      "name": "Last 7 days",
       "label": null,
-      "value": "0",
+      "value": "Last 7 days",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -278,20 +278,41 @@
       ],
       "bounds": {
         "points": [
-          592.625,
-          895.0,
-          599.09375,
-          911.0
+          987.0,
+          365.0,
+          1591.0,
+          389.0
         ],
         "pixels": [
-          593.0,
-          895.0,
-          599.0,
-          911.0
+          987.0,
+          365.0,
+          1591.0,
+          389.0
         ]
       },
       "children": [
-        4551283378778480038
+        15414083202973957842
+      ]
+    },
+    {
+      "id": 13237713326105409290,
+      "parent": 39640867617091659,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        4010417599532944688,
+        9383550330207729984,
+        8821012449141240623,
+        15470704649601751468,
+        1043896956284048687
       ]
     },
     {
@@ -327,75 +348,6 @@
       "bounds": null,
       "children": [
         15651725192175810751
-      ]
-    },
-    {
-      "id": 15485998489513392398,
-      "parent": 14223074406190115890,
-      "role": "GenericContainer",
-      "name": null,
-      "label": null,
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": null,
-      "children": [
-        750151814658726671,
-        13913846481396736067
-      ]
-    },
-    {
-      "id": 750151814658726671,
-      "parent": 15485998489513392398,
-      "role": "GenericContainer",
-      "name": null,
-      "label": null,
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": null,
-      "children": [
-        3520904742423870131,
-        5904385754677245080,
-        11520615723342639212
-      ]
-    },
-    {
-      "id": 1688051246728090898,
-      "parent": 7538189576194547633,
-      "role": "Label",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          592.625,
-          575.0,
-          599.09375,
-          591.0
-        ],
-        "pixels": [
-          593.0,
-          575.0,
-          599.0,
-          591.0
-        ]
-      },
-      "children": [
-        17137736846269186523
       ]
     },
     {
@@ -447,12 +399,33 @@
       "children": []
     },
     {
-      "id": 16630974664873800467,
-      "parent": 16857443964184995019,
-      "role": "TextRun",
-      "name": "2026-11-05",
+      "id": 4412433640979217427,
+      "parent": 781001148180896912,
+      "role": "GenericContainer",
+      "name": null,
       "label": null,
-      "value": "2026-11-05",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        5515128875278125419,
+        15799292471083866436,
+        16564612345637801385,
+        16482764795889262462,
+        7410084606185029090
+      ]
+    },
+    {
+      "id": 4245647275875430677,
+      "parent": 15799292471083866436,
+      "role": "TextRun",
+      "name": "US$ 0.00",
+      "label": null,
+      "value": "US$ 0.00",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -461,26 +434,26 @@
       "bounds": {
         "points": [
           341.0,
-          655.5,
-          416.625,
-          670.5
+          405.0,
+          432.9375,
+          437.0
         ],
         "pixels": [
           341.0,
-          656.0,
-          417.0,
-          671.0
+          405.0,
+          433.0,
+          437.0
         ]
       },
       "children": []
     },
     {
-      "id": 710175804341607438,
-      "parent": 9960043068307193921,
+      "id": 336503258098025239,
+      "parent": 7781188517825605635,
       "role": "TextRun",
-      "name": "2026-11-07",
+      "name": "Period",
       "label": null,
-      "value": "2026-11-07",
+      "value": "Period",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -488,16 +461,16 @@
       "actions": [],
       "bounds": {
         "points": [
-          341.0,
-          735.5,
-          416.625,
-          750.5
+          324.0,
+          138.0,
+          358.0625,
+          154.0
         ],
         "pixels": [
-          341.0,
-          736.0,
-          417.0,
-          751.0
+          324.0,
+          138.0,
+          358.0,
+          154.0
         ]
       },
       "children": []
@@ -531,52 +504,6 @@
       "children": []
     },
     {
-      "id": 382536639694049562,
-      "parent": 8924387505115005546,
-      "role": "GenericContainer",
-      "name": null,
-      "label": null,
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": null,
-      "children": [
-        3379428647366652802,
-        7683704071024920461
-      ]
-    },
-    {
-      "id": 2495183055305760539,
-      "parent": 4666315427429093196,
-      "role": "TextRun",
-      "name": "2026-11-14",
-      "label": null,
-      "value": "2026-11-14",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          341.0,
-          1015.5,
-          416.625,
-          1030.5
-        ],
-        "pixels": [
-          341.0,
-          1016.0,
-          417.0,
-          1031.0
-        ]
-      },
-      "children": []
-    },
-    {
       "id": 5064175733223792413,
       "parent": 1749702046863834304,
       "role": "TextRun",
@@ -591,15 +518,15 @@
       "bounds": {
         "points": [
           182.0,
-          161.0,
+          201.0,
           210.0,
-          189.0
+          229.0
         ],
         "pixels": [
           182.0,
-          161.0,
+          201.0,
           210.0,
-          189.0
+          229.0
         ]
       },
       "children": []
@@ -635,12 +562,12 @@
       "children": []
     },
     {
-      "id": 3626335388000936993,
-      "parent": 9854857223226374650,
+      "id": 4091177233919852063,
+      "parent": 12772628373259676365,
       "role": "TextRun",
-      "name": "0 input · 0 output",
+      "name": "US$ 0.00",
       "label": null,
-      "value": "0 input · 0 output",
+      "value": "US$ 0.00",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -649,18 +576,50 @@
       "bounds": {
         "points": [
           987.0,
-          377.0,
-          1079.0625,
-          393.0
+          405.0,
+          1078.9375,
+          437.0
         ],
         "pixels": [
           987.0,
-          377.0,
+          405.0,
           1079.0,
-          393.0
+          437.0
         ]
       },
       "children": []
+    },
+    {
+      "id": 15597218918518101534,
+      "parent": 6476119192743012938,
+      "role": "Label",
+      "name": "0 tokens",
+      "label": null,
+      "value": "0 tokens",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          341.0,
+          638.0,
+          945.0,
+          657.0
+        ],
+        "pixels": [
+          341.0,
+          638.0,
+          945.0,
+          657.0
+        ]
+      },
+      "children": [
+        8782200294843813120
+      ]
     },
     {
       "id": 9433432068548225826,
@@ -694,21 +653,35 @@
       "children": []
     },
     {
-      "id": 11688863637716628259,
-      "parent": 8924387505115005546,
-      "role": "GenericContainer",
-      "name": null,
+      "id": 10056609459993599010,
+      "parent": 8140145600965021818,
+      "role": "Label",
+      "name": "0 tokens",
       "label": null,
-      "value": null,
+      "value": "0 tokens",
       "description": null,
       "disabled": false,
       "selected": null,
       "toggled": null,
-      "actions": [],
-      "bounds": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          987.0,
+          445.0,
+          1591.0,
+          464.0
+        ],
+        "pixels": [
+          987.0,
+          445.0,
+          1591.0,
+          464.0
+        ]
+      },
       "children": [
-        11015175965927768689,
-        16630397224573720072
+        6796744819365516519
       ]
     },
     {
@@ -727,34 +700,6 @@
       "children": [
         14219053030263038990
       ]
-    },
-    {
-      "id": 7919951603639538980,
-      "parent": 11520615723342639212,
-      "role": "TextRun",
-      "name": "0 input · 0 output",
-      "label": null,
-      "value": "0 input · 0 output",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          341.0,
-          235.0,
-          433.0625,
-          251.0
-        ],
-        "pixels": [
-          341.0,
-          235.0,
-          433.0,
-          251.0
-        ]
-      },
-      "children": []
     },
     {
       "id": 13672268269099447846,
@@ -788,94 +733,12 @@
       "children": []
     },
     {
-      "id": 15045887806841936166,
-      "parent": 8924387505115005546,
-      "role": "GenericContainer",
-      "name": null,
-      "label": null,
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": null,
-      "children": [
-        16857443964184995019,
-        7937902728720385797
-      ]
-    },
-    {
-      "id": 16576298012730042148,
-      "parent": 8924387505115005546,
-      "role": "GenericContainer",
-      "name": null,
-      "label": null,
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": null,
-      "children": [
-        9392618993649622255,
-        14577968804115763077
-      ]
-    },
-    {
-      "id": 13350557648095744033,
-      "parent": 8924387505115005546,
-      "role": "GenericContainer",
-      "name": null,
-      "label": null,
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": null,
-      "children": [
-        14946197799934086302,
-        3974951264242940326
-      ]
-    },
-    {
-      "id": 51168473690020906,
-      "parent": 14039959604559640190,
+      "id": 15374236937756535596,
+      "parent": 16633862072594329297,
       "role": "TextRun",
-      "name": "0",
+      "name": "No usage recorded yet",
       "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          592.625,
-          1015.0,
-          599.09375,
-          1031.0
-        ],
-        "pixels": [
-          593.0,
-          1015.0,
-          599.0,
-          1031.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 724310435976803628,
-      "parent": 5904385754677245080,
-      "role": "TextRun",
-      "name": "0",
-      "label": null,
-      "value": "0",
+      "value": "No usage recorded yet",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -885,77 +748,17 @@
         "points": [
           341.0,
           195.0,
-          353.9375,
-          227.0
+          526.5,
+          219.0
         ],
         "pixels": [
           341.0,
           195.0,
-          354.0,
-          227.0
+          527.0,
+          219.0
         ]
       },
       "children": []
-    },
-    {
-      "id": 6542660639285889069,
-      "parent": 5376057943693748864,
-      "role": "TextRun",
-      "name": "2026-11-10",
-      "label": null,
-      "value": "2026-11-10",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          341.0,
-          855.5,
-          416.625,
-          870.5
-        ],
-        "pixels": [
-          341.0,
-          856.0,
-          417.0,
-          871.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 5566215327003504686,
-      "parent": 16372733767424363422,
-      "role": "Label",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          592.625,
-          495.0,
-          599.09375,
-          511.0
-        ],
-        "pixels": [
-          593.0,
-          495.0,
-          599.0,
-          511.0
-        ]
-      },
-      "children": [
-        11048541586233073215
-      ]
     },
     {
       "id": 8874388665896959535,
@@ -976,6 +779,70 @@
       ]
     },
     {
+      "id": 12402886418570165552,
+      "parent": 6476119192743012938,
+      "role": "Label",
+      "name": "0 input · 0 output",
+      "label": null,
+      "value": "0 input · 0 output",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          341.0,
+          665.0,
+          945.0,
+          681.0
+        ],
+        "pixels": [
+          341.0,
+          665.0,
+          945.0,
+          681.0
+        ]
+      },
+      "children": [
+        11153318095477717126
+      ]
+    },
+    {
+      "id": 4010417599532944688,
+      "parent": 13237713326105409290,
+      "role": "Label",
+      "name": "Total",
+      "label": null,
+      "value": "Total",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          987.0,
+          558.0,
+          1591.0,
+          582.0
+        ],
+        "pixels": [
+          987.0,
+          558.0,
+          1591.0,
+          582.0
+        ]
+      },
+      "children": [
+        17383669946882161827
+      ]
+    },
+    {
       "id": 14223074406190115890,
       "parent": 4124151587910648382,
       "role": "GenericContainer",
@@ -989,9 +856,43 @@
       "actions": [],
       "bounds": null,
       "children": [
-        15485998489513392398,
-        1797003944121511752,
-        8924387505115005546
+        7781188517825605635,
+        7769814321499092331,
+        14297924118069530824,
+        14473801978390857686,
+        962232915144401255
+      ]
+    },
+    {
+      "id": 8821012449141240623,
+      "parent": 13237713326105409290,
+      "role": "Label",
+      "name": "0 tokens",
+      "label": null,
+      "value": "0 tokens",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          987.0,
+          638.0,
+          1591.0,
+          657.0
+        ],
+        "pixels": [
+          987.0,
+          638.0,
+          1591.0,
+          657.0
+        ]
+      },
+      "children": [
+        9326644390269233652
       ]
     },
     {
@@ -1059,21 +960,35 @@
       ]
     },
     {
-      "id": 12335877113293724214,
-      "parent": 8924387505115005546,
-      "role": "GenericContainer",
-      "name": null,
+      "id": 7791453177883397430,
+      "parent": 8140145600965021818,
+      "role": "Label",
+      "name": "0 input · 0 output",
       "label": null,
-      "value": null,
+      "value": "0 input · 0 output",
       "description": null,
       "disabled": false,
       "selected": null,
       "toggled": null,
-      "actions": [],
-      "bounds": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          987.0,
+          472.0,
+          1591.0,
+          488.0
+        ],
+        "pixels": [
+          987.0,
+          472.0,
+          1591.0,
+          488.0
+        ]
+      },
       "children": [
-        8197191953088884030,
-        9699372871212977226
+        15392518201092255098
       ]
     },
     {
@@ -1103,6 +1018,37 @@
           5.0,
           1867.0,
           37.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 237075411805143865,
+      "parent": 5097716552592903397,
+      "role": "Button",
+      "name": "Scan again",
+      "label": "Scan again",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          341.0,
+          287.0,
+          430.9375,
+          319.0
+        ],
+        "pixels": [
+          341.0,
+          287.0,
+          431.0,
+          319.0
         ]
       },
       "children": []
@@ -1139,12 +1085,12 @@
       "children": []
     },
     {
-      "id": 4839531275126626619,
-      "parent": 7046441459659107979,
+      "id": 3136104414962337850,
+      "parent": 15470704649601751468,
       "role": "TextRun",
-      "name": "Total",
+      "name": "0 input · 0 output",
       "label": null,
-      "value": "Total",
+      "value": "0 input · 0 output",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -1153,18 +1099,50 @@
       "bounds": {
         "points": [
           987.0,
-          297.0,
-          1025.6875,
-          321.0
+          665.0,
+          1079.0625,
+          681.0
         ],
         "pixels": [
           987.0,
-          297.0,
-          1026.0,
-          321.0
+          665.0,
+          1079.0,
+          681.0
         ]
       },
       "children": []
+    },
+    {
+      "id": 1043896956284048687,
+      "parent": 13237713326105409290,
+      "role": "Label",
+      "name": "0 cache read · 0 cache write",
+      "label": null,
+      "value": "0 cache read · 0 cache write",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          987.0,
+          689.0,
+          1591.0,
+          705.0
+        ],
+        "pixels": [
+          987.0,
+          689.0,
+          1591.0,
+          705.0
+        ]
+      },
+      "children": [
+        1730183858865453134
+      ]
     },
     {
       "id": 2536795170955985725,
@@ -1199,8 +1177,7 @@
       "children": [
         8874388665896959535,
         14223074406190115890,
-        13922460140532254890,
-        4268781569790589099
+        14487540896279269317
       ]
     },
     {
@@ -1277,12 +1254,12 @@
       "children": []
     },
     {
-      "id": 2548467600212885055,
-      "parent": 8924387505115005546,
+      "id": 9383550330207729984,
+      "parent": 13237713326105409290,
       "role": "Label",
-      "name": "By day",
+      "name": "US$ 0.00",
       "label": null,
-      "value": "By day",
+      "value": "US$ 0.00",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -1292,20 +1269,20 @@
       ],
       "bounds": {
         "points": [
-          341.0,
-          447.0,
-          395.15625,
-          471.0
+          987.0,
+          598.0,
+          1591.0,
+          630.0
         ],
         "pixels": [
-          341.0,
-          447.0,
-          395.0,
-          471.0
+          987.0,
+          598.0,
+          1591.0,
+          630.0
         ]
       },
       "children": [
-        12635405727820688327
+        352618076043007056
       ]
     },
     {
@@ -1327,22 +1304,35 @@
       ]
     },
     {
-      "id": 13913846481396736067,
-      "parent": 15485998489513392398,
-      "role": "GenericContainer",
-      "name": null,
+      "id": 15799292471083866436,
+      "parent": 4412433640979217427,
+      "role": "Label",
+      "name": "US$ 0.00",
       "label": null,
-      "value": null,
+      "value": "US$ 0.00",
       "description": null,
       "disabled": false,
       "selected": null,
       "toggled": null,
-      "actions": [],
-      "bounds": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          341.0,
+          405.0,
+          945.0,
+          437.0
+        ],
+        "pixels": [
+          341.0,
+          405.0,
+          945.0,
+          437.0
+        ]
+      },
       "children": [
-        8239049581480334160,
-        2853904010272931965,
-        9041758756350549960
+        4245647275875430677
       ]
     },
     {
@@ -1377,68 +1367,8 @@
       "children": []
     },
     {
-      "id": 11048541586233073215,
-      "parent": 5566215327003504686,
-      "role": "TextRun",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          592.625,
-          495.0,
-          599.09375,
-          511.0
-        ],
-        "pixels": [
-          593.0,
-          495.0,
-          599.0,
-          511.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 9960043068307193921,
-      "parent": 11911385619519366027,
-      "role": "Label",
-      "name": "2026-11-07",
-      "label": null,
-      "value": "2026-11-07",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          341.0,
-          735.5,
-          416.625,
-          750.5
-        ],
-        "pixels": [
-          341.0,
-          736.0,
-          417.0,
-          751.0
-        ]
-      },
-      "children": [
-        710175804341607438
-      ]
-    },
-    {
-      "id": 1797003944121511752,
-      "parent": 14223074406190115890,
+      "id": 6476119192743012938,
+      "parent": 781001148180896912,
       "role": "GenericContainer",
       "name": null,
       "label": null,
@@ -1450,132 +1380,29 @@
       "actions": [],
       "bounds": null,
       "children": [
-        16868636148597908972,
-        17347920697343805674
+        17709622280611473396,
+        12046412887590457173,
+        15597218918518101534,
+        12402886418570165552,
+        11680081423341558988
       ]
     },
     {
-      "id": 8197191953088884030,
-      "parent": 12335877113293724214,
-      "role": "Label",
-      "name": "2026-11-08",
+      "id": 39640867617091659,
+      "parent": 14487540896279269317,
+      "role": "GenericContainer",
+      "name": null,
       "label": null,
-      "value": "2026-11-08",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          341.0,
-          775.5,
-          416.625,
-          790.5
-        ],
-        "pixels": [
-          341.0,
-          776.0,
-          417.0,
-          791.0
-        ]
-      },
-      "children": [
-        17227890729356496601
-      ]
-    },
-    {
-      "id": 4826419119178014538,
-      "parent": 7937902728720385797,
-      "role": "TextRun",
-      "name": "0",
-      "label": null,
-      "value": "0",
+      "value": null,
       "description": null,
       "disabled": false,
       "selected": null,
       "toggled": null,
       "actions": [],
-      "bounds": {
-        "points": [
-          592.625,
-          655.0,
-          599.09375,
-          671.0
-        ],
-        "pixels": [
-          593.0,
-          655.0,
-          599.0,
-          671.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 9699372871212977226,
-      "parent": 12335877113293724214,
-      "role": "Label",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          592.625,
-          775.0,
-          599.09375,
-          791.0
-        ],
-        "pixels": [
-          593.0,
-          775.0,
-          599.0,
-          791.0
-        ]
-      },
+      "bounds": null,
       "children": [
-        4258520879593219810
-      ]
-    },
-    {
-      "id": 9087270393467667020,
-      "parent": 16868636148597908972,
-      "role": "Label",
-      "name": "Last 7 days",
-      "label": null,
-      "value": "Last 7 days",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          987.0,
-          155.0,
-          1591.0,
-          179.0
-        ],
-        "pixels": [
-          987.0,
-          155.0,
-          1591.0,
-          179.0
-        ]
-      },
-      "children": [
-        12996482428433581532
+        8140145600965021818,
+        13237713326105409290
       ]
     },
     {
@@ -1595,123 +1422,27 @@
       ],
       "bounds": {
         "points": [
-          221.0,
-          101.0,
-          280.3125,
-          133.0
+          64.0,
+          141.0,
+          123.3125,
+          173.0
         ],
         "pixels": [
-          221.0,
-          101.0,
-          280.0,
-          133.0
+          64.0,
+          141.0,
+          123.0,
+          173.0
         ]
       },
       "children": []
     },
     {
-      "id": 7597270166957823821,
-      "parent": 16298478755363006140,
-      "role": "Label",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          592.625,
-          935.0,
-          599.09375,
-          951.0
-        ],
-        "pixels": [
-          593.0,
-          935.0,
-          599.0,
-          951.0
-        ]
-      },
-      "children": [
-        7977692227350344914
-      ]
-    },
-    {
-      "id": 4666315427429093196,
-      "parent": 7360194771548889332,
-      "role": "Label",
-      "name": "2026-11-14",
-      "label": null,
-      "value": "2026-11-14",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          341.0,
-          1015.5,
-          416.625,
-          1030.5
-        ],
-        "pixels": [
-          341.0,
-          1016.0,
-          417.0,
-          1031.0
-        ]
-      },
-      "children": [
-        2495183055305760539
-      ]
-    },
-    {
-      "id": 8239049581480334160,
-      "parent": 13913846481396736067,
-      "role": "Label",
-      "name": "Last 30 days",
-      "label": null,
-      "value": "Last 30 days",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          341.0,
-          297.0,
-          945.0,
-          321.0
-        ],
-        "pixels": [
-          341.0,
-          297.0,
-          945.0,
-          321.0
-        ]
-      },
-      "children": [
-        4988404046597981420
-      ]
-    },
-    {
-      "id": 11378208347481191761,
-      "parent": 3520904742423870131,
+      "id": 1730183858865453134,
+      "parent": 1043896956284048687,
       "role": "TextRun",
-      "name": "Today",
+      "name": "0 cache read · 0 cache write",
       "label": null,
-      "value": "Today",
+      "value": "0 cache read · 0 cache write",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -1719,16 +1450,44 @@
       "actions": [],
       "bounds": {
         "points": [
-          341.0,
-          155.0,
-          389.15625,
-          179.0
+          987.0,
+          689.0,
+          1132.28125,
+          705.0
         ],
         "pixels": [
-          341.0,
-          155.0,
-          389.0,
-          179.0
+          987.0,
+          689.0,
+          1132.0,
+          705.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 352618076043007056,
+      "parent": 9383550330207729984,
+      "role": "TextRun",
+      "name": "US$ 0.00",
+      "label": null,
+      "value": "US$ 0.00",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          987.0,
+          598.0,
+          1078.9375,
+          630.0
+        ],
+        "pixels": [
+          987.0,
+          598.0,
+          1079.0,
+          630.0
         ]
       },
       "children": []
@@ -1765,12 +1524,12 @@
       "children": []
     },
     {
-      "id": 17979762549064939603,
-      "parent": 9020155732093307996,
+      "id": 12046412887590457173,
+      "parent": 6476119192743012938,
       "role": "Label",
-      "name": "2026-11-09",
+      "name": "US$ 0.00",
       "label": null,
-      "value": "2026-11-09",
+      "value": "US$ 0.00",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -1781,19 +1540,19 @@
       "bounds": {
         "points": [
           341.0,
-          815.5,
-          416.625,
-          830.5
+          598.0,
+          945.0,
+          630.0
         ],
         "pixels": [
           341.0,
-          816.0,
-          417.0,
-          831.0
+          598.0,
+          945.0,
+          630.0
         ]
       },
       "children": [
-        14462601676770350343
+        15473357517888926554
       ]
     },
     {
@@ -1857,15 +1616,15 @@
       "bounds": {
         "points": [
           182.0,
-          216.0,
+          256.0,
           307.03125,
-          235.0
+          275.0
         ],
         "pixels": [
           182.0,
-          216.0,
+          256.0,
           307.0,
-          235.0
+          275.0
         ]
       },
       "children": []
@@ -1962,22 +1721,32 @@
       ]
     },
     {
-      "id": 9020155732093307996,
-      "parent": 8924387505115005546,
-      "role": "GenericContainer",
-      "name": null,
+      "id": 15473357517888926554,
+      "parent": 12046412887590457173,
+      "role": "TextRun",
+      "name": "US$ 0.00",
       "label": null,
-      "value": null,
+      "value": "US$ 0.00",
       "description": null,
       "disabled": false,
       "selected": null,
       "toggled": null,
       "actions": [],
-      "bounds": null,
-      "children": [
-        17979762549064939603,
-        10731760265126018026
-      ]
+      "bounds": {
+        "points": [
+          341.0,
+          598.0,
+          432.9375,
+          630.0
+        ],
+        "pixels": [
+          341.0,
+          598.0,
+          433.0,
+          630.0
+        ]
+      },
+      "children": []
     },
     {
       "id": 7528245900600709990,
@@ -2011,6 +1780,65 @@
       "children": []
     },
     {
+      "id": 962232915144401255,
+      "parent": 14223074406190115890,
+      "role": "Button",
+      "name": "Total",
+      "label": "Total",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          662.875,
+          130.0,
+          761.8125,
+          162.0
+        ],
+        "pixels": [
+          663.0,
+          130.0,
+          762.0,
+          162.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 10354569732425178982,
+      "parent": 319323779954835068,
+      "role": "TextRun",
+      "name": "0 cache read · 0 cache write",
+      "label": null,
+      "value": "0 cache read · 0 cache write",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          987.0,
+          496.0,
+          1132.28125,
+          512.0
+        ],
+        "pixels": [
+          987.0,
+          496.0,
+          1132.0,
+          512.0
+        ]
+      },
+      "children": []
+    },
+    {
       "id": 5847957139851059049,
       "parent": 15590497865806244558,
       "role": "GenericContainer",
@@ -2029,67 +1857,35 @@
       ]
     },
     {
-      "id": 15546957772303288426,
-      "parent": 16868636148597908972,
-      "role": "Label",
-      "name": "0 input · 0 output",
-      "label": null,
-      "value": "0 input · 0 output",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          987.0,
-          235.0,
-          1591.0,
-          251.0
-        ],
-        "pixels": [
-          987.0,
-          235.0,
-          1591.0,
-          251.0
-        ]
-      },
-      "children": [
-        10772278334023078064
-      ]
-    },
-    {
-      "id": 8924387505115005546,
+      "id": 7769814321499092331,
       "parent": 14223074406190115890,
-      "role": "GenericContainer",
-      "name": null,
-      "label": null,
+      "role": "Button",
+      "name": "Today",
+      "label": "Today",
       "value": null,
       "description": null,
       "disabled": false,
       "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": null,
-      "children": [
-        2548467600212885055,
-        16372733767424363422,
-        794040497045756152,
-        7538189576194547633,
-        382536639694049562,
-        15045887806841936166,
-        16576298012730042148,
-        11911385619519366027,
-        12335877113293724214,
-        9020155732093307996,
-        4340749757112684538,
-        11688863637716628259,
-        16298478755363006140,
-        13350557648095744033,
-        7360194771548889332
-      ]
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          366.0625,
+          130.0,
+          465.0,
+          162.0
+        ],
+        "pixels": [
+          366.0,
+          130.0,
+          465.0,
+          162.0
+        ]
+      },
+      "children": []
     },
     {
       "id": 12274340460185043820,
@@ -2109,12 +1905,12 @@
       ]
     },
     {
-      "id": 11520615723342639212,
-      "parent": 750151814658726671,
+      "id": 5515128875278125419,
+      "parent": 4412433640979217427,
       "role": "Label",
-      "name": "0 input · 0 output",
+      "name": "Today",
       "label": null,
-      "value": "0 input · 0 output",
+      "value": "Today",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -2125,83 +1921,19 @@
       "bounds": {
         "points": [
           341.0,
-          235.0,
+          365.0,
           945.0,
-          251.0
+          389.0
         ],
         "pixels": [
           341.0,
-          235.0,
+          365.0,
           945.0,
-          251.0
+          389.0
         ]
       },
       "children": [
-        7919951603639538980
-      ]
-    },
-    {
-      "id": 3789894224887281001,
-      "parent": 794040497045756152,
-      "role": "Label",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          592.625,
-          535.0,
-          599.09375,
-          551.0
-        ],
-        "pixels": [
-          593.0,
-          535.0,
-          599.0,
-          551.0
-        ]
-      },
-      "children": [
-        18257301520971854734
-      ]
-    },
-    {
-      "id": 4367569333557975405,
-      "parent": 16298478755363006140,
-      "role": "Label",
-      "name": "2026-11-12",
-      "label": null,
-      "value": "2026-11-12",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          341.0,
-          935.5,
-          416.625,
-          950.5
-        ],
-        "pixels": [
-          341.0,
-          936.0,
-          417.0,
-          951.0
-        ]
-      },
-      "children": [
-        9897041290590372298
+        297353862853577902
       ]
     },
     {
@@ -2220,38 +1952,6 @@
       "children": [
         1749702046863834304,
         6083462245666266831
-      ]
-    },
-    {
-      "id": 11015175965927768689,
-      "parent": 11688863637716628259,
-      "role": "Label",
-      "name": "2026-11-11",
-      "label": null,
-      "value": "2026-11-11",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          341.0,
-          895.5,
-          416.625,
-          910.5
-        ],
-        "pixels": [
-          341.0,
-          896.0,
-          417.0,
-          911.0
-        ]
-      },
-      "children": [
-        7972552081256193234
       ]
     },
     {
@@ -2283,38 +1983,6 @@
       "children": [
         15251687066213349634,
         4971133494036647965
-      ]
-    },
-    {
-      "id": 4256935618093009267,
-      "parent": 7538189576194547633,
-      "role": "Label",
-      "name": "2026-11-03",
-      "label": null,
-      "value": "2026-11-03",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          341.0,
-          575.5,
-          416.625,
-          590.5
-        ],
-        "pixels": [
-          341.0,
-          576.0,
-          417.0,
-          591.0
-        ]
-      },
-      "children": [
-        11893521895540417981
       ]
     },
     {
@@ -2366,12 +2034,33 @@
       ]
     },
     {
-      "id": 17701863415586150007,
-      "parent": 14577968804115763077,
-      "role": "TextRun",
-      "name": "0",
+      "id": 8140145600965021818,
+      "parent": 39640867617091659,
+      "role": "GenericContainer",
+      "name": null,
       "label": null,
-      "value": "0",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        4642046695969991179,
+        12772628373259676365,
+        10056609459993599010,
+        7791453177883397430,
+        319323779954835068
+      ]
+    },
+    {
+      "id": 15392518201092255098,
+      "parent": 7791453177883397430,
+      "role": "TextRun",
+      "name": "0 input · 0 output",
+      "label": null,
+      "value": "0 input · 0 output",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -2379,16 +2068,16 @@
       "actions": [],
       "bounds": {
         "points": [
-          592.625,
-          695.0,
-          599.09375,
-          711.0
+          987.0,
+          472.0,
+          1079.0625,
+          488.0
         ],
         "pixels": [
-          593.0,
-          695.0,
-          599.0,
-          711.0
+          987.0,
+          472.0,
+          1079.0,
+          488.0
         ]
       },
       "children": []
@@ -2426,12 +2115,12 @@
       ]
     },
     {
-      "id": 2853904010272931965,
-      "parent": 13913846481396736067,
+      "id": 319323779954835068,
+      "parent": 8140145600965021818,
       "role": "Label",
-      "name": "0",
+      "name": "0 cache read · 0 cache write",
       "label": null,
-      "value": "0",
+      "value": "0 cache read · 0 cache write",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -2441,28 +2130,28 @@
       ],
       "bounds": {
         "points": [
-          341.0,
-          337.0,
-          945.0,
-          369.0
+          987.0,
+          496.0,
+          1591.0,
+          512.0
         ],
         "pixels": [
-          341.0,
-          337.0,
-          945.0,
-          369.0
+          987.0,
+          496.0,
+          1591.0,
+          512.0
         ]
       },
       "children": [
-        4369636879981613493
+        10354569732425178982
       ]
     },
     {
       "id": 3309078991269281406,
       "parent": 13825972575653543348,
       "role": "Button",
-      "name": "New",
-      "label": "New",
+      "name": "New project",
+      "label": "New project",
       "value": null,
       "description": null,
       "disabled": false,
@@ -2476,13 +2165,13 @@
         "points": [
           161.875,
           101.0,
-          213.0,
+          260.625,
           133.0
         ],
         "pixels": [
           162.0,
           101.0,
-          213.0,
+          261.0,
           133.0
         ]
       },
@@ -2578,12 +2267,12 @@
       "children": []
     },
     {
-      "id": 3379428647366652802,
-      "parent": 382536639694049562,
+      "id": 16482764795889262462,
+      "parent": 4412433640979217427,
       "role": "Label",
-      "name": "2026-11-04",
+      "name": "0 input · 0 output",
       "label": null,
-      "value": "2026-11-04",
+      "value": "0 input · 0 output",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -2594,51 +2283,19 @@
       "bounds": {
         "points": [
           341.0,
-          615.5,
-          416.625,
-          630.5
+          472.0,
+          945.0,
+          488.0
         ],
         "pixels": [
           341.0,
-          616.0,
-          417.0,
-          631.0
+          472.0,
+          945.0,
+          488.0
         ]
       },
       "children": [
-        15588645585717664669
-      ]
-    },
-    {
-      "id": 12132840622036570755,
-      "parent": 11911385619519366027,
-      "role": "Label",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          592.625,
-          735.0,
-          599.09375,
-          751.0
-        ],
-        "pixels": [
-          593.0,
-          735.0,
-          599.0,
-          751.0
-        ]
-      },
-      "children": [
-        15260485218061994629
+        16657648998633293785
       ]
     },
     {
@@ -2659,12 +2316,12 @@
       ]
     },
     {
-      "id": 14528501131495105156,
-      "parent": 13469649459160895398,
+      "id": 11153318095477717126,
+      "parent": 12402886418570165552,
       "role": "TextRun",
-      "name": "2026-11-02",
+      "name": "0 input · 0 output",
       "label": null,
-      "value": "2026-11-02",
+      "value": "0 input · 0 output",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -2673,174 +2330,18 @@
       "bounds": {
         "points": [
           341.0,
-          535.5,
-          416.625,
-          550.5
+          665.0,
+          433.0625,
+          681.0
         ],
         "pixels": [
           341.0,
-          536.0,
-          417.0,
-          551.0
+          665.0,
+          433.0,
+          681.0
         ]
       },
       "children": []
-    },
-    {
-      "id": 14577968804115763077,
-      "parent": 16576298012730042148,
-      "role": "Label",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          592.625,
-          695.0,
-          599.09375,
-          711.0
-        ],
-        "pixels": [
-          593.0,
-          695.0,
-          599.0,
-          711.0
-        ]
-      },
-      "children": [
-        17701863415586150007
-      ]
-    },
-    {
-      "id": 15260485218061994629,
-      "parent": 12132840622036570755,
-      "role": "TextRun",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          592.625,
-          735.0,
-          599.09375,
-          751.0
-        ],
-        "pixels": [
-          593.0,
-          735.0,
-          599.0,
-          751.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 5376057943693748864,
-      "parent": 4340749757112684538,
-      "role": "Label",
-      "name": "2026-11-10",
-      "label": null,
-      "value": "2026-11-10",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          341.0,
-          855.5,
-          416.625,
-          870.5
-        ],
-        "pixels": [
-          341.0,
-          856.0,
-          417.0,
-          871.0
-        ]
-      },
-      "children": [
-        6542660639285889069
-      ]
-    },
-    {
-      "id": 14979413897776499074,
-      "parent": 4340749757112684538,
-      "role": "Label",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          592.625,
-          855.0,
-          599.09375,
-          871.0
-        ],
-        "pixels": [
-          593.0,
-          855.0,
-          599.0,
-          871.0
-        ]
-      },
-      "children": [
-        6852119183774699207
-      ]
-    },
-    {
-      "id": 14039959604559640190,
-      "parent": 7360194771548889332,
-      "role": "Label",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          592.625,
-          1015.0,
-          599.09375,
-          1031.0
-        ],
-        "pixels": [
-          593.0,
-          1015.0,
-          599.0,
-          1031.0
-        ]
-      },
-      "children": [
-        51168473690020906
-      ]
     },
     {
       "id": 13667176677639168651,
@@ -2869,98 +2370,6 @@
           50.0,
           151.0,
           85.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 7046441459659107979,
-      "parent": 17347920697343805674,
-      "role": "Label",
-      "name": "Total",
-      "label": null,
-      "value": "Total",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          987.0,
-          297.0,
-          1591.0,
-          321.0
-        ],
-        "pixels": [
-          987.0,
-          297.0,
-          1591.0,
-          321.0
-        ]
-      },
-      "children": [
-        4839531275126626619
-      ]
-    },
-    {
-      "id": 7683704071024920461,
-      "parent": 382536639694049562,
-      "role": "Label",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          592.625,
-          615.0,
-          599.09375,
-          631.0
-        ],
-        "pixels": [
-          593.0,
-          615.0,
-          599.0,
-          631.0
-        ]
-      },
-      "children": [
-        15467179150080680177
-      ]
-    },
-    {
-      "id": 4698826139275092366,
-      "parent": 9041758756350549960,
-      "role": "TextRun",
-      "name": "0 input · 0 output",
-      "label": null,
-      "value": "0 input · 0 output",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          341.0,
-          377.0,
-          433.0625,
-          393.0
-        ],
-        "pixels": [
-          341.0,
-          377.0,
-          433.0,
-          393.0
         ]
       },
       "children": []
@@ -2997,12 +2406,12 @@
       "children": []
     },
     {
-      "id": 18257301520971854734,
-      "parent": 3789894224887281001,
-      "role": "TextRun",
-      "name": "0",
+      "id": 14098437132086212752,
+      "parent": 5097716552592903397,
+      "role": "Label",
+      "name": "The numbers come from the local transcripts of the installed helpers: Claude Code reads ~/.claude/projects, Codex reads ~/.codex/sessions and OpenCode reads its storage folder. Nothing leaves this machine. Run a helper session in a bench and click Refresh; if everything stays at zero, check that the helper CLI is installed and has already run at least once.",
       "label": null,
-      "value": "0",
+      "value": "The numbers come from the local transcripts of the installed helpers: Claude Code reads ~/.claude/projects, Codex reads ~/.codex/sessions and OpenCode reads its storage folder. Nothing leaves this machine. Run a helper session in a bench and click Refresh; if everything stays at zero, check that the helper CLI is installed and has already run at least once.",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -3010,16 +2419,16 @@
       "actions": [],
       "bounds": {
         "points": [
-          592.625,
-          535.0,
-          599.09375,
-          551.0
+          341.0,
+          235.0,
+          1570.84375,
+          273.0
         ],
         "pixels": [
-          593.0,
-          535.0,
-          599.0,
-          551.0
+          341.0,
+          235.0,
+          1571.0,
+          273.0
         ]
       },
       "children": []
@@ -3040,36 +2449,8 @@
       "children": []
     },
     {
-      "id": 729888941439572881,
-      "parent": 9392618993649622255,
-      "role": "TextRun",
-      "name": "2026-11-06",
-      "label": null,
-      "value": "2026-11-06",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          341.0,
-          695.5,
-          416.625,
-          710.5
-        ],
-        "pixels": [
-          341.0,
-          696.0,
-          417.0,
-          711.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 11911385619519366027,
-      "parent": 8924387505115005546,
+      "id": 781001148180896912,
+      "parent": 14487540896279269317,
       "role": "GenericContainer",
       "name": null,
       "label": null,
@@ -3081,8 +2462,8 @@
       "actions": [],
       "bounds": null,
       "children": [
-        9960043068307193921,
-        12132840622036570755
+        4412433640979217427,
+        6476119192743012938
       ]
     },
     {
@@ -3101,12 +2482,12 @@
       "children": []
     },
     {
-      "id": 3742890111571150231,
-      "parent": 10731760265126018026,
+      "id": 13190738611100694933,
+      "parent": 17709622280611473396,
       "role": "TextRun",
-      "name": "0",
+      "name": "Last 30 days",
       "label": null,
-      "value": "0",
+      "value": "Last 30 days",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -3114,51 +2495,19 @@
       "actions": [],
       "bounds": {
         "points": [
-          592.625,
-          815.0,
-          599.09375,
-          831.0
+          341.0,
+          558.0,
+          439.75,
+          582.0
         ],
         "pixels": [
-          593.0,
-          815.0,
-          599.0,
-          831.0
+          341.0,
+          558.0,
+          440.0,
+          582.0
         ]
       },
       "children": []
-    },
-    {
-      "id": 5904385754677245080,
-      "parent": 750151814658726671,
-      "role": "Label",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          341.0,
-          195.0,
-          945.0,
-          227.0
-        ],
-        "pixels": [
-          341.0,
-          195.0,
-          945.0,
-          227.0
-        ]
-      },
-      "children": [
-        724310435976803628
-      ]
     },
     {
       "id": 3789027533678307993,
@@ -3192,84 +2541,6 @@
       "children": []
     },
     {
-      "id": 15588645585717664669,
-      "parent": 3379428647366652802,
-      "role": "TextRun",
-      "name": "2026-11-04",
-      "label": null,
-      "value": "2026-11-04",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          341.0,
-          615.5,
-          416.625,
-          630.5
-        ],
-        "pixels": [
-          341.0,
-          616.0,
-          417.0,
-          631.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 16372733767424363422,
-      "parent": 8924387505115005546,
-      "role": "GenericContainer",
-      "name": null,
-      "label": null,
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": null,
-      "children": [
-        9209072372306598373,
-        5566215327003504686
-      ]
-    },
-    {
-      "id": 14946197799934086302,
-      "parent": 13350557648095744033,
-      "role": "Label",
-      "name": "2026-11-13",
-      "label": null,
-      "value": "2026-11-13",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          341.0,
-          975.5,
-          416.625,
-          990.5
-        ],
-        "pixels": [
-          341.0,
-          976.0,
-          417.0,
-          991.0
-        ]
-      },
-      "children": [
-        14520861589846679729
-      ]
-    },
-    {
       "id": 15412225307970989218,
       "parent": 8874388665896959535,
       "role": "Button",
@@ -3296,6 +2567,34 @@
           90.0,
           452.0,
           122.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 17383669946882161827,
+      "parent": 4010417599532944688,
+      "role": "TextRun",
+      "name": "Total",
+      "label": null,
+      "value": "Total",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          987.0,
+          558.0,
+          1025.6875,
+          582.0
+        ],
+        "pixels": [
+          987.0,
+          558.0,
+          1026.0,
+          582.0
         ]
       },
       "children": []
@@ -3329,98 +2628,6 @@
       "children": [
         15590497865806244558,
         6540390449713134039
-      ]
-    },
-    {
-      "id": 13469649459160895398,
-      "parent": 794040497045756152,
-      "role": "Label",
-      "name": "2026-11-02",
-      "label": null,
-      "value": "2026-11-02",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          341.0,
-          535.5,
-          416.625,
-          550.5
-        ],
-        "pixels": [
-          341.0,
-          536.0,
-          417.0,
-          551.0
-        ]
-      },
-      "children": [
-        14528501131495105156
-      ]
-    },
-    {
-      "id": 4551283378778480038,
-      "parent": 16630397224573720072,
-      "role": "TextRun",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          592.625,
-          895.0,
-          599.09375,
-          911.0
-        ],
-        "pixels": [
-          593.0,
-          895.0,
-          599.0,
-          911.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 3974951264242940326,
-      "parent": 13350557648095744033,
-      "role": "Label",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          592.625,
-          975.0,
-          599.09375,
-          991.0
-        ],
-        "pixels": [
-          593.0,
-          975.0,
-          599.0,
-          991.0
-        ]
-      },
-      "children": [
-        16999291685238001842
       ]
     },
     {
@@ -3472,70 +2679,41 @@
       ]
     },
     {
-      "id": 13922460140532254890,
-      "parent": 4124151587910648382,
-      "role": "Unknown",
-      "name": null,
+      "id": 16564612345637801385,
+      "parent": 4412433640979217427,
+      "role": "Label",
+      "name": "0 tokens",
       "label": null,
-      "value": null,
+      "value": "0 tokens",
       "description": null,
       "disabled": false,
       "selected": null,
       "toggled": null,
       "actions": [
-        "focus"
+        "click"
       ],
       "bounds": {
         "points": [
-          324.0,
-          138.0,
-          1608.0,
-          1040.0
+          341.0,
+          445.0,
+          945.0,
+          464.0
         ],
         "pixels": [
-          324.0,
-          138.0,
-          1608.0,
-          1040.0
+          341.0,
+          445.0,
+          945.0,
+          464.0
         ]
       },
-      "children": []
+      "children": [
+        7685871399036572417
+      ]
     },
     {
-      "id": 4268781569790589099,
-      "parent": 4124151587910648382,
-      "role": "Unknown",
-      "name": null,
-      "label": null,
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click",
-        "focus"
-      ],
-      "bounds": {
-        "points": [
-          1606.0,
-          138.0,
-          1608.0,
-          1040.0
-        ],
-        "pixels": [
-          1606.0,
-          138.0,
-          1608.0,
-          1040.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 10772278334023078064,
-      "parent": 15546957772303288426,
-      "role": "TextRun",
+      "id": 15470704649601751468,
+      "parent": 13237713326105409290,
+      "role": "Label",
       "name": "0 input · 0 output",
       "label": null,
       "value": "0 input · 0 output",
@@ -3543,19 +2721,51 @@
       "disabled": false,
       "selected": null,
       "toggled": null,
-      "actions": [],
+      "actions": [
+        "click"
+      ],
       "bounds": {
         "points": [
           987.0,
-          235.0,
-          1079.0625,
-          251.0
+          665.0,
+          1591.0,
+          681.0
         ],
         "pixels": [
           987.0,
-          235.0,
-          1079.0,
-          251.0
+          665.0,
+          1591.0,
+          681.0
+        ]
+      },
+      "children": [
+        3136104414962337850
+      ]
+    },
+    {
+      "id": 297353862853577902,
+      "parent": 5515128875278125419,
+      "role": "TextRun",
+      "name": "Today",
+      "label": null,
+      "value": "Today",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          341.0,
+          365.0,
+          389.15625,
+          389.0
+        ],
+        "pixels": [
+          341.0,
+          365.0,
+          389.0,
+          389.0
         ]
       },
       "children": []
@@ -3575,56 +2785,6 @@
       "bounds": null,
       "children": [
         2480966651013750526
-      ]
-    },
-    {
-      "id": 7538189576194547633,
-      "parent": 8924387505115005546,
-      "role": "GenericContainer",
-      "name": null,
-      "label": null,
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": null,
-      "children": [
-        4256935618093009267,
-        1688051246728090898
-      ]
-    },
-    {
-      "id": 3520904742423870131,
-      "parent": 750151814658726671,
-      "role": "Label",
-      "name": "Today",
-      "label": null,
-      "value": "Today",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          341.0,
-          155.0,
-          945.0,
-          179.0
-        ],
-        "pixels": [
-          341.0,
-          155.0,
-          945.0,
-          179.0
-        ]
-      },
-      "children": [
-        11378208347481191761
       ]
     },
     {
@@ -3679,94 +2839,6 @@
       ]
     },
     {
-      "id": 6903610250678813875,
-      "parent": 16868636148597908972,
-      "role": "Label",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          987.0,
-          195.0,
-          1591.0,
-          227.0
-        ],
-        "pixels": [
-          987.0,
-          195.0,
-          1591.0,
-          227.0
-        ]
-      },
-      "children": [
-        15610957687931606979
-      ]
-    },
-    {
-      "id": 4369636879981613493,
-      "parent": 2853904010272931965,
-      "role": "TextRun",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          341.0,
-          337.0,
-          353.9375,
-          369.0
-        ],
-        "pixels": [
-          341.0,
-          337.0,
-          354.0,
-          369.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 14520861589846679729,
-      "parent": 14946197799934086302,
-      "role": "TextRun",
-      "name": "2026-11-13",
-      "label": null,
-      "value": "2026-11-13",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          341.0,
-          975.5,
-          416.625,
-          990.5
-        ],
-        "pixels": [
-          341.0,
-          976.0,
-          417.0,
-          991.0
-        ]
-      },
-      "children": []
-    },
-    {
       "id": 1645713706894281914,
       "parent": 14219053030263038990,
       "role": "Label",
@@ -3800,58 +2872,12 @@
       ]
     },
     {
-      "id": 16999291685238001842,
-      "parent": 3974951264242940326,
+      "id": 3758422608007396029,
+      "parent": 11680081423341558988,
       "role": "TextRun",
-      "name": "0",
+      "name": "0 cache read · 0 cache write",
       "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          592.625,
-          975.0,
-          599.09375,
-          991.0
-        ],
-        "pixels": [
-          593.0,
-          975.0,
-          599.0,
-          991.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 16298478755363006140,
-      "parent": 8924387505115005546,
-      "role": "GenericContainer",
-      "name": null,
-      "label": null,
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": null,
-      "children": [
-        4367569333557975405,
-        7597270166957823821
-      ]
-    },
-    {
-      "id": 11893521895540417981,
-      "parent": 4256935618093009267,
-      "role": "TextRun",
-      "name": "2026-11-03",
-      "label": null,
-      "value": "2026-11-03",
+      "value": "0 cache read · 0 cache write",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -3860,15 +2886,15 @@
       "bounds": {
         "points": [
           341.0,
-          575.5,
-          416.625,
-          590.5
+          689.0,
+          486.28125,
+          705.0
         ],
         "pixels": [
           341.0,
-          576.0,
-          417.0,
-          591.0
+          689.0,
+          486.0,
+          705.0
         ]
       },
       "children": []
@@ -3969,15 +2995,15 @@
       "bounds": {
         "points": [
           168.0,
-          161.0,
+          201.0,
           196.0,
-          189.0
+          229.0
         ],
         "pixels": [
           168.0,
-          161.0,
+          201.0,
           196.0,
-          189.0
+          229.0
         ]
       },
       "children": [
@@ -4036,32 +3062,23 @@
       "children": []
     },
     {
-      "id": 15610957687931606979,
-      "parent": 6903610250678813875,
-      "role": "TextRun",
-      "name": "0",
+      "id": 14487540896279269317,
+      "parent": 4124151587910648382,
+      "role": "GenericContainer",
+      "name": null,
       "label": null,
-      "value": "0",
+      "value": null,
       "description": null,
       "disabled": false,
       "selected": null,
       "toggled": null,
       "actions": [],
-      "bounds": {
-        "points": [
-          987.0,
-          195.0,
-          999.9375,
-          227.0
-        ],
-        "pixels": [
-          987.0,
-          195.0,
-          1000.0,
-          227.0
-        ]
-      },
-      "children": []
+      "bounds": null,
+      "children": [
+        5097716552592903397,
+        781001148180896912,
+        39640867617091659
+      ]
     },
     {
       "id": 13833332050291347142,
@@ -4078,15 +3095,15 @@
       "bounds": {
         "points": [
           182.0,
-          197.0,
+          237.0,
           412.875,
-          216.0
+          256.0
         ],
         "pixels": [
           182.0,
-          197.0,
+          237.0,
           413.0,
-          216.0
+          256.0
         ]
       },
       "children": []
@@ -4110,124 +3127,35 @@
       ]
     },
     {
-      "id": 9041758756350549960,
-      "parent": 13913846481396736067,
-      "role": "Label",
-      "name": "0 input · 0 output",
-      "label": null,
-      "value": "0 input · 0 output",
+      "id": 14297924118069530824,
+      "parent": 14223074406190115890,
+      "role": "Button",
+      "name": "Last 7 days",
+      "label": "Last 7 days",
+      "value": null,
       "description": null,
       "disabled": false,
       "selected": null,
-      "toggled": null,
+      "toggled": "True",
       "actions": [
-        "click"
+        "click",
+        "focus"
       ],
       "bounds": {
         "points": [
-          341.0,
-          377.0,
-          945.0,
-          393.0
+          465.0,
+          130.0,
+          563.9375,
+          162.0
         ],
         "pixels": [
-          341.0,
-          377.0,
-          945.0,
-          393.0
-        ]
-      },
-      "children": [
-        4698826139275092366
-      ]
-    },
-    {
-      "id": 12635405727820688327,
-      "parent": 2548467600212885055,
-      "role": "TextRun",
-      "name": "By day",
-      "label": null,
-      "value": "By day",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          341.0,
-          447.0,
-          395.15625,
-          471.0
-        ],
-        "pixels": [
-          341.0,
-          447.0,
-          395.0,
-          471.0
+          465.0,
+          130.0,
+          564.0,
+          162.0
         ]
       },
       "children": []
-    },
-    {
-      "id": 6852119183774699207,
-      "parent": 14979413897776499074,
-      "role": "TextRun",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          592.625,
-          855.0,
-          599.09375,
-          871.0
-        ],
-        "pixels": [
-          593.0,
-          855.0,
-          599.0,
-          871.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 16857443964184995019,
-      "parent": 15045887806841936166,
-      "role": "Label",
-      "name": "2026-11-05",
-      "label": null,
-      "value": "2026-11-05",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          341.0,
-          655.5,
-          416.625,
-          670.5
-        ],
-        "pixels": [
-          341.0,
-          656.0,
-          417.0,
-          671.0
-        ]
-      },
-      "children": [
-        16630974664873800467
-      ]
     },
     {
       "id": 6294323589538451916,
@@ -4247,32 +3175,36 @@
       ]
     },
     {
-      "id": 9897041290590372298,
-      "parent": 4367569333557975405,
-      "role": "TextRun",
-      "name": "2026-11-12",
+      "id": 12772628373259676365,
+      "parent": 8140145600965021818,
+      "role": "Label",
+      "name": "US$ 0.00",
       "label": null,
-      "value": "2026-11-12",
+      "value": "US$ 0.00",
       "description": null,
       "disabled": false,
       "selected": null,
       "toggled": null,
-      "actions": [],
+      "actions": [
+        "click"
+      ],
       "bounds": {
         "points": [
-          341.0,
-          935.5,
-          416.625,
-          950.5
+          987.0,
+          405.0,
+          1591.0,
+          437.0
         ],
         "pixels": [
-          341.0,
-          936.0,
-          417.0,
-          951.0
+          987.0,
+          405.0,
+          1591.0,
+          437.0
         ]
       },
-      "children": []
+      "children": [
+        4091177233919852063
+      ]
     },
     {
       "id": 15590497865806244558,
@@ -4308,20 +3240,84 @@
       "bounds": {
         "points": [
           66.5625,
-          197.0,
+          237.0,
           297.4375,
-          235.0
+          275.0
         ],
         "pixels": [
           67.0,
-          197.0,
+          237.0,
           297.0,
-          235.0
+          275.0
         ]
       },
       "children": [
         13833332050291347142,
         4150826552837522009
+      ]
+    },
+    {
+      "id": 11680081423341558988,
+      "parent": 6476119192743012938,
+      "role": "Label",
+      "name": "0 cache read · 0 cache write",
+      "label": null,
+      "value": "0 cache read · 0 cache write",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          341.0,
+          689.0,
+          945.0,
+          705.0
+        ],
+        "pixels": [
+          341.0,
+          689.0,
+          945.0,
+          705.0
+        ]
+      },
+      "children": [
+        3758422608007396029
+      ]
+    },
+    {
+      "id": 16633862072594329297,
+      "parent": 5097716552592903397,
+      "role": "Label",
+      "name": "No usage recorded yet",
+      "label": null,
+      "value": "No usage recorded yet",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          341.0,
+          195.0,
+          526.5,
+          219.0
+        ],
+        "pixels": [
+          341.0,
+          195.0,
+          527.0,
+          219.0
+        ]
+      },
+      "children": [
+        15374236937756535596
       ]
     },
     {
@@ -4497,29 +3493,32 @@
       "children": []
     },
     {
-      "id": 7972552081256193234,
-      "parent": 11015175965927768689,
-      "role": "TextRun",
-      "name": "2026-11-11",
-      "label": null,
-      "value": "2026-11-11",
+      "id": 14473801978390857686,
+      "parent": 14223074406190115890,
+      "role": "Button",
+      "name": "Last 30 days",
+      "label": "Last 30 days",
+      "value": null,
       "description": null,
       "disabled": false,
       "selected": null,
-      "toggled": null,
-      "actions": [],
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
       "bounds": {
         "points": [
-          341.0,
-          895.5,
-          416.625,
-          910.5
+          563.9375,
+          130.0,
+          662.875,
+          162.0
         ],
         "pixels": [
-          341.0,
-          896.0,
-          417.0,
-          911.0
+          564.0,
+          130.0,
+          663.0,
+          162.0
         ]
       },
       "children": []
@@ -4540,12 +3539,12 @@
       "children": []
     },
     {
-      "id": 13366870051345079258,
-      "parent": 6587094992780325094,
+      "id": 16657648998633293785,
+      "parent": 16482764795889262462,
       "role": "TextRun",
-      "name": "0",
+      "name": "0 input · 0 output",
       "label": null,
-      "value": "0",
+      "value": "0 input · 0 output",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -4553,27 +3552,27 @@
       "actions": [],
       "bounds": {
         "points": [
-          987.0,
-          337.0,
-          999.9375,
-          369.0
+          341.0,
+          472.0,
+          433.0625,
+          488.0
         ],
         "pixels": [
-          987.0,
-          337.0,
-          1000.0,
-          369.0
+          341.0,
+          472.0,
+          433.0,
+          488.0
         ]
       },
       "children": []
     },
     {
-      "id": 17137736846269186523,
-      "parent": 1688051246728090898,
+      "id": 810479979582257361,
+      "parent": 7410084606185029090,
       "role": "TextRun",
-      "name": "0",
+      "name": "0 cache read · 0 cache write",
       "label": null,
-      "value": "0",
+      "value": "0 cache read · 0 cache write",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -4581,23 +3580,23 @@
       "actions": [],
       "bounds": {
         "points": [
-          592.625,
-          575.0,
-          599.09375,
-          591.0
+          341.0,
+          496.0,
+          486.28125,
+          512.0
         ],
         "pixels": [
-          593.0,
-          575.0,
-          599.0,
-          591.0
+          341.0,
+          496.0,
+          486.0,
+          512.0
         ]
       },
       "children": []
     },
     {
-      "id": 12996482428433581532,
-      "parent": 9087270393467667020,
+      "id": 15414083202973957842,
+      "parent": 4642046695969991179,
       "role": "TextRun",
       "name": "Last 7 days",
       "label": null,
@@ -4610,71 +3609,15 @@
       "bounds": {
         "points": [
           987.0,
-          155.0,
+          365.0,
           1075.75,
-          179.0
+          389.0
         ],
         "pixels": [
           987.0,
-          155.0,
+          365.0,
           1076.0,
-          179.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 17227890729356496601,
-      "parent": 8197191953088884030,
-      "role": "TextRun",
-      "name": "2026-11-08",
-      "label": null,
-      "value": "2026-11-08",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          341.0,
-          775.5,
-          416.625,
-          790.5
-        ],
-        "pixels": [
-          341.0,
-          776.0,
-          417.0,
-          791.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 7977692227350344914,
-      "parent": 7597270166957823821,
-      "role": "TextRun",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          592.625,
-          935.0,
-          599.09375,
-          951.0
-        ],
-        "pixels": [
-          593.0,
-          935.0,
-          599.0,
-          951.0
+          389.0
         ]
       },
       "children": []
@@ -4711,32 +3654,36 @@
       "children": []
     },
     {
-      "id": 4258520879593219810,
-      "parent": 9699372871212977226,
-      "role": "TextRun",
-      "name": "0",
+      "id": 7410084606185029090,
+      "parent": 4412433640979217427,
+      "role": "Label",
+      "name": "0 cache read · 0 cache write",
       "label": null,
-      "value": "0",
+      "value": "0 cache read · 0 cache write",
       "description": null,
       "disabled": false,
       "selected": null,
       "toggled": null,
-      "actions": [],
+      "actions": [
+        "click"
+      ],
       "bounds": {
         "points": [
-          592.625,
-          775.0,
-          599.09375,
-          791.0
+          341.0,
+          496.0,
+          945.0,
+          512.0
         ],
         "pixels": [
-          593.0,
-          775.0,
-          599.0,
-          791.0
+          341.0,
+          496.0,
+          945.0,
+          512.0
         ]
       },
-      "children": []
+      "children": [
+        810479979582257361
+      ]
     },
     {
       "id": 13826925289788388,
@@ -4778,68 +3725,51 @@
       ]
     },
     {
-      "id": 6587094992780325094,
-      "parent": 17347920697343805674,
-      "role": "Label",
-      "name": "0",
+      "id": 5097716552592903397,
+      "parent": 14487540896279269317,
+      "role": "GenericContainer",
+      "name": null,
       "label": null,
-      "value": "0",
+      "value": null,
       "description": null,
       "disabled": false,
       "selected": null,
       "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          987.0,
-          337.0,
-          1591.0,
-          369.0
-        ],
-        "pixels": [
-          987.0,
-          337.0,
-          1591.0,
-          369.0
-        ]
-      },
+      "actions": [],
+      "bounds": null,
       "children": [
-        13366870051345079258
+        16633862072594329297,
+        14098437132086212752,
+        237075411805143865
       ]
     },
     {
-      "id": 9209072372306598373,
-      "parent": 16372733767424363422,
-      "role": "Label",
-      "name": "2026-11-01",
+      "id": 6796744819365516519,
+      "parent": 10056609459993599010,
+      "role": "TextRun",
+      "name": "0 tokens",
       "label": null,
-      "value": "2026-11-01",
+      "value": "0 tokens",
       "description": null,
       "disabled": false,
       "selected": null,
       "toggled": null,
-      "actions": [
-        "click"
-      ],
+      "actions": [],
       "bounds": {
         "points": [
-          341.0,
-          495.5,
-          416.625,
-          510.5
+          987.0,
+          445.0,
+          1061.375,
+          464.0
         ],
         "pixels": [
-          341.0,
-          496.0,
-          417.0,
-          511.0
+          987.0,
+          445.0,
+          1061.0,
+          464.0
         ]
       },
-      "children": [
-        17653119940246746625
-      ]
+      "children": []
     },
     {
       "id": 7643624069601378792,
@@ -4940,104 +3870,6 @@
       "children": []
     },
     {
-      "id": 16868636148597908972,
-      "parent": 1797003944121511752,
-      "role": "GenericContainer",
-      "name": null,
-      "label": null,
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": null,
-      "children": [
-        9087270393467667020,
-        6903610250678813875,
-        15546957772303288426
-      ]
-    },
-    {
-      "id": 4988404046597981420,
-      "parent": 8239049581480334160,
-      "role": "TextRun",
-      "name": "Last 30 days",
-      "label": null,
-      "value": "Last 30 days",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          341.0,
-          297.0,
-          439.75,
-          321.0
-        ],
-        "pixels": [
-          341.0,
-          297.0,
-          440.0,
-          321.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 17347920697343805674,
-      "parent": 1797003944121511752,
-      "role": "GenericContainer",
-      "name": null,
-      "label": null,
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": null,
-      "children": [
-        7046441459659107979,
-        6587094992780325094,
-        9854857223226374650
-      ]
-    },
-    {
-      "id": 9392618993649622255,
-      "parent": 16576298012730042148,
-      "role": "Label",
-      "name": "2026-11-06",
-      "label": null,
-      "value": "2026-11-06",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          341.0,
-          695.5,
-          416.625,
-          710.5
-        ],
-        "pixels": [
-          341.0,
-          696.0,
-          417.0,
-          711.0
-        ]
-      },
-      "children": [
-        729888941439572881
-      ]
-    },
-    {
       "id": 15386672761517176305,
       "parent": 13826925289788388,
       "role": "GenericContainer",
@@ -5052,66 +3884,6 @@
       "bounds": null,
       "children": [
         7643624069601378792
-      ]
-    },
-    {
-      "id": 15467179150080680177,
-      "parent": 7683704071024920461,
-      "role": "TextRun",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          592.625,
-          615.0,
-          599.09375,
-          631.0
-        ],
-        "pixels": [
-          593.0,
-          615.0,
-          599.0,
-          631.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 10731760265126018026,
-      "parent": 9020155732093307996,
-      "role": "Label",
-      "name": "0",
-      "label": null,
-      "value": "0",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          592.625,
-          815.0,
-          599.09375,
-          831.0
-        ],
-        "pixels": [
-          593.0,
-          815.0,
-          599.0,
-          831.0
-        ]
-      },
-      "children": [
-        3742890111571150231
       ]
     },
     {
@@ -5148,48 +3920,12 @@
       ]
     },
     {
-      "id": 7360194771548889332,
-      "parent": 8924387505115005546,
-      "role": "GenericContainer",
-      "name": null,
-      "label": null,
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": null,
-      "children": [
-        4666315427429093196,
-        14039959604559640190
-      ]
-    },
-    {
-      "id": 794040497045756152,
-      "parent": 8924387505115005546,
-      "role": "GenericContainer",
-      "name": null,
-      "label": null,
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": null,
-      "children": [
-        13469649459160895398,
-        3789894224887281001
-      ]
-    },
-    {
-      "id": 9854857223226374650,
-      "parent": 17347920697343805674,
+      "id": 17709622280611473396,
+      "parent": 6476119192743012938,
       "role": "Label",
-      "name": "0 input · 0 output",
+      "name": "Last 30 days",
       "label": null,
-      "value": "0 input · 0 output",
+      "value": "Last 30 days",
       "description": null,
       "disabled": false,
       "selected": null,
@@ -5199,39 +3935,49 @@
       ],
       "bounds": {
         "points": [
-          987.0,
-          377.0,
-          1591.0,
-          393.0
+          341.0,
+          558.0,
+          945.0,
+          582.0
         ],
         "pixels": [
-          987.0,
-          377.0,
-          1591.0,
-          393.0
+          341.0,
+          558.0,
+          945.0,
+          582.0
         ]
       },
       "children": [
-        3626335388000936993
+        13190738611100694933
       ]
     },
     {
-      "id": 4340749757112684538,
-      "parent": 8924387505115005546,
-      "role": "GenericContainer",
-      "name": null,
+      "id": 9326644390269233652,
+      "parent": 8821012449141240623,
+      "role": "TextRun",
+      "name": "0 tokens",
       "label": null,
-      "value": null,
+      "value": "0 tokens",
       "description": null,
       "disabled": false,
       "selected": null,
       "toggled": null,
       "actions": [],
-      "bounds": null,
-      "children": [
-        5376057943693748864,
-        14979413897776499074
-      ]
+      "bounds": {
+        "points": [
+          987.0,
+          638.0,
+          1061.375,
+          657.0
+        ],
+        "pixels": [
+          987.0,
+          638.0,
+          1061.0,
+          657.0
+        ]
+      },
+      "children": []
     },
     {
       "id": 2480966651013750526,

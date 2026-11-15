@@ -177,8 +177,8 @@
       "id": 3309078991269281406,
       "parent": 13825972575653543348,
       "role": "Button",
-      "name": "New",
-      "label": "New",
+      "name": "New project",
+      "label": "New project",
       "value": null,
       "description": null,
       "disabled": false,
@@ -192,13 +192,13 @@
         "points": [
           161.875,
           101.0,
-          213.0,
+          260.625,
           133.0
         ],
         "pixels": [
           162.0,
           101.0,
-          213.0,
+          261.0,
           133.0
         ]
       },
@@ -315,6 +315,37 @@
       "id": 132320206866794376,
       "parent": 4913364587148968597,
       "role": "Button",
+      "name": "Terminal",
+      "label": "Terminal",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          418.9375,
+          51.5,
+          496.34375,
+          83.5
+        ],
+        "pixels": [
+          419.0,
+          52.0,
+          496.0,
+          84.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 13995776236015764873,
+      "parent": 4913364587148968597,
+      "role": "Button",
       "name": "Preview",
       "label": "Preview",
       "value": null,
@@ -328,44 +359,13 @@
       ],
       "bounds": {
         "points": [
-          418.9375,
-          51.5,
-          490.0625,
-          83.5
-        ],
-        "pixels": [
-          419.0,
-          52.0,
-          490.0,
-          84.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 13995776236015764873,
-      "parent": 4913364587148968597,
-      "role": "Button",
-      "name": "Changes",
-      "label": "Changes",
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": "False",
-      "actions": [
-        "click",
-        "focus"
-      ],
-      "bounds": {
-        "points": [
-          700.21875,
+          706.03125,
           51.5,
           777.15625,
           83.5
         ],
         "pixels": [
-          700.0,
+          706.0,
           52.0,
           777.0,
           84.0
@@ -587,15 +587,15 @@
       "bounds": {
         "points": [
           182.0,
-          161.0,
+          201.0,
           210.0,
-          189.0
+          229.0
         ],
         "pixels": [
           182.0,
-          161.0,
+          201.0,
           210.0,
-          189.0
+          229.0
         ]
       },
       "children": []
@@ -1254,15 +1254,15 @@
       "bounds": {
         "points": [
           168.0,
-          161.0,
+          201.0,
           196.0,
-          189.0
+          229.0
         ],
         "pixels": [
           168.0,
-          161.0,
+          201.0,
           196.0,
-          189.0
+          229.0
         ]
       },
       "children": [
@@ -1402,15 +1402,15 @@
       "bounds": {
         "points": [
           182.0,
-          197.0,
+          237.0,
           412.875,
-          216.0
+          256.0
         ],
         "pixels": [
           182.0,
-          197.0,
+          237.0,
           413.0,
-          216.0
+          256.0
         ]
       },
       "children": []
@@ -1536,16 +1536,16 @@
       ],
       "bounds": {
         "points": [
-          221.0,
-          101.0,
-          280.3125,
-          133.0
+          64.0,
+          141.0,
+          123.3125,
+          173.0
         ],
         "pixels": [
-          221.0,
-          101.0,
-          280.0,
-          133.0
+          64.0,
+          141.0,
+          123.0,
+          173.0
         ]
       },
       "children": []
@@ -1584,15 +1584,15 @@
       "bounds": {
         "points": [
           66.5625,
-          197.0,
+          237.0,
           297.4375,
-          235.0
+          275.0
         ],
         "pixels": [
           67.0,
-          197.0,
+          237.0,
           297.0,
-          235.0
+          275.0
         ]
       },
       "children": [
@@ -1621,8 +1621,8 @@
       "id": 17943206950140650817,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Editor",
-      "label": "Editor",
+      "name": "Browser",
+      "label": "Browser",
       "value": null,
       "description": null,
       "disabled": false,
@@ -1634,15 +1634,15 @@
       ],
       "bounds": {
         "points": [
-          567.46875,
+          556.21875,
           51.5,
-          627.34375,
+          629.09375,
           83.5
         ],
         "pixels": [
-          567.0,
+          556.0,
           52.0,
-          627.0,
+          629.0,
           84.0
         ]
       },
@@ -1951,15 +1951,15 @@
       "bounds": {
         "points": [
           182.0,
-          216.0,
+          256.0,
           307.03125,
-          235.0
+          275.0
         ],
         "pixels": [
           182.0,
-          216.0,
+          256.0,
           307.0,
-          235.0
+          275.0
         ]
       },
       "children": []
@@ -2035,8 +2035,8 @@
       "id": 9079394125717109856,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Browser",
-      "label": "Browser",
+      "name": "Changes",
+      "label": "Changes",
       "value": null,
       "description": null,
       "disabled": false,
@@ -2048,15 +2048,15 @@
       ],
       "bounds": {
         "points": [
-          627.34375,
+          629.09375,
           51.5,
-          700.21875,
+          706.03125,
           83.5
         ],
         "pixels": [
-          627.0,
+          629.0,
           52.0,
-          700.0,
+          706.0,
           84.0
         ]
       },
@@ -2600,8 +2600,8 @@
       "id": 16533134483839780982,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Terminal",
-      "label": "Terminal",
+      "name": "Editor",
+      "label": "Editor",
       "value": null,
       "description": null,
       "disabled": false,
@@ -2613,15 +2613,15 @@
       ],
       "bounds": {
         "points": [
-          490.0625,
+          496.34375,
           51.5,
-          567.46875,
+          556.21875,
           83.5
         ],
         "pixels": [
-          490.0,
+          496.0,
           52.0,
-          567.0,
+          556.0,
           84.0
         ]
       },

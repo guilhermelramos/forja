@@ -177,8 +177,8 @@
       "id": 3309078991269281406,
       "parent": 13825972575653543348,
       "role": "Button",
-      "name": "Novo",
-      "label": "Novo",
+      "name": "Novo projeto",
+      "label": "Novo projeto",
       "value": null,
       "description": null,
       "disabled": false,
@@ -192,13 +192,13 @@
         "points": [
           191.125,
           101.0,
-          248.34375,
+          297.34375,
           133.0
         ],
         "pixels": [
           191.0,
           101.0,
-          248.0,
+          297.0,
           133.0
         ]
       },
@@ -315,6 +315,37 @@
       "id": 132320206866794376,
       "parent": 4913364587148968597,
       "role": "Button",
+      "name": "Terminal",
+      "label": "Terminal",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          416.9375,
+          51.5,
+          494.34375,
+          83.5
+        ],
+        "pixels": [
+          417.0,
+          52.0,
+          494.0,
+          84.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 13995776236015764873,
+      "parent": 4913364587148968597,
+      "role": "Button",
       "name": "Visualizador",
       "label": "Visualizador",
       "value": null,
@@ -328,44 +359,13 @@
       ],
       "bounds": {
         "points": [
-          416.9375,
-          51.5,
-          514.8125,
-          83.5
-        ],
-        "pixels": [
-          417.0,
-          52.0,
-          515.0,
-          84.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 13995776236015764873,
-      "parent": 4913364587148968597,
-      "role": "Button",
-      "name": "Diferenças",
-      "label": "Diferenças",
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": "False",
-      "actions": [
-        "click",
-        "focus"
-      ],
-      "bounds": {
-        "points": [
-          743.96875,
+          734.03125,
           51.5,
           831.90625,
           83.5
         ],
         "pixels": [
-          744.0,
+          734.0,
           52.0,
           832.0,
           84.0
@@ -1621,8 +1621,8 @@
       "id": 17943206950140650817,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Editor",
-      "label": "Editor",
+      "name": "Navegador",
+      "label": "Navegador",
       "value": null,
       "description": null,
       "disabled": false,
@@ -1634,15 +1634,15 @@
       ],
       "bounds": {
         "points": [
-          592.21875,
+          554.21875,
           51.5,
-          652.09375,
+          646.09375,
           83.5
         ],
         "pixels": [
-          592.0,
+          554.0,
           52.0,
-          652.0,
+          646.0,
           84.0
         ]
       },
@@ -2035,8 +2035,8 @@
       "id": 9079394125717109856,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Navegador",
-      "label": "Navegador",
+      "name": "Diferenças",
+      "label": "Diferenças",
       "value": null,
       "description": null,
       "disabled": false,
@@ -2048,15 +2048,15 @@
       ],
       "bounds": {
         "points": [
-          652.09375,
+          646.09375,
           51.5,
-          743.96875,
+          734.03125,
           83.5
         ],
         "pixels": [
-          652.0,
+          646.0,
           52.0,
-          744.0,
+          734.0,
           84.0
         ]
       },
@@ -2600,8 +2600,8 @@
       "id": 16533134483839780982,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Terminal",
-      "label": "Terminal",
+      "name": "Editor",
+      "label": "Editor",
       "value": null,
       "description": null,
       "disabled": false,
@@ -2613,15 +2613,15 @@
       ],
       "bounds": {
         "points": [
-          514.8125,
+          494.34375,
           51.5,
-          592.21875,
+          554.21875,
           83.5
         ],
         "pixels": [
-          515.0,
+          494.0,
           52.0,
-          592.0,
+          554.0,
           84.0
         ]
       },

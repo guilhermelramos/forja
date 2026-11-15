@@ -445,8 +445,8 @@
       "id": 9637531811882211883,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Bancada",
-      "label": "Bancada",
+      "name": "Revisão",
+      "label": "Revisão",
       "value": null,
       "description": null,
       "disabled": false,
@@ -458,15 +458,15 @@
       ],
       "bounds": {
         "points": [
-          911.125,
+          908.03125,
           51.5,
-          987.25,
+          978.25,
           83.5
         ],
         "pixels": [
-          911.0,
+          908.0,
           52.0,
-          987.0,
+          978.0,
           84.0
         ]
       },
@@ -741,8 +741,8 @@
       "id": 17943206950140650817,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Editor",
-      "label": "Editor",
+      "name": "Navegador",
+      "label": "Navegador",
       "value": null,
       "description": null,
       "disabled": false,
@@ -754,15 +754,15 @@
       ],
       "bounds": {
         "points": [
-          573.5625,
+          554.21875,
           51.5,
-          633.4375,
+          646.09375,
           83.5
         ],
         "pixels": [
-          574.0,
+          554.0,
           52.0,
-          633.0,
+          646.0,
           84.0
         ]
       },
@@ -790,26 +790,26 @@
       "id": 2449513345604842562,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Revisão",
-      "label": "Revisão",
+      "name": "Histórico",
+      "label": "Histórico",
       "value": null,
       "description": null,
       "disabled": false,
       "selected": null,
-      "toggled": "False",
+      "toggled": "True",
       "actions": [
         "click",
         "focus"
       ],
       "bounds": {
         "points": [
-          987.25,
+          978.25,
           51.5,
           1057.46875,
           83.5
         ],
         "pixels": [
-          987.0,
+          978.0,
           52.0,
           1057.0,
           84.0
@@ -1138,8 +1138,8 @@
       "id": 9079394125717109856,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Navegador",
-      "label": "Navegador",
+      "name": "Diferenças",
+      "label": "Diferenças",
       "value": null,
       "description": null,
       "disabled": false,
@@ -1151,15 +1151,15 @@
       ],
       "bounds": {
         "points": [
-          633.4375,
+          646.09375,
           51.5,
-          725.3125,
+          734.03125,
           83.5
         ],
         "pixels": [
-          633.0,
+          646.0,
           52.0,
-          725.0,
+          734.0,
           84.0
         ]
       },
@@ -1416,8 +1416,8 @@
       "id": 16533134483839780982,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Terminal",
-      "label": "Terminal",
+      "name": "Editor",
+      "label": "Editor",
       "value": null,
       "description": null,
       "disabled": false,
@@ -1429,15 +1429,15 @@
       ],
       "bounds": {
         "points": [
-          496.15625,
+          494.34375,
           51.5,
-          573.5625,
+          554.21875,
           83.5
         ],
         "pixels": [
-          496.0,
+          494.0,
           52.0,
-          574.0,
+          554.0,
           84.0
         ]
       },
@@ -1510,8 +1510,8 @@
       "id": 3309078991269281406,
       "parent": 13825972575653543348,
       "role": "Button",
-      "name": "Novo",
-      "label": "Novo",
+      "name": "Novo projeto",
+      "label": "Novo projeto",
       "value": null,
       "description": null,
       "disabled": false,
@@ -1525,13 +1525,13 @@
         "points": [
           191.125,
           101.0,
-          248.34375,
+          297.34375,
           133.0
         ],
         "pixels": [
           191.0,
           101.0,
-          248.0,
+          297.0,
           133.0
         ]
       },
@@ -1675,39 +1675,8 @@
       "id": 132320206866794376,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Histórico",
-      "label": "Histórico",
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": "True",
-      "actions": [
-        "click",
-        "focus"
-      ],
-      "bounds": {
-        "points": [
-          416.9375,
-          51.5,
-          496.15625,
-          83.5
-        ],
-        "pixels": [
-          417.0,
-          52.0,
-          496.0,
-          84.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 13995776236015764873,
-      "parent": 4913364587148968597,
-      "role": "Button",
-      "name": "Diferenças",
-      "label": "Diferenças",
+      "name": "Terminal",
+      "label": "Terminal",
       "value": null,
       "description": null,
       "disabled": false,
@@ -1719,15 +1688,46 @@
       ],
       "bounds": {
         "points": [
-          725.3125,
+          416.9375,
           51.5,
-          813.25,
+          494.34375,
           83.5
         ],
         "pixels": [
-          725.0,
+          417.0,
           52.0,
-          813.0,
+          494.0,
+          84.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 13995776236015764873,
+      "parent": 4913364587148968597,
+      "role": "Button",
+      "name": "Visualizador",
+      "label": "Visualizador",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          734.03125,
+          51.5,
+          831.90625,
+          83.5
+        ],
+        "pixels": [
+          734.0,
+          52.0,
+          832.0,
           84.0
         ]
       },
@@ -2418,8 +2418,8 @@
       "id": 3360861421404707280,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Visualizador",
-      "label": "Visualizador",
+      "name": "Bancada",
+      "label": "Bancada",
       "value": null,
       "description": null,
       "disabled": false,
@@ -2431,15 +2431,15 @@
       ],
       "bounds": {
         "points": [
-          813.25,
+          831.90625,
           51.5,
-          911.125,
+          908.03125,
           83.5
         ],
         "pixels": [
-          813.0,
+          832.0,
           52.0,
-          911.0,
+          908.0,
           84.0
         ]
       },

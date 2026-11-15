@@ -10,7 +10,7 @@
       "args": [],
       "png": "captures/pt-BR.dark.home.default.png",
       "tree": "captures/pt-BR.dark.home.default.json",
-      "capture_sha": "e1e8fb4fccf38bb6",
+      "capture_sha": "be21a8d7045e3a24",
       "same_as": null,
       "nodes": 116,
       "named_widgets": [
@@ -28,6 +28,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -37,7 +38,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -50,7 +51,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -65,9 +67,9 @@
       ],
       "png": "captures/pt-BR.dark.open.anvil.png",
       "tree": "captures/pt-BR.dark.open.anvil.json",
-      "capture_sha": "c724bb7063901c6b",
+      "capture_sha": "b8a54a22d4a523ae",
       "same_as": null,
-      "nodes": 203,
+      "nodes": 174,
       "named_widgets": [
         "56 módulos",
         "Aba anterior",
@@ -111,28 +113,13 @@
         "Bigorna  Ctrl+K",
         "Clonar",
         "Comandos",
-        "Compilar pacote Python  ·  projeto",
-        "Compilar pacotes Go  ·  projeto",
-        "Compilar projeto Node  ·  projeto",
-        "Compilar workspace Rust  ·  projeto",
         "Diferenças",
         "Editor",
         "Enter executa · Ctrl+Enter mantém a Bigorna aberta · Esc fecha",
         "Escrever testes para o arquivo",
-        "Executar Clippy linter  ·  projeto",
-        "Executar golangci-lint  ·  projeto",
-        "Executar linter Node  ·  projeto",
-        "Executar linter Ruff  ·  projeto",
-        "Executar testes Go  ·  projeto",
-        "Executar testes Node  ·  projeto",
-        "Executar testes Rust  ·  projeto",
-        "Executar testes com pytest  ·  projeto",
         "Explicar erro do terminal",
         "Extensões",
-        "Formatar código Rust  ·  projeto",
-        "Formatar código com Prettier  ·  projeto",
-        "Formatar código com Ruff  ·  projeto",
-        "Formatar código com gofmt  ·  projeto",
+        "Fechar pwsh",
         "Gerar mensagem de commit",
         "Histórico",
         "Mais abas",
@@ -143,7 +130,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Otimizar desempenho",
         "Painéis de extensões",
         "Pedidos",
@@ -152,7 +139,6 @@
         "Pronto",
         "Quadro",
         "Receitas",
-        "Receitas do terminal",
         "Refatorar código para clareza",
         "Resumir as mudanças da bancada",
         "Revisar as mudanças da bancada",
@@ -166,11 +152,8 @@
         "Terminal",
         "Tudo",
         "Uso",
-        "Verificar formatação Prettier  ·  projeto",
-        "Verificar formatação Ruff  ·  projeto",
-        "Verificar formatação Rust  ·  projeto",
-        "Verificar formatação gofmt  ·  projeto",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -185,7 +168,7 @@
       ],
       "png": "captures/pt-BR.dark.open.onboarding.png",
       "tree": "captures/pt-BR.dark.open.onboarding.json",
-      "capture_sha": "556ea25cac448896",
+      "capture_sha": "b158d0773c658435",
       "same_as": null,
       "nodes": 134,
       "named_widgets": [
@@ -207,6 +190,7 @@
         "Escolha o idioma da interface.",
         "Extensões",
         "Fechar",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -216,7 +200,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -230,7 +214,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -245,7 +230,7 @@
       ],
       "png": "captures/pt-BR.dark.open.toast.png",
       "tree": "captures/pt-BR.dark.open.toast.json",
-      "capture_sha": "2d0da89ced71a731",
+      "capture_sha": "d52dd93fb4892b23",
       "same_as": null,
       "nodes": 127,
       "named_widgets": [
@@ -264,6 +249,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Forja — A notificação chegou.",
         "Histórico",
         "Mais abas",
@@ -273,7 +259,7 @@
         "Nenhum projeto",
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -286,7 +272,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -301,7 +288,7 @@
       ],
       "png": "captures/pt-BR.dark.rail.archive.tab.png",
       "tree": "captures/pt-BR.dark.rail.archive.tab.json",
-      "capture_sha": "e7027b87cc6c4721",
+      "capture_sha": "dc303f77c0152fc6",
       "same_as": null,
       "nodes": 117,
       "named_widgets": [
@@ -325,7 +312,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Nenhuma sessão salva ainda.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Pedidos",
         "Projeto",
         "Projetos",
@@ -352,7 +339,7 @@
       ],
       "png": "captures/pt-BR.dark.modal.bench.dialogs.png",
       "tree": "captures/pt-BR.dark.modal.bench.dialogs.json",
-      "capture_sha": "e1e8fb4fccf38bb6",
+      "capture_sha": "be21a8d7045e3a24",
       "same_as": "pt-BR.dark.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -370,6 +357,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -379,7 +367,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -392,7 +380,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -407,7 +396,7 @@
       ],
       "png": "captures/pt-BR.dark.bench-tab.bench.detail.png",
       "tree": "captures/pt-BR.dark.bench-tab.bench.detail.json",
-      "capture_sha": "fb6f573e896490f2",
+      "capture_sha": "27893b24ee05f767",
       "same_as": null,
       "nodes": 117,
       "named_widgets": [
@@ -437,7 +426,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
         "Nova bancada",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -463,7 +452,7 @@
       ],
       "png": "captures/pt-BR.dark.rail.board.page.png",
       "tree": "captures/pt-BR.dark.rail.board.page.json",
-      "capture_sha": "c9ab00608e0f4e7a",
+      "capture_sha": "1963d3308fb3567a",
       "same_as": null,
       "nodes": 146,
       "named_widgets": [
@@ -490,7 +479,7 @@
         "Nenhuma bancada neste quadro ainda. Crie uma para começar.",
         "Notificações",
         "Nova bancada",
-        "Novo",
+        "Novo projeto",
         "Pedidos",
         "Projetos",
         "Pronto",
@@ -515,15 +504,12 @@
       ],
       "png": "captures/pt-BR.dark.bench-tab.browser.tab.png",
       "tree": "captures/pt-BR.dark.bench-tab.browser.tab.json",
-      "capture_sha": "fcf7ce5793702ec5",
+      "capture_sha": "8fb0f58bb3bc2748",
       "same_as": null,
-      "nodes": 123,
+      "nodes": 125,
       "named_widgets": [
         "100%",
-        "23 portas",
         "56 módulos",
-        "A janela da Forja não foi encontrada para o navegador embutido.",
-        "A página fica oculta enquanto um painel ou janela estiver por cima.",
         "Acervo",
         "Achar arquivo  Ctrl+P",
         "Adicionar pasta",
@@ -548,7 +534,8 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
         "Nova aba",
-        "Novo",
+        "Novo projeto",
+        "O navegador embutido fica oculto quando a janela está sem foco ou fora da tela. Clique na janela para exibir a página.",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -578,14 +565,17 @@
       ],
       "png": "captures/pt-BR.dark.bench-tab.chat.tab.png",
       "tree": "captures/pt-BR.dark.bench-tab.chat.tab.json",
-      "capture_sha": "6f8d54dfb87a2a0b",
+      "capture_sha": "3b741cb4467a173f",
       "same_as": null,
-      "nodes": 137,
+      "nodes": 150,
       "named_widgets": [
+        "22 portas",
         "56 módulos",
+        "Abrir Ajudantes",
         "Acervo",
         "Achar arquivo  Ctrl+P",
         "Adicionar pasta",
+        "Ajudante",
         "Ajudante (chat)",
         "Ajudantes",
         "Ajustes",
@@ -593,9 +583,9 @@
         "Arquivos",
         "Bancada",
         "Bigorna  Ctrl+K",
-        "Claude Code",
         "Claude Code · D:\\a\\forja\\forja ·",
         "Clonar",
+        "Copiar comando",
         "D:\\a\\forja\\forja",
         "Diferenças",
         "Editor",
@@ -603,15 +593,17 @@
         "Esforço",
         "Extensões",
         "Histórico",
+        "Instale um ajudante compatível ou abra a página Ajudantes para começar.",
         "Mais abas",
         "Mudanças",
         "Mutirão",
         "Navegador",
+        "Nenhum ajudante compatível com o chat foi encontrado.",
         "Nenhum projeto",
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -623,7 +615,8 @@
         "Terminal",
         "Uso",
         "Visualizador",
-        "ocioso"
+        "npm install -g @anthropic-ai/claude-code",
+        "não instalado"
       ]
     },
     {
@@ -638,7 +631,7 @@
       ],
       "png": "captures/pt-BR.dark.modal.counter.poller.png",
       "tree": "captures/pt-BR.dark.modal.counter.poller.json",
-      "capture_sha": "e1e8fb4fccf38bb6",
+      "capture_sha": "be21a8d7045e3a24",
       "same_as": "pt-BR.dark.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -656,6 +649,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -665,7 +659,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -678,7 +672,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -693,7 +688,7 @@
       ],
       "png": "captures/pt-BR.dark.bench-tab.diff.tab.png",
       "tree": "captures/pt-BR.dark.bench-tab.diff.tab.json",
-      "capture_sha": "509fa40adb8a6199",
+      "capture_sha": "ecbe234c3d2aa05e",
       "same_as": null,
       "nodes": 123,
       "named_widgets": [
@@ -731,7 +726,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Nenhuma mudança carregada. Pressione Atualizar.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -759,7 +754,7 @@
       ],
       "png": "captures/pt-BR.dark.bench-tab.editor.tab.png",
       "tree": "captures/pt-BR.dark.bench-tab.editor.tab.json",
-      "capture_sha": "f2a82cf734fe91b2",
+      "capture_sha": "a8222feb6bb5b060",
       "same_as": null,
       "nodes": 106,
       "named_widgets": [
@@ -787,7 +782,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -813,7 +808,7 @@
       ],
       "png": "captures/pt-BR.dark.right-tab.explorer.panel.png",
       "tree": "captures/pt-BR.dark.right-tab.explorer.panel.json",
-      "capture_sha": "e1e8fb4fccf38bb6",
+      "capture_sha": "be21a8d7045e3a24",
       "same_as": "pt-BR.dark.home.default",
       "nodes": 116,
       "named_widgets": [
@@ -831,6 +826,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -840,7 +836,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -853,7 +849,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -868,7 +865,7 @@
       ],
       "png": "captures/pt-BR.dark.rail.extension.page.png",
       "tree": "captures/pt-BR.dark.rail.extension.page.json",
-      "capture_sha": "751949cf03d26cfb",
+      "capture_sha": "47bfe5c1cb641018",
       "same_as": null,
       "nodes": 110,
       "named_widgets": [
@@ -893,7 +890,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Nenhuma extensão encontrada.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Pedidos",
         "Projetos",
         "Pronto",
@@ -917,7 +914,7 @@
       ],
       "png": "captures/pt-BR.dark.right-tab.extension.panels.right.png",
       "tree": "captures/pt-BR.dark.right-tab.extension.panels.right.json",
-      "capture_sha": "2757c7eeaec1cbf8",
+      "capture_sha": "3c7887a3296f17ed",
       "same_as": null,
       "nodes": 111,
       "named_widgets": [
@@ -934,6 +931,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mutirão",
@@ -942,7 +940,7 @@
         "Nenhum projeto",
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -955,7 +953,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -970,7 +969,7 @@
       ],
       "png": "captures/pt-BR.dark.bench-tab.extension.panels.bench.png",
       "tree": "captures/pt-BR.dark.bench-tab.extension.panels.bench.json",
-      "capture_sha": "85a2d328dc86dd82",
+      "capture_sha": "1811a0105da31b26",
       "same_as": null,
       "nodes": 105,
       "named_widgets": [
@@ -998,7 +997,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -1024,7 +1023,7 @@
       ],
       "png": "captures/pt-BR.dark.right-tab.git.changes.png",
       "tree": "captures/pt-BR.dark.right-tab.git.changes.json",
-      "capture_sha": "f0ea139f031951c3",
+      "capture_sha": "87de67fc7e1da67f",
       "same_as": null,
       "nodes": 120,
       "named_widgets": [
@@ -1043,6 +1042,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -1052,7 +1052,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma mudança.\nEscolha uma bancada para ver a árvore de trabalho.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -1065,7 +1065,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -1080,7 +1081,7 @@
       ],
       "png": "captures/pt-BR.dark.bench-tab.git.history.png",
       "tree": "captures/pt-BR.dark.bench-tab.git.history.json",
-      "capture_sha": "f5c0668c0b2acd04",
+      "capture_sha": "7d7c5fedc358c098",
       "same_as": null,
       "nodes": 115,
       "named_widgets": [
@@ -1109,7 +1110,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Nenhuma mudança.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -1135,7 +1136,7 @@
       ],
       "png": "captures/pt-BR.dark.modal.helper.profile_picker.png",
       "tree": "captures/pt-BR.dark.modal.helper.profile_picker.json",
-      "capture_sha": "5565b4287910fc60",
+      "capture_sha": "4038dc332ea04e35",
       "same_as": null,
       "nodes": 142,
       "named_widgets": [
@@ -1162,6 +1163,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Gemini CLI",
         "GitHub Copilot CLI",
         "Goose",
@@ -1177,7 +1179,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "OpenAI Codex CLI",
         "OpenCode",
         "Painéis de extensões",
@@ -1193,7 +1195,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -1208,58 +1211,43 @@
       ],
       "png": "captures/pt-BR.dark.rail.helper.tab.png",
       "tree": "captures/pt-BR.dark.rail.helper.tab.json",
-      "capture_sha": "21fe7755ab350d3e",
+      "capture_sha": "966af888fa8ca01b",
       "same_as": null,
-      "nodes": 193,
+      "nodes": 116,
       "named_widgets": [
         "56 módulos",
         "Acervo",
         "Achar arquivo  Ctrl+P",
         "Adicionar pasta",
-        "Aider",
         "Ajudantes",
         "Ajudantes ativos: 0",
         "Ajustes",
-        "Amp",
-        "Antigravity CLI",
         "Arquivos",
         "Bigorna  Ctrl+K",
-        "Claude Code",
-        "Cline CLI",
         "Clonar",
-        "Continue CLI",
-        "Crush",
-        "Cursor Agent CLI",
-        "Detectar",
+        "Detectando…",
         "Extensões",
-        "Gemini CLI",
-        "GitHub Copilot CLI",
-        "Goose",
-        "Iniciar",
-        "Kimi Code CLI",
-        "Kiro CLI",
+        "Instalados (0)",
         "Mais abas",
+        "Mostrar não instalados (16)",
         "Mudanças",
         "Mutirão",
         "Nenhum ajudante em execução.",
+        "Nenhum ajudante instalado foi encontrado no PATH.",
         "Nenhum projeto",
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
-        "OpenAI Codex CLI",
-        "OpenCode",
+        "Novo projeto",
         "Pedidos",
         "Perfis",
         "Projetos",
         "Pronto",
         "Quadro",
-        "Qwen Code",
         "Rotinas",
         "Skills",
         "Uso",
-        "Voltar à bancada",
-        "não instalado"
+        "Voltar à bancada"
       ]
     },
     {
@@ -1274,7 +1262,7 @@
       ],
       "png": "captures/pt-BR.dark.modal.mcp.approval.png",
       "tree": "captures/pt-BR.dark.modal.mcp.approval.json",
-      "capture_sha": "e1e8fb4fccf38bb6",
+      "capture_sha": "be21a8d7045e3a24",
       "same_as": "pt-BR.dark.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -1292,6 +1280,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -1301,7 +1290,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -1314,7 +1303,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -1329,9 +1319,9 @@
       ],
       "png": "captures/pt-BR.dark.rail.muster.page.png",
       "tree": "captures/pt-BR.dark.rail.muster.page.json",
-      "capture_sha": "e24bc876e68f3f33",
+      "capture_sha": "1279b82e9a92bcc7",
       "same_as": null,
-      "nodes": 102,
+      "nodes": 101,
       "named_widgets": [
         "56 módulos",
         "Acervo",
@@ -1351,8 +1341,8 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
         "Novo mutirão",
+        "Novo projeto",
         "Pedidos",
         "Projetos",
         "Pronto",
@@ -1376,7 +1366,7 @@
       ],
       "png": "captures/pt-BR.dark.modal.notify.toasts.png",
       "tree": "captures/pt-BR.dark.modal.notify.toasts.json",
-      "capture_sha": "e1e8fb4fccf38bb6",
+      "capture_sha": "be21a8d7045e3a24",
       "same_as": "pt-BR.dark.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -1394,6 +1384,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -1403,7 +1394,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -1416,7 +1407,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -1431,7 +1423,7 @@
       ],
       "png": "captures/pt-BR.dark.modal.onboarding.wizard.png",
       "tree": "captures/pt-BR.dark.modal.onboarding.wizard.json",
-      "capture_sha": "e1e8fb4fccf38bb6",
+      "capture_sha": "be21a8d7045e3a24",
       "same_as": "pt-BR.dark.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -1449,6 +1441,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -1458,7 +1451,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -1471,7 +1464,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -1486,9 +1480,9 @@
       ],
       "png": "captures/pt-BR.dark.right-tab.ports.panel.png",
       "tree": "captures/pt-BR.dark.right-tab.ports.panel.json",
-      "capture_sha": "680f7d6585c50d7e",
+      "capture_sha": "58a00503a7499701",
       "same_as": null,
-      "nodes": 120,
+      "nodes": 124,
       "named_widgets": [
         "0 em escuta",
         "56 módulos",
@@ -1506,15 +1500,17 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
+        "Mostrar todas as portas do sistema",
         "Mutirão",
         "Navegador",
         "Nenhum projeto",
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma porta TCP em escuta foi encontrada.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Portas",
@@ -1528,7 +1524,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -1543,7 +1540,7 @@
       ],
       "png": "captures/pt-BR.dark.modal.project.dialogs.png",
       "tree": "captures/pt-BR.dark.modal.project.dialogs.json",
-      "capture_sha": "e1e8fb4fccf38bb6",
+      "capture_sha": "be21a8d7045e3a24",
       "same_as": "pt-BR.dark.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -1561,6 +1558,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -1570,7 +1568,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -1583,7 +1581,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -1598,7 +1597,7 @@
       ],
       "png": "captures/pt-BR.dark.rail.request.page.png",
       "tree": "captures/pt-BR.dark.rail.request.page.json",
-      "capture_sha": "d910dc5dda34d560",
+      "capture_sha": "259db6d90d4b8d95",
       "same_as": null,
       "nodes": 120,
       "named_widgets": [
@@ -1630,8 +1629,8 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
         "Novo pedido local",
+        "Novo projeto",
         "Para revisar",
         "Pedidos",
         "Projetos",
@@ -1657,9 +1656,9 @@
       ],
       "png": "captures/pt-BR.dark.bench-tab.review.tab.png",
       "tree": "captures/pt-BR.dark.bench-tab.review.tab.json",
-      "capture_sha": "8a716994354d3a15",
+      "capture_sha": "997df5ddf13bcf00",
       "same_as": null,
-      "nodes": 133,
+      "nodes": 146,
       "named_widgets": [
         "56 módulos",
         "Abrir como rascunho",
@@ -1671,14 +1670,15 @@
         "Ajudantes",
         "Ajustes",
         "Arquivos",
-        "Atualizar revisão",
         "Bancada",
         "Base",
         "Bigorna  Ctrl+K",
-        "Branch de origem:",
+        "Branch de origem",
         "Clonar",
+        "Descrição",
         "Diferenças",
         "Editor",
+        "Escolha uma base válida para continuar.",
         "Extensões",
         "Gerar",
         "Histórico",
@@ -1691,18 +1691,21 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Novo pull request",
+        "Não há uma base disponível. Escolha uma branch para comparar.",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
         "Pronto",
         "Quadro",
+        "Resumo do que será enviado",
         "Revisores",
         "Revisão",
         "Rotinas",
         "Skills",
         "Terminal",
+        "Título",
         "Uso",
         "Visualizador"
       ]
@@ -1719,7 +1722,7 @@
       ],
       "png": "captures/pt-BR.dark.rail.routine.page.png",
       "tree": "captures/pt-BR.dark.rail.routine.page.json",
-      "capture_sha": "e24c63736131aefe",
+      "capture_sha": "a413df9f4385d858",
       "same_as": null,
       "nodes": 110,
       "named_widgets": [
@@ -1744,7 +1747,7 @@
         "Nenhuma rotina ainda. Crie uma para agendar um prompt ou um comando.",
         "Notificações",
         "Nova rotina",
-        "Novo",
+        "Novo projeto",
         "Pedidos",
         "Projetos",
         "Pronto",
@@ -1767,7 +1770,7 @@
       ],
       "png": "captures/pt-BR.dark.right-tab.search.panel.png",
       "tree": "captures/pt-BR.dark.right-tab.search.panel.json",
-      "capture_sha": "fc3acff4fe053bfe",
+      "capture_sha": "8118862f6ed36181",
       "same_as": null,
       "nodes": 137,
       "named_widgets": [
@@ -1789,6 +1792,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Maiúsculas",
@@ -1797,7 +1801,7 @@
         "Nenhum projeto",
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Palavra inteira",
         "Parar",
@@ -1815,7 +1819,8 @@
         "Substituir",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -1830,7 +1835,7 @@
       ],
       "png": "captures/pt-BR.dark.rail.skill.page.png",
       "tree": "captures/pt-BR.dark.rail.skill.page.json",
-      "capture_sha": "b0247d8687d24acf",
+      "capture_sha": "4b5be85b347d7b15",
       "same_as": null,
       "nodes": 124,
       "named_widgets": [
@@ -1859,7 +1864,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Nenhuma skill encontrada.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Pedidos",
         "Projeto",
         "Projetos",
@@ -1885,7 +1890,7 @@
       ],
       "png": "captures/pt-BR.dark.bench-tab.terminal.tab.png",
       "tree": "captures/pt-BR.dark.bench-tab.terminal.tab.json",
-      "capture_sha": "e1e8fb4fccf38bb6",
+      "capture_sha": "be21a8d7045e3a24",
       "same_as": "pt-BR.dark.home.default",
       "nodes": 116,
       "named_widgets": [
@@ -1903,6 +1908,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -1912,7 +1918,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -1925,7 +1931,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -1940,26 +1947,13 @@
       ],
       "png": "captures/pt-BR.dark.rail.usage.page.png",
       "tree": "captures/pt-BR.dark.rail.usage.page.json",
-      "capture_sha": "d4341e933f3866ef",
+      "capture_sha": "bbaeda9ee37a6fc0",
       "same_as": null,
-      "nodes": 201,
+      "nodes": 154,
       "named_widgets": [
-        "0",
+        "0 cache lido · 0 cache escrito",
         "0 entrada · 0 saída",
-        "2026-11-01",
-        "2026-11-02",
-        "2026-11-03",
-        "2026-11-04",
-        "2026-11-05",
-        "2026-11-06",
-        "2026-11-07",
-        "2026-11-08",
-        "2026-11-09",
-        "2026-11-10",
-        "2026-11-11",
-        "2026-11-12",
-        "2026-11-13",
-        "2026-11-14",
+        "0 tokens",
         "56 módulos",
         "Acervo",
         "Achar arquivo  Ctrl+P",
@@ -1977,18 +1971,22 @@
         "Mutirão",
         "Nenhum projeto",
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
+        "Nenhum uso registrado ainda",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
+        "Os números vêm das transcrições locais dos ajudantes instalados: o Claude Code lê ~/.claude/projects, o Codex lê ~/.codex/sessions e o OpenCode lê a pasta storage. Nada sai desta máquina. Rode uma sessão de um ajudante em uma bancada e clique em Atualizar; se tudo continuar zerado, confira se o CLI do ajudante está instalado e se ele já rodou ao menos uma vez.",
         "Pedidos",
-        "Por dia",
+        "Período",
         "Projetos",
         "Pronto",
         "Quadro",
         "Rotinas",
         "Skills",
         "Total",
+        "US$ 0,00",
         "Uso",
+        "Varrer de novo",
         "Voltar à bancada",
         "Últimos 30 dias",
         "Últimos 7 dias"
@@ -2006,7 +2004,7 @@
       ],
       "png": "captures/pt-BR.dark.bench-tab.viewers.tab.png",
       "tree": "captures/pt-BR.dark.bench-tab.viewers.tab.json",
-      "capture_sha": "3b8f02a2d695f73c",
+      "capture_sha": "51a63a17a30afd8e",
       "same_as": null,
       "nodes": 107,
       "named_widgets": [
@@ -2034,7 +2032,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Nenhuma prévia aberta. Escolha um arquivo no explorador ou use o botão de prévia no editor.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -2060,7 +2058,7 @@
       ],
       "png": "captures/pt-BR.dark.modal.voice.overlay.png",
       "tree": "captures/pt-BR.dark.modal.voice.overlay.json",
-      "capture_sha": "e1e8fb4fccf38bb6",
+      "capture_sha": "be21a8d7045e3a24",
       "same_as": "pt-BR.dark.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -2078,6 +2076,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -2087,7 +2086,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -2100,7 +2099,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -2115,7 +2115,7 @@
       ],
       "png": "captures/pt-BR.dark.settings.accounts.png",
       "tree": "captures/pt-BR.dark.settings.accounts.json",
-      "capture_sha": "0bfcd9fc09e4fbd2",
+      "capture_sha": "cc4edd0476929797",
       "same_as": null,
       "nodes": 168,
       "named_widgets": [
@@ -2140,6 +2140,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -2149,7 +2150,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "OpenAI Codex CLI",
         "Painéis de extensões",
         "Pedidos",
@@ -2164,7 +2165,8 @@
         "Terminal",
         "Uso",
         "Visualizador",
-        "executável do ajudante não encontrado"
+        "executável do ajudante não encontrado",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -2179,7 +2181,7 @@
       ],
       "png": "captures/pt-BR.dark.settings.content.png",
       "tree": "captures/pt-BR.dark.settings.content.json",
-      "capture_sha": "7dd542b374ecc30e",
+      "capture_sha": "ffbfe4dcc5c65b47",
       "same_as": null,
       "nodes": 165,
       "named_widgets": [
@@ -2201,6 +2203,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -2210,7 +2213,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -2229,6 +2232,7 @@
         "builtin · D:\\a\\forja\\forja\\crates\\modules\\content\\../../../content\\templates\\README.md",
         "builtin · D:\\a\\forja\\forja\\crates\\modules\\content\\../../../content\\templates\\SKILL.md",
         "missing `+++` frontmatter",
+        "pwsh · Em execução",
         "rev 1"
       ]
     },
@@ -2244,7 +2248,7 @@
       ],
       "png": "captures/pt-BR.dark.settings.counter_github.png",
       "tree": "captures/pt-BR.dark.settings.counter_github.json",
-      "capture_sha": "bd71c79690941a9f",
+      "capture_sha": "af384760e44d9568",
       "same_as": null,
       "nodes": 151,
       "named_widgets": [
@@ -2265,6 +2269,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "GitHub",
         "Histórico",
         "Mais abas",
@@ -2275,7 +2280,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Não conectado",
         "Painéis de extensões",
         "Pedidos",
@@ -2290,7 +2295,8 @@
         "Terminal",
         "Testar",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -2305,7 +2311,7 @@
       ],
       "png": "captures/pt-BR.dark.settings.counter_gitlab.png",
       "tree": "captures/pt-BR.dark.settings.counter_gitlab.json",
-      "capture_sha": "e87842222c357684",
+      "capture_sha": "8e0038565a10a26a",
       "same_as": null,
       "nodes": 151,
       "named_widgets": [
@@ -2326,6 +2332,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "GitLab",
         "Histórico",
         "Mais abas",
@@ -2336,7 +2343,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Não conectado",
         "Painéis de extensões",
         "Pedidos",
@@ -2351,7 +2358,8 @@
         "Terminal",
         "Testar",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -2366,7 +2374,7 @@
       ],
       "png": "captures/pt-BR.dark.settings.counter_jira.png",
       "tree": "captures/pt-BR.dark.settings.counter_jira.json",
-      "capture_sha": "f29808549d52cb25",
+      "capture_sha": "194d349fc3ce9f16",
       "same_as": null,
       "nodes": 155,
       "named_widgets": [
@@ -2387,6 +2395,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Jira",
         "Mais abas",
@@ -2397,7 +2406,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Não conectado",
         "Painéis de extensões",
         "Pedidos",
@@ -2412,7 +2421,8 @@
         "Terminal",
         "Testar",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -2427,7 +2437,7 @@
       ],
       "png": "captures/pt-BR.dark.settings.counter_linear.png",
       "tree": "captures/pt-BR.dark.settings.counter_linear.json",
-      "capture_sha": "06ad9962be52acb1",
+      "capture_sha": "37aedc3be85df5e8",
       "same_as": null,
       "nodes": 151,
       "named_widgets": [
@@ -2448,6 +2458,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Linear",
         "Mais abas",
@@ -2458,7 +2469,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Não conectado",
         "Painéis de extensões",
         "Pedidos",
@@ -2473,7 +2484,8 @@
         "Terminal",
         "Testar",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -2488,7 +2500,7 @@
       ],
       "png": "captures/pt-BR.dark.settings.helper.png",
       "tree": "captures/pt-BR.dark.settings.helper.json",
-      "capture_sha": "2b233abe1940a2c7",
+      "capture_sha": "b96bcf557c737a58",
       "same_as": null,
       "nodes": 443,
       "named_widgets": [
@@ -2543,6 +2555,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Gemini CLI",
         "GitHub Copilot CLI",
         "Goose",
@@ -2560,7 +2573,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "OpenAI Codex CLI",
         "OpenCode",
         "Painéis de extensões",
@@ -2582,6 +2595,7 @@
         "crush.json",
         "não instalados",
         "opencode.json",
+        "pwsh · Em execução",
         "sem suporte"
       ]
     },
@@ -2597,7 +2611,7 @@
       ],
       "png": "captures/pt-BR.dark.settings.import.png",
       "tree": "captures/pt-BR.dark.settings.import.json",
-      "capture_sha": "44555d0436661a3a",
+      "capture_sha": "e70f1a73ebd704ad",
       "same_as": null,
       "nodes": 148,
       "named_widgets": [
@@ -2616,6 +2630,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Importar do Harbor",
         "Mais abas",
@@ -2627,7 +2642,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -2641,7 +2656,8 @@
         "Terminal",
         "Traz projetos, bancadas, comandos, notas, destinos SSH, tema e fonte do Harbor 0.1. Nada é alterado no Harbor e nenhum segredo é importado.",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -2656,7 +2672,7 @@
       ],
       "png": "captures/pt-BR.dark.settings.mcp.png",
       "tree": "captures/pt-BR.dark.settings.mcp.json",
-      "capture_sha": "fcb869d68fe2a98c",
+      "capture_sha": "2163e0d4815e31c6",
       "same_as": null,
       "nodes": 168,
       "named_widgets": [
@@ -2677,6 +2693,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -2686,7 +2703,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "O snippet é só exibido; a Forja não escreve na configuração de outro CLI.",
         "OpenAI Codex CLI",
         "OpenCode",
@@ -2699,13 +2716,14 @@
         "Revisão",
         "Rotinas",
         "Servidor MCP",
-        "Servidor · ligado: 52",
+        "Servidor · ligado: 53",
         "Shell",
         "Skills",
         "Terminal",
         "Uso",
         "Visualizador",
         "[mcp_servers.forja]\ncommand = \"forja-mcp\"",
+        "pwsh · Em execução",
         "{\n  \"mcp\": {\n    \"forja\": { \"type\": \"local\", \"command\": [\"forja-mcp\"] }\n  }\n}",
         "{\n  \"mcpServers\": {\n    \"forja\": { \"command\": \"forja-mcp\" }\n  }\n}"
       ]
@@ -2722,7 +2740,7 @@
       ],
       "png": "captures/pt-BR.dark.settings.onboarding.png",
       "tree": "captures/pt-BR.dark.settings.onboarding.json",
-      "capture_sha": "29614e64cfdb049c",
+      "capture_sha": "c336c2f1becf6658",
       "same_as": null,
       "nodes": 141,
       "named_widgets": [
@@ -2742,6 +2760,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Idioma, tema, pasta de projetos e avisos.",
         "Mais abas",
@@ -2752,7 +2771,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -2765,7 +2784,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -2780,7 +2800,7 @@
       ],
       "png": "captures/pt-BR.dark.settings.remote.png",
       "tree": "captures/pt-BR.dark.settings.remote.json",
-      "capture_sha": "5a893efbafe4dd67",
+      "capture_sha": "1855a5b8db41a1b3",
       "same_as": null,
       "nodes": 163,
       "named_widgets": [
@@ -2801,6 +2821,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Importar ~/.ssh/config",
         "Mais abas",
@@ -2812,8 +2833,8 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
         "Novo destino",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -2830,7 +2851,8 @@
         "Terminal",
         "Uso",
         "Visualizador",
-        "WSL"
+        "WSL",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -2845,7 +2867,7 @@
       ],
       "png": "captures/pt-BR.dark.settings.trust.png",
       "tree": "captures/pt-BR.dark.settings.trust.json",
-      "capture_sha": "28ae5fa13d2c2081",
+      "capture_sha": "eebc2138af7569f0",
       "same_as": null,
       "nodes": 150,
       "named_widgets": [
@@ -2865,6 +2887,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -2875,7 +2898,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Pedidos pendentes: 0",
@@ -2889,7 +2912,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -2904,7 +2928,7 @@
       ],
       "png": "captures/pt-BR.dark.settings.voice.png",
       "tree": "captures/pt-BR.dark.settings.voice.json",
-      "capture_sha": "887d135d1a43ab83",
+      "capture_sha": "39e765455a56c9e6",
       "same_as": null,
       "nodes": 165,
       "named_widgets": [
@@ -2927,6 +2951,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Guardar chave",
         "Guardar áudio",
         "Histórico",
@@ -2941,7 +2966,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Nenhuma chave guardada.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "O áudio só vai à OpenAI quando você pede a transcrição. A chave nunca fica em arquivo.",
         "Painéis de extensões",
         "Pedidos",
@@ -2957,7 +2982,8 @@
         "Uso",
         "Visualizador",
         "Voz",
-        "Windows (Win+H)"
+        "Windows (Win+H)",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -2969,7 +2995,7 @@
       "args": [],
       "png": "captures/pt-BR.light.home.default.png",
       "tree": "captures/pt-BR.light.home.default.json",
-      "capture_sha": "05a8e7923f9e9370",
+      "capture_sha": "e40580666329304e",
       "same_as": null,
       "nodes": 116,
       "named_widgets": [
@@ -2987,6 +3013,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -2996,7 +3023,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -3009,7 +3036,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -3024,9 +3052,9 @@
       ],
       "png": "captures/pt-BR.light.open.anvil.png",
       "tree": "captures/pt-BR.light.open.anvil.json",
-      "capture_sha": "2401c47bbb1d18e5",
+      "capture_sha": "d6bb766a7bcdd4c9",
       "same_as": null,
-      "nodes": 203,
+      "nodes": 174,
       "named_widgets": [
         "56 módulos",
         "Aba anterior",
@@ -3070,28 +3098,13 @@
         "Bigorna  Ctrl+K",
         "Clonar",
         "Comandos",
-        "Compilar pacote Python  ·  projeto",
-        "Compilar pacotes Go  ·  projeto",
-        "Compilar projeto Node  ·  projeto",
-        "Compilar workspace Rust  ·  projeto",
         "Diferenças",
         "Editor",
         "Enter executa · Ctrl+Enter mantém a Bigorna aberta · Esc fecha",
         "Escrever testes para o arquivo",
-        "Executar Clippy linter  ·  projeto",
-        "Executar golangci-lint  ·  projeto",
-        "Executar linter Node  ·  projeto",
-        "Executar linter Ruff  ·  projeto",
-        "Executar testes Go  ·  projeto",
-        "Executar testes Node  ·  projeto",
-        "Executar testes Rust  ·  projeto",
-        "Executar testes com pytest  ·  projeto",
         "Explicar erro do terminal",
         "Extensões",
-        "Formatar código Rust  ·  projeto",
-        "Formatar código com Prettier  ·  projeto",
-        "Formatar código com Ruff  ·  projeto",
-        "Formatar código com gofmt  ·  projeto",
+        "Fechar pwsh",
         "Gerar mensagem de commit",
         "Histórico",
         "Mais abas",
@@ -3102,7 +3115,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Otimizar desempenho",
         "Painéis de extensões",
         "Pedidos",
@@ -3111,7 +3124,6 @@
         "Pronto",
         "Quadro",
         "Receitas",
-        "Receitas do terminal",
         "Refatorar código para clareza",
         "Resumir as mudanças da bancada",
         "Revisar as mudanças da bancada",
@@ -3125,11 +3137,8 @@
         "Terminal",
         "Tudo",
         "Uso",
-        "Verificar formatação Prettier  ·  projeto",
-        "Verificar formatação Ruff  ·  projeto",
-        "Verificar formatação Rust  ·  projeto",
-        "Verificar formatação gofmt  ·  projeto",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -3144,7 +3153,7 @@
       ],
       "png": "captures/pt-BR.light.open.onboarding.png",
       "tree": "captures/pt-BR.light.open.onboarding.json",
-      "capture_sha": "cd2190c1f101404a",
+      "capture_sha": "656183f09bc4e32e",
       "same_as": null,
       "nodes": 134,
       "named_widgets": [
@@ -3166,6 +3175,7 @@
         "Escolha o idioma da interface.",
         "Extensões",
         "Fechar",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -3175,7 +3185,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -3189,7 +3199,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -3204,7 +3215,7 @@
       ],
       "png": "captures/pt-BR.light.open.toast.png",
       "tree": "captures/pt-BR.light.open.toast.json",
-      "capture_sha": "af64ccb34867417b",
+      "capture_sha": "cbc75091d8a78368",
       "same_as": null,
       "nodes": 127,
       "named_widgets": [
@@ -3223,6 +3234,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Forja — A notificação chegou.",
         "Histórico",
         "Mais abas",
@@ -3232,7 +3244,7 @@
         "Nenhum projeto",
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -3245,7 +3257,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -3260,7 +3273,7 @@
       ],
       "png": "captures/pt-BR.light.rail.archive.tab.png",
       "tree": "captures/pt-BR.light.rail.archive.tab.json",
-      "capture_sha": "855b9af2b850d7e3",
+      "capture_sha": "8ac137f564fbef74",
       "same_as": null,
       "nodes": 117,
       "named_widgets": [
@@ -3284,7 +3297,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Nenhuma sessão salva ainda.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Pedidos",
         "Projeto",
         "Projetos",
@@ -3311,7 +3324,7 @@
       ],
       "png": "captures/pt-BR.light.modal.bench.dialogs.png",
       "tree": "captures/pt-BR.light.modal.bench.dialogs.json",
-      "capture_sha": "05a8e7923f9e9370",
+      "capture_sha": "e40580666329304e",
       "same_as": "pt-BR.light.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -3329,6 +3342,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -3338,7 +3352,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -3351,7 +3365,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -3366,7 +3381,7 @@
       ],
       "png": "captures/pt-BR.light.bench-tab.bench.detail.png",
       "tree": "captures/pt-BR.light.bench-tab.bench.detail.json",
-      "capture_sha": "0c60282354d1889b",
+      "capture_sha": "73e654c0f9c472b8",
       "same_as": null,
       "nodes": 117,
       "named_widgets": [
@@ -3396,7 +3411,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
         "Nova bancada",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -3422,7 +3437,7 @@
       ],
       "png": "captures/pt-BR.light.rail.board.page.png",
       "tree": "captures/pt-BR.light.rail.board.page.json",
-      "capture_sha": "719dabd2ceb7db55",
+      "capture_sha": "2571aff88e686e1f",
       "same_as": null,
       "nodes": 146,
       "named_widgets": [
@@ -3449,7 +3464,7 @@
         "Nenhuma bancada neste quadro ainda. Crie uma para começar.",
         "Notificações",
         "Nova bancada",
-        "Novo",
+        "Novo projeto",
         "Pedidos",
         "Projetos",
         "Pronto",
@@ -3474,15 +3489,12 @@
       ],
       "png": "captures/pt-BR.light.bench-tab.browser.tab.png",
       "tree": "captures/pt-BR.light.bench-tab.browser.tab.json",
-      "capture_sha": "7422383cfc5ad705",
+      "capture_sha": "67684552b3771a48",
       "same_as": null,
-      "nodes": 123,
+      "nodes": 125,
       "named_widgets": [
         "100%",
-        "23 portas",
         "56 módulos",
-        "A janela da Forja não foi encontrada para o navegador embutido.",
-        "A página fica oculta enquanto um painel ou janela estiver por cima.",
         "Acervo",
         "Achar arquivo  Ctrl+P",
         "Adicionar pasta",
@@ -3507,7 +3519,8 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
         "Nova aba",
-        "Novo",
+        "Novo projeto",
+        "O navegador embutido fica oculto quando a janela está sem foco ou fora da tela. Clique na janela para exibir a página.",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -3537,14 +3550,17 @@
       ],
       "png": "captures/pt-BR.light.bench-tab.chat.tab.png",
       "tree": "captures/pt-BR.light.bench-tab.chat.tab.json",
-      "capture_sha": "bf663950b9f3d7f7",
+      "capture_sha": "ca114d23ba1d3962",
       "same_as": null,
-      "nodes": 137,
+      "nodes": 150,
       "named_widgets": [
+        "22 portas",
         "56 módulos",
+        "Abrir Ajudantes",
         "Acervo",
         "Achar arquivo  Ctrl+P",
         "Adicionar pasta",
+        "Ajudante",
         "Ajudante (chat)",
         "Ajudantes",
         "Ajustes",
@@ -3552,9 +3568,9 @@
         "Arquivos",
         "Bancada",
         "Bigorna  Ctrl+K",
-        "Claude Code",
         "Claude Code · D:\\a\\forja\\forja ·",
         "Clonar",
+        "Copiar comando",
         "D:\\a\\forja\\forja",
         "Diferenças",
         "Editor",
@@ -3562,15 +3578,17 @@
         "Esforço",
         "Extensões",
         "Histórico",
+        "Instale um ajudante compatível ou abra a página Ajudantes para começar.",
         "Mais abas",
         "Mudanças",
         "Mutirão",
         "Navegador",
+        "Nenhum ajudante compatível com o chat foi encontrado.",
         "Nenhum projeto",
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -3582,7 +3600,8 @@
         "Terminal",
         "Uso",
         "Visualizador",
-        "ocioso"
+        "npm install -g @anthropic-ai/claude-code",
+        "não instalado"
       ]
     },
     {
@@ -3597,7 +3616,7 @@
       ],
       "png": "captures/pt-BR.light.modal.counter.poller.png",
       "tree": "captures/pt-BR.light.modal.counter.poller.json",
-      "capture_sha": "05a8e7923f9e9370",
+      "capture_sha": "e40580666329304e",
       "same_as": "pt-BR.light.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -3615,6 +3634,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -3624,7 +3644,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -3637,7 +3657,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -3652,7 +3673,7 @@
       ],
       "png": "captures/pt-BR.light.bench-tab.diff.tab.png",
       "tree": "captures/pt-BR.light.bench-tab.diff.tab.json",
-      "capture_sha": "223a48eaf9fdca65",
+      "capture_sha": "d930ec0ea0672ce5",
       "same_as": null,
       "nodes": 123,
       "named_widgets": [
@@ -3690,7 +3711,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Nenhuma mudança carregada. Pressione Atualizar.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -3718,7 +3739,7 @@
       ],
       "png": "captures/pt-BR.light.bench-tab.editor.tab.png",
       "tree": "captures/pt-BR.light.bench-tab.editor.tab.json",
-      "capture_sha": "6063ee915edf6fc7",
+      "capture_sha": "5b270896c8f5edfb",
       "same_as": null,
       "nodes": 106,
       "named_widgets": [
@@ -3746,7 +3767,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -3772,7 +3793,7 @@
       ],
       "png": "captures/pt-BR.light.right-tab.explorer.panel.png",
       "tree": "captures/pt-BR.light.right-tab.explorer.panel.json",
-      "capture_sha": "05a8e7923f9e9370",
+      "capture_sha": "e40580666329304e",
       "same_as": "pt-BR.light.home.default",
       "nodes": 116,
       "named_widgets": [
@@ -3790,6 +3811,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -3799,7 +3821,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -3812,7 +3834,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -3827,7 +3850,7 @@
       ],
       "png": "captures/pt-BR.light.rail.extension.page.png",
       "tree": "captures/pt-BR.light.rail.extension.page.json",
-      "capture_sha": "ca1904d1571e5c12",
+      "capture_sha": "9c857cbfc0b4320f",
       "same_as": null,
       "nodes": 110,
       "named_widgets": [
@@ -3852,7 +3875,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Nenhuma extensão encontrada.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Pedidos",
         "Projetos",
         "Pronto",
@@ -3876,7 +3899,7 @@
       ],
       "png": "captures/pt-BR.light.right-tab.extension.panels.right.png",
       "tree": "captures/pt-BR.light.right-tab.extension.panels.right.json",
-      "capture_sha": "8e638c45e52581a9",
+      "capture_sha": "9ce5660c5e2f5c1b",
       "same_as": null,
       "nodes": 111,
       "named_widgets": [
@@ -3893,6 +3916,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mutirão",
@@ -3901,7 +3925,7 @@
         "Nenhum projeto",
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -3914,7 +3938,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -3929,7 +3954,7 @@
       ],
       "png": "captures/pt-BR.light.bench-tab.extension.panels.bench.png",
       "tree": "captures/pt-BR.light.bench-tab.extension.panels.bench.json",
-      "capture_sha": "0005ab5378ad569e",
+      "capture_sha": "113b3cd20bb9ef98",
       "same_as": null,
       "nodes": 105,
       "named_widgets": [
@@ -3957,7 +3982,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -3983,7 +4008,7 @@
       ],
       "png": "captures/pt-BR.light.right-tab.git.changes.png",
       "tree": "captures/pt-BR.light.right-tab.git.changes.json",
-      "capture_sha": "3084b9947c089302",
+      "capture_sha": "1d1cd071e05f3b55",
       "same_as": null,
       "nodes": 120,
       "named_widgets": [
@@ -4002,6 +4027,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -4011,7 +4037,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma mudança.\nEscolha uma bancada para ver a árvore de trabalho.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -4024,7 +4050,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -4039,7 +4066,7 @@
       ],
       "png": "captures/pt-BR.light.bench-tab.git.history.png",
       "tree": "captures/pt-BR.light.bench-tab.git.history.json",
-      "capture_sha": "4cd2ca3bc1f286f7",
+      "capture_sha": "054029203939d452",
       "same_as": null,
       "nodes": 115,
       "named_widgets": [
@@ -4068,7 +4095,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Nenhuma mudança.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -4094,7 +4121,7 @@
       ],
       "png": "captures/pt-BR.light.modal.helper.profile_picker.png",
       "tree": "captures/pt-BR.light.modal.helper.profile_picker.json",
-      "capture_sha": "17504f292c17b73e",
+      "capture_sha": "92a1f3333b52fcd6",
       "same_as": null,
       "nodes": 142,
       "named_widgets": [
@@ -4121,6 +4148,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Gemini CLI",
         "GitHub Copilot CLI",
         "Goose",
@@ -4136,7 +4164,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "OpenAI Codex CLI",
         "OpenCode",
         "Painéis de extensões",
@@ -4152,7 +4180,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -4167,58 +4196,43 @@
       ],
       "png": "captures/pt-BR.light.rail.helper.tab.png",
       "tree": "captures/pt-BR.light.rail.helper.tab.json",
-      "capture_sha": "827f43b7d659c432",
+      "capture_sha": "19da53659dba62e1",
       "same_as": null,
-      "nodes": 193,
+      "nodes": 116,
       "named_widgets": [
         "56 módulos",
         "Acervo",
         "Achar arquivo  Ctrl+P",
         "Adicionar pasta",
-        "Aider",
         "Ajudantes",
         "Ajudantes ativos: 0",
         "Ajustes",
-        "Amp",
-        "Antigravity CLI",
         "Arquivos",
         "Bigorna  Ctrl+K",
-        "Claude Code",
-        "Cline CLI",
         "Clonar",
-        "Continue CLI",
-        "Crush",
-        "Cursor Agent CLI",
-        "Detectar",
+        "Detectando…",
         "Extensões",
-        "Gemini CLI",
-        "GitHub Copilot CLI",
-        "Goose",
-        "Iniciar",
-        "Kimi Code CLI",
-        "Kiro CLI",
+        "Instalados (0)",
         "Mais abas",
+        "Mostrar não instalados (16)",
         "Mudanças",
         "Mutirão",
         "Nenhum ajudante em execução.",
+        "Nenhum ajudante instalado foi encontrado no PATH.",
         "Nenhum projeto",
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
-        "OpenAI Codex CLI",
-        "OpenCode",
+        "Novo projeto",
         "Pedidos",
         "Perfis",
         "Projetos",
         "Pronto",
         "Quadro",
-        "Qwen Code",
         "Rotinas",
         "Skills",
         "Uso",
-        "Voltar à bancada",
-        "não instalado"
+        "Voltar à bancada"
       ]
     },
     {
@@ -4233,7 +4247,7 @@
       ],
       "png": "captures/pt-BR.light.modal.mcp.approval.png",
       "tree": "captures/pt-BR.light.modal.mcp.approval.json",
-      "capture_sha": "05a8e7923f9e9370",
+      "capture_sha": "e40580666329304e",
       "same_as": "pt-BR.light.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -4251,6 +4265,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -4260,7 +4275,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -4273,7 +4288,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -4288,9 +4304,9 @@
       ],
       "png": "captures/pt-BR.light.rail.muster.page.png",
       "tree": "captures/pt-BR.light.rail.muster.page.json",
-      "capture_sha": "3815afce55b4d56b",
+      "capture_sha": "a777e991dde6a056",
       "same_as": null,
-      "nodes": 102,
+      "nodes": 101,
       "named_widgets": [
         "56 módulos",
         "Acervo",
@@ -4310,8 +4326,8 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
         "Novo mutirão",
+        "Novo projeto",
         "Pedidos",
         "Projetos",
         "Pronto",
@@ -4335,7 +4351,7 @@
       ],
       "png": "captures/pt-BR.light.modal.notify.toasts.png",
       "tree": "captures/pt-BR.light.modal.notify.toasts.json",
-      "capture_sha": "05a8e7923f9e9370",
+      "capture_sha": "e40580666329304e",
       "same_as": "pt-BR.light.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -4353,6 +4369,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -4362,7 +4379,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -4375,7 +4392,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -4390,7 +4408,7 @@
       ],
       "png": "captures/pt-BR.light.modal.onboarding.wizard.png",
       "tree": "captures/pt-BR.light.modal.onboarding.wizard.json",
-      "capture_sha": "05a8e7923f9e9370",
+      "capture_sha": "e40580666329304e",
       "same_as": "pt-BR.light.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -4408,6 +4426,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -4417,7 +4436,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -4430,7 +4449,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -4445,9 +4465,9 @@
       ],
       "png": "captures/pt-BR.light.right-tab.ports.panel.png",
       "tree": "captures/pt-BR.light.right-tab.ports.panel.json",
-      "capture_sha": "222da9f214b0c844",
+      "capture_sha": "ec69f012b342438f",
       "same_as": null,
-      "nodes": 120,
+      "nodes": 124,
       "named_widgets": [
         "0 em escuta",
         "56 módulos",
@@ -4465,15 +4485,17 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
+        "Mostrar todas as portas do sistema",
         "Mutirão",
         "Navegador",
         "Nenhum projeto",
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma porta TCP em escuta foi encontrada.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Portas",
@@ -4487,7 +4509,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -4502,7 +4525,7 @@
       ],
       "png": "captures/pt-BR.light.modal.project.dialogs.png",
       "tree": "captures/pt-BR.light.modal.project.dialogs.json",
-      "capture_sha": "05a8e7923f9e9370",
+      "capture_sha": "e40580666329304e",
       "same_as": "pt-BR.light.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -4520,6 +4543,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -4529,7 +4553,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -4542,7 +4566,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -4557,7 +4582,7 @@
       ],
       "png": "captures/pt-BR.light.rail.request.page.png",
       "tree": "captures/pt-BR.light.rail.request.page.json",
-      "capture_sha": "37bfd6a702b753e4",
+      "capture_sha": "533429a858fea121",
       "same_as": null,
       "nodes": 120,
       "named_widgets": [
@@ -4589,8 +4614,8 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
         "Novo pedido local",
+        "Novo projeto",
         "Para revisar",
         "Pedidos",
         "Projetos",
@@ -4616,9 +4641,9 @@
       ],
       "png": "captures/pt-BR.light.bench-tab.review.tab.png",
       "tree": "captures/pt-BR.light.bench-tab.review.tab.json",
-      "capture_sha": "34053d7afc522a32",
+      "capture_sha": "68013cb6a686c51c",
       "same_as": null,
-      "nodes": 133,
+      "nodes": 146,
       "named_widgets": [
         "56 módulos",
         "Abrir como rascunho",
@@ -4630,14 +4655,15 @@
         "Ajudantes",
         "Ajustes",
         "Arquivos",
-        "Atualizar revisão",
         "Bancada",
         "Base",
         "Bigorna  Ctrl+K",
-        "Branch de origem:",
+        "Branch de origem",
         "Clonar",
+        "Descrição",
         "Diferenças",
         "Editor",
+        "Escolha uma base válida para continuar.",
         "Extensões",
         "Gerar",
         "Histórico",
@@ -4650,18 +4676,21 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Novo pull request",
+        "Não há uma base disponível. Escolha uma branch para comparar.",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
         "Pronto",
         "Quadro",
+        "Resumo do que será enviado",
         "Revisores",
         "Revisão",
         "Rotinas",
         "Skills",
         "Terminal",
+        "Título",
         "Uso",
         "Visualizador"
       ]
@@ -4678,7 +4707,7 @@
       ],
       "png": "captures/pt-BR.light.rail.routine.page.png",
       "tree": "captures/pt-BR.light.rail.routine.page.json",
-      "capture_sha": "8bffec8097b7e881",
+      "capture_sha": "7865ec5b28d4c3bf",
       "same_as": null,
       "nodes": 110,
       "named_widgets": [
@@ -4703,7 +4732,7 @@
         "Nenhuma rotina ainda. Crie uma para agendar um prompt ou um comando.",
         "Notificações",
         "Nova rotina",
-        "Novo",
+        "Novo projeto",
         "Pedidos",
         "Projetos",
         "Pronto",
@@ -4726,7 +4755,7 @@
       ],
       "png": "captures/pt-BR.light.right-tab.search.panel.png",
       "tree": "captures/pt-BR.light.right-tab.search.panel.json",
-      "capture_sha": "7740e2ffa5e588fe",
+      "capture_sha": "d4078ce87e0d6a35",
       "same_as": null,
       "nodes": 137,
       "named_widgets": [
@@ -4748,6 +4777,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Maiúsculas",
@@ -4756,7 +4786,7 @@
         "Nenhum projeto",
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Palavra inteira",
         "Parar",
@@ -4774,7 +4804,8 @@
         "Substituir",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -4789,7 +4820,7 @@
       ],
       "png": "captures/pt-BR.light.rail.skill.page.png",
       "tree": "captures/pt-BR.light.rail.skill.page.json",
-      "capture_sha": "b36a013da4a7cfb7",
+      "capture_sha": "425e647e7f42ccb8",
       "same_as": null,
       "nodes": 124,
       "named_widgets": [
@@ -4818,7 +4849,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Nenhuma skill encontrada.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Pedidos",
         "Projeto",
         "Projetos",
@@ -4844,7 +4875,7 @@
       ],
       "png": "captures/pt-BR.light.bench-tab.terminal.tab.png",
       "tree": "captures/pt-BR.light.bench-tab.terminal.tab.json",
-      "capture_sha": "05a8e7923f9e9370",
+      "capture_sha": "e40580666329304e",
       "same_as": "pt-BR.light.home.default",
       "nodes": 116,
       "named_widgets": [
@@ -4862,6 +4893,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -4871,7 +4903,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -4884,7 +4916,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -4899,26 +4932,13 @@
       ],
       "png": "captures/pt-BR.light.rail.usage.page.png",
       "tree": "captures/pt-BR.light.rail.usage.page.json",
-      "capture_sha": "810fe8ae6dc7ff83",
+      "capture_sha": "0d87a2e913aaa1b5",
       "same_as": null,
-      "nodes": 201,
+      "nodes": 154,
       "named_widgets": [
-        "0",
+        "0 cache lido · 0 cache escrito",
         "0 entrada · 0 saída",
-        "2026-11-01",
-        "2026-11-02",
-        "2026-11-03",
-        "2026-11-04",
-        "2026-11-05",
-        "2026-11-06",
-        "2026-11-07",
-        "2026-11-08",
-        "2026-11-09",
-        "2026-11-10",
-        "2026-11-11",
-        "2026-11-12",
-        "2026-11-13",
-        "2026-11-14",
+        "0 tokens",
         "56 módulos",
         "Acervo",
         "Achar arquivo  Ctrl+P",
@@ -4936,18 +4956,22 @@
         "Mutirão",
         "Nenhum projeto",
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
+        "Nenhum uso registrado ainda",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
+        "Os números vêm das transcrições locais dos ajudantes instalados: o Claude Code lê ~/.claude/projects, o Codex lê ~/.codex/sessions e o OpenCode lê a pasta storage. Nada sai desta máquina. Rode uma sessão de um ajudante em uma bancada e clique em Atualizar; se tudo continuar zerado, confira se o CLI do ajudante está instalado e se ele já rodou ao menos uma vez.",
         "Pedidos",
-        "Por dia",
+        "Período",
         "Projetos",
         "Pronto",
         "Quadro",
         "Rotinas",
         "Skills",
         "Total",
+        "US$ 0,00",
         "Uso",
+        "Varrer de novo",
         "Voltar à bancada",
         "Últimos 30 dias",
         "Últimos 7 dias"
@@ -4965,7 +4989,7 @@
       ],
       "png": "captures/pt-BR.light.bench-tab.viewers.tab.png",
       "tree": "captures/pt-BR.light.bench-tab.viewers.tab.json",
-      "capture_sha": "5bc57613881698e7",
+      "capture_sha": "43d6c76f2f0ca12d",
       "same_as": null,
       "nodes": 107,
       "named_widgets": [
@@ -4993,7 +5017,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Nenhuma prévia aberta. Escolha um arquivo no explorador ou use o botão de prévia no editor.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -5019,7 +5043,7 @@
       ],
       "png": "captures/pt-BR.light.modal.voice.overlay.png",
       "tree": "captures/pt-BR.light.modal.voice.overlay.json",
-      "capture_sha": "05a8e7923f9e9370",
+      "capture_sha": "e40580666329304e",
       "same_as": "pt-BR.light.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -5037,6 +5061,7 @@
         "Diferenças",
         "Editor",
         "Extensões",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -5046,7 +5071,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -5059,7 +5084,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -5074,7 +5100,7 @@
       ],
       "png": "captures/pt-BR.light.settings.accounts.png",
       "tree": "captures/pt-BR.light.settings.accounts.json",
-      "capture_sha": "b3ae2a4166e172ce",
+      "capture_sha": "eb0f35c59d687231",
       "same_as": null,
       "nodes": 168,
       "named_widgets": [
@@ -5099,6 +5125,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -5108,7 +5135,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "OpenAI Codex CLI",
         "Painéis de extensões",
         "Pedidos",
@@ -5123,7 +5150,8 @@
         "Terminal",
         "Uso",
         "Visualizador",
-        "executável do ajudante não encontrado"
+        "executável do ajudante não encontrado",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -5138,7 +5166,7 @@
       ],
       "png": "captures/pt-BR.light.settings.content.png",
       "tree": "captures/pt-BR.light.settings.content.json",
-      "capture_sha": "b0b9a8f00b7cfabe",
+      "capture_sha": "ae548f52faec20ab",
       "same_as": null,
       "nodes": 165,
       "named_widgets": [
@@ -5160,6 +5188,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -5169,7 +5198,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -5188,6 +5217,7 @@
         "builtin · D:\\a\\forja\\forja\\crates\\modules\\content\\../../../content\\templates\\README.md",
         "builtin · D:\\a\\forja\\forja\\crates\\modules\\content\\../../../content\\templates\\SKILL.md",
         "missing `+++` frontmatter",
+        "pwsh · Em execução",
         "rev 1"
       ]
     },
@@ -5203,7 +5233,7 @@
       ],
       "png": "captures/pt-BR.light.settings.counter_github.png",
       "tree": "captures/pt-BR.light.settings.counter_github.json",
-      "capture_sha": "9db89826b7cf5f88",
+      "capture_sha": "77cbe303486706b7",
       "same_as": null,
       "nodes": 151,
       "named_widgets": [
@@ -5224,6 +5254,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "GitHub",
         "Histórico",
         "Mais abas",
@@ -5234,7 +5265,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Não conectado",
         "Painéis de extensões",
         "Pedidos",
@@ -5249,7 +5280,8 @@
         "Terminal",
         "Testar",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -5264,7 +5296,7 @@
       ],
       "png": "captures/pt-BR.light.settings.counter_gitlab.png",
       "tree": "captures/pt-BR.light.settings.counter_gitlab.json",
-      "capture_sha": "5b521c41bacc9cce",
+      "capture_sha": "b99a24b5a1cf802a",
       "same_as": null,
       "nodes": 151,
       "named_widgets": [
@@ -5285,6 +5317,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "GitLab",
         "Histórico",
         "Mais abas",
@@ -5295,7 +5328,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Não conectado",
         "Painéis de extensões",
         "Pedidos",
@@ -5310,7 +5343,8 @@
         "Terminal",
         "Testar",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -5325,7 +5359,7 @@
       ],
       "png": "captures/pt-BR.light.settings.counter_jira.png",
       "tree": "captures/pt-BR.light.settings.counter_jira.json",
-      "capture_sha": "be0127b56a1a0e11",
+      "capture_sha": "6c92183af5379f7d",
       "same_as": null,
       "nodes": 155,
       "named_widgets": [
@@ -5346,6 +5380,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Jira",
         "Mais abas",
@@ -5356,7 +5391,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Não conectado",
         "Painéis de extensões",
         "Pedidos",
@@ -5371,7 +5406,8 @@
         "Terminal",
         "Testar",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -5386,7 +5422,7 @@
       ],
       "png": "captures/pt-BR.light.settings.counter_linear.png",
       "tree": "captures/pt-BR.light.settings.counter_linear.json",
-      "capture_sha": "c06ed0e33ef35a74",
+      "capture_sha": "e0519cd6ace0ad69",
       "same_as": null,
       "nodes": 151,
       "named_widgets": [
@@ -5407,6 +5443,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Linear",
         "Mais abas",
@@ -5417,7 +5454,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Não conectado",
         "Painéis de extensões",
         "Pedidos",
@@ -5432,7 +5469,8 @@
         "Terminal",
         "Testar",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -5447,7 +5485,7 @@
       ],
       "png": "captures/pt-BR.light.settings.helper.png",
       "tree": "captures/pt-BR.light.settings.helper.json",
-      "capture_sha": "6a2242a22661d83f",
+      "capture_sha": "8d1e0b6efbb9a7b8",
       "same_as": null,
       "nodes": 443,
       "named_widgets": [
@@ -5502,6 +5540,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Gemini CLI",
         "GitHub Copilot CLI",
         "Goose",
@@ -5519,7 +5558,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "OpenAI Codex CLI",
         "OpenCode",
         "Painéis de extensões",
@@ -5541,6 +5580,7 @@
         "crush.json",
         "não instalados",
         "opencode.json",
+        "pwsh · Em execução",
         "sem suporte"
       ]
     },
@@ -5556,7 +5596,7 @@
       ],
       "png": "captures/pt-BR.light.settings.import.png",
       "tree": "captures/pt-BR.light.settings.import.json",
-      "capture_sha": "f10d5867e8d98626",
+      "capture_sha": "4d6b138059c02bb1",
       "same_as": null,
       "nodes": 148,
       "named_widgets": [
@@ -5575,6 +5615,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Importar do Harbor",
         "Mais abas",
@@ -5586,7 +5627,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -5600,7 +5641,8 @@
         "Terminal",
         "Traz projetos, bancadas, comandos, notas, destinos SSH, tema e fonte do Harbor 0.1. Nada é alterado no Harbor e nenhum segredo é importado.",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -5615,7 +5657,7 @@
       ],
       "png": "captures/pt-BR.light.settings.mcp.png",
       "tree": "captures/pt-BR.light.settings.mcp.json",
-      "capture_sha": "1051594ce95939ac",
+      "capture_sha": "83defe001eae97f3",
       "same_as": null,
       "nodes": 168,
       "named_widgets": [
@@ -5636,6 +5678,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -5645,7 +5688,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "O snippet é só exibido; a Forja não escreve na configuração de outro CLI.",
         "OpenAI Codex CLI",
         "OpenCode",
@@ -5658,13 +5701,14 @@
         "Revisão",
         "Rotinas",
         "Servidor MCP",
-        "Servidor · ligado: 52",
+        "Servidor · ligado: 53",
         "Shell",
         "Skills",
         "Terminal",
         "Uso",
         "Visualizador",
         "[mcp_servers.forja]\ncommand = \"forja-mcp\"",
+        "pwsh · Em execução",
         "{\n  \"mcp\": {\n    \"forja\": { \"type\": \"local\", \"command\": [\"forja-mcp\"] }\n  }\n}",
         "{\n  \"mcpServers\": {\n    \"forja\": { \"command\": \"forja-mcp\" }\n  }\n}"
       ]
@@ -5681,7 +5725,7 @@
       ],
       "png": "captures/pt-BR.light.settings.onboarding.png",
       "tree": "captures/pt-BR.light.settings.onboarding.json",
-      "capture_sha": "855a80fbbf5d57a1",
+      "capture_sha": "09ceef82141dbeb3",
       "same_as": null,
       "nodes": 141,
       "named_widgets": [
@@ -5701,6 +5745,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Idioma, tema, pasta de projetos e avisos.",
         "Mais abas",
@@ -5711,7 +5756,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -5724,7 +5769,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -5739,7 +5785,7 @@
       ],
       "png": "captures/pt-BR.light.settings.remote.png",
       "tree": "captures/pt-BR.light.settings.remote.json",
-      "capture_sha": "75fba81c6089d335",
+      "capture_sha": "7a66a6887464367b",
       "same_as": null,
       "nodes": 163,
       "named_widgets": [
@@ -5760,6 +5806,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Importar ~/.ssh/config",
         "Mais abas",
@@ -5771,8 +5818,8 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
         "Novo destino",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Projetos",
@@ -5789,7 +5836,8 @@
         "Terminal",
         "Uso",
         "Visualizador",
-        "WSL"
+        "WSL",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -5804,7 +5852,7 @@
       ],
       "png": "captures/pt-BR.light.settings.trust.png",
       "tree": "captures/pt-BR.light.settings.trust.json",
-      "capture_sha": "5f7fe26c18925450",
+      "capture_sha": "92aa3ca5850c73f3",
       "same_as": null,
       "nodes": 150,
       "named_widgets": [
@@ -5824,6 +5872,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Histórico",
         "Mais abas",
         "Mudanças",
@@ -5834,7 +5883,7 @@
         "Nenhum projeto ainda. Adicione uma pasta ou crie um novo.",
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "Painéis de extensões",
         "Pedidos",
         "Pedidos pendentes: 0",
@@ -5848,7 +5897,8 @@
         "Skills",
         "Terminal",
         "Uso",
-        "Visualizador"
+        "Visualizador",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -5863,7 +5913,7 @@
       ],
       "png": "captures/pt-BR.light.settings.voice.png",
       "tree": "captures/pt-BR.light.settings.voice.json",
-      "capture_sha": "3739e9fb195f12b3",
+      "capture_sha": "ed7c8f34e2ec7710",
       "same_as": null,
       "nodes": 165,
       "named_widgets": [
@@ -5886,6 +5936,7 @@
         "Editor",
         "Extensões",
         "Fechar janela",
+        "Fechar pwsh",
         "Guardar chave",
         "Guardar áudio",
         "Histórico",
@@ -5900,7 +5951,7 @@
         "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.",
         "Nenhuma chave guardada.",
         "Notificações",
-        "Novo",
+        "Novo projeto",
         "O áudio só vai à OpenAI quando você pede a transcrição. A chave nunca fica em arquivo.",
         "Painéis de extensões",
         "Pedidos",
@@ -5916,7 +5967,8 @@
         "Uso",
         "Visualizador",
         "Voz",
-        "Windows (Win+H)"
+        "Windows (Win+H)",
+        "pwsh · Em execução"
       ]
     },
     {
@@ -5928,7 +5980,7 @@
       "args": [],
       "png": "captures/en.dark.home.default.png",
       "tree": "captures/en.dark.home.default.json",
-      "capture_sha": "91d40a4dae5fe8fd",
+      "capture_sha": "6c4e872ce8f46e4d",
       "same_as": null,
       "nodes": 116,
       "named_widgets": [
@@ -5941,6 +5993,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -5951,7 +6004,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -5967,7 +6020,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -5982,9 +6036,9 @@
       ],
       "png": "captures/en.dark.open.anvil.png",
       "tree": "captures/en.dark.open.anvil.json",
-      "capture_sha": "1f911f765b327cdc",
+      "capture_sha": "4863b4bff836d32d",
       "same_as": null,
-      "nodes": 203,
+      "nodes": 174,
       "named_widgets": [
         "56 modules",
         "Abort rebase or merge",
@@ -6024,16 +6078,9 @@
         "Benches",
         "Board",
         "Browser",
-        "Build Go packages  ·  project",
-        "Build Node project  ·  project",
-        "Build Python package  ·  project",
-        "Build Rust workspace  ·  project",
         "Changes",
-        "Check Prettier formatting  ·  project",
-        "Check Ruff formatting  ·  project",
-        "Check Rust formatting  ·  project",
-        "Check gofmt formatting  ·  project",
         "Clone",
+        "Close pwsh",
         "Commands",
         "Dark theme",
         "Document code",
@@ -6044,10 +6091,6 @@
         "Extensions",
         "Files",
         "Find file  Ctrl+P",
-        "Format Rust code  ·  project",
-        "Format code with Prettier  ·  project",
-        "Format code with Ruff  ·  project",
-        "Format code with gofmt  ·  project",
         "Generate commit message",
         "Helper (chat)",
         "Helpers",
@@ -6055,7 +6098,7 @@
         "Light theme",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -6071,22 +6114,14 @@
         "Review",
         "Review bench changes",
         "Routines",
-        "Run Clippy linter  ·  project",
-        "Run Go tests  ·  project",
-        "Run Node linter  ·  project",
-        "Run Node tests  ·  project",
-        "Run Ruff linter  ·  project",
-        "Run Rust tests  ·  project",
-        "Run golangci-lint  ·  project",
-        "Run tests with pytest  ·  project",
         "Settings",
         "Shell",
         "Skills",
         "Summarize bench changes",
         "Terminal",
-        "Terminal recipes",
         "Usage",
-        "Write tests for file"
+        "Write tests for file",
+        "pwsh · Running"
       ]
     },
     {
@@ -6101,7 +6136,7 @@
       ],
       "png": "captures/en.dark.open.onboarding.png",
       "tree": "captures/en.dark.open.onboarding.json",
-      "capture_sha": "b68b032d154839f3",
+      "capture_sha": "23c5ad29fc19a832",
       "same_as": null,
       "nodes": 134,
       "named_widgets": [
@@ -6116,6 +6151,7 @@
         "Choose the interface language.",
         "Clone",
         "Close",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -6127,7 +6163,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "Next",
         "No active bench. Open a bench to see its files.",
         "No project",
@@ -6145,7 +6181,8 @@
         "Skills",
         "Terminal",
         "Usage",
-        "Welcome to Forja"
+        "Welcome to Forja",
+        "pwsh · Running"
       ]
     },
     {
@@ -6160,7 +6197,7 @@
       ],
       "png": "captures/en.dark.open.toast.png",
       "tree": "captures/en.dark.open.toast.json",
-      "capture_sha": "e3360be5e5c692cf",
+      "capture_sha": "4ad267ecc2b85f06",
       "same_as": null,
       "nodes": 127,
       "named_widgets": [
@@ -6174,6 +6211,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -6185,7 +6223,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -6200,7 +6238,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -6215,7 +6254,7 @@
       ],
       "png": "captures/en.dark.rail.archive.tab.png",
       "tree": "captures/en.dark.rail.archive.tab.json",
-      "capture_sha": "2046a7f35749f5aa",
+      "capture_sha": "7831c7f681ba1bad",
       "same_as": null,
       "nodes": 117,
       "named_widgets": [
@@ -6233,7 +6272,7 @@
         "Helpers",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -6266,7 +6305,7 @@
       ],
       "png": "captures/en.dark.modal.bench.dialogs.png",
       "tree": "captures/en.dark.modal.bench.dialogs.json",
-      "capture_sha": "91d40a4dae5fe8fd",
+      "capture_sha": "6c4e872ce8f46e4d",
       "same_as": "en.dark.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -6279,6 +6318,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -6289,7 +6329,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -6305,7 +6345,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -6320,7 +6361,7 @@
       ],
       "png": "captures/en.dark.bench-tab.bench.detail.png",
       "tree": "captures/en.dark.bench-tab.bench.detail.json",
-      "capture_sha": "f85589935b0f7fbb",
+      "capture_sha": "8b800d1b88b4b1ba",
       "same_as": null,
       "nodes": 117,
       "named_widgets": [
@@ -6343,8 +6384,8 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
         "New bench",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No bench is active.\nCreate a bench, or pick one in the sidebar or board.",
         "No project",
@@ -6375,7 +6416,7 @@
       ],
       "png": "captures/en.dark.rail.board.page.png",
       "tree": "captures/en.dark.rail.board.page.json",
-      "capture_sha": "875df461346cd8d6",
+      "capture_sha": "ef85cbb211f59a69",
       "same_as": null,
       "nodes": 146,
       "named_widgets": [
@@ -6398,8 +6439,8 @@
         "Helpers",
         "More tabs",
         "Muster",
-        "New",
         "New bench",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No bench in this board yet. Create one to start.",
         "No project",
@@ -6427,12 +6468,11 @@
       ],
       "png": "captures/en.dark.bench-tab.browser.tab.png",
       "tree": "captures/en.dark.bench-tab.browser.tab.json",
-      "capture_sha": "dfb493671f4d9d22",
+      "capture_sha": "510b702929ed4c97",
       "same_as": null,
-      "nodes": 123,
+      "nodes": 125,
       "named_widgets": [
         "100%",
-        "23 ports",
         "56 modules",
         "Add folder",
         "Anvil  Ctrl+K",
@@ -6453,7 +6493,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "New tab",
         "No active bench. Open a bench to see its files.",
         "No project",
@@ -6469,8 +6509,7 @@
         "Settings",
         "Skills",
         "Terminal",
-        "The Forja window was not found for the embedded browser.",
-        "The page is hidden while a panel or window is on top.",
+        "The embedded browser is hidden while the window is unfocused or off-screen. Focus the window to show the page.",
         "Usage",
         "forja://inicio",
         "forja://inicio …",
@@ -6489,10 +6528,11 @@
       ],
       "png": "captures/en.dark.bench-tab.chat.tab.png",
       "tree": "captures/en.dark.bench-tab.chat.tab.json",
-      "capture_sha": "d1c8881a78a41f64",
+      "capture_sha": "17b1f7c570095a12",
       "same_as": null,
-      "nodes": 137,
+      "nodes": 150,
       "named_widgets": [
+        "22 ports",
         "56 modules",
         "Add folder",
         "Anvil  Ctrl+K",
@@ -6502,9 +6542,9 @@
         "Board",
         "Browser",
         "Changes",
-        "Claude Code",
         "Claude Code · D:\\a\\forja\\forja ·",
         "Clone",
+        "Copy command",
         "D:\\a\\forja\\forja",
         "Editor",
         "Effort",
@@ -6512,16 +6552,20 @@
         "Extensions",
         "Files",
         "Find file  Ctrl+P",
+        "Helper",
         "Helper (chat)",
         "Helpers",
         "History",
+        "Install a compatible helper or open the Helpers page to get started.",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
+        "No chat-compatible helper was found.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
         "Notifications",
+        "Open Helpers",
         "Preview",
         "Projects",
         "Ready",
@@ -6533,7 +6577,8 @@
         "Skills",
         "Terminal",
         "Usage",
-        "idle"
+        "not installed",
+        "npm install -g @anthropic-ai/claude-code"
       ]
     },
     {
@@ -6548,7 +6593,7 @@
       ],
       "png": "captures/en.dark.modal.counter.poller.png",
       "tree": "captures/en.dark.modal.counter.poller.json",
-      "capture_sha": "91d40a4dae5fe8fd",
+      "capture_sha": "6c4e872ce8f46e4d",
       "same_as": "en.dark.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -6561,6 +6606,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -6571,7 +6617,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -6587,7 +6633,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -6602,7 +6649,7 @@
       ],
       "png": "captures/en.dark.bench-tab.diff.tab.png",
       "tree": "captures/en.dark.bench-tab.diff.tab.json",
-      "capture_sha": "ffe182426020e017",
+      "capture_sha": "6cbde14d3cfadd84",
       "same_as": null,
       "nodes": 123,
       "named_widgets": [
@@ -6631,7 +6678,7 @@
         "Inline",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "Next change",
         "No active bench. Open a bench to see its files.",
         "No project",
@@ -6667,7 +6714,7 @@
       ],
       "png": "captures/en.dark.bench-tab.editor.tab.png",
       "tree": "captures/en.dark.bench-tab.editor.tab.json",
-      "capture_sha": "b27b954423d20b42",
+      "capture_sha": "8d4fc872e6e33285",
       "same_as": null,
       "nodes": 106,
       "named_widgets": [
@@ -6690,7 +6737,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -6720,7 +6767,7 @@
       ],
       "png": "captures/en.dark.right-tab.explorer.panel.png",
       "tree": "captures/en.dark.right-tab.explorer.panel.json",
-      "capture_sha": "91d40a4dae5fe8fd",
+      "capture_sha": "6c4e872ce8f46e4d",
       "same_as": "en.dark.home.default",
       "nodes": 116,
       "named_widgets": [
@@ -6733,6 +6780,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -6743,7 +6791,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -6759,7 +6807,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -6774,7 +6823,7 @@
       ],
       "png": "captures/en.dark.rail.extension.page.png",
       "tree": "captures/en.dark.rail.extension.page.json",
-      "capture_sha": "0c2b4d0c4245ebc8",
+      "capture_sha": "43e4a7239ddc0f05",
       "same_as": null,
       "nodes": 110,
       "named_widgets": [
@@ -6793,7 +6842,7 @@
         "Helpers",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No extensions found.",
         "No project",
@@ -6823,7 +6872,7 @@
       ],
       "png": "captures/en.dark.right-tab.extension.panels.right.png",
       "tree": "captures/en.dark.right-tab.extension.panels.right.json",
-      "capture_sha": "547f7c095b5199bd",
+      "capture_sha": "35d3d54b49a272a3",
       "same_as": null,
       "nodes": 112,
       "named_widgets": [
@@ -6836,6 +6885,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -6846,7 +6896,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No extension panel in this slot.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -6862,7 +6912,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -6877,7 +6928,7 @@
       ],
       "png": "captures/en.dark.bench-tab.extension.panels.bench.png",
       "tree": "captures/en.dark.bench-tab.extension.panels.bench.json",
-      "capture_sha": "1fe8eadc03c4c1b9",
+      "capture_sha": "acf702077b43f923",
       "same_as": null,
       "nodes": 105,
       "named_widgets": [
@@ -6900,7 +6951,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No extension panel in this slot.",
         "No project",
@@ -6930,7 +6981,7 @@
       ],
       "png": "captures/en.dark.right-tab.git.changes.png",
       "tree": "captures/en.dark.right-tab.git.changes.json",
-      "capture_sha": "d884ea9d13a3d328",
+      "capture_sha": "5cbef133c5557c53",
       "same_as": null,
       "nodes": 119,
       "named_widgets": [
@@ -6944,6 +6995,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -6954,7 +7006,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No changes.\nPick a bench to see its working tree.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -6970,7 +7022,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -6985,7 +7038,7 @@
       ],
       "png": "captures/en.dark.bench-tab.git.history.png",
       "tree": "captures/en.dark.bench-tab.git.history.json",
-      "capture_sha": "430854ae7953101e",
+      "capture_sha": "a2f9a99345acefcf",
       "same_as": null,
       "nodes": 115,
       "named_widgets": [
@@ -7009,7 +7062,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No changes.",
         "No project",
@@ -7039,7 +7092,7 @@
       ],
       "png": "captures/en.dark.modal.helper.profile_picker.png",
       "tree": "captures/en.dark.modal.helper.profile_picker.json",
-      "capture_sha": "91fa3bde05671a9b",
+      "capture_sha": "00851003c4125d3e",
       "same_as": null,
       "nodes": 142,
       "named_widgets": [
@@ -7058,6 +7111,7 @@
         "Claude Code",
         "Cline CLI",
         "Clone",
+        "Close pwsh",
         "Continue CLI",
         "Crush",
         "Cursor Agent CLI",
@@ -7077,7 +7131,7 @@
         "Launch helper",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -7096,7 +7150,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -7111,58 +7166,43 @@
       ],
       "png": "captures/en.dark.rail.helper.tab.png",
       "tree": "captures/en.dark.rail.helper.tab.json",
-      "capture_sha": "b12201ab90a16b4a",
+      "capture_sha": "20a6dc0214f639ca",
       "same_as": null,
-      "nodes": 193,
+      "nodes": 116,
       "named_widgets": [
         "56 modules",
         "Active helpers: 0",
         "Add folder",
-        "Aider",
-        "Amp",
-        "Antigravity CLI",
         "Anvil  Ctrl+K",
         "Archive",
         "Back to bench",
         "Board",
         "Changes",
-        "Claude Code",
-        "Cline CLI",
         "Clone",
-        "Continue CLI",
-        "Crush",
-        "Cursor Agent CLI",
-        "Detect",
+        "Detecting…",
         "Extensions",
         "Files",
         "Find file  Ctrl+P",
-        "Gemini CLI",
-        "GitHub Copilot CLI",
-        "Goose",
         "Helpers",
-        "Kimi Code CLI",
-        "Kiro CLI",
-        "Launch",
+        "Installed (0)",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No helper is running.",
+        "No installed helpers found on PATH.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
         "Notifications",
-        "OpenAI Codex CLI",
-        "OpenCode",
         "Profiles",
         "Projects",
-        "Qwen Code",
         "Ready",
         "Requests",
         "Routines",
         "Settings",
+        "Show not installed (16)",
         "Skills",
-        "Usage",
-        "not installed"
+        "Usage"
       ]
     },
     {
@@ -7177,7 +7217,7 @@
       ],
       "png": "captures/en.dark.modal.mcp.approval.png",
       "tree": "captures/en.dark.modal.mcp.approval.json",
-      "capture_sha": "91d40a4dae5fe8fd",
+      "capture_sha": "6c4e872ce8f46e4d",
       "same_as": "en.dark.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -7190,6 +7230,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -7200,7 +7241,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -7216,7 +7257,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -7231,9 +7273,9 @@
       ],
       "png": "captures/en.dark.rail.muster.page.png",
       "tree": "captures/en.dark.rail.muster.page.json",
-      "capture_sha": "a41bfe9dee5eb713",
+      "capture_sha": "34705e755bfe5c75",
       "same_as": null,
-      "nodes": 102,
+      "nodes": 101,
       "named_widgets": [
         "56 modules",
         "Add folder",
@@ -7249,8 +7291,8 @@
         "Helpers",
         "More tabs",
         "Muster",
-        "New",
         "New muster",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No muster yet. Create one to split the work into tasks.",
         "No project",
@@ -7278,7 +7320,7 @@
       ],
       "png": "captures/en.dark.modal.notify.toasts.png",
       "tree": "captures/en.dark.modal.notify.toasts.json",
-      "capture_sha": "91d40a4dae5fe8fd",
+      "capture_sha": "6c4e872ce8f46e4d",
       "same_as": "en.dark.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -7291,6 +7333,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -7301,7 +7344,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -7317,7 +7360,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -7332,7 +7376,7 @@
       ],
       "png": "captures/en.dark.modal.onboarding.wizard.png",
       "tree": "captures/en.dark.modal.onboarding.wizard.json",
-      "capture_sha": "91d40a4dae5fe8fd",
+      "capture_sha": "6c4e872ce8f46e4d",
       "same_as": "en.dark.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -7345,6 +7389,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -7355,7 +7400,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -7371,7 +7416,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -7386,9 +7432,9 @@
       ],
       "png": "captures/en.dark.right-tab.ports.panel.png",
       "tree": "captures/en.dark.right-tab.ports.panel.json",
-      "capture_sha": "fcd1e507cde2cc00",
+      "capture_sha": "701ed8b6a346949d",
       "same_as": null,
-      "nodes": 120,
+      "nodes": 124,
       "named_widgets": [
         "0 listening",
         "56 modules",
@@ -7400,6 +7446,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -7410,7 +7457,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No listening TCP port was found.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -7427,9 +7474,11 @@
         "Search",
         "Settings",
         "Shell",
+        "Show all system ports",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -7444,7 +7493,7 @@
       ],
       "png": "captures/en.dark.modal.project.dialogs.png",
       "tree": "captures/en.dark.modal.project.dialogs.json",
-      "capture_sha": "91d40a4dae5fe8fd",
+      "capture_sha": "6c4e872ce8f46e4d",
       "same_as": "en.dark.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -7457,6 +7506,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -7467,7 +7517,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -7483,7 +7533,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -7498,7 +7549,7 @@
       ],
       "png": "captures/en.dark.rail.request.page.png",
       "tree": "captures/en.dark.rail.request.page.json",
-      "capture_sha": "96a16e3a82f730dd",
+      "capture_sha": "e176c389c6d1ecef",
       "same_as": null,
       "nodes": 120,
       "named_widgets": [
@@ -7523,8 +7574,8 @@
         "Mine",
         "More tabs",
         "Muster",
-        "New",
         "New local request",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -7557,9 +7608,9 @@
       ],
       "png": "captures/en.dark.bench-tab.review.tab.png",
       "tree": "captures/en.dark.bench-tab.review.tab.json",
-      "capture_sha": "8710a99138ef6d12",
+      "capture_sha": "edea2cfc8da02caf",
       "same_as": null,
-      "nodes": 133,
+      "nodes": 146,
       "named_widgets": [
         "56 modules",
         "Add folder",
@@ -7570,7 +7621,9 @@
         "Board",
         "Browser",
         "Changes",
+        "Choose a valid base to continue.",
         "Clone",
+        "Description",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -7583,9 +7636,10 @@
         "Labels",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "New pull request",
         "No active bench. Open a bench to see its files.",
+        "No base is available. Choose a branch to compare.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
         "Notifications",
@@ -7594,16 +7648,17 @@
         "Preview",
         "Projects",
         "Ready",
-        "Refresh review",
         "Requests",
         "Review",
         "Reviewers",
         "Routines",
         "Settings",
         "Skills",
-        "Source branch:",
+        "Source branch",
         "Terminal",
-        "Usage"
+        "Title",
+        "Usage",
+        "What will be sent"
       ]
     },
     {
@@ -7618,7 +7673,7 @@
       ],
       "png": "captures/en.dark.rail.routine.page.png",
       "tree": "captures/en.dark.rail.routine.page.json",
-      "capture_sha": "6b1086d029f6fd76",
+      "capture_sha": "258ffccc67fe52ee",
       "same_as": null,
       "nodes": 110,
       "named_widgets": [
@@ -7637,7 +7692,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "New routine",
         "No active bench. Open a bench to see its files.",
         "No project",
@@ -7666,7 +7721,7 @@
       ],
       "png": "captures/en.dark.right-tab.search.panel.png",
       "tree": "captures/en.dark.right-tab.search.panel.json",
-      "capture_sha": "c9b5eaa5a03eb7ed",
+      "capture_sha": "4ca51eef296802d6",
       "same_as": null,
       "nodes": 138,
       "named_widgets": [
@@ -7680,6 +7735,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -7691,7 +7747,7 @@
         "Match case",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
         "Notifications",
@@ -7713,7 +7769,8 @@
         "Stop",
         "Terminal",
         "Usage",
-        "Whole word"
+        "Whole word",
+        "pwsh · Running"
       ]
     },
     {
@@ -7728,7 +7785,7 @@
       ],
       "png": "captures/en.dark.rail.skill.page.png",
       "tree": "captures/en.dark.rail.skill.page.json",
-      "capture_sha": "5d702bd613672467",
+      "capture_sha": "e33a6a1c96af1bee",
       "same_as": null,
       "nodes": 124,
       "named_widgets": [
@@ -7751,7 +7808,7 @@
         "Install zip",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -7783,7 +7840,7 @@
       ],
       "png": "captures/en.dark.bench-tab.terminal.tab.png",
       "tree": "captures/en.dark.bench-tab.terminal.tab.json",
-      "capture_sha": "91d40a4dae5fe8fd",
+      "capture_sha": "6c4e872ce8f46e4d",
       "same_as": "en.dark.home.default",
       "nodes": 116,
       "named_widgets": [
@@ -7796,6 +7853,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -7806,7 +7864,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -7822,7 +7880,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -7837,33 +7896,19 @@
       ],
       "png": "captures/en.dark.rail.usage.page.png",
       "tree": "captures/en.dark.rail.usage.page.json",
-      "capture_sha": "169f9572708dff6f",
+      "capture_sha": "de063b2d6a2156cd",
       "same_as": null,
-      "nodes": 201,
+      "nodes": 154,
       "named_widgets": [
-        "0",
+        "0 cache read · 0 cache write",
         "0 input · 0 output",
-        "2026-11-01",
-        "2026-11-02",
-        "2026-11-03",
-        "2026-11-04",
-        "2026-11-05",
-        "2026-11-06",
-        "2026-11-07",
-        "2026-11-08",
-        "2026-11-09",
-        "2026-11-10",
-        "2026-11-11",
-        "2026-11-12",
-        "2026-11-13",
-        "2026-11-14",
+        "0 tokens",
         "56 modules",
         "Add folder",
         "Anvil  Ctrl+K",
         "Archive",
         "Back to bench",
         "Board",
-        "By day",
         "Changes",
         "Clone",
         "Extensions",
@@ -7874,20 +7919,25 @@
         "Last 7 days",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
+        "No usage recorded yet",
         "Notifications",
+        "Period",
         "Projects",
         "Ready",
         "Refresh",
         "Requests",
         "Routines",
+        "Scan again",
         "Settings",
         "Skills",
+        "The numbers come from the local transcripts of the installed helpers: Claude Code reads ~/.claude/projects, Codex reads ~/.codex/sessions and OpenCode reads its storage folder. Nothing leaves this machine. Run a helper session in a bench and click Refresh; if everything stays at zero, check that the helper CLI is installed and has already run at least once.",
         "Today",
         "Total",
+        "US$ 0.00",
         "Usage"
       ]
     },
@@ -7903,7 +7953,7 @@
       ],
       "png": "captures/en.dark.bench-tab.viewers.tab.png",
       "tree": "captures/en.dark.bench-tab.viewers.tab.json",
-      "capture_sha": "36a25c503037bb89",
+      "capture_sha": "80087cd52d547abb",
       "same_as": null,
       "nodes": 107,
       "named_widgets": [
@@ -7926,7 +7976,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No preview open. Pick a file in the explorer or use the preview button in the editor.",
         "No project",
@@ -7956,7 +8006,7 @@
       ],
       "png": "captures/en.dark.modal.voice.overlay.png",
       "tree": "captures/en.dark.modal.voice.overlay.json",
-      "capture_sha": "91d40a4dae5fe8fd",
+      "capture_sha": "6c4e872ce8f46e4d",
       "same_as": "en.dark.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -7969,6 +8019,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -7979,7 +8030,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -7995,7 +8046,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -8010,7 +8062,7 @@
       ],
       "png": "captures/en.dark.settings.accounts.png",
       "tree": "captures/en.dark.settings.accounts.json",
-      "capture_sha": "9f11fa87c0d5fe06",
+      "capture_sha": "c4e2c6bf05ee2e33",
       "same_as": null,
       "nodes": 168,
       "named_widgets": [
@@ -8028,6 +8080,7 @@
         "Changes",
         "Claude Code",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Each account uses a separate config home for its helper.",
         "Editor",
@@ -8040,7 +8093,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -8058,7 +8111,8 @@
         "Skills",
         "Terminal",
         "Usage",
-        "helper executable not found"
+        "helper executable not found",
+        "pwsh · Running"
       ]
     },
     {
@@ -8073,7 +8127,7 @@
       ],
       "png": "captures/en.dark.settings.content.png",
       "tree": "captures/en.dark.settings.content.json",
-      "capture_sha": "188573fb42fa42d7",
+      "capture_sha": "e4522d0883135c87",
       "same_as": null,
       "nodes": 165,
       "named_widgets": [
@@ -8087,6 +8141,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Content",
         "Diagnostics",
@@ -8100,7 +8155,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -8122,6 +8177,7 @@
         "builtin · D:\\a\\forja\\forja\\crates\\modules\\content\\../../../content\\templates\\README.md",
         "builtin · D:\\a\\forja\\forja\\crates\\modules\\content\\../../../content\\templates\\SKILL.md",
         "missing `+++` frontmatter",
+        "pwsh · Running",
         "rev 1"
       ]
     },
@@ -8137,7 +8193,7 @@
       ],
       "png": "captures/en.dark.settings.counter_github.png",
       "tree": "captures/en.dark.settings.counter_github.json",
-      "capture_sha": "bb5f575ec4a8fdff",
+      "capture_sha": "dd2162e88ec86b10",
       "same_as": null,
       "nodes": 151,
       "named_widgets": [
@@ -8150,6 +8206,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Connect",
         "Disconnect",
@@ -8164,7 +8221,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -8182,7 +8239,8 @@
         "Skills",
         "Terminal",
         "Test",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -8197,7 +8255,7 @@
       ],
       "png": "captures/en.dark.settings.counter_gitlab.png",
       "tree": "captures/en.dark.settings.counter_gitlab.json",
-      "capture_sha": "5afdb47a4d0a85e2",
+      "capture_sha": "2d5cac3bb1e37004",
       "same_as": null,
       "nodes": 151,
       "named_widgets": [
@@ -8210,6 +8268,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Connect",
         "Disconnect",
@@ -8224,7 +8283,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -8242,7 +8301,8 @@
         "Skills",
         "Terminal",
         "Test",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -8257,7 +8317,7 @@
       ],
       "png": "captures/en.dark.settings.counter_jira.png",
       "tree": "captures/en.dark.settings.counter_jira.json",
-      "capture_sha": "a414ac1083822e01",
+      "capture_sha": "5cd0230bbcd2b81e",
       "same_as": null,
       "nodes": 155,
       "named_widgets": [
@@ -8270,6 +8330,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Connect",
         "Disconnect",
@@ -8284,7 +8345,7 @@
         "Jira",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -8302,7 +8363,8 @@
         "Skills",
         "Terminal",
         "Test",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -8317,7 +8379,7 @@
       ],
       "png": "captures/en.dark.settings.counter_linear.png",
       "tree": "captures/en.dark.settings.counter_linear.json",
-      "capture_sha": "d4fc8ffa636db94a",
+      "capture_sha": "5f9227c684a499e4",
       "same_as": null,
       "nodes": 151,
       "named_widgets": [
@@ -8330,6 +8392,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Connect",
         "Disconnect",
@@ -8344,7 +8407,7 @@
         "Linear",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -8362,7 +8425,8 @@
         "Skills",
         "Terminal",
         "Test",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -8377,7 +8441,7 @@
       ],
       "png": "captures/en.dark.settings.helper.png",
       "tree": "captures/en.dark.settings.helper.json",
-      "capture_sha": "fbb3b33f006dbd3d",
+      "capture_sha": "688cc05feef1bd19",
       "same_as": null,
       "nodes": 443,
       "named_widgets": [
@@ -8404,6 +8468,7 @@
         "Claude Code",
         "Cline CLI",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Command: agy",
         "Command: aider",
@@ -8446,7 +8511,7 @@
         "Loading…",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -8470,6 +8535,7 @@
         "crush.json",
         "not installed",
         "opencode.json",
+        "pwsh · Running",
         "unsupported"
       ]
     },
@@ -8485,7 +8551,7 @@
       ],
       "png": "captures/en.dark.settings.import.png",
       "tree": "captures/en.dark.settings.import.json",
-      "capture_sha": "e02ced9a1996a7fa",
+      "capture_sha": "46be1417913384a5",
       "same_as": null,
       "nodes": 148,
       "named_widgets": [
@@ -8499,6 +8565,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Editor",
         "Extension panels",
@@ -8511,7 +8578,7 @@
         "Import from Harbor",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No Harbor 0.1 data was found on this machine.",
         "No active bench. Open a bench to see its files.",
         "No project",
@@ -8528,7 +8595,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -8543,7 +8611,7 @@
       ],
       "png": "captures/en.dark.settings.mcp.png",
       "tree": "captures/en.dark.settings.mcp.json",
-      "capture_sha": "b02ff6d005dcb2e3",
+      "capture_sha": "b67d0ad076726c9b",
       "same_as": null,
       "nodes": 168,
       "named_widgets": [
@@ -8557,6 +8625,7 @@
         "Changes",
         "Claude Code",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Editor",
         "Extension panels",
@@ -8570,7 +8639,7 @@
         "MCP server",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -8584,7 +8653,7 @@
         "Requests",
         "Review",
         "Routines",
-        "Server · on: 52",
+        "Server · on: 53",
         "Settings",
         "Shell",
         "Skills",
@@ -8592,6 +8661,7 @@
         "The snippet is shown only; Forja does not write to another CLI's configuration.",
         "Usage",
         "[mcp_servers.forja]\ncommand = \"forja-mcp\"",
+        "pwsh · Running",
         "{\n  \"mcp\": {\n    \"forja\": { \"type\": \"local\", \"command\": [\"forja-mcp\"] }\n  }\n}",
         "{\n  \"mcpServers\": {\n    \"forja\": { \"command\": \"forja-mcp\" }\n  }\n}"
       ]
@@ -8608,7 +8678,7 @@
       ],
       "png": "captures/en.dark.settings.onboarding.png",
       "tree": "captures/en.dark.settings.onboarding.json",
-      "capture_sha": "d05b2e8899067c1b",
+      "capture_sha": "98585967f11449f0",
       "same_as": null,
       "nodes": 141,
       "named_widgets": [
@@ -8621,6 +8691,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Editor",
         "Extension panels",
@@ -8633,7 +8704,7 @@
         "Language, theme, project folder and notifications.",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -8650,7 +8721,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -8665,7 +8737,7 @@
       ],
       "png": "captures/en.dark.settings.remote.png",
       "tree": "captures/en.dark.settings.remote.json",
-      "capture_sha": "8f44e12bf615224b",
+      "capture_sha": "3e8534e6bbaef1ae",
       "same_as": null,
       "nodes": 163,
       "named_widgets": [
@@ -8678,6 +8750,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Distros not read yet. Refresh to list them.",
         "Editor",
@@ -8691,7 +8764,7 @@
         "Import ~/.ssh/config",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "New target",
         "No SSH target yet. Import ~/.ssh/config or add one below.",
         "No active bench. Open a bench to see its files.",
@@ -8714,7 +8787,8 @@
         "Skills",
         "Terminal",
         "Usage",
-        "WSL"
+        "WSL",
+        "pwsh · Running"
       ]
     },
     {
@@ -8729,7 +8803,7 @@
       ],
       "png": "captures/en.dark.settings.trust.png",
       "tree": "captures/en.dark.settings.trust.json",
-      "capture_sha": "844943b64bc01a21",
+      "capture_sha": "a13fd9bcb6d1060b",
       "same_as": null,
       "nodes": 150,
       "named_widgets": [
@@ -8742,6 +8816,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Editor",
         "Extension panels",
@@ -8753,7 +8828,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -8772,7 +8847,8 @@
         "Skills",
         "Terminal",
         "Trust approvals",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -8787,7 +8863,7 @@
       ],
       "png": "captures/en.dark.settings.voice.png",
       "tree": "captures/en.dark.settings.voice.json",
-      "capture_sha": "4beca4b1db556f15",
+      "capture_sha": "65caf9e6197530f8",
       "same_as": null,
       "nodes": 165,
       "named_widgets": [
@@ -8802,6 +8878,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Delete key",
         "Editor",
@@ -8815,7 +8892,7 @@
         "Keep audio",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No key saved.",
         "No project",
@@ -8839,7 +8916,8 @@
         "Usage",
         "Voice",
         "Windows (Win+H)",
-        "Windows dictation or local recording with optional transcription by OpenAI."
+        "Windows dictation or local recording with optional transcription by OpenAI.",
+        "pwsh · Running"
       ]
     },
     {
@@ -8851,7 +8929,7 @@
       "args": [],
       "png": "captures/en.light.home.default.png",
       "tree": "captures/en.light.home.default.json",
-      "capture_sha": "ef12c9914de37539",
+      "capture_sha": "7696479b806f4539",
       "same_as": null,
       "nodes": 116,
       "named_widgets": [
@@ -8864,6 +8942,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -8874,7 +8953,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -8890,7 +8969,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -8905,9 +8985,9 @@
       ],
       "png": "captures/en.light.open.anvil.png",
       "tree": "captures/en.light.open.anvil.json",
-      "capture_sha": "bfc4d781702e2bbe",
+      "capture_sha": "02bf23994a6f8cdc",
       "same_as": null,
-      "nodes": 203,
+      "nodes": 174,
       "named_widgets": [
         "56 modules",
         "Abort rebase or merge",
@@ -8947,16 +9027,9 @@
         "Benches",
         "Board",
         "Browser",
-        "Build Go packages  ·  project",
-        "Build Node project  ·  project",
-        "Build Python package  ·  project",
-        "Build Rust workspace  ·  project",
         "Changes",
-        "Check Prettier formatting  ·  project",
-        "Check Ruff formatting  ·  project",
-        "Check Rust formatting  ·  project",
-        "Check gofmt formatting  ·  project",
         "Clone",
+        "Close pwsh",
         "Commands",
         "Dark theme",
         "Document code",
@@ -8967,10 +9040,6 @@
         "Extensions",
         "Files",
         "Find file  Ctrl+P",
-        "Format Rust code  ·  project",
-        "Format code with Prettier  ·  project",
-        "Format code with Ruff  ·  project",
-        "Format code with gofmt  ·  project",
         "Generate commit message",
         "Helper (chat)",
         "Helpers",
@@ -8978,7 +9047,7 @@
         "Light theme",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -8994,22 +9063,14 @@
         "Review",
         "Review bench changes",
         "Routines",
-        "Run Clippy linter  ·  project",
-        "Run Go tests  ·  project",
-        "Run Node linter  ·  project",
-        "Run Node tests  ·  project",
-        "Run Ruff linter  ·  project",
-        "Run Rust tests  ·  project",
-        "Run golangci-lint  ·  project",
-        "Run tests with pytest  ·  project",
         "Settings",
         "Shell",
         "Skills",
         "Summarize bench changes",
         "Terminal",
-        "Terminal recipes",
         "Usage",
-        "Write tests for file"
+        "Write tests for file",
+        "pwsh · Running"
       ]
     },
     {
@@ -9024,7 +9085,7 @@
       ],
       "png": "captures/en.light.open.onboarding.png",
       "tree": "captures/en.light.open.onboarding.json",
-      "capture_sha": "1aaf9ccd55d854f7",
+      "capture_sha": "b8a28e9e1ec4f9e6",
       "same_as": null,
       "nodes": 134,
       "named_widgets": [
@@ -9039,6 +9100,7 @@
         "Choose the interface language.",
         "Clone",
         "Close",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -9050,7 +9112,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "Next",
         "No active bench. Open a bench to see its files.",
         "No project",
@@ -9068,7 +9130,8 @@
         "Skills",
         "Terminal",
         "Usage",
-        "Welcome to Forja"
+        "Welcome to Forja",
+        "pwsh · Running"
       ]
     },
     {
@@ -9083,7 +9146,7 @@
       ],
       "png": "captures/en.light.open.toast.png",
       "tree": "captures/en.light.open.toast.json",
-      "capture_sha": "7057cedb40cfeaa0",
+      "capture_sha": "c89ebfb997ef4871",
       "same_as": null,
       "nodes": 127,
       "named_widgets": [
@@ -9097,6 +9160,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -9108,7 +9172,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -9123,7 +9187,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -9138,7 +9203,7 @@
       ],
       "png": "captures/en.light.rail.archive.tab.png",
       "tree": "captures/en.light.rail.archive.tab.json",
-      "capture_sha": "aaa845674ba14995",
+      "capture_sha": "80cff95c5f3b68c2",
       "same_as": null,
       "nodes": 117,
       "named_widgets": [
@@ -9156,7 +9221,7 @@
         "Helpers",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -9189,7 +9254,7 @@
       ],
       "png": "captures/en.light.modal.bench.dialogs.png",
       "tree": "captures/en.light.modal.bench.dialogs.json",
-      "capture_sha": "ef12c9914de37539",
+      "capture_sha": "7696479b806f4539",
       "same_as": "en.light.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -9202,6 +9267,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -9212,7 +9278,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -9228,7 +9294,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -9243,7 +9310,7 @@
       ],
       "png": "captures/en.light.bench-tab.bench.detail.png",
       "tree": "captures/en.light.bench-tab.bench.detail.json",
-      "capture_sha": "21318f5a26505bfb",
+      "capture_sha": "4ba67505ef07f986",
       "same_as": null,
       "nodes": 117,
       "named_widgets": [
@@ -9266,8 +9333,8 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
         "New bench",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No bench is active.\nCreate a bench, or pick one in the sidebar or board.",
         "No project",
@@ -9298,7 +9365,7 @@
       ],
       "png": "captures/en.light.rail.board.page.png",
       "tree": "captures/en.light.rail.board.page.json",
-      "capture_sha": "428e93bdf8346d1b",
+      "capture_sha": "6054492ada4ed5ad",
       "same_as": null,
       "nodes": 146,
       "named_widgets": [
@@ -9321,8 +9388,8 @@
         "Helpers",
         "More tabs",
         "Muster",
-        "New",
         "New bench",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No bench in this board yet. Create one to start.",
         "No project",
@@ -9350,12 +9417,11 @@
       ],
       "png": "captures/en.light.bench-tab.browser.tab.png",
       "tree": "captures/en.light.bench-tab.browser.tab.json",
-      "capture_sha": "4b14ce95028fbe55",
+      "capture_sha": "61d046c14fadf90d",
       "same_as": null,
-      "nodes": 123,
+      "nodes": 125,
       "named_widgets": [
         "100%",
-        "23 ports",
         "56 modules",
         "Add folder",
         "Anvil  Ctrl+K",
@@ -9376,7 +9442,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "New tab",
         "No active bench. Open a bench to see its files.",
         "No project",
@@ -9392,8 +9458,7 @@
         "Settings",
         "Skills",
         "Terminal",
-        "The Forja window was not found for the embedded browser.",
-        "The page is hidden while a panel or window is on top.",
+        "The embedded browser is hidden while the window is unfocused or off-screen. Focus the window to show the page.",
         "Usage",
         "forja://inicio",
         "forja://inicio …",
@@ -9412,10 +9477,11 @@
       ],
       "png": "captures/en.light.bench-tab.chat.tab.png",
       "tree": "captures/en.light.bench-tab.chat.tab.json",
-      "capture_sha": "b26e9b6f8e49c728",
+      "capture_sha": "6f5b694a3b58afd4",
       "same_as": null,
-      "nodes": 137,
+      "nodes": 150,
       "named_widgets": [
+        "22 ports",
         "56 modules",
         "Add folder",
         "Anvil  Ctrl+K",
@@ -9425,9 +9491,9 @@
         "Board",
         "Browser",
         "Changes",
-        "Claude Code",
         "Claude Code · D:\\a\\forja\\forja ·",
         "Clone",
+        "Copy command",
         "D:\\a\\forja\\forja",
         "Editor",
         "Effort",
@@ -9435,16 +9501,20 @@
         "Extensions",
         "Files",
         "Find file  Ctrl+P",
+        "Helper",
         "Helper (chat)",
         "Helpers",
         "History",
+        "Install a compatible helper or open the Helpers page to get started.",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
+        "No chat-compatible helper was found.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
         "Notifications",
+        "Open Helpers",
         "Preview",
         "Projects",
         "Ready",
@@ -9456,7 +9526,8 @@
         "Skills",
         "Terminal",
         "Usage",
-        "idle"
+        "not installed",
+        "npm install -g @anthropic-ai/claude-code"
       ]
     },
     {
@@ -9471,7 +9542,7 @@
       ],
       "png": "captures/en.light.modal.counter.poller.png",
       "tree": "captures/en.light.modal.counter.poller.json",
-      "capture_sha": "ef12c9914de37539",
+      "capture_sha": "7696479b806f4539",
       "same_as": "en.light.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -9484,6 +9555,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -9494,7 +9566,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -9510,7 +9582,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -9525,7 +9598,7 @@
       ],
       "png": "captures/en.light.bench-tab.diff.tab.png",
       "tree": "captures/en.light.bench-tab.diff.tab.json",
-      "capture_sha": "628ed02608248fb1",
+      "capture_sha": "4d0052350a4f0f4e",
       "same_as": null,
       "nodes": 123,
       "named_widgets": [
@@ -9554,7 +9627,7 @@
         "Inline",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "Next change",
         "No active bench. Open a bench to see its files.",
         "No project",
@@ -9590,7 +9663,7 @@
       ],
       "png": "captures/en.light.bench-tab.editor.tab.png",
       "tree": "captures/en.light.bench-tab.editor.tab.json",
-      "capture_sha": "c8a791e17e2a8fcf",
+      "capture_sha": "8300cf4fa0d030fc",
       "same_as": null,
       "nodes": 106,
       "named_widgets": [
@@ -9613,7 +9686,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -9643,7 +9716,7 @@
       ],
       "png": "captures/en.light.right-tab.explorer.panel.png",
       "tree": "captures/en.light.right-tab.explorer.panel.json",
-      "capture_sha": "ef12c9914de37539",
+      "capture_sha": "7696479b806f4539",
       "same_as": "en.light.home.default",
       "nodes": 116,
       "named_widgets": [
@@ -9656,6 +9729,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -9666,7 +9740,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -9682,7 +9756,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -9697,7 +9772,7 @@
       ],
       "png": "captures/en.light.rail.extension.page.png",
       "tree": "captures/en.light.rail.extension.page.json",
-      "capture_sha": "7cd1d7589d88d886",
+      "capture_sha": "dc318eea9f5424cb",
       "same_as": null,
       "nodes": 110,
       "named_widgets": [
@@ -9716,7 +9791,7 @@
         "Helpers",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No extensions found.",
         "No project",
@@ -9746,7 +9821,7 @@
       ],
       "png": "captures/en.light.right-tab.extension.panels.right.png",
       "tree": "captures/en.light.right-tab.extension.panels.right.json",
-      "capture_sha": "17d7376c2b0b0674",
+      "capture_sha": "f4e286d81ac48440",
       "same_as": null,
       "nodes": 112,
       "named_widgets": [
@@ -9759,6 +9834,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -9769,7 +9845,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No extension panel in this slot.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -9785,7 +9861,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -9800,7 +9877,7 @@
       ],
       "png": "captures/en.light.bench-tab.extension.panels.bench.png",
       "tree": "captures/en.light.bench-tab.extension.panels.bench.json",
-      "capture_sha": "8a36c135136e8c6a",
+      "capture_sha": "fd84d93adfaf8669",
       "same_as": null,
       "nodes": 105,
       "named_widgets": [
@@ -9823,7 +9900,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No extension panel in this slot.",
         "No project",
@@ -9853,7 +9930,7 @@
       ],
       "png": "captures/en.light.right-tab.git.changes.png",
       "tree": "captures/en.light.right-tab.git.changes.json",
-      "capture_sha": "ced6f132abb52385",
+      "capture_sha": "97f913862c173fb3",
       "same_as": null,
       "nodes": 119,
       "named_widgets": [
@@ -9867,6 +9944,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -9877,7 +9955,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No changes.\nPick a bench to see its working tree.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -9893,7 +9971,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -9908,7 +9987,7 @@
       ],
       "png": "captures/en.light.bench-tab.git.history.png",
       "tree": "captures/en.light.bench-tab.git.history.json",
-      "capture_sha": "9db25477e3457146",
+      "capture_sha": "656c794a5a8d0698",
       "same_as": null,
       "nodes": 115,
       "named_widgets": [
@@ -9932,7 +10011,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No changes.",
         "No project",
@@ -9962,7 +10041,7 @@
       ],
       "png": "captures/en.light.modal.helper.profile_picker.png",
       "tree": "captures/en.light.modal.helper.profile_picker.json",
-      "capture_sha": "6114ebf0d6662a45",
+      "capture_sha": "39ca29537ecf4458",
       "same_as": null,
       "nodes": 142,
       "named_widgets": [
@@ -9981,6 +10060,7 @@
         "Claude Code",
         "Cline CLI",
         "Clone",
+        "Close pwsh",
         "Continue CLI",
         "Crush",
         "Cursor Agent CLI",
@@ -10000,7 +10080,7 @@
         "Launch helper",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -10019,7 +10099,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -10034,58 +10115,43 @@
       ],
       "png": "captures/en.light.rail.helper.tab.png",
       "tree": "captures/en.light.rail.helper.tab.json",
-      "capture_sha": "5b50a2bf2f7a2c20",
+      "capture_sha": "91d319dc2f2371f0",
       "same_as": null,
-      "nodes": 193,
+      "nodes": 116,
       "named_widgets": [
         "56 modules",
         "Active helpers: 0",
         "Add folder",
-        "Aider",
-        "Amp",
-        "Antigravity CLI",
         "Anvil  Ctrl+K",
         "Archive",
         "Back to bench",
         "Board",
         "Changes",
-        "Claude Code",
-        "Cline CLI",
         "Clone",
-        "Continue CLI",
-        "Crush",
-        "Cursor Agent CLI",
-        "Detect",
+        "Detecting…",
         "Extensions",
         "Files",
         "Find file  Ctrl+P",
-        "Gemini CLI",
-        "GitHub Copilot CLI",
-        "Goose",
         "Helpers",
-        "Kimi Code CLI",
-        "Kiro CLI",
-        "Launch",
+        "Installed (0)",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No helper is running.",
+        "No installed helpers found on PATH.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
         "Notifications",
-        "OpenAI Codex CLI",
-        "OpenCode",
         "Profiles",
         "Projects",
-        "Qwen Code",
         "Ready",
         "Requests",
         "Routines",
         "Settings",
+        "Show not installed (16)",
         "Skills",
-        "Usage",
-        "not installed"
+        "Usage"
       ]
     },
     {
@@ -10100,7 +10166,7 @@
       ],
       "png": "captures/en.light.modal.mcp.approval.png",
       "tree": "captures/en.light.modal.mcp.approval.json",
-      "capture_sha": "ef12c9914de37539",
+      "capture_sha": "7696479b806f4539",
       "same_as": "en.light.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -10113,6 +10179,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -10123,7 +10190,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -10139,7 +10206,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -10154,9 +10222,9 @@
       ],
       "png": "captures/en.light.rail.muster.page.png",
       "tree": "captures/en.light.rail.muster.page.json",
-      "capture_sha": "75b6f947eaea23d1",
+      "capture_sha": "62761eca070b3f4a",
       "same_as": null,
-      "nodes": 102,
+      "nodes": 101,
       "named_widgets": [
         "56 modules",
         "Add folder",
@@ -10172,8 +10240,8 @@
         "Helpers",
         "More tabs",
         "Muster",
-        "New",
         "New muster",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No muster yet. Create one to split the work into tasks.",
         "No project",
@@ -10201,7 +10269,7 @@
       ],
       "png": "captures/en.light.modal.notify.toasts.png",
       "tree": "captures/en.light.modal.notify.toasts.json",
-      "capture_sha": "ef12c9914de37539",
+      "capture_sha": "7696479b806f4539",
       "same_as": "en.light.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -10214,6 +10282,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -10224,7 +10293,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -10240,7 +10309,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -10255,7 +10325,7 @@
       ],
       "png": "captures/en.light.modal.onboarding.wizard.png",
       "tree": "captures/en.light.modal.onboarding.wizard.json",
-      "capture_sha": "ef12c9914de37539",
+      "capture_sha": "7696479b806f4539",
       "same_as": "en.light.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -10268,6 +10338,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -10278,7 +10349,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -10294,7 +10365,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -10309,9 +10381,9 @@
       ],
       "png": "captures/en.light.right-tab.ports.panel.png",
       "tree": "captures/en.light.right-tab.ports.panel.json",
-      "capture_sha": "a66455b2d5e2f64a",
+      "capture_sha": "fd140d4bc0748149",
       "same_as": null,
-      "nodes": 120,
+      "nodes": 124,
       "named_widgets": [
         "0 listening",
         "56 modules",
@@ -10323,6 +10395,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -10333,7 +10406,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No listening TCP port was found.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -10350,9 +10423,11 @@
         "Search",
         "Settings",
         "Shell",
+        "Show all system ports",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -10367,7 +10442,7 @@
       ],
       "png": "captures/en.light.modal.project.dialogs.png",
       "tree": "captures/en.light.modal.project.dialogs.json",
-      "capture_sha": "ef12c9914de37539",
+      "capture_sha": "7696479b806f4539",
       "same_as": "en.light.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -10380,6 +10455,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -10390,7 +10466,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -10406,7 +10482,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -10421,7 +10498,7 @@
       ],
       "png": "captures/en.light.rail.request.page.png",
       "tree": "captures/en.light.rail.request.page.json",
-      "capture_sha": "bc8b59289c324814",
+      "capture_sha": "5431bd3e86b42236",
       "same_as": null,
       "nodes": 120,
       "named_widgets": [
@@ -10446,8 +10523,8 @@
         "Mine",
         "More tabs",
         "Muster",
-        "New",
         "New local request",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -10480,9 +10557,9 @@
       ],
       "png": "captures/en.light.bench-tab.review.tab.png",
       "tree": "captures/en.light.bench-tab.review.tab.json",
-      "capture_sha": "e760a6af482b767f",
+      "capture_sha": "e715eae83051741d",
       "same_as": null,
-      "nodes": 133,
+      "nodes": 146,
       "named_widgets": [
         "56 modules",
         "Add folder",
@@ -10493,7 +10570,9 @@
         "Board",
         "Browser",
         "Changes",
+        "Choose a valid base to continue.",
         "Clone",
+        "Description",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -10506,9 +10585,10 @@
         "Labels",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "New pull request",
         "No active bench. Open a bench to see its files.",
+        "No base is available. Choose a branch to compare.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
         "Notifications",
@@ -10517,16 +10597,17 @@
         "Preview",
         "Projects",
         "Ready",
-        "Refresh review",
         "Requests",
         "Review",
         "Reviewers",
         "Routines",
         "Settings",
         "Skills",
-        "Source branch:",
+        "Source branch",
         "Terminal",
-        "Usage"
+        "Title",
+        "Usage",
+        "What will be sent"
       ]
     },
     {
@@ -10541,7 +10622,7 @@
       ],
       "png": "captures/en.light.rail.routine.page.png",
       "tree": "captures/en.light.rail.routine.page.json",
-      "capture_sha": "d4904c22c3930813",
+      "capture_sha": "29ea9972e3f48875",
       "same_as": null,
       "nodes": 110,
       "named_widgets": [
@@ -10560,7 +10641,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "New routine",
         "No active bench. Open a bench to see its files.",
         "No project",
@@ -10589,7 +10670,7 @@
       ],
       "png": "captures/en.light.right-tab.search.panel.png",
       "tree": "captures/en.light.right-tab.search.panel.json",
-      "capture_sha": "499bc1fba9eb5ca7",
+      "capture_sha": "207b016bbf2e2256",
       "same_as": null,
       "nodes": 138,
       "named_widgets": [
@@ -10603,6 +10684,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -10614,7 +10696,7 @@
         "Match case",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
         "Notifications",
@@ -10636,7 +10718,8 @@
         "Stop",
         "Terminal",
         "Usage",
-        "Whole word"
+        "Whole word",
+        "pwsh · Running"
       ]
     },
     {
@@ -10651,7 +10734,7 @@
       ],
       "png": "captures/en.light.rail.skill.page.png",
       "tree": "captures/en.light.rail.skill.page.json",
-      "capture_sha": "042a03e18a2d4aa3",
+      "capture_sha": "14d9b00b0b58ac51",
       "same_as": null,
       "nodes": 124,
       "named_widgets": [
@@ -10674,7 +10757,7 @@
         "Install zip",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -10706,7 +10789,7 @@
       ],
       "png": "captures/en.light.bench-tab.terminal.tab.png",
       "tree": "captures/en.light.bench-tab.terminal.tab.json",
-      "capture_sha": "ef12c9914de37539",
+      "capture_sha": "7696479b806f4539",
       "same_as": "en.light.home.default",
       "nodes": 116,
       "named_widgets": [
@@ -10719,6 +10802,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -10729,7 +10813,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -10745,7 +10829,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -10760,33 +10845,19 @@
       ],
       "png": "captures/en.light.rail.usage.page.png",
       "tree": "captures/en.light.rail.usage.page.json",
-      "capture_sha": "dd31568ab1dc5d6a",
+      "capture_sha": "9739c112ed298832",
       "same_as": null,
-      "nodes": 201,
+      "nodes": 154,
       "named_widgets": [
-        "0",
+        "0 cache read · 0 cache write",
         "0 input · 0 output",
-        "2026-11-01",
-        "2026-11-02",
-        "2026-11-03",
-        "2026-11-04",
-        "2026-11-05",
-        "2026-11-06",
-        "2026-11-07",
-        "2026-11-08",
-        "2026-11-09",
-        "2026-11-10",
-        "2026-11-11",
-        "2026-11-12",
-        "2026-11-13",
-        "2026-11-14",
+        "0 tokens",
         "56 modules",
         "Add folder",
         "Anvil  Ctrl+K",
         "Archive",
         "Back to bench",
         "Board",
-        "By day",
         "Changes",
         "Clone",
         "Extensions",
@@ -10797,20 +10868,25 @@
         "Last 7 days",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
+        "No usage recorded yet",
         "Notifications",
+        "Period",
         "Projects",
         "Ready",
         "Refresh",
         "Requests",
         "Routines",
+        "Scan again",
         "Settings",
         "Skills",
+        "The numbers come from the local transcripts of the installed helpers: Claude Code reads ~/.claude/projects, Codex reads ~/.codex/sessions and OpenCode reads its storage folder. Nothing leaves this machine. Run a helper session in a bench and click Refresh; if everything stays at zero, check that the helper CLI is installed and has already run at least once.",
         "Today",
         "Total",
+        "US$ 0.00",
         "Usage"
       ]
     },
@@ -10826,7 +10902,7 @@
       ],
       "png": "captures/en.light.bench-tab.viewers.tab.png",
       "tree": "captures/en.light.bench-tab.viewers.tab.json",
-      "capture_sha": "2a80f352011a0c06",
+      "capture_sha": "82b8a360302433da",
       "same_as": null,
       "nodes": 107,
       "named_widgets": [
@@ -10849,7 +10925,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No preview open. Pick a file in the explorer or use the preview button in the editor.",
         "No project",
@@ -10879,7 +10955,7 @@
       ],
       "png": "captures/en.light.modal.voice.overlay.png",
       "tree": "captures/en.light.modal.voice.overlay.json",
-      "capture_sha": "ef12c9914de37539",
+      "capture_sha": "7696479b806f4539",
       "same_as": "en.light.home.default",
       "nodes": 119,
       "named_widgets": [
@@ -10892,6 +10968,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Editor",
         "Extension panels",
         "Extensions",
@@ -10902,7 +10979,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -10918,7 +10995,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -10933,7 +11011,7 @@
       ],
       "png": "captures/en.light.settings.accounts.png",
       "tree": "captures/en.light.settings.accounts.json",
-      "capture_sha": "0399e0c4281ae8ce",
+      "capture_sha": "2fa0b7d8a886159d",
       "same_as": null,
       "nodes": 168,
       "named_widgets": [
@@ -10951,6 +11029,7 @@
         "Changes",
         "Claude Code",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Each account uses a separate config home for its helper.",
         "Editor",
@@ -10963,7 +11042,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -10981,7 +11060,8 @@
         "Skills",
         "Terminal",
         "Usage",
-        "helper executable not found"
+        "helper executable not found",
+        "pwsh · Running"
       ]
     },
     {
@@ -10996,7 +11076,7 @@
       ],
       "png": "captures/en.light.settings.content.png",
       "tree": "captures/en.light.settings.content.json",
-      "capture_sha": "83e3ce8b3efef6db",
+      "capture_sha": "18a55ed60c371096",
       "same_as": null,
       "nodes": 165,
       "named_widgets": [
@@ -11010,6 +11090,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Content",
         "Diagnostics",
@@ -11023,7 +11104,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -11045,6 +11126,7 @@
         "builtin · D:\\a\\forja\\forja\\crates\\modules\\content\\../../../content\\templates\\README.md",
         "builtin · D:\\a\\forja\\forja\\crates\\modules\\content\\../../../content\\templates\\SKILL.md",
         "missing `+++` frontmatter",
+        "pwsh · Running",
         "rev 1"
       ]
     },
@@ -11060,7 +11142,7 @@
       ],
       "png": "captures/en.light.settings.counter_github.png",
       "tree": "captures/en.light.settings.counter_github.json",
-      "capture_sha": "d5362ce239daeca1",
+      "capture_sha": "60bfec9810dec22b",
       "same_as": null,
       "nodes": 151,
       "named_widgets": [
@@ -11073,6 +11155,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Connect",
         "Disconnect",
@@ -11087,7 +11170,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -11105,7 +11188,8 @@
         "Skills",
         "Terminal",
         "Test",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -11120,7 +11204,7 @@
       ],
       "png": "captures/en.light.settings.counter_gitlab.png",
       "tree": "captures/en.light.settings.counter_gitlab.json",
-      "capture_sha": "920f1b95ad496783",
+      "capture_sha": "6b3f171475f4582f",
       "same_as": null,
       "nodes": 151,
       "named_widgets": [
@@ -11133,6 +11217,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Connect",
         "Disconnect",
@@ -11147,7 +11232,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -11165,7 +11250,8 @@
         "Skills",
         "Terminal",
         "Test",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -11180,7 +11266,7 @@
       ],
       "png": "captures/en.light.settings.counter_jira.png",
       "tree": "captures/en.light.settings.counter_jira.json",
-      "capture_sha": "ec18be6cd5f094c6",
+      "capture_sha": "f88131d7aff4ce20",
       "same_as": null,
       "nodes": 155,
       "named_widgets": [
@@ -11193,6 +11279,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Connect",
         "Disconnect",
@@ -11207,7 +11294,7 @@
         "Jira",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -11225,7 +11312,8 @@
         "Skills",
         "Terminal",
         "Test",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -11240,7 +11328,7 @@
       ],
       "png": "captures/en.light.settings.counter_linear.png",
       "tree": "captures/en.light.settings.counter_linear.json",
-      "capture_sha": "07e8ffc5663d6e1e",
+      "capture_sha": "ea7e7c350e4738be",
       "same_as": null,
       "nodes": 151,
       "named_widgets": [
@@ -11253,6 +11341,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Connect",
         "Disconnect",
@@ -11267,7 +11356,7 @@
         "Linear",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -11285,7 +11374,8 @@
         "Skills",
         "Terminal",
         "Test",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -11300,7 +11390,7 @@
       ],
       "png": "captures/en.light.settings.helper.png",
       "tree": "captures/en.light.settings.helper.json",
-      "capture_sha": "e5291ff4c93c0029",
+      "capture_sha": "5e5a75fafb61e48c",
       "same_as": null,
       "nodes": 443,
       "named_widgets": [
@@ -11327,6 +11417,7 @@
         "Claude Code",
         "Cline CLI",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Command: agy",
         "Command: aider",
@@ -11369,7 +11460,7 @@
         "Loading…",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -11393,6 +11484,7 @@
         "crush.json",
         "not installed",
         "opencode.json",
+        "pwsh · Running",
         "unsupported"
       ]
     },
@@ -11408,7 +11500,7 @@
       ],
       "png": "captures/en.light.settings.import.png",
       "tree": "captures/en.light.settings.import.json",
-      "capture_sha": "71647a76102566c3",
+      "capture_sha": "29eae50cb395b98a",
       "same_as": null,
       "nodes": 148,
       "named_widgets": [
@@ -11422,6 +11514,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Editor",
         "Extension panels",
@@ -11434,7 +11527,7 @@
         "Import from Harbor",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No Harbor 0.1 data was found on this machine.",
         "No active bench. Open a bench to see its files.",
         "No project",
@@ -11451,7 +11544,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -11466,7 +11560,7 @@
       ],
       "png": "captures/en.light.settings.mcp.png",
       "tree": "captures/en.light.settings.mcp.json",
-      "capture_sha": "4a3dfe39ff537717",
+      "capture_sha": "287de7cb1d1e7af5",
       "same_as": null,
       "nodes": 168,
       "named_widgets": [
@@ -11480,6 +11574,7 @@
         "Changes",
         "Claude Code",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Editor",
         "Extension panels",
@@ -11493,7 +11588,7 @@
         "MCP server",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -11507,7 +11602,7 @@
         "Requests",
         "Review",
         "Routines",
-        "Server · on: 52",
+        "Server · on: 53",
         "Settings",
         "Shell",
         "Skills",
@@ -11515,6 +11610,7 @@
         "The snippet is shown only; Forja does not write to another CLI's configuration.",
         "Usage",
         "[mcp_servers.forja]\ncommand = \"forja-mcp\"",
+        "pwsh · Running",
         "{\n  \"mcp\": {\n    \"forja\": { \"type\": \"local\", \"command\": [\"forja-mcp\"] }\n  }\n}",
         "{\n  \"mcpServers\": {\n    \"forja\": { \"command\": \"forja-mcp\" }\n  }\n}"
       ]
@@ -11531,7 +11627,7 @@
       ],
       "png": "captures/en.light.settings.onboarding.png",
       "tree": "captures/en.light.settings.onboarding.json",
-      "capture_sha": "891a4e8136c9b6b3",
+      "capture_sha": "e175ea3f2adef93c",
       "same_as": null,
       "nodes": 141,
       "named_widgets": [
@@ -11544,6 +11640,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Editor",
         "Extension panels",
@@ -11556,7 +11653,7 @@
         "Language, theme, project folder and notifications.",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -11573,7 +11670,8 @@
         "Shell",
         "Skills",
         "Terminal",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -11588,7 +11686,7 @@
       ],
       "png": "captures/en.light.settings.remote.png",
       "tree": "captures/en.light.settings.remote.json",
-      "capture_sha": "03e042569f68da4b",
+      "capture_sha": "420f98431e7fcee5",
       "same_as": null,
       "nodes": 163,
       "named_widgets": [
@@ -11601,6 +11699,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Distros not read yet. Refresh to list them.",
         "Editor",
@@ -11614,7 +11713,7 @@
         "Import ~/.ssh/config",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "New target",
         "No SSH target yet. Import ~/.ssh/config or add one below.",
         "No active bench. Open a bench to see its files.",
@@ -11637,7 +11736,8 @@
         "Skills",
         "Terminal",
         "Usage",
-        "WSL"
+        "WSL",
+        "pwsh · Running"
       ]
     },
     {
@@ -11652,7 +11752,7 @@
       ],
       "png": "captures/en.light.settings.trust.png",
       "tree": "captures/en.light.settings.trust.json",
-      "capture_sha": "8e129a9e656e8744",
+      "capture_sha": "2d42e9720e01eea5",
       "same_as": null,
       "nodes": 150,
       "named_widgets": [
@@ -11665,6 +11765,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Editor",
         "Extension panels",
@@ -11676,7 +11777,7 @@
         "History",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No project",
         "No project yet. Add an existing folder or create a new one.",
@@ -11695,7 +11796,8 @@
         "Skills",
         "Terminal",
         "Trust approvals",
-        "Usage"
+        "Usage",
+        "pwsh · Running"
       ]
     },
     {
@@ -11710,7 +11812,7 @@
       ],
       "png": "captures/en.light.settings.voice.png",
       "tree": "captures/en.light.settings.voice.json",
-      "capture_sha": "89903fdbfa830e4b",
+      "capture_sha": "fe956669a55b3660",
       "same_as": null,
       "nodes": 165,
       "named_widgets": [
@@ -11725,6 +11827,7 @@
         "Browser",
         "Changes",
         "Clone",
+        "Close pwsh",
         "Close window",
         "Delete key",
         "Editor",
@@ -11738,7 +11841,7 @@
         "Keep audio",
         "More tabs",
         "Muster",
-        "New",
+        "New project",
         "No active bench. Open a bench to see its files.",
         "No key saved.",
         "No project",
@@ -11762,7 +11865,8 @@
         "Usage",
         "Voice",
         "Windows (Win+H)",
-        "Windows dictation or local recording with optional transcription by OpenAI."
+        "Windows dictation or local recording with optional transcription by OpenAI.",
+        "pwsh · Running"
       ]
     }
   ],

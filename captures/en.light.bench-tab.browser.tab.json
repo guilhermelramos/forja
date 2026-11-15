@@ -5,38 +5,6 @@
   "focus": 13826925289788388,
   "nodes": [
     {
-      "id": 17941280375354871296,
-      "parent": 17696102049569399056,
-      "role": "Label",
-      "name": "The Forja window was not found for the embedded browser.",
-      "label": null,
-      "value": "The Forja window was not found for the embedded browser.",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          324.0,
-          149.0,
-          643.59375,
-          165.0
-        ],
-        "pixels": [
-          324.0,
-          149.0,
-          644.0,
-          165.0
-        ]
-      },
-      "children": [
-        17815352402567149048
-      ]
-    },
-    {
       "id": 15251687066213349634,
       "parent": 320594485635094898,
       "role": "GenericContainer",
@@ -289,41 +257,8 @@
       "bounds": null,
       "children": [
         1040463663724816892,
-        17941280375354871296,
-        2511487495296933010,
-        7557454659891746831
-      ]
-    },
-    {
-      "id": 7557454659891746831,
-      "parent": 17696102049569399056,
-      "role": "Label",
-      "name": "The page is hidden while a panel or window is on top.",
-      "label": null,
-      "value": "The page is hidden while a panel or window is on top.",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          324.0,
-          1048.0,
-          608.59375,
-          1064.0
-        ],
-        "pixels": [
-          324.0,
-          1048.0,
-          609.0,
-          1064.0
-        ]
-      },
-      "children": [
-        13264321958703938163
+        6036130811422629193,
+        1305257748637872117
       ]
     },
     {
@@ -386,15 +321,15 @@
       "bounds": {
         "points": [
           182.0,
-          161.0,
+          201.0,
           210.0,
-          189.0
+          229.0
         ],
         "pixels": [
           182.0,
-          161.0,
+          201.0,
           210.0,
-          189.0
+          229.0
         ]
       },
       "children": []
@@ -566,37 +501,6 @@
           109.0,
           358.0,
           141.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 6663621398473087024,
-      "parent": 2511487495296933010,
-      "role": "Button",
-      "name": "x",
-      "label": "x",
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click",
-        "focus"
-      ],
-      "bounds": {
-        "points": [
-          444.25,
-          181.0,
-          474.6875,
-          200.0
-        ],
-        "pixels": [
-          444.0,
-          181.0,
-          475.0,
-          200.0
         ]
       },
       "children": []
@@ -787,32 +691,29 @@
       "children": []
     },
     {
-      "id": 2766683615897940279,
-      "parent": 2511487495296933010,
-      "role": "Button",
-      "name": "forja://inicio …",
-      "label": "forja://inicio …",
-      "value": null,
+      "id": 14958698252315977526,
+      "parent": 10172619363647389266,
+      "role": "TextRun",
+      "name": "The embedded browser is hidden while the window is unfocused or off-screen. Focus the window to show the page.",
+      "label": null,
+      "value": "The embedded browser is hidden while the window is unfocused or off-screen. Focus the window to show the page.",
       "description": null,
       "disabled": false,
       "selected": null,
       "toggled": null,
-      "actions": [
-        "click",
-        "focus"
-      ],
+      "actions": [],
       "bounds": {
         "points": [
-          324.0,
-          173.0,
-          436.25,
-          208.0
+          966.015625,
+          513.0,
+          1578.609375,
+          529.0
         ],
         "pixels": [
-          324.0,
-          173.0,
-          436.0,
-          208.0
+          966.0,
+          513.0,
+          1579.0,
+          529.0
         ]
       },
       "children": []
@@ -911,26 +812,26 @@
       "id": 17943206950140650817,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Editor",
-      "label": "Editor",
+      "name": "Browser",
+      "label": "Browser",
       "value": null,
       "description": null,
       "disabled": false,
       "selected": null,
-      "toggled": "False",
+      "toggled": "True",
       "actions": [
         "click",
         "focus"
       ],
       "bounds": {
         "points": [
-          569.21875,
+          556.21875,
           51.5,
           629.09375,
           83.5
         ],
         "pixels": [
-          569.0,
+          556.0,
           52.0,
           629.0,
           84.0
@@ -1019,6 +920,24 @@
       "children": []
     },
     {
+      "id": 6036130811422629193,
+      "parent": 17696102049569399056,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        7241205193604267735,
+        13856933297658475098
+      ]
+    },
+    {
       "id": 8234854716645895245,
       "parent": 13825972575653543348,
       "role": "Button",
@@ -1035,16 +954,16 @@
       ],
       "bounds": {
         "points": [
-          221.0,
-          101.0,
-          280.3125,
-          133.0
+          64.0,
+          141.0,
+          123.3125,
+          173.0
         ],
         "pixels": [
-          221.0,
-          101.0,
-          280.0,
-          133.0
+          64.0,
+          141.0,
+          123.0,
+          173.0
         ]
       },
       "children": []
@@ -1112,6 +1031,38 @@
       "children": []
     },
     {
+      "id": 10172619363647389266,
+      "parent": 14538972812239850585,
+      "role": "Label",
+      "name": "The embedded browser is hidden while the window is unfocused or off-screen. Focus the window to show the page.",
+      "label": null,
+      "value": "The embedded browser is hidden while the window is unfocused or off-screen. Focus the window to show the page.",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          659.71875,
+          513.0,
+          1272.3125,
+          529.0
+        ],
+        "pixels": [
+          660.0,
+          513.0,
+          1272.0,
+          529.0
+        ]
+      },
+      "children": [
+        14958698252315977526
+      ]
+    },
+    {
       "id": 15547738098778922838,
       "parent": 1402105924353346579,
       "role": "GenericContainer",
@@ -1172,15 +1123,15 @@
       "bounds": {
         "points": [
           182.0,
-          216.0,
+          256.0,
           307.03125,
-          235.0
+          275.0
         ],
         "pixels": [
           182.0,
-          216.0,
+          256.0,
           307.0,
-          235.0
+          275.0
         ]
       },
       "children": []
@@ -1277,6 +1228,37 @@
       ]
     },
     {
+      "id": 13856933297658475098,
+      "parent": 6036130811422629193,
+      "role": "Button",
+      "name": "x",
+      "label": "x",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          444.25,
+          157.0,
+          474.6875,
+          176.0
+        ],
+        "pixels": [
+          444.0,
+          157.0,
+          475.0,
+          176.0
+        ]
+      },
+      "children": []
+    },
+    {
       "id": 9079394125717109856,
       "parent": 4913364587148968597,
       "role": "Button",
@@ -1306,6 +1288,25 @@
         ]
       },
       "children": []
+    },
+    {
+      "id": 14538972812239850585,
+      "parent": 1305257748637872117,
+      "role": "GenericContainer",
+      "name": null,
+      "label": null,
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": null,
+      "children": [
+        15343871893175324015,
+        6282344616651004154,
+        10172619363647389266
+      ]
     },
     {
       "id": 7528245900600709990,
@@ -1357,38 +1358,6 @@
       ]
     },
     {
-      "id": 11813730558489901164,
-      "parent": 6067834502652307929,
-      "role": "Label",
-      "name": "23 ports",
-      "label": null,
-      "value": "23 ports",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [
-        "click"
-      ],
-      "bounds": {
-        "points": [
-          1858.90625,
-          1056.0,
-          1902.0,
-          1072.0
-        ],
-        "pixels": [
-          1859.0,
-          1056.0,
-          1902.0,
-          1072.0
-        ]
-      },
-      "children": [
-        14298816491087569084
-      ]
-    },
-    {
       "id": 12274340460185043820,
       "parent": 13826925289788388,
       "role": "GenericContainer",
@@ -1403,6 +1372,38 @@
       "bounds": null,
       "children": [
         3195092494388047668
+      ]
+    },
+    {
+      "id": 15343871893175324015,
+      "parent": 14538972812239850585,
+      "role": "Label",
+      "name": "forja://inicio",
+      "label": null,
+      "value": "forja://inicio",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
+      "bounds": {
+        "points": [
+          928.90625,
+          456.0,
+          1003.125,
+          475.0
+        ],
+        "pixels": [
+          929.0,
+          456.0,
+          1003.0,
+          475.0
+        ]
+      },
+      "children": [
+        9303349421851853220
       ]
     },
     {
@@ -1453,34 +1454,6 @@
         15251687066213349634,
         4971133494036647965
       ]
-    },
-    {
-      "id": 13264321958703938163,
-      "parent": 7557454659891746831,
-      "role": "TextRun",
-      "name": "The page is hidden while a panel or window is on top.",
-      "label": null,
-      "value": "The page is hidden while a panel or window is on top.",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          324.0,
-          1048.0,
-          608.59375,
-          1064.0
-        ],
-        "pixels": [
-          324.0,
-          1048.0,
-          609.0,
-          1064.0
-        ]
-      },
-      "children": []
     },
     {
       "id": 8804770842640026742,
@@ -1534,8 +1507,8 @@
       "id": 16533134483839780982,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Terminal",
-      "label": "Terminal",
+      "name": "Editor",
+      "label": "Editor",
       "value": null,
       "description": null,
       "disabled": false,
@@ -1547,15 +1520,15 @@
       ],
       "bounds": {
         "points": [
-          491.8125,
+          496.34375,
           51.5,
-          569.21875,
+          556.21875,
           83.5
         ],
         "pixels": [
-          492.0,
+          496.0,
           52.0,
-          569.0,
+          556.0,
           84.0
         ]
       },
@@ -1627,8 +1600,8 @@
       "id": 3309078991269281406,
       "parent": 13825972575653543348,
       "role": "Button",
-      "name": "New",
-      "label": "New",
+      "name": "New project",
+      "label": "New project",
       "value": null,
       "description": null,
       "disabled": false,
@@ -1642,13 +1615,13 @@
         "points": [
           161.875,
           101.0,
-          213.0,
+          260.625,
           133.0
         ],
         "pixels": [
           162.0,
           101.0,
-          213.0,
+          261.0,
           133.0
         ]
       },
@@ -1796,13 +1769,13 @@
       "id": 132320206866794376,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Browser",
-      "label": "Browser",
+      "name": "Terminal",
+      "label": "Terminal",
       "value": null,
       "description": null,
       "disabled": false,
       "selected": null,
-      "toggled": "True",
+      "toggled": "False",
       "actions": [
         "click",
         "focus"
@@ -1811,13 +1784,13 @@
         "points": [
           418.9375,
           51.5,
-          491.8125,
+          496.34375,
           83.5
         ],
         "pixels": [
           419.0,
           52.0,
-          492.0,
+          496.0,
           84.0
         ]
       },
@@ -1850,6 +1823,34 @@
           52.0,
           777.0,
           84.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 17630238373475745416,
+      "parent": 6282344616651004154,
+      "role": "TextRun",
+      "name": "forja://inicio",
+      "label": null,
+      "value": "forja://inicio",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          966.015625,
+          483.0,
+          1030.046875,
+          499.0
+        ],
+        "pixels": [
+          966.0,
+          483.0,
+          1030.0,
+          499.0
         ]
       },
       "children": []
@@ -1963,24 +1964,6 @@
       "children": []
     },
     {
-      "id": 2511487495296933010,
-      "parent": 17696102049569399056,
-      "role": "GenericContainer",
-      "name": null,
-      "label": null,
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": null,
-      "children": [
-        2766683615897940279,
-        6663621398473087024
-      ]
-    },
-    {
       "id": 1978776662958085780,
       "parent": 8107324973384426844,
       "role": "GenericContainer",
@@ -2080,6 +2063,34 @@
           109.0,
           399.0,
           141.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 9303349421851853220,
+      "parent": 15343871893175324015,
+      "role": "TextRun",
+      "name": "forja://inicio",
+      "label": null,
+      "value": "forja://inicio",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [],
+      "bounds": {
+        "points": [
+          966.015625,
+          456.0,
+          1040.234375,
+          475.0
+        ],
+        "pixels": [
+          966.0,
+          456.0,
+          1040.0,
+          475.0
         ]
       },
       "children": []
@@ -2296,34 +2307,6 @@
       ]
     },
     {
-      "id": 14298816491087569084,
-      "parent": 11813730558489901164,
-      "role": "TextRun",
-      "name": "23 ports",
-      "label": null,
-      "value": "23 ports",
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": null,
-      "actions": [],
-      "bounds": {
-        "points": [
-          1902.0,
-          1056.0,
-          1945.09375,
-          1072.0
-        ],
-        "pixels": [
-          1902.0,
-          1056.0,
-          1945.0,
-          1072.0
-        ]
-      },
-      "children": []
-    },
-    {
       "id": 11977546816825150398,
       "parent": 7821833382827135210,
       "role": "Button",
@@ -2419,15 +2402,15 @@
       "bounds": {
         "points": [
           168.0,
-          161.0,
+          201.0,
           196.0,
-          189.0
+          229.0
         ],
         "pixels": [
           168.0,
-          161.0,
+          201.0,
           196.0,
-          189.0
+          229.0
         ]
       },
       "children": [
@@ -2500,15 +2483,15 @@
       "bounds": {
         "points": [
           182.0,
-          197.0,
+          237.0,
           412.875,
-          216.0
+          256.0
         ],
         "pixels": [
           182.0,
-          197.0,
+          237.0,
           413.0,
-          216.0
+          256.0
         ]
       },
       "children": []
@@ -2582,15 +2565,15 @@
       "bounds": {
         "points": [
           66.5625,
-          197.0,
+          237.0,
           297.4375,
-          235.0
+          275.0
         ],
         "pixels": [
           67.0,
-          197.0,
+          237.0,
           297.0,
-          235.0
+          275.0
         ]
       },
       "children": [
@@ -2724,15 +2707,15 @@
       "actions": [],
       "bounds": {
         "points": [
-          1842.90625,
+          1886.0,
           1054.5,
-          1920.84375,
+          1963.9375,
           1073.5
         ],
         "pixels": [
-          1843.0,
+          1886.0,
           1055.0,
-          1921.0,
+          1964.0,
           1074.0
         ]
       },
@@ -2862,9 +2845,38 @@
       "toggled": null,
       "actions": [],
       "bounds": null,
-      "children": [
-        11813730558489901164
-      ]
+      "children": []
+    },
+    {
+      "id": 7241205193604267735,
+      "parent": 6036130811422629193,
+      "role": "Button",
+      "name": "forja://inicio …",
+      "label": "forja://inicio …",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          324.0,
+          149.0,
+          436.25,
+          184.0
+        ],
+        "pixels": [
+          324.0,
+          149.0,
+          436.0,
+          184.0
+        ]
+      },
+      "children": []
     },
     {
       "id": 9608727923775226082,
@@ -3068,15 +3080,15 @@
       ],
       "bounds": {
         "points": [
-          1764.90625,
+          1808.0,
           1054.5,
-          1842.90625,
+          1886.0,
           1073.5
         ],
         "pixels": [
-          1765.0,
+          1808.0,
           1055.0,
-          1843.0,
+          1886.0,
           1074.0
         ]
       },
@@ -3085,32 +3097,53 @@
       ]
     },
     {
-      "id": 17815352402567149048,
-      "parent": 17941280375354871296,
-      "role": "TextRun",
-      "name": "The Forja window was not found for the embedded browser.",
+      "id": 1305257748637872117,
+      "parent": 17696102049569399056,
+      "role": "GenericContainer",
+      "name": null,
       "label": null,
-      "value": "The Forja window was not found for the embedded browser.",
+      "value": null,
       "description": null,
       "disabled": false,
       "selected": null,
       "toggled": null,
       "actions": [],
+      "bounds": null,
+      "children": [
+        14538972812239850585
+      ]
+    },
+    {
+      "id": 6282344616651004154,
+      "parent": 14538972812239850585,
+      "role": "Label",
+      "name": "forja://inicio",
+      "label": null,
+      "value": "forja://inicio",
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": null,
+      "actions": [
+        "click"
+      ],
       "bounds": {
         "points": [
-          324.0,
-          149.0,
-          643.59375,
-          165.0
+          934.0,
+          483.0,
+          998.03125,
+          499.0
         ],
         "pixels": [
-          324.0,
-          149.0,
-          644.0,
-          165.0
+          934.0,
+          483.0,
+          998.0,
+          499.0
         ]
       },
-      "children": []
+      "children": [
+        17630238373475745416
+      ]
     },
     {
       "id": 1040463663724816892,

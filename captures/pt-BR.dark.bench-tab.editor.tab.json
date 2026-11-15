@@ -177,8 +177,8 @@
       "id": 3309078991269281406,
       "parent": 13825972575653543348,
       "role": "Button",
-      "name": "Novo",
-      "label": "Novo",
+      "name": "Novo projeto",
+      "label": "Novo projeto",
       "value": null,
       "description": null,
       "disabled": false,
@@ -192,13 +192,13 @@
         "points": [
           191.125,
           101.0,
-          248.34375,
+          297.34375,
           133.0
         ],
         "pixels": [
           191.0,
           101.0,
-          248.0,
+          297.0,
           133.0
         ]
       },
@@ -315,13 +315,13 @@
       "id": 132320206866794376,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Editor",
-      "label": "Editor",
+      "name": "Terminal",
+      "label": "Terminal",
       "value": null,
       "description": null,
       "disabled": false,
       "selected": null,
-      "toggled": "True",
+      "toggled": "False",
       "actions": [
         "click",
         "focus"
@@ -330,13 +330,13 @@
         "points": [
           416.9375,
           51.5,
-          476.8125,
+          494.34375,
           83.5
         ],
         "pixels": [
           417.0,
           52.0,
-          477.0,
+          494.0,
           84.0
         ]
       },
@@ -2537,26 +2537,26 @@
       "id": 16533134483839780982,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Terminal",
-      "label": "Terminal",
+      "name": "Editor",
+      "label": "Editor",
       "value": null,
       "description": null,
       "disabled": false,
       "selected": null,
-      "toggled": "False",
+      "toggled": "True",
       "actions": [
         "click",
         "focus"
       ],
       "bounds": {
         "points": [
-          476.8125,
+          494.34375,
           51.5,
           554.21875,
           83.5
         ],
         "pixels": [
-          477.0,
+          494.0,
           52.0,
           554.0,
           84.0

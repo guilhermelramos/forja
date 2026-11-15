@@ -177,8 +177,8 @@
       "id": 3309078991269281406,
       "parent": 13825972575653543348,
       "role": "Button",
-      "name": "Novo",
-      "label": "Novo",
+      "name": "Novo projeto",
+      "label": "Novo projeto",
       "value": null,
       "description": null,
       "disabled": false,
@@ -192,13 +192,13 @@
         "points": [
           191.125,
           101.0,
-          248.34375,
+          297.34375,
           133.0
         ],
         "pixels": [
           191.0,
           101.0,
-          248.0,
+          297.0,
           133.0
         ]
       },
@@ -315,39 +315,8 @@
       "id": 132320206866794376,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Painéis de extensões",
-      "label": "Painéis de extensões",
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": "True",
-      "actions": [
-        "click",
-        "focus"
-      ],
-      "bounds": {
-        "points": [
-          416.9375,
-          51.5,
-          567.875,
-          83.5
-        ],
-        "pixels": [
-          417.0,
-          52.0,
-          568.0,
-          84.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 13995776236015764873,
-      "parent": 4913364587148968597,
-      "role": "Button",
-      "name": "Diferenças",
-      "label": "Diferenças",
+      "name": "Terminal",
+      "label": "Terminal",
       "value": null,
       "description": null,
       "disabled": false,
@@ -359,15 +328,46 @@
       ],
       "bounds": {
         "points": [
-          797.03125,
+          416.9375,
           51.5,
-          884.96875,
+          494.34375,
           83.5
         ],
         "pixels": [
-          797.0,
+          417.0,
           52.0,
-          885.0,
+          494.0,
+          84.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 13995776236015764873,
+      "parent": 4913364587148968597,
+      "role": "Button",
+      "name": "Visualizador",
+      "label": "Visualizador",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          734.03125,
+          51.5,
+          831.90625,
+          83.5
+        ],
+        "pixels": [
+          734.0,
+          52.0,
+          832.0,
           84.0
         ]
       },
@@ -869,8 +869,8 @@
       "id": 9637531811882211883,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Bancada",
-      "label": "Bancada",
+      "name": "Revisão",
+      "label": "Revisão",
       "value": null,
       "description": null,
       "disabled": false,
@@ -882,15 +882,15 @@
       ],
       "bounds": {
         "points": [
-          982.84375,
+          908.03125,
           51.5,
-          1058.96875,
+          978.25,
           83.5
         ],
         "pixels": [
-          983.0,
+          908.0,
           52.0,
-          1059.0,
+          978.0,
           84.0
         ]
       },
@@ -1620,8 +1620,8 @@
       "id": 17943206950140650817,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Editor",
-      "label": "Editor",
+      "name": "Navegador",
+      "label": "Navegador",
       "value": null,
       "description": null,
       "disabled": false,
@@ -1633,15 +1633,15 @@
       ],
       "bounds": {
         "points": [
-          645.28125,
+          554.21875,
           51.5,
-          705.15625,
+          646.09375,
           83.5
         ],
         "pixels": [
-          645.0,
+          554.0,
           52.0,
-          705.0,
+          646.0,
           84.0
         ]
       },
@@ -2034,8 +2034,8 @@
       "id": 9079394125717109856,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Navegador",
-      "label": "Navegador",
+      "name": "Diferenças",
+      "label": "Diferenças",
       "value": null,
       "description": null,
       "disabled": false,
@@ -2047,15 +2047,15 @@
       ],
       "bounds": {
         "points": [
-          705.15625,
+          646.09375,
           51.5,
-          797.03125,
+          734.03125,
           83.5
         ],
         "pixels": [
-          705.0,
+          646.0,
           52.0,
-          797.0,
+          734.0,
           84.0
         ]
       },
@@ -2096,8 +2096,8 @@
       "id": 3360861421404707280,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Visualizador",
-      "label": "Visualizador",
+      "name": "Bancada",
+      "label": "Bancada",
       "value": null,
       "description": null,
       "disabled": false,
@@ -2109,15 +2109,15 @@
       ],
       "bounds": {
         "points": [
-          884.96875,
+          831.90625,
           51.5,
-          982.84375,
+          908.03125,
           83.5
         ],
         "pixels": [
-          885.0,
+          832.0,
           52.0,
-          983.0,
+          908.0,
           84.0
         ]
       },
@@ -2427,8 +2427,8 @@
       "id": 2449513345604842562,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Revisão",
-      "label": "Revisão",
+      "name": "Histórico",
+      "label": "Histórico",
       "value": null,
       "description": null,
       "disabled": false,
@@ -2440,15 +2440,15 @@
       ],
       "bounds": {
         "points": [
-          1058.96875,
+          978.25,
           51.5,
-          1129.1875,
+          1057.46875,
           83.5
         ],
         "pixels": [
-          1059.0,
+          978.0,
           52.0,
-          1129.0,
+          1057.0,
           84.0
         ]
       },
@@ -2539,8 +2539,8 @@
       "id": 16533134483839780982,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Terminal",
-      "label": "Terminal",
+      "name": "Editor",
+      "label": "Editor",
       "value": null,
       "description": null,
       "disabled": false,
@@ -2552,15 +2552,15 @@
       ],
       "bounds": {
         "points": [
-          567.875,
+          494.34375,
           51.5,
-          645.28125,
+          554.21875,
           83.5
         ],
         "pixels": [
-          568.0,
+          494.0,
           52.0,
-          645.0,
+          554.0,
           84.0
         ]
       },
@@ -2570,26 +2570,26 @@
       "id": 13207746598841804152,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Histórico",
-      "label": "Histórico",
+      "name": "Painéis de extensões",
+      "label": "Painéis de extensões",
       "value": null,
       "description": null,
       "disabled": false,
       "selected": null,
-      "toggled": "False",
+      "toggled": "True",
       "actions": [
         "click",
         "focus"
       ],
       "bounds": {
         "points": [
-          1129.1875,
+          1057.46875,
           51.5,
           1208.40625,
           83.5
         ],
         "pixels": [
-          1129.0,
+          1057.0,
           52.0,
           1208.0,
           84.0

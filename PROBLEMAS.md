@@ -828,11 +828,28 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - O texto "Click to type", visível no canto inferior direito da área do terminal, não aparece na árvore de acessibilidade.
 - Elemento de dimensão zero (960,540)–(960,540) sem nome na área central.
 
+## [en.light.rail.archive.tab](pages/en.light.rail.archive.tab.md)
+
+- O botão "Back to bench" (324,50)–(435,82) aparece no topo da área central da tela Archive, sobrepondo-se à linha de abas; parece um resquício de navegação da tela de bancada.
+- A sugestão do campo de filtro exibida na imagem ("Parser, pedido, erro…") está em português, sem tradução para o idioma en desta variante.
+- Vários elementos sem nome acessível: os dois divisores verticais, o logo (Image), o alternador de tema da barra superior, os dois campos de filtro (TextInput) e os três ícones de estado vazio, o que dificulta a navegação por leitor de telas.
+- Os botões de janela usam apenas os símbolos "–", "□" e "×" como nome acessível, sem rótulo descritivo.
+- A linha de abas do painel esquerdo não exibe as demais abas diretamente (só "More tabs"), exigindo interação extra para alcançá-las.
+
 ## [en.light.bench-tab.bench.detail](pages/en.light.bench-tab.bench.detail.md)
 
 - O botão de tema na barra superior (1741,5)–(1773,37) é um Unknown sem nome acessível; só é identificável pelo ícone de sol.
 - As duas divisórias verticais (304,42)–(320,1048) e (1612,42)–(1628,1048), o logo do trilho (12,50)–(40,78) e os três ícones de estado vazio estão sem nome acessível, o que reduz a navegabilidade por leitor de tela.
 - Três botões compartilham o mesmo nome acessível "More tabs" em painéis diferentes, sem contexto na árvore que os distinga.
+
+## [en.light.rail.board.page](pages/en.light.rail.board.page.md)
+
+- O Label "(ícone)" do estado vazio do quadro, em (952,1072)–(980,1100), invade a barra de status e ultrapassa a altura da janela (1080 px).
+- A mensagem "No bench in this board yet. Create one to start." ((822,1108)–(1111,1127)) está inteiramente abaixo da área visível e não aparece na tela.
+- O campo de filtro de bancadas (TextInput em (324,130)–(564,162)) não tem nome acessível; o rótulo visível é só a marca d'água "Filter benches".
+- Há dois botões "More tabs" com o mesmo nome ("More tabs" em (64,50)–(151,85) e (1632,50)–(1719,85)), o que dificulta a distinção por leitor de tela.
+- O texto "Archived" do CheckBox tem retângulo (1361,94)–(1462,118) com altura de 24 px, menor que os botões vizinhos de 32 px, ficando desalinhado verticalmente em relação a "New bench".
+- Elementos sem nome acessível além do esperado: divisores verticais, ícone de tema da barra superior, logomarca e campo de filtro.
 
 ## [en.light.bench-tab.browser.tab](pages/en.light.bench-tab.browser.tab.md)
 
@@ -871,6 +888,15 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Divisores verticais (304,42)–(320,1048) e (1612,42)–(1628,1048) são Unknown sem nome acessível, o que dificulta identificação por leitor de tela.
 - Textos de estado vazio em cinza ("Open a file in the explorer or press Ctrl+P.", "No project yet. Add an existing folder or create a new one.", "No active bench. Open a bench to see its files.") têm contraste reduzido sobre o fundo claro.
 - Diferenças em relação à referência (pt-BR.dark), por capturarem janelas de tamanhos distintos (1920×1080 vs 1024×768): nesta variante não há sobreposição de abas nem elementos fora da janela — na referência, as abas do grupo direito se sobrepunham e "Ajudante (chat)" ficava fora da largura; aqui o grupo direito mostra apenas "Files" e "Changes", e as abas excedentes ficam sob os botões "More tabs".
+
+## [en.light.rail.extension.page](pages/en.light.rail.extension.page.md)
+
+- O botão de alternar tema na barra superior (1741,5)–(1773,37) não tem nome acessível; só se identifica pela imagem do sol.
+- O campo de busca de extensões (324,186)–(1608,218) é um TextInput sem nome acessível; o rótulo "Search" fica fora do campo, sem associação.
+- O logotipo do app (imagem em 12,50) e os três ícones de estado vazio (168,201), (952,242) e (1756,117) estão sem nome acessível.
+- A instrução "Put a folder with extension.toml and init.lua in ~/.forja/extensions." é exposta com papel de Botão; semanticamente é um texto de ajuda, o que pode confundir leitores de tela.
+- Nomes acessíveis duplicados: dois botões "More tabs" (64,50) e (1632,50) e dois "Extensions" (título do painel central e item do trilho), o que ambigua comandos de voz e leitores de tela.
+- Nenhum elemento com retângulo além da largura/altura da janela (1920×1080) nesta captura.
 
 ## [en.light.bench-tab.extension.panels.bench](pages/en.light.bench-tab.extension.panels.bench.md)
 

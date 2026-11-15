@@ -241,15 +241,15 @@
       "bounds": {
         "points": [
           182.0,
-          161.0,
+          201.0,
           210.0,
-          189.0
+          229.0
         ],
         "pixels": [
           182.0,
-          161.0,
+          201.0,
           210.0,
-          189.0
+          229.0
         ]
       },
       "children": []
@@ -663,8 +663,8 @@
       "id": 17943206950140650817,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Editor",
-      "label": "Editor",
+      "name": "Browser",
+      "label": "Browser",
       "value": null,
       "description": null,
       "disabled": false,
@@ -676,15 +676,15 @@
       ],
       "bounds": {
         "points": [
-          557.28125,
+          556.21875,
           51.5,
-          617.15625,
+          629.09375,
           83.5
         ],
         "pixels": [
-          557.0,
+          556.0,
           52.0,
-          617.0,
+          629.0,
           84.0
         ]
       },
@@ -818,16 +818,16 @@
       ],
       "bounds": {
         "points": [
-          221.0,
-          101.0,
-          280.3125,
-          133.0
+          64.0,
+          141.0,
+          123.3125,
+          173.0
         ],
         "pixels": [
-          221.0,
-          101.0,
-          280.0,
-          133.0
+          64.0,
+          141.0,
+          123.0,
+          173.0
         ]
       },
       "children": []
@@ -987,15 +987,15 @@
       "bounds": {
         "points": [
           182.0,
-          216.0,
+          256.0,
           307.03125,
-          235.0
+          275.0
         ],
         "pixels": [
           182.0,
-          216.0,
+          256.0,
           307.0,
-          235.0
+          275.0
         ]
       },
       "children": []
@@ -1123,8 +1123,8 @@
       "id": 9079394125717109856,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Browser",
-      "label": "Browser",
+      "name": "Changes",
+      "label": "Changes",
       "value": null,
       "description": null,
       "disabled": false,
@@ -1136,15 +1136,15 @@
       ],
       "bounds": {
         "points": [
-          617.15625,
+          629.09375,
           51.5,
-          690.03125,
+          706.03125,
           83.5
         ],
         "pixels": [
-          617.0,
+          629.0,
           52.0,
-          690.0,
+          706.0,
           84.0
         ]
       },
@@ -1317,8 +1317,8 @@
       "id": 16533134483839780982,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Terminal",
-      "label": "Terminal",
+      "name": "Editor",
+      "label": "Editor",
       "value": null,
       "description": null,
       "disabled": false,
@@ -1330,15 +1330,15 @@
       ],
       "bounds": {
         "points": [
-          479.875,
+          496.34375,
           51.5,
-          557.28125,
+          556.21875,
           83.5
         ],
         "pixels": [
-          480.0,
+          496.0,
           52.0,
-          557.0,
+          556.0,
           84.0
         ]
       },
@@ -1379,8 +1379,8 @@
       "id": 3309078991269281406,
       "parent": 13825972575653543348,
       "role": "Button",
-      "name": "New",
-      "label": "New",
+      "name": "New project",
+      "label": "New project",
       "value": null,
       "description": null,
       "disabled": false,
@@ -1394,13 +1394,13 @@
         "points": [
           161.875,
           101.0,
-          213.0,
+          260.625,
           133.0
         ],
         "pixels": [
           162.0,
           101.0,
-          213.0,
+          261.0,
           133.0
         ]
       },
@@ -1516,39 +1516,8 @@
       "id": 132320206866794376,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Bench",
-      "label": "Bench",
-      "value": null,
-      "description": null,
-      "disabled": false,
-      "selected": null,
-      "toggled": "True",
-      "actions": [
-        "click",
-        "focus"
-      ],
-      "bounds": {
-        "points": [
-          418.9375,
-          51.5,
-          479.875,
-          83.5
-        ],
-        "pixels": [
-          419.0,
-          52.0,
-          480.0,
-          84.0
-        ]
-      },
-      "children": []
-    },
-    {
-      "id": 13995776236015764873,
-      "parent": 4913364587148968597,
-      "role": "Button",
-      "name": "Changes",
-      "label": "Changes",
+      "name": "Terminal",
+      "label": "Terminal",
       "value": null,
       "description": null,
       "disabled": false,
@@ -1560,15 +1529,46 @@
       ],
       "bounds": {
         "points": [
-          690.03125,
+          418.9375,
           51.5,
-          766.96875,
+          496.34375,
           83.5
         ],
         "pixels": [
-          690.0,
+          419.0,
           52.0,
-          767.0,
+          496.0,
+          84.0
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": 13995776236015764873,
+      "parent": 4913364587148968597,
+      "role": "Button",
+      "name": "Preview",
+      "label": "Preview",
+      "value": null,
+      "description": null,
+      "disabled": false,
+      "selected": null,
+      "toggled": "False",
+      "actions": [
+        "click",
+        "focus"
+      ],
+      "bounds": {
+        "points": [
+          706.03125,
+          51.5,
+          777.15625,
+          83.5
+        ],
+        "pixels": [
+          706.0,
+          52.0,
+          777.0,
           84.0
         ]
       },
@@ -2124,15 +2124,15 @@
       "bounds": {
         "points": [
           168.0,
-          161.0,
+          201.0,
           196.0,
-          189.0
+          229.0
         ],
         "pixels": [
           168.0,
-          161.0,
+          201.0,
           196.0,
-          189.0
+          229.0
         ]
       },
       "children": [
@@ -2233,15 +2233,15 @@
       "bounds": {
         "points": [
           182.0,
-          197.0,
+          237.0,
           412.875,
-          216.0
+          256.0
         ],
         "pixels": [
           182.0,
-          197.0,
+          237.0,
           413.0,
-          216.0
+          256.0
         ]
       },
       "children": []
@@ -2334,15 +2334,15 @@
       "bounds": {
         "points": [
           66.5625,
-          197.0,
+          237.0,
           297.4375,
-          235.0
+          275.0
         ],
         "pixels": [
           67.0,
-          197.0,
+          237.0,
           297.0,
-          235.0
+          275.0
         ]
       },
       "children": [
@@ -2371,26 +2371,26 @@
       "id": 3360861421404707280,
       "parent": 4913364587148968597,
       "role": "Button",
-      "name": "Preview",
-      "label": "Preview",
+      "name": "Bench",
+      "label": "Bench",
       "value": null,
       "description": null,
       "disabled": false,
       "selected": null,
-      "toggled": "False",
+      "toggled": "True",
       "actions": [
         "click",
         "focus"
       ],
       "bounds": {
         "points": [
-          766.96875,
+          777.15625,
           51.5,
           838.09375,
           83.5
         ],
         "pixels": [
-          767.0,
+          777.0,
           52.0,
           838.0,
           84.0
