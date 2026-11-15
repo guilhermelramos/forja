@@ -12,7 +12,7 @@ Este arquivo vale para pessoas e para modelos. Leia-o inteiro antes de mudar qua
 ## 2. Mapa do repositório
 | Caminho | O que é |
 |---|---|
-| `design/` | Fonte de verdade do produto: `product.md` (conceitos e vocabulário), `brand.md`, `settings.md`, `keymap.md`, `ui.md` |
+| `design/` | Fonte de verdade do produto: `product.md` (conceitos e vocabulário), `brand.md`, `settings.md`, `keymap.md`, `ui.md`, `roadmap.md` (ordem de trabalho das melhorias) |
 | `crates/kernel` | Núcleo: contrato `Module`, `Registrar`, comandos, eventos, tarefas, armazenamento, configurações, atalhos e i18n. Não depende de egui. |
 | `crates/protocol` | Tipos do RPC/CLI/MCP (serde) e o schema de métodos |
 | `crates/ui-kit` | Design system (tokens "Brasa" e componentes egui) |
