@@ -321,18 +321,20 @@ fn check_geometry(
         }
     }
 
-    // Collect open Window rects so we only compare tabs within the same layer.
+    // Collect open Window and Popup menu layers so foreground popups aren't paired with background tabs.
     let window_rects: Vec<[f64; 4]> = snapshot
         .elements
         .iter()
         .filter(|el| el.role == "Window")
         .map(|el| el.rect)
         .collect();
+    let popup_layers = detect_popup_layers(&snapshot.elements);
 
-    let tab_candidates: Vec<&Element> = snapshot
+    let tab_candidates: Vec<(usize, &Element)> = snapshot
         .elements
         .iter()
-        .filter(|el| {
+        .enumerate()
+        .filter(|(_, el)| {
             el.clickable
                 && matches!(el.role.as_str(), "Button" | "Tab")
                 && !el.name.trim().is_empty()
@@ -341,8 +343,8 @@ fn check_geometry(
 
     for i in 0..tab_candidates.len() {
         for j in (i + 1)..tab_candidates.len() {
-            let a = tab_candidates[i];
-            let b = tab_candidates[j];
+            let (idx_a, a) = tab_candidates[i];
+            let (idx_b, b) = tab_candidates[j];
             if (a.rect[1] - b.rect[1]).abs() > 4.0 || (a.rect[3] - b.rect[3]).abs() > 4.0 {
                 continue;
             }
@@ -350,7 +352,9 @@ fn check_geometry(
             if overlap_x <= 4.0 {
                 continue;
             }
-            if enclosing_windows(a, &window_rects) != enclosing_windows(b, &window_rects) {
+            if popup_layers[idx_a] != popup_layers[idx_b]
+                || enclosing_windows(a, &window_rects) != enclosing_windows(b, &window_rects)
+            {
                 continue;
             }
             let (first, second) = if a.name <= b.name {
@@ -386,6 +390,54 @@ fn enclosing_windows(el: &Element, windows: &[[f64; 4]]) -> Vec<usize> {
         .filter(|(_, w)| cx >= w[0] && cx <= w[2] && cy >= w[1] && cy <= w[3])
         .map(|(idx, _)| idx)
         .collect()
+}
+
+/// Identifies floating vertical popup containers (nameless clickable `Unknown` boxes holding
+/// full-width stacked menu buttons) and assigns each menu row its tightest container index.
+fn detect_popup_layers(elements: &[Element]) -> Vec<Option<usize>> {
+    let mut layers = vec![None; elements.len()];
+    let mut containers: Vec<(usize, f64)> = elements
+        .iter()
+        .enumerate()
+        .filter(|(_, el)| el.role == "Unknown" && el.name.trim().is_empty() && el.clickable)
+        .map(|(idx, el)| (idx, el.width().max(0.0) * el.height().max(0.0)))
+        .collect();
+    // Smallest containers first so a scrolled popup assigns rows to the inner container consistently.
+    containers.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+
+    for (c_idx, _) in containers {
+        let c = &elements[c_idx];
+        let mut rows: Vec<(usize, f64, f64)> = elements
+            .iter()
+            .enumerate()
+            .filter(|(idx, el)| {
+                *idx != c_idx
+                    && el.clickable
+                    && matches!(el.role.as_str(), "Button" | "SelectableLabel")
+                    && !el.name.trim().is_empty()
+                    && el.rect[0] >= c.rect[0] - 2.0
+                    && el.rect[2] <= c.rect[2] + 2.0
+                    && el.rect[1] >= c.rect[1] - 2.0
+                    && el.rect[3] <= c.rect[3] + 2.0
+                    && el.width() >= c.width() - 32.0
+            })
+            .map(|(idx, el)| (idx, el.rect[1], el.rect[3]))
+            .collect();
+        if rows.is_empty() {
+            continue;
+        }
+        rows.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+        let vertical_stack = rows.windows(2).all(|pair| pair[1].1 >= pair[0].2 - 4.0);
+        if !vertical_stack {
+            continue;
+        }
+        for (r_idx, _, _) in rows {
+            if layers[r_idx].is_none() {
+                layers[r_idx] = Some(c_idx);
+            }
+        }
+    }
+    layers
 }
 
 fn check_nameless_clickable(
@@ -499,6 +551,22 @@ mod tests {
         let v = check_snapshot(&s, "pt-BR", &TranslationDict::default(), &[]);
         assert!(v.iter().any(|x| x.dedup_key.starts_with("overlap:")));
         assert!(v.iter().any(|x| x.dedup_key.starts_with("outside:")));
+    }
+
+    #[test]
+    fn popup_menu_rows_do_not_collide_with_background_tabs() {
+        let s = snap(vec![
+            el(1, "Button", "Painéis de extensões", [1057.0, 52.0, 1208.0, 84.0], true),
+            el(2, "Button", "+", [1244.0, 48.0, 1277.0, 80.0], true),
+            el(3, "Unknown", "", [1174.0, 42.0, 1390.0, 148.0], true),
+            el(4, "Button", "Seguir o Windows", [1180.0, 48.0, 1384.0, 80.0], true),
+            el(5, "Button", "Escuro", [1180.0, 82.0, 1384.0, 114.0], true),
+        ]);
+        let v = check_snapshot(&s, "pt-BR", &TranslationDict::default(), &[]);
+        assert!(
+            !v.iter().any(|x| x.dedup_key.starts_with("overlap:")),
+            "unexpected overlap findings for foreground popup: {v:?}"
+        );
     }
 
     #[test]
