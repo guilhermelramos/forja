@@ -4,6 +4,8 @@
 mod auth;
 mod download;
 mod history;
+mod home;
+mod home_data;
 mod mermaid;
 mod profile;
 mod state;
@@ -498,6 +500,22 @@ fn used_keys() -> Vec<&'static str> {
         "browser.history.title",
         "browser.history.empty",
         "browser.history.clear",
+        "browser.home.servers-title",
+        "browser.home.servers-refresh",
+        "browser.home.servers-filter-hint",
+        "browser.home.servers-active-only",
+        "browser.home.servers-empty",
+        "browser.home.servers-empty-bench",
+        "browser.home.servers-forja",
+        "browser.home.docs-title",
+        "browser.home.docs-hint",
+        "browser.home.docs-no-project",
+        "browser.home.docs-empty",
+        "browser.home.docs-loading",
+        "browser.home.docs-open-failed",
+        "browser.home.recent-title",
+        "browser.home.recent-empty",
+        "browser.home.offline-note",
         "browser.method.open.description",
         "browser.method.open.result",
         "browser.method.history.description",

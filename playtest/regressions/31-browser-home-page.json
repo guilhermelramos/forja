@@ -1,0 +1,51 @@
+{
+  "title": "Página inicial do Navegador lista servidores das bancadas, docs no Visualizador e atalhos recentes (#112)",
+  "issue": 112,
+  "locale": "pt-BR",
+  "seed": "31-browser-home-page",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 300 },
+    { "m": "ui.click", "target": "Navegador" },
+    { "m": "ui.wait", "ms": 300 },
+    { "m": "ui.click", "target": "README.md", "index": 1 },
+    { "m": "ui.wait", "ms": 300 },
+    { "m": "ui.click", "target": "Navegador" },
+    { "m": "ui.click", "target": "Guia Local" },
+    { "m": "ui.wait", "ms": 200 }
+  ],
+  "expect": [
+    {
+      "step": 6,
+      "present": [
+        "Servidores locais das bancadas",
+        "Documentação do projeto",
+        "Atalhos recentes",
+        "README.md",
+        "Guia Local",
+        "Página inicial offline — sem requisições à rede externa."
+      ],
+      "absent": [
+        "O navegador embutido fica oculto quando a janela está sem foco ou fora da tela. Clique na janela para exibir a página."
+      ]
+    },
+    {
+      "step": 8,
+      "present": [
+        "README.md",
+        "Markdown",
+        "Abrir no app padrão"
+      ]
+    },
+    {
+      "step": 11,
+      "present": [
+        "http://localhost:3000/guia",
+        "O navegador embutido fica oculto quando a janela está sem foco ou fora da tela. Clique na janela para exibir a página."
+      ]
+    }
+  ]
+}

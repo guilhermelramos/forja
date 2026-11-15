@@ -34,6 +34,12 @@ downloads confinados e Mermaid offline.
   pinta por cima de filho nativo, então ocultar é a regra de visibilidade.
   O WebView2 só é criado quando a página está visível; criar o controle é
   trabalho de processo/COM que não pode atrasar um quadro invisível (Refs #73).
+- A página inicial padrão (`forja://inicio`, `home.rs` e `home_data.rs`) é
+  renderizada em egui sem criar WebView2 e sem requisições à rede externa:
+  lista servidores locais HTTP das bancadas via contrato `ports.list` (com o
+  mesmo filtro por bancada e busca do painel Portas), links para `README*` e
+  `docs/` do projeto ou bancada ativa (abertos no Visualizador via
+  `viewers.open` + `shell.tab.open`), e atalhos recentes do histórico local.
 - Downloads usam `browser.download.dir`; o nome vem do servidor ou da URL e é
   reduzido a um nome simples (sem pastas, drives, ADS ou nomes de dispositivo).
 - O histórico fica em `<data>/browser-history.json`, com no máximo 500 entradas

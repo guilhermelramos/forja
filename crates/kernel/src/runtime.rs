@@ -637,6 +637,14 @@ impl<'a> Ctx<'a> {
         self.runtime.run_command(id, args)
     }
 
+    pub fn call_method(
+        &mut self,
+        name: &str,
+        params: Map<String, Value>,
+    ) -> std::result::Result<Value, RpcError> {
+        self.runtime.call_method(name, params)
+    }
+
     pub fn command_available(&self, id: &str, context: AvailabilityContext) -> bool {
         self.runtime.is_command_available(id, context)
     }

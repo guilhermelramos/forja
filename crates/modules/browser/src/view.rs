@@ -17,9 +17,11 @@ pub struct BrowserView {
     address: String,
     profile_root: PathBuf,
     last_active: Option<u64>,
+    last_url: String,
     scale: f32,
     default_zoom: f64,
     last_tabs: Vec<String>,
+    home: crate::home::HomeState,
 }
 
 impl BrowserView {
@@ -32,9 +34,11 @@ impl BrowserView {
             address: String::new(),
             profile_root: forja_kernel::paths::default_data_dir().join("webview"),
             last_active: None,
+            last_url: String::new(),
             scale: 1.0,
             default_zoom: 1.0,
             last_tabs: Vec::new(),
+            home: crate::home::HomeState::new(),
         }
     }
 
@@ -61,7 +65,7 @@ impl BrowserView {
             }
             if self.state.tabs().is_empty() {
                 let home = home_url(cx);
-                let html = if home.starts_with("forja://") {
+                let html = if home.starts_with("forja://") && !crate::home::is_home_url(&home) {
                     Some(home_html(
                         &cx.t("browser.view.home-title"),
                         &cx.t("browser.view.home-body"),
@@ -75,8 +79,14 @@ impl BrowserView {
     }
 
     fn handle_ipc(&mut self, cx: &mut Ctx<'_>, command: &str) {
+        let active_is_home = self
+            .state
+            .active()
+            .map(|tab| tab.kind == Kind::Url && crate::home::is_home_url(&tab.url))
+            .unwrap_or(false);
         match command {
             "address" => self.state.set_address_focus(true),
+            "reload" | "hardReload" if active_is_home => self.home.force_refresh(cx),
             "reload" => self.state.request(Pending::Reload),
             "hardReload" => self.state.request(Pending::HardReload),
             "find" => self.state.set_find(true, None),
@@ -119,7 +129,7 @@ impl BrowserView {
 
     fn new_page(&mut self, cx: &mut Ctx<'_>) {
         let home = home_url(cx);
-        let html = if home.starts_with("forja://") {
+        let html = if home.starts_with("forja://") && !crate::home::is_home_url(&home) {
             Some(home_html(
                 &cx.t("browser.view.home-title"),
                 &cx.t("browser.view.home-body"),
@@ -386,20 +396,26 @@ impl View for BrowserView {
         let _ = ui.allocate_rect(rect, egui::Sense::hover());
         let bounds = logical_rect(rect.min.x, rect.min.y, rect.width(), rect.height());
         let active = self.state.active();
+        let active_is_home = active
+            .as_ref()
+            .map(|tab| tab.kind == Kind::Url && crate::home::is_home_url(&tab.url))
+            .unwrap_or(false);
         if let Some(tab) = active {
-            if self.last_active != Some(tab.id) {
+            if self.last_active != Some(tab.id) || self.last_url != tab.url {
                 self.address = tab.url.clone();
                 self.last_active = Some(tab.id);
+                self.last_url = tab.url.clone();
             }
             self.drain_events(cx, tab.id);
             // Criar um WebView2 é trabalho de processo e COM que pode levar
-            // segundos. Só cria quando a página nativa estaria visível; uma
-            // aba escondida não pode congelar o quadro. Refs #73.
+            // segundos. Só cria quando a página nativa estaria visível e não for a
+            // página inicial nativa (forja://inicio); uma aba escondida não pode
+            // congelar o quadro. Refs #73, #112.
             let has_native = self.native.iter().any(|(id, _)| *id == tab.id);
-            if !has_native && show {
+            if !active_is_home && !has_native && show {
                 let _ = self.native_for(cx, &tab, bounds);
             }
-            if self.native.iter().any(|(id, _)| *id == tab.id) {
+            if !active_is_home && self.native.iter().any(|(id, _)| *id == tab.id) {
                 self.apply_pending(cx, &tab);
             }
         }
@@ -409,32 +425,40 @@ impl View for BrowserView {
         self.native
             .retain(|(id, _)| tabs.iter().any(|tab| tab.id == *id));
         for (id, native) in &self.native {
-            native.set_visible(show && Some(*id) == active_id);
-            if Some(*id) == active_id {
+            native.set_visible(!active_is_home && show && Some(*id) == active_id);
+            if !active_is_home && Some(*id) == active_id {
                 native.set_bounds(bounds);
             }
         }
-        if !show && rect.width() > 40.0 && rect.height() > 40.0 {
+        if active_is_home && rect.width() > 40.0 && rect.height() > 40.0 {
+            self.home.ui(ui, cx, &self.state, rect);
+        } else if !show && rect.width() > 40.0 && rect.height() > 40.0 {
             let reason = if !focused || minimized {
                 cx.t("browser.view.unfocused")
             } else {
                 cx.t("browser.view.hidden")
             };
             let notice_rect = rect.shrink(24.0);
-            ui.scope_builder(egui::UiBuilder::new().max_rect(notice_rect), |ui| {
-                ui.add_space((notice_rect.height() * 0.3).max(8.0));
-                ui.vertical_centered(|ui| {
-                    if let Some((title, url)) = &active_summary {
-                        if !title.is_empty() {
-                            ui.label(egui::RichText::new(title).strong());
-                        }
-                        if !url.is_empty() {
-                            ui.label(egui::RichText::new(url).small().color(muted));
-                        }
-                        ui.add_space(6.0);
+            let max_notice_width = (notice_rect.width() * 0.85).clamp(220.0, 560.0);
+            let left_pad = ((notice_rect.width() - max_notice_width) * 0.5).max(0.0);
+            let box_rect = egui::Rect::from_min_size(
+                egui::pos2(notice_rect.left() + left_pad, notice_rect.top()),
+                egui::vec2(max_notice_width, notice_rect.height()),
+            );
+            ui.scope_builder(egui::UiBuilder::new().max_rect(box_rect), |ui| {
+                ui.add_space((notice_rect.height() * 0.25).max(8.0));
+                if let Some((title, url)) = &active_summary {
+                    if !title.is_empty() {
+                        ui.add(egui::Label::new(egui::RichText::new(title).strong()).wrap());
                     }
-                    ui.label(egui::RichText::new(reason).small().color(muted));
-                });
+                    if !url.is_empty() {
+                        ui.add(
+                            egui::Label::new(egui::RichText::new(url).small().color(muted)).wrap(),
+                        );
+                    }
+                    ui.add_space(6.0);
+                }
+                ui.add(egui::Label::new(egui::RichText::new(reason).color(muted)).wrap());
             });
         }
         self.history_window(ui, cx, muted);
@@ -456,7 +480,11 @@ impl BrowserView {
                     self.state.request(Pending::Forward);
                 }
                 if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, "R").clicked() {
-                    self.state.request(Pending::Reload);
+                    if tab.kind == Kind::Url && crate::home::is_home_url(&tab.url) {
+                        self.home.force_refresh(cx);
+                    } else {
+                        self.state.request(Pending::Reload);
+                    }
                 }
                 let _ = tab;
             }
