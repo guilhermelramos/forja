@@ -1,0 +1,25 @@
+{
+  "number": 203,
+  "title": "[playtest] Fixture sem prioridade: correção aguardando verificação",
+  "body": "**Tipo:** observation\n\nFixture de seleção por prioridade. A correção na main está aguardando verificação.\n",
+  "state": "OPEN",
+  "createdAt": "2026-10-20T10:00:00Z",
+  "closedAt": null,
+  "labels": [
+    {
+      "name": "playtest"
+    }
+  ],
+  "url": "https://github.com/guilhermelramos/forja/issues/203",
+  "comments": [
+    {
+      "id": "fixture-203-correction",
+      "author": {
+        "login": "guilhermelramos"
+      },
+      "body": "Corrigido na main (fixture), aguardando verificação.",
+      "createdAt": "2026-11-10T10:00:00Z",
+      "url": "https://github.com/guilhermelramos/forja/issues/203#issuecomment-203"
+    }
+  ]
+}

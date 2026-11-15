@@ -8,6 +8,7 @@ $ErrorActionPreference = "Stop"
 
 $owner = "guilhermelramos"
 $issuesDir = Join-Path $PSScriptRoot "fixtures/selection/issues"
+$priorityIssuesDir = Join-Path $PSScriptRoot "fixtures/selection/priority"
 $issue13 = Get-Content (Join-Path $issuesDir "issue-13.json") -Raw | ConvertFrom-Json
 $issue1301 = Get-Content (Join-Path $issuesDir "issue-1301.json") -Raw | ConvertFrom-Json
 $issue13Chatter = Get-Content (Join-Path $issuesDir "chatter-13.json") -Raw | ConvertFrom-Json
@@ -130,6 +131,42 @@ pwsh -NoProfile -File "%~dp0fake-gh.ps1" %*
         throw "selection: the person-closed skip was not logged"
     }
     Write-Host "selection using the real #13 history: $($numbers -join ', ') (person-closed #13 skipped)"
+
+    # Priority ordering: priority-5 first, down to priority-1, then issues with
+    # no priority label; oldest first inside the same priority. The fixture also
+    # has an in-progress issue that must never be verified.
+    $env:FORJA_GH_FIXTURES = $priorityIssuesDir
+    $priorityPath = Join-Path $fakeDir "priority-issues.json"
+    $priorityOutput = & pwsh -NoProfile -File (Join-Path $PSScriptRoot "select-verifications.ps1") `
+        -Repository "fixture/repo" -MaxIssues 8 -Out $priorityPath *>&1 | Out-String
+    Write-Host $priorityOutput
+    $prioritySelected = @(Get-Content $priorityPath -Raw | ConvertFrom-Json)
+    $priorityNumbers = @($prioritySelected | ForEach-Object { [int]$_.issue })
+    $expectedPriorityOrder = @(202, 205, 208, 201, 207, 206, 203)
+    if (($priorityNumbers -join ',') -ne ($expectedPriorityOrder -join ',')) {
+        throw "priority selection: expected $($expectedPriorityOrder -join ', '), got $($priorityNumbers -join ', ')"
+    }
+    if ($priorityNumbers -contains 204) {
+        throw "priority selection: em-andamento #204 must not be selected: $($priorityNumbers -join ', ')"
+    }
+    if ($priorityOutput -notmatch "skip #204: label em-andamento") {
+        throw "priority selection: the em-andamento skip was not logged"
+    }
+    if ($prioritySelected[0].priority -ne 5 -or $prioritySelected[-1].priority -ne 0) {
+        throw "priority selection: each selected issue must carry priority 5..1, or 0 without a label"
+    }
+
+    # MaxIssues is applied after ordering: the three highest priorities survive.
+    $limitedPath = Join-Path $fakeDir "priority-limited.json"
+    $limitedOutput = & pwsh -NoProfile -File (Join-Path $PSScriptRoot "select-verifications.ps1") `
+        -Repository "fixture/repo" -MaxIssues 3 -Out $limitedPath *>&1 | Out-String
+    Write-Host $limitedOutput
+    $limited = @(Get-Content $limitedPath -Raw | ConvertFrom-Json)
+    $limitedNumbers = @($limited | ForEach-Object { [int]$_.issue })
+    if (($limitedNumbers -join ',') -ne "202,205,208") {
+        throw "priority selection: MaxIssues must cut after the highest priorities, got $($limitedNumbers -join ', ')"
+    }
+    $env:FORJA_GH_FIXTURES = $issuesDir
 
     # Person-closed #13, even with still_broken: it must be skipped with a log
     # and must not write anything. No -DryRun here, and the fake gh records any
