@@ -59,5 +59,11 @@ jobs:
       - name: Screen at 1920x1080
         continue-on-error: true
         run: Set-DisplayResolution -Width 1920 -Height 1080 -Force
-      - name: Run recorded UI regressions
+      - name: Run recorded UI regressions (1920x1080)
+        env:
+          FORJA_TEST_WINDOW_SIZE: 1920x1080
+        run: ./target/debug/forja-explore.exe --app target/debug/forja-app.exe --replay playtest/regressions
+      - name: Run recorded UI regressions (1280x800)
+        env:
+          FORJA_TEST_WINDOW_SIZE: 1280x800
         run: ./target/debug/forja-explore.exe --app target/debug/forja-app.exe --replay playtest/regressions

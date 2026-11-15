@@ -7,7 +7,7 @@
     { "m": "ui.click", "target": "Adicionar pasta" },
     { "m": "ui.click", "target": "Escolher…" },
     { "m": "ui.click", "target": "Adicionar" },
-    { "m": "ui.click", "target": "Terminal" },
+    { "m": "ui.open_tab", "target": "Terminal" },
     { "m": "ui.click", "target": "Shell" }
   ],
   "expect": [

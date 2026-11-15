@@ -1,9 +1,10 @@
 //! Recorded regression runner (`forja-explore --replay <dir>`).
 
 use crate::client::{call_ui, AppSession, CALL_TIMEOUT};
-use crate::snapshot::Snapshot;
+use crate::snapshot::{Element, Snapshot};
 use serde::Deserialize;
-use serde_json::{Map, Value};
+use serde_json::{json, Map, Value};
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
 /// One recorded regression file in `playtest/regressions/*.json`.
@@ -198,16 +199,29 @@ fn run_file(
                 .get("m")
                 .and_then(Value::as_str)
                 .ok_or_else(|| format!("step {step_idx} missing string field `m`"))?;
-            let mut params = Map::new();
-            for (k, v) in step {
-                if k != "m" && k != "view" {
-                    params.insert(k.clone(), v.clone());
+            let snap = if method == "ui.open_tab" {
+                let target = step
+                    .get("target")
+                    .and_then(Value::as_str)
+                    .map(str::trim)
+                    .filter(|s| !s.is_empty())
+                    .ok_or_else(|| {
+                        format!("step {step_idx} (ui.open_tab) missing string field `target`")
+                    })?;
+                open_tab(session.pipe(), target)
+                    .map_err(|err| format!("step {step_idx} (ui.open_tab) failed: {err}"))?
+            } else {
+                let mut params = Map::new();
+                for (k, v) in step {
+                    if k != "m" && k != "view" {
+                        params.insert(k.clone(), v.clone());
+                    }
                 }
-            }
-            let reply = call_ui(session.pipe(), method, Value::Object(params), CALL_TIMEOUT)
-                .map_err(|err| format!("step {step_idx} ({method}) failed: {err}"))?;
-            let snap = Snapshot::from_rpc_result(&reply)
-                .map_err(|err| format!("step {step_idx} ({method}) invalid snapshot: {err}"))?;
+                let reply = call_ui(session.pipe(), method, Value::Object(params), CALL_TIMEOUT)
+                    .map_err(|err| format!("step {step_idx} ({method}) failed: {err}"))?;
+                Snapshot::from_rpc_result(&reply)
+                    .map_err(|err| format!("step {step_idx} ({method}) invalid snapshot: {err}"))?
+            };
             snapshots.push(snap);
         }
 
@@ -218,6 +232,71 @@ fn run_file(
 
     let _ = std::fs::remove_dir_all(&temp_root);
     result
+}
+
+const MORE_TABS_LABELS: &[&str] = &["Mais abas", "More tabs"];
+
+/// Opens a slot tab directly when visible on the tab bar, or through any
+/// `"Mais abas"` / `"More tabs"` overflow menu when the window is too narrow.
+fn open_tab(pipe: &str, target: &str) -> Result<Snapshot, String> {
+    open_tab_with(target, |method, params| {
+        call_ui(pipe, method, params, CALL_TIMEOUT).map_err(|err| err.to_string())
+    })
+}
+
+fn open_tab_with<F>(target: &str, mut call: F) -> Result<Snapshot, String>
+where
+    F: FnMut(&str, Value) -> Result<Value, String>,
+{
+    let snap_val = call("ui.snapshot", json!({}))?;
+    let initial = Snapshot::from_rpc_result(&snap_val)?;
+    if let Some(el) = find_clickable_tab(&initial.elements, target, None) {
+        let reply = call("ui.click", json!({ "id": el.id }))?;
+        return Snapshot::from_rpc_result(&reply);
+    }
+
+    let initial_ids: BTreeSet<u64> = initial.elements.iter().map(|el| el.id).collect();
+    let more_ids: Vec<u64> = initial
+        .elements
+        .iter()
+        .filter(|el| el.clickable && MORE_TABS_LABELS.contains(&el.name.trim()))
+        .map(|el| el.id)
+        .collect();
+
+    for more_id in more_ids {
+        let menu_val = call("ui.click", json!({ "id": more_id }))?;
+        let menu_snap = Snapshot::from_rpc_result(&menu_val)?;
+        if let Some(item) = find_clickable_tab(&menu_snap.elements, target, Some(&initial_ids))
+            .or_else(|| find_clickable_tab(&menu_snap.elements, target, None))
+        {
+            let reply = call("ui.click", json!({ "id": item.id }))?;
+            return Snapshot::from_rpc_result(&reply);
+        }
+        let _ = call("ui.key", json!({ "keys": "Escape" }))?;
+    }
+
+    Err(format!(
+        "tab \"{target}\" not found directly or inside any \"Mais abas\"/\"More tabs\" menu"
+    ))
+}
+
+fn find_clickable_tab<'a>(
+    elements: &'a [Element],
+    target: &str,
+    excluded_ids: Option<&BTreeSet<u64>>,
+) -> Option<&'a Element> {
+    let trimmed = target.trim();
+    let lower = trimmed.to_lowercase();
+    let allowed =
+        |el: &&Element| el.clickable && excluded_ids.is_none_or(|ids| !ids.contains(&el.id));
+    elements
+        .iter()
+        .find(|el| allowed(el) && el.name.trim() == trimmed)
+        .or_else(|| {
+            elements
+                .iter()
+                .find(|el| allowed(el) && el.name.trim().to_lowercase() == lower)
+        })
 }
 
 /// Evaluates all expectations against the recorded step snapshots.
@@ -435,5 +514,120 @@ mod tests {
         .unwrap();
 
         assert_eq!(spec.test_helpers.as_deref(), Some("none"));
+    }
+
+    fn rpc_snapshot(elements: Vec<Element>) -> Value {
+        serde_json::to_value(Snapshot {
+            window: WindowSize {
+                width: 1280.0,
+                height: 800.0,
+            },
+            changes: Changes::default(),
+            view: String::new(),
+            elements,
+        })
+        .unwrap()
+    }
+
+    fn tab_el(id: u64, name: &str, clickable: bool) -> Element {
+        Element {
+            id,
+            role: "Button".into(),
+            name: name.into(),
+            rect: [10.0, 10.0, 90.0, 40.0],
+            clickable,
+            editable: false,
+            state: vec![],
+            window_id: None,
+        }
+    }
+
+    #[test]
+    fn open_tab_clicks_directly_when_visible_and_clickable() {
+        let mut log = Vec::new();
+        let result = open_tab_with("Bancada", |method, params| {
+            log.push((method.to_owned(), params.clone()));
+            match method {
+                "ui.snapshot" => Ok(rpc_snapshot(vec![
+                    tab_el(1, "Mais abas", true),
+                    tab_el(2, "Terminal", true),
+                    tab_el(3, "Bancada", true),
+                    tab_el(4, "Nova bancada", true),
+                ])),
+                "ui.click" => {
+                    assert_eq!(params["id"], 3);
+                    Ok(rpc_snapshot(vec![tab_el(3, "Bancada", true)]))
+                }
+                other => panic!("unexpected method {other}"),
+            }
+        })
+        .unwrap();
+
+        assert_eq!(log.len(), 2);
+        assert_eq!(result.elements[0].name, "Bancada");
+    }
+
+    #[test]
+    fn open_tab_falls_back_through_more_tabs_menus_in_either_locale() {
+        let mut log = Vec::new();
+        let result = open_tab_with("Ajudante (chat)", |method, params| {
+            log.push((method.to_owned(), params.clone()));
+            match method {
+                "ui.snapshot" => Ok(rpc_snapshot(vec![
+                    tab_el(10, "Mais abas", true),
+                    tab_el(11, "More tabs", true),
+                    // Non-clickable truncated label must not block overflow lookup.
+                    tab_el(12, "Ajudante (chat)", false),
+                ])),
+                "ui.click" => match params["id"].as_u64() {
+                    Some(10) => Ok(rpc_snapshot(vec![
+                        tab_el(10, "Mais abas", true),
+                        tab_el(20, "Projetos", true),
+                    ])),
+                    Some(11) => Ok(rpc_snapshot(vec![
+                        tab_el(11, "More tabs", true),
+                        tab_el(30, "Ajudante (chat)", true),
+                    ])),
+                    Some(30) => Ok(rpc_snapshot(vec![tab_el(30, "Ajudante (chat)", true)])),
+                    other => panic!("unexpected click id {other:?}"),
+                },
+                "ui.key" => {
+                    assert_eq!(params["keys"], "Escape");
+                    Ok(rpc_snapshot(vec![
+                        tab_el(10, "Mais abas", true),
+                        tab_el(11, "More tabs", true),
+                    ]))
+                }
+                other => panic!("unexpected method {other}"),
+            }
+        })
+        .unwrap();
+
+        assert_eq!(
+            log.iter().map(|(m, _)| m.as_str()).collect::<Vec<_>>(),
+            ["ui.snapshot", "ui.click", "ui.key", "ui.click", "ui.click"]
+        );
+        assert_eq!(result.elements[0].id, 30);
+    }
+
+    #[test]
+    fn open_tab_errors_after_checking_all_overflow_menus() {
+        let mut keys_sent = 0;
+        let err = open_tab_with("Inexistente", |method, params| match method {
+            "ui.snapshot" => Ok(rpc_snapshot(vec![tab_el(1, "Mais abas", true)])),
+            "ui.click" => {
+                assert_eq!(params["id"], 1);
+                Ok(rpc_snapshot(vec![tab_el(2, "Terminal", true)]))
+            }
+            "ui.key" => {
+                keys_sent += 1;
+                Ok(rpc_snapshot(vec![tab_el(1, "Mais abas", true)]))
+            }
+            other => panic!("unexpected method {other}"),
+        })
+        .unwrap_err();
+
+        assert_eq!(keys_sent, 1);
+        assert!(err.contains("Inexistente"));
     }
 }

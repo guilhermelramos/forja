@@ -5,7 +5,7 @@ Explorador de interface sem modelo de IA e executor de regressões gravadas (`fo
 ## Propósito
 - Dirigir `forja-app --test-driver` pelo pipe RPC (`ui.snapshot`, `ui.click`, `ui.type`, `ui.key`, `ui.scroll`, `ui.wait`) com escolha guiada por cobertura.
 - Verificar invariantes após cada ação (resposta em < 10 s, textos sem tradução, erros técnicos crus, elementos fora da janela ou abas sobrepostas, comportamento de `Escape` em janelas, elementos clicáveis sem nome) e gravar achados deduplicados em JSONL.
-- Rodar regressões gravadas (`--replay <dir>`) em um app limpo por arquivo.
+- Rodar regressões gravadas (`--replay <dir>`) em um app limpo por arquivo, incluindo o passo `ui.open_tab` que abre uma aba diretamente ou pelo menu `Mais abas` (`More tabs`) quando a janela está estreita.
 - Sair com `0` quando a exploração rodou, mesmo com achados; `1` só em erro real (app não abre, pipe sem resposta inicial, regressão falha); `2` em argumentos inválidos.
 
 ## Como testar

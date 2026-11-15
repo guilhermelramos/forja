@@ -9,11 +9,11 @@
     { "m": "ui.click", "target": "Escolher…" },
     { "m": "ui.click", "target": "Adicionar" },
     { "m": "ui.wait", "ms": 300 },
-    { "m": "ui.click", "target": "Navegador" },
+    { "m": "ui.open_tab", "target": "Navegador" },
     { "m": "ui.wait", "ms": 300 },
     { "m": "ui.click", "target": "README.md", "index": 1 },
     { "m": "ui.wait", "ms": 300 },
-    { "m": "ui.click", "target": "Navegador" },
+    { "m": "ui.open_tab", "target": "Navegador" },
     { "m": "ui.click", "target": "Guia Local" },
     { "m": "ui.wait", "ms": 200 }
   ],

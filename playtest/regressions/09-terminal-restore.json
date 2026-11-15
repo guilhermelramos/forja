@@ -5,7 +5,7 @@
   "seed": "09-terminal-restore",
   "steps": [
     { "m": "ui.wait", "ms": 800 },
-    { "m": "ui.click", "target": "Terminal" },
+    { "m": "ui.open_tab", "target": "Terminal" },
     { "m": "ui.wait", "ms": 800 },
     { "m": "ui.snapshot", "view": false }
   ],
