@@ -19,6 +19,20 @@ impl Geometry {
             && self.x.abs() <= 65536.0 && self.y.abs() <= 65536.0
     }
 
+    /// Whether the window's title area lands on the desktop (all monitors).
+    /// A position saved off-screen (for example by a background test window)
+    /// would otherwise open Forja invisible.
+    pub fn on_screen(self) -> bool {
+        let Some((left, top, width, height)) = virtual_screen() else {
+            return true;
+        };
+        let (right, bottom) = (left + width, top + height);
+        // At least 120x40 of the top strip (where the title bar is) must be visible.
+        let visible_x = (self.x + self.width).min(right) - self.x.max(left);
+        let visible_y = (self.y + 40.0).min(bottom) - self.y.max(top);
+        visible_x >= 120.0 && visible_y >= 40.0
+    }
+
     pub fn from_viewport(viewport: &egui::ViewportInfo) -> Option<Self> {
         if viewport.maximized.unwrap_or(false) || viewport.minimized.unwrap_or(false) || viewport.fullscreen.unwrap_or(false) { return None; }
         let outer = viewport.outer_rect?;
@@ -92,5 +106,40 @@ mod tests {
         assert_eq!(Geometry::from_json(&stored), Some(last));
         drop(runtime);
         let _ = std::fs::remove_dir_all(dir);
+    }
+}
+
+/// Desktop rectangle covering every monitor, in physical pixels.
+#[cfg(windows)]
+fn virtual_screen() -> Option<(f32, f32, f32, f32)> {
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        GetSystemMetrics, SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN, SM_XVIRTUALSCREEN,
+        SM_YVIRTUALSCREEN,
+    };
+    // SAFETY: GetSystemMetrics has no preconditions.
+    let (x, y, w, h) = unsafe {
+        (
+            GetSystemMetrics(SM_XVIRTUALSCREEN),
+            GetSystemMetrics(SM_YVIRTUALSCREEN),
+            GetSystemMetrics(SM_CXVIRTUALSCREEN),
+            GetSystemMetrics(SM_CYVIRTUALSCREEN),
+        )
+    };
+    (w > 0 && h > 0).then_some((x as f32, y as f32, w as f32, h as f32))
+}
+
+#[cfg(not(windows))]
+fn virtual_screen() -> Option<(f32, f32, f32, f32)> {
+    None
+}
+
+#[cfg(test)]
+mod screen_tests {
+    use super::Geometry;
+
+    #[test]
+    fn background_test_position_is_not_on_screen() {
+        let hidden = Geometry { x: -20000.0, y: -20000.0, width: 1280.0, height: 720.0 };
+        assert!(!hidden.on_screen());
     }
 }

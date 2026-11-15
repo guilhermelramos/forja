@@ -843,7 +843,9 @@ impl ForjaApp {
 impl eframe::App for ForjaApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         let closing = ctx.input(|input| input.viewport().close_requested());
+        // Test-driver windows sit off-screen on purpose: never remember that position.
         if self.screenshot.is_none()
+            && self.driver.is_none()
             && self.setting_bool("appearance.window.remember_geometry", true)
             && (closing || self.geometry_checked.elapsed() >= std::time::Duration::from_secs(1))
         {
@@ -851,7 +853,9 @@ impl eframe::App for ForjaApp {
             if let Some(geometry) =
                 ctx.input(|input| crate::window_geometry::Geometry::from_viewport(input.viewport()))
             {
-                self.geometry_writer.record(&mut self.runtime, geometry);
+                if geometry.on_screen() {
+                    self.geometry_writer.record(&mut self.runtime, geometry);
+                }
             }
         }
         let hiding_in_tray = self.setting_bool("app.tray.enabled", false) && !self.quitting;
@@ -859,6 +863,7 @@ impl eframe::App for ForjaApp {
             && !self.geometry_close_allowed
             && !hiding_in_tray
             && self.screenshot.is_none()
+            && self.driver.is_none()
             && self.setting_bool("appearance.window.remember_geometry", true)
         {
             ctx.send_viewport_cmd(ViewportCommand::CancelClose);

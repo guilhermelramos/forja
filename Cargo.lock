@@ -1735,7 +1735,7 @@ checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 
 [[package]]
 name = "forja-app"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "base64 0.22.1",
  "eframe",
@@ -1791,7 +1791,7 @@ dependencies = [
 
 [[package]]
 name = "forja-cli"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-protocol",
  "serde_json",
@@ -1799,7 +1799,7 @@ dependencies = [
 
 [[package]]
 name = "forja-contracts"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -1807,7 +1807,7 @@ dependencies = [
 
 [[package]]
 name = "forja-counter-kit"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "keyring",
@@ -1818,7 +1818,7 @@ dependencies = [
 
 [[package]]
 name = "forja-explore"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-protocol",
  "serde",
@@ -1827,7 +1827,7 @@ dependencies = [
 
 [[package]]
 name = "forja-hook"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-protocol",
  "serde_json",
@@ -1835,7 +1835,7 @@ dependencies = [
 
 [[package]]
 name = "forja-kernel"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "eframe",
  "fluent-bundle",
@@ -1851,11 +1851,11 @@ dependencies = [
 
 [[package]]
 name = "forja-kernel-macros"
-version = "0.2.0"
+version = "0.2.1"
 
 [[package]]
 name = "forja-mcp"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-protocol",
  "serde_json",
@@ -1863,7 +1863,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-accounts"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-kernel",
  "forja-ui-kit",
@@ -1875,7 +1875,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-archive"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "forja-contracts",
@@ -1892,7 +1892,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-benches"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -1906,7 +1906,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-board"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -1918,7 +1918,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-browser"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -1936,7 +1936,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-chat"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "forja-contracts",
@@ -1955,7 +1955,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-content"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -1971,7 +1971,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-counter"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-counter-kit",
@@ -1982,7 +1982,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-counter_github"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-counter-kit",
@@ -1995,7 +1995,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-counter_gitlab"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-counter-kit",
@@ -2008,7 +2008,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-counter_jira"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-counter-kit",
@@ -2021,7 +2021,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-counter_linear"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-counter-kit",
@@ -2034,7 +2034,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-diff"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -2048,7 +2048,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-editor"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -2065,7 +2065,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-explorer"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -2080,7 +2080,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-extension"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "forja-contracts",
@@ -2100,7 +2100,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-find"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -2113,7 +2113,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-git"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "forja-contracts",
@@ -2126,7 +2126,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-hello"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-kernel",
  "linkme",
@@ -2135,7 +2135,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-helper"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "forja-contracts",
@@ -2151,7 +2151,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-hook"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-kernel",
  "linkme",
@@ -2160,7 +2160,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-import"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "forja-kernel",
@@ -2173,7 +2173,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-integrations"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -2185,7 +2185,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-mcp"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "forja-kernel",
@@ -2197,7 +2197,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-muster"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -2209,7 +2209,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-network"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -2219,7 +2219,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-notify"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "forja-contracts",
@@ -2232,7 +2232,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-onboarding"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-kernel",
  "forja-ui-kit",
@@ -2244,7 +2244,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-ports"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-kernel",
  "forja-ui-kit",
@@ -2256,7 +2256,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-privacy"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-kernel",
  "linkme",
@@ -2266,7 +2266,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-projects"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -2280,7 +2280,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-remote"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -2293,7 +2293,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-request"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-counter-kit",
@@ -2306,7 +2306,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-review"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "forja-contracts",
@@ -2321,7 +2321,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-routine"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "forja-contracts",
@@ -2334,7 +2334,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-search"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -2348,7 +2348,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-skill"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-kernel",
  "forja-ui-kit",
@@ -2363,7 +2363,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-terminal"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -2379,7 +2379,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-trust"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "forja-contracts",
@@ -2393,7 +2393,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-update"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-kernel",
  "linkme",
@@ -2402,7 +2402,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-usage"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "forja-kernel",
@@ -2415,7 +2415,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-viewers"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "forja-contracts",
  "forja-kernel",
@@ -2431,7 +2431,7 @@ dependencies = [
 
 [[package]]
 name = "forja-module-voice"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "cpal",
  "forja-kernel",
@@ -2447,7 +2447,7 @@ dependencies = [
 
 [[package]]
 name = "forja-protocol"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -2457,7 +2457,7 @@ dependencies = [
 
 [[package]]
 name = "forja-ui-kit"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "eframe",
  "image",
@@ -7468,7 +7468,7 @@ checksum = "e450f9b2ed1dff33c94c12589a87338689467b9c4f5d8a5710bd09a847d2c8a7"
 
 [[package]]
 name = "xtask"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "serde",
  "serde_json",

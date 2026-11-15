@@ -1,5 +1,8 @@
 //! `forja-app` entry point: window setup, CLI flags and screenshot mode.
 
+// Release builds are a window app: no console window opens with Forja.
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 mod actions;
 mod anvil;
 mod anvil_ask;
@@ -80,7 +83,9 @@ fn run() -> i32 {
     }
     set_app_user_model_id();
 
-    let isolated = flags.screenshot.is_some();
+    // Captures and test-driver runs never touch the person's real data (window
+    // position, projects, settings) unless a data dir is given explicitly.
+    let isolated = flags.screenshot.is_some() || flags.test_driver;
     let isolated_dir =
         std::env::temp_dir().join(format!("forja-screenshot-{}", std::process::id()));
     let data_dir = if isolated && std::env::var_os("FORJA_DATA_DIR").is_none() {
@@ -143,7 +148,9 @@ fn run() -> i32 {
         if let forja_kernel::store::LoadResult::Loaded(value) =
             runtime.store().load::<serde_json::Value>("window_geometry")
         {
-            if let Some(geometry) = window_geometry::Geometry::from_json(&value) {
+            if let Some(geometry) = window_geometry::Geometry::from_json(&value)
+                .filter(|geometry| geometry.on_screen())
+            {
                 viewport = viewport.with_position([geometry.x, geometry.y])
                     .with_inner_size([geometry.width, geometry.height]);
             }
