@@ -1,34 +1,21 @@
 use crate::state::{self, CloneForm, Dialog, ProjectForm, Shared};
-use crate::view::{humanize_error, parse_color, ColorExt};
+use crate::view::{humanize_error_detail, parse_color, ColorExt};
 use forja_kernel::ui_contract::egui;
 use forja_kernel::Ctx;
 use std::path::PathBuf;
 
-fn render_dialog_error(
-    ui: &mut egui::Ui,
-    cx: &Ctx<'_>,
-    tokens: &forja_ui_kit::Tokens,
-    error: &mut Option<String>,
-) {
+fn render_dialog_error(ui: &mut egui::Ui, cx: &Ctx<'_>, error: &mut Option<String>) {
     let Some(raw) = error.as_deref() else {
         return;
     };
-    let message = humanize_error(cx, raw);
-    let mut dismissed = false;
-    ui.horizontal_wrapped(|ui| {
-        ui.label(
-            egui::RichText::new(message)
-                .small()
-                .color(tokens.color.danger.forja_color()),
-        );
-        if forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE)
-            .on_hover_text(cx.t("project.error.dismiss"))
-            .clicked()
-        {
-            dismissed = true;
-        }
-    });
-    if dismissed {
+    let human = humanize_error_detail(cx, raw);
+    if forja_ui_kit::error_notice(
+        ui,
+        &human.summary,
+        human.detail.as_deref(),
+        &cx.t("kernel.error.details"),
+        Some(&cx.t("project.error.dismiss")),
+    ) {
         *error = None;
     }
 }
@@ -40,6 +27,18 @@ pub(crate) fn render_dialog(
 ) -> Dialog {
     let tokens = forja_ui_kit::applied_tokens(ctx);
     let creating_form = matches!(dialog, Dialog::Create(_));
+    if !matches!(dialog, Dialog::Add(_)) {
+        ctx.data_mut(|data| data.remove::<bool>(egui::Id::new("forja.projects.add.focus")));
+    }
+    if !creating_form {
+        ctx.data_mut(|data| data.remove::<bool>(egui::Id::new("forja.projects.create.focus")));
+    }
+    if !matches!(dialog, Dialog::Clone(_)) {
+        ctx.data_mut(|data| data.remove::<bool>(egui::Id::new("forja.projects.clone.focus")));
+    }
+    if !matches!(dialog, Dialog::Edit(_)) {
+        ctx.data_mut(|data| data.remove::<bool>(egui::Id::new("forja.projects.edit.focus")));
+    }
     // Closing replaces the dialog; otherwise the edited form (typing, picked folder) is kept.
     let mut next: Option<Dialog> = None;
     match dialog {
@@ -100,7 +99,7 @@ pub(crate) fn render_dialog(
             } else {
                 "forja.projects.add.keyboard"
             });
-            if forja_ui_kit::consume_layer_escape(ctx, layer) {
+            if !form.busy && forja_ui_kit::consume_layer_escape(ctx, layer) {
                 return Dialog::None;
             }
             // The first field takes the keyboard as soon as the dialog opens,
@@ -191,7 +190,13 @@ pub(crate) fn render_dialog(
                             });
                         });
                     });
-                    render_dialog_error(ui, cx, &tokens, &mut form.error);
+                    if form.busy {
+                        ui.horizontal(|ui| {
+                            ui.spinner();
+                            ui.label(egui::RichText::new(cx.t("project.status.creating")).small());
+                        });
+                    }
+                    render_dialog_error(ui, cx, &mut form.error);
                     ui.add_space(8.0);
                     ui.horizontal(|ui| {
                         let submit_label = if creating {
@@ -199,29 +204,35 @@ pub(crate) fn render_dialog(
                         } else {
                             cx.t("project.action.add")
                         };
-                        if forja_ui_kit::button(
-                            ui,
-                            forja_ui_kit::ButtonKind::Primary,
-                            &submit_label,
-                        )
-                        .clicked()
+                        if !form.busy
+                            && forja_ui_kit::button(
+                                ui,
+                                forja_ui_kit::ButtonKind::Primary,
+                                &submit_label,
+                            )
+                            .clicked()
                         {
                             submit = true;
                         }
-                        if forja_ui_kit::button(
-                            ui,
-                            forja_ui_kit::ButtonKind::Ghost,
-                            &cx.t("project.action.cancel"),
-                        )
-                        .clicked()
+                        if !form.busy
+                            && forja_ui_kit::button(
+                                ui,
+                                forja_ui_kit::ButtonKind::Ghost,
+                                &cx.t("project.action.cancel"),
+                            )
+                            .clicked()
                         {
                             close = true;
                         }
                     });
                 });
-            if submit {
-                let result = if creating {
-                    start_create(cx, shared, form)
+            if submit && !form.busy {
+                form.error = None;
+                if creating {
+                    match start_create(cx, shared, form) {
+                        Ok(()) => form.busy = true,
+                        Err(error) => form.error = Some(error),
+                    }
                 } else {
                     let new = crate::model::NewProject {
                         path: form.path.clone(),
@@ -229,21 +240,22 @@ pub(crate) fn render_dialog(
                         icon: form.icon.clone(),
                         color: form.color.clone(),
                     };
-                    shared.add(cx, &new).map(|_| ())
-                };
-                match result {
-                    Ok(()) => next = Some(Dialog::None),
-                    Err(error) => form.error = Some(error),
+                    match shared.add(cx, &new).map(|_| ()) {
+                        Ok(()) => next = Some(Dialog::None),
+                        Err(error) => form.error = Some(error),
+                    }
                 }
-            } else if close {
+            } else if close && !form.busy {
                 next = Some(Dialog::None);
             }
         }
         Dialog::Clone(clone) => {
             let layer = egui::Id::new("forja.projects.clone.keyboard");
-            if forja_ui_kit::consume_layer_escape(ctx, layer) {
+            if !clone.form.busy && forja_ui_kit::consume_layer_escape(ctx, layer) {
                 return Dialog::None;
             }
+            let focus_key = egui::Id::new("forja.projects.clone.focus");
+            let focus_url = !ctx.data(|data| data.get_temp::<bool>(focus_key).unwrap_or(false));
             let mut close = false;
             let mut submit = false;
             egui::Window::new(cx.t("project.dialog.clone.title"))
@@ -258,7 +270,15 @@ pub(crate) fn render_dialog(
                             .small()
                             .color(tokens.color.text_muted.forja_color()),
                     );
-                    forja_ui_kit::text_field(ui, &mut clone.url, "https://host/owner/repo.git");
+                    let url = forja_ui_kit::text_field(
+                        ui,
+                        &mut clone.url,
+                        "https://host/owner/repo.git",
+                    );
+                    if focus_url {
+                        url.request_focus();
+                        ctx.data_mut(|data| data.insert_temp(focus_key, true));
+                    }
                     ui.add_space(4.0);
                     ui.label(
                         egui::RichText::new(cx.t("project.field.destination"))
@@ -277,35 +297,44 @@ pub(crate) fn render_dialog(
                         &mut clone.form.name,
                         &cx.t("project.field.name-hint"),
                     );
-                    render_dialog_error(ui, cx, &tokens, &mut clone.form.error);
+                    if clone.form.busy {
+                        ui.horizontal(|ui| {
+                            ui.spinner();
+                            ui.label(egui::RichText::new(cx.t("project.status.cloning")).small());
+                        });
+                    }
+                    render_dialog_error(ui, cx, &mut clone.form.error);
                     ui.add_space(8.0);
                     ui.horizontal(|ui| {
-                        if forja_ui_kit::button(
-                            ui,
-                            forja_ui_kit::ButtonKind::Primary,
-                            &cx.t("project.action.clone"),
-                        )
-                        .clicked()
+                        if !clone.form.busy
+                            && forja_ui_kit::button(
+                                ui,
+                                forja_ui_kit::ButtonKind::Primary,
+                                &cx.t("project.action.clone"),
+                            )
+                            .clicked()
                         {
                             submit = true;
                         }
-                        if forja_ui_kit::button(
-                            ui,
-                            forja_ui_kit::ButtonKind::Ghost,
-                            &cx.t("project.action.cancel"),
-                        )
-                        .clicked()
+                        if !clone.form.busy
+                            && forja_ui_kit::button(
+                                ui,
+                                forja_ui_kit::ButtonKind::Ghost,
+                                &cx.t("project.action.cancel"),
+                            )
+                            .clicked()
                         {
                             close = true;
                         }
                     });
                 });
-            if submit {
+            if submit && !clone.form.busy {
+                clone.form.error = None;
                 match start_clone(cx, shared, clone) {
-                    Ok(()) => next = Some(Dialog::None),
+                    Ok(()) => clone.form.busy = true,
                     Err(error) => clone.form.error = Some(error),
                 }
-            } else if close {
+            } else if close && !clone.form.busy {
                 next = Some(Dialog::None);
             }
         }
@@ -333,7 +362,7 @@ pub(crate) fn render_dialog(
                             ui.allocate_exact_size(egui::vec2(24.0, 24.0), egui::Sense::hover());
                         ui.painter().rect_filled(swatch, 4, color);
                     });
-                    render_dialog_error(ui, cx, &tokens, &mut form.error);
+                    render_dialog_error(ui, cx, &mut form.error);
                     ui.add_space(8.0);
                     ui.horizontal(|ui| {
                         if forja_ui_kit::button(
@@ -385,6 +414,7 @@ fn start_create(cx: &mut Ctx<'_>, shared: &Shared, form: &ProjectForm) -> Result
     let path = form.path.clone();
     let form = form.clone();
     let state = shared.clone();
+    shared.set_error(None);
     shared.set_status(Some(cx.t("project.status.creating")));
     cx.spawn(
         move || state::create_folder(&path),
@@ -399,11 +429,11 @@ fn start_create(cx: &mut Ctx<'_>, shared: &Shared, form: &ProjectForm) -> Result
                         color: form.color.clone(),
                     };
                     match state.add(cx, &new) {
-                        Ok(_) => state.set_dialog(Dialog::None),
-                        Err(error) => state.set_error(Some(error)),
+                        Ok(_) => state.finish_dialog(None),
+                        Err(error) => state.finish_dialog(Some(error)),
                     }
                 }
-                Err(error) => state.set_error(Some(error)),
+                Err(error) => state.finish_dialog(Some(error)),
             }
         },
     );
@@ -423,6 +453,7 @@ fn start_clone(cx: &mut Ctx<'_>, shared: &Shared, clone: &CloneForm) -> Result<(
     let icon = clone.form.icon.clone();
     let color = clone.form.color.clone();
     let state = shared.clone();
+    shared.set_error(None);
     shared.set_status(Some(cx.t("project.status.cloning")));
     cx.spawn(
         move || state::clone_repository(&url, &path),
@@ -437,11 +468,11 @@ fn start_clone(cx: &mut Ctx<'_>, shared: &Shared, clone: &CloneForm) -> Result<(
                         color,
                     };
                     match state.add(cx, &new) {
-                        Ok(_) => state.set_dialog(Dialog::None),
-                        Err(error) => state.set_error(Some(error)),
+                        Ok(_) => state.finish_dialog(None),
+                        Err(error) => state.finish_dialog(Some(error)),
                     }
                 }
-                Err(error) => state.set_error(Some(error)),
+                Err(error) => state.finish_dialog(Some(error)),
             }
         },
     );

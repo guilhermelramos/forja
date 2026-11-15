@@ -161,13 +161,20 @@ fn raw_project_errors_are_humanized_in_pt_br() {
     std::fs::create_dir_all(&root).unwrap();
     let mut runtime = runtime(&root);
     let cx = runtime.ctx("project");
-    assert_eq!(view::humanize_error(&cx, "path is empty"), "Informe o caminho da pasta.");
-    let missing = view::humanize_error(
+    assert_eq!(
+        view::humanize_error_detail(&cx, "path is empty").summary,
+        "Informe o caminho da pasta."
+    );
+    let missing = view::humanize_error_detail(
         &cx,
         "folder does not exist: The system cannot find the path specified. (os error 3)",
     );
-    assert!(missing.starts_with("Pasta inexistente"), "{missing}");
-    assert!(missing.contains("os error 3"), "{missing}");
+    assert!(missing.summary.starts_with("Pasta inexistente"), "{missing:?}");
+    assert!(
+        missing.detail.as_deref().unwrap_or_default().contains("os error 3")
+            || missing.summary.contains("os error 3"),
+        "{missing:?}"
+    );
     let _ = std::fs::remove_dir_all(root);
 }
 
@@ -226,5 +233,45 @@ fn active_project_switches_persists_and_falls_back_on_remove() {
         .unwrap();
     let fallback = reopened.call_method("project.current", Map::new()).unwrap();
     assert_eq!(fallback["id"], beta_id);
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
+fn create_folder_rejects_non_empty_dir_and_finish_dialog_keeps_form_on_error() {
+    let root = temp_dir("create-non-empty");
+    let target = root.join("existing");
+    std::fs::create_dir_all(&target).unwrap();
+    std::fs::write(target.join("README.md"), "occupied").unwrap();
+
+    let err = state::create_folder(target.to_str().unwrap()).unwrap_err();
+    assert_eq!(err, "the folder is not empty");
+
+    let mut runtime = runtime(&root);
+    let cx = runtime.ctx("project");
+    let human = view::humanize_error_detail(&cx, &err);
+    assert_eq!(human.summary, "A pasta de destino não está vazia.");
+
+    let shared = state::Shared::new();
+    let form = state::ProjectForm {
+        path: target.to_string_lossy().into_owned(),
+        name: "Teste A".to_owned(),
+        busy: true,
+        ..Default::default()
+    };
+    shared.set_dialog(state::Dialog::Create(form));
+
+    shared.finish_dialog(Some(err.clone()));
+    match shared.dialog() {
+        state::Dialog::Create(kept) => {
+            assert!(!kept.busy);
+            assert_eq!(kept.name, "Teste A");
+            assert_eq!(kept.path, target.to_string_lossy());
+            assert_eq!(kept.error.as_deref(), Some(err.as_str()));
+        }
+        other => panic!("expected Dialog::Create to stay open on error, got {other:?}"),
+    }
+
+    shared.finish_dialog(None);
+    assert!(matches!(shared.dialog(), state::Dialog::None));
     let _ = std::fs::remove_dir_all(root);
 }

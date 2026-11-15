@@ -1,0 +1,22 @@
+{
+  "title": "Novo projeto em pasta existente mantém diálogo aberto e exibe erro legível (#121)",
+  "issue": 121,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Novo projeto" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.type", "text": "Teste A" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Criar", "region": "Novo projeto" },
+    { "m": "ui.wait", "ms": 500 }
+  ],
+  "expect": [
+    {
+      "window_count": 1,
+      "present": ["A pasta de destino não está vazia.", "Fechar aviso", "Teste A", "Criar", "Cancelar"],
+      "present_contains": ["sample"]
+    }
+  ]
+}

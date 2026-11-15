@@ -95,20 +95,17 @@ impl View for ProjectsView {
         ui.add_space(4.0);
 
         if let Some(error) = self.state.error() {
-            let message = humanize_error(cx, &error);
-            ui.horizontal_wrapped(|ui| {
-                ui.label(
-                    egui::RichText::new(cx.t_args("project.error.prefix", &[("message", &message)]))
-                        .small()
-                        .color(tokens.color.danger.forja_color()),
-                );
-                if forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE)
-                    .on_hover_text(cx.t("project.error.dismiss"))
-                    .clicked()
-                {
-                    self.state.set_error(None);
-                }
-            });
+            let human = humanize_error_detail(cx, &error);
+            let message = cx.t_args("project.error.prefix", &[("message", &human.summary)]);
+            if forja_ui_kit::error_notice(
+                ui,
+                &message,
+                human.detail.as_deref(),
+                &cx.t("kernel.error.details"),
+                Some(&cx.t("project.error.dismiss")),
+            ) {
+                self.state.set_error(None);
+            }
         }
         if let Some(status) = self.state.status() {
             ui.label(
@@ -296,58 +293,74 @@ impl View for ProjectsView {
     }
 }
 
-pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> String {
+pub(crate) fn humanize_error_detail(cx: &Ctx<'_>, raw: &str) -> forja_kernel::HumanError {
     let trimmed = raw.trim();
     if trimmed == "path is empty" {
-        return cx.t("project.error.empty-path");
+        return forja_kernel::HumanError::simple(cx.t("project.error.empty-path"));
     }
     if let Some(detail) = trimmed.strip_prefix("folder does not exist:") {
-        return cx.t_args("project.error.not-found", &[("detail", detail.trim())]);
+        let detail = detail.trim();
+        return forja_kernel::HumanError::with_detail(
+            cx.t_args("project.error.not-found", &[("detail", detail)]),
+            detail,
+        );
     }
     if trimmed == "path is not a folder" {
-        return cx.t("project.error.not-folder");
+        return forja_kernel::HumanError::simple(cx.t("project.error.not-folder"));
     }
     if trimmed == "this folder is already registered" {
-        return cx.t("project.error.already-registered");
+        return forja_kernel::HumanError::simple(cx.t("project.error.already-registered"));
     }
     if trimmed == "the folder is not empty" {
-        return cx.t("project.error.not-empty");
+        return forja_kernel::HumanError::simple(cx.t("project.error.not-empty"));
     }
     if trimmed == "project not found" {
-        return cx.t("project.error.not-found-simple");
+        return forja_kernel::HumanError::simple(cx.t("project.error.not-found-simple"));
     }
     if trimmed == "color must be #RRGGBB" {
-        return cx.t("project.error.color-format");
+        return forja_kernel::HumanError::simple(cx.t("project.error.color-format"));
     }
     if trimmed == "repository URL is required" {
-        return cx.t("project.error.missing-url");
+        return forja_kernel::HumanError::simple(cx.t("project.error.missing-url"));
     }
     if trimmed == "destination is required" {
-        return cx.t("project.error.missing-destination");
+        return forja_kernel::HumanError::simple(cx.t("project.error.missing-destination"));
     }
     if let Some(detail) = trimmed
         .strip_prefix("could not create the folder:")
         .or_else(|| trimmed.strip_prefix("could not create the destination:"))
     {
-        return cx.t_args("project.error.create-folder", &[("detail", detail.trim())]);
+        return forja_kernel::HumanError::with_detail(
+            cx.t_args("project.error.create-folder", &[("detail", detail.trim())]),
+            trimmed,
+        );
     }
     if let Some(detail) = trimmed
         .strip_prefix("git init failed:")
         .or_else(|| trimmed.strip_prefix("could not run git init:"))
     {
-        return cx.t_args("project.error.git-init", &[("detail", detail.trim())]);
+        return forja_kernel::HumanError::with_detail(
+            cx.t_args("project.error.git-init", &[("detail", detail.trim())]),
+            trimmed,
+        );
     }
     if let Some(detail) = trimmed
         .strip_prefix("git clone failed:")
         .or_else(|| trimmed.strip_prefix("could not run git clone:"))
         .or_else(|| trimmed.strip_prefix("could not resolve the clone:"))
     {
-        return cx.t_args("project.error.git-clone", &[("detail", detail.trim())]);
+        return forja_kernel::HumanError::with_detail(
+            cx.t_args("project.error.git-clone", &[("detail", detail.trim())]),
+            trimmed,
+        );
     }
     if let Some(detail) = trimmed.strip_prefix("could not save projects:") {
-        return cx.t_args("project.error.save", &[("detail", detail.trim())]);
+        return forja_kernel::HumanError::with_detail(
+            cx.t_args("project.error.save", &[("detail", detail.trim())]),
+            trimmed,
+        );
     }
-    cx.t_args("project.error.generic", &[("detail", trimmed)])
+    forja_kernel::human_error::humanize_ctx(cx, trimmed)
 }
 
 /// Bench that represents the checkout of the project itself.
