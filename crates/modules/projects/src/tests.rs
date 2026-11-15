@@ -169,11 +169,24 @@ fn raw_project_errors_are_humanized_in_pt_br() {
         &cx,
         "folder does not exist: The system cannot find the path specified. (os error 3)",
     );
-    assert!(missing.summary.starts_with("Pasta inexistente"), "{missing:?}");
+    assert_eq!(missing.summary, "Pasta inexistente.");
     assert!(
-        missing.detail.as_deref().unwrap_or_default().contains("os error 3")
-            || missing.summary.contains("os error 3"),
+        missing.detail.as_deref().unwrap_or_default().contains("os error 3"),
         "{missing:?}"
+    );
+    let invalid_create = view::humanize_error_detail(
+        &cx,
+        "could not create the folder: The filename, directory name, or volume label syntax is incorrect. (os error 123)",
+    );
+    assert_eq!(invalid_create.summary, "Não foi possível criar a pasta.");
+    assert!(!invalid_create.summary.contains("os error"));
+    assert!(
+        invalid_create
+            .detail
+            .as_deref()
+            .unwrap_or_default()
+            .contains("os error 123"),
+        "{invalid_create:?}"
     );
     let _ = std::fs::remove_dir_all(root);
 }
