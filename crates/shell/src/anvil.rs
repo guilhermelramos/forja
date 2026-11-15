@@ -729,17 +729,7 @@ impl ForjaApp {
                     }
                     Ok(_) => {}
                     Err(error) => {
-                        let title = self.runtime.registry().command(&command)
-                            .map(|spec| self.text(&spec.title_key))
-                            .unwrap_or_else(|| command.clone());
-                        let message = match error {
-                            forja_kernel::KernelError::Command { message, .. } => message,
-                            other => other.to_string(),
-                        };
-                        self.status = Some(self.text_args(
-                            "shell.command.failed",
-                            &[("id", &title), ("message", &message)],
-                        ))
+                        self.set_command_error(&command, &error);
                     }
                 }
             }

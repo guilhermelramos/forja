@@ -136,7 +136,8 @@ pub struct ForjaApp {
     pub(crate) file_cache_query: String,
     pub(crate) show_right_panel: bool,
     pub(crate) fullscreen: bool,
-    pub(crate) status: Option<String>,
+    pub(crate) status: Option<forja_kernel::HumanError>,
+    pub(crate) status_details_open: bool,
     pub(crate) slot_rects: BTreeMap<String, egui::Rect>,
     pub(crate) theme_override: Option<String>,
     pub(crate) interface_theme: Option<String>,
@@ -264,6 +265,7 @@ impl ForjaApp {
             show_right_panel: true,
             fullscreen: false,
             status: None,
+            status_details_open: false,
             slot_rects: BTreeMap::new(),
             theme_override: session.theme,
             interface_theme: None,
@@ -301,7 +303,7 @@ impl ForjaApp {
             app.runtime.set_wake(Arc::clone(&wake));
             match RpcHost::start(wake) {
                 Ok(host) => app.rpc = Some(host),
-                Err(error) => app.status = Some(format!("RPC: {error}")),
+                Err(error) => app.set_status_error(&error.to_string()),
             }
         }
         if let Some(slot) = app.screenshot.as_ref().and_then(|job| job.slot.as_deref()) {
@@ -405,7 +407,7 @@ impl ForjaApp {
         }
         match self.runtime.run_command(id, args) {
             Ok(_) => {
-                self.status = None;
+                self.clear_status();
                 if matches!(id, "terminal.open" | "terminal.search" | "terminal.toggle" | "terminal.focus") {
                     actions::push(actions::Action::ShowBenchTab("terminal.tab".to_owned()));
                 }
@@ -417,20 +419,39 @@ impl ForjaApp {
                 }
             }
             Err(error) => {
-                let title = self
-                    .runtime
-                    .registry()
-                    .command(id)
-                    .map(|spec| self.text(&spec.title_key))
-                    .unwrap_or_else(|| id.to_owned());
-                let message = error.to_string();
-                let text = self.text_args(
-                    "shell.command.failed",
-                    &[("id", &title), ("message", &message)],
-                );
-                self.status = Some(text);
+                self.set_command_error(id, &error);
             }
         }
+    }
+
+    pub(crate) fn clear_status(&mut self) {
+        self.status = None;
+        self.status_details_open = false;
+    }
+
+    pub(crate) fn set_status_error(&mut self, raw: &str) {
+        self.status = Some(forja_kernel::human_error::humanize_error(
+            self.runtime.i18n(),
+            raw,
+        ));
+        self.status_details_open = false;
+    }
+
+    pub(crate) fn set_command_error(&mut self, id: &str, error: &forja_kernel::KernelError) {
+        let title = self
+            .runtime
+            .registry()
+            .command(id)
+            .map(|spec| self.text(&spec.title_key))
+            .unwrap_or_else(|| self.text("shell.anvil.group.commands"));
+        let human = forja_kernel::human_error::humanize_kernel_error(self.runtime.i18n(), error);
+        let summary = self.text_args(
+            "shell.command.failed",
+            &[("id", &title), ("message", &human.summary)],
+        );
+        let detail = human.detail.map(|detail| format!("{id}: {detail}"));
+        self.status = Some(forja_kernel::HumanError { summary, detail });
+        self.status_details_open = false;
     }
 
     pub(crate) fn active_project_crumb(&mut self) -> String {
@@ -508,7 +529,11 @@ impl ForjaApp {
                     if self.rail_views.iter().any(|view| view.id == view_id) {
                         self.rail_page = Some(view_id);
                     } else {
-                        self.status = Some(format!("rail page `{view_id}` not found"));
+                        self.status = Some(forja_kernel::HumanError::with_detail(
+                            self.text("shell.rail.not-found"),
+                            view_id,
+                        ));
+                        self.status_details_open = false;
                     }
                 }
                 actions::Action::OpenBench { project, bench } => {

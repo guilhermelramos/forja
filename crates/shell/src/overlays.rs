@@ -417,14 +417,16 @@ impl ForjaApp {
 
     fn apply_setting(&mut self, key: &str, value: SettingValue) {
         match self.runtime.set_setting(key, value) {
-            Ok(()) => self.status = None,
+            Ok(()) => self.clear_status(),
             Err(error) => {
-                self.status = Some(humanize_setting_error_for(
+                let summary = humanize_setting_error_for(
                     self.runtime.i18n(),
                     self.runtime.registry(),
                     key,
                     &error.to_string(),
-                ));
+                );
+                self.status = Some(forja_kernel::HumanError::simple(summary));
+                self.status_details_open = false;
             }
         }
     }
