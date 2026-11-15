@@ -1,0 +1,28 @@
+{
+  "title": "Diálogo Nova bancada captura foco inicial, mantém Tab dentro do modal e fecha com Escape (#122)",
+  "issue": 122,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.click", "target": "Quadro" },
+    { "m": "ui.click", "target": "Nova bancada" },
+    { "m": "ui.type", "text": "Bancada Foco" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.type", "text": "main" },
+    { "m": "ui.key", "keys": "Escape" }
+  ],
+  "expect": [
+    {
+      "step": 8,
+      "window_count": 1,
+      "present": ["Bancada Foco", "main", "Criar bancada"]
+    },
+    {
+      "window_count": 0,
+      "absent": ["Criar bancada", "Branch base"]
+    }
+  ]
+}

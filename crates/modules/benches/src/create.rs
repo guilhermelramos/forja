@@ -203,6 +203,8 @@ fn finish_create(cx: &mut Ctx<'_>, shared: &Shared, result: Result<Created, Stri
         }
     };
     shared.finish_create(None);
+    shared.set_error(None);
+    shared.set_notice(None);
     let record = created.record.clone();
     if let Err(error) = shared.mutate(cx, |file| {
         if file.find(&record.bench_id).is_none() {
@@ -214,6 +216,7 @@ fn finish_create(cx: &mut Ctx<'_>, shared: &Shared, result: Result<Created, Stri
     }
     cx.emit(&BenchCreated(record.to_ref()));
     open_tabs(cx, &record, &created.tabs);
+    let _ = crate::service::activate_created(cx, shared, &record.bench_id);
     if created.setup.ran {
         if created.setup.success {
             notify(
