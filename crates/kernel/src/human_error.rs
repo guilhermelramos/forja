@@ -47,8 +47,12 @@ pub fn humanize_error(i18n: &I18n, raw: &str) -> HumanError {
         return HumanError::with_detail(i18n.t(key), trimmed);
     }
 
-    if looks_technical(trimmed, &full_lower) {
+    if looks_technical(normalized, &lower) {
         return HumanError::with_detail(i18n.t("kernel.error.generic"), trimmed);
+    }
+
+    if normalized != trimmed {
+        return HumanError::with_detail(normalized, trimmed);
     }
 
     HumanError::simple(trimmed)
@@ -89,6 +93,8 @@ fn strip_wrappers(mut text: &str) -> &str {
         let before = text;
         if let Some(rest) = text.strip_prefix("command `") {
             if let Some((_, after)) = rest.split_once("` failed:") {
+                text = after.trim();
+            } else if let Some((_, after)) = rest.split_once("` falhou:") {
                 text = after.trim();
             }
         }
@@ -136,8 +142,33 @@ fn classify_key(full_lower: &str, inner_lower: &str) -> Option<&'static str> {
     if let Some(git_key) = classify_git_key(full_lower, inner_lower) {
         return Some(git_key);
     }
+    if let Some(helper_key) = classify_helper_key(inner_lower) {
+        return Some(helper_key);
+    }
     if is_network_error(inner_lower) {
         return Some("kernel.error.network");
+    }
+    None
+}
+
+fn classify_helper_key(inner_lower: &str) -> Option<&'static str> {
+    if inner_lower.contains("no installed helper profile matches")
+        || inner_lower.contains("no installed helpers found")
+        || inner_lower.contains("nenhum ajudante instalado foi encontrado")
+    {
+        return Some("kernel.error.helper-not-installed");
+    }
+    if inner_lower.contains("helper profile") && inner_lower.contains("is disabled") {
+        return Some("kernel.error.helper-disabled");
+    }
+    if inner_lower.contains("helper profile") && inner_lower.contains("not trusted") {
+        return Some("kernel.error.helper-untrusted");
+    }
+    if inner_lower.contains("terminal module is not available")
+        || inner_lower.contains("no terminal is available")
+        || inner_lower.contains("returned no terminal_id")
+    {
+        return Some("kernel.error.terminal-unavailable");
     }
     None
 }
@@ -414,5 +445,47 @@ mod tests {
         let clean = humanize_error(&pt, "Informe um nome para a bancada.");
         assert_eq!(clean.summary, "Informe um nome para a bancada.");
         assert_eq!(clean.detail, None);
+    }
+
+    #[test]
+    fn converts_helper_launch_and_wrapped_content_errors_without_internal_ids() {
+        let pt = test_i18n(Locale::PtBr);
+        let en = test_i18n(Locale::En);
+
+        let wrapped_pt = humanize_error(
+            &pt,
+            "command `content.run` falhou: command `helper.launch` failed: no installed helper profile matches helper.default.profile",
+        );
+        assert!(
+            wrapped_pt.summary.contains("Nenhum ajudante instalado"),
+            "{}",
+            wrapped_pt.summary
+        );
+        assert!(!wrapped_pt.summary.contains('`'));
+        assert!(!wrapped_pt.summary.contains("helper.default.profile"));
+        assert!(wrapped_pt.detail.is_some());
+
+        let wrapped_en = humanize_error(
+            &en,
+            "command `helper.launch` failed: No installed helpers found on PATH.",
+        );
+        assert!(
+            wrapped_en.summary.contains("No installed helper was found on PATH"),
+            "{}",
+            wrapped_en.summary
+        );
+        assert!(!wrapped_en.summary.contains("helper.launch"));
+        assert!(!wrapped_en.summary.to_ascii_lowercase().contains("failed"));
+        assert!(wrapped_en.detail.is_some());
+
+        let clean_wrapped = humanize_error(
+            &pt,
+            "command `helper.launch` failed: O ajudante Claude Code não está instalado neste computador.",
+        );
+        assert_eq!(
+            clean_wrapped.summary,
+            "O ajudante Claude Code não está instalado neste computador."
+        );
+        assert!(clean_wrapped.detail.is_some());
     }
 }

@@ -18,3 +18,7 @@ kernel-error-git-no-upstream = Esta branch ainda não tem uma branch remota conf
 kernel-error-git-auth = Falha de autenticação ao acessar o repositório remoto.
 kernel-error-git-dirty = Há alterações não salvas. Salve ou descarte antes de continuar.
 kernel-error-git-generic = Não foi possível concluir a operação do Git.
+kernel-error-helper-not-installed = Nenhum ajudante instalado foi encontrado no PATH. Instale um em Ajudantes para executar esta ação.
+kernel-error-helper-disabled = O ajudante selecionado está desativado nos Ajustes.
+kernel-error-helper-untrusted = O perfil do ajudante selecionado precisa de aprovação antes de rodar.
+kernel-error-terminal-unavailable = Nenhum terminal está disponível para executar esta ação.

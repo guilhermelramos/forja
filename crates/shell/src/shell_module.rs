@@ -287,6 +287,24 @@ mod tests {
         );
         assert!(!status_en.contains("os error"), "{status_en}");
         assert!(!status_en.to_lowercase().contains("failed"), "{status_en}");
+
+        let helper_err = forja_kernel::KernelError::Command {
+            id: "content.run".to_owned(),
+            message: "command `helper.launch` failed: No installed helpers found on PATH."
+                .to_owned(),
+        };
+        let helper_en = forja_kernel::human_error::humanize_kernel_error(runtime.i18n(), &helper_err);
+        assert!(
+            helper_en.summary.contains("No installed helper was found on PATH"),
+            "{}",
+            helper_en.summary
+        );
+        assert!(!helper_en.summary.contains('`'));
+        assert!(helper_en
+            .detail
+            .as_deref()
+            .is_some_and(|detail| detail.contains("helper.launch")));
+
         drop(runtime);
         let _ = std::fs::remove_dir_all(dir);
     }

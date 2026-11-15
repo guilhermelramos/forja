@@ -176,13 +176,13 @@ shell-status-dismiss = Dismiss notice
 shell-settings-range = Allowed: { $min } to { $max }
 shell-settings-range-min = Minimum: { $min }
 shell-settings-range-max = Maximum: { $max }
-shell-settings-error-color = { $label }: enter a color in #RRGGBB format, such as #F2762E ({ $detail }).
-shell-settings-error-min = { $label }: minimum allowed value is { $limit } ({ $detail }).
-shell-settings-error-max = { $label }: maximum allowed value is { $limit } ({ $detail }).
-shell-settings-error-max-len = { $label }: use at most { $limit } characters ({ $detail }).
-shell-settings-error-list-empty = { $label }: list items cannot be empty ({ $detail }).
-shell-settings-error-list-repeat = { $label }: there is a duplicate item in the list ({ $detail }).
-shell-settings-error-generic = Could not save "{ $label }" ({ $detail }).
+shell-settings-error-color = { $label }: enter a color in #RRGGBB format, such as #F2762E.
+shell-settings-error-min = { $label }: minimum allowed value is { $limit }.
+shell-settings-error-max = { $label }: maximum allowed value is { $limit }.
+shell-settings-error-max-len = { $label }: use at most { $limit } characters.
+shell-settings-error-list-empty = { $label }: list items cannot be empty.
+shell-settings-error-list-repeat = { $label }: there is a duplicate item in the list.
+shell-settings-error-generic = Could not save "{ $label }".
 
 # Setting combo options
 setting-option-auto = Automatic
