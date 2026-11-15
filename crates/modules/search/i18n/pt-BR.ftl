@@ -54,3 +54,4 @@ search-notice-replaced = { $matches ->
 search-notice-changed = Nada foi gravado: estes arquivos mudaram desde a prévia: { $files }. Faça a prévia de novo.
 search-notice-io = Falha ao gravar ({ $message }). Gravados: { $written }; restaurados: { $restored }.
 search-notice-error = Não foi possível concluir: { $message }
+search-error-invalid-regex = Expressão regular inválida.

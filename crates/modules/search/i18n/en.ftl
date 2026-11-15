@@ -54,3 +54,4 @@ search-notice-replaced = Replaced { $matches ->
 search-notice-changed = Nothing was written: these files changed since the preview: { $files }. Preview again.
 search-notice-io = Write failed ({ $message }). Written: { $written }; restored: { $restored }.
 search-notice-error = Could not finish: { $message }
+search-error-invalid-regex = Invalid regular expression.
