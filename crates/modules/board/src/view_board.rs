@@ -132,6 +132,10 @@ pub(crate) fn render_board(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) 
     }
 
     let visible = visible_cards(&cards, &prefs, &names);
+    if !stages.is_empty() && cards.is_empty() {
+        forja_ui_kit::empty_state(ui, forja_ui_kit::BOARD, &cx.t("board.empty"), None);
+        ui.add_space(8.0);
+    }
     let mut column_rects: Vec<(String, egui::Rect)> = Vec::new();
     let options = CardOptions::from_ctx(cx);
     egui::ScrollArea::horizontal()
@@ -144,7 +148,7 @@ pub(crate) fn render_board(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) 
                         .copied()
                         .filter(|card| card.stage == stage.id)
                         .collect();
-                    let height = ui.available_height().max(300.0);
+                    let height = ui.available_height().max(160.0);
                     let inner = ui.allocate_ui_with_layout(
                         egui::vec2(176.0, height),
                         egui::Layout::top_down(egui::Align::Min),
@@ -206,10 +210,6 @@ pub(crate) fn render_board(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) 
             }
             state.set_dragging(None);
         }
-    }
-    if !stages.is_empty() && cards.is_empty() {
-        ui.add_space(8.0);
-        forja_ui_kit::empty_state(ui, forja_ui_kit::BOARD, &cx.t("board.empty"), None);
     }
 }
 
