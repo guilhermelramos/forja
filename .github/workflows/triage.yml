@@ -31,15 +31,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      OPENCODE_VERSION: "2.2.7"
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      TRIAGE_MODELS: ${{ vars.TRIAGE_MODELS || 'openrouter/nvidia/nemotron-3.5-lightning:free,openrouter/nvidia/nemotron-3-ultra-550b-a55b:free,openrouter/google/gemma-4-31b-it:free' }}
+      TRIAGE_MODELS: ${{ vars.TRIAGE_MODELS || 'openrouter/z-ai/glm-5.3-flash,openrouter/nvidia/nemotron-3.5-lightning:free,openrouter/nvidia/nemotron-3-ultra-550b-a55b:free,openrouter/google/gemma-4-31b-it:free' }}
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Install OpenCode
-        run: npm install -g "@opencode/cli@${OPENCODE_VERSION}"
+      - name: Install OpenRouter SDK
+        working-directory: playtest/ts
+        run: npm ci && npm run build
       - name: Triage open issues
         shell: pwsh
         env:

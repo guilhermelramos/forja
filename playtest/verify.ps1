@@ -17,6 +17,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "window-size.ps1")
+. (Join-Path $PSScriptRoot "model-rules.ps1")
 $windowSizeOverride = Test-ForjaWindowSizeValue $WindowSize
 if ($MaxActions -lt 1) { throw "MaxActions must be positive" }
 if ($MinutesPerIssue -lt 1) { throw "MinutesPerIssue must be positive" }
@@ -31,16 +32,13 @@ if (-not $Models.Count -and $env:VERIFY_MODELS) {
 }
 if (-not $Models.Count) {
     $Models = @(
+        "openrouter/z-ai/glm-5.3-flash",
         "openrouter/nvidia/nemotron-3.5-super-vl:free",
         "openrouter/google/gemma-4-31b-it:free",
         "openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
     )
 }
-$Models = @($Models | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-$invalidModels = @($Models | Where-Object { $_ -notmatch "(-free|:free)$" })
-if ($invalidModels.Count) {
-    throw "Only free models are allowed; invalid model id(s): $($invalidModels -join ', ')"
-}
+$Models = Assert-AllowedPlaytestModels $Models
 $hasOpenRouterModel = @($Models | Where-Object { $_.StartsWith("openrouter/") }).Count -gt 0
 if ($hasOpenRouterModel -and -not $env:OPENROUTER_API_KEY) {
     throw "OPENROUTER_API_KEY is required for OpenRouter models; set VERIFY_MODELS to another free provider for a local run"
@@ -185,6 +183,7 @@ the structured expectations list required by the instructions.
             } } }
             permissions = $permissions
         }
+        $null = Add-OpenCodeProviderRoutingConfig $config $Models $model
         $config | ConvertTo-Json -Depth 12 | Set-Content (Join-Path $room "opencode.json") -Encoding utf8
         Push-Location $room
         try { git init -q 2>$null } finally { Pop-Location }
@@ -251,9 +250,9 @@ the structured expectations list required by the instructions.
             break
         }
 
-        if ($output -match "(?i)(rate.?limit|too many requests|\b429\b|usage limit reached|free usage limit|insufficient (credit|quota))") {
+        if ($output -match "(?i)(rate.?limit|too many requests|\b429\b|usage limit reached|free usage limit|insufficient (credit|quota)|no allowed providers|no endpoints found|provider.*unavailable)") {
             $null = $exhausted.Add($model)
-            Write-Host "verification #${number}: $model reached its free limit; trying the next model"
+            Write-Host "verification #${number}: $model unavailable or rate-limited; trying the next model"
             continue
         }
         if ($timedOut) {

@@ -27,6 +27,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "triage-rules.ps1")
+. (Join-Path $PSScriptRoot "model-rules.ps1")
 
 if ($MaxIssues -lt 1) { throw "MaxIssues must be at least 1" }
 if ($TimeoutSeconds -lt 1) { throw "TimeoutSeconds must be at least 1" }
@@ -43,18 +44,13 @@ if (-not $Models.Count -and $env:TRIAGE_MODELS) {
 }
 if (-not $Models.Count) {
     $Models = @(
+        "openrouter/z-ai/glm-5.3-flash",
         "openrouter/nvidia/nemotron-3.5-lightning:free",
         "openrouter/nvidia/nemotron-3-ultra-550b-a55b:free",
         "openrouter/google/gemma-4-31b-it:free"
     )
 }
-$Models = @($Models | ForEach-Object { $_ -split "," } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
-if (-not $Models.Count) { throw "At least one free model is required" }
-
-$invalidModels = @($Models | Where-Object { $_ -notmatch "(-free|:free)$" })
-if ($invalidModels.Count) {
-    throw "Only free models are allowed; invalid model id(s): $($invalidModels -join ', ')"
-}
+$Models = Assert-AllowedPlaytestModels $Models
 $hasOpenRouterModel = @($Models | Where-Object { $_.StartsWith("openrouter/") }).Count -gt 0
 if ($hasOpenRouterModel -and -not $env:OPENROUTER_API_KEY) {
     throw "OPENROUTER_API_KEY is required for OpenRouter models; set TRIAGE_MODELS to another free provider for a local run"
@@ -156,6 +152,113 @@ function Invoke-OpenCodeTriage($Runner, [string]$Model, [string]$Prompt, [int]$T
     }
 }
 
+function Resolve-OpenRouterSdkClassifier {
+    $nodeCmd = Get-Command node -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($null -eq $nodeCmd) {
+        throw "Node.js is required for OpenRouter SDK triage"
+    }
+    $tsDir = Join-Path $PSScriptRoot "ts"
+    $tsSource = Join-Path $tsDir "triage-classify.ts"
+    $jsBuilt = Join-Path $tsDir "dist\triage-classify.js"
+    $nodeModules = Join-Path $tsDir "node_modules"
+    if (-not (Test-Path $nodeModules)) {
+        throw "OpenRouter SDK dependencies are missing in $tsDir; run 'npm ci' inside playtest/ts"
+    }
+    $needsBuild = (-not (Test-Path $jsBuilt)) -or
+        ((Get-Item $tsSource).LastWriteTimeUtc -gt (Get-Item $jsBuilt).LastWriteTimeUtc)
+    if ($needsBuild) {
+        $npmCmd = Get-Command npm -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+        if ($null -eq $npmCmd) {
+            throw "npm is required to build playtest/ts/triage-classify.ts"
+        }
+        Push-Location $tsDir
+        try {
+            & $npmCmd.Source run build | Out-Null
+            if ($LASTEXITCODE -ne 0 -or -not (Test-Path $jsBuilt)) {
+                throw "Failed to build playtest/ts/triage-classify.ts"
+            }
+        } finally {
+            Pop-Location
+        }
+    }
+    return [pscustomobject]@{
+        NodeExecutable = $nodeCmd.Source
+        ScriptPath = $jsBuilt
+    }
+}
+
+function Invoke-OpenRouterSdkTriage($Classifier, [string]$Model, [string]$Prompt, [int]$TimeoutSec) {
+    $psi = [System.Diagnostics.ProcessStartInfo]::new($Classifier.NodeExecutable)
+    foreach ($arg in @($Classifier.ScriptPath, "--model", $Model, "--timeout-ms", ([string]($TimeoutSec * 1000)))) {
+        $psi.ArgumentList.Add($arg)
+    }
+    $psi.WorkingDirectory = Join-Path $PSScriptRoot "ts"
+    foreach ($name in @("GITHUB_TOKEN", "GH_TOKEN", "ACTIONS_RUNTIME_TOKEN")) {
+        $null = $psi.Environment.Remove($name)
+    }
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardInput = $true
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.StandardInputEncoding = [System.Text.Encoding]::UTF8
+    $psi.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+    $psi.StandardErrorEncoding = [System.Text.Encoding]::UTF8
+
+    $process = [System.Diagnostics.Process]::Start($psi)
+    $process.StandardInput.Write($Prompt)
+    $process.StandardInput.Close()
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
+    $timedOut = -not $process.WaitForExit(($TimeoutSec + 5) * 1000)
+    if ($timedOut) {
+        $process.Kill($true)
+        $process.WaitForExit(2000) | Out-Null
+        return [pscustomobject]@{
+            ExitCode = -1
+            TimedOut = $true
+            Stdout = ""
+            Stderr = ""
+            Usage = $null
+        }
+    }
+    $process.WaitForExit()
+    $rawOut = $stdoutTask.Result
+    $rawErr = $stderrTask.Result
+    if ($process.ExitCode -eq 2) {
+        return [pscustomobject]@{
+            ExitCode = 2
+            TimedOut = $true
+            Stdout = ""
+            Stderr = $rawErr
+            Usage = $null
+        }
+    }
+
+    $content = $rawOut
+    $usage = $null
+    if ($process.ExitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($rawOut)) {
+        try {
+            $envelope = $rawOut | ConvertFrom-Json -ErrorAction Stop
+            if ($null -ne $envelope.PSObject.Properties["content"]) {
+                $content = [string]$envelope.content
+            }
+            if ($null -ne $envelope.PSObject.Properties["usage"]) {
+                $usage = $envelope.usage
+            }
+        } catch {
+            # Let caller validate $content if envelope JSON is malformed.
+        }
+    }
+
+    return [pscustomobject]@{
+        ExitCode = $process.ExitCode
+        TimedOut = $false
+        Stdout = $content
+        Stderr = $rawErr
+        Usage = $usage
+    }
+}
+
 function Ensure-TriageLabel([string]$Name, [System.Collections.Generic.HashSet[string]]$Ensured) {
     if ($Ensured.Contains($Name)) { return }
     $def = $script:TriageLabelByName[$Name]
@@ -213,7 +316,13 @@ foreach ($issue in $candidates) {
     }
 }
 
-$runner = Resolve-OpenCodeRunner
+$useFakeOpenCode = [bool]$env:FORJA_OPENCODE_SCRIPT
+$openRouterClassifier = $null
+if (-not $useFakeOpenCode -and $hasOpenRouterModel) {
+    $openRouterClassifier = Resolve-OpenRouterSdkClassifier
+}
+$hasNonOpenRouterModel = @($Models | Where-Object { -not $_.StartsWith("openrouter/") }).Count -gt 0
+$runner = if ($useFakeOpenCode -or $hasNonOpenRouterModel) { Resolve-OpenCodeRunner } else { $null }
 $exhausted = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
 $consecutiveTimeouts = @{}
 $consecutiveFailures = @{}
@@ -225,7 +334,11 @@ $provisionalCount = 0
 $skippedInvalid = 0
 $skippedExistingProvisional = 0
 $loggedAllExhausted = $false
-$rateLimitPattern = "(?i)(rate.?limit|too many requests|\b429\b|usage limit reached|free usage limit|insufficient (credit|quota)|quota exceeded)"
+$totalPromptTokens = [long]0
+$totalCompletionTokens = [long]0
+$totalReasoningTokens = [long]0
+$usageSamples = 0
+$rateLimitPattern = "(?i)(rate.?limit|too many requests|\b429\b|usage limit reached|free usage limit|insufficient (credit|quota)|quota exceeded|no allowed providers|no endpoints found)"
 
 foreach ($issue in $candidates) {
     $number = [int]$issue.number
@@ -236,19 +349,34 @@ foreach ($issue in $candidates) {
 
     if (-not $available.Count) {
         if (-not $loggedAllExhausted) {
-            Write-Host "triage: every free model is unavailable (rate limited/timed out); applying deterministic provisional triage"
+            Write-Host "triage: every model is unavailable (rate limited/timed out); applying deterministic provisional triage"
             $loggedAllExhausted = $true
         }
     } else {
         $prompt = New-TriagePrompt $rubricText $issue $openIssues $shortcut
 
         foreach ($model in $available) {
-            $result = Invoke-OpenCodeTriage $runner $model $prompt $TimeoutSeconds
+            $result = if (-not $useFakeOpenCode -and $model.StartsWith("openrouter/")) {
+                Invoke-OpenRouterSdkTriage $openRouterClassifier $model $prompt $TimeoutSeconds
+            } else {
+                Invoke-OpenCodeTriage $runner $model $prompt $TimeoutSeconds
+            }
             $combined = ($result.Stdout + "`n" + $result.Stderr) -replace "\x1b\[[0-9;]*[A-Za-z]", ""
+
+            if ($null -ne $result.PSObject.Properties["Usage"] -and $null -ne $result.Usage) {
+                $inTok = [long]($result.Usage.promptTokens ?? 0)
+                $outTok = [long]($result.Usage.completionTokens ?? 0)
+                $reasonTok = [long]($result.Usage.reasoningTokens ?? 0)
+                $totalPromptTokens += $inTok
+                $totalCompletionTokens += $outTok
+                $totalReasoningTokens += $reasonTok
+                $usageSamples++
+                Write-Host "  usage #${number} ($model): input=$inTok, output=$outTok, reasoning=$reasonTok"
+            }
 
             if ($combined -match $rateLimitPattern) {
                 $null = $exhausted.Add($model)
-                Write-Host "triage #${number}: $model reached its free limit; trying next model"
+                Write-Host "triage #${number}: $model unavailable or rate-limited; trying next model"
                 continue
             }
             if ($result.TimedOut) {
@@ -264,7 +392,7 @@ foreach ($issue in $candidates) {
                 if ($consecutiveFailures[$model] -ge 3) {
                     $null = $exhausted.Add($model)
                 }
-                Write-Warning "triage #${number}: $model failed (OpenCode exit $($result.ExitCode)); trying next model"
+                Write-Warning "triage #${number}: $model failed (exit $($result.ExitCode)); trying next model"
                 continue
             }
             if ([string]::IsNullOrWhiteSpace($result.Stdout)) {
@@ -350,4 +478,7 @@ Write-Host "priority distribution: P5=$($priorityCounts[5]), P4=$($priorityCount
 if ($areaCounts.Count -gt 0) {
     $areaSummary = @($areaCounts.GetEnumerator() | Sort-Object Name | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ", "
     Write-Host "area distribution: $areaSummary"
+}
+if ($usageSamples -gt 0) {
+    Write-Host "token usage summary: input=$totalPromptTokens, output=$totalCompletionTokens, reasoning=$totalReasoningTokens ($usageSamples call(s))"
 }

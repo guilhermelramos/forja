@@ -5,6 +5,7 @@
 
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "triage-rules.ps1")
+. (Join-Path $PSScriptRoot "model-rules.ps1")
 
 $fixturesFile = Join-Path $PSScriptRoot "fixtures/triage/issues.json"
 $issues = @(Get-Content $fixturesFile -Raw | ConvertFrom-Json)
@@ -90,6 +91,8 @@ $oldFixtures = $env:FORJA_TRIAGE_FIXTURES
 $oldWrites = $env:FORJA_FAKE_GH_WRITES
 $oldOpencode = $env:FORJA_OPENCODE_SCRIPT
 $oldMutate = $env:FORJA_FAKE_GH_MUTATE
+$oldOrKey = $env:OPENROUTER_API_KEY
+$oldOrBase = $env:OPENROUTER_BASE_URL
 
 try {
     $null = New-Item -ItemType Directory -Force $fakeDir
@@ -516,13 +519,123 @@ pwsh -NoProfile -File "%~dp0fake-gh.ps1" %*
     if ($edit740Fallback -match "triagem-provisória") {
         throw "Timeout+working model run should use working model (not provisional): $edit740Fallback"
     }
+
+    # 8. Model allowlist & OpenCode provider routing config tests.
+    $allowed = Assert-AllowedPlaytestModels @("openrouter/z-ai/glm-5.3-flash", "openrouter/google/gemma-4-31b-it:free", "opencode/glm-5.3-flash-free")
+    if ($allowed.Count -ne 3 -or $allowed[0] -ne "openrouter/z-ai/glm-5.3-flash") {
+        throw "Allowlist failed to accept openrouter/z-ai/glm-5.3-flash + free models"
+    }
+    $rejectedPaid = $false
+    try {
+        $null = Assert-AllowedPlaytestModels @("openrouter/openai/gpt-4o")
+    } catch {
+        $rejectedPaid = $true
+    }
+    if (-not $rejectedPaid) {
+        throw "Assert-AllowedPlaytestModels must reject paid model not in models-allowlist.txt"
+    }
+    $badAllowlist = Join-Path $fakeDir "bad-allowlist.txt"
+    Set-Content -Path $badAllowlist -Value "openrouter/openai/gpt-4o" -Encoding utf8
+    $rejectedBadAllowlist = $false
+    try {
+        $null = Assert-AllowedPlaytestModels @("openrouter/openai/gpt-4o") $badAllowlist
+    } catch {
+        $rejectedBadAllowlist = $true
+    }
+    if (-not $rejectedBadAllowlist) {
+        throw "models-allowlist.txt must only permit openrouter/z-ai/glm-5.3-flash"
+    }
+
+    $cfgWithRelace = Add-OpenCodeProviderRoutingConfig ([ordered]@{}) @("openrouter/z-ai/glm-5.3-flash", "opencode/glm-5.3-flash-free") "openrouter/z-ai/glm-5.3-flash"
+    $relaceOpts = $cfgWithRelace.provider.openrouter.models["z-ai/glm-5.3-flash"].options.provider
+    if (($relaceOpts.only -join ",") -ne "relace/fp4" -or $relaceOpts.allow_fallbacks -ne $false) {
+        throw "OpenCode config missing mandatory relace/fp4 routing: $($cfgWithRelace | ConvertTo-Json -Depth 10 -Compress)"
+    }
+    if ($cfgWithRelace.small_model -ne "openrouter/z-ai/glm-5.3-flash") {
+        throw "OpenCode config must pin small_model to openrouter/z-ai/glm-5.3-flash when active"
+    }
+
+    $triagePaidOut = & pwsh -NoProfile -File (Join-Path $PSScriptRoot "triage.ps1") `
+        -Repository "fixture/repo" -DryRun -Models "openrouter/openai/gpt-4o" *>&1 | Out-String
+    if ($LASTEXITCODE -eq 0) {
+        throw "triage.ps1 must reject non-allowlisted paid models:`n$triagePaidOut"
+    }
+
+    # 9. End-to-end TypeScript @openrouter/sdk streaming + relace/fp4 routing + usage summary test.
+    $sdkIssues = Join-Path $fakeDir "sdk-issues.json"
+    ConvertTo-Json -InputObject @($byNumber[901]) -Depth 20 | Set-Content -Path $sdkIssues -Encoding utf8
+    $env:FORJA_TRIAGE_FIXTURES = $sdkIssues
+    $env:FORJA_FAKE_GH_MUTATE = "0"
+    Remove-Item Env:FORJA_OPENCODE_SCRIPT -ErrorAction SilentlyContinue
+    $env:OPENROUTER_API_KEY = "fixture-test-key"
+
+    function Invoke-WithMockOpenRouter([string]$Mode, [scriptblock]$Body) {
+        $portFile = Join-Path $fakeDir "or-port-$Mode.txt"
+        $captureFile = Join-Path $fakeDir "or-cap-$Mode.jsonl"
+        Remove-Item $portFile, $captureFile -ErrorAction SilentlyContinue
+        $serverScript = Join-Path $PSScriptRoot "fixtures/triage/mock-openrouter-server.mjs"
+        $srvProc = Start-Process -FilePath "node" -ArgumentList @($serverScript, $portFile, $captureFile, $Mode) -PassThru -NoNewWindow
+        try {
+            $deadline = (Get-Date).AddSeconds(10)
+            while (-not (Test-Path $portFile) -and (Get-Date) -lt $deadline) {
+                Start-Sleep -Milliseconds 50
+            }
+            if (-not (Test-Path $portFile)) { throw "Mock OpenRouter server ($Mode) failed to bind" }
+            $port = (Get-Content $portFile -Raw).Trim()
+            $env:OPENROUTER_BASE_URL = "http://127.0.0.1:$port"
+            & $Body $captureFile
+        } finally {
+            if ($srvProc -and -not $srvProc.HasExited) { $srvProc.Kill($true) }
+        }
+    }
+
+    Invoke-WithMockOpenRouter "ok" {
+        param($captureFile)
+        Remove-Item $writeLog -ErrorAction SilentlyContinue
+        $sdkOut = & pwsh -NoProfile -File (Join-Path $PSScriptRoot "triage.ps1") `
+            -Repository "fixture/repo" -IssueNumber 901 `
+            -Models "openrouter/z-ai/glm-5.3-flash" *>&1 | Out-String
+        if ($LASTEXITCODE -ne 0) { throw "OpenRouter SDK triage failed:`n$sdkOut" }
+        if ($sdkOut -notmatch "usage #901 \(openrouter/z-ai/glm-5.3-flash\): input=120, output=45, reasoning=18") {
+            throw "Missing per-issue streaming usage log:`n$sdkOut"
+        }
+        if ($sdkOut -notmatch "token usage summary: input=120, output=45, reasoning=18 \(1 call\(s\)\)") {
+            throw "Missing token usage summary:`n$sdkOut"
+        }
+        $captured = @(Get-Content $captureFile | ForEach-Object { $_ | ConvertFrom-Json })
+        if ($captured.Count -ne 1) { throw "Expected 1 HTTP request to OpenRouter SDK, got $($captured.Count)" }
+        $reqBody = $captured[0].body
+        if ($reqBody.model -ne "z-ai/glm-5.3-flash" -or $reqBody.stream -ne $true -or
+            ($reqBody.provider.only -join ",") -ne "relace/fp4" -or $reqBody.provider.allow_fallbacks -ne $false) {
+            throw "OpenRouter SDK request payload mismatch: $($reqBody | ConvertTo-Json -Depth 10 -Compress)"
+        }
+        $sdkWrites = @(Get-Content $writeLog)
+        if (-not ($sdkWrites | Where-Object { $_ -match "^issue edit 901 .*--add-label prioridade-4" })) {
+            throw "OpenRouter SDK run did not apply expected labels:`n$($sdkWrites -join "`n")"
+        }
+    }
+
+    Invoke-WithMockOpenRouter "all429" {
+        param($captureFile)
+        Remove-Item $writeLog -ErrorAction SilentlyContinue
+        $sdk429Out = & pwsh -NoProfile -File (Join-Path $PSScriptRoot "triage.ps1") `
+            -Repository "fixture/repo" -IssueNumber 901 `
+            -Models "openrouter/z-ai/glm-5.3-flash,openrouter/mock/fallback:free" *>&1 | Out-String
+        if ($LASTEXITCODE -ne 0) { throw "OpenRouter SDK all-429 fallback failed:`n$sdk429Out" }
+        $writes429 = @(Get-Content $writeLog)
+        if (-not ($writes429 | Where-Object { $_ -match "^issue edit 901 .*--add-label triagem-provisória" })) {
+            throw "OpenRouter SDK all-429 run did not apply provisional fallback:`n$($writes429 -join "`n")"
+        }
+    }
 } finally {
     $env:PATH = $oldPath
     if ($null -eq $oldFixtures) { Remove-Item Env:FORJA_TRIAGE_FIXTURES -ErrorAction SilentlyContinue } else { $env:FORJA_TRIAGE_FIXTURES = $oldFixtures }
     if ($null -eq $oldWrites) { Remove-Item Env:FORJA_FAKE_GH_WRITES -ErrorAction SilentlyContinue } else { $env:FORJA_FAKE_GH_WRITES = $oldWrites }
     if ($null -eq $oldOpencode) { Remove-Item Env:FORJA_OPENCODE_SCRIPT -ErrorAction SilentlyContinue } else { $env:FORJA_OPENCODE_SCRIPT = $oldOpencode }
     if ($null -eq $oldMutate) { Remove-Item Env:FORJA_FAKE_GH_MUTATE -ErrorAction SilentlyContinue } else { $env:FORJA_FAKE_GH_MUTATE = $oldMutate }
+    if ($null -eq $oldOrKey) { Remove-Item Env:OPENROUTER_API_KEY -ErrorAction SilentlyContinue } else { $env:OPENROUTER_API_KEY = $oldOrKey }
+    if ($null -eq $oldOrBase) { Remove-Item Env:OPENROUTER_BASE_URL -ErrorAction SilentlyContinue } else { $env:OPENROUTER_BASE_URL = $oldOrBase }
     Remove-Item $fakeDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-Write-Host "triage fixtures: all shortcut, provisional, refinement, validation, em-andamento preservation, retriage, fallback, timeout, and DryRun tests passed"
+Write-Host "triage fixtures: all shortcut, provisional, refinement, validation, allowlist, OpenRouter SDK streaming, em-andamento preservation, retriage, fallback, timeout, and DryRun tests passed"
