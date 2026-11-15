@@ -256,7 +256,7 @@ pub fn short_title(title: &str) -> String {
 }
 
 fn hidden_command(program: &str) -> Command {
-    let mut command = Command::new(program);
+    let mut command = forja_kernel::process::command(program);
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;

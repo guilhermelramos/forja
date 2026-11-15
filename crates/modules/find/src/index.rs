@@ -7,7 +7,7 @@
 
 use crate::fuzzy::Candidate;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
 /// Files kept per index. Beyond this the finder says the list is partial.
 pub const FILE_CAP: usize = 50_000;
@@ -83,7 +83,7 @@ fn visible(rel: &str, options: Options) -> bool {
 
 /// Lists files with `git ls-files`. `None` when `root` is not a repository or git is missing.
 fn git_files(root: &Path, options: Options) -> Option<Vec<String>> {
-    let mut command = Command::new("git");
+    let mut command = forja_kernel::process::command("git");
     command
         .arg("-C")
         .arg(root)
@@ -143,6 +143,7 @@ fn walk_files(root: &Path, options: Options) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::process::Command;
 
     fn temp_dir(name: &str) -> PathBuf {
         let dir = std::env::temp_dir().join(format!(

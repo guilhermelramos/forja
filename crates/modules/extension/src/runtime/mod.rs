@@ -462,13 +462,13 @@ fn open_external(url: &str) -> Result<Value, String> {
     std::thread::spawn(move || {
         #[cfg(target_os = "windows")]
         {
-            let _ = std::process::Command::new("cmd")
+            let _ = forja_kernel::process::command("cmd")
                 .args(["/C", "start", "", &target])
                 .spawn();
         }
         #[cfg(not(target_os = "windows"))]
         {
-            let _ = std::process::Command::new("xdg-open").arg(&target).spawn();
+            let _ = forja_kernel::process::command("xdg-open").arg(&target).spawn();
         }
     });
     Ok(serde_json::json!({ "opened": true }))

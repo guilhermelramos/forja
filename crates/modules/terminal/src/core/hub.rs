@@ -562,9 +562,16 @@ impl Hub {
             } else {
                 self.base_dir.clone()
             };
-            let shell = ShellCommand {
-                program: entry.shell.clone(),
-                arguments: entry.args.clone(),
+            // Reopening Forja never relaunches a helper (claude, codex, …) by
+            // itself: a saved helper terminal comes back as the default shell,
+            // keeping its text. Plain shells reopen as they were. Refs #167.
+            let shell = if is_plain_shell(&entry.shell) {
+                ShellCommand {
+                    program: entry.shell.clone(),
+                    arguments: entry.args.clone(),
+                }
+            } else {
+                resolve_shell(settings, None, None, None)
             };
             let terminal = Terminal::start(
                 id,
@@ -730,3 +737,30 @@ impl Hub {
         target.is_dir().then_some(target)
     }
 }
+
+/// Interactive shells that are safe to reopen. Anything else (a helper CLI
+/// such as `claude`, `codex` or `opencode`) is not relaunched on restore.
+fn is_plain_shell(program: &str) -> bool {
+    let name = std::path::Path::new(program)
+        .file_stem()
+        .and_then(|stem| stem.to_str())
+        .unwrap_or(program)
+        .to_ascii_lowercase();
+    matches!(
+        name.as_str(),
+        "pwsh" | "powershell" | "cmd" | "bash" | "sh" | "zsh" | "fish" | "nu" | "wsl" | "git-bash"
+    )
+}
+
+#[cfg(test)]
+mod restore_shell_tests {
+    #[test]
+    fn helpers_are_not_plain_shells() {
+        assert!(super::is_plain_shell("pwsh"));
+        assert!(super::is_plain_shell(r"C:\Windows\System32\cmd.exe"));
+        assert!(!super::is_plain_shell("claude"));
+        assert!(!super::is_plain_shell("codex"));
+        assert!(!super::is_plain_shell("opencode"));
+    }
+}
+

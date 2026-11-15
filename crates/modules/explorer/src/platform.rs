@@ -54,7 +54,7 @@ pub fn trash(_path: &Path) -> io::Result<()> {
 /// Opens Windows Explorer with `path` selected. The process is not awaited.
 #[cfg(windows)]
 pub fn reveal(path: &Path) -> io::Result<()> {
-    std::process::Command::new("explorer.exe")
+    forja_kernel::process::command("explorer.exe")
         .arg(format!("/select,{}", path.display()))
         .stdin(std::process::Stdio::null())
         .spawn()
@@ -72,7 +72,7 @@ pub fn reveal(_path: &Path) -> io::Result<()> {
 /// Opens `path` with the system's default app. Used when no editor module answers.
 #[cfg(windows)]
 pub fn open_default(path: &Path) -> io::Result<()> {
-    std::process::Command::new("explorer.exe")
+    forja_kernel::process::command("explorer.exe")
         .arg(path)
         .stdin(std::process::Stdio::null())
         .spawn()

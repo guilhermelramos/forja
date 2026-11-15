@@ -2,7 +2,7 @@
 
 use std::io::Read;
 use std::path::Path;
-use std::process::{Child, Command, Stdio};
+use std::process::{Child, Stdio};
 use std::time::{Duration, Instant};
 
 const MAX_OUTPUT: usize = 16 * 1024;
@@ -52,7 +52,7 @@ fn spawn(script: &str, cwd: &Path) -> Option<Child> {
         &[("sh", &["-c"])]
     };
     for (program, prefix) in candidates {
-        let mut command = Command::new(program);
+        let mut command = forja_kernel::process::command(program);
         command
             .args(*prefix)
             .arg(script)
@@ -87,7 +87,7 @@ fn wait(mut child: Child, _cwd: &Path, timeout_secs: i64) -> ScriptOutcome {
             let pid = child.id();
             let _ = child.kill();
             if cfg!(windows) {
-                let _ = Command::new("taskkill")
+                let _ = forja_kernel::process::command("taskkill")
                     .args(["/PID", &pid.to_string(), "/T", "/F"])
                     .stdout(Stdio::null())
                     .stderr(Stdio::null())

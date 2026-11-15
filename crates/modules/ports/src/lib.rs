@@ -14,7 +14,6 @@ use forja_kernel::{
 };
 use serde_json::json;
 use state::Shared;
-use std::process::Command;
 
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -174,7 +173,7 @@ fn register_settings(r: &mut Registrar<'_>) {
 }
 
 fn terminate(pid: u32) -> Result<(), String> {
-    let mut command = Command::new("taskkill");
+    let mut command = forja_kernel::process::command("taskkill");
     command.args(["/PID", &pid.to_string(), "/T", "/F"]);
     #[cfg(windows)]
     command.creation_flags(CREATE_NO_WINDOW);

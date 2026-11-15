@@ -1,7 +1,9 @@
 //! `forja-app` entry point: window setup, CLI flags and screenshot mode.
 
-// Release builds are a window app: no console window opens with Forja.
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+// Always a window app (release and the debug builds used by tests): Windows
+// never opens a console window for Forja. When started from a terminal, it
+// attaches to that terminal so --help and logs still print there.
+#![windows_subsystem = "windows"]
 
 mod actions;
 mod anvil;
@@ -54,6 +56,7 @@ struct Flags {
 }
 
 fn main() {
+    attach_parent_console();
     let code = run();
     std::process::exit(code);
 }
@@ -495,6 +498,19 @@ fn print_help() {
     );
 }
 
+/// Prints to the terminal that started Forja, if any, without creating one.
+fn attach_parent_console() {
+    #[cfg(windows)]
+    {
+        use windows_sys::Win32::System::Console::{AttachConsole, ATTACH_PARENT_PROCESS};
+        // SAFETY: AttachConsole has no preconditions; it fails harmlessly when
+        // there is no parent console or stdio is already redirected.
+        unsafe {
+            AttachConsole(ATTACH_PARENT_PROCESS);
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -593,3 +609,4 @@ mod tests {
         assert!(parsed["keybinds"].as_array().is_some_and(|k| !k.is_empty()));
     }
 }
+

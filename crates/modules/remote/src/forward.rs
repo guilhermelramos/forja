@@ -59,7 +59,7 @@ impl PortForwards {
         }
         self.running.remove(&key);
 
-        let mut command = Command::new(program);
+        let mut command = forja_kernel::process::command(program);
         command
             .args(ssh::forward_args(target, options, forward))
             .stdin(Stdio::null())

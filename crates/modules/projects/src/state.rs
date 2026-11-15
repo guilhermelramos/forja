@@ -381,7 +381,7 @@ pub fn create_folder(path: &str) -> Result<std::path::PathBuf, String> {
     }
     std::fs::create_dir_all(&path)
         .map_err(|error| format!("could not create the folder: {error}"))?;
-    let mut command = std::process::Command::new("git");
+    let mut command = forja_kernel::process::command("git");
     command
         .arg("init")
         .current_dir(&path)
@@ -411,7 +411,7 @@ pub fn clone_repository(url: &str, path: &str) -> Result<std::path::PathBuf, Str
         std::fs::create_dir_all(parent)
             .map_err(|error| format!("could not create the destination: {error}"))?;
     }
-    let mut command = std::process::Command::new("git");
+    let mut command = forja_kernel::process::command("git");
     command
         .arg("clone")
         .arg("--")

@@ -297,11 +297,11 @@ pub fn bench_created(cx: &mut Ctx<'_>, shared: &Shared, name: &str, path: &str) 
 /// Roda o comando de pré-checagem no diretório da bancada. Código de saída ou erro ao iniciar.
 pub fn run_precheck(command: &str, cwd: &str) -> Result<i32, String> {
     let mut process = if cfg!(windows) {
-        let mut process = Command::new("cmd.exe");
+        let mut process = forja_kernel::process::command("cmd.exe");
         process.arg("/C").arg(command);
         process
     } else {
-        let mut process = Command::new("sh");
+        let mut process = forja_kernel::process::command("sh");
         process.arg("-c").arg(command);
         process
     };

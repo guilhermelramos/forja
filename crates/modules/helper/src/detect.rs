@@ -177,12 +177,12 @@ fn version_command(executable: &Path, args: &[String]) -> Command {
         .unwrap_or_default();
     if matches!(ext.as_str(), "cmd" | "bat") {
         let comspec = std::env::var_os("COMSPEC").unwrap_or_else(|| "cmd.exe".into());
-        let mut command = Command::new(comspec);
+        let mut command = forja_kernel::process::command(comspec);
         command.arg("/d").arg("/c").arg(executable).args(args);
         return command;
     }
     if ext == "ps1" {
-        let mut command = Command::new("powershell.exe");
+        let mut command = forja_kernel::process::command("powershell.exe");
         command
             .arg("-NoLogo")
             .arg("-NoProfile")
@@ -193,7 +193,7 @@ fn version_command(executable: &Path, args: &[String]) -> Command {
             .args(args);
         return command;
     }
-    let mut command = Command::new(executable);
+    let mut command = forja_kernel::process::command(executable);
     command.args(args);
     command
 }

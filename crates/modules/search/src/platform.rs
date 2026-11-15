@@ -7,7 +7,7 @@ use std::path::Path;
 /// Opens `path` with its associated app. Used when no editor module answers.
 #[cfg(windows)]
 pub fn open_default(path: &Path) -> io::Result<()> {
-    std::process::Command::new("explorer.exe")
+    forja_kernel::process::command("explorer.exe")
         .arg(path)
         .stdin(std::process::Stdio::null())
         .spawn()

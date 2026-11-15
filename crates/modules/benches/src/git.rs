@@ -4,10 +4,10 @@
 //! missing credential fails instead of freezing a worker thread.
 
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
 pub fn git(cwd: &Path, args: &[&str]) -> Result<String, String> {
-    let output = Command::new("git")
+    let output = forja_kernel::process::command("git")
         .args(args)
         .current_dir(cwd)
         .env("GIT_TERMINAL_PROMPT", "0")

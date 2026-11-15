@@ -6,7 +6,7 @@
 
 use forja_contracts::GitSummary;
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use std::sync::Mutex;
 
 /// Git writes `.git/index.lock` for many read commands, so concurrent status
@@ -15,7 +15,7 @@ static GIT_LOCK: Mutex<()> = Mutex::new(());
 
 pub fn git(cwd: &Path, args: &[&str]) -> Result<String, String> {
     let _guard = GIT_LOCK.lock().unwrap_or_else(|error| error.into_inner());
-    let output = Command::new("git")
+    let output = forja_kernel::process::command("git")
         .args(args)
         .current_dir(cwd)
         .env("GIT_TERMINAL_PROMPT", "0")

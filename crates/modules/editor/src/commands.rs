@@ -10,7 +10,7 @@ use forja_kernel::{Args, Ctx, Result, SettingValue};
 use serde_json::json;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
 /// Images, notebooks, tables and PDFs are read-only; when the viewers module
 /// is present it owns the tab. A line request means the caller wants text.
@@ -270,7 +270,7 @@ pub fn open_external(cx: &mut Ctx<'_>, path: &str) {
         move || {
             #[cfg(windows)]
             {
-                Command::new("cmd")
+                forja_kernel::process::command("cmd")
                     .args(["/C", "start", "", &path])
                     .spawn()
                     .map(|_| ())
@@ -278,7 +278,7 @@ pub fn open_external(cx: &mut Ctx<'_>, path: &str) {
             }
             #[cfg(not(windows))]
             {
-                Command::new("xdg-open")
+                forja_kernel::process::command("xdg-open")
                     .arg(&path)
                     .spawn()
                     .map(|_| ())
@@ -399,7 +399,7 @@ pub fn comment_prefix(path: &str) -> &'static str {
 }
 
 fn format_rust(content: &str) -> Option<String> {
-    let mut child = Command::new("rustfmt")
+    let mut child = forja_kernel::process::command("rustfmt")
         .args(["--emit", "stdout", "--edition", "2021"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

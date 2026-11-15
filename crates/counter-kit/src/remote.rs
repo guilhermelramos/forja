@@ -68,7 +68,14 @@ pub fn check_host(remote_host: &str, configured_host: &str) -> Result<(), Counte
 
 /// URL do remoto `origin` da pasta, lida com `git` sem prompt e sem stdin.
 pub fn read_origin(dir: &Path) -> Result<String, CounterError> {
-    let output = Command::new("git")
+    let mut git = Command::new("git");
+    #[cfg(windows)]
+    {
+        // CREATE_NO_WINDOW: never flash a console window from the window app.
+        use std::os::windows::process::CommandExt;
+        git.creation_flags(0x0800_0000);
+    }
+    let output = git
         .arg("-C")
         .arg(dir)
         .args(["remote", "get-url", "origin"])

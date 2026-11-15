@@ -252,8 +252,13 @@ mod tests {
     impl TestRepo {
         fn new() -> Self {
             let path = std::env::temp_dir().join(format!(
-                "forja-git-compare-{}-{}",
+                "forja-git-compare-{}-{}-{}",
                 std::process::id(),
+                {
+                    // Parallel tests can read the same clock value.
+                    static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+                    NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+                },
                 SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .unwrap()

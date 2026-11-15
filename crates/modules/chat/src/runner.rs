@@ -27,7 +27,7 @@ impl Turn {
 /// Encerra um processo e seus filhos.
 pub fn cancel_pid(pid: u32) {
     std::thread::spawn(move || {
-        let mut command = Command::new("taskkill.exe");
+        let mut command = forja_kernel::process::command("taskkill.exe");
         command
             .args(["/PID", &pid.to_string(), "/T", "/F"])
             .stdin(Stdio::null())
@@ -138,12 +138,12 @@ fn build_command(program: &str, args: &[String]) -> Command {
         .map(str::to_ascii_lowercase)
         .unwrap_or_default();
     if ext == "cmd" || ext == "bat" {
-        let mut command = Command::new("cmd.exe");
+        let mut command = forja_kernel::process::command("cmd.exe");
         command.arg("/d").arg("/c").arg(&resolved).args(args);
         return command;
     }
     if ext == "ps1" {
-        let mut command = Command::new("powershell.exe");
+        let mut command = forja_kernel::process::command("powershell.exe");
         command
             .arg("-NoLogo")
             .arg("-NoProfile")
@@ -154,7 +154,7 @@ fn build_command(program: &str, args: &[String]) -> Command {
             .args(args);
         return command;
     }
-    let mut command = Command::new(&resolved);
+    let mut command = forja_kernel::process::command(&resolved);
     command.args(args);
     command
 }

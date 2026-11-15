@@ -198,7 +198,7 @@ mod tests {
         assert_eq!(inspect_process(4), ProcessInspection::default());
 
         let temp = std::env::temp_dir();
-        let mut child = std::process::Command::new("cmd")
+        let mut child = forja_kernel::process::command("cmd")
             .args(["/C", "ping -n 2 127.0.0.1 >NUL"])
             .current_dir(&temp)
             .spawn()

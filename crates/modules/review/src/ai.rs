@@ -7,7 +7,7 @@
 use serde::Deserialize;
 use std::io::Write;
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use std::time::{Duration, Instant};
 
 pub const TIMEOUT: Duration = Duration::from_secs(120);
@@ -244,7 +244,7 @@ pub fn command_for(profile: &Profile, input: &str) -> (String, Vec<String>) {
 
 pub fn run(profile: &Profile, input: &str, cwd: &Path) -> Result<String, String> {
     let (program, args) = command_for(profile, input);
-    let mut child = Command::new(&program)
+    let mut child = forja_kernel::process::command(&program)
         .args(&args)
         .current_dir(cwd)
         .env("GIT_TERMINAL_PROMPT", "0")

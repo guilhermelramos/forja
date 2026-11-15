@@ -3,7 +3,6 @@
 use crate::manifest::Capabilities;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::time::Duration;
 
 /// Configuração imutável da thread de uma extensão.
@@ -118,7 +117,7 @@ impl HostIo {
             return Err("[capability_denied] git.read".to_owned());
         }
         let root = self.project_root()?;
-        let output = Command::new("git")
+        let output = forja_kernel::process::command("git")
             .args(args)
             .current_dir(root)
             .output()

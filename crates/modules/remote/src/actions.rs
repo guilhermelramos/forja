@@ -131,7 +131,7 @@ pub fn probe(cx: &mut Ctx<'_>, shared: &Shared, id: &str) -> Result<(), String> 
 /// Roda `ssh … echo ok` e mede o tempo. Bloqueante: só dentro de `spawn`.
 pub fn run_probe(target: &SshTarget, options: &SshOptions) -> (Result<(), ProbeError>, u64) {
     let started = Instant::now();
-    let mut command = Command::new(ssh::ssh_program());
+    let mut command = forja_kernel::process::command(ssh::ssh_program());
     command.args(ssh::test_args(target, options)).stdin(Stdio::null());
     no_window(&mut command);
     let outcome = match command.output() {
@@ -169,7 +169,7 @@ pub fn list_distros(cx: &mut Ctx<'_>, shared: &Shared) {
 }
 
 fn run_wsl_list() -> Vec<WslDistro> {
-    let mut command = Command::new("wsl.exe");
+    let mut command = forja_kernel::process::command("wsl.exe");
     command.args(wsl::list_args()).stdin(Stdio::null());
     no_window(&mut command);
     match command.output() {

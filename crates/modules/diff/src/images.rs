@@ -6,7 +6,7 @@
 
 use forja_ui_kit::egui::ColorImage;
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
 pub struct Pair {
     pub old: Option<ColorImage>,
@@ -34,7 +34,7 @@ pub fn load(bench: &str, file: &str, staged: bool) -> Pair {
     } else {
         format!("HEAD:{file}")
     };
-    let old = Command::new("git")
+    let old = forja_kernel::process::command("git")
         .arg("-C")
         .arg(bench)
         .args(["show", &spec])
@@ -81,7 +81,7 @@ pub fn load_comparison(bench: &str, file: &str, base: &str) -> Pair {
 }
 
 fn git_output(bench: &str, args: &[&str]) -> Result<Vec<u8>, ()> {
-    let output = Command::new("git")
+    let output = forja_kernel::process::command("git")
         .arg("-C")
         .arg(bench)
         .args(args)

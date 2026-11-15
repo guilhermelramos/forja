@@ -9,7 +9,7 @@ use crate::state::{Comparison, Generated, Shared, Snapshot};
 use forja_kernel::{Args, Ctx, KernelError, Result, SettingValue};
 use serde_json::{Value, json};
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
 pub fn refresh(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value> {
     let bench = if fixtures() {
@@ -663,7 +663,7 @@ fn local_base(bench: &str, branch: &str) -> String {
 }
 
 fn git_text(bench: &str, args: &[&str]) -> std::result::Result<String, String> {
-    let output = Command::new("git")
+    let output = forja_kernel::process::command("git")
         .arg("-C")
         .arg(bench)
         .args(args)

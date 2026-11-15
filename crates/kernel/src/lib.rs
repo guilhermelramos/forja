@@ -23,6 +23,7 @@ pub mod keymap;
 pub mod manifest;
 pub mod module;
 pub mod paths;
+pub mod process;
 pub mod registry;
 pub mod rpc;
 pub mod runtime;

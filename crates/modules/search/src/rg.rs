@@ -4,12 +4,12 @@
 
 use crate::engine::Plan;
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
 /// Whether an `rg` executable answers `--version`. Runs a process: call it from
 /// the search thread, never from the interface thread.
 pub fn available() -> bool {
-    Command::new("rg")
+    forja_kernel::process::command("rg")
         .arg("--version")
         .stdin(Stdio::null())
         .stdout(Stdio::null())
@@ -66,7 +66,7 @@ pub fn args(plan: &Plan) -> Vec<String> {
 /// Files under the root that contain a match, as paths joined to the root.
 /// Exit code 1 (no match) is an empty list; any other failure is an error.
 pub fn candidate_files(plan: &Plan) -> Result<Vec<PathBuf>, String> {
-    let output = Command::new("rg")
+    let output = forja_kernel::process::command("rg")
         .args(args(plan))
         .stdin(Stdio::null())
         .output()

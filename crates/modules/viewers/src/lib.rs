@@ -150,7 +150,7 @@ fn bench_tab_order(default: i32) -> i32 {
 fn open_external(path: &str) -> Result<(), String> {
     #[cfg(windows)]
     {
-        let mut command = std::process::Command::new("cmd");
+        let mut command = forja_kernel::process::command("cmd");
         command.args(["/C", "start", "", path]);
         command
             .spawn()
@@ -159,7 +159,7 @@ fn open_external(path: &str) -> Result<(), String> {
     }
     #[cfg(not(windows))]
     {
-        std::process::Command::new("xdg-open")
+        forja_kernel::process::command("xdg-open")
             .arg(path)
             .spawn()
             .map(|_| ())

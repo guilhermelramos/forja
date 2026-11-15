@@ -41,6 +41,22 @@ impl ForjaApp {
             .exact_height(height)
             .frame(frame)
             .show(ctx, |ui| {
+                // The whole empty bar moves the window (Forja draws its own title
+                // bar). Registered first, so buttons and fields on top still win.
+                let bar = ui.interact(
+                    ui.max_rect(),
+                    egui::Id::new("forja.top.drag"),
+                    Sense::click_and_drag(),
+                );
+                if bar.drag_started_by(egui::PointerButton::Primary) {
+                    ui.ctx().send_viewport_cmd(ViewportCommand::StartDrag);
+                }
+                if bar.double_clicked() {
+                    let maximized = ui
+                        .ctx()
+                        .input(|input| input.viewport().maximized.unwrap_or(false));
+                    ui.ctx().send_viewport_cmd(ViewportCommand::Maximized(!maximized));
+                }
                 ui.horizontal_centered(|ui| {
                     let title = ui.add(
                         egui::Label::new(
@@ -50,7 +66,7 @@ impl ForjaApp {
                         )
                         .sense(Sense::click_and_drag()),
                     );
-                    if title.drag_started() {
+                    if title.drag_started_by(egui::PointerButton::Primary) {
                         ui.ctx().send_viewport_cmd(ViewportCommand::StartDrag);
                     }
                     ui.separator();

@@ -4,7 +4,7 @@
 //! título não virar código. A Forja já chamou `SetCurrentProcessExplicitAppUserModelID`
 //! no processo antes da janela.
 
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
 /// Mostra o aviso na central do Windows. Erros voltam como texto.
 pub fn show(title: &str, body: &str) -> Result<(), String> {
@@ -19,7 +19,7 @@ pub fn show(title: &str, body: &str) -> Result<(), String> {
     ));
     let payload = serde_json::json!({ "title": title, "body": body });
     std::fs::write(&path, payload.to_string()).map_err(|error| error.to_string())?;
-    let result = Command::new("powershell.exe")
+    let result = forja_kernel::process::command("powershell.exe")
         .args([
             "-NoProfile",
             "-NonInteractive",

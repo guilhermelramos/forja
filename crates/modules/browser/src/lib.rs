@@ -429,7 +429,7 @@ fn save_history(cx: &mut Ctx<'_>, shared: &Shared) {
 pub(crate) fn open_external(url: &str) -> Result<(), String> {
     #[cfg(windows)]
     {
-        std::process::Command::new("cmd")
+        forja_kernel::process::command("cmd")
             .args(["/C", "start", "", url])
             .spawn()
             .map(|_| ())
@@ -437,7 +437,7 @@ pub(crate) fn open_external(url: &str) -> Result<(), String> {
     }
     #[cfg(not(windows))]
     {
-        std::process::Command::new("xdg-open")
+        forja_kernel::process::command("xdg-open")
             .arg(url)
             .spawn()
             .map(|_| ())
