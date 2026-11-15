@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 21/160 telas documentadas · elementos citados 4576/4980 · completo: false
+**Progresso:** 24/160 telas documentadas · elementos citados 4714/5118 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -197,8 +197,8 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.light.settings.counter_linear` | [página](pages/en.light.settings.counter_linear.md) | [png](captures/en.light.settings.counter_linear.png) |
 | `en.light.settings.helper` | [página](pages/en.light.settings.helper.md) | [png](captures/en.light.settings.helper.png) |
 | `en.light.settings.import` | [página](pages/en.light.settings.import.md) | [png](captures/en.light.settings.import.png) |
-| `en.light.settings.mcp` | — | [png](captures/en.light.settings.mcp.png) |
-| `en.light.settings.onboarding` | — | [png](captures/en.light.settings.onboarding.png) |
-| `en.light.settings.remote` | — | [png](captures/en.light.settings.remote.png) |
+| `en.light.settings.mcp` | [página](pages/en.light.settings.mcp.md) | [png](captures/en.light.settings.mcp.png) |
+| `en.light.settings.onboarding` | [página](pages/en.light.settings.onboarding.md) | [png](captures/en.light.settings.onboarding.png) |
+| `en.light.settings.remote` | [página](pages/en.light.settings.remote.md) | [png](captures/en.light.settings.remote.png) |
 | `en.light.settings.trust` | — | [png](captures/en.light.settings.trust.png) |
 | `en.light.settings.voice` | — | [png](captures/en.light.settings.voice.png) |

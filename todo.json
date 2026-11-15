@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 21,
-  "widgets_total": 4980,
-  "widgets_covered": 4576,
+  "states_done": 24,
+  "widgets_total": 5118,
+  "widgets_covered": 4714,
   "complete": false,
   "stale": [
     {
@@ -1257,21 +1257,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "en.light.settings.mcp",
-      "png": "captures/en.light.settings.mcp.png",
-      "tree": "captures/en.light.settings.mcp.json"
-    },
-    {
-      "state": "en.light.settings.onboarding",
-      "png": "captures/en.light.settings.onboarding.png",
-      "tree": "captures/en.light.settings.onboarding.json"
-    },
-    {
-      "state": "en.light.settings.remote",
-      "png": "captures/en.light.settings.remote.png",
-      "tree": "captures/en.light.settings.remote.json"
-    },
     {
       "state": "en.light.settings.trust",
       "png": "captures/en.light.settings.trust.png",

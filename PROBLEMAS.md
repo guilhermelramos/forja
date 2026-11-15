@@ -1102,3 +1102,30 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Textos secundários em cinza médio sobre fundo creme ("No project yet…", "No active bench…", "Click to type", descrição da importação) têm contraste apenas moderado.
 - Nenhum elemento ultrapassa os limites da janela (1920×1080); nenhum texto estranho ou em idioma indevido nesta variante.
 
+## [en.light.settings.mcp](pages/en.light.settings.mcp.md)
+
+- A janela modal "Settings" termina em y=496, mas o snippet do OpenCode ((337,469)–(779,544)) e o aviso "The snippet is shown only; Forja does not write to another CLI's configuration." ((337,552)–(816,571)) estendem-se abaixo do limite da janela; o conteúdo aparece cortado/fora do modal na imagem.
+- O campo de busca do modal é um TextInput sem nome acessível (só o texto de apoio "Search settings" é visível).
+- Botões sem nome acessível: o alternador de tema (ícone de sol, (1741,5)) e os quatro botões de ícone da barra do terminal ((444,113)–(581,145)).
+- Ícones registrados apenas como "(ícone)" ((168,201) e (1756,117)) sem texto alternativo descritivo.
+- As abas "Extension panels" ((973,52)–(1099,84)) e "Helper (chat)" ((1099,52)–(1202,84)) têm retângulos que se estendem sobre a faixa do painel direito (até x≈1202), muito além do limite da área central (x≈1612); indicam sobreposição/desalinhamento da faixa de abas.
+- O botão "Close pwsh" ((385,121)–(401,137)) fica sobreposto pelo campo de busca do modal, e a aba "pwsh · Running" é parcialmente coberta pela janela "Settings".
+- Os botões "+", os quatro ícones sem nome, "Recipes" e "Shell" da barra do terminal ficam ocultos atrás da janela modal.
+
+## [en.light.settings.onboarding](pages/en.light.settings.onboarding.md)
+
+- A janela "Settings" sobrepõe as barras de abas centrais: a aba ativa "Terminal" (419,52)–(496,84) fica totalmente oculta, "Extension panels" (973,52)–(1099,84) aparece truncada ("ion panels") e o botão "More tabs" central (324,50)–(411,85) é parcialmente encoberto.
+- Retângulos sobrepostos atrás da janela: "pwsh · Running" (328,118)–(404,140), "Close pwsh" (385,121)–(401,137) e o campo de busca de ajustes (TextInput em 337,121)–(1017,153) ocupam a mesma região, indicando conflito de camadas na árvore de acessibilidade.
+- Os botões "+", "Recipes", "Shell" e os quatro ícones sem nome da faixa central (y≈113–145) ficam totalmente encobertos pela janela "Settings".
+- Vários elementos sem nome acessível: o botão-ícone de tema (1741,5), o logotipo (12,50), o campo de busca de ajustes (TextInput em 337,121), a grande área de texto central (328,150)–(1604,1036), os separadores verticais, os marcadores das faixas de abas e os quatro ícones da barra central (444–581,113), que só identificáveis pela posição.
+- O nome "More tabs" se repete em três botões distintos (64,50 / 324,50 / 1632,50), ambíguo para leitores de tela; "Changes" também nomeia duas abas diferentes (central e painel direito) e "Settings" nomeia a janela e o botão do trilho.
+
+## [en.light.settings.remote](pages/en.light.settings.remote.md)
+
+- A janela modal "Settings" termina em y=496, mas seu conteúdo continua até y≈631: o botão "Save target" (337,491)–(430,523), o rótulo "WSL", o botão "Refresh distros" e a mensagem "Distros not read yet. Refresh to list them." ficam fora da área da janela e não aparecem na captura. Na referência pt-BR o modal ia até y=635 e exibia tudo; aqui a seção WSL inteira e o botão de salvar ficam inacessíveis (há uma barra de rolagem estreita de 2 px em (1015,167)–(1017,487), facilmente perceptível).
+- Os cinco campos de texto (busca "Search settings" e os quatro do formulário "New target") são TextInput "(sem nome acessível)": o rótulo existe apenas como texto visual/espaço reservado.
+- Vários elementos sem nome acessível: alternador de tema (1741,5)–(1773,37), divisores verticais, faixas de abas e bordas do modal, os quatro botões de ícone da barra de projetos (444–581, 113–145), a área do terminal e a barra de rolagem do modal; os ícones de estado vazio aparecem apenas como "(ícone)".
+- A janela modal sobrepõe a barra de abas central e os botões "+", "Recipes" e "Shell" do painel de projetos; as abas "Editor", "Browser", "Changes", "Preview", "Bench", "Review" e "History" ficam totalmente ocultas e "Extension panels" aparece truncada ("…ion panels") na borda direita do modal; a aba "pwsh · Running" também é coberta (sobreposição esperada em modal, mas que esconde controles da tela de fundo).
+- Os botões de janela da barra de título têm apenas símbolos como nome ("–", "□", "×").
+- Diferença em relação à referência: no painel de projetos só aparecem "More tabs" e "Projects", com as demais abas recolhidas, enquanto a página pt-BR lista três abas visíveis.
+
