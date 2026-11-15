@@ -92,25 +92,37 @@ impl View for SearchView {
         {
             let state = lock(&self.shared);
             let status = if !has_root {
-                cx.t("search.notice.no_bench")
+                Some(cx.t("search.notice.no_bench"))
             } else if state.running {
-                cx.t("search.status.running")
+                Some(cx.t("search.status.running"))
             } else if !state.searched {
-                cx.t("search.status.idle")
-            } else if let Some(error) = &state.error {
-                error.clone()
+                Some(cx.t("search.status.idle"))
+            } else if state.error.is_some() {
+                None
             } else if state.files.is_empty() {
-                cx.t("search.status.none")
+                Some(cx.t("search.status.none"))
             } else {
-                cx.t_args(
+                Some(cx.t_args(
                     "search.status.results",
                     &[
                         ("matches", &state.matches.to_string()),
                         ("files", &state.files.len().to_string()),
                     ],
-                )
+                ))
             };
-            ui.label(egui::RichText::new(status).weak());
+            if let Some(status) = status {
+                ui.label(egui::RichText::new(status).weak());
+            }
+            if let Some(error) = state.error.as_deref() {
+                let human = humanize_error(cx, error);
+                let details_label = cx.t("kernel.error.details");
+                forja_ui_kit::error_banner(
+                    ui,
+                    &human.summary,
+                    human.detail.as_deref(),
+                    &details_label,
+                );
+            }
             if state.truncated {
                 ui.label(egui::RichText::new(cx.t("search.status.truncated")).weak());
             }
@@ -253,8 +265,10 @@ fn draw_plan(ui: &mut egui::Ui, cx: &Ctx<'_>, shared: &Shared, planning: bool) {
         return;
     }
     let state = lock(shared);
-    if let Some(error) = &state.plan_error {
-        ui.label(egui::RichText::new(error).color(egui::Color32::from_rgb(0xE5, 0x53, 0x4B)));
+    if let Some(error) = state.plan_error.as_deref() {
+        let human = humanize_error(cx, error);
+        let details_label = cx.t("kernel.error.details");
+        forja_ui_kit::error_banner(ui, &human.summary, human.detail.as_deref(), &details_label);
     }
     if let Some(notice) = &state.notice {
         if state.plan.is_none() {
@@ -306,4 +320,16 @@ fn draw_plan(ui: &mut egui::Ui, cx: &Ctx<'_>, shared: &Shared, planning: bool) {
                     });
             }
         });
+}
+
+pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> forja_kernel::HumanError {
+    let trimmed = raw.trim();
+    let lower = trimmed.to_ascii_lowercase();
+    if lower.contains("regex parse error")
+        || lower.starts_with("regex error")
+        || lower.starts_with("compiled regex exceeds")
+    {
+        return forja_kernel::HumanError::with_detail(cx.t("search.error.invalid-regex"), trimmed);
+    }
+    forja_kernel::human_error::humanize_ctx(cx, trimmed)
 }

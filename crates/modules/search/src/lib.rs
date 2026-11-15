@@ -198,6 +198,7 @@ impl Module for SearchModule {
             "search.notice.changed",
             "search.notice.io",
             "search.notice.error",
+            "search.error.invalid-regex",
         ] {
             r.uses_i18n(key);
         }
@@ -424,6 +425,29 @@ mod tests {
             .expect("search.results rpc succeeds");
         assert_eq!(results["matches"], serde_json::json!(1));
         assert_eq!(results["files"][0]["rel"], serde_json::json!("hello.txt"));
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn regex_parse_errors_are_humanized_without_raw_parser_output() {
+        let dir = std::env::temp_dir().join(format!("forja-search-err-{}", std::process::id()));
+        let module = SearchModule::new();
+        let mut runtime = Runtime::new(
+            vec![Box::new(module)],
+            RuntimeOptions {
+                data_dir: Some(dir.join("data")),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("search registers cleanly");
+        let cx = runtime.ctx("search");
+        let raw = "regex parse error:\n    C:\\forja\\999\n         ^\nerror: unrecognized escape sequence";
+        let human = view::humanize_error(&cx, raw);
+        assert_eq!(human.summary, "Expressão regular inválida.");
+        assert!(!human.summary.contains("error:"));
+        assert_eq!(human.detail.as_deref(), Some(raw));
         let _ = std::fs::remove_dir_all(dir);
     }
 }

@@ -301,8 +301,8 @@ pub(crate) fn humanize_error_detail(cx: &Ctx<'_>, raw: &str) -> forja_kernel::Hu
     if let Some(detail) = trimmed.strip_prefix("folder does not exist:") {
         let detail = detail.trim();
         return forja_kernel::HumanError::with_detail(
-            cx.t_args("project.error.not-found", &[("detail", detail)]),
-            detail,
+            cx.t("project.error.not-found"),
+            if detail.is_empty() { trimmed } else { detail },
         );
     }
     if trimmed == "path is not a folder" {
@@ -326,39 +326,22 @@ pub(crate) fn humanize_error_detail(cx: &Ctx<'_>, raw: &str) -> forja_kernel::Hu
     if trimmed == "destination is required" {
         return forja_kernel::HumanError::simple(cx.t("project.error.missing-destination"));
     }
-    if let Some(detail) = trimmed
-        .strip_prefix("could not create the folder:")
-        .or_else(|| trimmed.strip_prefix("could not create the destination:"))
-    {
-        return forja_kernel::HumanError::with_detail(
-            cx.t_args("project.error.create-folder", &[("detail", detail.trim())]),
-            trimmed,
-        );
-    }
-    if let Some(detail) = trimmed
-        .strip_prefix("git init failed:")
-        .or_else(|| trimmed.strip_prefix("could not run git init:"))
-    {
-        return forja_kernel::HumanError::with_detail(
-            cx.t_args("project.error.git-init", &[("detail", detail.trim())]),
-            trimmed,
-        );
-    }
-    if let Some(detail) = trimmed
-        .strip_prefix("git clone failed:")
-        .or_else(|| trimmed.strip_prefix("could not run git clone:"))
-        .or_else(|| trimmed.strip_prefix("could not resolve the clone:"))
-    {
-        return forja_kernel::HumanError::with_detail(
-            cx.t_args("project.error.git-clone", &[("detail", detail.trim())]),
-            trimmed,
-        );
-    }
-    if let Some(detail) = trimmed.strip_prefix("could not save projects:") {
-        return forja_kernel::HumanError::with_detail(
-            cx.t_args("project.error.save", &[("detail", detail.trim())]),
-            trimmed,
-        );
+    for (prefix, key) in [
+        ("could not create the folder:", "project.error.create-folder"),
+        (
+            "could not create the destination:",
+            "project.error.create-folder",
+        ),
+        ("git init failed:", "project.error.git-init"),
+        ("could not run git init:", "project.error.git-init"),
+        ("git clone failed:", "project.error.git-clone"),
+        ("could not run git clone:", "project.error.git-clone"),
+        ("could not resolve the clone:", "project.error.git-clone"),
+        ("could not save projects:", "project.error.save"),
+    ] {
+        if trimmed.starts_with(prefix) {
+            return forja_kernel::HumanError::with_detail(cx.t(key), trimmed);
+        }
     }
     forja_kernel::human_error::humanize_ctx(cx, trimmed)
 }

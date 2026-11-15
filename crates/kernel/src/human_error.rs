@@ -249,6 +249,7 @@ fn classify_git_key(full_lower: &str, inner_lower: &str) -> Option<&'static str>
     }
     if inner_lower.contains("already checked out")
         || inner_lower.contains("is already used by worktree")
+        || inner_lower.contains("used by worktree")
     {
         return Some("kernel.error.git-worktree-in-use");
     }
@@ -487,5 +488,15 @@ mod tests {
             "O ajudante Claude Code não está instalado neste computador."
         );
         assert!(clean_wrapped.detail.is_some());
+
+        let worktree_delete = humanize_error(
+            &pt,
+            "git branch -D main failed: error: cannot delete branch 'main' used by worktree at 'C:/repo'",
+        );
+        assert_eq!(
+            worktree_delete.summary,
+            "Esta branch já está em uso em outra bancada."
+        );
+        assert!(worktree_delete.detail.is_some());
     }
 }

@@ -198,7 +198,7 @@ fn check_raw_errors(
 ) {
     for el in &snapshot.elements {
         let name = el.name.trim();
-        if name.is_empty() {
+        if name.is_empty() || is_inside_technical_details(snapshot, el) {
             continue;
         }
         if let Some(reason) = detect_raw_error(name, locale, dict) {
@@ -216,6 +216,55 @@ fn check_raw_errors(
             });
         }
     }
+}
+
+fn is_details_label(name: &str) -> bool {
+    matches!(
+        name.trim(),
+        "Detalhes técnicos" | "Technical details" | "Detalhes" | "Details"
+    )
+}
+
+fn rect_contains(outer: [f64; 4], inner: [f64; 4], margin: f64) -> bool {
+    inner[0] >= outer[0] - margin
+        && inner[1] >= outer[1] - margin
+        && inner[2] <= outer[2] + margin
+        && inner[3] <= outer[3] + margin
+}
+
+/// Technical details drawers (`forja_ui_kit::error_banner`, terminal details)
+/// and the status-bar details modal intentionally reveal raw diagnostics only
+/// after explicit expansion.
+fn is_inside_technical_details(snapshot: &Snapshot, el: &Element) -> bool {
+    if el.role != "Label" {
+        return false;
+    }
+    let in_modal = snapshot.elements.iter().any(|w| {
+        w.role == "Window" && is_details_label(&w.name) && rect_contains(w.rect, el.rect, 4.0)
+    });
+    if in_modal {
+        return true;
+    }
+    snapshot.elements.iter().any(|header| {
+        if header.role != "Button" || !is_details_label(&header.name) {
+            return false;
+        }
+        let indented = el.rect[0] >= header.rect[0] + 6.0 && el.rect[0] <= header.rect[0] + 64.0;
+        let directly_below =
+            el.rect[1] >= header.rect[3] - 2.0 && el.rect[1] <= header.rect[3] + 36.0;
+        if !indented || !directly_below {
+            return false;
+        }
+        let blocked_between = snapshot.elements.iter().any(|other| {
+            other.id != header.id
+                && other.id != el.id
+                && other.rect[0] <= header.rect[0] + 4.0
+                && other.rect[2] >= header.rect[0]
+                && other.rect[1] >= header.rect[3] - 2.0
+                && other.rect[3] <= el.rect[1] + 2.0
+        });
+        !blocked_between
+    })
 }
 
 /// Detects raw technical error patterns in visible UI text.
@@ -539,6 +588,36 @@ mod tests {
         let s_en = snap(vec![el(1, "Label", "Notify failed checks", [10.0, 10.0, 200.0, 30.0], false)]);
         let v_en = check_snapshot(&s_en, "en", &dict, &[]);
         assert!(v_en.is_empty());
+
+        // Intentional details inside an expanded CollapsingHeader or details Window are allowed,
+        // while a raw error in the summary label outside details is still caught.
+        let expanded_drawer = snap(vec![
+            el(10, "Label", "A busca falhou.", [483.0, 183.0, 700.0, 231.0], false),
+            el(11, "Button", "Detalhes técnicos", [483.0, 243.0, 666.0, 291.0], true),
+            el(12, "Label", "invalid query: Syntax Error: <>", [510.0, 303.0, 793.0, 327.0], false),
+        ]);
+        assert!(
+            check_snapshot(&expanded_drawer, "pt-BR", &dict, &[]).is_empty(),
+            "raw detail inside expanded CollapsingHeader should be allowed"
+        );
+
+        let leaked_summary = snap(vec![
+            el(10, "Label", "command `helper.launch` failed: bad", [483.0, 183.0, 800.0, 231.0], false),
+            el(11, "Button", "Detalhes técnicos", [483.0, 243.0, 666.0, 291.0], true),
+            el(12, "Label", "command `helper.launch` failed: bad", [510.0, 303.0, 800.0, 327.0], false),
+        ]);
+        let leaked = check_snapshot(&leaked_summary, "pt-BR", &dict, &[]);
+        assert_eq!(leaked.len(), 1);
+        assert!(leaked[0].dedup_key.starts_with("raw_error:"));
+
+        let details_modal = snap(vec![
+            el(20, "Window", "Technical details", [500.0, 200.0, 1100.0, 500.0], false),
+            el(21, "Label", "content.run: command `helper.launch` failed: missing", [520.0, 260.0, 1050.0, 300.0], false),
+        ]);
+        assert!(
+            check_snapshot(&details_modal, "en", &dict, &[]).is_empty(),
+            "raw detail inside Technical details modal window should be allowed"
+        );
     }
 
     #[test]

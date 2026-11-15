@@ -113,6 +113,7 @@ impl Module for ChatModule {
             "chat.view.none-installed",
             "chat.view.install-guide",
             "chat.view.open-helpers",
+            "chat.view.send-no-helper",
             "chat.view.copy-install",
             "chat.view.copied",
             "chat.view.error-not-found",
@@ -564,5 +565,18 @@ mod tests {
         assert!(events.iter().any(|e| matches!(e, stream::StreamEvent::SessionId(id) if id == "ses_abc")));
         assert!(events.iter().any(|e| matches!(e, stream::StreamEvent::Message(m) if m.summary() == "oi tudo bem")));
         assert!(events.iter().any(|e| matches!(e, stream::StreamEvent::Message(m) if m.role == crate::model::ChatRole::Tool)));
+    }
+
+    #[test]
+    fn humanizes_helper_launch_and_not_installed_errors() {
+        let guard = temp_guard("humanize-chat-err");
+        let mut runtime = runtime(&guard.0);
+        let cx = runtime.ctx("chat");
+        let raw = "command `helper.launch` failed: Helper OpenAI Codex CLI is not installed on this machine.";
+        let human = helper_picker::humanize_error(&cx, "OpenAI Codex CLI", raw);
+        assert!(!human.summary.contains("command `"));
+        assert!(!human.summary.contains("failed:"));
+        assert!(!human.summary.contains("is not installed"));
+        assert_eq!(human.detail.as_deref(), Some(raw));
     }
 }

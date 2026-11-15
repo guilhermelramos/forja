@@ -165,15 +165,30 @@ pub(crate) fn draw_uninstalled_banner(
     }
 }
 
-pub(crate) fn humanize_error(cx: &Ctx<'_>, helper_name: &str, raw: &str) -> String {
-    if raw.starts_with("executable-not-found:")
-        || raw.to_ascii_lowercase().contains("os error 2")
-        || raw.to_ascii_lowercase().contains("not found")
+pub(crate) fn humanize_error(
+    cx: &Ctx<'_>,
+    helper_name: &str,
+    raw: &str,
+) -> forja_kernel::HumanError {
+    let trimmed = raw.trim();
+    let lower = trimmed.to_ascii_lowercase();
+    if trimmed.starts_with("executable-not-found:")
+        || lower.contains("os error 2")
+        || lower.contains("not found")
     {
-        return cx.t_args("chat.view.error-not-found", &[("helper", helper_name)]);
+        return forja_kernel::HumanError::with_detail(
+            cx.t_args("chat.view.error-not-found", &[("helper", helper_name)]),
+            trimmed,
+        );
     }
-    if raw.starts_with("launch-failed:") {
-        return cx.t_args("chat.view.error-launch", &[("helper", helper_name)]);
+    if lower.contains("is not installed") || lower.contains("não está instalado") {
+        return forja_kernel::HumanError::with_detail(cx.t("chat.view.send-no-helper"), trimmed);
     }
-    raw.to_owned()
+    if trimmed.starts_with("launch-failed:") {
+        return forja_kernel::HumanError::with_detail(
+            cx.t_args("chat.view.error-launch", &[("helper", helper_name)]),
+            trimmed,
+        );
+    }
+    forja_kernel::human_error::humanize_ctx(cx, trimmed)
 }

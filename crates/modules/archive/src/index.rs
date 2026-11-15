@@ -280,7 +280,7 @@ impl ArchiveIndex {
             Box::new(
                 parser
                     .parse_query(trimmed)
-                    .map_err(|error| format!("busca inválida: {error}"))?,
+                    .map_err(|error| format!("invalid query: {error}"))?,
             )
         };
         let snippet_generator =

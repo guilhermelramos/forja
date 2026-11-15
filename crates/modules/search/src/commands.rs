@@ -363,14 +363,17 @@ pub fn apply(cx: &mut Ctx<'_>, shared: &Shared) -> KResult<Value> {
                     message,
                     written,
                     restored,
-                }) => cx.t_args(
-                    "search.notice.io",
-                    &[
-                        ("message", message),
-                        ("written", &written.to_string()),
-                        ("restored", &restored.to_string()),
-                    ],
-                ),
+                }) => {
+                    let clean = forja_kernel::human_error::humanize_ctx(cx, message).summary;
+                    cx.t_args(
+                        "search.notice.io",
+                        &[
+                            ("message", clean.as_str()),
+                            ("written", &written.to_string()),
+                            ("restored", &restored.to_string()),
+                        ],
+                    )
+                }
             };
             {
                 let mut state = lock(&done_shared);
@@ -411,14 +414,18 @@ pub fn open_hit(cx: &mut Ctx<'_>, shared: &Shared, path: PathBuf, line: u32) {
                 move || platform::open_default(&path),
                 move |cx, result: std::io::Result<()>| {
                     if let Err(error) = result {
-                        let text =
-                            cx.t_args("search.notice.error", &[("message", &error.to_string())]);
+                        let clean =
+                            forja_kernel::human_error::humanize_ctx(cx, &error.to_string()).summary;
+                        let text = cx.t_args("search.notice.error", &[("message", &clean)]);
                         lock(&done_shared).notice = Some(text);
                     }
                 },
             );
         }
-        Err(error) => lock(shared).notice = Some(error.to_string()),
+        Err(error) => {
+            let clean = forja_kernel::human_error::humanize_ctx(cx, &error.to_string()).summary;
+            lock(shared).notice = Some(clean);
+        }
     }
 }
 
