@@ -5,6 +5,7 @@
 //! while a command runs.
 
 use crate::commands;
+use crate::dialogs::{confirm_trash_window, name_window, new_entry_window, Outcome};
 use crate::state::{lock, Dialog, Shared};
 use crate::tree::Entry;
 use forja_kernel::ui_contract::{egui, View};
@@ -34,14 +35,6 @@ enum Request {
     Undo,
     Redo,
     Refresh,
-}
-
-/// How a small input dialog ended this frame.
-#[derive(PartialEq, Eq)]
-enum Outcome {
-    Open,
-    Submit,
-    Cancel,
 }
 
 /// Snapshot of the state the frame needs, taken once under the lock.
@@ -367,6 +360,10 @@ impl ExplorerView {
 
     fn dialogs(&self, ctx: &egui::Context, cx: &mut Ctx<'_>) {
         let Some(dialog) = lock(&self.shared).dialog.take() else {
+            ctx.data_mut(|data| {
+                data.remove_temp::<bool>(egui::Id::new("forja.explorer.new_entry.focus"));
+                data.remove_temp::<bool>(egui::Id::new("forja.explorer.rename.focus"));
+            });
             return;
         };
         match dialog {
@@ -434,31 +431,7 @@ impl ExplorerView {
                 }
             }
             Dialog::ConfirmTrash { path } => {
-                let name = path
-                    .file_name()
-                    .map(|n| n.to_string_lossy().into_owned())
-                    .unwrap_or_else(|| path.display().to_string());
-                let title = cx.t("explorer.dialog.trash.title");
-                let body = cx.t_args("explorer.dialog.trash.body", &[("name", &name)]);
-                let yes = cx.t("explorer.dialog.trash.yes");
-                let no = cx.t("explorer.dialog.cancel");
-                let mut answer: Option<bool> = None;
-                egui::Window::new(title)
-                    .collapsible(false)
-                    .resizable(false)
-                    .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-                    .show(ctx, |ui| {
-                        ui.label(body);
-                        ui.horizontal(|ui| {
-                            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, &yes).clicked() {
-                                answer = Some(true);
-                            }
-                            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &no).clicked() {
-                                answer = Some(false);
-                            }
-                        });
-                    });
-                match answer {
+                match confirm_trash_window(ctx, cx, &path) {
                     Some(true) => {
                         let result = commands::trash(cx, &self.shared, path);
                         report(&self.shared, result);
@@ -559,92 +532,4 @@ fn templates(cx: &mut Ctx<'_>) -> Vec<(String, String)> {
                 })
         })
         .unwrap_or_default()
-}
-
-/// Name field plus the file template menu, with OK / Cancel.
-fn new_entry_window(
-    ctx: &egui::Context,
-    cx: &Ctx<'_>,
-    title: &str,
-    name: &mut String,
-    templates: &[(String, String)],
-    template: &mut Option<String>,
-) -> Outcome {
-    let label = cx.t("explorer.dialog.name.label");
-    let template_label = cx.t("explorer.dialog.template.label");
-    let none = cx.t("explorer.dialog.template.none");
-    let ok = cx.t("explorer.dialog.confirm");
-    let cancel = cx.t("explorer.dialog.cancel");
-    let mut outcome = Outcome::Open;
-    egui::Window::new(title)
-        .collapsible(false)
-        .resizable(false)
-        .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-        .show(ctx, |ui| {
-            ui.label(label);
-            let edit = forja_ui_kit::text_field(ui, name, "");
-            edit.request_focus();
-            if !templates.is_empty() {
-                ui.label(template_label);
-                let mut options = vec![none.as_str()];
-                options.extend(templates.iter().map(|(_, name)| name.as_str()));
-                let mut index = template
-                    .as_ref()
-                    .and_then(|selected| templates.iter().position(|(id, _)| id == selected))
-                    .map(|index| index + 1)
-                    .unwrap_or(0);
-                if forja_ui_kit::select(ui, &mut index, &options).changed() {
-                    *template = if index == 0 {
-                        None
-                    } else {
-                        templates.get(index - 1).map(|(id, _)| id.clone())
-                    };
-                }
-            }
-            ui.horizontal(|ui| {
-                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, &ok).clicked() {
-                    outcome = Outcome::Submit;
-                }
-                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cancel).clicked() {
-                    outcome = Outcome::Cancel;
-                }
-            });
-            if ui.input(|input| input.key_pressed(egui::Key::Enter)) {
-                outcome = Outcome::Submit;
-            }
-            if ui.input(|input| input.key_pressed(egui::Key::Escape)) {
-                outcome = Outcome::Cancel;
-            }
-        });
-    outcome
-}
-
-/// A small window with one name field and OK / Cancel. Enter submits, Escape cancels.
-fn name_window(ctx: &egui::Context, cx: &Ctx<'_>, title: &str, name: &mut String) -> Outcome {
-    let label = cx.t("explorer.dialog.name.label");
-    let ok = cx.t("explorer.dialog.confirm");
-    let cancel = cx.t("explorer.dialog.cancel");
-    let mut outcome = Outcome::Open;
-    egui::Window::new(title)
-        .collapsible(false)
-        .resizable(false)
-        .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-        .show(ctx, |ui| {
-            ui.label(label);
-            let edit = forja_ui_kit::text_field(ui, name, "");
-            edit.request_focus();
-            let enter = edit.lost_focus() && ui.input(|input| input.key_pressed(egui::Key::Enter));
-            ui.horizontal(|ui| {
-                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, &ok).clicked() || enter {
-                    outcome = Outcome::Submit;
-                }
-                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cancel).clicked() {
-                    outcome = Outcome::Cancel;
-                }
-            });
-        });
-    if ctx.input(|input| input.key_pressed(egui::Key::Escape)) {
-        outcome = Outcome::Cancel;
-    }
-    outcome
 }
