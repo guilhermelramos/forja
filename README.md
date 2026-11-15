@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 15/160 telas documentadas · elementos citados 4266/4670 · completo: false
+**Progresso:** 18/160 telas documentadas · elementos citados 4398/4802 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -191,9 +191,9 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.light.modal.voice.overlay` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.modal.voice.overlay.png) |
 | `en.light.settings.accounts` | [página](pages/en.light.settings.accounts.md) | [png](captures/en.light.settings.accounts.png) |
 | `en.light.settings.content` | [página](pages/en.light.settings.content.md) | [png](captures/en.light.settings.content.png) |
-| `en.light.settings.counter_github` | — | [png](captures/en.light.settings.counter_github.png) |
-| `en.light.settings.counter_gitlab` | — | [png](captures/en.light.settings.counter_gitlab.png) |
-| `en.light.settings.counter_jira` | — | [png](captures/en.light.settings.counter_jira.png) |
+| `en.light.settings.counter_github` | [página](pages/en.light.settings.counter_github.md) | [png](captures/en.light.settings.counter_github.png) |
+| `en.light.settings.counter_gitlab` | [página](pages/en.light.settings.counter_gitlab.md) | [png](captures/en.light.settings.counter_gitlab.png) |
+| `en.light.settings.counter_jira` | [página](pages/en.light.settings.counter_jira.md) | [png](captures/en.light.settings.counter_jira.png) |
 | `en.light.settings.counter_linear` | — | [png](captures/en.light.settings.counter_linear.png) |
 | `en.light.settings.helper` | — | [png](captures/en.light.settings.helper.png) |
 | `en.light.settings.import` | — | [png](captures/en.light.settings.import.png) |

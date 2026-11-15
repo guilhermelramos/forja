@@ -1047,3 +1047,27 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Os cantos de redimensionamento inferiores da modal (486–506) se estendem 10 px além do retângulo declarado da janela "Settings" (termina em y=496).
 - Barra de rolagem da lista de diagnósticos com apenas 2 px de largura ((865,337)–(867,487)), muito fina para interação visível.
 
+## [en.light.settings.counter_gitlab](pages/en.light.settings.counter_gitlab.md)
+
+- A janela "Settings" sobrepõe a barra de abas central ("Terminal", "Editor", "Browser", "Changes", "Preview", "Bench", "Review", "History", "Extension panels"), a barra de ferramentas ("+", quatro botões de ícone, "Recipes", "Shell") e a aba de terminal "pwsh · Running"; as abas "Extension panels" e "Helper (chat)" aparecem parcialmente cortadas pelo modal na imagem.
+- Quatro botões de ícone da barra de ferramentas central ((444,113), (479,113), (514,113), (549,113)) estão sem nome acessível.
+- O ícone de alternância de tema na barra superior ((1741,5)–(1773,37)) está sem nome acessível.
+- Os divisores verticais entre painéis e as bordas/cantos de redimensionamento do modal estão sem nome acessível.
+- O campo de busca "Search settings" (TextInput) e o campo "Token" (PasswordInput) não têm nome acessível próprio; o rótulo existe apenas como texto de apoio dentro do campo.
+- Três botões compartilham o nome acessível "More tabs" e dois compartilham "Changes" (ambiguidade para leitores de tela).
+- O texto de apoio "Click to type" do painel central não tem elemento acessível correspondente.
+- O botão "Connect" está desativado, mas com preenchimento âmbar que o faz parecer acionável; os botões desativados ("Connect", "Disconnect") têm contraste reduzido.
+- Os nomes dos botões "Find file  Ctrl+P" e "Anvil  Ctrl+K" contêm espaço duplo entre o rótulo e o atalho.
+- A mensagem "No active bench. Open a bench to see its files." quebra em duas linhas e se aproxima da borda direita da janela (retângulo até x=1896 de 1920 px), com a segunda linha centralizada.
+
+## [en.light.settings.counter_jira](pages/en.light.settings.counter_jira.md)
+
+- Três botões com o mesmo nome acessível "More tabs" em posições distintas ((64,50), (324,50) e (1632,50)); nomes duplicados dificultam navegação e automação por acessibilidade.
+- Dois botões com o mesmo nome acessível "Changes" ((629,52) e (1778,52)), um em cada painel.
+- Aba "Extension panels" em (973,52)–(1099,84) é parcialmente encoberta pela modal (só "ion panels" fica visível); sobreposição esperada de uma modal, mas reduz a legibilidade do rótulo.
+- Botões "+", "Recipes" e "Shell" (faixa y113–145) e a aba "pwsh · Running" com o botão "Close pwsh" ficam totalmente sob a modal e invisíveis nesta captura.
+- Ícone clicável de tema (sol) em (1741,5)–(1773,37) sem nome acessível.
+- Vários elementos interativos sem nome acessível: campos de texto e o campo de senha (só identificáveis pelos textos de apoio visíveis "Search settings", "Site, for example acme.atlassian.net", "E-mail of the account" e "Token"), botões de ícone em (444,113)–(581,145), alças de redimensionamento, divisórias da janela e o sublinhado da aba "Terminal".
+- Botão desativado "Connect" apresenta texto claro sobre fundo laranja pálido, com contraste baixo.
+- Texto "Click to type" solto no canto inferior direito da área central (parte do painel de terminal vazio atrás da modal), sem elemento correspondente nomeado na árvore.
+
