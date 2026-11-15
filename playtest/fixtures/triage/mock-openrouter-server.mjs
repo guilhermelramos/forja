@@ -57,6 +57,7 @@ const server = http.createServer((req, res) => {
     const chunk2 = {
       id: "gen-fixture-1",
       model,
+      provider: "Relace",
       object: "chat.completion.chunk",
       created: 1700000000,
       choices: [
