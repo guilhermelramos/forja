@@ -49,3 +49,4 @@ archive-view-delete-confirm = Delete
 archive-view-cancel = Cancel
 archive-view-deleted = Session moved to the trash.
 archive-view-opened = Opened
+archive-error-invalid-query = The search text has invalid syntax. Try simpler words.

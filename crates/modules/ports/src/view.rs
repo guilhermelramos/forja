@@ -49,10 +49,12 @@ impl View for PortsView {
         });
         ui.separator();
         if let Some(error) = &snapshot.error {
-            ui.label(
-                egui::RichText::new(error)
-                    .small()
-                    .color(c32(tokens.color.danger)),
+            let human = forja_kernel::human_error::humanize_ctx(cx, error);
+            forja_ui_kit::error_banner(
+                ui,
+                &human.summary,
+                human.detail.as_deref(),
+                &cx.t("kernel.error.details"),
             );
         }
         if snapshot.ports.is_empty() {

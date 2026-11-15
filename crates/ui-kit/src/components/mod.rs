@@ -18,6 +18,6 @@ pub use field::{select, text_field};
 pub use menu::{context_menu, icon_menu, menu_panel, MenuItem};
 pub use modal::{modal, modal_explicit_close, modal_preview, window_header, window_header_with_focus};
 pub use page::{empty_state, page_heading};
-pub use status::{progress_bar, stage_badge, toast, Stage, ToastKind};
+pub use status::{error_banner, error_notice, progress_bar, stage_badge, toast, Stage, ToastKind};
 pub use toggle::toggle;
 pub use tree::{tree, virtual_table, Column, TreeNode};

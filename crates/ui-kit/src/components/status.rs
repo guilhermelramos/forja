@@ -48,6 +48,61 @@ pub fn toast(ui: &mut Ui, kind: ToastKind, text: &str) -> Response {
         .response
 }
 
+/// Exibe uma mensagem de erro humana com detalhe técnico recolhível opcional.
+pub fn error_banner(ui: &mut Ui, message: &str, detail: Option<&str>, details_label: &str) {
+    let _ = error_notice(ui, message, detail, details_label, None);
+}
+
+/// Exibe uma mensagem de erro humana com detalhe técnico recolhível e botão
+/// opcional de fechar (`dismiss_label`). Devolve `true` se o usuário fechou.
+pub fn error_notice(
+    ui: &mut Ui,
+    message: &str,
+    detail: Option<&str>,
+    details_label: &str,
+    dismiss_label: Option<&str>,
+) -> bool {
+    let tokens = paint::tokens(ui);
+    let metrics = tokens.metrics();
+    let mut dismissed = false;
+    ui.vertical(|ui| {
+        ui.horizontal_wrapped(|ui| {
+            ui.label(
+                egui::RichText::new(message)
+                    .font(caption_font(&metrics))
+                    .color(tokens.color.danger.to_color32()),
+            );
+            if let Some(dismiss) = dismiss_label {
+                let button = crate::icon_button(ui, crate::CLOSE).on_hover_text(dismiss);
+                button.widget_info(|| {
+                    egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), dismiss)
+                });
+                if button.clicked() {
+                    dismissed = true;
+                }
+            }
+        });
+        if let Some(detail) = detail.map(str::trim).filter(|text| !text.is_empty()) {
+            egui::CollapsingHeader::new(
+                egui::RichText::new(details_label)
+                    .font(caption_font(&metrics))
+                    .color(tokens.color.text_muted.to_color32()),
+            )
+            .id_salt((details_label, message))
+            .default_open(false)
+            .show(ui, |ui| {
+                ui.label(
+                    egui::RichText::new(detail)
+                        .monospace()
+                        .font(caption_font(&metrics))
+                        .color(tokens.color.text_muted.to_color32()),
+                );
+            });
+        }
+    });
+    dismissed
+}
+
 /// Etapa de uma bancada. O nome vem de quem chama.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Stage {

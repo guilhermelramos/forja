@@ -20,6 +20,7 @@ pub struct ArchiveView {
     date_filter: String,
     pending_delete: Option<PathBuf>,
     notice: Option<String>,
+    action_error: Option<String>,
     searched: bool,
 }
 
@@ -34,6 +35,7 @@ impl ArchiveView {
             date_filter: "all".to_owned(),
             pending_delete: None,
             notice: None,
+            action_error: None,
             searched: false,
         }
     }
@@ -164,10 +166,12 @@ impl ArchiveView {
             Ok(hits) => {
                 state.results = hits;
                 self.notice = None;
+                self.action_error = None;
                 self.searched = true;
             }
             Err(error) => {
-                self.notice = Some(error);
+                self.notice = None;
+                self.action_error = Some(error);
                 state.results.clear();
             }
         }
@@ -312,9 +316,17 @@ impl ArchiveView {
                     .get("command_line")
                     .and_then(serde_json::Value::as_str)
                     .unwrap_or("");
+                self.action_error = None;
                 self.notice = Some(format!("{}: {line}", cx.t("archive.view.opened")));
             }
-            Err(error) => self.notice = Some(error.to_string()),
+            Err(error) => {
+                let message = match error {
+                    forja_kernel::KernelError::Command { message, .. } => message,
+                    other => other.to_string(),
+                };
+                self.notice = None;
+                self.action_error = Some(message);
+            }
         }
     }
 
@@ -353,6 +365,7 @@ impl ArchiveView {
         args.insert("confirm", json!(true));
         match cx.run_command("archive.delete", args) {
             Ok(_) => {
+                self.action_error = None;
                 self.notice = Some(cx.t("archive.view.deleted"));
                 if let Ok(mut state) = self.core.state.lock() {
                     let text = path.display().to_string();
@@ -361,7 +374,14 @@ impl ArchiveView {
                     state.sessions.retain(|session| session.path != text);
                 }
             }
-            Err(error) => self.notice = Some(error.to_string()),
+            Err(error) => {
+                let message = match error {
+                    forja_kernel::KernelError::Command { message, .. } => message,
+                    other => other.to_string(),
+                };
+                self.notice = None;
+                self.action_error = Some(message);
+            }
         }
         self.pending_delete = None;
     }
@@ -395,6 +415,15 @@ impl View for ArchiveView {
         forja_ui_kit::page_heading(ui, &cx.t("archive.view.title"), None, |_| {});
         if let Some(notice) = &self.notice {
             ui.label(egui::RichText::new(notice).weak());
+        }
+        if let Some(error) = &self.action_error {
+            let human = humanize_error(cx, error);
+            forja_ui_kit::error_banner(
+                ui,
+                &human.summary,
+                human.detail.as_deref(),
+                &cx.t("kernel.error.details"),
+            );
         }
         let (profiles, report, scanning, error, results_count, sessions_count) = {
             let Ok(state) = core.state.lock() else {
@@ -452,7 +481,13 @@ impl View for ArchiveView {
             }
         });
         if let Some(error) = error {
-            ui.label(egui::RichText::new(error).color(egui::Color32::from_rgb(0xE5, 0x53, 0x4B)));
+            let human = humanize_error(cx, &error);
+            forja_ui_kit::error_banner(
+                ui,
+                &human.summary,
+                human.detail.as_deref(),
+                &cx.t("kernel.error.details"),
+            );
         }
         {
             let Ok(state) = core.state.lock() else {
@@ -505,4 +540,15 @@ fn format_date(ms: i64) -> String {
     chrono::DateTime::from_timestamp_millis(ms)
         .map(|time| time.format("%d/%m %H:%M").to_string())
         .unwrap_or_default()
+}
+
+pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> forja_kernel::HumanError {
+    let trimmed = raw.trim();
+    if trimmed.starts_with("busca inválida:") || trimmed.starts_with("invalid query:") {
+        return forja_kernel::HumanError::with_detail(
+            cx.t("archive.error.invalid-query"),
+            trimmed,
+        );
+    }
+    forja_kernel::human_error::humanize_ctx(cx, trimmed)
 }

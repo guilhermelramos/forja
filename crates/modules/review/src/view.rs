@@ -91,7 +91,13 @@ impl View for ReviewView {
         let muted = c32(tokens.color.text_muted);
         self.header(ui, cx, &snapshot, muted);
         if let Some(status) = &snapshot.status {
-            ui.label(egui::RichText::new(status).color(c32(tokens.color.danger)));
+            let human = crate::commands::humanize_error(cx, status);
+            forja_ui_kit::error_banner(
+                ui,
+                &human.summary,
+                human.detail.as_deref(),
+                &cx.t("kernel.error.details"),
+            );
         }
         if let Some(notice) = &snapshot.notice {
             ui.label(egui::RichText::new(notice).color(c32(tokens.color.ok)));
@@ -131,7 +137,13 @@ impl ReviewView {
                 });
             }
             if let Some(error) = &state.comparison_error {
-                ui.label(egui::RichText::new(error).color(muted));
+                let human = crate::commands::humanize_error(cx, error);
+                forja_ui_kit::error_banner(
+                    ui,
+                    &human.summary,
+                    human.detail.as_deref(),
+                    &cx.t("kernel.error.details"),
+                );
             }
             let mut changed_base = false;
             if let Some(comparison) = &state.comparison {
@@ -444,7 +456,11 @@ impl ReviewView {
                 args.insert("reviewers", json!(form.reviewers));
                 args.insert("labels", json!(form.labels));
                 if let Err(error) = cx.run_command("review.pr.create", args) {
-                    self.state.set_status(Some(error.to_string()));
+                    let message = match error {
+                        forja_kernel::KernelError::Command { message, .. } => message,
+                        other => other.to_string(),
+                    };
+                    self.state.set_status(Some(message));
                 }
             }
         }

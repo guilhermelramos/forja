@@ -124,8 +124,9 @@ fn finish_store(cx: &mut Ctx<'_>, shared: &Shared, result: Result<Stored, String
     let stored = match result {
         Ok(stored) => stored,
         Err(error) => {
-            shared.set_error(Some(error.clone()));
-            notify(cx, cx.t("bench.notify.store-failed.title"), error, "error");
+            let human = crate::create::humanize_error(cx, &error);
+            shared.set_error(Some(error));
+            notify(cx, cx.t("bench.notify.store-failed.title"), human.summary, "error");
             return;
         }
     };

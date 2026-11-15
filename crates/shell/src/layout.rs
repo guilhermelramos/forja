@@ -158,7 +158,21 @@ impl ForjaApp {
                     ui.label(module_label);
                     if let Some(status) = status {
                         ui.separator();
-                        ui.label(RichText::new(status).color(self.paint(self.tokens.color.danger)));
+                        ui.label(
+                            RichText::new(&status.summary).color(self.paint(self.tokens.color.danger)),
+                        );
+                        if status.detail.is_some() {
+                            let details_title = self.text("shell.status.details-title");
+                            if forja_ui_kit::button(
+                                ui,
+                                forja_ui_kit::ButtonKind::Ghost,
+                                &details_title,
+                            )
+                            .clicked()
+                            {
+                                self.status_details_open = !self.status_details_open;
+                            }
+                        }
                         let dismiss = self.text("shell.status.dismiss");
                         let button = forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE)
                             .on_hover_text(&dismiss);
@@ -170,7 +184,7 @@ impl ForjaApp {
                             )
                         });
                         if button.clicked() {
-                            self.status = None;
+                            self.clear_status();
                         }
                     }
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -184,6 +198,32 @@ impl ForjaApp {
             });
         self.slot_rects
             .insert("status".into(), response.response.rect);
+        if self.status_details_open {
+            if let Some(detail) = self.status.as_ref().and_then(|s| s.detail.clone()) {
+                let mut open = true;
+                let title = self.text("shell.status.details-title");
+                let summary = self
+                    .status
+                    .as_ref()
+                    .map(|s| s.summary.clone())
+                    .unwrap_or_default();
+                forja_ui_kit::modal(ctx, &mut open, &title, |ui| {
+                    ui.label(summary);
+                    ui.add_space(self.tokens.metrics().gap);
+                    ui.label(
+                        egui::RichText::new(detail)
+                            .small()
+                            .monospace()
+                            .color(self.paint(self.tokens.color.text_muted)),
+                    );
+                });
+                if !open {
+                    self.status_details_open = false;
+                }
+            } else {
+                self.status_details_open = false;
+            }
+        }
     }
 
     pub(crate) fn left_panels(&mut self, ctx: &egui::Context) {

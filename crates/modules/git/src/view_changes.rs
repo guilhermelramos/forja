@@ -460,20 +460,17 @@ pub(crate) fn messages(
         );
     }
     if let Some(error) = state.error() {
-        let message = humanize_error(cx, &error);
-        ui.horizontal_wrapped(|ui| {
-            ui.label(
-                egui::RichText::new(message)
-                    .small()
-                    .color(c32(tokens.color.danger)),
-            );
-            if forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE)
-                .on_hover_text(cx.t("git.error.dismiss"))
-                .clicked()
-            {
-                state.set_error(None);
-            }
-        });
+        let human = humanize_error(cx, &error);
+        let dismiss = cx.t("git.error.dismiss");
+        if forja_ui_kit::error_notice(
+            ui,
+            &human.summary,
+            human.detail.as_deref(),
+            &cx.t("kernel.error.details"),
+            Some(&dismiss),
+        ) {
+            state.set_error(None);
+        }
     }
     if let Some(notice) = state.notice() {
         ui.label(
@@ -546,52 +543,62 @@ fn unstage(cx: &mut Ctx<'_>, path: &str, files: &[String]) {
     let _ = run(cx, "git.unstage", args);
 }
 
-pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> String {
+pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> forja_kernel::HumanError {
     let trimmed = raw.trim();
     if trimmed == "no-remote" {
-        return cx.t("git.error.no-remote");
+        return forja_kernel::HumanError::simple(cx.t("git.error.no-remote"));
     }
     if trimmed == "nothing-to-abort" {
-        return cx.t("git.error.nothing-to-abort");
+        return forja_kernel::HumanError::simple(cx.t("git.error.nothing-to-abort"));
     }
     if let Some(branch) = trimmed.strip_prefix("protected:") {
-        return cx.t_args("git.error.protected", &[("branch", branch)]);
+        return forja_kernel::HumanError::simple(cx.t_args("git.error.protected", &[("branch", branch)]));
     }
     if trimmed == "no file selected" {
-        return cx.t("git.error.no-file");
+        return forja_kernel::HumanError::simple(cx.t("git.error.no-file"));
     }
     let protected_template = cx.t_args("git.error.protected", &[("branch", "\x00")]);
     if let Some((head, tail)) = protected_template.split_once('\x00') {
         if trimmed.starts_with(head) && trimmed.ends_with(tail) {
-            return trimmed.to_owned();
+            return forja_kernel::HumanError::simple(trimmed);
         }
     }
     let lower = trimmed.to_ascii_lowercase();
     if lower.contains("not a git repository") {
-        return cx.t_args("git.error.not-repo", &[("detail", trimmed)]);
+        return forja_kernel::HumanError::with_detail(cx.t("git.error.not-repo"), trimmed);
     }
     if lower.contains("nothing to commit") || lower.contains("no changes added to commit") {
-        return cx.t_args("git.error.nothing-to-commit", &[("detail", trimmed)]);
+        return forja_kernel::HumanError::with_detail(cx.t("git.error.nothing-to-commit"), trimmed);
     }
     if lower.contains("conflict") || lower.contains("unmerged files") {
-        return cx.t_args("git.error.conflict", &[("detail", trimmed)]);
+        return forja_kernel::HumanError::with_detail(cx.t("git.error.conflict"), trimmed);
     }
-    if lower.contains("rejected") || lower.contains("failed to push") || lower.contains("non-fast-forward") {
-        return cx.t_args("git.error.push-rejected", &[("detail", trimmed)]);
+    if lower.contains("rejected")
+        || lower.contains("failed to push")
+        || lower.contains("non-fast-forward")
+    {
+        return forja_kernel::HumanError::with_detail(cx.t("git.error.push-rejected"), trimmed);
     }
-    if lower.contains("no upstream branch") || lower.contains("has no upstream") || lower.contains("no tracking information") {
-        return cx.t_args("git.error.no-upstream", &[("detail", trimmed)]);
+    if lower.contains("no upstream branch")
+        || lower.contains("has no upstream")
+        || lower.contains("no tracking information")
+    {
+        return forja_kernel::HumanError::with_detail(cx.t("git.error.no-upstream"), trimmed);
     }
     if lower.contains("authentication failed")
-        || lower.contains("permission denied")
         || lower.contains("could not read username")
+        || lower.contains("terminal prompts disabled")
     {
-        return cx.t_args("git.error.auth", &[("detail", trimmed)]);
+        return forja_kernel::HumanError::with_detail(cx.t("git.error.auth"), trimmed);
     }
-    if lower.contains("git failed to start") || lower.contains("failed to execute") {
-        return cx.t_args("git.error.exec", &[("detail", trimmed)]);
+    let human = forja_kernel::human_error::humanize_ctx(cx, trimmed);
+    if human.summary == cx.t("kernel.error.generic") {
+        if lower.contains("git failed to start") || lower.contains("failed to execute") {
+            return forja_kernel::HumanError::with_detail(cx.t("git.error.exec"), trimmed);
+        }
+        return forja_kernel::HumanError::with_detail(cx.t("git.error.generic"), trimmed);
     }
-    cx.t_args("git.error.generic", &[("detail", trimmed)])
+    human
 }
 
 pub(crate) fn c32(color: forja_ui_kit::Color) -> egui::Color32 {
@@ -618,17 +625,43 @@ mod tests {
             },
         )
         .expect("runtime");
+        {
+            let cx = runtime.ctx("git");
+            let msg = humanize_error(&cx, "fatal: not a git repository (or any parent)");
+            assert!(msg.summary.contains("repositório Git"), "{}", msg.summary);
+            assert!(!msg.summary.contains("fatal:"), "{}", msg.summary);
+            assert_eq!(
+                msg.detail.as_deref(),
+                Some("fatal: not a git repository (or any parent)")
+            );
+            let upstream = humanize_error(
+                &cx,
+                "git pull --ff-only failed: There is no tracking information for the current branch.",
+            );
+            assert!(upstream.summary.contains("branch remoto"));
+            assert!(!upstream.summary.contains("failed"));
+            let dir_err = humanize_error(
+                &cx,
+                "could not run git: The directory name is invalid. (os error 267)",
+            );
+            assert!(!dir_err.summary.contains("os error"));
+            assert!(!dir_err.summary.to_lowercase().contains("failed"));
+            assert_eq!(
+                dir_err.detail.as_deref(),
+                Some("could not run git: The directory name is invalid. (os error 267)")
+            );
+            assert!(humanize_error(&cx, "no-remote")
+                .summary
+                .contains("remote configurado"));
+            assert_eq!(
+                humanize_error(&cx, "no file selected").summary,
+                "Selecione ao menos um arquivo."
+            );
+        }
+        runtime.set_locale(forja_kernel::Locale::En);
         let cx = runtime.ctx("git");
-        let msg = humanize_error(&cx, "fatal: not a git repository (or any parent)");
-        assert!(msg.contains("repositório Git"), "{msg}");
-        assert!(msg.contains("not a git repository"), "{msg}");
-        assert!(humanize_error(
-            &cx,
-            "git pull --ff-only failed: There is no tracking information for the current branch."
-        )
-        .contains("branch remoto"));
-        assert!(humanize_error(&cx, "no-remote").contains("remote configurado"));
-        assert_eq!(humanize_error(&cx, "no file selected"), "Selecione ao menos um arquivo.");
+        let en_err = humanize_error(&cx, "git status failed: some technical issue");
+        assert!(!en_err.summary.to_lowercase().contains("failed"));
         let _ = std::fs::remove_dir_all(dir);
     }
 }

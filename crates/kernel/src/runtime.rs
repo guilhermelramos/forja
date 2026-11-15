@@ -8,7 +8,7 @@ use crate::args::{Args, CommandId};
 use crate::commands::{AvailabilityContext, CommandSpec};
 use crate::error::{KernelError, Result};
 use crate::events::EventBus;
-use crate::i18n::{I18n, Locale, TimeFormat, WeekStart};
+use crate::i18n::{BundleSource, I18n, Locale, TimeFormat, WeekStart};
 use crate::keymap::{BindingSource, Keymap, KeymapLayer};
 use crate::registry::{build_registry, Registry};
 use crate::settings::{SettingSpec, SettingValue, Settings, SettingsWriter};
@@ -79,7 +79,13 @@ impl Runtime {
             .unwrap_or_else(|| "pt-BR".to_owned());
         let locale = Locale::parse(&locale_setting);
 
-        let (mut i18n, mut warnings) = I18n::build(registry.bundles(), locale);
+        let mut bundles = vec![BundleSource {
+            module: "kernel".to_owned(),
+            en: include_str!("../i18n/en.ftl").to_owned(),
+            pt_br: include_str!("../i18n/pt-BR.ftl").to_owned(),
+        }];
+        bundles.extend_from_slice(registry.bundles());
+        let (mut i18n, mut warnings) = I18n::build(&bundles, locale);
         let (settings, setting_warnings) =
             Settings::load(data_dir.join("settings.toml"), registry.settings());
         warnings.extend(setting_warnings);

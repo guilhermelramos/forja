@@ -137,6 +137,8 @@ const CHROME_KEYS: &[&str] = &[
     "shell.status.task",
     "shell.settings.save-failed",
     "shell.command.failed",
+    "shell.rail.not-found",
+    "shell.status.details-title",
     "shell.slot.empty",
     "shell.tray.show",
     "shell.tray.quit",
@@ -243,6 +245,48 @@ mod tests {
                 Action::ShowBenchTab("editor.tab".to_owned()),
             ]
         );
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn command_status_errors_hide_raw_os_codes() {
+        let dir = std::env::temp_dir().join(format!("forja-shell-err-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let mut runtime = Runtime::new(
+            vec![Box::new(ShellModule)],
+            RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("shell module registers");
+        let err = forja_kernel::KernelError::Command {
+            id: "git.status".to_owned(),
+            message: "Git operation failed (detail: could not run git: The directory name is invalid. (os error 267)).".to_owned(),
+        };
+        let human = forja_kernel::human_error::humanize_kernel_error(runtime.i18n(), &err);
+        let status_pt = runtime.i18n().t_args(
+            "shell.command.failed",
+            &[("id", "Atualizar"), ("message", &human.summary)],
+        );
+        assert!(!status_pt.contains("os error"), "{status_pt}");
+        assert!(!status_pt.to_lowercase().contains("failed"), "{status_pt}");
+        assert!(human
+            .detail
+            .as_deref()
+            .is_some_and(|detail| detail.contains("os error 267")));
+
+        runtime.set_locale(forja_kernel::Locale::En);
+        let human_en = forja_kernel::human_error::humanize_kernel_error(runtime.i18n(), &err);
+        let status_en = runtime.i18n().t_args(
+            "shell.command.failed",
+            &[("id", "Refresh"), ("message", &human_en.summary)],
+        );
+        assert!(!status_en.contains("os error"), "{status_en}");
+        assert!(!status_en.to_lowercase().contains("failed"), "{status_en}");
         drop(runtime);
         let _ = std::fs::remove_dir_all(dir);
     }

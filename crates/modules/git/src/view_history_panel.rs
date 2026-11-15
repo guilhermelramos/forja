@@ -125,10 +125,12 @@ fn render_commit_detail(
                 });
         }
         Some(Err(error)) => {
-            ui.label(
-                egui::RichText::new(error)
-                    .small()
-                    .color(c32(tokens.color.danger)),
+            let human = crate::view_changes::humanize_error(cx, &error);
+            forja_ui_kit::error_banner(
+                ui,
+                &human.summary,
+                human.detail.as_deref(),
+                &cx.t("kernel.error.details"),
             );
         }
         None => {

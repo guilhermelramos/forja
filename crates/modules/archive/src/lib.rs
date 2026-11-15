@@ -105,6 +105,7 @@ impl Module for ArchiveModule {
             "archive.view.cancel",
             "archive.view.deleted",
             "archive.view.opened",
+            "archive.error.invalid-query",
         ] {
             r.uses_i18n(key);
         }
@@ -637,5 +638,33 @@ mod tests {
     fn command_line_quotes_spaces() {
         assert_eq!(quote_arg("plain"), "plain");
         assert_eq!(quote_arg("two words"), "\"two words\"");
+    }
+
+    #[test]
+    fn archive_errors_are_humanized_in_pt_br_and_en() {
+        let dir = temp_dir("humanize");
+        let mut rt = runtime(&dir);
+        {
+            let cx = rt.ctx("archive");
+            let io_err = view::humanize_error(
+                &cx,
+                "An IO error occurred: 'Access is denied. (os error 5)'",
+            );
+            assert!(!io_err.summary.contains("os error"));
+            assert!(!io_err.summary.contains("IO error"));
+            assert!(io_err.detail.as_deref().is_some_and(|d| d.contains("os error 5")));
+
+            let query_err = view::humanize_error(&cx, "busca inválida: syntax error");
+            assert!(query_err.summary.contains("sintaxe inválida"));
+            assert!(query_err.detail.is_some());
+        }
+        rt.set_locale(forja_kernel::Locale::En);
+        let cx = rt.ctx("archive");
+        let io_err_en = view::humanize_error(
+            &cx,
+            "An IO error occurred: 'Access is denied. (os error 5)'",
+        );
+        assert!(!io_err_en.summary.contains("os error"));
+        assert!(!io_err_en.summary.contains("IO error"));
     }
 }
