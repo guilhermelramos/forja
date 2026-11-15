@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 35/160 telas documentadas · elementos citados 5215/5620 · completo: false
+**Progresso:** 38/160 telas documentadas · elementos citados 5399/5804 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -56,8 +56,8 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.dark.settings.trust` | [página](pages/pt-BR.dark.settings.trust.md) | [png](captures/pt-BR.dark.settings.trust.png) |
 | `pt-BR.dark.settings.voice` | [página](pages/pt-BR.dark.settings.voice.md) | [png](captures/pt-BR.dark.settings.voice.png) |
 | `pt-BR.light.home.default` | [página](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.home.default.png) |
-| `pt-BR.light.open.anvil` | — | [png](captures/pt-BR.light.open.anvil.png) |
-| `pt-BR.light.open.onboarding` | — | [png](captures/pt-BR.light.open.onboarding.png) |
+| `pt-BR.light.open.anvil` | [página](pages/pt-BR.light.open.anvil.md) | [png](captures/pt-BR.light.open.anvil.png) |
+| `pt-BR.light.open.onboarding` | [página](pages/pt-BR.light.open.onboarding.md) | [png](captures/pt-BR.light.open.onboarding.png) |
 | `pt-BR.light.open.toast` | — | [png](captures/pt-BR.light.open.toast.png) |
 | `pt-BR.light.rail.archive.tab` | — | [png](captures/pt-BR.light.rail.archive.tab.png) |
 | `pt-BR.light.modal.bench.dialogs` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.bench.dialogs.png) |
@@ -74,7 +74,7 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.light.bench-tab.extension.panels.bench` | [página](pages/pt-BR.light.bench-tab.extension.panels.bench.md) | [png](captures/pt-BR.light.bench-tab.extension.panels.bench.png) |
 | `pt-BR.light.right-tab.git.changes` | — | [png](captures/pt-BR.light.right-tab.git.changes.png) |
 | `pt-BR.light.bench-tab.git.history` | [página](pages/pt-BR.light.bench-tab.git.history.md) | [png](captures/pt-BR.light.bench-tab.git.history.png) |
-| `pt-BR.light.modal.helper.profile_picker` | — | [png](captures/pt-BR.light.modal.helper.profile_picker.png) |
+| `pt-BR.light.modal.helper.profile_picker` | [página](pages/pt-BR.light.modal.helper.profile_picker.md) | [png](captures/pt-BR.light.modal.helper.profile_picker.png) |
 | `pt-BR.light.rail.helper.tab` | — | [png](captures/pt-BR.light.rail.helper.tab.png) |
 | `pt-BR.light.modal.mcp.approval` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.mcp.approval.png) |
 | `pt-BR.light.rail.muster.page` | — | [png](captures/pt-BR.light.rail.muster.page.png) |

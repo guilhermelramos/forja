@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 35,
-  "widgets_total": 5620,
-  "widgets_covered": 5215,
+  "states_done": 38,
+  "widgets_total": 5804,
+  "widgets_covered": 5399,
   "complete": false,
   "stale": [
     {
@@ -1267,21 +1267,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "pt-BR.light.modal.helper.profile_picker",
-      "png": "captures/pt-BR.light.modal.helper.profile_picker.png",
-      "tree": "captures/pt-BR.light.modal.helper.profile_picker.json"
-    },
-    {
-      "state": "pt-BR.light.open.anvil",
-      "png": "captures/pt-BR.light.open.anvil.png",
-      "tree": "captures/pt-BR.light.open.anvil.json"
-    },
-    {
-      "state": "pt-BR.light.open.onboarding",
-      "png": "captures/pt-BR.light.open.onboarding.png",
-      "tree": "captures/pt-BR.light.open.onboarding.json"
-    },
     {
       "state": "pt-BR.light.open.toast",
       "png": "captures/pt-BR.light.open.toast.png",

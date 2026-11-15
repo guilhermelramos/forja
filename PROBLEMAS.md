@@ -434,6 +434,27 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Estados com pixels idênticos a esta captura incluem modais que deveriam alterar a imagem (pt-BR.light.modal.bench.dialogs, pt-BR.light.modal.counter.poller, pt-BR.light.modal.mcp.approval, pt-BR.light.modal.notify.toasts, pt-BR.light.modal.onboarding.wizard, pt-BR.light.modal.project.dialogs, pt-BR.light.modal.voice.overlay, pt-BR.light.right-tab.explorer.panel e pt-BR.light.bench-tab.terminal.tab): nessas capturas nenhum diálogo, aviso ou sobreposição aparece renderizado.
 - Nenhum elemento da árvore tem retângulo além dos limites da imagem (1920×1080) nesta variante — os cortes de abas relatados na referência escura não ocorrem aqui.
 
+## [pt-BR.light.open.anvil](pages/pt-BR.light.open.anvil.md)
+
+- Vários comandos da Bigorna têm retângulos muito além dos limites da captura (1920×1080): a lista vai até y=1812 ("Abrir terminal"). A partir de "Preparar descrição de PR" (650,500) os comandos ficam abaixo do fundo da janela "Bigorna" (que termina em y=499) e não são visíveis; "Abrir diálogo de aprovação de scripts" (650,1060)–(1270,1092) cruza a borda inferior da imagem e os demais ficam totalmente fora dela.
+- A dica "Enter executa · Ctrl+Enter mantém a Bigorna aberta · Esc fecha" (650,474)–(980,490) sobrepõe a última linha visível da lista ("Otimizar desempenho", 650,460–492).
+- A janela "Bigorna" (641,72)–(1279,499) cobre as abas centrais de "Diferenças" a "Ajudante (chat)", que aparecem esmaecidas e com o texto cortado na borda da janela.
+- Botões "Shell" (661,113)–(714,145) fica totalmente oculto atrás da janela da Bigorna e "Receitas" (584,113)–(658,145) é parcialmente coberto (texto renderizado como "Recita..."); sobreposição de camadas sem indicação de que há conteúdo sob a sobreposição.
+- O botão "Fechar pwsh" (385,121)–(401,137), de 16×16 px, sobrepõe a aba "pwsh · Em execução" e tem área de clique muito pequena.
+- Elementos interativos sem nome acessível: o botão de alternar tema (ícone de sol, (1741,5)–(1773,37)), o campo de busca da Bigorna, os quatro ícones de filtro do terminal e os dois divisores dos painéis.
+- A barra de rolagem da lista de resultados tem apenas 2 px de largura ((1268,220)–(1270,460)), muito fina e de baixo contraste.
+- Comando duplicado na lista da Bigorna: "Abrir no app padrão" aparece duas vezes ((650,1260) e (650,1300)).
+
+## [pt-BR.light.open.onboarding](pages/pt-BR.light.open.onboarding.md)
+
+- O botão de alternar tema (ícone de sol, (1741,5)–(1773,37)) está sem nome acessível.
+- Os quatro botões de ícone da barra do terminal (dividir, encerrar, limpar, buscar) estão sem nome acessível.
+- O elemento associado à seleção de idioma em (960,540)–(960,540) está sem nome acessível e tem tamanho zero.
+- Dois rótulos de ícone aparecem na árvore com o texto literal "(ícone)" em vez de um nome descritivo: o da pasta do painel Projetos (168,201)–(196,229) e o da grade do painel Arquivos (1756,117)–(1784,145).
+- O botão "Fechar pwsh" tem apenas 16×16 px e fica sobreposto ao interior da aba "pwsh · Em execução" — alvo de clique muito pequeno.
+- A dica "Clique para digitar" no canto inferior direito do terminal (visível na imagem, sem item na árvore) está em cinza claro sobre fundo cinza claro, com contraste baixo.
+- Os botões de janela usam os símbolos "–", "□" e "×" como nome, em vez de rótulos textuais (minimizar, maximizar, fechar).
+
 ## [pt-BR.light.bench-tab.bench.detail](pages/pt-BR.light.bench-tab.bench.detail.md)
 
 - O botão de tema na barra superior (1741,5)–(1773,37) é um Unknown sem nome acessível; só é identificável pelo ícone de sol.
@@ -490,6 +511,13 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Nomes duplicados/ambíguos para leitores de tela: três botões "Mais abas"; dois botões "Histórico" (aba do painel central e sub-aba da visão Git), além do Label "Histórico"; dois Labels "Nenhuma mudança.".
 - Três Labels declarados como "(ícone)" sem nome acessível (grade do painel direito, pasta do painel de projetos e grade da área central); a Image do logotipo (12,50)–(40,78) e os dois divisores verticais (304,42)–(320,1048) e (1612,42)–(1628,1048) também não têm nome.
 - Textos secundários em cinza médio sobre fundo claro ("Nenhum projeto ainda. Adicione uma pasta ou crie um novo.", "Nenhuma mudança.", "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.") têm contraste visivelmente reduzido em relação ao texto principal.
+
+## [pt-BR.light.modal.helper.profile_picker](pages/pt-BR.light.modal.helper.profile_picker.md)
+
+- O modal sobrepõe a área central: as abas "Terminal", "Editor" e "Navegador", o início da aba "Diferenças", o botão "Mais abas" central (324,50)–(409,85), os botões "+" e "Receitas" e a aba de terminal "pwsh · Em execução" com "Fechar pwsh" continuam na árvore de acessibilidade mas estão invisíveis ou ilegíveis para o usuário; "Shell" e o "Mais abas" central ficam parcialmente encobertos.
+- Botão de tema na barra superior (1741,5)–(1773,37), os quatro controles da barra central (444–581,113–145), os dois divisores verticais (304–320 e 1612–1628) e a grande área de conteúdo central (328,150)–(1604,1036) sem nome acessível.
+- Rótulos de ícone expostos como "(ícone)" (grade e pasta dos estados vazios), sem nome descritivo.
+- Elemento de dimensão nula na árvore em (960,540)–(960,540).
 
 ## [pt-BR.light.bench-tab.review.tab](pages/pt-BR.light.bench-tab.review.tab.md)
 
