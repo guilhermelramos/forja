@@ -82,3 +82,106 @@ fn grouping_by_stage_keeps_column_order() {
     assert_eq!(groups[0].0, "Rascunho");
     assert_eq!(groups[1].0, "Forjando");
 }
+
+#[test]
+fn refresh_filters_cards_by_active_project() {
+    use forja_kernel::{Module, ModuleManifest, Registrar, Runtime, RuntimeOptions};
+    use serde_json::json;
+    use std::sync::{Arc, Mutex};
+
+    struct StubProjects {
+        active_id: Arc<Mutex<String>>,
+    }
+
+    impl Module for StubProjects {
+        fn manifest(&self) -> ModuleManifest {
+            ModuleManifest::new("project", "stub.project.name", "0.1.0")
+        }
+        fn register(&mut self, r: &mut Registrar<'_>) {
+            r.i18n("stub-project-name = Projects\n", "stub-project-name = Projetos\n");
+            let active = Arc::clone(&self.active_id);
+            r.command("project.current", "stub.project.name", move |_cx, _| {
+                let id = active.lock().unwrap().clone();
+                Ok(json!({ "id": id, "name": id, "path": "C:/p" }))
+            });
+            r.command("project.list", "stub.project.name", |_cx, _| {
+                Ok(json!({
+                    "projects": [
+                        { "id": "p1", "name": "Alfa", "path": "C:/alfa" },
+                        { "id": "p2", "name": "Beta", "path": "C:/beta" }
+                    ]
+                }))
+            });
+        }
+    }
+
+    struct StubBenches;
+
+    impl Module for StubBenches {
+        fn manifest(&self) -> ModuleManifest {
+            ModuleManifest::new("bench", "stub.bench.name", "0.1.0")
+        }
+        fn register(&mut self, r: &mut Registrar<'_>) {
+            r.i18n("stub-bench-name = Benches\n", "stub-bench-name = Bancadas\n");
+            r.command("bench.list_cards", "stub.bench.name", |_cx, args| {
+                let filter = args.str("project_id").map(str::to_owned);
+                let all = vec![
+                    card("b1", "draft", "p1", false, false, 1),
+                    card("b2", "forging", "p2", false, false, 2),
+                ];
+                let filtered: Vec<_> = all
+                    .into_iter()
+                    .filter(|c| filter.as_deref().is_none_or(|id| c.bench.project_id == id))
+                    .collect();
+                Ok(json!({ "benches": filtered }))
+            });
+            r.command("bench.stage.list", "stub.bench.name", |_cx, _| {
+                Ok(json!({ "stages": [] }))
+            });
+        }
+    }
+
+    let root = std::env::temp_dir().join(format!("forja-board-filter-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    let active_id = Arc::new(Mutex::new("p1".to_owned()));
+    let board_state = crate::state::Shared::new();
+    let mut runtime = Runtime::new(
+        vec![
+            Box::new(crate::BoardModule {
+                state: board_state.clone(),
+            }),
+            Box::new(StubProjects {
+                active_id: Arc::clone(&active_id),
+            }),
+            Box::new(StubBenches),
+        ],
+        RuntimeOptions {
+            data_dir: Some(root.join("data")),
+            user_dir: Some(root.join("user")),
+            locale: Some("pt-BR".to_owned()),
+            wake: None,
+        },
+    )
+    .expect("board + stub register cleanly");
+
+    {
+        let mut cx = runtime.ctx("board");
+        crate::view::refresh(&mut cx, &board_state);
+    }
+    let cards = board_state.cards();
+    assert_eq!(cards.len(), 1);
+    assert_eq!(cards[0].bench.project_id, "p1");
+    assert_eq!(board_state.active_project().as_deref(), Some("p1"));
+
+    *active_id.lock().unwrap() = "p2".to_owned();
+    {
+        let mut cx = runtime.ctx("board");
+        crate::view::refresh(&mut cx, &board_state);
+    }
+    let cards = board_state.cards();
+    assert_eq!(cards.len(), 1);
+    assert_eq!(cards[0].bench.project_id, "p2");
+    assert_eq!(board_state.active_project().as_deref(), Some("p2"));
+
+    let _ = std::fs::remove_dir_all(&root);
+}

@@ -13,7 +13,10 @@ mod view_sidebar;
 #[cfg(test)]
 mod view_tests;
 
-use forja_contracts::{names, BenchActivated, BenchCreated, BenchStored, StageChanged};
+use forja_contracts::{
+    names, BenchActivated, BenchCreated, BenchStored, ProjectActivated, ProjectAdded,
+    ProjectRemoved, StageChanged,
+};
 use forja_kernel::{
     Module, ModuleManifest, Registrar, SettingKind, SettingSpec, SettingValue, Slot,
 };
@@ -52,6 +55,9 @@ impl Module for BoardModule {
         r.contract_event::<BenchStored>(names::BENCH_STORED);
         r.contract_event::<BenchActivated>(names::BENCH_ACTIVATED);
         r.contract_event::<StageChanged>(names::STAGE_CHANGED);
+        r.contract_event::<ProjectActivated>(names::PROJECT_ACTIVATED);
+        r.contract_event::<ProjectAdded>(names::PROJECT_ADDED);
+        r.contract_event::<ProjectRemoved>(names::PROJECT_REMOVED);
         let created_state = self.state.clone();
         r.subscribe::<BenchCreated, _>(move |_cx, _event| created_state.request_refresh());
         let stored_state = self.state.clone();
@@ -60,6 +66,14 @@ impl Module for BoardModule {
         r.subscribe::<BenchActivated, _>(move |_cx, _event| activated_state.request_refresh());
         let stage_state = self.state.clone();
         r.subscribe::<StageChanged, _>(move |_cx, _event| stage_state.request_refresh());
+        let project_activated_state = self.state.clone();
+        r.subscribe::<ProjectActivated, _>(move |_cx, _event| {
+            project_activated_state.request_refresh()
+        });
+        let project_added_state = self.state.clone();
+        r.subscribe::<ProjectAdded, _>(move |_cx, _event| project_added_state.request_refresh());
+        let project_removed_state = self.state.clone();
+        r.subscribe::<ProjectRemoved, _>(move |_cx, _event| project_removed_state.request_refresh());
 
         let refresh_state = self.state.clone();
         r.command("board.refresh", "board.command.refresh", move |_, _| {

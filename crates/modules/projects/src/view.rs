@@ -122,17 +122,27 @@ impl View for ProjectsView {
             forja_ui_kit::empty_state(ui, forja_ui_kit::ARCHIVE, &cx.t("project.sidebar.empty"), None);
         }
 
+        let active_id = self.state.active_id();
         let mut remove_request = None;
         let mut edit_request = None;
+        let mut project_switch = None;
         let mut bench_activation = None;
         for project in &projects {
             let expanded = self.state.is_expanded(&project.id);
+            let active = active_id.as_deref() == Some(project.id.as_str());
+            let fill = if active {
+                tokens.color.accent_soft.forja_color()
+            } else {
+                tokens.color.surface.forja_color()
+            };
+            let stroke = if active {
+                egui::Stroke::new(1.5_f32, tokens.color.accent.forja_color())
+            } else {
+                egui::Stroke::new(1.0_f32, tokens.color.border.forja_color())
+            };
             let frame = egui::Frame::new()
-                .fill(tokens.color.surface.forja_color())
-                .stroke(egui::Stroke::new(
-                    1.0_f32,
-                    tokens.color.border.forja_color(),
-                ))
+                .fill(fill)
+                .stroke(stroke)
                 .corner_radius(6)
                 .inner_margin(egui::Margin::symmetric(8, 6));
             frame.show(ui, |ui| {
@@ -164,13 +174,19 @@ impl View for ProjectsView {
                         .truncate()
                         .sense(egui::Sense::click()),
                     );
+                    name.widget_info(|| {
+                        egui::WidgetInfo::selected(
+                            egui::WidgetType::Button,
+                            ui.is_enabled(),
+                            active,
+                            &project.name,
+                        )
+                    });
                     if name.clicked() {
-                        self.state.toggle_expanded(&project.id);
-                        // A project click also makes its main bench active so
-                        // the title and the bench-dependent panels follow it.
-                        if let Some(bench_id) = main_bench(cx, &project.id) {
-                            bench_activation = Some(bench_id);
+                        if !expanded {
+                            self.state.toggle_expanded(&project.id);
                         }
+                        project_switch = Some(project.id.clone());
                     }
                     name.context_menu(|ui| {
                         if forja_ui_kit::button(
@@ -259,6 +275,14 @@ impl View for ProjectsView {
                 error: None,
             });
         }
+        if let Some(project_id) = project_switch {
+            let mut args = Map::new();
+            args.insert("project_id".to_owned(), json!(project_id));
+            match cx.run_command("project.switch", Args::from_map(args)) {
+                Ok(_) => self.state.set_error(None),
+                Err(error) => self.state.set_error(Some(error.to_string())),
+            }
+        }
         if let Some(bench_id) = bench_activation {
             let mut args = Map::new();
             args.insert("bench_id".to_owned(), json!(bench_id));
@@ -327,22 +351,6 @@ pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> String {
 }
 
 /// Bench that represents the checkout of the project itself.
-fn main_bench(cx: &mut Ctx<'_>, project_id: &str) -> Option<String> {
-    let mut args = Map::new();
-    args.insert("project_id".to_owned(), json!(project_id));
-    args.insert("include_archived".to_owned(), json!(false));
-    let value = cx.run_command("bench.list_cards", Args::from_map(args)).ok()?;
-    value
-        .get("benches")?
-        .as_array()?
-        .iter()
-        .find(|card| card.get("is_main").and_then(serde_json::Value::as_bool) == Some(true))?
-        .get("bench")
-        .and_then(|bench| bench.get("bench_id"))
-        .and_then(serde_json::Value::as_str)
-        .map(str::to_owned)
-}
-
 fn benches_for(cx: &mut Ctx<'_>, project_id: &str) -> Result<Vec<BenchRef>, String> {
     let mut args = Map::new();
     args.insert("project_id".to_owned(), json!(project_id));

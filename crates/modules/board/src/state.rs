@@ -78,6 +78,7 @@ pub struct PendingMove {
 struct State {
     loaded: bool,
     prefs: Prefs,
+    active_project: Option<String>,
     cards: Vec<BenchCard>,
     stages: Vec<StageColumn>,
     names: BTreeMap<String, String>,
@@ -162,6 +163,19 @@ impl Shared {
     pub fn set_error(&self, value: Option<String>) {
         if let Ok(mut state) = self.0.lock() {
             state.error = value;
+        }
+    }
+
+    pub fn active_project(&self) -> Option<String> {
+        self.0
+            .lock()
+            .ok()
+            .and_then(|state| state.active_project.clone())
+    }
+
+    pub fn set_active_project(&self, project_id: Option<String>) {
+        if let Ok(mut state) = self.0.lock() {
+            state.active_project = project_id;
         }
     }
 

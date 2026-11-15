@@ -38,6 +38,8 @@ pub struct ProjectsFile {
     pub schema_version: u32,
     #[serde(default)]
     pub projects: Vec<Project>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active_id: Option<String>,
 }
 
 fn schema_version() -> u32 {

@@ -16,6 +16,7 @@ pub use viewers::*;
 pub mod names {
     pub const PROJECT_ADDED: &str = "project.added";
     pub const PROJECT_REMOVED: &str = "project.removed";
+    pub const PROJECT_ACTIVATED: &str = "project.activated";
     pub const BENCH_ACTIVATED: &str = "bench.activated";
     pub const BENCH_CREATED: &str = "bench.created";
     pub const BENCH_STORED: &str = "bench.stored";
@@ -54,6 +55,8 @@ pub struct BenchRef {
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProjectAdded(pub ProjectRef);
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProjectActivated(pub ProjectRef);
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProjectRemoved {
     pub project_id: String,

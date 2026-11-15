@@ -170,3 +170,61 @@ fn raw_project_errors_are_humanized_in_pt_br() {
     assert!(missing.contains("os error 3"), "{missing}");
     let _ = std::fs::remove_dir_all(root);
 }
+
+#[test]
+fn active_project_switches_persists_and_falls_back_on_remove() {
+    let root = temp_dir("active");
+    let alfa = root.join("alfa");
+    let beta = root.join("beta");
+    std::fs::create_dir_all(&alfa).unwrap();
+    std::fs::create_dir_all(&beta).unwrap();
+
+    let (alfa_id, beta_id) = {
+        let mut runtime = runtime(&root);
+        let switch_cmd = runtime
+            .registry()
+            .command("project.switch")
+            .expect("project.switch command registered");
+        assert_eq!(switch_cmd.fields.len(), 1);
+        assert_eq!(switch_cmd.fields[0].arg, "project_id");
+
+        let alfa_ref = runtime
+            .call_method("project.add", Map::from_iter([("path".to_owned(), json!(alfa))]))
+            .unwrap();
+        let beta_ref = runtime
+            .call_method("project.add", Map::from_iter([("path".to_owned(), json!(beta))]))
+            .unwrap();
+        let current = runtime.call_method("project.current", Map::new()).unwrap();
+        assert_eq!(current["id"], beta_ref["id"]);
+
+        let switched = runtime
+            .call_method(
+                "project.switch",
+                Map::from_iter([("project_id".to_owned(), alfa_ref["id"].clone())]),
+            )
+            .unwrap();
+        assert_eq!(switched["id"], alfa_ref["id"]);
+        let current = runtime.call_method("project.current", Map::new()).unwrap();
+        assert_eq!(current["id"], alfa_ref["id"]);
+
+        (
+            alfa_ref["id"].as_str().unwrap().to_owned(),
+            beta_ref["id"].as_str().unwrap().to_owned(),
+        )
+    };
+
+    // Reopen runtime on the same data_dir and verify active project persisted.
+    let mut reopened = runtime(&root);
+    let current = reopened.call_method("project.current", Map::new()).unwrap();
+    assert_eq!(current["id"], alfa_id);
+
+    reopened
+        .call_method(
+            "project.remove",
+            Map::from_iter([("project_id".to_owned(), json!(alfa_id))]),
+        )
+        .unwrap();
+    let fallback = reopened.call_method("project.current", Map::new()).unwrap();
+    assert_eq!(fallback["id"], beta_id);
+    let _ = std::fs::remove_dir_all(root);
+}

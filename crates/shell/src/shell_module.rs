@@ -35,10 +35,14 @@ fn focus_bench(registrar: &mut Registrar<'_>) {
         |_, args| {
             let project = args.required_str("project")?.to_owned();
             let bench = args.required_str("bench")?.to_owned();
-            actions::push(Action::OpenBench {
-                project: project.clone(),
-                bench: bench.clone(),
-            });
+            if args.bool("keep_page").unwrap_or(false) {
+                actions::push(Action::RefreshProjectCrumb);
+            } else {
+                actions::push(Action::OpenBench {
+                    project: project.clone(),
+                    bench: bench.clone(),
+                });
+            }
             Ok(json!({ "project": project, "bench": bench }))
         },
     );

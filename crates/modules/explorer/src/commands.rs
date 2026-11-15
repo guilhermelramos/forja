@@ -536,6 +536,30 @@ pub fn on_bench_activated(cx: &Ctx<'_>, shared: &Shared, bench: &BenchRef) {
     apply_bench(cx, shared, Some(bench));
 }
 
+/// Handles `project.activated` when `benches` is absent or has not activated yet.
+pub fn on_project_activated(
+    cx: &mut Ctx<'_>,
+    shared: &Shared,
+    project: &forja_contracts::ProjectRef,
+) {
+    if let Some(bench) = read_current(cx).filter(|bench| bench.project_id == project.id) {
+        apply_bench(cx, shared, Some(&bench));
+        return;
+    }
+    let root = PathBuf::from(&project.path);
+    let current = lock(shared).tree.root().map(Path::to_path_buf);
+    if current.as_ref() != Some(&root) {
+        switch_root(cx, shared, Some(root), Some(project.name.clone()));
+    }
+}
+
+/// Handles `project.removed`: clears the tree if no active bench/project remains.
+pub fn on_project_removed(cx: &mut Ctx<'_>, shared: &Shared) {
+    if read_current(cx).is_none() {
+        apply_bench(cx, shared, None);
+    }
+}
+
 /// Makes `bench` the panel's root, or no root. Switching again to the same bench does nothing.
 fn apply_bench(cx: &Ctx<'_>, shared: &Shared, bench: Option<&BenchRef>) {
     let root = bench.map(|bench| PathBuf::from(&bench.path));

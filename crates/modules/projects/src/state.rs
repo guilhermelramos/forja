@@ -1,7 +1,7 @@
 //! In-memory state and mutations for the project list.
 
 use crate::model::{self, NewProject, Project, ProjectsFile};
-use forja_contracts::{ProjectAdded, ProjectRef, ProjectRemoved};
+use forja_contracts::{ProjectActivated, ProjectAdded, ProjectRef, ProjectRemoved};
 use forja_kernel::Ctx;
 use std::collections::BTreeSet;
 use std::sync::{Arc, Mutex};
@@ -60,6 +60,7 @@ pub struct EditForm {
 struct State {
     loaded: bool,
     projects: Vec<Project>,
+    active_id: Option<String>,
     expanded: BTreeSet<String>,
     dialog: Dialog,
     status: Option<String>,
@@ -86,10 +87,15 @@ impl Shared {
         state.loaded = true;
         match cx.store().load::<ProjectsFile>() {
             forja_kernel::LoadResult::Loaded(file) => {
-                let mut projects = file.sorted().projects;
+                let file = file.sorted();
+                let mut projects = file.projects;
                 for project in &mut projects {
                     project.path = forja_kernel::paths::clean_path_str(&project.path);
                 }
+                state.active_id = file
+                    .active_id
+                    .filter(|id| projects.iter().any(|project| project.id == *id))
+                    .or_else(|| projects.first().map(|project| project.id.clone()));
                 state.projects = projects;
             }
             forja_kernel::LoadResult::Quarantined(path) => {
@@ -107,6 +113,24 @@ impl Shared {
             .lock()
             .map(|state| state.projects.clone())
             .unwrap_or_default()
+    }
+
+    pub fn active_id(&self) -> Option<String> {
+        self.0
+            .lock()
+            .ok()
+            .and_then(|state| state.active_id.clone())
+    }
+
+    pub fn active(&self) -> Option<ProjectRef> {
+        self.0.lock().ok().and_then(|state| {
+            let active_id = state.active_id.as_deref()?;
+            state
+                .projects
+                .iter()
+                .find(|project| project.id == active_id)
+                .map(reference)
+        })
     }
 
     pub fn is_expanded(&self, id: &str) -> bool {
@@ -176,6 +200,7 @@ impl Shared {
             ProjectsFile {
                 schema_version: model::SCHEMA_VERSION,
                 projects: state.projects.clone(),
+                active_id: state.active_id.clone(),
             }
         };
         cx.store()
@@ -205,14 +230,18 @@ impl Shared {
 
     /// Adds an already-validated record (used by the create and clone tasks).
     fn push_project(&self, cx: &mut Ctx<'_>, project: Project) -> Result<(), String> {
-        {
+        let previous_active = {
             let mut state = self.0.lock().map_err(|_| "project state is poisoned")?;
+            let previous_active = state.active_id.clone();
             state.projects.push(project.clone());
             state.projects.sort_by_key(|a| a.name.to_lowercase());
-        }
+            state.active_id = Some(project.id.clone());
+            previous_active
+        };
         if let Err(error) = self.save(cx) {
             if let Ok(mut state) = self.0.lock() {
                 state.projects.retain(|existing| existing.id != project.id);
+                state.active_id = previous_active;
             }
             return Err(error);
         }
@@ -221,8 +250,29 @@ impl Shared {
             name: project.name,
             path: project.path,
         };
-        cx.emit(&ProjectAdded(reference));
+        cx.emit(&ProjectAdded(reference.clone()));
+        cx.emit(&ProjectActivated(reference));
         Ok(())
+    }
+
+    pub fn activate(&self, cx: &mut Ctx<'_>, id: &str) -> Result<ProjectRef, String> {
+        let (changed, active) = {
+            let mut state = self.0.lock().map_err(|_| "project state is poisoned")?;
+            let project = state
+                .projects
+                .iter()
+                .find(|project| project.id == id)
+                .ok_or_else(|| "project not found".to_owned())?
+                .clone();
+            let changed = state.active_id.as_deref() != Some(id);
+            state.active_id = Some(id.to_owned());
+            (changed, reference(&project))
+        };
+        if changed {
+            self.save(cx)?;
+            cx.emit(&ProjectActivated(active.clone()));
+        }
+        Ok(active)
     }
 
     pub fn update(
@@ -259,15 +309,24 @@ impl Shared {
     }
 
     pub fn remove(&self, cx: &mut Ctx<'_>, id: &str) -> Result<(), String> {
-        {
+        let next_active = {
             let mut state = self.0.lock().map_err(|_| "project state is poisoned")?;
             state.projects.retain(|project| project.id != id);
             state.expanded.remove(id);
-        }
+            if state.active_id.as_deref() == Some(id) {
+                state.active_id = state.projects.first().map(|project| project.id.clone());
+                state.projects.first().map(reference)
+            } else {
+                None
+            }
+        };
         self.save(cx)?;
         cx.emit(&ProjectRemoved {
             project_id: id.to_owned(),
         });
+        if let Some(active) = next_active {
+            cx.emit(&ProjectActivated(active));
+        }
         Ok(())
     }
 }

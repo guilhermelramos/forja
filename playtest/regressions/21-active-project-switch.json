@@ -1,0 +1,53 @@
+{
+  "title": "Trocar de projeto na lateral e pela Bigorna atualiza barra, Arquivos e Quadro (#19)",
+  "issue": 19,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Novo projeto" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "\\sample" },
+    { "m": "ui.key", "keys": "End" },
+    { "m": "ui.type", "text": "-beta" },
+    { "m": "ui.click", "target": "Criar" },
+    { "m": "ui.wait", "ms": 700 },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 400 },
+    { "m": "ui.click", "target": "Quadro" },
+    { "m": "ui.wait", "ms": 300 },
+    { "m": "ui.click", "target": "sample-beta" },
+    { "m": "ui.wait", "ms": 300 },
+    { "m": "ui.click", "target": "Bigorna" },
+    { "m": "ui.type", "text": "Trocar de projeto" },
+    { "m": "ui.key", "keys": "Return" },
+    { "m": "ui.type", "text": "sample" },
+    { "m": "ui.key", "keys": "Return" },
+    { "m": "ui.wait", "ms": 400 },
+    { "m": "ui.snapshot", "view": false }
+  ],
+  "expect": [
+    {
+      "step": 11,
+      "window_count": 0,
+      "present": ["sample", "sample-beta", "README.md", "docs", "src"],
+      "absent": ["Nenhum projeto"]
+    },
+    {
+      "step": 13,
+      "present": ["1 bancadas", "README.md"],
+      "absent_contains": ["2 bancadas"]
+    },
+    {
+      "step": 15,
+      "present": ["1 bancadas"],
+      "absent": ["README.md", "docs", "src"]
+    },
+    {
+      "window_count": 0,
+      "present": ["1 bancadas", "README.md", "docs", "src"],
+      "absent_contains": ["2 bancadas"]
+    }
+  ]
+}

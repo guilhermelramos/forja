@@ -59,6 +59,16 @@ pub fn project_path(cx: &mut Ctx<'_>, project_id: &str) -> Option<String> {
     project_by_id(cx, project_id).map(|project| project.path)
 }
 
+pub fn active_project_id(cx: &mut Ctx<'_>) -> Option<String> {
+    let value = cx.run_command("project.current", Args::new()).ok()?;
+    value
+        .get("id")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|id| !id.is_empty())
+        .map(str::to_owned)
+}
+
 /// Adds the main-checkout record for every registered project once. This is
 /// metadata only; the branch is filled by `bench.refresh`.
 pub fn ensure_main(cx: &mut Ctx<'_>, shared: &Shared) -> Result<(), String> {
@@ -69,7 +79,11 @@ pub fn ensure_main(cx: &mut Ctx<'_>, shared: &Shared) -> Result<(), String> {
     }
     let default_stage = setting_str(cx, "bench.stage.creation_default", stages::DRAFT);
     let existing = shared.file();
-    let need_current = existing.current.is_none() && !existing.benches.is_empty();
+    let need_current = existing
+        .current
+        .as_deref()
+        .is_none_or(|id| existing.find(id).is_none())
+        && (!existing.benches.is_empty() || !projects.is_empty());
     let missing = projects.iter().any(|project| {
         existing.main_for(&project.id).is_none()
             || existing
@@ -80,6 +94,11 @@ pub fn ensure_main(cx: &mut Ctx<'_>, shared: &Shared) -> Result<(), String> {
     if !missing && !need_current {
         return Ok(());
     }
+    let preferred_project = if need_current {
+        active_project_id(cx)
+    } else {
+        None
+    };
     shared.mutate(cx, |file| {
         for project in &projects {
             match file.main_for(&project.id).cloned() {
@@ -112,11 +131,15 @@ pub fn ensure_main(cx: &mut Ctx<'_>, shared: &Shared) -> Result<(), String> {
                 }),
             }
         }
-        if file.current.is_none() {
-            file.current = file
-                .benches
-                .iter()
-                .find(|bench| bench.is_main)
+        if file
+            .current
+            .as_deref()
+            .is_none_or(|id| file.find(id).is_none())
+        {
+            file.current = preferred_project
+                .as_deref()
+                .and_then(|project_id| file.main_for(project_id))
+                .or_else(|| file.benches.iter().find(|bench| bench.is_main))
                 .map(|bench| bench.bench_id.clone());
         }
     })
@@ -171,6 +194,54 @@ fn remember_tabs_when_leaving(cx: &mut Ctx<'_>, shared: &Shared) {
 }
 
 pub fn activate(cx: &mut Ctx<'_>, shared: &Shared, bench_id: &str) -> Result<BenchRef, String> {
+    activate_inner(cx, shared, bench_id, true)
+}
+
+pub fn activate_project(cx: &mut Ctx<'_>, shared: &Shared, project_id: &str) -> Result<(), String> {
+    shared.ensure_loaded(cx);
+    ensure_main(cx, shared)?;
+    if shared
+        .current()
+        .is_some_and(|bench| bench.project_id == project_id)
+    {
+        return Ok(());
+    }
+    let bench_id = {
+        let file = shared.file();
+        model::ordered(&file.benches, false)
+            .into_iter()
+            .find(|bench| bench.project_id == project_id)
+            .map(|bench| bench.bench_id.clone())
+            .or_else(|| {
+                file.main_for(project_id)
+                    .map(|bench| bench.bench_id.clone())
+            })
+    };
+    if let Some(bench_id) = bench_id {
+        // Keep the current rail view (like Board) open when switching project.
+        activate_inner(cx, shared, &bench_id, false)?;
+    }
+    Ok(())
+}
+
+pub fn on_project_removed(cx: &mut Ctx<'_>, shared: &Shared, project_id: &str) {
+    shared.ensure_loaded(cx);
+    if shared
+        .current()
+        .is_some_and(|bench| bench.project_id == project_id)
+    {
+        let _ = shared.mutate(cx, |file| {
+            file.current = None;
+        });
+    }
+}
+
+fn activate_inner(
+    cx: &mut Ctx<'_>,
+    shared: &Shared,
+    bench_id: &str,
+    focus_shell: bool,
+) -> Result<BenchRef, String> {
     shared.ensure_loaded(cx);
     ensure_main(cx, shared)?;
     let bench = shared
@@ -201,6 +272,9 @@ pub fn activate(cx: &mut Ctx<'_>, shared: &Shared, bench_id: &str) -> Result<Ben
         let mut args = Map::new();
         args.insert("project".to_owned(), json!(project.name));
         args.insert("bench".to_owned(), json!(bench.name));
+        if !focus_shell {
+            args.insert("keep_page".to_owned(), json!(true));
+        }
         let _ = cx.run_command("shell.bench.focus", Args::from_map(args));
     }
     Ok(bench.to_ref())
@@ -453,6 +527,7 @@ pub fn approve(
 pub fn open_create_dialog(cx: &mut Ctx<'_>, shared: &Shared, project_id: Option<&str>) {
     let project_id = project_id
         .map(str::to_owned)
+        .or_else(|| active_project_id(cx))
         .or_else(|| projects(cx).first().map(|project| project.id.clone()))
         .unwrap_or_default();
     shared.set_dialog(Dialog::Create(CreateForm {
