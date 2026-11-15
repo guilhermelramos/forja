@@ -9,7 +9,9 @@
     { "m": "ui.wait", "ms": 800 },
     { "m": "ui.click", "id": 6246926411915730854 },
     { "m": "ui.click", "target": "Add" },
+    { "m": "ui.wait", "ms": 1200 },
     { "m": "ui.click", "target": "sample" },
+    { "m": "ui.wait", "ms": 800 },
     { "m": "ui.click", "target": "New file" }
   ],
   "expect": [
