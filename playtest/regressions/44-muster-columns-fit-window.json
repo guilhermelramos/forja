@@ -1,0 +1,17 @@
+{
+  "title": "Mutirão view keeps its columns scrolled inside window bounds (#99)",
+  "issue": 99,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Mutirão" },
+    { "m": "ui.wait", "ms": 300 },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 3,
+      "no_geometry_issues": true
+    }
+  ]
+}

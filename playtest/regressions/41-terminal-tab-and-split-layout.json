@@ -1,0 +1,36 @@
+{
+  "title": "Terminal tab chip, Receitas popup, and split search bar stay inside bounds without overlapping (#100, #101, #102)",
+  "issue": 100,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.click", "target": "Receitas" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Dividir abaixo" },
+    { "m": "ui.click", "target": "Dividir abaixo" },
+    { "m": "ui.click", "target": "Dividir abaixo" },
+    { "m": "ui.click", "target": "Dividir abaixo" },
+    { "m": "ui.click", "target": "Dividir abaixo" },
+    { "m": "ui.click", "target": "Dividir abaixo" },
+    { "m": "ui.click", "target": "Buscar" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 0,
+      "present_contains": ["pwsh", "Fechar pwsh"],
+      "no_geometry_issues": true
+    },
+    {
+      "step": 4,
+      "no_geometry_issues": true
+    },
+    {
+      "step": 13,
+      "no_geometry_issues": true
+    }
+  ]
+}
