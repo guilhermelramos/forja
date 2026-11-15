@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 44/160 telas documentadas · elementos citados 5599/6004 · completo: false
+**Progresso:** 47/160 telas documentadas · elementos citados 5707/6112 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -82,11 +82,11 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.light.modal.onboarding.wizard` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.onboarding.wizard.png) |
 | `pt-BR.light.right-tab.ports.panel` | — | [png](captures/pt-BR.light.right-tab.ports.panel.png) |
 | `pt-BR.light.modal.project.dialogs` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.project.dialogs.png) |
-| `pt-BR.light.rail.request.page` | — | [png](captures/pt-BR.light.rail.request.page.png) |
+| `pt-BR.light.rail.request.page` | [página](pages/pt-BR.light.rail.request.page.md) | [png](captures/pt-BR.light.rail.request.page.png) |
 | `pt-BR.light.bench-tab.review.tab` | [página](pages/pt-BR.light.bench-tab.review.tab.md) | [png](captures/pt-BR.light.bench-tab.review.tab.png) |
-| `pt-BR.light.rail.routine.page` | — | [png](captures/pt-BR.light.rail.routine.page.png) |
+| `pt-BR.light.rail.routine.page` | [página](pages/pt-BR.light.rail.routine.page.md) | [png](captures/pt-BR.light.rail.routine.page.png) |
 | `pt-BR.light.right-tab.search.panel` | — | [png](captures/pt-BR.light.right-tab.search.panel.png) |
-| `pt-BR.light.rail.skill.page` | — | [png](captures/pt-BR.light.rail.skill.page.png) |
+| `pt-BR.light.rail.skill.page` | [página](pages/pt-BR.light.rail.skill.page.md) | [png](captures/pt-BR.light.rail.skill.page.png) |
 | `pt-BR.light.bench-tab.terminal.tab` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.bench-tab.terminal.tab.png) |
 | `pt-BR.light.rail.usage.page` | — | [png](captures/pt-BR.light.rail.usage.page.png) |
 | `pt-BR.light.bench-tab.viewers.tab` | [página](pages/pt-BR.light.bench-tab.viewers.tab.md) | [png](captures/pt-BR.light.bench-tab.viewers.tab.png) |

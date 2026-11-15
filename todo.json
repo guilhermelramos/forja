@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 44,
-  "widgets_total": 6004,
-  "widgets_covered": 5599,
+  "states_done": 47,
+  "widgets_total": 6112,
+  "widgets_covered": 5707,
   "complete": false,
   "stale": [
     {
@@ -1267,21 +1267,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "pt-BR.light.rail.request.page",
-      "png": "captures/pt-BR.light.rail.request.page.png",
-      "tree": "captures/pt-BR.light.rail.request.page.json"
-    },
-    {
-      "state": "pt-BR.light.rail.routine.page",
-      "png": "captures/pt-BR.light.rail.routine.page.png",
-      "tree": "captures/pt-BR.light.rail.routine.page.json"
-    },
-    {
-      "state": "pt-BR.light.rail.skill.page",
-      "png": "captures/pt-BR.light.rail.skill.page.png",
-      "tree": "captures/pt-BR.light.rail.skill.page.json"
-    },
     {
       "state": "pt-BR.light.rail.usage.page",
       "png": "captures/pt-BR.light.rail.usage.page.png",

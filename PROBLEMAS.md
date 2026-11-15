@@ -574,6 +574,14 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - O estado vazio central "Nenhum mutirão ainda. Crie um para dividir o trabalho em tarefas." fica a cerca de 170 px do topo da coluna (que tem ~1006 px de altura), em vez de centrado verticalmente.
 - Textos de estado vazio e subtítulo em cinza sobre fundo claro têm contraste reduzido (por exemplo, "Tarefas, ajudantes e recados num só lugar." e "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.").
 
+## [pt-BR.light.rail.request.page](pages/pt-BR.light.rail.request.page.md)
+
+- O botão de alternância de tema no topo direito (1741,5)–(1773,37) não tem nome acessível; é identificável apenas pelo ícone de sol.
+- O campo de busca (TextInput) não tem nome acessível, apenas o texto-guia visível.
+- Os três ícones de estado vazio (pasta, envelope, grade) são Labels "(ícone)" sem descrição acessível.
+- O nome "Todos" se repete em dois grupos de filtro (lista e origem) com retângulos distintos, o que pode gerar ambiguidade para leitores de tela.
+- As abas extras dos painéis laterais ficam escondidas atrás dos botões "Mais abas" nesta resolução, exigindo um clique extra para alcançar "Bancadas", "Painéis de extensões", "Busca" e "Portas" (visíveis diretamente na referência escura).
+
 ## [pt-BR.light.bench-tab.review.tab](pages/pt-BR.light.bench-tab.review.tab.md)
 
 - Campos de texto sem nome acessível: branch de origem (324,295), "Título" (324,350), "Descrição" (324,405), Base (360,570), Revisores (390,610) e Labels (672,610); os rótulos existem na tela, mas não há associação explícita entre rótulo e campo.
@@ -584,6 +592,21 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - O campo "Branch de origem" aparece desativado antes de qualquer interação; o motivo só é explicado longe do campo ("Não há uma base disponível. Escolha uma branch para comparar." no topo e "Escolha uma base válida para continuar." abaixo do botão), e não junto ao campo.
 - "Abrir como rascunho" e "Gerar" ficam na mesma linha do campo "Base", um agrupamento que dificulta a leitura do formulário.
 - Nenhum elemento com retângulo fora dos limites da janela (1920×1080) e nenhuma sobreposição entre abas nesta variante.
+
+## [pt-BR.light.rail.routine.page](pages/pt-BR.light.rail.routine.page.md)
+
+- Nenhum elemento com retângulo fora dos limites da janela (1920×1080) nesta variante; o problema de estouro da aba "Painéis de extensões" visto na dark não ocorre aqui porque essas abas ficam recolhidas em "Mais abas".
+- Os botões-ícone do trilho ("Quadro", "Ajudantes", "Mutirão", "Pedidos", "Skills", "Uso", "Extensões", "Acervo") dependem exclusivamente de ícone na interface; o nome acessível existe na árvore, mas não há rótulo visível nem dica na tela.
+- Os três ícones ilustrativos dos estados vazios, a logomarca, o ícone de tema da barra superior e os dois divisores verticais são expostos como "(sem nome acessível)", sem descrição para leitores de tela.
+- Há dois botões com o mesmo nome "Mais abas" (painel esquerdo e painel direito), o que dificulta a distinção por leitores de tela.
+
+## [pt-BR.light.rail.skill.page](pages/pt-BR.light.rail.skill.page.md)
+
+- O campo de busca "Buscar skills" é um TextInput sem nome acessível; o texto de sugestão só aparece visualmente.
+- O ícone de alternância de tema na barra superior (1741,5)–(1773,37) é um elemento clicável sem nome acessível; a função só é identificável pela imagem.
+- Os dois divisores verticais e a imagem do logotipo no trilho são elementos sem nome acessível.
+- Os três ícones de estado vazio aparecem como rótulos "(ícone)" sem descrição de texto alternativa.
+- A página exibe o botão "Voltar à bancada" no topo da área central mesmo sem nenhuma bancada ativa (o painel de arquivos informa "Nenhuma bancada ativa"), o que é inconsistente para o usuário.
 
 ## [pt-BR.light.bench-tab.viewers.tab](pages/pt-BR.light.bench-tab.viewers.tab.md)
 
