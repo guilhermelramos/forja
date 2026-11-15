@@ -50,66 +50,75 @@ foreach ($dir in Get-ChildItem $In -Directory -ErrorAction SilentlyContinue) {
     }
 }
 
-$existing = @()
-if (-not $DryRun) {
-    foreach ($lbl in $Labels) {
-        gh label create $lbl --color D93F0B --description "Achado pelos testadores automáticos" --force 2>$null | Out-Null
-        $existing += @(gh issue list --label $lbl --state all --limit 500 --json title | ConvertFrom-Json | ForEach-Object { $_.title -replace '^\[[^\]]+\]\s*', '' })
-    }
-    $existing = @($existing | Select-Object -Unique)
-}
-
-$order = @{ critical = 0; high = 1; medium = 2; low = 3 }
 $created = 0
-$lines = @("# Rodada de testes", "", "$($all.Count) achados de $(@($all | Select-Object -ExpandProperty mission -Unique).Count) testadores.", "")
-foreach ($finding in $all | Sort-Object { $order[[string]$_.severity] ?? 4 }) {
-    $title = [string]$finding.title
-    $duplicate = $existing | Where-Object { (Normalize $_) -eq (Normalize $title) -or (Similar $_ $title) } | Select-Object -First 1
-    $status = "nova"
-    if ($duplicate) {
-        $status = "já existe: $duplicate"
-    } elseif ($created -ge $MaxIssues) {
-        $status = "não aberta (limite de $MaxIssues por rodada)"
-    } else {
-        $steps = @($finding.steps | Where-Object { $_ }) | ForEach-Object { "1. $_" }
-        $body = @(
-            "**Missão:** $($finding.mission) · **Tipo:** $($finding.kind) · **Gravidade:** $($finding.severity)",
-            "**Tela:** $($finding.screen)", "",
-            "### Passos", ($steps -join "`n"), "",
-            "### Esperado", [string]$finding.expected, "",
-            "### Aconteceu", [string]$finding.actual, "",
-            "_${SourceNote} Rodada: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID_"
-        ) -join "`n"
-        if (-not $DryRun) {
-            $body | Set-Content issue-body.md -Encoding utf8
-            $labelArgs = @()
-            foreach ($lbl in $Labels) { $labelArgs += @("--label", $lbl) }
-            gh issue create --title "$TitlePrefix $title" @labelArgs --body-file issue-body.md | Out-Null
+try {
+    $existing = @()
+    if (-not $DryRun) {
+        foreach ($lbl in $Labels) {
+            gh label create $lbl --color D93F0B --description "Achado pelos testadores automáticos" --force 2>$null | Out-Null
+            $existing += @(gh issue list --label $lbl --state all --limit 500 --json title | ConvertFrom-Json | ForEach-Object { $_.title -replace '^\[[^\]]+\]\s*', '' })
         }
-        $existing += $title
-        $created++
+        $existing = @($existing | Select-Object -Unique)
     }
-    $lines += "- **[$($finding.severity)]** $title — _$($finding.mission)_ ($status)"
-}
-$lines += "", "$created issues novas."
-$usageFiles = @(Get-ChildItem $In -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-    $file = Get-ChildItem $_.FullName -Recurse -Filter usage.json | Select-Object -First 1
-    if ($file) { [pscustomobject]@{ Dir = $_; File = $file } }
-})
-if ($usageFiles.Count -gt 0) {
-    $lines += "", "## Uso de tokens", "",
-        "| Testador | Passos | Entrada | Cache lido | Saída | Raciocínio | Custo |", "|---|---:|---:|---:|---:|---:|---:|"
-    $sum = @{ steps = [long]0; input = [long]0; cache = [long]0; output = [long]0; reasoning = [long]0; cost = 0.0 }
-    foreach ($entry in $usageFiles) {
-        try { $usage = Get-Content $entry.File.FullName -Raw | ConvertFrom-Json } catch { continue }
-        $row = @{
-            steps = [long]$usage.steps; input = [long]$usage.tokens.input; cache = [long]$usage.tokens.cache.read
-            output = [long]$usage.tokens.output; reasoning = [long]$usage.tokens.reasoning; cost = [double]$usage.cost
+
+    $order = @{ critical = 0; high = 1; medium = 2; low = 3 }
+    $lines = @("# Rodada de testes", "", "$($all.Count) achados de $(@($all | Select-Object -ExpandProperty mission -Unique).Count) testadores.", "")
+    foreach ($finding in $all | Sort-Object { $order[[string]$_.severity] ?? 4 }) {
+        $title = [string]$finding.title
+        $duplicate = $existing | Where-Object { (Normalize $_) -eq (Normalize $title) -or (Similar $_ $title) } | Select-Object -First 1
+        $status = "nova"
+        if ($duplicate) {
+            $status = "já existe: $duplicate"
+        } elseif ($created -ge $MaxIssues) {
+            $status = "não aberta (limite de $MaxIssues por rodada)"
+        } else {
+            $steps = @($finding.steps | Where-Object { $_ }) | ForEach-Object { "1. $_" }
+            $body = @(
+                "**Missão:** $($finding.mission) · **Tipo:** $($finding.kind) · **Gravidade:** $($finding.severity)",
+                "**Tela:** $($finding.screen)", "",
+                "### Passos", ($steps -join "`n"), "",
+                "### Esperado", [string]$finding.expected, "",
+                "### Aconteceu", [string]$finding.actual, "",
+                "_${SourceNote} Rodada: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID_"
+            ) -join "`n"
+            if (-not $DryRun) {
+                $body | Set-Content issue-body.md -Encoding utf8
+                $labelArgs = @()
+                foreach ($lbl in $Labels) { $labelArgs += @("--label", $lbl) }
+                gh issue create --title "$TitlePrefix $title" @labelArgs --body-file issue-body.md | Out-Null
+                if ($LASTEXITCODE -ne 0) { throw "could not create issue '$TitlePrefix $title'" }
+            }
+            $existing += $title
+            $created++
         }
-        foreach ($key in @($row.Keys)) { $sum[$key] += $row[$key] }
-        $lines += "| $($entry.Dir.Name -replace '^(playtest|explore)-', '') | $($row.steps) | $($row.input.ToString('N0')) | $($row.cache.ToString('N0')) | $($row.output.ToString('N0')) | $($row.reasoning.ToString('N0')) | US$ $($row.cost.ToString('N4')) |"
+        $lines += "- **[$($finding.severity)]** $title — _$($finding.mission)_ ($status)"
     }
-    $lines += "| **total** | $($sum.steps) | $($sum.input.ToString('N0')) | $($sum.cache.ToString('N0')) | $($sum.output.ToString('N0')) | $($sum.reasoning.ToString('N0')) | US$ $($sum.cost.ToString('N4')) |"
+    $lines += "", "$created issues novas."
+    $usageFiles = @(Get-ChildItem $In -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+        $file = Get-ChildItem $_.FullName -Recurse -Filter usage.json | Select-Object -First 1
+        if ($file) { [pscustomobject]@{ Dir = $_; File = $file } }
+    })
+    if ($usageFiles.Count -gt 0) {
+        $lines += "", "## Uso de tokens", "",
+            "| Testador | Passos | Entrada | Cache lido | Saída | Raciocínio | Custo |", "|---|---:|---:|---:|---:|---:|---:|"
+        $sum = @{ steps = [long]0; input = [long]0; cache = [long]0; output = [long]0; reasoning = [long]0; cost = 0.0 }
+        foreach ($entry in $usageFiles) {
+            try { $usage = Get-Content $entry.File.FullName -Raw | ConvertFrom-Json } catch { continue }
+            $row = @{
+                steps = [long]$usage.steps; input = [long]$usage.tokens.input; cache = [long]$usage.tokens.cache.read
+                output = [long]$usage.tokens.output; reasoning = [long]$usage.tokens.reasoning; cost = [double]$usage.cost
+            }
+            foreach ($key in @($row.Keys)) { $sum[$key] += $row[$key] }
+            $lines += "| $($entry.Dir.Name -replace '^(playtest|explore)-', '') | $($row.steps) | $($row.input.ToString('N0')) | $($row.cache.ToString('N0')) | $($row.output.ToString('N0')) | $($row.reasoning.ToString('N0')) | US$ $($row.cost.ToString('N4')) |"
+        }
+        $lines += "| **total** | $($sum.steps) | $($sum.input.ToString('N0')) | $($sum.cache.ToString('N0')) | $($sum.output.ToString('N0')) | $($sum.reasoning.ToString('N0')) | US$ $($sum.cost.ToString('N4')) |"
+    }
+    $lines -join "`n" | Set-Content $Report -Encoding utf8
+    Write-Host ($lines -join "`n")
+} finally {
+    if ($env:GITHUB_OUTPUT) {
+        $hasCreated = if ($created -gt 0) { "true" } else { "false" }
+        "created_count=$created" | Add-Content $env:GITHUB_OUTPUT
+        "has_created=$hasCreated" | Add-Content $env:GITHUB_OUTPUT
+    }
 }
-$lines -join "`n" | Set-Content $Report -Encoding utf8
-Write-Host ($lines -join "`n")

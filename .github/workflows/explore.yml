@@ -100,6 +100,7 @@ jobs:
     permissions:
       contents: read
       issues: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -108,7 +109,8 @@ jobs:
         with:
           path: explore-results
           pattern: explore-*
-      - name: Open issues for new findings
+      - id: report
+        name: Open issues for new findings
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -122,3 +124,9 @@ jobs:
             -TitlePrefix "[explore]" `
             -SourceNote "Registrado pelo explorador automático (forja-explore, sem IA) usando a Forja ao vivo."
           Get-Content report.md | Add-Content $env:GITHUB_STEP_SUMMARY
+      - name: Trigger issue triage
+        if: (!cancelled()) && steps.report.outputs.has_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run triage.yml -R "$GH_REPO"

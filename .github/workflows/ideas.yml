@@ -94,6 +94,7 @@ jobs:
     permissions:
       contents: read
       issues: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -102,7 +103,8 @@ jobs:
         with:
           path: playtest-results
           pattern: playtest-*
-      - name: Open issues for new findings
+      - id: report
+        name: Open issues for new findings
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -110,3 +112,9 @@ jobs:
         run: |
           ./playtest/report.ps1 -In playtest-results -MaxIssues 10 -Report report.md -Label ideia
           Get-Content report.md | Add-Content $env:GITHUB_STEP_SUMMARY
+      - name: Trigger issue triage
+        if: (!cancelled()) && steps.report.outputs.has_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run triage.yml -R "$GH_REPO"

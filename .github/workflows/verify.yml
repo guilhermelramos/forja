@@ -112,6 +112,7 @@ jobs:
     permissions:
       contents: read
       issues: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -120,9 +121,16 @@ jobs:
         with:
           name: verification-results
           path: verification-results
-      - name: Comment, label, or close with explicit verdicts
+      - id: apply
+        name: Comment, label, or close with explicit verdicts
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: ./playtest/apply-verdicts.ps1 -Repository $env:GH_REPO -VerdictsPath verification-results/verdicts.jsonl
+      - name: Trigger issue triage
+        if: (!cancelled()) && steps.apply.outputs.has_reopened == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run triage.yml -R "$GH_REPO"

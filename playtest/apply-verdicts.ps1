@@ -1,4 +1,4 @@
-<##
+﻿<##
 .SYNOPSIS
   Aplica vereditos verificados às issues, ou mostra o plano com -DryRun.
 #>
@@ -13,6 +13,10 @@ $ErrorActionPreference = "Stop"
 if (-not $Repository) { throw "Repository is required (OWNER/REPO)" }
 if (-not (Test-Path $VerdictsPath)) {
     Write-Host "no verdict file; nothing to apply"
+    if ($env:GITHUB_OUTPUT) {
+        "reopened_count=0" | Add-Content $env:GITHUB_OUTPUT
+        "has_reopened=false" | Add-Content $env:GITHUB_OUTPUT
+    }
     exit 0
 }
 
@@ -50,6 +54,8 @@ function Test-ClosedByPerson($Issue, [int]$Number) {
     return $true
 }
 
+$reopened = 0
+try {
 foreach ($result in $verdicts) {
     $number = [int]$result.issue
     $verdict = [string]$result.verdict
@@ -169,6 +175,7 @@ Rodada: $runUrl
             }
             "still_broken" {
                 if ($isRecheck) {
+                    $reopened++
                     "would reopen the issue, comment, and add label 'reaberto'"
                 } else {
                     "would comment and add label 'reaberto'"
@@ -176,6 +183,7 @@ Rodada: $runUrl
             }
             "cannot_reproduce" {
                 if ($isRecheck) {
+                    $reopened++
                     "would reopen the issue, comment, and add label 'verificar-manual'"
                 } else {
                     "would comment and add label 'verificar-manual'"
@@ -207,6 +215,7 @@ Rodada: $runUrl
         }
         gh issue reopen $number -R $Repository
         if ($LASTEXITCODE -ne 0) { throw "could not reopen issue #$number" }
+        $reopened++
         Write-Host "reopened #$number after '$verdict'"
     }
 
@@ -231,4 +240,11 @@ Rodada: $runUrl
     gh issue edit $number -R $Repository --add-label $label
     if ($LASTEXITCODE -ne 0) { throw "could not add label '$label' to issue #$number" }
     Write-Host "commented and labeled #$number with '$label'"
+}
+} finally {
+    if ($env:GITHUB_OUTPUT) {
+        $hasReopened = if ($reopened -gt 0) { "true" } else { "false" }
+        "reopened_count=$reopened" | Add-Content $env:GITHUB_OUTPUT
+        "has_reopened=$hasReopened" | Add-Content $env:GITHUB_OUTPUT
+    }
 }
