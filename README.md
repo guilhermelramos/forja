@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 47/160 telas documentadas · elementos citados 5707/6112 · completo: false
+**Progresso:** 50/160 telas documentadas · elementos citados 5823/6228 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -70,9 +70,9 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.light.bench-tab.editor.tab` | [página](pages/pt-BR.light.bench-tab.editor.tab.md) | [png](captures/pt-BR.light.bench-tab.editor.tab.png) |
 | `pt-BR.light.right-tab.explorer.panel` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.right-tab.explorer.panel.png) |
 | `pt-BR.light.rail.extension.page` | [página](pages/pt-BR.light.rail.extension.page.md) | [png](captures/pt-BR.light.rail.extension.page.png) |
-| `pt-BR.light.right-tab.extension.panels.right` | — | [png](captures/pt-BR.light.right-tab.extension.panels.right.png) |
+| `pt-BR.light.right-tab.extension.panels.right` | [página](pages/pt-BR.light.right-tab.extension.panels.right.md) | [png](captures/pt-BR.light.right-tab.extension.panels.right.png) |
 | `pt-BR.light.bench-tab.extension.panels.bench` | [página](pages/pt-BR.light.bench-tab.extension.panels.bench.md) | [png](captures/pt-BR.light.bench-tab.extension.panels.bench.png) |
-| `pt-BR.light.right-tab.git.changes` | — | [png](captures/pt-BR.light.right-tab.git.changes.png) |
+| `pt-BR.light.right-tab.git.changes` | [página](pages/pt-BR.light.right-tab.git.changes.md) | [png](captures/pt-BR.light.right-tab.git.changes.png) |
 | `pt-BR.light.bench-tab.git.history` | [página](pages/pt-BR.light.bench-tab.git.history.md) | [png](captures/pt-BR.light.bench-tab.git.history.png) |
 | `pt-BR.light.modal.helper.profile_picker` | [página](pages/pt-BR.light.modal.helper.profile_picker.md) | [png](captures/pt-BR.light.modal.helper.profile_picker.png) |
 | `pt-BR.light.rail.helper.tab` | [página](pages/pt-BR.light.rail.helper.tab.md) | [png](captures/pt-BR.light.rail.helper.tab.png) |
@@ -88,7 +88,7 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.light.right-tab.search.panel` | — | [png](captures/pt-BR.light.right-tab.search.panel.png) |
 | `pt-BR.light.rail.skill.page` | [página](pages/pt-BR.light.rail.skill.page.md) | [png](captures/pt-BR.light.rail.skill.page.png) |
 | `pt-BR.light.bench-tab.terminal.tab` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.bench-tab.terminal.tab.png) |
-| `pt-BR.light.rail.usage.page` | — | [png](captures/pt-BR.light.rail.usage.page.png) |
+| `pt-BR.light.rail.usage.page` | [página](pages/pt-BR.light.rail.usage.page.md) | [png](captures/pt-BR.light.rail.usage.page.png) |
 | `pt-BR.light.bench-tab.viewers.tab` | [página](pages/pt-BR.light.bench-tab.viewers.tab.md) | [png](captures/pt-BR.light.bench-tab.viewers.tab.png) |
 | `pt-BR.light.modal.voice.overlay` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.voice.overlay.png) |
 | `pt-BR.light.settings.accounts` | — | [png](captures/pt-BR.light.settings.accounts.png) |

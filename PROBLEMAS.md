@@ -537,12 +537,29 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - O botão "Voltar à bancada" (324,50) aparece habilitado mesmo sem nenhuma bancada ativa (o painel de arquivos exibe "Nenhuma bancada ativa...").
 - Dois elementos genéricos sem nome acessível (os divisores em (304,42) e (1612,42)) são focáveis, mas não identificam sua função de redimensionamento.
 
+## [pt-BR.light.right-tab.extension.panels.right](pages/pt-BR.light.right-tab.extension.panels.right.md)
+
+- Botão de tema na barra superior (1741,5)–(1773,37) sem nome acessível; mesmo problema nos ícones de fechar/dividir/maximizar/busca do terminal (444–581, y 113–145) e nos divisores de painéis.
+- Nome acessível "(ícone)" no rótulo do ícone de pasta (168,201)–(196,229) não descreve o elemento.
+- Botões de janela nomeados apenas com os símbolos "–", "□" e "×", sem rótulos descritivos.
+- "Fechar pwsh" (385,121)–(401,137) tem retângulo sobreposto ao da aba "pwsh · Em execução" (328,118)–(404,140); na imagem é um botão interno da aba, mas a árvore o expõe como sobreposição.
+- Diferença de estado em relação à variante escura: aqui o painel esquerdo mostra apenas a aba "Projetos" além de "Mais abas", enquanto na referência escura aparecem também "Bancadas" e "Painéis de extensões" na mesma faixa.
+
 ## [pt-BR.light.bench-tab.extension.panels.bench](pages/pt-BR.light.bench-tab.extension.panels.bench.md)
 
 - Elementos sem nome acessível: alternador de tema (1741,5), os dois divisores verticais (304,42 e 1612,42) e o logotipo (12,50) — apenas "Unknown"/"Image" sem nome na árvore.
 - Botões de janela nomeados apenas pelos símbolos "–", "□" e "×", sem rótulo descritivo (minimizar/maximizar/fechar).
 - Três botões com o mesmo nome acessível "Mais abas" (um por painel), ambíguos para leitores de tela.
 - Rótulos de estado vazio e ícones de estado vazio ((ícone) em (1756,117) e (168,201)) expostos como Label clicável, mas sem ação correspondente.
+
+## [pt-BR.light.right-tab.git.changes](pages/pt-BR.light.right-tab.git.changes.md)
+
+- Botões de janela rotulados apenas com os caracteres "–", "□" e "×" como nome acessível, sem rótulo descritivo (minimizar/maximizar/fechar).
+- Vários controles sem nome acessível: alternador de tema (1741,5)–(1773,37), os quatro botões de ícone da barra do terminal (444–581), os divisores verticais, a área do terminal, o logotipo (Image) e os ícones "(ícone)" dos estados vazios.
+- "Fechar pwsh" (385,121)–(401,137): alvo de clique de apenas 16×16 px, sobreposto dentro do chip "pwsh · Em execução" (328,118)–(404,140) — pequeno demais e com sobreposição intencional que pode dificultar o acerto.
+- A dica "Clique para digitar" (≈1480,1017–1570,1029), visível na imagem dentro do terminal, não tem entrada na árvore de acessibilidade.
+- Abas e textos inativos em cinza médio sobre fundo claro (por exemplo "Editor", "Navegador", "Histórico" da faixa central e as mensagens de estado vazio) têm contraste moderado/baixo.
+- O painel direito (292 px de largura) acomoda apenas "Arquivos" e "Mudanças" na faixa de abas; demais abas ficam atrás do menu "Mais abas", sem indicação visual de que existem.
 
 ## [pt-BR.light.bench-tab.git.history](pages/pt-BR.light.bench-tab.git.history.md)
 
@@ -607,6 +624,14 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Os dois divisores verticais e a imagem do logotipo no trilho são elementos sem nome acessível.
 - Os três ícones de estado vazio aparecem como rótulos "(ícone)" sem descrição de texto alternativa.
 - A página exibe o botão "Voltar à bancada" no topo da área central mesmo sem nenhuma bancada ativa (o painel de arquivos informa "Nenhuma bancada ativa"), o que é inconsistente para o usuário.
+
+## [pt-BR.light.rail.usage.page](pages/pt-BR.light.rail.usage.page.md)
+
+- O botão de alternância de tema na barra superior (1741,5)–(1773,37) não tem nome acessível (apenas ícone de sol).
+- Os botões de janela usam os símbolos "–", "□" e "×" como nome acessível, em vez de rótulos descritivos ("Minimizar", "Maximizar", "Fechar").
+- O logotipo do app (12,50)–(40,78) é uma imagem sem nome acessível.
+- Dois botões compartilham o mesmo nome acessível "Mais abas" (painéis esquerdo e direito), sem distinção para leitores de tela.
+- O botão "Voltar à bancada" aparece na página de uso mesmo sem nenhuma bancada ativa (o painel direito exibe "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos."), o que pode confundir sobre o destino do botão.
 
 ## [pt-BR.light.bench-tab.viewers.tab](pages/pt-BR.light.bench-tab.viewers.tab.md)
 
