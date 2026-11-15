@@ -158,20 +158,27 @@ impl ForjaApp {
                     ui.label(module_label);
                     if let Some(status) = status {
                         ui.separator();
-                        ui.label(
-                            RichText::new(&status.summary).color(self.paint(self.tokens.color.danger)),
-                        );
-                        if status.detail.is_some() {
-                            let details_title = self.text("shell.status.details-title");
-                            if forja_ui_kit::button(
-                                ui,
-                                forja_ui_kit::ButtonKind::Ghost,
-                                &details_title,
+                        let summary_max = (ui.available_width() - 280.0).max(120.0);
+                        ui.scope(|ui| {
+                            ui.set_max_width(summary_max);
+                            ui.add(
+                                egui::Label::new(
+                                    RichText::new(&status.summary)
+                                        .color(self.paint(self.tokens.color.danger)),
+                                )
+                                .truncate(),
                             )
-                            .clicked()
-                            {
-                                self.status_details_open = !self.status_details_open;
-                            }
+                            .on_hover_text(&status.summary);
+                        });
+                        let details_title = self.text("shell.status.details-title");
+                        if forja_ui_kit::button(
+                            ui,
+                            forja_ui_kit::ButtonKind::Ghost,
+                            &details_title,
+                        )
+                        .clicked()
+                        {
+                            self.status_details_open = !self.status_details_open;
                         }
                         let dismiss = self.text("shell.status.dismiss");
                         let button = forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE)
@@ -199,23 +206,38 @@ impl ForjaApp {
         self.slot_rects
             .insert("status".into(), response.response.rect);
         if self.status_details_open {
-            if let Some(detail) = self.status.as_ref().and_then(|s| s.detail.clone()) {
+            if let Some(status) = self.status.clone() {
                 let mut open = true;
                 let title = self.text("shell.status.details-title");
-                let summary = self
-                    .status
-                    .as_ref()
-                    .map(|s| s.summary.clone())
-                    .unwrap_or_default();
+                let copy_label = self.text("shell.status.copy");
                 forja_ui_kit::modal(ctx, &mut open, &title, |ui| {
-                    ui.label(summary);
+                    ui.set_max_width(480.0);
+                    ui.add(egui::Label::new(status.summary.clone()).selectable(true).wrap());
+                    if let Some(detail) = &status.detail {
+                        ui.add_space(self.tokens.metrics().gap);
+                        egui::ScrollArea::vertical().max_height(180.0).show(ui, |ui| {
+                            ui.add(
+                                egui::Label::new(
+                                    egui::RichText::new(detail)
+                                        .small()
+                                        .monospace()
+                                        .color(self.paint(self.tokens.color.text_muted)),
+                                )
+                                .selectable(true)
+                                .wrap(),
+                            );
+                        });
+                    }
                     ui.add_space(self.tokens.metrics().gap);
-                    ui.label(
-                        egui::RichText::new(detail)
-                            .small()
-                            .monospace()
-                            .color(self.paint(self.tokens.color.text_muted)),
-                    );
+                    if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &copy_label)
+                        .clicked()
+                    {
+                        let full = match &status.detail {
+                            Some(detail) => format!("{}\n\n{detail}", status.summary),
+                            None => status.summary.clone(),
+                        };
+                        ctx.copy_text(full);
+                    }
                 });
                 if !open {
                     self.status_details_open = false;
