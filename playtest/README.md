@@ -37,8 +37,9 @@ cargo build -p forja-app -p forja-mcp
 A janela de teste em segundo plano usa 1920x1080 por padrão. `FORJA_TEST_WINDOW_SIZE=1280x800` (ou `-WindowSize` no `run.ps1`) muda o tamanho sem trazer a janela para a frente.
 
 ## Configuração
-- Variável `PLAYTEST_MODELS` (opcional): modelos separados por vírgula, alternados por sessão. O padrão é `opencode/glm-5.3-flash-free,opencode/deepseek-v4.1-flash-free`.
-- Secret `OPENCODE_API_KEY` (opcional): só se os modelos gratuitos passarem a exigir login.
+- Variável `PLAYTEST_MODELS` (opcional): modelos separados por vírgula, alternados por sessão. O padrão começa com `openrouter/z-ai/glm-5.3-flash` (roteado obrigatoriamente para `relace/fp4` via `provider.openrouter.models["z-ai/glm-5.3-flash"].options.provider`) seguido de `opencode/glm-5.3-flash-free,opencode/deepseek-v4.1-flash-free,opencode/minimax-m3.1-flash-free,opencode/mimo-v2.6-flash-free`.
+- Trava de modelos (`playtest/models-allowlist.txt`): aceita apenas ids terminados em `-free` ou `:free` mais a lista explícita em `playtest/models-allowlist.txt` (`openrouter/z-ai/glm-5.3-flash`, sempre com `only = ["relace/fp4"]` e `allow_fallbacks = false`); qualquer outro id pago continua recusado.
+- Secrets: `OPENROUTER_API_KEY` (obrigatório para modelos `openrouter/...`) e `OPENCODE_API_KEY` (opcional para os modelos `opencode/...`).
 
 ## Explorador sem IA (`forja-explore`)
 O binário `forja-explore` (`crates/explore`) dirige `forja-app --test-driver` sem modelo de IA, com escolha guiada por cobertura (assinatura de tela = hash dos papéis/nomes visíveis, priorização de elementos ainda não acionados, entradas difíceis em campos editáveis, atalhos de `forja-app --dump-catalog`, `Escape`, `Tab`, rolagem e retorno à tela inicial).
@@ -102,11 +103,12 @@ O OpenCode só recebe as ferramentas do `forja-mcp --player`; o modelo deve cham
 tenham `ok: true`; qualquer item falso vira `still_broken`, e condições
 impossíveis de montar viram `cannot_reproduce`. A lista é a fonte do veredito:
 o script não rebaixa mais por palavras, porque frases como "Não abriu nenhuma
-janela de Ajustes" podem descrever o comportamento esperado. O padrão usa
-modelos gratuitos no OpenRouter e `VERIFY_MODELS` permite trocar a lista,
-aceitando apenas ids que terminem em `-free` ou `:free`. Configure
-`OPENROUTER_API_KEY` nos secrets do repositório; `VERIFY_MODELS` pode ser
-definido como variável do repositório.
+janela de Ajustes" podem descrever o comportamento esperado. O padrão começa com `openrouter/z-ai/glm-5.3-flash` (roteado obrigatoriamente
+para `relace/fp4` no `opencode.json`) seguido dos modelos gratuitos no
+OpenRouter, e `VERIFY_MODELS` permite trocar a lista, aceitando apenas ids
+que terminem em `-free` ou `:free` ou constem em `playtest/models-allowlist.txt`.
+Configure `OPENROUTER_API_KEY` nos secrets do repositório; `VERIFY_MODELS` pode
+ser definido como variável do repositório.
 
 O job final `apply` só age sobre issues com correção pendente. `fixed` fecha a
 issue com comentário e evidências; se a issue já estava fechada por um pedido de
@@ -151,9 +153,16 @@ ou reaberta na rodada. O triador aplica atalhos determinísticos antes da
 IA (`crash`/`travou` → `5`, `ideia` sem perda de dados → máximo `3`, `explore`
 `elemento sem nome acessível` → `2`), valida o JSON do modelo (`priority` em
 `1–5`, `area` válida, `rationale`, `duplicate_of`), comenta uma única linha e
-nunca fecha issues nem altera o rótulo `em-andamento`. A variável `TRIAGE_MODELS`
-aceita modelos gratuitos (`-free` ou `:free`) e `-DryRun` mostra o plano sem
-escrever no GitHub:
+nunca fecha issues nem altera o rótulo `em-andamento`. Se nenhum modelo
+responder (limite/timeout/erro em todos), aplica nota e área provisórias
+determinísticas com o rótulo `triagem-provisória` para refinar automaticamente
+em uma rodada futura com cota disponível. Para modelos `openrouter/...`, a
+classificação em texto puro usa `playtest/ts/triage-classify.ts` com o SDK
+oficial `@openrouter/sdk` em streaming (forçando `provider: { only: ["relace/fp4"], allow_fallbacks: false }`
+em `z-ai/glm-5.3-flash` e registrando tokens de entrada, saída e `reasoningTokens`
+do último chunk). A variável `TRIAGE_MODELS` começa em `openrouter/z-ai/glm-5.3-flash`
+e aceita modelos gratuitos (`-free` ou `:free`) ou da `playtest/models-allowlist.txt`;
+`-DryRun` mostra o plano sem escrever no GitHub:
 
 ```powershell
 ./playtest/triage.ps1 -Repository guilhermelramos/forja -DryRun -MaxIssues 20 -Models opencode/glm-5.3-flash-free

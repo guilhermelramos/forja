@@ -4,6 +4,7 @@
 $script:TriagePriorityPattern = '^prioridade-[1-5]$'
 $script:TriageAreaPattern = '^area-'
 $script:TriageDuplicateLabel = 'duplicata?'
+$script:TriageProvisionalLabel = 'triagem-provisória'
 $script:TriageProtectedLabel = 'em-andamento'
 
 $script:TriageLabelDefinitions = @(
@@ -30,6 +31,7 @@ $script:TriageLabelDefinitions = @(
     [pscustomobject]@{ Name = 'area-explorador'; Color = '059669'; Description = 'Árvore de arquivos, projetos, acervo, extensões e portas' }
     [pscustomobject]@{ Name = 'area-outros'; Color = '78716C'; Description = 'Outros pontos que não se encaixam nas áreas acima' }
     [pscustomobject]@{ Name = 'duplicata?'; Color = 'D4C5F9'; Description = 'Possível duplicata sugerida pelo triador automático' }
+    [pscustomobject]@{ Name = 'triagem-provisória'; Color = 'D97706'; Description = 'Triagem provisória determinística; será refinada quando houver cota de modelo' }
     [pscustomobject]@{ Name = 'em-andamento'; Color = '0E8A16'; Description = 'Issue em andamento pelo coordenador (o triador nunca altera)' }
 )
 
@@ -69,7 +71,9 @@ function Test-TriageEligibleIssue($Issue, [switch]$Retriage) {
     if ([string]$Issue.state -ne 'OPEN') { return $false }
     $labels = @(Get-IssueLabelNames $Issue)
     if (-not $Retriage) {
-        if (@($labels | Where-Object { $_ -match $script:TriagePriorityPattern }).Count -gt 0) {
+        $hasPriority = @($labels | Where-Object { $_ -match $script:TriagePriorityPattern }).Count -gt 0
+        $isProvisional = $labels -contains $script:TriageProvisionalLabel
+        if ($hasPriority -and -not $isProvisional) {
             return $false
         }
     }
@@ -312,11 +316,13 @@ function Resolve-TriagePlan($Issue, $Parsed, $Shortcut, [switch]$Retriage) {
     }
 
     $addLabels = @($desired | Where-Object { $existing -notcontains $_ })
+    $isProvisionalRefinement = $existing -contains $script:TriageProvisionalLabel
     $removeLabels = @()
-    if ($Retriage) {
+    if ($Retriage -or $isProvisionalRefinement) {
         $removeLabels = @(
             $existing | Where-Object {
                 $_ -ne $script:TriageProtectedLabel -and (
+                    ($_ -eq $script:TriageProvisionalLabel) -or
                     ($_ -match $script:TriagePriorityPattern -and $_ -ne $priorityLabel) -or
                     ($_ -match $script:TriageAreaPattern -and $_ -ne $area)
                 )
@@ -343,5 +349,147 @@ function Resolve-TriagePlan($Issue, $Parsed, $Shortcut, [switch]$Retriage) {
         Comment = $comment
         ShortcutReasons = @($Shortcut.Reasons)
         PreservedInProgress = ($existing -contains $script:TriageProtectedLabel)
+        IsProvisional = $false
+        RuleReason = $null
+    }
+}
+
+function Get-ProvisionalTriageArea($Issue) {
+    $title = [string]$Issue.title
+    $body = [string]$Issue.body
+    $screen = ''
+    if ($body -match '(?im)(?:\*\*(?:Tela|Screen):\*\*|^\s*(?:Tela|Screen)\s*:)\s*([^\r\n]+)') {
+        $screen = $Matches[1].Trim()
+    }
+    $titleNorm = ConvertTo-TriageNormalizedText $title
+    $screenNorm = ConvertTo-TriageNormalizedText $screen
+    $areaTextNorm = "$titleNorm`n$screenNorm"
+
+    if ($titleNorm -match '\b(elemento fora da janela|fora da janela|sobrepost[oa]s?)\b') { return 'area-layout' }
+    if ($titleNorm -match '\b(erro tecnico cru|sem traducao|traduc(?:ao|oes)|i18n|pluralizacao|id interno)\b') { return 'area-textos' }
+    if ($titleNorm -match '\b(escape|shift\+tab|teclado|keyboard|foco de teclado|navegacao por tab)\b') { return 'area-teclado' }
+
+    if ($areaTextNorm -match '\b(bigorna|anvil|paleta de comandos|ctrl\+k)\b') { return 'area-bigorna' }
+    if ($areaTextNorm -match '\b(rotina|rotinas|routine|routines|nova rotina|cron|agendamento)\b') { return 'area-rotinas' }
+    if (($screenNorm -match '\b(uso|usage)\b') -or
+        ($titleNorm -match '\b(tela(?:\s+de)?\s+uso|aba\s+uso|tokens?|custos?|usage)\b') -or
+        ($titleNorm -match '(?:^|:\s*|\bem\s+[''"]?)uso\b')) { return 'area-uso' }
+    if ($areaTextNorm -match '\b(navegador|browser|barra de endereco|address bar)\b') { return 'area-navegador' }
+    if ($areaTextNorm -match '\b(mutirao|muster|multiajudante|multi-ajudante|recados)\b') { return 'area-mutirao' }
+    if ($areaTextNorm -match '\b(chat|conversa|enviar mensagem|envio de mensagem)\b') { return 'area-chat' }
+    if ($areaTextNorm -match '\b(terminal|shell|receita|receitas|recipe|recipes|pty)\b') { return 'area-terminal' }
+    if ($areaTextNorm -match '\b(git|mudancas|changes|diff|diferencas|pull request|\bpr\b|commit|push|pull|fetch|branch|stash|merge)\b') { return 'area-git' }
+    if ($areaTextNorm -match '\b(editor|salvar arquivo|ctrl\+s|desfazer|ctrl\+z|abrir arquivo)\b') { return 'area-editor' }
+    if ($areaTextNorm -match '\b(ajudante|ajudantes|helper|helpers|opencode|claude|codex|gemini|skills?|perfil de ajudante|perfis)\b') { return 'area-ajudantes' }
+    if ($areaTextNorm -match '\b(ajustes|settings|preferencias|idioma|language|tema|themes?)\b') { return 'area-ajustes' }
+    if ($areaTextNorm -match '\b(explorador|explorer|extensoes|extensions|portas|ports|acervo|vault|arvore de arquivos|arquivos|file tree|achar arquivo|ctrl\+p|clonar|clone|busca em arquivos)\b') { return 'area-explorador' }
+    if ($areaTextNorm -match '\b(bancada|bancadas|bench|benches|quadro|board|projeto|projetos|project|projects|boas-vindas|welcome)\b') { return 'area-bancadas' }
+    if ($areaTextNorm -match '\b(atalho|atalhos|foco|focus|\btab\b)\b') { return 'area-teclado' }
+    if ($areaTextNorm -match '\b(layout|divisor(?:es)?|geometria|paineis|painel)\b') { return 'area-layout' }
+    return 'area-outros'
+}
+
+function Get-ProvisionalTriageDecision($Issue, $Shortcut = $null) {
+    if ($null -eq $Shortcut) {
+        $Shortcut = Get-TriageShortcut $Issue
+    }
+    $labels = @(Get-IssueLabelNames $Issue)
+    $title = [string]$Issue.title
+    $body = [string]$Issue.body
+    $titleNorm = ConvertTo-TriageNormalizedText $title
+    $bodyNorm = ConvertTo-TriageNormalizedText $body
+    $combinedNorm = "$titleNorm`n$bodyNorm"
+
+    $mainFlowPattern = '\b(fluxo principal|projeto|projetos|project|projects|bancada|bancadas|bench|benches|terminal|ajudante|ajudantes|helper|helpers|chat|editor|arquivo|arquivos|salvar|save|ctrl\+s|ajustes|settings|bigorna|anvil|git|mudancas|changes|navegador|browser|mutirao|muster|boas-vindas|welcome|clonar|clone)\b'
+
+    $priority = 3
+    $ruleReason = 'demais issues (padrão)'
+
+    if ((Test-TriageCrashOrHang $Issue) -or
+        ($titleNorm -match '\b(crash|travou|fechou inesperadamente)\b') -or
+        ($bodyNorm -match '(?m)(?:\*\*(?:tipo|kind):\*\*|^(?:tipo|kind)\s*:)\s*(?:crash|hang)\b')) {
+        $priority = 5
+        $ruleReason = 'crash/travou'
+    } elseif ($labels -contains 'ideia') {
+        if ($combinedNorm -match '\b(perda de tempo|perde tempo|perder tempo|fluxo principal)\b') {
+            $priority = 3
+            $ruleReason = 'rótulo ideia com impacto em tempo/fluxo principal'
+        } else {
+            $priority = 2
+            $ruleReason = 'rótulo ideia'
+        }
+    } elseif ($titleNorm -match '\bescape\s+nao\s+(?:fechou|fecha)\b') {
+        $priority = 4
+        $ruleReason = 'título "Escape não fechou"'
+    } elseif (($titleNorm -match '\b(?:nao\s+abre|nao\s+abriu|nao\s+faz\s+nada)\b') -and
+              ($combinedNorm -match $mainFlowPattern)) {
+        $priority = 4
+        $ruleReason = '"não abre/não faz nada" em fluxo principal'
+    } elseif ($combinedNorm -match '\berro\s+tecnico\s+cru\b') {
+        $priority = 3
+        $ruleReason = '"Erro técnico cru"'
+    } elseif ($combinedNorm -match '\belemento\s+fora\s+da\s+janela\b') {
+        $priority = 2
+        $ruleReason = '"Elemento fora da janela"'
+    } elseif ($combinedNorm -match '\bsobrepost[oa]s?\b') {
+        $priority = 2
+        $ruleReason = '"sobrepostos"'
+    } elseif ($combinedNorm -match '\bsem\s+nome\s+acessivel\b') {
+        $priority = 2
+        $ruleReason = '"sem nome acessível"'
+    }
+
+    if ($priority -lt $Shortcut.MinPriority) { $priority = $Shortcut.MinPriority }
+    if ($priority -gt $Shortcut.MaxPriority) { $priority = $Shortcut.MaxPriority }
+
+    $area = Get-ProvisionalTriageArea $Issue
+
+    return [pscustomobject]@{
+        Priority = $priority
+        Area = $area
+        RuleReason = $ruleReason
+    }
+}
+
+function Resolve-ProvisionalTriagePlan($Issue, $Shortcut = $null, [switch]$Retriage) {
+    if ($null -eq $Shortcut) {
+        $Shortcut = Get-TriageShortcut $Issue
+    }
+    $decision = Get-ProvisionalTriageDecision $Issue $Shortcut
+    $priority = [int]$decision.Priority
+    $area = [string]$decision.Area
+    $priorityLabel = "prioridade-$priority"
+
+    $existing = @(Get-IssueLabelNames $Issue)
+    $desired = @($priorityLabel, $area, $script:TriageProvisionalLabel)
+    $addLabels = @($desired | Where-Object { $existing -notcontains $_ })
+
+    $removeLabels = @()
+    if ($Retriage) {
+        $removeLabels = @(
+            $existing | Where-Object {
+                $_ -ne $script:TriageProtectedLabel -and (
+                    ($_ -match $script:TriagePriorityPattern -and $_ -ne $priorityLabel) -or
+                    ($_ -match $script:TriageAreaPattern -and $_ -ne $area)
+                )
+            }
+        )
+    }
+
+    $comment = "Triagem provisória: prioridade $priority (área $area) — regra $($decision.RuleReason); será refinada quando houver cota."
+
+    return [pscustomobject]@{
+        Number = [int]$Issue.number
+        Priority = $priority
+        PriorityLabel = $priorityLabel
+        Area = $area
+        DuplicateOf = $null
+        AddLabels = @($addLabels)
+        RemoveLabels = @($removeLabels)
+        Comment = $comment
+        ShortcutReasons = @($Shortcut.Reasons)
+        PreservedInProgress = ($existing -contains $script:TriageProtectedLabel)
+        IsProvisional = $true
+        RuleReason = $decision.RuleReason
     }
 }

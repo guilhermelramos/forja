@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Um testador: abre a Forja em modo de teste e deixa um agente usá-la ao vivo.
 
@@ -24,8 +24,8 @@ param(
     [int]$SessionMinutes = 20,
     # Actions (click, type, key, scroll, wait) an agent may take in one session.
     [int]$MaxSteps = 40,
-    [string[]]$Models = @("opencode/glm-5.3-flash-free", "opencode/deepseek-v4.1-flash-free",
-        "opencode/minimax-m3.1-flash-free", "opencode/mimo-v2.6-flash-free"),
+    [string[]]$Models = @("openrouter/z-ai/glm-5.3-flash", "opencode/glm-5.3-flash-free",
+        "opencode/deepseek-v4.1-flash-free", "opencode/minimax-m3.1-flash-free", "opencode/mimo-v2.6-flash-free"),
     # Testers start at different models so the free limits are spread out.
     [int]$ModelOffset = 0,
     [string]$App = "target/release/forja-app.exe",
@@ -39,6 +39,15 @@ param(
 
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "window-size.ps1")
+. (Join-Path $PSScriptRoot "model-rules.ps1")
+if (-not $Models.Count -and $env:PLAYTEST_MODELS) {
+    $Models = @($env:PLAYTEST_MODELS -split ",")
+}
+$Models = Assert-AllowedPlaytestModels $Models
+$hasOpenRouterModel = @($Models | Where-Object { $_.StartsWith("openrouter/") }).Count -gt 0
+if ($hasOpenRouterModel -and -not $env:OPENROUTER_API_KEY) {
+    throw "OPENROUTER_API_KEY is required for OpenRouter models; set PLAYTEST_MODELS to another free provider for a local run"
+}
 $windowSizeValue = Test-ForjaWindowSizeValue $WindowSize
 $deadline = (Get-Date).AddMinutes($Minutes)
 $name = [System.IO.Path]::GetFileNameWithoutExtension($Mission)
@@ -176,16 +185,21 @@ function Save-SessionUsage([string]$OpenCode, [string]$Room, [string]$Out, [int]
     }
 }
 
-# Config do OpenCode só nesta pasta: o servidor MCP do testador.
-$config = @{
-    '$schema' = "https://opencode.ai/config.json"
-    mcp = @{ servers = @{ forja = @{
-        type = "local"
-        command = @($Mcp, "--player", "--findings", $findings, "--max-steps", "$MaxSteps")
-        environment = @{ FORJA_PIPE = $pipe }
-    } } }
+# Config do OpenCode só nesta pasta: o servidor MCP do testador e roteamento
+# explícito do OpenRouter (provider.only / allow_fallbacks) quando aplicável.
+function Write-PlaytestOpenCodeConfig([string]$ActiveModel = "") {
+    $config = [ordered]@{
+        '$schema' = "https://opencode.ai/config.json"
+        mcp = @{ servers = @{ forja = @{
+            type = "local"
+            command = @($Mcp, "--player", "--findings", $findings, "--max-steps", "$MaxSteps")
+            environment = @{ FORJA_PIPE = $pipe }
+        } } }
+    }
+    $null = Add-OpenCodeProviderRoutingConfig $config $Models $ActiveModel
+    $config | ConvertTo-Json -Depth 12 | Set-Content "$Out\room\opencode.json" -Encoding utf8
 }
-$config | ConvertTo-Json -Depth 8 | Set-Content "$Out\room\opencode.json" -Encoding utf8
+Write-PlaytestOpenCodeConfig
 Push-Location "$Out\room"
 git init -q 2>$null
 Pop-Location
@@ -200,10 +214,6 @@ $summary = ""
 $session = 0
 $exhausted = @{}
 $quickFailures = 0
-$Models = @($Models | Where-Object { $_ })
-# Free models only: either catalog suffix is accepted, so no paid quota is used.
-$Models = @($Models | Where-Object { $_ -and $_.Trim() -match '(-free|:free)$' } | ForEach-Object { $_.Trim() })
-if ($Models.Count -eq 0) { throw "no free model configured (ids must end in -free or :free)" }
 
 while ((Get-Date) -lt $deadline) {
     $session++
@@ -227,6 +237,7 @@ while ((Get-Date) -lt $deadline) {
         break
     }
     $model = $available[($session - 1 + $ModelOffset) % $available.Count]
+    Write-PlaytestOpenCodeConfig $model
     $sessionStart = Get-Date
     $sessionStartMs = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
     $findingLines = Get-LineCount $findings
@@ -261,9 +272,9 @@ while ((Get-Date) -lt $deadline) {
     Save-SessionUsage $opencode "$Out\room" $Out $session $sessionStartMs $configHome
 
     $plain = $text
-    if ($plain -match "(?i)usage limit reached|free usage limit|insufficient (credit|quota)|subscribe to OpenCode") {
+    if ($plain -match "(?i)usage limit reached|free usage limit|insufficient (credit|quota)|subscribe to OpenCode|no allowed providers|no endpoints found|provider.*unavailable") {
         $exhausted[$model] = $true
-        Write-Host "  $model atingiu o limite de uso; próximo modelo"
+        Write-Host "  $model atingiu o limite de uso ou ficou indisponível; próximo modelo"
     } elseif (((Get-Date) - $sessionStart).TotalSeconds -lt 45) {
         $quickFailures++
         Write-Host "  sessão curta demais ($quickFailures seguidas)"

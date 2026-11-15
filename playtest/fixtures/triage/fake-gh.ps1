@@ -45,7 +45,34 @@ switch ($Arguments[0]) {
                 if ($null -eq $issue) { throw "fake gh: issue #$number not found" }
                 Write-Json $issue
             }
-            "edit" { Record-Write ($Arguments -join " ") }
+            "edit" {
+                Record-Write ($Arguments -join " ")
+                if ($env:FORJA_FAKE_GH_MUTATE -eq "1") {
+                    $number = [int]$Arguments[2]
+                    $target = $issues | Where-Object { [int]$_.number -eq $number } | Select-Object -First 1
+                    if ($null -eq $target) { throw "fake gh: issue #$number not found for edit" }
+                    $labelList = [System.Collections.Generic.List[string]]::new()
+                    foreach ($lbl in @($target.labels)) {
+                        $name = if ($lbl -is [string]) { $lbl } else { [string]$lbl.name }
+                        if (-not [string]::IsNullOrWhiteSpace($name) -and -not $labelList.Contains($name)) {
+                            $labelList.Add($name)
+                        }
+                    }
+                    for ($i = 3; $i -lt $Arguments.Count; $i++) {
+                        if ($Arguments[$i] -eq "--add-label" -and $i + 1 -lt $Arguments.Count) {
+                            $val = $Arguments[$i + 1]
+                            if (-not $labelList.Contains($val)) { $labelList.Add($val) }
+                            $i++
+                        } elseif ($Arguments[$i] -eq "--remove-label" -and $i + 1 -lt $Arguments.Count) {
+                            $val = $Arguments[$i + 1]
+                            $null = $labelList.Remove($val)
+                            $i++
+                        }
+                    }
+                    $target.labels = @($labelList | ForEach-Object { [pscustomobject]@{ name = $_ } })
+                    ConvertTo-Json -InputObject @($issues) -Depth 20 | Set-Content -Path $env:FORJA_TRIAGE_FIXTURES -Encoding utf8
+                }
+            }
             "comment" { Record-Write ($Arguments -join " ") }
             "close" { throw "fake gh: close must NEVER be called by triage" }
             "reopen" { throw "fake gh: reopen must NEVER be called by triage" }

@@ -61,7 +61,7 @@ jobs:
       MESA_VERSION: "26.2.4"
       OPENCODE_VERSION: "2.2.7"
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-      VERIFY_MODELS: ${{ vars.VERIFY_MODELS || 'openrouter/nvidia/nemotron-3.5-super-vl:free,openrouter/google/gemma-4-31b-it:free,openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free' }}
+      VERIFY_MODELS: ${{ vars.VERIFY_MODELS || 'openrouter/z-ai/glm-5.3-flash,openrouter/nvidia/nemotron-3.5-super-vl:free,openrouter/google/gemma-4-31b-it:free,openrouter/nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free' }}
     steps:
       - uses: actions/checkout@v4
         with:
