@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 18/160 telas documentadas · elementos citados 4398/4802 · completo: false
+**Progresso:** 21/160 telas documentadas · elementos citados 4576/4980 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -194,9 +194,9 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.light.settings.counter_github` | [página](pages/en.light.settings.counter_github.md) | [png](captures/en.light.settings.counter_github.png) |
 | `en.light.settings.counter_gitlab` | [página](pages/en.light.settings.counter_gitlab.md) | [png](captures/en.light.settings.counter_gitlab.png) |
 | `en.light.settings.counter_jira` | [página](pages/en.light.settings.counter_jira.md) | [png](captures/en.light.settings.counter_jira.png) |
-| `en.light.settings.counter_linear` | — | [png](captures/en.light.settings.counter_linear.png) |
-| `en.light.settings.helper` | — | [png](captures/en.light.settings.helper.png) |
-| `en.light.settings.import` | — | [png](captures/en.light.settings.import.png) |
+| `en.light.settings.counter_linear` | [página](pages/en.light.settings.counter_linear.md) | [png](captures/en.light.settings.counter_linear.png) |
+| `en.light.settings.helper` | [página](pages/en.light.settings.helper.md) | [png](captures/en.light.settings.helper.png) |
+| `en.light.settings.import` | [página](pages/en.light.settings.import.md) | [png](captures/en.light.settings.import.png) |
 | `en.light.settings.mcp` | — | [png](captures/en.light.settings.mcp.png) |
 | `en.light.settings.onboarding` | — | [png](captures/en.light.settings.onboarding.png) |
 | `en.light.settings.remote` | — | [png](captures/en.light.settings.remote.png) |

@@ -1071,3 +1071,34 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Botão desativado "Connect" apresenta texto claro sobre fundo laranja pálido, com contraste baixo.
 - Texto "Click to type" solto no canto inferior direito da área central (parte do painel de terminal vazio atrás da modal), sem elemento correspondente nomeado na árvore.
 
+## [en.light.settings.counter_linear](pages/en.light.settings.counter_linear.md)
+
+- Três abas aparecem marcadas simultaneamente ("Projects" no painel esquerdo, "Terminal" na área central e "Files" no painel direito), o que dificulta identificar o painel realmente ativo.
+- O TextInput de busca ("Search settings") e o PasswordInput de token ("Token") não têm nome acessível; dependem apenas do texto de sugestão.
+- Vários botões-ícone da barra da área central ("+" e quatro elementos entre 444–581 px) estão sem nome acessível.
+- Sobreposição: o modal "Settings" (328,58)–(1026,307) encobre por completo as abas "Editor", "Browser", "Changes", "Preview", "Bench", "Review" e "History", os botões "+", "Recipes", "Shell", a aba "pwsh · Running" e o botão "Close pwsh", que existem na árvore mas não são visíveis.
+- A aba "Extension panels" (973,52)–(1099,84) é parcialmente encoberta pelo modal; na imagem só aparece o fragmento "…ion panels".
+- O texto "Click to type" (~1600,996) é exibido em cinza claro sobre fundo claro, com contraste baixo.
+- Os elementos de borda e alça do modal (321,69)–(337,297), (1018,69)–(1034,297), (319,297)–(339,317), (1016,297)–(1036,317) e (339,299)–(1016,315) estão sem nome acessível.
+
+## [en.light.settings.helper](pages/en.light.settings.helper.md)
+
+- A janela "Settings" tem retângulo declarado de (328,58)–(1026,496), mas os elementos-filhos se estendem até y=3624, muito além da janela e dos 1080 px da captura; todo o conteúdo abaixo do cartão Amp só é acessível rolando, e a barra de rolagem declarada (1015,167)–(1017,487) tem 2 px de largura e não é perceptível na captura.
+- Elementos entre y≈496 e y=1080 (a partir de "Allow writing hooks" do Amp) ficam fora dos limites declarados da janela: estão na árvore, mas não são renderizados dentro do modal visível.
+- Oito cartões exibem "Loading…" persistente no estado de hooks (GitHub Copilot CLI, Crush, Gemini CLI, Goose, Kimi Code CLI, Kiro CLI, OpenCode, Qwen Code) — status não resolvido na captura.
+- O caminho do Goose contém "<nome>" (português) em uma tela de locale en — texto em outro idioma.
+- Caminhos de configuração misturam separadores "\" e "/" (ex.: "C:\Users\runneradmin\.gemini/config/hooks.json", "C:\Users\runneradmin\.claude/settings.json").
+- Sobreposição/oclusão: o modal cobre a faixa de abas central ("Terminal" a "History"), a aba "Extension panels" fica parcialmente cortada (aparece "ion panels" na imagem), e "pwsh · Running"/"Close pwsh" sobrepõem a área do campo "Search settings" — elementos do terminal ocultos pelo modal.
+- O texto visível "Click to type" (~1507,1015) na área central não tem elemento correspondente na árvore de acessibilidade.
+- Controles sem nome acessível: ícone de tema (1741,5)–(1773,37), quatro controles Unknown em (444–581,113–145) e todos os campos TextInput ("Search settings", "Extra arguments", "Environment") sem rótulo associado.
+- O botão "Settings" do trilho esquerdo permanece marcado=False enquanto a tela de Settings está aberta (estado inconsistente com a tela exibida).
+- Retângulos parcialmente fora dos limites visíveis: elementos do modal nas bordas (cantos de redimensionamento em (319,49)–(339,69), (1016,49)–(1036,69), (319,486)–(339,506), (1016,486)–(1036,506)) e campos cortados pelo limite inferior do modal ("Environment" do Amp em (423,492)–(751,515)).
+
+## [en.light.settings.import](pages/en.light.settings.import.md)
+
+- O diálogo "Settings" (328,58)–(1028,281) encobre a barra de ferramentas do terminal — "+", os quatro botões de filtro sem nome, "Recipes", "Shell", a aba "pwsh · Running" e "Close pwsh" — e a metade esquerda da aba "Extension panels" (973,52)–(1099,84); esperado num modal, mas a sobreposição é indicada apenas por uma sombra/borda discretas.
+- Vários controles sem nome acessível: o alternador de tema (1741,5), os quatro botões-ícone de filtro do terminal (444–581,113), o campo de busca do diálogo (337,121), os divisores e alças de redimensionamento e a grande área central (328,150), dificultando o uso por leitor de tela.
+- A faixa sem nome (339,51)–(1018,67) fica sobreposta/atrás das abas centrais nomeadas na mesma faixa vertical.
+- Textos secundários em cinza médio sobre fundo creme ("No project yet…", "No active bench…", "Click to type", descrição da importação) têm contraste apenas moderado.
+- Nenhum elemento ultrapassa os limites da janela (1920×1080); nenhum texto estranho ou em idioma indevido nesta variante.
+

@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 18,
-  "widgets_total": 4802,
-  "widgets_covered": 4398,
+  "states_done": 21,
+  "widgets_total": 4980,
+  "widgets_covered": 4576,
   "complete": false,
   "stale": [
     {
@@ -1257,21 +1257,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "en.light.settings.counter_linear",
-      "png": "captures/en.light.settings.counter_linear.png",
-      "tree": "captures/en.light.settings.counter_linear.json"
-    },
-    {
-      "state": "en.light.settings.helper",
-      "png": "captures/en.light.settings.helper.png",
-      "tree": "captures/en.light.settings.helper.json"
-    },
-    {
-      "state": "en.light.settings.import",
-      "png": "captures/en.light.settings.import.png",
-      "tree": "captures/en.light.settings.import.json"
-    },
     {
       "state": "en.light.settings.mcp",
       "png": "captures/en.light.settings.mcp.png",
