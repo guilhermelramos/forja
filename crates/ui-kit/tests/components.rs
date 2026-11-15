@@ -1,7 +1,7 @@
 //! Componentes novos e o `select` que agora reporta mudança, sem janela.
 
 use forja_ui_kit::egui::{self, Event, PointerButton, Pos2, RawInput, Rect};
-use forja_ui_kit::{apply, empty_state, install_fonts, page_heading, select, Tokens};
+use forja_ui_kit::{apply, context_menu, empty_state, install_fonts, page_heading, select, MenuItem, Tokens};
 use std::cell::Cell;
 
 const WIDTH: f32 = 960.0;
@@ -189,4 +189,104 @@ fn empty_state_action_reports_its_click() {
     let at = rect.get().expect("action laid out").center();
     frame(&ctx, &tokens, click(at), draw);
     assert!(clicked.get(), "clicking the action of an empty state counts");
+}
+
+#[test]
+fn context_menu_picks_item_in_long_scrollable_list() {
+    let tokens = Tokens::brasa_dark();
+    let ctx = context();
+    let labels: Vec<String> = (0..20).map(|i| format!("Recipe item {i}")).collect();
+    let items: Vec<MenuItem<'_>> = labels
+        .iter()
+        .map(|l| MenuItem {
+            label: l.as_str(),
+            danger: false,
+        })
+        .collect();
+    let mut picked = None;
+    let open_init = frame(&ctx, &tokens, Vec::new(), |ui| {
+        ui.add_space(40.0);
+        if let Some(choice) = context_menu(ui, "Receitas", &items) {
+            picked = Some(choice);
+        }
+    });
+    let at_trigger = text_center(&open_init, "Receitas").expect("Receitas trigger rendered");
+    frame(&ctx, &tokens, click(at_trigger), |ui| {
+        ui.add_space(40.0);
+        if let Some(choice) = context_menu(ui, "Receitas", &items) {
+            picked = Some(choice);
+        }
+    });
+    let open = frame(&ctx, &tokens, Vec::new(), |ui| {
+        ui.add_space(40.0);
+        if let Some(choice) = context_menu(ui, "Receitas", &items) {
+            picked = Some(choice);
+        }
+    });
+    let at_item = text_center(&open, "Recipe item 14").expect("item 14 is visible in 720px window");
+    // Simula clique em dois quadros como no test_driver (press num quadro, release no seguinte).
+    frame(&ctx, &tokens, vec![
+        Event::PointerMoved(at_item),
+        Event::PointerButton {
+            pos: at_item,
+            button: PointerButton::Primary,
+            pressed: true,
+            modifiers: Default::default(),
+        },
+    ], |ui| {
+        ui.add_space(40.0);
+        if let Some(choice) = context_menu(ui, "Receitas", &items) {
+            picked = Some(choice);
+        }
+    });
+    frame(&ctx, &tokens, vec![
+        Event::PointerButton {
+            pos: at_item,
+            button: PointerButton::Primary,
+            pressed: false,
+            modifiers: Default::default(),
+        },
+    ], |ui| {
+        ui.add_space(40.0);
+        if let Some(choice) = context_menu(ui, "Receitas", &items) {
+            picked = Some(choice);
+        }
+    });
+    assert_eq!(picked, Some(14));
+}
+
+#[test]
+fn context_menu_picks_visible_item_when_scrolling() {
+    let tokens = Tokens::brasa_dark();
+    let ctx = context();
+    let labels: Vec<String> = (0..30).map(|i| format!("Long menu entry {i}")).collect();
+    let items: Vec<MenuItem<'_>> = labels
+        .iter()
+        .map(|l| MenuItem {
+            label: l.as_str(),
+            danger: false,
+        })
+        .collect();
+    let mut picked = None;
+    let init = frame(&ctx, &tokens, Vec::new(), |ui| {
+        ui.add_space(40.0);
+        let _ = context_menu(ui, "Menu", &items);
+    });
+    let trigger = text_center(&init, "Menu").expect("trigger");
+    frame(&ctx, &tokens, click(trigger), |ui| {
+        ui.add_space(40.0);
+        let _ = context_menu(ui, "Menu", &items);
+    });
+    let open = frame(&ctx, &tokens, Vec::new(), |ui| {
+        ui.add_space(40.0);
+        let _ = context_menu(ui, "Menu", &items);
+    });
+    let item = text_center(&open, "Long menu entry 4").expect("entry 4 is visible");
+    frame(&ctx, &tokens, click(item), |ui| {
+        ui.add_space(40.0);
+        if let Some(choice) = context_menu(ui, "Menu", &items) {
+            picked = Some(choice);
+        }
+    });
+    assert_eq!(picked, Some(4));
 }
