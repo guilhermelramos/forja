@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 3/160 telas documentadas · elementos citados 3796/4200 · completo: false
+**Progresso:** 6/160 telas documentadas · elementos citados 3899/4303 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -173,14 +173,14 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.light.right-tab.git.changes` | — | [png](captures/en.light.right-tab.git.changes.png) |
 | `en.light.bench-tab.git.history` | [página](pages/en.light.bench-tab.git.history.md) | [png](captures/en.light.bench-tab.git.history.png) |
 | `en.light.modal.helper.profile_picker` | [página](pages/en.light.modal.helper.profile_picker.md) | [png](captures/en.light.modal.helper.profile_picker.png) |
-| `en.light.rail.helper.tab` | — | [png](captures/en.light.rail.helper.tab.png) |
+| `en.light.rail.helper.tab` | [página](pages/en.light.rail.helper.tab.md) | [png](captures/en.light.rail.helper.tab.png) |
 | `en.light.modal.mcp.approval` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.modal.mcp.approval.png) |
-| `en.light.rail.muster.page` | — | [png](captures/en.light.rail.muster.page.png) |
+| `en.light.rail.muster.page` | [página](pages/en.light.rail.muster.page.md) | [png](captures/en.light.rail.muster.page.png) |
 | `en.light.modal.notify.toasts` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.modal.notify.toasts.png) |
 | `en.light.modal.onboarding.wizard` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.modal.onboarding.wizard.png) |
 | `en.light.right-tab.ports.panel` | — | [png](captures/en.light.right-tab.ports.panel.png) |
 | `en.light.modal.project.dialogs` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.modal.project.dialogs.png) |
-| `en.light.rail.request.page` | — | [png](captures/en.light.rail.request.page.png) |
+| `en.light.rail.request.page` | [página](pages/en.light.rail.request.page.md) | [png](captures/en.light.rail.request.page.png) |
 | `en.light.bench-tab.review.tab` | [página](pages/en.light.bench-tab.review.tab.md) | [png](captures/en.light.bench-tab.review.tab.png) |
 | `en.light.rail.routine.page` | — | [png](captures/en.light.rail.routine.page.png) |
 | `en.light.right-tab.search.panel` | — | [png](captures/en.light.right-tab.search.panel.png) |

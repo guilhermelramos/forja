@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 3,
-  "widgets_total": 4200,
-  "widgets_covered": 3796,
+  "states_done": 6,
+  "widgets_total": 4303,
+  "widgets_covered": 3899,
   "complete": false,
   "stale": [
     {
@@ -1257,21 +1257,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "en.light.rail.helper.tab",
-      "png": "captures/en.light.rail.helper.tab.png",
-      "tree": "captures/en.light.rail.helper.tab.json"
-    },
-    {
-      "state": "en.light.rail.muster.page",
-      "png": "captures/en.light.rail.muster.page.png",
-      "tree": "captures/en.light.rail.muster.page.json"
-    },
-    {
-      "state": "en.light.rail.request.page",
-      "png": "captures/en.light.rail.request.page.png",
-      "tree": "captures/en.light.rail.request.page.json"
-    },
     {
       "state": "en.light.rail.routine.page",
       "png": "captures/en.light.rail.routine.page.png",

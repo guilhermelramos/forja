@@ -922,6 +922,31 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Nomes acessíveis ambíguos por duplicação: "Changes" nomeia duas abas distintas (área central e painel direito) e "More tabs" se repete três vezes, o que dificulta a identificação por leitores de tela.
 - Mensagens de estado vazio ("No project yet..." e "No active bench...") em cinza claro sobre fundo branco, com contraste inferior ao do restante dos textos.
 
+## [en.light.rail.helper.tab](pages/en.light.rail.helper.tab.md)
+
+- Dois botões com o mesmo nome acessível "More tabs" na mesma tela (painel esquerdo e painel direito), o que dificulta a identificação por leitor de tela.
+- Campo de filtro (`TextInput` em (377,244)–(605,267)) sem nome acessível; só é identificável pelo placeholder "Filter helpers..." visível na imagem.
+- Botões de janela com nomes acessíveis simbólicos "–", "□" e "×" em vez de rótulos descritivos (Minimize/Maximize/Close).
+- Vários elementos sem nome acessível: dois divisores, o botão de tema, o logotipo do trilho e os ícones de estado vazio (registrados como "(sem nome acessível)" ou "(ícone)").
+- Rótulo "Detecting…" usa reticências tipográficas ("…"); conferir consistência com o restante dos textos.
+- Nenhum elemento com retângulo além dos limites da janela (1920×1080) nesta captura.
+
+## [en.light.rail.muster.page](pages/en.light.rail.muster.page.md)
+
+- Dois botões com o mesmo nome acessível "More tabs" (painel esquerdo em (64,50) e painel direito em (1632,50)), o que dificulta a identificação por leitores de tela.
+- O botão "Back to bench" aparece no topo da área central embora o painel direito informe "No active bench. Open a bench to see its files."; a ação de voltar a uma bancada é oferecida sem bancada ativa.
+- Botão de alternância de tema e as duas divisórias verticais estão sem nome acessível.
+- Textos de estado vazio e subtítulo em cinza sobre fundo claro têm contraste reduzido (por exemplo, "Tasks, helpers and notes in one place.").
+- As tiras de abas escondem as demais abas atrás de "More tabs" sem indicação visual de quantas existem.
+
+## [en.light.rail.request.page](pages/en.light.rail.request.page.md)
+
+- O botão de alternância de tema no topo direito (1741,5)–(1773,37) não tem nome acessível; é identificável apenas pelo ícone de sol.
+- O campo de busca (TextInput) não tem nome acessível, apenas o texto-guia visível.
+- Os três ícones de estado vazio (pasta, envelope, grade) são Labels "(ícone)" sem descrição acessível.
+- O nome "All" se repete em dois grupos de filtro (lista e origem) com retângulos distintos, o que pode gerar ambiguidade para leitores de tela.
+- O nome "More tabs" se repete em dois painéis (esquerdo (64,50)–(151,85) e direito (1632,50)–(1719,85)) sem indicação de contexto, o que pode gerar ambiguidade para leitores de tela.
+
 ## [en.light.bench-tab.review.tab](pages/en.light.bench-tab.review.tab.md)
 
 - Campos de texto sem nome acessível: título (324,222), descrição (324,253), Base (360,418), Revisores (393,458) e Labels (675,458); os dois primeiros exibem placeholders ("Title", "Description") que poderiam servir de nome.
