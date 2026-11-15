@@ -17,10 +17,11 @@ pub fn segmented(ui: &mut Ui, selected: &mut usize, labels: &[&str]) -> Response
         .map(|label| paint::text_size(ui, label, font.clone(), tokens.color.text.to_color32()).x)
         .fold(0.0_f32, f32::max);
     let segment = (widest + metrics.pad_x * 2.0).max(metrics.control * 2.0);
-    let (rect, response) = ui.allocate_exact_size(
+    let (rect, mut response) = ui.allocate_exact_size(
         egui::vec2(segment * labels.len() as f32, metrics.control),
         egui::Sense::hover(),
     );
+    let mut changed = false;
     let painter = painter_for(ui);
     painter.rect(
         rect,
@@ -33,6 +34,7 @@ pub fn segmented(ui: &mut Ui, selected: &mut usize, labels: &[&str]) -> Response
         let piece = segment_rect(rect, segment, index);
         let piece_response = ui.interact(piece, response.id.with(index), egui::Sense::click());
         if piece_response.clicked() {
+            changed |= *selected != index;
             *selected = index;
         }
         let is_active = index == *selected;
@@ -73,6 +75,9 @@ pub fn segmented(ui: &mut Ui, selected: &mut usize, labels: &[&str]) -> Response
             metrics.radius_control,
             tokens.color.accent.to_color32(),
         );
+    }
+    if changed {
+        response.mark_changed();
     }
     response
 }
@@ -227,5 +232,43 @@ mod tests {
             });
         });
         assert_eq!(selected, 2);
+    }
+
+    #[test]
+    fn segmented_reports_when_a_different_option_is_clicked() {
+        let ctx = egui::Context::default();
+        let mut selected = 0usize;
+        let labels = ["First", "Second"];
+        let mut bounds = egui::Rect::NOTHING;
+        let _ = ctx.run(egui::RawInput::default(), |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                bounds = segmented(ui, &mut selected, &labels).rect;
+            });
+        });
+
+        let second = egui::pos2(bounds.center().x + bounds.width() / 4.0, bounds.center().y);
+        let mut input = egui::RawInput::default();
+        input.events.push(egui::Event::PointerMoved(second));
+        input.events.push(egui::Event::PointerButton {
+            pos: second,
+            button: egui::PointerButton::Primary,
+            pressed: true,
+            modifiers: egui::Modifiers::NONE,
+        });
+        input.events.push(egui::Event::PointerButton {
+            pos: second,
+            button: egui::PointerButton::Primary,
+            pressed: false,
+            modifiers: egui::Modifiers::NONE,
+        });
+        let mut response_changed = false;
+        let _ = ctx.run(input, |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                response_changed = segmented(ui, &mut selected, &labels).changed();
+            });
+        });
+
+        assert_eq!(selected, 1);
+        assert!(response_changed);
     }
 }

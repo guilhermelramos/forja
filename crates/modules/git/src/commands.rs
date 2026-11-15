@@ -2,8 +2,8 @@ use crate::comparison;
 use crate::diff;
 use crate::engine;
 use crate::helpers::{
-    files_arg, kernel_error, path_arg, refresh_now, setting_list, setting_str, spawn_op, truthy,
-    unit,
+    files_arg, kernel_error, path_arg, refresh_now, setting_list, setting_str, spawn_op,
+    spawn_op_with_success, truthy, unit,
 };
 use crate::log;
 use crate::state::Shared;
@@ -192,7 +192,9 @@ pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
         let name = setting_str(cx, "git.identity.name");
         let email = setting_str(cx, "git.identity.email");
         let protected = setting_list(cx, "git.protected.branches", &["main", "master"]);
-        spawn_op(cx, &s, move || {
+        let clear_message = args.bool("clear_message").unwrap_or(false);
+        let submitted_message = message.clone();
+        let work = move || {
             let path = std::path::Path::new(&path);
             if let Some(branch) = engine::protected_branch(path, &protected)? {
                 return Err(format!("protected:{branch}"));
@@ -209,7 +211,17 @@ pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
                     email: &email,
                 },
             )
-        });
+        };
+        if clear_message {
+            let state = s.clone();
+            spawn_op_with_success(cx, &s, work, move || {
+                if state.commit_message() == submitted_message {
+                    state.set_commit_message(String::new());
+                }
+            });
+        } else {
+            spawn_op(cx, &s, work);
+        }
         Ok(json!({ "pending": true }))
     });
 

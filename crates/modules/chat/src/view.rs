@@ -280,10 +280,7 @@ impl ChatView {
                     if ui.button(cx.t("chat.view.cancel")).clicked() {
                         cancel = true;
                     }
-                } else if ui
-                    .add_enabled(installed, egui::Button::new(cx.t("chat.view.send")))
-                    .clicked()
-                {
+                } else if ui.button(cx.t("chat.view.send")).clicked() {
                     send = true;
                 }
             });
@@ -298,6 +295,13 @@ impl ChatView {
                 .desired_rows(3)
                 .desired_width(f32::INFINITY),
         );
+        response.widget_info(|| {
+            egui::WidgetInfo::labeled(
+                egui::WidgetType::TextEdit,
+                true,
+                cx.t("chat.view.composer-hint"),
+            )
+        });
         if paste_images
             && response.has_focus()
             && ui.input(|input| input.modifiers.command && input.key_pressed(egui::Key::V))
@@ -305,30 +309,33 @@ impl ChatView {
             self.paste_clipboard_image(cx);
         }
         if enter_sends
-            && installed
             && response.has_focus()
             && ui.input(|input| input.key_pressed(egui::Key::Enter) && !input.modifiers.shift)
         {
             send = true;
         }
         if send {
-            let mut prompt = self.composer.trim().to_owned();
-            for path in session.attachments.drain(..) {
-                prompt.push_str(&format!(
-                    "\n@{}",
-                    path.display().to_string().replace('\\', "/")
-                ));
-            }
-            if !prompt.is_empty() {
-                let _tokens = crate::model::composer_tokens(&prompt);
-                match session.send(prompt) {
-                    Ok(_) => {
-                        self.composer.clear();
-                        self.attach_error = None;
-                    }
-                    Err(_) => {
-                        self.composer.clear();
-                        self.attach_error = None;
+            if !installed {
+                self.attach_error = Some(cx.t("chat.view.send-no-helper"));
+            } else {
+                let mut prompt = self.composer.trim().to_owned();
+                for path in &session.attachments {
+                    prompt.push_str(&format!(
+                        "\n@{}",
+                        path.display().to_string().replace('\\', "/")
+                    ));
+                }
+                if !prompt.is_empty() {
+                    let _tokens = crate::model::composer_tokens(&prompt);
+                    match session.send(prompt) {
+                        Ok(_) => {
+                            self.composer.clear();
+                            session.attachments.clear();
+                            self.attach_error = None;
+                        }
+                        Err(error) => {
+                            self.attach_error = Some(error);
+                        }
                     }
                 }
             }
