@@ -143,6 +143,7 @@ const CHROME_KEYS: &[&str] = &[
     "shell.command.failed",
     "shell.rail.not-found",
     "shell.status.details-title",
+    "shell.status.copy",
     "shell.slot.empty",
     "shell.tray.show",
     "shell.tray.quit",

@@ -596,8 +596,8 @@ pwsh -NoProfile -File "%~dp0fake-gh.ps1" %*
             -Repository "fixture/repo" -IssueNumber 901 `
             -Models "openrouter/z-ai/glm-5.3-flash" *>&1 | Out-String
         if ($LASTEXITCODE -ne 0) { throw "OpenRouter SDK triage failed:`n$sdkOut" }
-        if ($sdkOut -notmatch "usage #901 \(openrouter/z-ai/glm-5.3-flash\): input=120, output=45, reasoning=18") {
-            throw "Missing per-issue streaming usage log:`n$sdkOut"
+        if ($sdkOut -notmatch "usage #901 \(openrouter/z-ai/glm-5\.3-flash, provider=Relace\): input=120, output=45, reasoning=18") {
+            throw "Missing per-issue streaming usage + provider log:`n$sdkOut"
         }
         if ($sdkOut -notmatch "token usage summary: input=120, output=45, reasoning=18 \(1 call\(s\)\)") {
             throw "Missing token usage summary:`n$sdkOut"

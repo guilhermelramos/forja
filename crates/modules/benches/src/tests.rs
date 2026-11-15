@@ -693,3 +693,158 @@ fn project_activation_switches_current_bench_and_default_create_project() {
     }
     let _ = std::fs::remove_dir_all(root);
 }
+
+#[test]
+fn create_dialog_owns_keyboard_layer_and_closes_on_escape() {
+    use forja_kernel::ui_contract::{egui, View};
+
+    let root = temp_dir("create-dialog-kbd");
+    let project_path = repo(&root);
+    let project = forja_contracts::ProjectRef {
+        id: "proj-kbd".to_owned(),
+        name: "projeto".to_owned(),
+        path: project_path.display().to_string(),
+    };
+    let state = Shared::new();
+    let mut runtime = Runtime::new(
+        vec![
+            Box::new(BenchModule {
+                state: state.clone(),
+            }),
+            Box::new(TestProjects { project }),
+        ],
+        RuntimeOptions {
+            data_dir: Some(root.join("data")),
+            user_dir: Some(root.join("user")),
+            locale: Some("pt-BR".to_owned()),
+            wake: None,
+        },
+    )
+    .expect("modules register cleanly");
+
+    runtime
+        .run_command("bench.create_dialog", forja_kernel::Args::new())
+        .unwrap();
+    let mut view = crate::view_dialogs::DialogsView::new(state.clone());
+    let ctx = egui::Context::default();
+    let layer = egui::Id::new("forja.bench.create.keyboard");
+
+    // Frame 1: dialog renders and registers its modal keyboard layer.
+    let _ = ctx.run(egui::RawInput::default(), |ctx| {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            let mut cx = runtime.ctx("bench");
+            view.ui(ui, &mut cx);
+        });
+    });
+    assert!(forja_ui_kit::keyboard_layer_active(&ctx, layer));
+
+    // Frame 2: pressing Escape closes the create dialog via the modal layer.
+    let mut esc = egui::RawInput::default();
+    esc.events.push(egui::Event::Key {
+        key: egui::Key::Escape,
+        physical_key: None,
+        pressed: true,
+        repeat: false,
+        modifiers: egui::Modifiers::NONE,
+    });
+    let _ = ctx.run(esc, |ctx| {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            let mut cx = runtime.ctx("bench");
+            view.ui(ui, &mut cx);
+        });
+    });
+    assert!(matches!(state.dialog(), crate::state::Dialog::None));
+
+    // Reopening the dialog after closing via modal poll must focus Nome again.
+    {
+        let mut cx = runtime.ctx("bench");
+        view.poll(&mut cx);
+    }
+    runtime
+        .run_command("bench.create_dialog", forja_kernel::Args::new())
+        .unwrap();
+    let _ = ctx.run(egui::RawInput::default(), |ctx| {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            let mut cx = runtime.ctx("bench");
+            view.ui(ui, &mut cx);
+        });
+    });
+    let mut typed = egui::RawInput::default();
+    typed.events.push(egui::Event::Text("segunda".to_owned()));
+    let _ = ctx.run(typed, |ctx| {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            let mut cx = runtime.ctx("bench");
+            view.ui(ui, &mut cx);
+        });
+    });
+    match state.dialog() {
+        crate::state::Dialog::Create(form) => assert_eq!(form.name, "segunda"),
+        other => panic!("expected reopened create dialog with typed name, got {other:?}"),
+    }
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
+fn create_success_activates_new_bench_and_clears_previous_error() {
+    let root = temp_dir("create-clears-error");
+    let project_path = repo(&root);
+    let project = forja_contracts::ProjectRef {
+        id: "proj-116".to_owned(),
+        name: "projeto".to_owned(),
+        path: project_path.display().to_string(),
+    };
+    let state = Shared::new();
+    let mut runtime = Runtime::new(
+        vec![
+            Box::new(BenchModule {
+                state: state.clone(),
+            }),
+            Box::new(TestProjects { project }),
+        ],
+        RuntimeOptions {
+            data_dir: Some(root.join("data")),
+            user_dir: Some(root.join("user")),
+            locale: Some("pt-BR".to_owned()),
+            wake: None,
+        },
+    )
+    .expect("modules register cleanly");
+
+    // First, trigger a creation failure so shared error is populated.
+    let _ = runtime.call_method(
+        "bench.create",
+        Map::from_iter([
+            ("project_id".to_owned(), json!("proj-116")),
+            ("name".to_owned(), json!("fail-bench")),
+            ("base".to_owned(), json!("master")),
+            ("fetch".to_owned(), json!(false)),
+        ]),
+    );
+    wait(&mut runtime, |_| state.error().is_some());
+    assert!(state.error().is_some());
+
+    // Now create a valid bench and check that it activates and clears the error.
+    let _ = runtime
+        .call_method(
+            "bench.create",
+            Map::from_iter([
+                ("project_id".to_owned(), json!("proj-116")),
+                ("name".to_owned(), json!("Bancada Teste 1")),
+                ("fetch".to_owned(), json!(false)),
+            ]),
+        )
+        .unwrap();
+    wait(&mut runtime, |runtime| {
+        let current = runtime.call_method("bench.current", Map::new()).unwrap();
+        current["bench_id"] != "main" && current["name"] == "bancada-teste-1"
+    });
+    assert!(
+        state.error().is_none(),
+        "expected previous error to clear on bench creation, got {:?}",
+        state.error()
+    );
+    let current = runtime.call_method("bench.current", Map::new()).unwrap();
+    assert_eq!(current["name"], "bancada-teste-1");
+    assert_eq!(current["branch"], "forja/bancada-teste-1");
+    let _ = std::fs::remove_dir_all(root);
+}

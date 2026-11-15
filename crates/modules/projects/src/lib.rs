@@ -397,6 +397,7 @@ fn clone_form_from_args(args: &Args, destination: &str) -> state::ProjectForm {
         name: args.str("name").unwrap_or_default().to_owned(),
         icon: args.str("icon").unwrap_or(model::DEFAULT_ICON).to_owned(),
         color: args.str("color").unwrap_or(model::DEFAULT_COLOR).to_owned(),
+        busy: false,
         error: None,
     }
 }
@@ -423,6 +424,7 @@ fn clone_form_from_params(params: &Map<String, Value>) -> state::ProjectForm {
             .and_then(Value::as_str)
             .unwrap_or(model::DEFAULT_COLOR)
             .to_owned(),
+        busy: false,
         error: None,
     }
 }

@@ -52,6 +52,7 @@ shell-settings-save-failed = Could not save the setting: { $message }
 shell-command-failed = Could not run { $id }: { $message }
 shell-rail-not-found = This page is unavailable.
 shell-status-details-title = Technical details
+shell-status-copy = Copy error
 shell-slot-empty = Nothing here yet.
 shell-tray-show = Open Forja
 shell-tray-quit = Quit

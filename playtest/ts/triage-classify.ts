@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import { OpenRouter } from "@openrouter/sdk";
+import { HTTPClient } from "@openrouter/sdk/lib/http.js";
 
 interface UsageSummary {
   promptTokens: number;
@@ -78,9 +79,62 @@ async function main(): Promise<void> {
   }
 
   const model = normalizeOpenRouterModel(rawModel);
+  let resolvedProvider: string | null = null;
+  const providerScans: Array<Promise<void>> = [];
+  const httpClient = new HTTPClient();
+  httpClient.addHook("response", (res) => {
+    const scan = (async () => {
+      try {
+        const contentType = res.headers.get("content-type") ?? "";
+        const cloned = res.clone();
+        if (contentType.includes("text/event-stream") && cloned.body) {
+          const reader = cloned.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          for (;;) {
+            const { value, done } = await reader.read();
+            if (done) {
+              break;
+            }
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split(/\r?\n/);
+            buffer = lines.pop() ?? "";
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith("data:")) {
+                continue;
+              }
+              const payload = trimmed.slice("data:".length).trim();
+              if (!payload || payload === "[DONE]") {
+                continue;
+              }
+              try {
+                const parsed = JSON.parse(payload) as { provider?: unknown };
+                if (typeof parsed.provider === "string" && parsed.provider.trim()) {
+                  resolvedProvider = parsed.provider.trim();
+                }
+              } catch {
+                // Ignore partial/non-JSON SSE frames.
+              }
+            }
+          }
+        } else if (contentType.includes("application/json")) {
+          const parsed = (await cloned.json()) as { provider?: unknown };
+          if (typeof parsed.provider === "string" && parsed.provider.trim()) {
+            resolvedProvider = parsed.provider.trim();
+          }
+        }
+      } catch {
+        // Provider telemetry must never abort classification.
+      }
+    })();
+    providerScans.push(scan);
+  });
+
   const openrouter = new OpenRouter({
     apiKey,
     timeoutMs,
+    httpClient,
   });
 
   const controller = new AbortController();
@@ -123,6 +177,10 @@ async function main(): Promise<void> {
       if (chunk.model) {
         resolvedModel = chunk.model;
       }
+      const chunkProvider = (chunk as { provider?: unknown }).provider;
+      if (typeof chunkProvider === "string" && chunkProvider.trim()) {
+        resolvedProvider = chunkProvider.trim();
+      }
       const delta = chunk.choices?.[0]?.delta?.content;
       if (typeof delta === "string") {
         content += delta;
@@ -137,11 +195,13 @@ async function main(): Promise<void> {
         };
       }
     }
+    await Promise.allSettled(providerScans);
 
     process.stdout.write(
       JSON.stringify({
         content,
         model: resolvedModel,
+        provider: resolvedProvider,
         usage: lastUsage ?? {
           promptTokens: 0,
           completionTokens: 0,

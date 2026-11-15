@@ -236,6 +236,14 @@ pub fn on_project_removed(cx: &mut Ctx<'_>, shared: &Shared, project_id: &str) {
     }
 }
 
+pub(crate) fn activate_created(
+    cx: &mut Ctx<'_>,
+    shared: &Shared,
+    bench_id: &str,
+) -> Result<BenchRef, String> {
+    activate_inner(cx, shared, bench_id, false)
+}
+
 fn activate_inner(
     cx: &mut Ctx<'_>,
     shared: &Shared,
