@@ -419,13 +419,14 @@ impl ForjaApp {
         match self.runtime.set_setting(key, value) {
             Ok(()) => self.clear_status(),
             Err(error) => {
+                let raw = error.to_string();
                 let summary = humanize_setting_error_for(
                     self.runtime.i18n(),
                     self.runtime.registry(),
                     key,
-                    &error.to_string(),
+                    &raw,
                 );
-                self.status = Some(forja_kernel::HumanError::simple(summary));
+                self.status = Some(forja_kernel::HumanError::with_detail(summary, raw));
                 self.status_details_open = false;
             }
         }
@@ -514,21 +515,18 @@ pub(crate) fn humanize_setting_error_for(
         .map(|spec| i18n.t(&spec.label_key))
         .unwrap_or_else(|| key.to_owned());
     if raw.contains("must be a color in #RRGGBB form") {
-        return i18n.t_args(
-            "shell.settings.error-color",
-            &[("label", &label), ("detail", raw)],
-        );
+        return i18n.t_args("shell.settings.error-color", &[("label", &label)]);
     }
     if let Some(limit) = raw.split("must be at least ").nth(1) {
         return i18n.t_args(
             "shell.settings.error-min",
-            &[("label", &label), ("limit", limit.trim()), ("detail", raw)],
+            &[("label", &label), ("limit", limit.trim())],
         );
     }
     if let Some(limit) = raw.split("must be at most ").nth(1) {
         return i18n.t_args(
             "shell.settings.error-max",
-            &[("label", &label), ("limit", limit.trim()), ("detail", raw)],
+            &[("label", &label), ("limit", limit.trim())],
         );
     }
     if let Some(limit) = raw
@@ -538,25 +536,16 @@ pub(crate) fn humanize_setting_error_for(
     {
         return i18n.t_args(
             "shell.settings.error-max-len",
-            &[("label", &label), ("limit", limit.trim()), ("detail", raw)],
+            &[("label", &label), ("limit", limit.trim())],
         );
     }
     if raw.contains("list items cannot be empty") {
-        return i18n.t_args(
-            "shell.settings.error-list-empty",
-            &[("label", &label), ("detail", raw)],
-        );
+        return i18n.t_args("shell.settings.error-list-empty", &[("label", &label)]);
     }
     if raw.contains("list repeats ") {
-        return i18n.t_args(
-            "shell.settings.error-list-repeat",
-            &[("label", &label), ("detail", raw)],
-        );
+        return i18n.t_args("shell.settings.error-list-repeat", &[("label", &label)]);
     }
-    i18n.t_args(
-        "shell.settings.error-generic",
-        &[("label", &label), ("detail", raw)],
-    )
+    i18n.t_args("shell.settings.error-generic", &[("label", &label)])
 }
 
 fn setting_matches(query: &str, key: &str, label: &str) -> bool {
@@ -707,7 +696,7 @@ mod tests {
         let dir = TempGuard(
             std::env::temp_dir().join(format!("forja-shell-bounds-{}", std::process::id())),
         );
-        let runtime = crate::app::build_runtime(
+        let mut runtime = crate::app::build_runtime(
             Some("pt-BR".into()),
             Some(dir.0.clone()),
             Some(dir.0.join("u")),
@@ -729,6 +718,31 @@ mod tests {
             "invalid setting: `appearance.colors.accent` must be a color in #RRGGBB form",
         );
         assert!(color_err.contains("#RRGGBB"), "{color_err}");
-        assert!(!color_err.starts_with("invalid setting:"), "{color_err}");
+        assert!(!color_err.to_ascii_lowercase().contains("invalid setting"), "{color_err}");
+        assert!(!color_err.contains("appearance.colors.accent"), "{color_err}");
+
+        let min_err = humanize_setting_error_for(
+            runtime.i18n(),
+            runtime.registry(),
+            "appearance.sidebar.width",
+            "invalid setting: `appearance.sidebar.width` must be at least 160",
+        );
+        assert!(min_err.contains("160"), "{min_err}");
+        assert!(!min_err.to_ascii_lowercase().contains("invalid setting"), "{min_err}");
+        assert!(!min_err.contains('`'), "{min_err}");
+
+        runtime.set_locale(forja_kernel::Locale::En);
+        let color_err_en = humanize_setting_error_for(
+            runtime.i18n(),
+            runtime.registry(),
+            "appearance.colors.accent",
+            "invalid setting: `appearance.colors.accent` must be a color in #RRGGBB form",
+        );
+        assert!(color_err_en.contains("#RRGGBB"), "{color_err_en}");
+        assert!(
+            !color_err_en.to_ascii_lowercase().contains("invalid setting"),
+            "{color_err_en}"
+        );
+        assert!(!color_err_en.contains("appearance.colors.accent"), "{color_err_en}");
     }
 }

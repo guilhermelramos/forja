@@ -228,13 +228,14 @@ fn finish_create(cx: &mut Ctx<'_>, shared: &Shared, result: Result<Created, Stri
             } else {
                 created.setup.output.clone()
             };
-            shared.set_notice(Some(output.clone()));
+            let summary = humanize_error(cx, &output).summary;
+            shared.set_notice(Some(output));
             notify(
                 cx,
                 cx.t("bench.notify.setup-failed.title"),
                 cx.t_args(
                     "bench.notify.setup-failed.body",
-                    &[("name", &record.name), ("message", &output)],
+                    &[("name", &record.name), ("message", &summary)],
                 ),
                 "error",
             );

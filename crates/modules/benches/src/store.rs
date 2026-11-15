@@ -163,12 +163,13 @@ fn finish_store(cx: &mut Ctx<'_>, shared: &Shared, result: Result<Stored, String
         } else {
             stored.teardown.output.clone()
         };
+        let summary = crate::create::humanize_error(cx, &output).summary;
         notify(
             cx,
             cx.t("bench.notify.teardown-failed.title"),
             cx.t_args(
                 "bench.notify.teardown-failed.body",
-                &[("name", &stored.bench_name), ("message", &output)],
+                &[("name", &stored.bench_name), ("message", &summary)],
             ),
             "error",
         );

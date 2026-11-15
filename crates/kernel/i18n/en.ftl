@@ -18,3 +18,7 @@ kernel-error-git-no-upstream = This branch has no upstream branch yet. Publish i
 kernel-error-git-auth = Authentication was refused while accessing the remote repository.
 kernel-error-git-dirty = There are uncommitted changes. Save or discard them before continuing.
 kernel-error-git-generic = Could not complete the Git operation.
+kernel-error-helper-not-installed = No installed helper was found on PATH. Install one in Helpers to run this action.
+kernel-error-helper-disabled = The selected helper is disabled in Settings.
+kernel-error-helper-untrusted = The selected helper profile needs approval before it can run.
+kernel-error-terminal-unavailable = No terminal is available to run this action.

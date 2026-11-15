@@ -14,8 +14,9 @@ caracteres além de espaços.
 
 ## O que registra
 
-- Página `muster.page` no slot `Rail` (glifo `HELPERS`), com mutirões, tarefas,
-  atribuições ao vivo, caixa de entrada e formulários.
+- Página `muster.page` no slot `Rail` (glifo `HELPERS`), em três colunas:
+  plano/tarefas, atribuições ao vivo por ajudante e caixa de entrada/custo.
+  O plano fica sempre visível; a revisão abre num modal antes de aprovar.
 - Comandos `muster.run`, `muster.task`, `muster.start`, `muster.note`,
   `muster.reply`, `muster.handoff`, `muster.inbox`, `muster.status`,
   `muster.plan.approve`, `muster.budget.set`, `muster.spend` e `muster.open`.
@@ -74,13 +75,20 @@ Cada `MusterRun` carrega `plan_approved`, `budget_usd` e `spent_usd`.
 
 - Com `muster.plan.require_approval` ligado (padrão), o mutirão nasce com
   `plan_approved: false`; `muster.start` recusa até `muster.plan.approve`.
-  O botão "Aprovar plano" aparece na página enquanto o plano está pendente.
+- O botão "Aprovar plano" abre uma revisão com tarefas, dependências, ajudante
+  sugerido por tarefa, teto de custo e custo até agora. A aprovação só sai do
+  botão de confirmar dentro da revisão (`plan::PlanGate`).
 - `muster.plan.max_tasks` limita quantas tarefas `muster.task` aceita.
 - `budget_usd` vem de `muster.run` ou, quando omitido, de
-  `muster.budget.max_usd`; `muster.spend` soma o custo e `muster.start` recusa
-  quando o teto já foi atingido.
-- A página mostra o estado do plano, uma barra de consumo e campos para salvar
-  o teto e registrar um custo.
+  `muster.budget.max_usd`; `muster.start` recusa quando o teto já foi atingido.
+- O custo automático vem do contrato `usage.spend` (período `all`), por bancada
+  do mutirão e de cada atribuição. A coluna de custo mostra o total e a barra
+  contra o teto; as atribuições mostram o custo por ajudante e cada tarefa
+  mostra o custo da bancada da sua atribuição. Bancadas repetidas entre
+  ajudantes ganham o aviso de bancada compartilhada.
+- Quando o Uso não tem dados para a bancada, a página mostra o campo manual
+  "Registrar custo" (`muster.spend`) como alternativa; com dados automáticos o
+  campo fica escondido.
 
 ## Escalonamento
 
@@ -92,14 +100,18 @@ e marca a tarefa como `blocked`. O alerta aparece uma vez por atribuição.
 ## Contratos
 
 Consome `bench.current`, `helper.launch`, `helper.focus`,
-`terminal.send`, `terminal.read`, `notify.show` e os eventos
-`helper.status_changed`, `terminal.exited` e `terminal.command_finished`.
-Publica os comandos/RPC acima. Não importa o crate de outro módulo.
+`terminal.send`, `terminal.read`, `notify.show`, o contrato opcional
+`usage.spend` e os eventos `helper.status_changed`, `terminal.exited` e
+`terminal.command_finished`. Publica os comandos/RPC acima. Não importa o
+crate de outro módulo.
 
 ## Limitações
 
-- O custo é registrado por `muster.spend`; o módulo não lê o consumo real dos
-  provedores sozinho.
+- O custo automático vem de `usage.spend`, que agrega por bancada. Várias
+  atribuições na mesma bancada mostram o mesmo valor, marcado como bancada
+  compartilhada; o módulo não separa tokens por tarefa.
+- Sem o módulo Uso, ou sem logs para a bancada, resta o custo manual de
+  `muster.spend`.
 - Recados para uma atribuição em modo chat ficam na fila, porque `chat` não
   expõe envio por sessão.
 

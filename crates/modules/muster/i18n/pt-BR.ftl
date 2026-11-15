@@ -126,6 +126,37 @@ muster-method-spend-result = O mutirão atualizado.
 muster-plan-approved = plano aprovado
 muster-plan-pending = plano esperando aprovação
 muster-plan-approve = Aprovar plano
+muster-plan-confirm = Confirmar aprovação
+muster-plan-view = Ver plano
+muster-plan-summary = Resumo do plano
+muster-plan-review-title = Plano do mutirão
+muster-plan-review-hint = Confira as tarefas, dependências, ajudante sugerido e teto de custo antes de aprovar.
+muster-plan-task-count =
+    { $count ->
+        [one] { $count } tarefa
+       *[other] { $count } tarefas
+    }
+muster-plan-dep-count =
+    { $count ->
+        [one] { $count } dependência
+       *[other] { $count } dependências
+    }
+muster-plan-helper = Ajudante sugerido
+muster-plan-helper-auto = Automático
+muster-plan-ceiling = Teto de custo
+muster-plan-empty = O plano ainda não tem tarefas.
+muster-plan-task-deps = Depende de: { $deps }
+muster-plan-no-deps = Sem dependências
+muster-page-plan = Plano e tarefas
+muster-cost-title = Custo
+muster-cost-auto = Lido do Uso por bancada
+muster-cost-manual = Sem dados de uso para esta bancada; registre um custo manual.
+muster-cost-pending = Lendo o custo do Uso...
+muster-cost-shared = bancada compartilhada
+muster-cost-unpriced = parte sem preço
+muster-cost-unavailable = O módulo Uso não está disponível; use o custo manual.
+muster-cost-value = US$ { $amount }
+muster-cost-now = Custo até agora
 muster-budget = Teto (US$)
 muster-budget-hint = 0 = sem teto
 muster-budget-none = sem teto de custo

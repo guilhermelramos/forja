@@ -176,13 +176,13 @@ shell-status-dismiss = Fechar aviso
 shell-settings-range = Aceito: { $min } a { $max }
 shell-settings-range-min = Mínimo: { $min }
 shell-settings-range-max = Máximo: { $max }
-shell-settings-error-color = { $label }: informe uma cor no formato #RRGGBB, como #F2762E ({ $detail }).
-shell-settings-error-min = { $label }: o valor mínimo aceito é { $limit } ({ $detail }).
-shell-settings-error-max = { $label }: o valor máximo aceito é { $limit } ({ $detail }).
-shell-settings-error-max-len = { $label }: use no máximo { $limit } caracteres ({ $detail }).
-shell-settings-error-list-empty = { $label }: os itens da lista não podem ficar vazios ({ $detail }).
-shell-settings-error-list-repeat = { $label }: há um item repetido na lista ({ $detail }).
-shell-settings-error-generic = Não foi possível salvar "{ $label }" ({ $detail }).
+shell-settings-error-color = { $label }: informe uma cor no formato #RRGGBB, como #F2762E.
+shell-settings-error-min = { $label }: o valor mínimo aceito é { $limit }.
+shell-settings-error-max = { $label }: o valor máximo aceito é { $limit }.
+shell-settings-error-max-len = { $label }: use no máximo { $limit } caracteres.
+shell-settings-error-list-empty = { $label }: os itens da lista não podem ficar vazios.
+shell-settings-error-list-repeat = { $label }: há um item repetido na lista.
+shell-settings-error-generic = Não foi possível salvar "{ $label }".
 
 # Opções de configurações (combos)
 setting-option-auto = Automático

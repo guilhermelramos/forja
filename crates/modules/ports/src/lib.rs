@@ -70,9 +70,14 @@ impl Module for PortsModule {
         r.command("ports.kill", "ports.command.kill", move |cx, args| {
             let pid = args.i64("pid").unwrap_or(0).max(0) as u32;
             let confirm = args.bool("confirm").unwrap_or(false);
-            if pid == 0 || pid == 4 || pid == std::process::id() {
+            if pid == std::process::id() {
                 return Err(forja_kernel::KernelError::Message(
-                    "refusing to terminate this process".to_owned(),
+                    cx.t("ports.error.self-process"),
+                ));
+            }
+            if pid == 0 || pid == 4 || kill.is_known_system_pid(pid) {
+                return Err(forja_kernel::KernelError::Message(
+                    cx.t("ports.error.system-process"),
                 ));
             }
             let ask = cx
@@ -81,15 +86,27 @@ impl Module for PortsModule {
                 .unwrap_or(true);
             if ask && !confirm {
                 return Err(forja_kernel::KernelError::Message(
-                    "confirmation is required to terminate the process".to_owned(),
+                    cx.t("ports.error.confirm-required"),
                 ));
             }
             let state = kill.clone();
+            let system_msg = cx.t("ports.error.system-process");
             cx.spawn(
-                move || terminate(pid),
-                move |_cx, result| match result {
-                    Ok(()) => state.expire(),
-                    Err(error) => state.set_error(error),
+                move || {
+                    if scan::is_system_pid(pid) {
+                        return Err(system_msg);
+                    }
+                    terminate(pid)
+                },
+                move |cx, result| match result {
+                    Ok(()) => {
+                        state.clear_error();
+                        state.expire();
+                    }
+                    Err(error) => {
+                        let human = forja_kernel::human_error::humanize_ctx(cx, &error);
+                        state.set_human_error(human);
+                    }
                 },
             );
             Ok(json!({ "pending": true, "pid": pid }))
@@ -194,14 +211,28 @@ fn used_keys() -> Vec<&'static str> {
         "ports.panel.title",
         "ports.status.count",
         "ports.view.count",
+        "ports.view.count-filtered",
         "ports.view.refresh",
+        "ports.view.filter-hint",
+        "ports.view.clear-filter",
+        "ports.view.show-all",
         "ports.view.empty",
+        "ports.view.empty-benches",
+        "ports.view.empty-filter",
         "ports.view.open",
+        "ports.view.open-browser",
         "ports.view.system",
         "ports.view.kill",
         "ports.view.confirm",
         "ports.view.cancel",
         "ports.view.no-bench",
+        "ports.view.group-forja",
+        "ports.view.group-other",
+        "ports.view.group-system",
+        "ports.view.dismiss-error",
+        "ports.error.system-process",
+        "ports.error.self-process",
+        "ports.error.confirm-required",
         "ports.command.refresh",
         "ports.command.kill",
         "ports.method.list.description",
@@ -261,6 +292,25 @@ mod tests {
         args.insert("pid", json!(std::process::id()));
         args.insert("confirm", json!(true));
         assert!(runtime.run_command("ports.kill", args).is_err());
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn killing_system_process_is_refused_with_human_error() {
+        let dir = temp_dir();
+        let mut runtime = runtime(&dir);
+        let mut args = Args::new();
+        args.insert("pid", json!(4u32));
+        args.insert("confirm", json!(true));
+        let err = runtime
+            .run_command("ports.kill", args)
+            .expect_err("PID 4 must be refused");
+        let human = forja_kernel::human_error::humanize_kernel_error(runtime.i18n(), &err);
+        assert!(
+            human.summary.contains("sistema") || human.summary.contains("system"),
+            "unexpected human summary: {:?}",
+            human.summary
+        );
         let _ = std::fs::remove_dir_all(dir);
     }
 
