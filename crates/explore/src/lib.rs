@@ -3,6 +3,7 @@
 pub mod client;
 pub mod ftl;
 pub mod invariants;
+pub mod outcome;
 pub mod replay;
 pub mod rng;
 pub mod runner;

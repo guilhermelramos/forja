@@ -1,5 +1,6 @@
 //! CLI entry point for `forja-explore`.
 
+use forja_explore::outcome::Outcome;
 use forja_explore::replay;
 use forja_explore::runner::{self, ExploreConfig};
 use std::path::PathBuf;
@@ -15,44 +16,40 @@ enum Mode {
 }
 
 fn main() {
-    let exit_code = match parse_args() {
+    let outcome = match parse_args() {
         Ok(Mode::Help) => {
             print_help();
-            0
+            Outcome::Help
         }
-        Ok(Mode::Replay { dir, app, locale }) => match replay::run_directory(&dir, &app, &locale) {
-            Ok(()) => 0,
-            Err(err) => {
-                eprintln!("forja-explore: {err}");
-                1
-            }
-        },
-        Ok(Mode::Explore(config)) => match runner::run(&config) {
-            Ok(summary) => {
-                println!(
-                    "explore: {} actions, {} screens, {} elements, {} keybinds, {} findings ({} crashes/hangs, {} restarts)",
-                    summary.actions,
-                    summary.screens,
-                    summary.elements,
-                    summary.keybinds,
-                    summary.findings,
-                    summary.crashes_or_hangs,
-                    summary.restarts
-                );
-                0
-            }
-            Err(err) => {
-                eprintln!("forja-explore: {err}");
-                1
-            }
-        },
-        Err(err) => {
+        Ok(Mode::Replay { dir, app, locale }) => {
+            Outcome::Replay(replay::run_directory(&dir, &app, &locale))
+        }
+        Ok(Mode::Explore(config)) => Outcome::Explore(runner::run(&config)),
+        Err(err) => Outcome::Usage(err),
+    };
+    match &outcome {
+        Outcome::Explore(Ok(summary)) => {
+            println!(
+                "explore: {} actions, {} screens, {} elements, {} keybinds, {} findings ({} crashes/hangs, {} restarts)",
+                summary.actions,
+                summary.screens,
+                summary.elements,
+                summary.keybinds,
+                summary.findings,
+                summary.crashes_or_hangs,
+                summary.restarts
+            );
+        }
+        Outcome::Explore(Err(err)) | Outcome::Replay(Err(err)) => {
+            eprintln!("forja-explore: {err}");
+        }
+        Outcome::Usage(err) => {
             eprintln!("forja-explore: {err}");
             eprintln!("Use `forja-explore --help` para ver as opções.");
-            2
         }
-    };
-    std::process::exit(exit_code);
+        Outcome::Help | Outcome::Replay(Ok(())) => {}
+    }
+    std::process::exit(outcome.exit_code());
 }
 
 fn parse_args() -> Result<Mode, String> {

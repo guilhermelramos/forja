@@ -234,6 +234,17 @@ mod tests {
             let _ = std::fs::remove_dir_all(root);
             return;
         }
+        for args in [
+            ["config", "user.name", "Forja Test"],
+            ["config", "user.email", "forja@example.invalid"],
+        ] {
+            let _ = Command::new("git")
+                .arg("-C")
+                .arg(&root)
+                .args(args)
+                .stdin(Stdio::null())
+                .status();
+        }
         write(&root.join(".gitignore"), "secret.env\n");
         write(&root.join("tracked.rs"), "");
         write(&root.join("new.rs"), "");

@@ -20,6 +20,12 @@ fn git(path: &std::path::Path, args: &[&str]) -> String {
         .args(args)
         .current_dir(path)
         .env("GIT_TERMINAL_PROMPT", "0")
+        // Runners have no global identity; every commit in a temporary repo
+        // must carry its own author and committer.
+        .env("GIT_AUTHOR_NAME", "Forja Test")
+        .env("GIT_AUTHOR_EMAIL", "forja@example.invalid")
+        .env("GIT_COMMITTER_NAME", "Forja Test")
+        .env("GIT_COMMITTER_EMAIL", "forja@example.invalid")
         .output()
         .unwrap();
     assert!(
@@ -515,6 +521,8 @@ fn unborn_repo_is_detected_before_opening_a_bench() {
     let path = root.join("vazio");
     std::fs::create_dir_all(&path).unwrap();
     git(&path, &["init", "-b", "main"]);
+    git(&path, &["config", "user.name", "Forja Test"]);
+    git(&path, &["config", "user.email", "forja@example.invalid"]);
     assert!(!crate::git::has_commits(&path));
     assert!(!crate::git::has_remote(&path));
     std::fs::write(path.join("a.txt"), "a\n").unwrap();

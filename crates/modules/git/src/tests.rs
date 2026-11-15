@@ -20,6 +20,12 @@ fn git(path: &std::path::Path, args: &[&str]) -> String {
         .args(args)
         .current_dir(path)
         .env("GIT_TERMINAL_PROMPT", "0")
+        // Runners have no global identity; every commit in a temporary repo
+        // must carry its own author and committer.
+        .env("GIT_AUTHOR_NAME", "Forja Test")
+        .env("GIT_AUTHOR_EMAIL", "forja@example.invalid")
+        .env("GIT_COMMITTER_NAME", "Forja Test")
+        .env("GIT_COMMITTER_EMAIL", "forja@example.invalid")
         .output()
         .unwrap();
     assert!(

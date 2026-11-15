@@ -53,7 +53,12 @@ fn project(url: &str, label: &str) -> PathBuf {
             .unwrap_or(0)
     ));
     std::fs::create_dir_all(&dir).unwrap();
-    for args in [vec!["init", "-q"], vec!["remote", "add", "origin", url]] {
+    for args in [
+        vec!["init", "-q"],
+        vec!["config", "user.name", "Forja Test"],
+        vec!["config", "user.email", "forja@example.invalid"],
+        vec!["remote", "add", "origin", url],
+    ] {
         let status = std::process::Command::new("git")
             .arg("-C")
             .arg(&dir)
