@@ -228,8 +228,9 @@ impl ChatView {
             .clone()
             .or_else(|| session.error.clone())
         {
-            let shown = helper_picker::humanize_error(cx, &session.profile.name, &error);
-            ui.label(egui::RichText::new(shown).color(egui::Color32::from_rgb(0xE5, 0x53, 0x4B)));
+            let human = helper_picker::humanize_error(cx, &session.profile.name, &error);
+            let details_label = cx.t("kernel.error.details");
+            forja_ui_kit::error_banner(ui, &human.summary, human.detail.as_deref(), &details_label);
         }
         if let Some(notice) = &session.notice {
             ui.label(egui::RichText::new(notice).weak());
