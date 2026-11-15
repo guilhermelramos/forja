@@ -425,6 +425,14 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - O botão "Ajustes" do trilho permanece marcado=False enquanto a janela "Ajustes" está aberta em foco, inconsistência de estado de seleção.
 - Vários botões-ícone sem nome acessível na barra de ferramentas central (444–581, 102–134), o que impede identificação por leitor de tela.
 
+## [pt-BR.light.bench-tab.bench.detail](pages/pt-BR.light.bench-tab.bench.detail.md)
+
+- O botão de tema na barra superior (1741,5)–(1773,37) é um Unknown sem nome acessível; só é identificável pelo ícone de sol.
+- Três botões com o mesmo nome "Mais abas" ((64,50)–(149,85), (324,50)–(409,85) e (1632,50)–(1717,85)) em regiões diferentes, sem contexto que os distinga para leitores de tela.
+- Rótulos interativos expostos como Label com ação click — "Notificações" (com focus), "Pronto", "56 módulos" e as mensagens de estado vazio —, com papel incompatível com o comportamento de botão.
+- A aba "Ajudante (chat)" é renderizada em cinza mais claro que as abas vizinhas, com contraste reduzido.
+- Vários elementos da árvore estão sem nome acessível (as duas divisórias, a Image do logo e os ícones "(ícone)"), o que reduz a navegabilidade por leitor de tela.
+
 ## [en.dark.home.default](pages/en.dark.home.default.md)
 
 - A aba "Extension panels" do painel esquerdo (211,50)–(337,82) ultrapassa a borda do painel (x≈304) e o texto aparece cortado ("Extension pan…") na imagem.
@@ -1128,4 +1136,27 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - A janela modal sobrepõe a barra de abas central e os botões "+", "Recipes" e "Shell" do painel de projetos; as abas "Editor", "Browser", "Changes", "Preview", "Bench", "Review" e "History" ficam totalmente ocultas e "Extension panels" aparece truncada ("…ion panels") na borda direita do modal; a aba "pwsh · Running" também é coberta (sobreposição esperada em modal, mas que esconde controles da tela de fundo).
 - Os botões de janela da barra de título têm apenas símbolos como nome ("–", "□", "×").
 - Diferença em relação à referência: no painel de projetos só aparecem "More tabs" e "Projects", com as demais abas recolhidas, enquanto a página pt-BR lista três abas visíveis.
+
+## [en.light.settings.trust](pages/en.light.settings.trust.md)
+
+- O diálogo "Settings" se sobrepõe à linha de abas da área central: "Extension panels" aparece cortado no texto visível ("ion panels") e "Helper (chat)" fica parcialmente encoberto na captura.
+- A aba "pwsh · Running" e o botão "Close pwsh" (328–404, y 118–140) ficam quase totalmente atrás do diálogo, invisíveis para o usuário.
+- O TextInput do campo de busca de ajustes (337,121)–(1017,153) não tem nome acessível, embora exiba o texto de apoio "Search settings".
+- O alternador de tema do topo (1741,5)–(1773,37) e quatro ícones da barra de ferramentas central (444–581, y 113–145) não têm nome acessível.
+- O nome "More tabs" se repete em três botões distintos (painel esquerdo, área central e painel direito), o que dificulta a identificação por leitores de tela.
+- O nome "Changes" se repete em duas abas diferentes (área central e painel direito).
+- Os ícones de grade do painel direito e de engrenagem do diálogo são expostos apenas como Label "(ícone)", sem papel ou nome descritivo.
+- Textos secundários em cinza médio sobre fundo claro ("Nothing approved yet.", "Pending requests: 0", avisos de vazio e "Click to type") têm baixo contraste.
+
+## [en.light.settings.voice](pages/en.light.settings.voice.md)
+
+- A janela "Settings" termina em y=496, mas os botões "Save key" (337,507)–(414,539) e "Delete key" (422,507)–(511,539) ficam abaixo/fora do retângulo dela e não aparecem na captura: o formulário da seção Voice é truncado (a barra de rolagem interna em (1015,167)–(1017,487) confirma conteúdo cortado).
+- O PasswordInput (337,476)–(665,499) ultrapassa ~3 px a borda inferior da modal (496); o placeholder "Paste the key here" aparece cortado pela borda.
+- O botão "More tabs" central (324,50)–(411,85) fica encoberto pela modal.
+- A aba "pwsh · Running" (328,118)–(404,140) e o botão "Close pwsh" (385,121)–(401,137) ficam totalmente cobertos pela modal.
+- A aba "Extension panels" (973,52)–(1099,84) é parcialmente encoberta pela modal, ficando visível apenas "…ion panels".
+- O TextInput de busca de ajustes (337,121)–(1017,153) e o PasswordInput da chave (337,476)–(665,499) não têm nome acessível; dependem apenas do placeholder.
+- O botão de alternância de tema (1741,5)–(1773,37) não tem nome acessível.
+- Botões-ícone sem nome acessível na barra de ferramentas central (444–581, y 113–145), o que impede identificação por leitor de tela.
+- O botão "Settings" do trilho permanece marcado=False enquanto a janela "Settings" está aberta em foco, inconsistência de estado de seleção.
 

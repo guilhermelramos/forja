@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 24,
-  "widgets_total": 5118,
-  "widgets_covered": 4714,
+  "states_done": 26,
+  "widgets_total": 5249,
+  "widgets_covered": 4844,
   "complete": false,
   "stale": [
     {
@@ -1254,24 +1254,19 @@
         "New project",
         "pwsh · Running"
       ]
-    }
-  ],
-  "missing": [
-    {
-      "state": "en.light.settings.trust",
-      "png": "captures/en.light.settings.trust.png",
-      "tree": "captures/en.light.settings.trust.json"
-    },
-    {
-      "state": "en.light.settings.voice",
-      "png": "captures/en.light.settings.voice.png",
-      "tree": "captures/en.light.settings.voice.json"
     },
     {
       "state": "pt-BR.light.bench-tab.bench.detail",
       "png": "captures/pt-BR.light.bench-tab.bench.detail.png",
-      "tree": "captures/pt-BR.light.bench-tab.bench.detail.json"
-    },
+      "tree": "captures/pt-BR.light.bench-tab.bench.detail.json",
+      "page": "pages/pt-BR.light.bench-tab.bench.detail.md",
+      "capture_changed": false,
+      "widgets_not_mentioned": [
+        "Nenhuma bancada ativa.\nCrie uma bancada ou escolha uma na lateral ou no Quadro."
+      ]
+    }
+  ],
+  "missing": [
     {
       "state": "pt-BR.light.bench-tab.browser.tab",
       "png": "captures/pt-BR.light.bench-tab.browser.tab.png",

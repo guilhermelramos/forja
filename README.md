@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 24/160 telas documentadas · elementos citados 4714/5118 · completo: false
+**Progresso:** 26/160 telas documentadas · elementos citados 4844/5249 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -61,7 +61,7 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.light.open.toast` | — | [png](captures/pt-BR.light.open.toast.png) |
 | `pt-BR.light.rail.archive.tab` | — | [png](captures/pt-BR.light.rail.archive.tab.png) |
 | `pt-BR.light.modal.bench.dialogs` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.bench.dialogs.png) |
-| `pt-BR.light.bench-tab.bench.detail` | — | [png](captures/pt-BR.light.bench-tab.bench.detail.png) |
+| `pt-BR.light.bench-tab.bench.detail` | [página](pages/pt-BR.light.bench-tab.bench.detail.md) | [png](captures/pt-BR.light.bench-tab.bench.detail.png) |
 | `pt-BR.light.rail.board.page` | — | [png](captures/pt-BR.light.rail.board.page.png) |
 | `pt-BR.light.bench-tab.browser.tab` | — | [png](captures/pt-BR.light.bench-tab.browser.tab.png) |
 | `pt-BR.light.bench-tab.chat.tab` | — | [png](captures/pt-BR.light.bench-tab.chat.tab.png) |
@@ -200,5 +200,5 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.light.settings.mcp` | [página](pages/en.light.settings.mcp.md) | [png](captures/en.light.settings.mcp.png) |
 | `en.light.settings.onboarding` | [página](pages/en.light.settings.onboarding.md) | [png](captures/en.light.settings.onboarding.png) |
 | `en.light.settings.remote` | [página](pages/en.light.settings.remote.md) | [png](captures/en.light.settings.remote.png) |
-| `en.light.settings.trust` | — | [png](captures/en.light.settings.trust.png) |
-| `en.light.settings.voice` | — | [png](captures/en.light.settings.voice.png) |
+| `en.light.settings.trust` | [página](pages/en.light.settings.trust.md) | [png](captures/en.light.settings.trust.png) |
+| `en.light.settings.voice` | [página](pages/en.light.settings.voice.md) | [png](captures/en.light.settings.voice.png) |
