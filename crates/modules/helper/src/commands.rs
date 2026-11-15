@@ -23,6 +23,7 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
             .map(PathBuf::from)
             .or_else(|| current_bench(cx));
         ensure(cx, &list_core, bench.clone()).map_err(error)?;
+        ensure_probed(&list_core);
         maybe_detect(cx, &list_core);
         let (detecting, profiles) = list_core
             .with_state(|state| (state.detecting, profile_infos(state)))
@@ -372,6 +373,7 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
         .or_else(|| current_bench(cx))
         .unwrap_or_else(|| PathBuf::from("."));
     ensure(cx, core, Some(bench.clone()))?;
+    ensure_probed(core);
     let default_profile = cx
         .setting("helper.default.profile")
         .and_then(|value| value.as_str())
@@ -383,34 +385,22 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
         .unwrap_or("ask")
         .to_owned();
     let selected = core.with_state(|state| {
-        let installed = |id: &str| {
-            if let Some(detection) = state.detection.get(id) {
-                detection.executable.is_some()
-            } else {
-                state
-                    .profiles
-                    .iter()
-                    .find(|profile| profile.id == id)
-                    .is_some_and(|profile| {
-                        profile
-                            .detect
-                            .executables
-                            .iter()
-                            .any(|name| detect::resolve(name).is_some())
-                    })
-            }
-        };
         let profile = match &request.profile_id {
             Some(id) => state
                 .profiles
                 .iter()
                 .find(|profile| &profile.id == id)
                 .cloned(),
-            None => profile::pick_default(&state.profiles, installed, &default_profile).cloned(),
+            None => profile::pick_default(
+                &state.profiles,
+                |id| state.is_installed(id),
+                &default_profile,
+            )
+            .cloned(),
         };
         let profile = profile.ok_or_else(|| cx.t("helper.view.installed-empty"))?;
         let overrides = state.overrides(&profile.id);
-        let detected = state.detection.get(&profile.id).cloned();
+        let detected = state.executable_for(&profile.id).map(std::path::Path::to_path_buf);
         Ok::<_, String>((profile, overrides, detected))
     })?;
     let (profile, overrides, detected) = selected?;
@@ -474,11 +464,7 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
         bench.clone(),
         &overrides,
     )?;
-    let resolved = match detected {
-        Some(detection) => detection.executable,
-        None => detect::resolve(&plan.program),
-    };
-    if resolved.is_none() {
+    if detected.is_none() {
         return Err(cx.t_args("helper.launch.not-installed", &[("name", &profile.name)]));
     }
     inject_account_env(cx, &profile.id, &mut plan);
@@ -606,12 +592,7 @@ fn hook_status_json(status: &hooks::HookStatus) -> Value {
 fn profile_infos(state: &HelperState) -> Vec<Value> {
     let default_id = profile::pick_default(
         &state.profiles,
-        |id| {
-            state
-                .detection
-                .get(id)
-                .is_some_and(|detection| detection.executable.is_some())
-        },
+        |id| state.is_installed(id),
         "auto",
     )
     .map(|profile| profile.id.clone());
@@ -621,14 +602,17 @@ fn profile_infos(state: &HelperState) -> Vec<Value> {
         .map(|profile| {
             let detection = state.detection.get(&profile.id);
             let overrides = state.overrides(&profile.id);
+            let executable = state
+                .executable_for(&profile.id)
+                .map(|path| path.display().to_string());
             json!({
                 "id": profile.id,
                 "name": profile.name,
                 "maker": profile.maker,
                 "site": profile.site,
                 "status": profile.status,
-                "installed": detection.is_some_and(|d| d.executable.is_some()),
-                "executable": detection.and_then(|d| d.executable.as_ref()).map(|p| p.display().to_string()),
+                "installed": state.is_installed(&profile.id),
+                "executable": executable,
                 "version": detection.and_then(|d| d.version.clone()),
                 "install_hint": detect::install_hint(&profile.id),
                 "last_bench": state.last_benches.get(&profile.id),
@@ -645,6 +629,38 @@ fn profile_infos(state: &HelperState) -> Vec<Value> {
             })
         })
         .collect()
+}
+
+pub(crate) fn ensure_probed(core: &Shared) {
+    let missing: Vec<(String, Vec<String>)> = match core.with_state(|state| {
+        state
+            .profiles
+            .iter()
+            .filter(|profile| {
+                !state.detection.contains_key(&profile.id)
+                    && !state.probed.contains_key(&profile.id)
+            })
+            .map(|profile| (profile.id.clone(), profile.detect.executables.clone()))
+            .collect()
+    }) {
+        Ok(list) => list,
+        Err(_) => return,
+    };
+    if missing.is_empty() {
+        return;
+    }
+    let resolved: Vec<(String, Option<PathBuf>)> = missing
+        .into_iter()
+        .map(|(id, executables)| {
+            let path = executables.iter().find_map(|name| detect::resolve(name));
+            (id, path)
+        })
+        .collect();
+    let _ = core.with_state(|state| {
+        for (id, path) in resolved {
+            state.probed.entry(id).or_insert(path);
+        }
+    });
 }
 
 pub(crate) fn maybe_detect(cx: &mut Ctx<'_>, core: &Shared) {
@@ -717,6 +733,7 @@ fn start_detection(cx: &mut Ctx<'_>, core: &Shared) {
         move |_cx, detections| {
             if let Ok(mut state) = owned.state.lock() {
                 state.detection = detections;
+                state.probed.clear();
                 state.detecting = false;
                 state.detect_runs += 1;
             }
