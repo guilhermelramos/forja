@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 26/160 telas documentadas · elementos citados 4844/5249 · completo: false
+**Progresso:** 29/160 telas documentadas · elementos citados 4983/5388 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -63,10 +63,10 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.light.modal.bench.dialogs` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.bench.dialogs.png) |
 | `pt-BR.light.bench-tab.bench.detail` | [página](pages/pt-BR.light.bench-tab.bench.detail.md) | [png](captures/pt-BR.light.bench-tab.bench.detail.png) |
 | `pt-BR.light.rail.board.page` | — | [png](captures/pt-BR.light.rail.board.page.png) |
-| `pt-BR.light.bench-tab.browser.tab` | — | [png](captures/pt-BR.light.bench-tab.browser.tab.png) |
-| `pt-BR.light.bench-tab.chat.tab` | — | [png](captures/pt-BR.light.bench-tab.chat.tab.png) |
+| `pt-BR.light.bench-tab.browser.tab` | [página](pages/pt-BR.light.bench-tab.browser.tab.md) | [png](captures/pt-BR.light.bench-tab.browser.tab.png) |
+| `pt-BR.light.bench-tab.chat.tab` | [página](pages/pt-BR.light.bench-tab.chat.tab.md) | [png](captures/pt-BR.light.bench-tab.chat.tab.png) |
 | `pt-BR.light.modal.counter.poller` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.counter.poller.png) |
-| `pt-BR.light.bench-tab.diff.tab` | — | [png](captures/pt-BR.light.bench-tab.diff.tab.png) |
+| `pt-BR.light.bench-tab.diff.tab` | [página](pages/pt-BR.light.bench-tab.diff.tab.md) | [png](captures/pt-BR.light.bench-tab.diff.tab.png) |
 | `pt-BR.light.bench-tab.editor.tab` | — | [png](captures/pt-BR.light.bench-tab.editor.tab.png) |
 | `pt-BR.light.right-tab.explorer.panel` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.right-tab.explorer.panel.png) |
 | `pt-BR.light.rail.extension.page` | — | [png](captures/pt-BR.light.rail.extension.page.png) |

@@ -433,6 +433,33 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - A aba "Ajudante (chat)" é renderizada em cinza mais claro que as abas vizinhas, com contraste reduzido.
 - Vários elementos da árvore estão sem nome acessível (as duas divisórias, a Image do logo e os ícones "(ícone)"), o que reduz a navegabilidade por leitor de tela.
 
+## [pt-BR.light.bench-tab.browser.tab](pages/pt-BR.light.bench-tab.browser.tab.md)
+
+- Botões de janela nomeados apenas por símbolo: "–", "□" e "×", sem nomes acessíveis descritivos (Minimizar/Maximizar/Fechar).
+- Botão "R" da barra de navegação tem nome não descritivo (não indica "Recarregar").
+- Elementos sem nome acessível: alternador de tema (1741,5)–(1773,37), os dois divisores verticais (304,42)–(320,1048) e (1612,42)–(1628,1048), o logotipo (12,50)–(40,78) e os dois rótulos "(ícone)".
+- O nome "Mais abas" aparece três vezes na árvore sem diferenciação de qual faixa de abas controla.
+- O nome "Histórico" aparece duas vezes com papéis diferentes (aba do painel central e botão da barra do navegador).
+- O texto "forja://inicio" aparece quatro vezes com papéis diferentes (campo de endereço, chip de aba, título e subtítulo da página), sem diferenciação na árvore.
+- Baixo contraste nos textos de estado vazio ("Nenhum projeto ainda…", "Nenhuma bancada ativa…"), nas abas inativas e em "Notificações", em cinza claro sobre fundo creme.
+
+## [pt-BR.light.bench-tab.chat.tab](pages/pt-BR.light.bench-tab.chat.tab.md)
+
+- O ajudante do chat não está instalado: o ComboBox "Ajudante" mostra "Claude Code · não instalado", o rótulo "não instalado" aparece em laranja e o chat exibe o aviso de ausência junto ao comando de instalação — a função principal desta tela está indisponível neste estado.
+- O status "não instalado" aparece duas vezes seguidas (dentro do texto do ComboBox "Claude Code · não instalado" e no rótulo separado "não instalado"), redundância visual.
+- O rótulo "Claude Code · D:\a\forja\forja ·" termina com um separador "·" solto.
+- O campo de texto do cabeçalho do painel direito exibe o texto em inglês "ANTHROPIC_MODEL" (não traduzido para pt-BR); o comando "npm install -g @anthropic-ai/claude-code" está em inglês, mas é um comando real e não deve ser traduzido.
+- TextInput e MultilineTextInput sem nome acessível.
+- O botão de tema (sol, 1741–1773) fica como Unknown sem nome acessível; os rótulos de ícone em (1756,117) e (168,201) também não têm nome acessível.
+- Os dois divisores verticais (304–320 e 1612–1628) são Unknown sem nome acessível.
+
+## [pt-BR.light.bench-tab.diff.tab](pages/pt-BR.light.bench-tab.diff.tab.md)
+
+- Contraste dos textos de estado vazio é baixo: cinza claro sobre fundo claro ("Nenhum projeto ainda. Adicione uma pasta ou crie um novo.", "Nenhuma mudança carregada. Pressione Atualizar.", "Escolha um arquivo para ver o diff." e "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos."); "Limpar" desativado também tem contraste reduzido (esperado para estado desabilitado).
+- Botão da barra superior sem nome acessível em (1741,5)–(1773,37) (ícone de sol, alternador de tema); divisores, o logo do trilho e os ícones de estado vazio também não têm nome acessível.
+- As três faixas de abas dependem do botão "Mais abas" para alcançar as demais abas do painel (por exemplo, "Bancadas" e as demais do painel direito não aparecem na árvore nesta captura); nenhuma aba fica cortada nesta largura de janela.
+- Nenhum elemento com retângulo além dos limites da janela (1920×1080) nesta variante — diferentemente da referência escura, onde várias abas e botões do diff estouravam a largura.
+
 ## [en.dark.home.default](pages/en.dark.home.default.md)
 
 - A aba "Extension panels" do painel esquerdo (211,50)–(337,82) ultrapassa a borda do painel (x≈304) e o texto aparece cortado ("Extension pan…") na imagem.
