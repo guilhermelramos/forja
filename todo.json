@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 12,
-  "widgets_total": 4529,
-  "widgets_covered": 4125,
+  "states_done": 15,
+  "widgets_total": 4670,
+  "widgets_covered": 4266,
   "complete": false,
   "stale": [
     {
@@ -1257,21 +1257,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "en.light.right-tab.search.panel",
-      "png": "captures/en.light.right-tab.search.panel.png",
-      "tree": "captures/en.light.right-tab.search.panel.json"
-    },
-    {
-      "state": "en.light.settings.accounts",
-      "png": "captures/en.light.settings.accounts.png",
-      "tree": "captures/en.light.settings.accounts.json"
-    },
-    {
-      "state": "en.light.settings.content",
-      "png": "captures/en.light.settings.content.png",
-      "tree": "captures/en.light.settings.content.json"
-    },
     {
       "state": "en.light.settings.counter_github",
       "png": "captures/en.light.settings.counter_github.png",

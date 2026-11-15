@@ -993,6 +993,15 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Os três ícones ilustrativos dos estados vazios são expostos como "(sem nome acessível)"/"(ícone)", sem descrição para leitores de tela.
 - Nenhum texto cortado, sobreposto ou fora da janela nesta captura: todos os retângulos cabem em 1920×1080, diferentemente da referência pt-BR, em que a aba "Painéis de extensões" do painel direito ultrapassava a largura.
 
+## [en.light.right-tab.search.panel](pages/en.light.right-tab.search.panel.md)
+
+- Os quatro campos de texto do painel Search e os quatro ícones da barra do terminal não têm nome acessível; só são identificáveis pelo placeholder ou pela aparência.
+- O ícone de tema na barra superior (1741,5)–(1773,37), os dois divisores ((304,42)–(320,1048) e (1612,42)–(1628,1048)), o logotipo e o viewport do terminal são elementos Unknown/Image sem nome acessível.
+- O botão "Close pwsh" (385,121)–(401,137) fica sobreposto dentro do chip "pwsh · Running" (328,118)–(404,140); na imagem o ícone de fechamento aparece sem a legenda do botão.
+- Há nomes duplicados na árvore: "Search" (aba e botão), "Preview" (aba e botão) e três botões "More tabs", o que pode confundir navegação por acessibilidade.
+- Botões "Search", "Stop", "Preview" e "Apply" estão desativados sem indicador visual de tooltip explicativo; a razão só aparece no texto "Open a bench first." abaixo dos botões.
+- As opções "Regex", "Match case" e "Whole word" são desenhadas como interruptores (toggles), mas expostas como CheckBox; a aparência de toggle pode não comunicar o estado marcado/desmarcado a usuários de leitor de tela.
+
 ## [en.light.rail.skill.page](pages/en.light.rail.skill.page.md)
 
 - O campo de busca "Search skills" é um TextInput sem nome acessível; o texto de sugestão só aparece visualmente.
@@ -1013,4 +1022,28 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 
 - Botão sem nome acessível: o ícone de tema (sol) em (1741,5)–(1773,37) não tem rótulo.
 - Nomes duplicados sem contexto dificultam a desambiguação por leitores de tela: três botões "More tabs" (64–151, 324–411 e 1632–1719) e duas abas "Changes" (700–777 e 1778–1855).
+
+## [en.light.settings.accounts](pages/en.light.settings.accounts.md)
+
+- O conteúdo do segundo cartão não cabe no modal: a segunda ocorrência de "helper executable not found" (354,482)–(503,498) é cortada pela borda inferior da janela "Settings" (termina em y=496), e o TextInput (354,511)–(542,534) e o botão "Add account" (550,506)–(652,538) ficam inteiramente abaixo dela, invisíveis — o corpo do modal tem rolagem (barra em (1015,167)–(1017,487)), mas os campos ficam fora da área visível.
+- O modal "Settings" (328,58)–(1026,496) se sobrepõe à barra de abas central (y 50–84) e à barra de ferramentas, escondendo "More tabs" central, as abas "Terminal" a "Extension panels" (só o fragmento "ion panels" aparece), os botões "+", "Recipes", "Shell" e quatro ícones sem nome.
+- A aba "pwsh · Running" (328,118)–(404,140) e seu botão "Close pwsh" (385,121)–(401,137) ficam sob o modal e sob o campo de busca TextInput (337,121)–(1017,153), que se sobrepõe a ambos.
+- A área central sem nome (328,150)–(1604,1036) se sobrepõe ao retângulo do modal "Settings".
+- A janela modal é mais baixa que na referência pt-BR/dark (496 contra 571 de altura), o que agrava o corte do segundo cartão de conta.
+- O campo de busca de ajustes e os dois campos "Name" são TextInput sem nome acessível; o rótulo visível é apenas o placeholder.
+- O alternador de tema na barra superior e os quatro ícones da barra de ferramentas central não têm nome acessível, o que prejudica leitores de tela.
+- O logo do app (Image) e o ícone de estado vazio do painel direito também não têm nome acessível (este último aparece como o rótulo genérico "(ícone)").
+- "Find file  Ctrl+P" e "Anvil  Ctrl+K" têm dois espaços entre o rótulo e o atalho.
+
+## [en.light.settings.content](pages/en.light.settings.content.md)
+
+- A modal encobre a faixa de abas central: as abas "Terminal" (marcada), "Editor", "Browser", "Changes", "Preview", "Bench", "Review" e "History" ficam totalmente invisíveis, e "Extension panels" (973,52)–(1099,84) é cortada pela borda direita da modal (aparece só "…ion panels").
+- Também encobertos pela modal: os botões "+" (407,113), "Recipes", "Shell", a aba "pwsh · Running" e "Close pwsh", além do grupo de quatro botões-ícone (444–581).
+- Os quatro botões-ícone da faixa de terminais (444–581) não têm nome acessível.
+- Botão de tema (1741,5)–(1773,37) (ícone de sol) sem nome acessível.
+- TextInput do campo de busca (337,121)–(1017,153) sem nome acessível; o rótulo existe apenas como texto de apoio "Search settings" visível.
+- O texto "Click to type" visível no rodapé da área central (aprox. 1508,1017–1596,1031) não corresponde a nenhum elemento nomeado na árvore de acessibilidade.
+- Caminhos dos diagnósticos exibidos com separadores misturados e trecho relativo cru ("…\modules\content\../../../content\templates\…"), difíceis de ler.
+- Os cantos de redimensionamento inferiores da modal (486–506) se estendem 10 px além do retângulo declarado da janela "Settings" (termina em y=496).
+- Barra de rolagem da lista de diagnósticos com apenas 2 px de largura ((865,337)–(867,487)), muito fina para interação visível.
 
