@@ -460,6 +460,28 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - As três faixas de abas dependem do botão "Mais abas" para alcançar as demais abas do painel (por exemplo, "Bancadas" e as demais do painel direito não aparecem na árvore nesta captura); nenhuma aba fica cortada nesta largura de janela.
 - Nenhum elemento com retângulo além dos limites da janela (1920×1080) nesta variante — diferentemente da referência escura, onde várias abas e botões do diff estouravam a largura.
 
+## [pt-BR.light.bench-tab.editor.tab](pages/pt-BR.light.bench-tab.editor.tab.md)
+
+- Botão sem nome acessível: o ícone de tema na barra superior (1741,5)–(1773,37) é um Unknown clicável sem rótulo.
+- Divisores verticais (304,42)–(320,1048) e (1612,42)–(1628,1048) são Unknown sem nome acessível, o que dificulta identificação por leitor de tela.
+- Ícones/imagens sem alternativa textual: logotipo (12,50)–(40,78) e os ícones de estado vazio (1756,117) e (168,201) aparecem como "(sem nome acessível)".
+- Três botões com o mesmo nome "Mais abas" (64,50), (324,50) e (1632,50) em grupos diferentes, o que gera ambiguidade para leitores de tela.
+- Textos de estado vazio em cinza itálico sobre fundo claro têm contraste reduzido para corpo pequeno ("Abra um arquivo no explorador ou pressione Ctrl+P.").
+
+## [pt-BR.light.bench-tab.extension.panels.bench](pages/pt-BR.light.bench-tab.extension.panels.bench.md)
+
+- Elementos sem nome acessível: alternador de tema (1741,5), os dois divisores verticais (304,42 e 1612,42) e o logotipo (12,50) — apenas "Unknown"/"Image" sem nome na árvore.
+- Botões de janela nomeados apenas pelos símbolos "–", "□" e "×", sem rótulo descritivo (minimizar/maximizar/fechar).
+- Três botões com o mesmo nome acessível "Mais abas" (um por painel), ambíguos para leitores de tela.
+- Rótulos de estado vazio e ícones de estado vazio ((ícone) em (1756,117) e (168,201)) expostos como Label clicável, mas sem ação correspondente.
+
+## [pt-BR.light.bench-tab.git.history](pages/pt-BR.light.bench-tab.git.history.md)
+
+- O botão de alternar tema (1741,5)–(1773,37) é um "Unknown" sem nome acessível, identificável apenas pelo ícone de sol.
+- Nomes duplicados/ambíguos para leitores de tela: três botões "Mais abas"; dois botões "Histórico" (aba do painel central e sub-aba da visão Git), além do Label "Histórico"; dois Labels "Nenhuma mudança.".
+- Três Labels declarados como "(ícone)" sem nome acessível (grade do painel direito, pasta do painel de projetos e grade da área central); a Image do logotipo (12,50)–(40,78) e os dois divisores verticais (304,42)–(320,1048) e (1612,42)–(1628,1048) também não têm nome.
+- Textos secundários em cinza médio sobre fundo claro ("Nenhum projeto ainda. Adicione uma pasta ou crie um novo.", "Nenhuma mudança.", "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.") têm contraste visivelmente reduzido em relação ao texto principal.
+
 ## [en.dark.home.default](pages/en.dark.home.default.md)
 
 - A aba "Extension panels" do painel esquerdo (211,50)–(337,82) ultrapassa a borda do painel (x≈304) e o texto aparece cortado ("Extension pan…") na imagem.
