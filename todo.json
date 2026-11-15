@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 9,
-  "widgets_total": 4409,
-  "widgets_covered": 4005,
+  "states_done": 12,
+  "widgets_total": 4529,
+  "widgets_covered": 4125,
   "complete": false,
   "stale": [
     {
@@ -1257,21 +1257,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "en.light.right-tab.extension.panels.right",
-      "png": "captures/en.light.right-tab.extension.panels.right.png",
-      "tree": "captures/en.light.right-tab.extension.panels.right.json"
-    },
-    {
-      "state": "en.light.right-tab.git.changes",
-      "png": "captures/en.light.right-tab.git.changes.png",
-      "tree": "captures/en.light.right-tab.git.changes.json"
-    },
-    {
-      "state": "en.light.right-tab.ports.panel",
-      "png": "captures/en.light.right-tab.ports.panel.png",
-      "tree": "captures/en.light.right-tab.ports.panel.json"
-    },
     {
       "state": "en.light.right-tab.search.panel",
       "png": "captures/en.light.right-tab.search.panel.png",

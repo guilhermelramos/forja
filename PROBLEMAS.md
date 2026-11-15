@@ -898,6 +898,15 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Nomes acessíveis duplicados: dois botões "More tabs" (64,50) e (1632,50) e dois "Extensions" (título do painel central e item do trilho), o que ambigua comandos de voz e leitores de tela.
 - Nenhum elemento com retângulo além da largura/altura da janela (1920×1080) nesta captura.
 
+## [en.light.right-tab.extension.panels.right](pages/en.light.right-tab.extension.panels.right.md)
+
+- Três botões com o mesmo nome acessível "More tabs" (64,50), (324,50) e (1636,50), em painéis diferentes; para leitores de tela não fica claro a qual faixa de abas cada um pertence.
+- Botão de tema na barra superior (1741,5)–(1773,37) sem nome acessível; mesmo problema nos ícones de fechar/dividir/maximizar/busca do terminal (444–581,113) e nos divisores de painéis.
+- Nome acessível "(ícone)" no rótulo do ícone de pasta (168,201)–(196,229) não descreve o elemento.
+- Botões de janela nomeados apenas com os símbolos "–", "□" e "×", sem rótulos descritivos.
+- "Close pwsh" (385,121)–(401,137) é um alvo de clique de apenas 16×16 px sobreposto à aba "pwsh · Running" (328,118)–(404,140); alvo pequeno para ponteiro e toque.
+- O painel esquerdo exibe apenas a aba "Projects", com as demais abas do painel recolhidas no "More tabs"; quem procura a aba de bancadas/painéis de extensão à esquerda não a encontra visível.
+
 ## [en.light.bench-tab.extension.panels.bench](pages/en.light.bench-tab.extension.panels.bench.md)
 
 - Elementos sem nome acessível: alternador de tema (1741,5), os dois divisores verticais (304,42 e 1612,42), o logotipo (12,50) e os ícones de estado vazio (1756,117 e 168,161) — apenas "Unknown"/(sem nome acessível) na árvore.
@@ -905,6 +914,17 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Nome acessível duplicado e ambíguo: três botões "More tabs" (um por painel) e dois botões "Changes" (um na faixa central, outro no painel direito) com o mesmo texto.
 - Contraste menor nos estados vazios: ícones de grade e pasta e as mensagens cinza em fundo claro ficam abaixo do destaque do restante da interface.
 - Nenhum estouro de largura ou altura: todos os retângulos cabem na janela de 1920×1080 px — os estouros e sobreposições de abas registrados na referência (janela de 1053×768 px) não ocorrem nesta variante.
+
+## [en.light.right-tab.git.changes](pages/en.light.right-tab.git.changes.md)
+
+- Botões de janela rotulados apenas com os caracteres "–", "□" e "×" como nome acessível.
+- Alternador de tema (1741,5)–(1773,37) sem nome acessível e com papel "Unknown".
+- Os três botões "More tabs" ((64,50)–(151,85), (324,50)–(411,85) e (1632,50)–(1719,85)) compartilham o mesmo nome acessível em regiões diferentes; o mesmo vale para "Changes" (três ocorrências) e "History" (duas), o que é ambíguo para leitores de tela.
+- "Close pwsh" (385,121)–(401,137) fica dentro do botão "pwsh · Running" (328,118)–(404,140) (botões aninhados/sobrepostos) e tem alvo pequeno (16×16 px).
+- Os quatro botões de ícone da barra do terminal ((444,113)–(476,145), (479,113)–(511,145), (514,113)–(546,145) e (549,113)–(581,145)) não têm nome acessível.
+- Divisores verticais ((304,42)–(320,1048) e (1612,42)–(1628,1048)), a área do terminal (328,150)–(1604,1036) e o logotipo (12,50)–(40,78) sem nome acessível.
+- A dica "Click to type" (≈1536,1016–1601,1030), visível na imagem dentro do terminal, não tem entrada na árvore de acessibilidade.
+- Abas inativas e textos de estado vazio em cinza médio sobre fundo creme (por exemplo "Editor", "Browser", "Preview") têm contraste moderado/baixo.
 
 ## [en.light.bench-tab.git.history](pages/en.light.bench-tab.git.history.md)
 
@@ -938,6 +958,16 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Botão de alternância de tema e as duas divisórias verticais estão sem nome acessível.
 - Textos de estado vazio e subtítulo em cinza sobre fundo claro têm contraste reduzido (por exemplo, "Tasks, helpers and notes in one place.").
 - As tiras de abas escondem as demais abas atrás de "More tabs" sem indicação visual de quantas existem.
+
+## [en.light.right-tab.ports.panel](pages/en.light.right-tab.ports.panel.md)
+
+- Botões sem nome acessível: alternância de tema (1741,5)–(1773,37) e os quatro ícones da barra do terminal (fechar, dividir, sessão, busca).
+- O campo de filtro do painel de portas (1632,145)–(1908,177) é um TextInput sem nome acessível; só o placeholder o identifica.
+- A superfície do terminal (328,150)–(1604,1036) e o logotipo (12,50)–(40,78) não têm nome acessível.
+- O rótulo "(ícone)" do estado vazio (168,201)–(196,229) não tem nome acessível significativo.
+- O botão "Close pwsh" (385,121)–(401,137) fica dentro do chip "pwsh · Running" (328,118)–(404,140): um botão aninhado dentro de outro, com alvos de clique sobrepostos.
+- "No project" (11,12)–(77,31) e "Notifications" (1808,1055)–(1886,1074) são Labels, mas expõem ações de clique e foco, papel incoerente com o tipo.
+- Três abas aparecem simultaneamente com marcado=True ("Projects", "Terminal" e "Ports"), o que torna ambíguo qual painel está de fato selecionado.
 
 ## [en.light.rail.request.page](pages/en.light.rail.request.page.md)
 
