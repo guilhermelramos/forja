@@ -1,0 +1,16 @@
+{
+  "title": "Nova aba do navegador responde (#73)",
+  "issue": 73,
+  "locale": "en",
+  "steps": [
+    { "m": "ui.wait", "ms": 500 },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Browser" },
+    { "m": "ui.wait", "ms": 800 },
+    { "m": "ui.click", "target": "New tab" }
+  ],
+  "expect": [
+    { "step": 4, "present_contains": "2 / 4" },
+    { "present_contains": "New tab" }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "title": "Novo arquivo abre o diálogo com o projeto aberto (#72)",
+  "issue": 72,
+  "locale": "en",
+  "steps": [
+    { "m": "ui.wait", "ms": 500 },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Add folder" },
+    { "m": "ui.wait", "ms": 800 },
+    { "m": "ui.click", "id": 6246926411915730854 },
+    { "m": "ui.click", "target": "Add" },
+    { "m": "ui.click", "target": "sample" },
+    { "m": "ui.click", "target": "New file" }
+  ],
+  "expect": [
+    { "window_count": 1, "present": ["Name", "Template", "New file"] }
+  ]
+}
