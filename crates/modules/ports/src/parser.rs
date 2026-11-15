@@ -6,19 +6,30 @@
 use crate::model::PortInfo;
 use std::collections::BTreeMap;
 
-/// Builds the final list: tasklist names, port+pid deduplication, port order.
+/// Process metadata extracted from `tasklist /FO CSV /NH`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct TaskEntry {
+    pub name: String,
+    pub session_name: String,
+    pub session_id: Option<u32>,
+}
+
+/// Builds the final list: tasklist names, system classification, deduplication, port order.
 pub fn parse_ports(netstat: &str, tasklist: &str) -> Vec<PortInfo> {
-    let names = parse_tasklist_csv(tasklist);
+    let entries = parse_tasklist_entries(tasklist);
     let mut ports = parse_netstat_listeners(netstat);
     ports.sort_by(|a, b| {
         (a.port, a.pid, a.address.as_str()).cmp(&(b.port, b.pid, b.address.as_str()))
     });
     ports.dedup_by(|a, b| a.port == b.port && a.pid == b.pid);
     for port in &mut ports {
-        port.process = names
-            .get(&port.pid)
-            .cloned()
-            .unwrap_or_else(|| "unknown".to_owned());
+        if let Some(entry) = entries.get(&port.pid) {
+            port.process = entry.name.clone();
+            port.is_system = is_system_task(port.pid, entry);
+        } else {
+            port.process = "unknown".to_owned();
+            port.is_system = port.pid == 0 || port.pid == 4;
+        }
     }
     ports
 }
@@ -50,8 +61,16 @@ pub fn parse_netstat_listeners(text: &str) -> Vec<PortInfo> {
     ports
 }
 
+#[cfg(test)]
 pub fn parse_tasklist_csv(text: &str) -> BTreeMap<u32, String> {
-    let mut names = BTreeMap::new();
+    parse_tasklist_entries(text)
+        .into_iter()
+        .map(|(pid, entry)| (pid, entry.name))
+        .collect()
+}
+
+pub fn parse_tasklist_entries(text: &str) -> BTreeMap<u32, TaskEntry> {
+    let mut entries = BTreeMap::new();
     for raw in text.lines() {
         let fields = csv_fields(raw);
         if fields.len() < 2 {
@@ -61,11 +80,76 @@ pub fn parse_tasklist_csv(text: &str) -> BTreeMap<u32, String> {
         let Ok(pid) = fields[1].trim().parse::<u32>() else {
             continue;
         };
-        if !name.is_empty() {
-            names.insert(pid, name.to_owned());
+        if name.is_empty() {
+            continue;
         }
+        let session_name = fields
+            .get(2)
+            .map(|value| value.trim().to_owned())
+            .unwrap_or_default();
+        let session_id = fields.get(3).and_then(|value| value.trim().parse::<u32>().ok());
+        entries.insert(
+            pid,
+            TaskEntry {
+                name: name.to_owned(),
+                session_name,
+                session_id,
+            },
+        );
     }
-    names
+    entries
+}
+
+/// True when `pid` / `TaskEntry` belongs to the OS kernel or a Windows service session.
+pub fn is_system_task(pid: u32, entry: &TaskEntry) -> bool {
+    if pid == 0 || pid == 4 {
+        return true;
+    }
+    if entry.session_id == Some(0) || entry.session_name.eq_ignore_ascii_case("Services") {
+        return true;
+    }
+    is_known_system_image(&entry.name)
+}
+
+pub fn is_known_system_image(name: &str) -> bool {
+    matches!(
+        name.to_ascii_lowercase().as_str(),
+        "system"
+            | "system idle process"
+            | "registry"
+            | "secure system"
+            | "memory compression"
+            | "smss.exe"
+            | "csrss.exe"
+            | "wininit.exe"
+            | "services.exe"
+            | "lsass.exe"
+            | "lsaiso.exe"
+            | "lsm.exe"
+            | "svchost.exe"
+            | "winlogon.exe"
+            | "fontdrvhost.exe"
+            | "dwm.exe"
+            | "spoolsv.exe"
+            | "mqsvc.exe"
+            | "sshd.exe"
+            | "msmpeng.exe"
+            | "searchindexer.exe"
+            | "taskhostw.exe"
+            | "sihost.exe"
+            | "dashost.exe"
+            | "audiodg.exe"
+            | "wmiprvse.exe"
+    )
+}
+
+/// Embedded browser engine children spawned by the shell (not user dev servers).
+pub fn is_browser_helper_name(name: &str) -> bool {
+    let lower = name.to_ascii_lowercase();
+    matches!(
+        lower.as_str(),
+        "msedgewebview2.exe" | "webview2.exe" | "crashpad_handler.exe"
+    )
 }
 
 fn split_host_port(value: &str) -> Option<(&str, u16)> {
@@ -142,6 +226,17 @@ mod tests {
         assert_eq!(ports.len(), 3);
         assert_eq!(ports[0].port, 135);
         assert_eq!(ports[0].process, "svc.exe");
+        assert!(ports[0].is_system);
+        assert!(!ports[1].is_system);
         assert!(ports.windows(2).all(|pair| pair[0].port <= pair[1].port));
+    }
+
+    #[test]
+    fn tasklist_entries_classify_services_and_system_images() {
+        let csv = "\"System\",\"4\",\"Services\",\"0\",\"100 K\"\r\n\"svchost.exe\",\"1596\",\"Services\",\"0\",\"10.000 K\"\r\n\"node.exe\",\"9001\",\"Console\",\"1\",\"50.000 K\"\r\n";
+        let entries = parse_tasklist_entries(csv);
+        assert!(is_system_task(4, entries.get(&4).expect("System")));
+        assert!(is_system_task(1596, entries.get(&1596).expect("svchost")));
+        assert!(!is_system_task(9001, entries.get(&9001).expect("node")));
     }
 }
