@@ -7,7 +7,7 @@
     { "m": "ui.click", "target": "Adicionar pasta" },
     { "m": "ui.click", "target": "Escolher…" },
     { "m": "ui.click", "target": "Adicionar" },
-    { "m": "ui.click", "target": "Bancada" },
+    { "m": "ui.open_tab", "target": "Bancada" },
     { "m": "ui.click", "target": "Nova bancada" },
     { "m": "ui.type", "text": "bench-superlong-unbreakable-0123456789-abcdefghijklmnopqrstuvwxyz-without-spaces-0123456789-end" },
     { "m": "ui.click", "target": "Criar bancada" },
