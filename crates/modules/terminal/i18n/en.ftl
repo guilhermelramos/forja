@@ -16,6 +16,7 @@ terminal-view-dismiss = Dismiss
 terminal-view-recipes = Recipes
 terminal-view-shell = Shell
 terminal-view-new-tab = New tab
+terminal-view-more = More
 terminal-view-split-right = Split right
 terminal-view-split-down = Split down
 terminal-view-max-panes = Terminal pane limit reached ({ $max } panes per bench).

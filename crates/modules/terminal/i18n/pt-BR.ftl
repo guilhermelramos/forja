@@ -16,6 +16,7 @@ terminal-view-dismiss = Dispensar
 terminal-view-recipes = Receitas
 terminal-view-shell = Shell
 terminal-view-new-tab = Nova aba
+terminal-view-more = Mais
 terminal-view-split-right = Dividir à direita
 terminal-view-split-down = Dividir abaixo
 terminal-view-max-panes = Limite de painéis de terminal atingido ({ $max } painéis por bancada).

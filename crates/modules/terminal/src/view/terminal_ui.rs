@@ -204,11 +204,12 @@ fn body_after(ui: &egui::Ui, body: Rect) -> Option<Rect> {
 }
 
 fn draw_search(ui: &mut egui::Ui, terminal: &mut Terminal, texts: &UiText) {
-    ui.horizontal(|ui| {
+    let field_width = (ui.available_width() - 180.0).clamp(80.0, 220.0);
+    ui.horizontal_wrapped(|ui| {
         let response = ui.add(
             egui::TextEdit::singleline(&mut terminal.search.query)
                 .hint_text(texts.search_hint.clone())
-                .desired_width(220.0),
+                .desired_width(field_width),
         );
         if terminal.search.focus_requested {
             terminal.search.focus_requested = false;
@@ -241,10 +242,12 @@ fn draw_search(ui: &mut egui::Ui, terminal: &mut Terminal, texts: &UiText) {
             format!("{count} {}", texts.match_plural)
         };
         ui.label(RichText::new(label).weak());
-        if forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE)
-            .on_hover_text(texts.search.clone())
-            .clicked()
-        {
+        let close_btn = forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE);
+        let close_label = texts.close.clone();
+        close_btn.widget_info(|| {
+            egui::WidgetInfo::labeled(egui::WidgetType::Button, true, close_label.clone())
+        });
+        if close_btn.on_hover_text(texts.search.clone()).clicked() {
             terminal.search.open = false;
             terminal.search.editing = false;
             terminal.focus_request = true;
@@ -262,7 +265,7 @@ fn draw_link_bar(
     let Some((_, link)) = pending_link.clone() else {
         return;
     };
-    ui.horizontal(|ui| {
+    ui.horizontal_wrapped(|ui| {
         ui.label(RichText::new(texts.link_title.clone()).strong());
         ui.label(RichText::new(link.display()).color(c32(applied_tokens(ui.ctx()).color.info)));
         if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, &texts.open).clicked() {
@@ -288,7 +291,7 @@ fn draw_paste_bar(
     let Some(pending) = pending_paste.clone() else {
         return;
     };
-    ui.horizontal(|ui| {
+    ui.horizontal_wrapped(|ui| {
         ui.label(RichText::new(texts.paste_title.clone()).strong());
         ui.label(RichText::new(texts.paste_body.clone()).weak());
         if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, &texts.paste_accept).clicked() {
