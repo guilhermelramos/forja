@@ -120,6 +120,16 @@ impl Module for BoardModule {
             "board.card.helper.idle",
             "board.card.helper.finished",
             "board.card.helper.unknown",
+            "board.forging-offer.body",
+            "board.forging-offer.start",
+            "board.forging-offer.dismiss",
+            "board.forging-offer.missing-title",
+            "board.forging-offer.missing-body",
+            "board.forging-offer.copy",
+            "board.forging-offer.copied",
+            "board.forging-offer.open-helpers",
+            "board.forging-offer.close",
+            "board.forging-offer.error",
         ] {
             r.uses_i18n(key);
         }
@@ -180,6 +190,12 @@ fn register_settings(r: &mut Registrar<'_>) {
         SettingKind::Bool,
         SettingValue::Bool(false),
         40,
+    );
+    add(
+        "board.stage.offer_helper",
+        SettingKind::Bool,
+        SettingValue::Bool(true),
+        45,
     );
     add(
         "board.refresh.interval_s",

@@ -70,8 +70,25 @@ pub struct StageColumn {
 pub struct PendingMove {
     pub bench_id: String,
     pub bench_name: String,
+    pub bench_path: String,
     pub to: String,
     pub to_label: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct HelperCandidate {
+    pub id: String,
+    pub name: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct HelperOffer {
+    pub bench_id: String,
+    pub bench_name: String,
+    pub bench_path: String,
+    pub default_profile: Option<HelperCandidate>,
+    pub install_hint: Option<String>,
+    pub error: Option<String>,
 }
 
 #[derive(Default)]
@@ -87,6 +104,8 @@ struct State {
     error: Option<String>,
     dragging: Option<String>,
     pending: Option<PendingMove>,
+    helper_offer: Option<HelperOffer>,
+    helper_missing_copied: bool,
     last_refresh: Option<Instant>,
     refresh_requested: bool,
 }
@@ -254,6 +273,41 @@ impl Shared {
     pub fn set_pending(&self, value: Option<PendingMove>) {
         if let Ok(mut state) = self.0.lock() {
             state.pending = value;
+        }
+    }
+
+    pub fn helper_offer(&self) -> Option<HelperOffer> {
+        self.0
+            .lock()
+            .ok()
+            .and_then(|state| state.helper_offer.clone())
+    }
+
+    pub fn set_helper_offer(&self, value: Option<HelperOffer>) {
+        if let Ok(mut state) = self.0.lock() {
+            state.helper_offer = value;
+            state.helper_missing_copied = false;
+        }
+    }
+
+    pub fn set_helper_offer_error(&self, error: Option<String>) {
+        if let Ok(mut state) = self.0.lock() {
+            if let Some(offer) = state.helper_offer.as_mut() {
+                offer.error = error;
+            }
+        }
+    }
+
+    pub fn helper_missing_copied(&self) -> bool {
+        self.0
+            .lock()
+            .ok()
+            .is_some_and(|state| state.helper_missing_copied)
+    }
+
+    pub fn set_helper_missing_copied(&self, copied: bool) {
+        if let Ok(mut state) = self.0.lock() {
+            state.helper_missing_copied = copied;
         }
     }
 }

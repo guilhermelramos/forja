@@ -13,8 +13,8 @@ Módulo `board`: o Quadro por etapas e a lista de bancadas da lateral.
 - View `board.sidebar` no slot `sidebar` (ordem 20): filtro, agrupamento,
   ordenação, fixar e lido/não lido.
 - Configurações `board.cards.show_branch`, `board.cards.show_helper`,
-  `board.cards.show_request`, `board.cards.compact` e
-  `board.refresh.interval_s`.
+  `board.cards.show_request`, `board.cards.compact`,
+  `board.stage.offer_helper` e `board.refresh.interval_s`.
 - Bundles Fluent `i18n/en.ftl` e `i18n/pt-BR.ftl`.
 
 ## Contratos consumidos

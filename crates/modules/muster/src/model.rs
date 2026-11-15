@@ -225,6 +225,17 @@ pub struct Assignment {
     pub escalated: bool,
 }
 
+/// Estado de entrega de um recado enviado pelo coordenador.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NoteDeliveryState {
+    /// Já foi entregue ao ajudante.
+    Delivered,
+    /// Enviado e aguardando na fila do ajudante.
+    Queued,
+    /// Enviado para uma tarefa ou atribuição sem ajudante ativo.
+    NoHelper,
+}
+
 /// Um recado.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Note {
@@ -255,6 +266,9 @@ pub struct Note {
     /// Já foi digitado no terminal.
     #[serde(default)]
     pub delivered: bool,
+    /// Enviado sem ajudante ativo para recebê-lo.
+    #[serde(default)]
+    pub no_helper: bool,
     /// Criação em ms.
     pub created_ms: i64,
 }
@@ -598,6 +612,36 @@ impl MusterFile {
         ))
     }
 
+    /// Recado do coordenador para uma tarefa sem atribuição ativa.
+    pub fn note_to_task(
+        &mut self,
+        task_id: &str,
+        body: &str,
+        kind: NoteKind,
+    ) -> Result<Note, String> {
+        let task = self
+            .task(task_id)
+            .ok_or_else(|| "tarefa não encontrada".to_owned())?;
+        let run = task.run.clone();
+        let task_id = task.id.clone();
+        let mut note = self.note(
+            &run,
+            Some(task_id),
+            None,
+            "coordinator",
+            "helper",
+            kind,
+            body,
+            false,
+            false,
+        );
+        note.no_helper = true;
+        if let Some(stored) = self.notes.iter_mut().find(|candidate| candidate.id == note.id) {
+            stored.no_helper = true;
+        }
+        Ok(note)
+    }
+
     /// Recado de um ajudante para o coordenador.
     pub fn note_from_helper(
         &mut self,
@@ -724,6 +768,16 @@ impl MusterFile {
         if let Some(note) = self.notes.iter_mut().find(|note| note.id == note_id) {
             note.delivered = true;
             note.queued = false;
+            note.no_helper = false;
+        }
+    }
+
+    /// Marca um recado como enviado sem ajudante ativo.
+    pub fn mark_no_helper(&mut self, note_id: &str) {
+        if let Some(note) = self.notes.iter_mut().find(|note| note.id == note_id) {
+            note.delivered = false;
+            note.queued = false;
+            note.no_helper = true;
         }
     }
 
@@ -737,8 +791,47 @@ impl MusterFile {
             .filter(|note| all || !note.read)
             .cloned()
             .collect();
+        notes.reverse();
         notes.sort_by_key(|note| std::cmp::Reverse(note.created_ms));
         notes
+    }
+
+    /// Conversa completa da caixa: inclui recados recebidos e enviados pelo coordenador.
+    pub fn conversation(&self, run: Option<&str>) -> Vec<Note> {
+        let mut notes: Vec<Note> = self
+            .notes
+            .iter()
+            .filter(|note| run.is_none_or(|run| note.run == run))
+            .cloned()
+            .collect();
+        notes.reverse();
+        notes.sort_by_key(|note| std::cmp::Reverse(note.created_ms));
+        notes
+    }
+
+    /// Estado de entrega para recados enviados pelo coordenador.
+    pub fn note_delivery_state(&self, note: &Note) -> Option<NoteDeliveryState> {
+        if note.from != "coordinator" {
+            return None;
+        }
+        if note.delivered {
+            return Some(NoteDeliveryState::Delivered);
+        }
+        if note.no_helper {
+            return Some(NoteDeliveryState::NoHelper);
+        }
+        let Some(assign_id) = note.assignment.as_deref() else {
+            return Some(NoteDeliveryState::NoHelper);
+        };
+        match self.assignment(assign_id) {
+            Some(assignment)
+                if (assignment.terminal_id.is_some() || assignment.session_id.is_some())
+                    && !matches!(assignment.state, AssignmentState::Stopped) =>
+            {
+                Some(NoteDeliveryState::Queued)
+            }
+            _ => Some(NoteDeliveryState::NoHelper),
+        }
     }
 
     /// Tarefas prontas: pendentes e com todas as dependências entregues.
@@ -808,6 +901,7 @@ impl MusterFile {
             read,
             queued,
             delivered: false,
+            no_helper: false,
             created_ms: now_ms(),
         };
         self.notes.push(note.clone());
@@ -1021,5 +1115,46 @@ mod tests {
         assert_eq!(restored.runs.len(), 1);
         assert_eq!(restored.tasks.len(), 1);
         assert_eq!(restored.assignments[0].terminal_id.as_deref(), Some("5"));
+    }
+
+    #[test]
+    fn conversation_includes_outgoing_notes_with_delivery_states() {
+        let mut file = MusterFile::default();
+        let (run, task) = run_with_task(&mut file);
+
+        let without_helper = file
+            .note_to_task(&task.id, "sem ajudante ainda", NoteKind::Status)
+            .unwrap();
+        assert_eq!(
+            file.note_delivery_state(&without_helper),
+            Some(NoteDeliveryState::NoHelper)
+        );
+        assert!(file.inbox(Some(&run.id), true).is_empty());
+        assert_eq!(file.conversation(Some(&run.id)).len(), 1);
+
+        let assignment = file.start(&task.id, "opencode", "C:/bench").unwrap();
+        file.launched(&assignment.id, "opencode", Some("9".into()), None, "tui")
+            .unwrap();
+        file.update_status(&assignment.id, HelperStatus::NeedsYou, "");
+        let queued = file
+            .note_to_helper(&assignment.id, "pode continuar", NoteKind::Status)
+            .unwrap();
+        assert_eq!(
+            file.note_delivery_state(&queued),
+            Some(NoteDeliveryState::Queued)
+        );
+
+        file.mark_delivered(&queued.id);
+        let delivered = file
+            .notes
+            .iter()
+            .find(|note| note.id == queued.id)
+            .unwrap()
+            .clone();
+        assert_eq!(
+            file.note_delivery_state(&delivered),
+            Some(NoteDeliveryState::Delivered)
+        );
+        assert_eq!(file.conversation(Some(&run.id)).len(), 2);
     }
 }

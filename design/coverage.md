@@ -7,8 +7,8 @@
 | Métrica | Valor |
 |---|---|
 | Configurações no catálogo | 311 |
-| Configurações registradas no app | 268 (268 do catálogo + 0 extras) |
-| Configurações com efeito real no código | 267 (267 do catálogo) |
+| Configurações registradas no app | 269 (268 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 268 (267 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
 | Configurações adiadas | 41 |
@@ -500,7 +500,9 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 
 ## Registrados no app mas ausentes do catálogo
 
-Nenhum item registrado fora dos catálogos.
+### Configurações extras
+
+- `board.stage.offer_helper` (módulo `board`, tipo `toggle`, padrão `true`)
 
 ## Configurações registradas sem efeito real
 

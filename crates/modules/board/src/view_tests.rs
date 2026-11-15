@@ -185,3 +185,186 @@ fn refresh_filters_cards_by_active_project() {
 
     let _ = std::fs::remove_dir_all(&root);
 }
+
+#[test]
+fn moving_to_forging_offers_default_helper_or_missing_guide_and_respects_setting() {
+    use forja_kernel::{
+        Module, ModuleManifest, Registrar, Runtime, RuntimeOptions, SettingValue,
+    };
+    use serde_json::json;
+    use std::sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Mutex,
+    };
+
+    struct StubBench;
+    impl Module for StubBench {
+        fn manifest(&self) -> ModuleManifest {
+            ModuleManifest::new("bench", "stub.name", "0.1.0")
+        }
+        fn register(&mut self, r: &mut Registrar<'_>) {
+            r.i18n("stub-name = Stub", "stub-name = Stub");
+            r.command("bench.stage.set", "stub.name", |_cx, args| {
+                Ok(json!({ "stage": args.str("stage").unwrap_or("forging") }))
+            });
+        }
+    }
+
+    struct StubHelper {
+        helpers_installed: Arc<AtomicBool>,
+        launched: Arc<Mutex<Vec<(String, String)>>>,
+    }
+    impl Module for StubHelper {
+        fn manifest(&self) -> ModuleManifest {
+            ModuleManifest::new("helper", "stub.name", "0.1.0")
+        }
+        fn register(&mut self, r: &mut Registrar<'_>) {
+            r.i18n("stub-name = Stub", "stub-name = Stub");
+            let installed = Arc::clone(&self.helpers_installed);
+            r.command("helper.list", "stub.name", move |_cx, _args| {
+                if installed.load(Ordering::Relaxed) {
+                    Ok(json!({
+                        "detecting": false,
+                        "profiles": [
+                            { "id": "codex", "name": "Codex", "installed": true, "default": false, "install_hint": "npm i -g @openai/codex" },
+                            { "id": "claude-code", "name": "Claude Code", "installed": true, "default": true, "install_hint": "npm i -g @anthropic-ai/claude-code" }
+                        ]
+                    }))
+                } else {
+                    Ok(json!({
+                        "detecting": false,
+                        "profiles": [
+                            { "id": "claude-code", "name": "Claude Code", "installed": false, "default": true, "install_hint": "npm i -g @anthropic-ai/claude-code" }
+                        ]
+                    }))
+                }
+            });
+            let launched = Arc::clone(&self.launched);
+            r.command("helper.launch", "stub.name", move |_cx, args| {
+                let profile_id = args.str("profile_id").unwrap_or("").to_owned();
+                let bench_path = args.str("bench_path").unwrap_or("").to_owned();
+                launched.lock().unwrap().push((profile_id, bench_path));
+                Ok(json!({ "terminal_id": "term-1" }))
+            });
+        }
+    }
+
+    struct StubShell {
+        opened_view: Arc<Mutex<Option<String>>>,
+    }
+    impl Module for StubShell {
+        fn manifest(&self) -> ModuleManifest {
+            ModuleManifest::new("shell", "stub.name", "0.1.0")
+        }
+        fn register(&mut self, r: &mut Registrar<'_>) {
+            r.i18n("stub-name = Stub", "stub-name = Stub");
+            let opened = Arc::clone(&self.opened_view);
+            r.command("shell.rail.open", "stub.name", move |_cx, args| {
+                *opened.lock().unwrap() = args.str("view_id").map(str::to_owned);
+                Ok(json!({ "opened": true }))
+            });
+        }
+    }
+
+    let root = std::env::temp_dir().join(format!("forja-board-offer-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&root);
+    let installed = Arc::new(AtomicBool::new(true));
+    let launched = Arc::new(Mutex::new(Vec::new()));
+    let opened_view = Arc::new(Mutex::new(None));
+    let board_state = crate::state::Shared::new();
+    let mut runtime = Runtime::new(
+        vec![
+            Box::new(crate::BoardModule {
+                state: board_state.clone(),
+            }),
+            Box::new(StubBench),
+            Box::new(StubHelper {
+                helpers_installed: Arc::clone(&installed),
+                launched: Arc::clone(&launched),
+            }),
+            Box::new(StubShell {
+                opened_view: Arc::clone(&opened_view),
+            }),
+        ],
+        RuntimeOptions {
+            data_dir: Some(root.join("data")),
+            user_dir: Some(root.join("user")),
+            locale: Some("pt-BR".to_owned()),
+            wake: None,
+        },
+    )
+    .expect("board + stub register");
+
+    let draft = card("b1", "draft", "p1", false, false, 1);
+    let stages = vec![
+        StageColumn {
+            id: "draft".into(),
+            label: "Rascunho".into(),
+            order: 0,
+            parent: "draft".into(),
+            dot: "muted".into(),
+        },
+        StageColumn {
+            id: "forging".into(),
+            label: "Forjando".into(),
+            order: 1,
+            parent: "forging".into(),
+            dot: "accent".into(),
+        },
+    ];
+
+    {
+        let mut cx = runtime.ctx("board");
+        move_card(&mut cx, &board_state, &draft, "forging", &stages);
+    }
+    assert!(launched.lock().unwrap().is_empty(), "must offer, not force-start");
+    let offer = board_state.helper_offer().expect("offer should open");
+    assert_eq!(
+        offer.default_profile.as_ref().map(|p| p.id.as_str()),
+        Some("claude-code")
+    );
+    assert!(offer.install_hint.is_none());
+
+    {
+        let mut cx = runtime.ctx("board");
+        launch_offered_helper(&mut cx, &board_state, &offer);
+    }
+    assert_eq!(
+        launched.lock().unwrap().as_slice(),
+        &[("claude-code".to_owned(), "C:/bancadas/b1".to_owned())]
+    );
+    assert!(board_state.helper_offer().is_none());
+
+    installed.store(false, Ordering::Relaxed);
+    {
+        let mut cx = runtime.ctx("board");
+        move_card(&mut cx, &board_state, &draft, "forging", &stages);
+    }
+    let missing = board_state.helper_offer().expect("missing-helper guide should open");
+    assert!(missing.default_profile.is_none());
+    assert_eq!(
+        missing.install_hint.as_deref(),
+        Some("npm i -g @anthropic-ai/claude-code")
+    );
+    {
+        let mut cx = runtime.ctx("board");
+        open_helpers_tab(&mut cx, &board_state);
+    }
+    assert_eq!(opened_view.lock().unwrap().as_deref(), Some("helper.tab"));
+    assert!(board_state.helper_offer().is_none());
+
+    runtime
+        .set_setting("board.stage.offer_helper", SettingValue::Bool(false))
+        .unwrap();
+    installed.store(true, Ordering::Relaxed);
+    {
+        let mut cx = runtime.ctx("board");
+        move_card(&mut cx, &board_state, &draft, "forging", &stages);
+    }
+    assert!(
+        board_state.helper_offer().is_none(),
+        "disabled setting must suppress offer"
+    );
+
+    let _ = std::fs::remove_dir_all(&root);
+}

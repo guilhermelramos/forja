@@ -46,6 +46,8 @@ pub const USED_KEYS: &[&str] = &[
     "muster.method.spend.result",
     "muster.notify.held-title",
     "muster.notify.held-body",
+    "muster.notify.no-helper-title",
+    "muster.notify.no-helper-body",
     "muster.notify.alert-title",
     "muster.notify.alert-body",
     "muster.notify.handoff-title",
@@ -493,37 +495,77 @@ fn note(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, KernelE
     let from = args.str("from").unwrap_or("helper");
     let kind = parse_kind(args.str("kind").unwrap_or("status"));
 
-    let assignment_id = with(shared, |state| {
+    let resolved = with(shared, |state| {
         state
             .store
             .resolve_assignment(assignment.as_deref(), task.as_deref())
             .map(|assignment| assignment.id.clone())
     })
-    .ok_or_else(|| KernelError::Message("muster state is unavailable".to_owned()))?
-    .map_err(KernelError::Message)?;
+    .ok_or_else(|| KernelError::Message("muster state is unavailable".to_owned()))?;
 
     if from == "coordinator" {
+        let assignment_id = match resolved {
+            Ok(id) => id,
+            Err(err) => {
+                if assignment.is_none() {
+                    if let Some(task_id) = task.as_deref() {
+                        let note = with(shared, |state| {
+                            state.store.note_to_task(task_id, &body, kind)
+                        })
+                        .ok_or_else(|| KernelError::Message("muster state is unavailable".to_owned()))?
+                        .map_err(KernelError::Message)?;
+                        state::persist(cx, shared);
+                        let task_title = task_label(shared, Some(task_id), task_id);
+                        let notify_body = cx.t_args(
+                            "muster.notify.no-helper-body",
+                            &[("task", &task_title)],
+                        );
+                        notify(cx, "muster.notify.no-helper-title", &notify_body, None);
+                        return Ok(json!({
+                            "note": note,
+                            "queued": false,
+                            "delivered": false,
+                            "no_helper": true,
+                            "reason": "sem ajudante ativo"
+                        }));
+                    }
+                }
+                return Err(KernelError::Message(err));
+            }
+        };
         let note = with(shared, |state| {
             state.store.note_to_helper(&assignment_id, &body, kind)
         })
         .ok_or_else(|| KernelError::Message("muster state is unavailable".to_owned()))?
         .map_err(KernelError::Message)?;
         let delivery = deliver(cx, shared, &note.id, &assignment_id)?;
+        let updated_note = with(shared, |state| {
+            state
+                .store
+                .notes
+                .iter()
+                .find(|candidate| candidate.id == note.id)
+                .cloned()
+        })
+        .flatten()
+        .unwrap_or(note);
         return Ok(json!({
-            "note": note,
+            "note": updated_note,
             "queued": delivery.queued,
             "delivered": delivery.delivered,
+            "no_helper": delivery.no_helper,
             "reason": delivery.reason
         }));
     }
 
+    let assignment_id = resolved.map_err(KernelError::Message)?;
     let note = with(shared, |state| {
         state.store.note_from_helper(&assignment_id, &body, kind)
     })
     .ok_or_else(|| KernelError::Message("muster state is unavailable".to_owned()))?
     .map_err(KernelError::Message)?;
     state::persist(cx, shared);
-    Ok(json!({ "note": note, "queued": false, "delivered": true }))
+    Ok(json!({ "note": note, "queued": false, "delivered": true, "no_helper": false }))
 }
 
 fn reply(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, KernelError> {
@@ -544,13 +586,25 @@ fn reply(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kernel
         None => DeliveryResult {
             queued: false,
             delivered: true,
+            no_helper: false,
             reason: None,
         },
     };
+    let updated_note = with(shared, |state| {
+        state
+            .store
+            .notes
+            .iter()
+            .find(|candidate| candidate.id == note.id)
+            .cloned()
+    })
+    .flatten()
+    .unwrap_or(note);
     Ok(json!({
-        "note": note,
+        "note": updated_note,
         "queued": delivery.queued,
         "delivered": delivery.delivered,
+        "no_helper": delivery.no_helper,
         "reason": delivery.reason
     }))
 }
@@ -742,7 +796,33 @@ fn status(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kerne
 struct DeliveryResult {
     queued: bool,
     delivered: bool,
+    no_helper: bool,
     reason: Option<String>,
+}
+
+fn task_label(shared: &Shared, task_id: Option<&str>, fallback: &str) -> String {
+    let raw = task_id
+        .and_then(|id| {
+            with(shared, |state| {
+                state
+                    .store
+                    .task(id)
+                    .map(|task| task.title.trim().to_owned())
+            })
+            .flatten()
+        })
+        .filter(|title| !title.is_empty())
+        .unwrap_or_else(|| fallback.to_owned());
+    compact_task_label(&raw, 48)
+}
+
+fn compact_task_label(text: &str, max_chars: usize) -> String {
+    let count = text.chars().count();
+    if count <= max_chars {
+        return text.to_owned();
+    }
+    let prefix: String = text.chars().take(max_chars.saturating_sub(1)).collect();
+    format!("{prefix}…")
 }
 
 fn deliver(
@@ -756,6 +836,7 @@ fn deliver(
             (
                 assignment.state,
                 assignment.terminal_id.clone(),
+                assignment.session_id.clone(),
                 assignment.profile_id.clone(),
                 assignment.task.clone(),
             )
@@ -763,7 +844,25 @@ fn deliver(
     })
     .flatten()
     .ok_or_else(|| KernelError::Message("atribuição não encontrada".to_owned()))?;
-    let (assignment_state, terminal_id, profile, task) = snapshot;
+    let (assignment_state, terminal_id, session_id, profile, task) = snapshot;
+    let task_title = task_label(shared, Some(&task), &task);
+    if (terminal_id.is_none() && session_id.is_none())
+        || matches!(assignment_state, AssignmentState::Stopped)
+    {
+        with(shared, |state| state.store.mark_no_helper(note_id));
+        state::persist(cx, shared);
+        let notify_body = cx.t_args(
+            "muster.notify.no-helper-body",
+            &[("task", &task_title)],
+        );
+        notify(cx, "muster.notify.no-helper-title", &notify_body, None);
+        return Ok(DeliveryResult {
+            queued: false,
+            delivered: false,
+            no_helper: true,
+            reason: Some("sem ajudante ativo".to_owned()),
+        });
+    }
     let body = with(shared, |state| {
         state
             .store
@@ -787,12 +886,13 @@ fn deliver(
             return Ok(DeliveryResult {
                 queued: false,
                 delivered: true,
+                no_helper: false,
                 reason: None,
             });
         }
     }
     let reason = match decision {
-        Delivery::Send => "o ajudante não tem terminal para receber o recado".to_owned(),
+        Delivery::Send => "terminal indisponível".to_owned(),
         Delivery::Hold(reason) => reason.to_owned(),
     };
     with(shared, |state| mark_queued(state, note_id));
@@ -801,7 +901,7 @@ fn deliver(
         "muster.notify.held-body",
         &[
             ("profile", if profile.is_empty() { "auto" } else { &profile }),
-            ("task", &task),
+            ("task", &task_title),
             ("reason", &reason),
         ],
     );
@@ -809,6 +909,7 @@ fn deliver(
     Ok(DeliveryResult {
         queued: true,
         delivered: false,
+        no_helper: false,
         reason: Some(reason),
     })
 }
