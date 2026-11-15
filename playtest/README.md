@@ -151,7 +151,10 @@ ou reaberta na rodada. O triador aplica atalhos determinísticos antes da
 IA (`crash`/`travou` → `5`, `ideia` sem perda de dados → máximo `3`, `explore`
 `elemento sem nome acessível` → `2`), valida o JSON do modelo (`priority` em
 `1–5`, `area` válida, `rationale`, `duplicate_of`), comenta uma única linha e
-nunca fecha issues nem altera o rótulo `em-andamento`. A variável `TRIAGE_MODELS`
+nunca fecha issues nem altera o rótulo `em-andamento`. Se nenhum modelo
+responder (limite/timeout/erro em todos), aplica nota e área provisórias
+determinísticas com o rótulo `triagem-provisória` para refinar automaticamente
+em uma rodada futura com cota disponível. A variável `TRIAGE_MODELS`
 aceita modelos gratuitos (`-free` ou `:free`) e `-DryRun` mostra o plano sem
 escrever no GitHub:
 

@@ -11,6 +11,19 @@ for ($i = 0; $i -lt $Arguments.Count; $i++) {
 }
 $prompt = $Arguments[-1]
 
+if ($model -in @("mock/always-rate-limited-free", "mock/always-rate-limited-2-free")) {
+    [Console]::Error.WriteLine("Error: 429 Too Many Requests - Free usage limit reached.")
+    exit 1
+}
+if ($model -eq "mock/timeout-free") {
+    Start-Sleep -Seconds 5
+    exit 0
+}
+if ($model -eq "mock/error-free") {
+    [Console]::Error.WriteLine("Error: upstream 503 service unavailable")
+    exit 1
+}
+
 $issueNumber = 0
 if ($prompt -match 'Número:\s*#(\d+)') {
     $issueNumber = [int]$Matches[1]
@@ -57,6 +70,15 @@ switch ($issueNumber) {
             exit 1
         }
         '{"priority":4,"area":"area-chat","rationale":"Modelo reserva classificou o problema no chat.","duplicate_of":null}'
+    }
+    1003 {
+        '{"priority":4,"area":"area-bancadas","rationale":"Modelo refinou falha ao abrir bancada.","duplicate_of":null}'
+    }
+    1009 {
+        '{"priority":4,"area":"area-editor","rationale":"Modelo refinou problema em andamento no editor.","duplicate_of":null}'
+    }
+    1010 {
+        '{"priority":2,"area":"area-outros","rationale":"Modelo concordou com prioridade 2 e area-outros.","duplicate_of":null}'
     }
     default {
         '{"priority":3,"area":"area-outros","rationale":"Classificação padrão de fixture.","duplicate_of":null}'

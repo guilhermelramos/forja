@@ -1,14 +1,19 @@
-<#
+﻿<#
 .SYNOPSIS
   Automatic issue triager: assigns priority (1-5) and area labels to open issues.
 
 .DESCRIPTION
-  Selects open issues without a `prioridade-N` label (or all open issues when
-  `-Retriage` is set), evaluates deterministic pre-AI shortcuts, asks a free
-  OpenCode model to classify priority, area, rationale, and possible duplicate,
-  validates the JSON response, applies labels and a single-line comment (or
-  shows the plan with `-DryRun`). Never closes issues, never touches closed
-  issues, and never adds or removes `em-andamento`.
+  Selects open issues without a `prioridade-N` label (plus open issues marked
+  `triagem-provisória`, or all open issues when `-Retriage` is set), evaluates
+  deterministic pre-AI shortcuts, asks a free OpenCode model to classify
+  priority, area, rationale, and possible duplicate, validates the JSON
+  response, and applies labels and a single-line comment (or shows the plan
+  with `-DryRun`). When no model responds (rate limit, timeout, or error on
+  every model), applies a deterministic provisional priority and area with
+  `triagem-provisória` so no issue is left untriaged; a later run with an
+  available model refines provisional issues and removes `triagem-provisória`.
+  Never closes issues, never touches closed issues, and never adds or removes
+  `em-andamento`.
 #>
 param(
     [string]$Repository = $env:GH_REPO,
@@ -210,62 +215,93 @@ foreach ($issue in $candidates) {
 
 $runner = Resolve-OpenCodeRunner
 $exhausted = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+$consecutiveTimeouts = @{}
+$consecutiveFailures = @{}
 $ensuredLabels = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
 $priorityCounts = @{ 1 = 0; 2 = 0; 3 = 0; 4 = 0; 5 = 0 }
 $areaCounts = @{}
 $triagedCount = 0
+$provisionalCount = 0
 $skippedInvalid = 0
+$skippedExistingProvisional = 0
+$loggedAllExhausted = $false
 $rateLimitPattern = "(?i)(rate.?limit|too many requests|\b429\b|usage limit reached|free usage limit|insufficient (credit|quota)|quota exceeded)"
 
 foreach ($issue in $candidates) {
     $number = [int]$issue.number
     $shortcut = $shortcutsByNumber[$number]
     $available = @($Models | Where-Object { -not $exhausted.Contains($_) })
-    if (-not $available.Count) {
-        Write-Host "triage: every free model is rate limited; stopping this round cleanly"
-        break
-    }
-
-    $prompt = New-TriagePrompt $rubricText $issue $openIssues $shortcut
     $plan = $null
+    $modelResponded = $false
 
-    foreach ($model in $available) {
-        $result = Invoke-OpenCodeTriage $runner $model $prompt $TimeoutSeconds
-        $combined = ($result.Stdout + "`n" + $result.Stderr) -replace "\x1b\[[0-9;]*[A-Za-z]", ""
-
-        if ($combined -match $rateLimitPattern) {
-            $null = $exhausted.Add($model)
-            Write-Host "triage #${number}: $model reached its free limit; trying next model"
-            continue
+    if (-not $available.Count) {
+        if (-not $loggedAllExhausted) {
+            Write-Host "triage: every free model is unavailable (rate limited/timed out); applying deterministic provisional triage"
+            $loggedAllExhausted = $true
         }
-        if ($result.TimedOut) {
-            Write-Warning "triage #${number}: $model timed out after ${TimeoutSeconds}s; skipping issue"
-            $skippedInvalid++
+    } else {
+        $prompt = New-TriagePrompt $rubricText $issue $openIssues $shortcut
+
+        foreach ($model in $available) {
+            $result = Invoke-OpenCodeTriage $runner $model $prompt $TimeoutSeconds
+            $combined = ($result.Stdout + "`n" + $result.Stderr) -replace "\x1b\[[0-9;]*[A-Za-z]", ""
+
+            if ($combined -match $rateLimitPattern) {
+                $null = $exhausted.Add($model)
+                Write-Host "triage #${number}: $model reached its free limit; trying next model"
+                continue
+            }
+            if ($result.TimedOut) {
+                $consecutiveTimeouts[$model] = 1 + [int]($consecutiveTimeouts[$model])
+                if ($consecutiveTimeouts[$model] -ge 2) {
+                    $null = $exhausted.Add($model)
+                }
+                Write-Warning "triage #${number}: $model timed out after ${TimeoutSeconds}s; trying next model"
+                continue
+            }
+            if ($result.ExitCode -ne 0) {
+                $consecutiveFailures[$model] = 1 + [int]($consecutiveFailures[$model])
+                if ($consecutiveFailures[$model] -ge 3) {
+                    $null = $exhausted.Add($model)
+                }
+                Write-Warning "triage #${number}: $model failed (OpenCode exit $($result.ExitCode)); trying next model"
+                continue
+            }
+            if ([string]::IsNullOrWhiteSpace($result.Stdout)) {
+                Write-Warning "triage #${number}: $model returned empty output; trying next model"
+                continue
+            }
+
+            $consecutiveTimeouts[$model] = 0
+            $consecutiveFailures[$model] = 0
+            $modelResponded = $true
+
+            $parsed = ConvertFrom-TriageModelOutput $result.Stdout $number
+            if (-not $parsed.Valid) {
+                Write-Warning "triage #${number}: ignoring invalid model output ($($parsed.Error))"
+                $skippedInvalid++
+                break
+            }
+
+            $plan = Resolve-TriagePlan $issue $parsed $shortcut -Retriage:$Retriage
             break
         }
-        if ($result.ExitCode -ne 0 -and [string]::IsNullOrWhiteSpace($result.Stdout)) {
-            Write-Warning "triage #${number}: OpenCode exited $($result.ExitCode); skipping issue"
-            $skippedInvalid++
-            break
-        }
-
-        $parsed = ConvertFrom-TriageModelOutput $result.Stdout $number
-        if (-not $parsed.Valid) {
-            Write-Warning "triage #${number}: ignoring invalid model output ($($parsed.Error))"
-            $skippedInvalid++
-            break
-        }
-
-        $plan = Resolve-TriagePlan $issue $parsed $shortcut -Retriage:$Retriage
-        break
     }
 
     if ($null -eq $plan) {
-        if (@($Models | Where-Object { -not $exhausted.Contains($_) }).Count -eq 0) {
-            Write-Host "triage: every free model is rate limited; stopping this round cleanly"
-            break
+        if ($modelResponded) {
+            continue
         }
-        continue
+        $existingLabels = @(Get-IssueLabelNames $issue)
+        $alreadyProvisional = ($existingLabels -contains $script:TriageProvisionalLabel) -and
+            (@($existingLabels | Where-Object { $_ -match $script:TriagePriorityPattern }).Count -gt 0)
+        if ($alreadyProvisional -and -not $Retriage) {
+            Write-Host "skip #${number}: already has $script:TriageProvisionalLabel and no model responded"
+            $skippedExistingProvisional++
+            continue
+        }
+        $plan = Resolve-ProvisionalTriagePlan $issue $shortcut -Retriage:$Retriage
+        $provisionalCount++
     }
 
     $priorityCounts[$plan.Priority]++
@@ -303,11 +339,13 @@ foreach ($issue in $candidates) {
 
     & gh issue comment $number -R $Repository --body $plan.Comment | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "could not comment on issue #$number" }
-    Write-Host "triaged #${number}: $($plan.PriorityLabel) $($plan.Area)$(if ($plan.DuplicateOf) { " duplicata? (#$($plan.DuplicateOf))" })"
+    $provTag = if ($plan.IsProvisional) { " $script:TriageProvisionalLabel" } else { "" }
+    $dupTag = if ($plan.DuplicateOf) { " duplicata? (#$($plan.DuplicateOf))" } else { "" }
+    Write-Host "triaged #${number}: $($plan.PriorityLabel) $($plan.Area)$provTag$dupTag"
 }
 
 Write-Host ""
-Write-Host "triage summary: $triagedCount triaged, $skippedInvalid skipped (invalid/timeout), $($candidates.Count) candidate(s)"
+Write-Host "triage summary: $triagedCount triaged ($provisionalCount provisional), $skippedInvalid skipped (invalid), $skippedExistingProvisional kept provisional, $($candidates.Count) candidate(s)"
 Write-Host "priority distribution: P5=$($priorityCounts[5]), P4=$($priorityCounts[4]), P3=$($priorityCounts[3]), P2=$($priorityCounts[2]), P1=$($priorityCounts[1])"
 if ($areaCounts.Count -gt 0) {
     $areaSummary = @($areaCounts.GetEnumerator() | Sort-Object Name | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ", "
