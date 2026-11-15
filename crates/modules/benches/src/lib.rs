@@ -192,6 +192,7 @@ fn used_keys() -> Vec<&'static str> {
         "bench.error.detached-head",
         "bench.error.no-scripts",
         "bench.error.folder-exists",
+        "bench.error.folder-missing",
         "bench.error.project-missing",
         "bench.dialog.create.add-folder",
         "bench.dialog.store.title",

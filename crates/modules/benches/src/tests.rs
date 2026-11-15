@@ -848,3 +848,33 @@ fn create_success_activates_new_bench_and_clears_previous_error() {
     assert_eq!(current["branch"], "forja/bancada-teste-1");
     let _ = std::fs::remove_dir_all(root);
 }
+
+#[test]
+fn store_warnings_and_worktree_delete_errors_are_humanized() {
+    let root = temp_dir("humanize-store-warn");
+    let state = Shared::new();
+    let mut runtime = Runtime::new(
+        vec![Box::new(BenchModule { state })],
+        RuntimeOptions {
+            data_dir: Some(root.join("data")),
+            user_dir: Some(root.join("user")),
+            locale: Some("pt-BR".to_owned()),
+            wake: None,
+        },
+    )
+    .expect("bench registers cleanly");
+    let cx = runtime.ctx("bench");
+
+    let missing_only = create::humanize_error(&cx, "the bench folder was already missing");
+    assert_eq!(missing_only.summary, "A pasta da bancada já não existia.");
+    assert_eq!(missing_only.detail, None);
+
+    let combined = "the bench folder was already missing; git branch -D main failed: error: cannot delete branch 'main' used by worktree at 'C:/repo'";
+    let human = create::humanize_error(&cx, combined);
+    assert_eq!(
+        human.summary,
+        "A pasta da bancada já não existia. Esta branch já está em uso em outra bancada."
+    );
+    assert_eq!(human.detail.as_deref(), Some(combined));
+    let _ = std::fs::remove_dir_all(root);
+}

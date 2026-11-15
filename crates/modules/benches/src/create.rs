@@ -288,6 +288,17 @@ pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> forja_kernel::HumanErro
         "forja.toml has no script to approve" => {
             forja_kernel::HumanError::simple(cx.t("bench.error.no-scripts"))
         }
+        "the bench folder was already missing" => {
+            forja_kernel::HumanError::simple(cx.t("bench.error.folder-missing"))
+        }
+        _ if trimmed.starts_with("the bench folder was already missing;") => {
+            let rest = trimmed
+                .trim_start_matches("the bench folder was already missing;")
+                .trim();
+            let rest_human = humanize_error(cx, rest);
+            let summary = format!("{} {}", cx.t("bench.error.folder-missing"), rest_human.summary);
+            forja_kernel::HumanError::with_detail(summary, trimmed)
+        }
         _ if trimmed.contains("already uses this folder")
             || trimmed.contains("bench folder already exists") =>
         {

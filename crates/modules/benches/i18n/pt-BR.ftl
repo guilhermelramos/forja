@@ -79,6 +79,7 @@ bench-error-uncommitted = A bancada tem mudanças não salvas; marque "Descartar
 bench-error-detached-head = O repositório está sem branch ativa (HEAD destacado).
 bench-error-no-scripts = Este projeto não tem scripts configurados no forja.toml.
 bench-error-folder-exists = Já existe uma pasta ou bancada com esse nome.
+bench-error-folder-missing = A pasta da bancada já não existia.
 bench-error-project-missing = O projeto selecionado não está mais registrado.
 bench-dialog-store-title = Guardar bancada
 bench-dialog-store-body = Guardar "{ $name }"? O worktree é removido; a etapa continua a mesma. Branch: { $branch }.

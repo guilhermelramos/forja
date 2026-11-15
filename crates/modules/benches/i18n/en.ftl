@@ -79,6 +79,7 @@ bench-error-uncommitted = The bench has uncommitted changes; enable "Discard unc
 bench-error-detached-head = The repository is in detached HEAD state with no active branch.
 bench-error-no-scripts = This project has no scripts configured in forja.toml.
 bench-error-folder-exists = A folder or bench with this name already exists.
+bench-error-folder-missing = The bench folder was already missing.
 bench-error-project-missing = The selected project is no longer registered.
 bench-dialog-store-title = Store bench
 bench-dialog-store-body = Store "{ $name }"? The worktree is removed; the stage stays as it is. Branch: { $branch }.
