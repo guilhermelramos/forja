@@ -4,12 +4,14 @@
   "locale": "pt-BR",
   "steps": [
     { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Mais abas", "index": 2 },
+    { "m": "ui.click", "target": "Painéis de extensões" },
     { "m": "ui.click", "target": "Seguir o Windows" },
     { "m": "ui.snapshot" }
   ],
   "expect": [
     {
-      "step": 1,
+      "step": 3,
       "present": ["Escuro", "Claro", "Painéis de extensões"],
       "window_count": 0
     }
