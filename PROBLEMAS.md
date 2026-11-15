@@ -956,6 +956,29 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Elementos interativos sem nome acessível: ícone de tema na barra superior (1741,5) e os dois divisores dos painéis (304,42) e (1612,42); os divisores só expõem a ação "focus", sem ação de arrastar/clique associada.
 - A caixa "Open as draft" é desenhada como um círculo (aspecto de botão de opção) na imagem, embora seja exposta como CheckBox.
 
+## [en.light.rail.routine.page](pages/en.light.rail.routine.page.md)
+
+- O ícone de tema na barra superior (1741,5)–(1773,37) é exposto como "(sem nome acessível)", sem rótulo para leitores de tela; os demais ícones da barra (logomarca, divisores) também não têm nome acessível.
+- Os botões-ícone do trilho ("Board", "Helpers", "Muster", "Requests", "Skills", "Usage", "Extensions", "Archive", "Settings") dependem exclusivamente de ícone na interface; o nome acessível existe na árvore, mas não há rótulo visível nem dica na tela.
+- Os três ícones ilustrativos dos estados vazios são expostos como "(sem nome acessível)"/"(ícone)", sem descrição para leitores de tela.
+- Nenhum texto cortado, sobreposto ou fora da janela nesta captura: todos os retângulos cabem em 1920×1080, diferentemente da referência pt-BR, em que a aba "Painéis de extensões" do painel direito ultrapassava a largura.
+
+## [en.light.rail.skill.page](pages/en.light.rail.skill.page.md)
+
+- O campo de busca "Search skills" é um TextInput sem nome acessível; o texto de sugestão só aparece visualmente.
+- O ícone de alternância de tema na barra superior (1741,5)–(1773,37) é um elemento clicável sem nome acessível; a função só é identificável pela imagem.
+- Os divisores verticais entre as colunas são elementos sem nome acessível.
+- Os três ícones de estado vazio aparecem como rótulos "(ícone)" sem descrição de texto alternativa.
+- O botão de aba "Changes" do painel direito fica colado à borda do painel (retângulo até x=1855, com o painel terminando em x=1920), sem margem direita visível.
+
+## [en.light.rail.usage.page](pages/en.light.rail.usage.page.md)
+
+- Os botões de janela usam os símbolos "–", "□" e "×" como nome acessível, em vez de rótulos descritivos ("Minimize", "Maximize", "Close").
+- O botão de alternância de tema na barra superior (1741,5)–(1773,37) não tem nome acessível (apenas ícone de sol).
+- O logotipo do app (12,50)–(40,78) é uma imagem sem nome acessível.
+- Os dois botões de abas ocultas têm o mesmo nome acessível "More tabs", o que os torna ambíguos para leitores de tela; não há como distinguir o do painel esquerdo do do painel direito.
+- O botão "Back to bench" aparece no topo da área central mesmo sem bancada ativa (o painel direito informa "No active bench"), um estado inconsistente.
+
 ## [en.light.bench-tab.viewers.tab](pages/en.light.bench-tab.viewers.tab.md)
 
 - Botão sem nome acessível: o ícone de tema (sol) em (1741,5)–(1773,37) não tem rótulo.

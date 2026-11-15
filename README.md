@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 6/160 telas documentadas · elementos citados 3899/4303 · completo: false
+**Progresso:** 9/160 telas documentadas · elementos citados 4005/4409 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -182,11 +182,11 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `en.light.modal.project.dialogs` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.modal.project.dialogs.png) |
 | `en.light.rail.request.page` | [página](pages/en.light.rail.request.page.md) | [png](captures/en.light.rail.request.page.png) |
 | `en.light.bench-tab.review.tab` | [página](pages/en.light.bench-tab.review.tab.md) | [png](captures/en.light.bench-tab.review.tab.png) |
-| `en.light.rail.routine.page` | — | [png](captures/en.light.rail.routine.page.png) |
+| `en.light.rail.routine.page` | [página](pages/en.light.rail.routine.page.md) | [png](captures/en.light.rail.routine.page.png) |
 | `en.light.right-tab.search.panel` | — | [png](captures/en.light.right-tab.search.panel.png) |
-| `en.light.rail.skill.page` | — | [png](captures/en.light.rail.skill.page.png) |
+| `en.light.rail.skill.page` | [página](pages/en.light.rail.skill.page.md) | [png](captures/en.light.rail.skill.page.png) |
 | `en.light.bench-tab.terminal.tab` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.bench-tab.terminal.tab.png) |
-| `en.light.rail.usage.page` | — | [png](captures/en.light.rail.usage.page.png) |
+| `en.light.rail.usage.page` | [página](pages/en.light.rail.usage.page.md) | [png](captures/en.light.rail.usage.page.png) |
 | `en.light.bench-tab.viewers.tab` | [página](pages/en.light.bench-tab.viewers.tab.md) | [png](captures/en.light.bench-tab.viewers.tab.png) |
 | `en.light.modal.voice.overlay` | igual a [en.light.home.default](pages/en.light.home.default.md) | [png](captures/en.light.modal.voice.overlay.png) |
 | `en.light.settings.accounts` | — | [png](captures/en.light.settings.accounts.png) |

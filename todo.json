@@ -1,8 +1,8 @@
 {
   "states_total": 160,
-  "states_done": 6,
-  "widgets_total": 4303,
-  "widgets_covered": 3899,
+  "states_done": 9,
+  "widgets_total": 4409,
+  "widgets_covered": 4005,
   "complete": false,
   "stale": [
     {
@@ -1257,21 +1257,6 @@
     }
   ],
   "missing": [
-    {
-      "state": "en.light.rail.routine.page",
-      "png": "captures/en.light.rail.routine.page.png",
-      "tree": "captures/en.light.rail.routine.page.json"
-    },
-    {
-      "state": "en.light.rail.skill.page",
-      "png": "captures/en.light.rail.skill.page.png",
-      "tree": "captures/en.light.rail.skill.page.json"
-    },
-    {
-      "state": "en.light.rail.usage.page",
-      "png": "captures/en.light.rail.usage.page.png",
-      "tree": "captures/en.light.rail.usage.page.json"
-    },
     {
       "state": "en.light.right-tab.extension.panels.right",
       "png": "captures/en.light.right-tab.extension.panels.right.png",
