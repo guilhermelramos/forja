@@ -135,6 +135,7 @@ corte de `MaxIssues` depois da ordenação:
 ./playtest/test-verdicts.ps1
 ./playtest/test-selection.ps1
 ./playtest/test-triage.ps1
+./playtest/test-triage-trigger.ps1
 ```
 
 ## Triagem automática de issues
@@ -142,7 +143,11 @@ corte de `MaxIssues` depois da ordenação:
 O workflow `.github/workflows/triage.yml` executa `playtest/triage.ps1` (em
 `ubuntu-latest`, ao abrir/reabrir issues, de hora em hora ou via
 `workflow_dispatch`) para classificar issues abertas sem `prioridade-N` segundo
-`playtest/TRIAGE_RUBRIC.md`. O triador aplica atalhos determinísticos antes da
+`playtest/TRIAGE_RUBRIC.md`. Como issues criadas ou reabertas com `GITHUB_TOKEN`
+não disparam eventos `issues`, os jobs de relatório/veredito
+(`.github/workflows/playtest.yml`, `ideas.yml`, `explore.yml` e `verify.yml`)
+chamam `gh workflow run triage.yml` ao final sempre que alguma issue foi criada
+ou reaberta na rodada. O triador aplica atalhos determinísticos antes da
 IA (`crash`/`travou` → `5`, `ideia` sem perda de dados → máximo `3`, `explore`
 `elemento sem nome acessível` → `2`), valida o JSON do modelo (`priority` em
 `1–5`, `area` válida, `rationale`, `duplicate_of`), comenta uma única linha e
