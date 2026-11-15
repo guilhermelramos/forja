@@ -17,6 +17,27 @@ use std::time::{Duration, Instant};
 
 const RECENT_STEP_LIMIT: usize = 15;
 
+/// What to do after the app closed and was asked to reopen.
+enum Restart {
+    Continue(Snapshot),
+    Stop,
+}
+
+/// Reopens the app after it closed. A failed restart ends the run with the
+/// findings collected so far instead of turning them into a process error.
+fn attempt_restart(spawn: impl FnOnce() -> Result<Snapshot, String>) -> Restart {
+    match spawn() {
+        Ok(snapshot) => Restart::Continue(snapshot),
+        Err(error) => {
+            eprintln!(
+                "forja-explore: could not reopen forja-app ({error}); \
+                 finishing with the findings collected so far"
+            );
+            Restart::Stop
+        }
+    }
+}
+
 /// Configuration for an exploration run.
 #[derive(Debug, Clone)]
 pub struct ExploreConfig {
@@ -162,7 +183,10 @@ pub fn run(config: &ExploreConfig) -> Result<ExploreSummary, String> {
                 }
                 restarts += 1;
                 recent_steps.clear();
-                current_snap = sess.spawn_and_wait()?;
+                match attempt_restart(|| sess.spawn_and_wait()) {
+                    Restart::Continue(snapshot) => current_snap = snapshot,
+                    Restart::Stop => break,
+                }
                 continue;
             }
         }
@@ -227,7 +251,10 @@ pub fn run(config: &ExploreConfig) -> Result<ExploreSummary, String> {
                 if let Some(sess) = session.as_mut() {
                     restarts += 1;
                     recent_steps.clear();
-                    current_snap = sess.spawn_and_wait()?;
+                    match attempt_restart(|| sess.spawn_and_wait()) {
+                        Restart::Continue(snapshot) => current_snap = snapshot,
+                        Restart::Stop => break,
+                    }
                 } else {
                     break;
                 }
@@ -256,7 +283,10 @@ pub fn run(config: &ExploreConfig) -> Result<ExploreSummary, String> {
                     }
                     restarts += 1;
                     recent_steps.clear();
-                    current_snap = sess.spawn_and_wait()?;
+                    match attempt_restart(|| sess.spawn_and_wait()) {
+                        Restart::Continue(snapshot) => current_snap = snapshot,
+                        Restart::Stop => break,
+                    }
                 } else {
                     crashes_or_hangs += 1;
                     let v = crash_or_hang_violation(
@@ -285,4 +315,47 @@ pub fn run(config: &ExploreConfig) -> Result<ExploreSummary, String> {
         crashes_or_hangs,
         restarts,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::snapshot::{Element, WindowSize};
+
+    fn snapshot(label: &str) -> Snapshot {
+        Snapshot {
+            window: WindowSize {
+                width: 1280.0,
+                height: 800.0,
+            },
+            changes: Default::default(),
+            view: String::new(),
+            elements: vec![Element {
+                id: 1,
+                role: "Window".to_owned(),
+                name: label.to_owned(),
+                rect: [10.0, 10.0, 400.0, 300.0],
+                clickable: false,
+                editable: false,
+                state: Vec::new(),
+            }],
+        }
+    }
+
+    #[test]
+    fn a_failed_restart_ends_the_run_without_an_error() {
+        let outcome = attempt_restart(|| {
+            Err("timed out waiting for forja-app --test-driver pipe".to_owned())
+        });
+        assert!(matches!(outcome, Restart::Stop));
+    }
+
+    #[test]
+    fn a_successful_restart_resumes_the_run() {
+        let restored = snapshot("Projetos");
+        match attempt_restart(|| Ok(restored)) {
+            Restart::Continue(snapshot) => assert_eq!(snapshot.screen_label(), "Projetos"),
+            Restart::Stop => panic!("a successful restart must resume the run"),
+        }
+    }
 }

@@ -249,10 +249,9 @@ impl AppSession {
             }
             match call_ui(&self.pipe, "ui.snapshot", json!({}), Duration::from_secs(3)) {
                 Ok(result) => return Snapshot::from_rpc_result(&result),
-                Err(PipeError::NotRunning) | Err(PipeError::Timeout) => {
-                    std::thread::sleep(Duration::from_millis(250));
-                }
-                Err(err) => return Err(format!("startup snapshot failed: {err}")),
+                // Keep polling until the deadline: a starting app can still be
+                // wiring the pipe or briefly answer with a transient RPC error.
+                Err(_) => std::thread::sleep(Duration::from_millis(250)),
             }
         }
         Err("timed out waiting for forja-app --test-driver pipe".to_owned())

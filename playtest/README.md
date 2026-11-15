@@ -56,6 +56,8 @@ cargo build -p forja-app -p forja-explore
 ./target/debug/forja-explore.exe --app target/debug/forja-app.exe --minutes 10 --seed 1 --locale pt-BR --out explore-out
 ```
 
+O código de saída é `0` quando a exploração rodou, mesmo que tenha achados (inclusive crashes/hangs, que viram linhas do `findings.jsonl`). Só há falha de processo (`1`) quando o app não abre, o pipe não responde no início ou uma regressão gravada não passa; argumentos inválidos saem com `2`.
+
 O workflow `.github/workflows/explore.yml` roda 6 exploradores em paralelo de hora em hora (sementes e locales `pt-BR`/`en`), guarda achados (`findings.jsonl`) e trilhas (`trail.jsonl`) como artefatos e abre issues com os rótulos `playtest` e `explore` via `playtest/report.ps1`.
 
 ## Regressões gravadas (`playtest/regressions/`)
