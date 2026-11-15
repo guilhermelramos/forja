@@ -1,0 +1,60 @@
+name: Triage issues
+
+on:
+  issues:
+    types: [opened, reopened]
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+    inputs:
+      max_issues:
+        description: "Máximo de issues triadas nesta rodada"
+        type: number
+        default: 30
+        required: false
+      retriage:
+        description: "Retriar issues abertas que já têm prioridade"
+        type: boolean
+        default: false
+        required: false
+
+concurrency:
+  group: triage-issues
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OPENCODE_VERSION: "2.2.7"
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      TRIAGE_MODELS: ${{ vars.TRIAGE_MODELS || 'openrouter/nvidia/nemotron-3.5-lightning:free,openrouter/nvidia/nemotron-3-ultra-550b-a55b:free,openrouter/google/gemma-4-31b-it:free' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install OpenCode
+        run: npm install -g "@opencode/cli@${OPENCODE_VERSION}"
+      - name: Triage open issues
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          MAX_ISSUES: ${{ inputs.max_issues || '30' }}
+          RETRIAGE: ${{ inputs.retriage || 'false' }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || '0' }}
+        run: |
+          $models = $env:TRIAGE_MODELS -split ','
+          $params = @{
+            Repository = $env:GH_REPO
+            MaxIssues = [int]$env:MAX_ISSUES
+            Models = $models
+          }
+          if ($env:RETRIAGE -eq 'true') { $params.Retriage = $true }
+          if ([int]$env:ISSUE_NUMBER -gt 0) { $params.IssueNumber = [int]$env:ISSUE_NUMBER }
+          ./playtest/triage.ps1 @params

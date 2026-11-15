@@ -125,6 +125,25 @@ sem abrir o app nem tocar no GitHub. O teste de seleção usa o histórico real 
 ./playtest/test-window-size.ps1
 ./playtest/test-verdicts.ps1
 ./playtest/test-selection.ps1
+./playtest/test-triage.ps1
+```
+
+## Triagem automática de issues
+
+O workflow `.github/workflows/triage.yml` executa `playtest/triage.ps1` (em
+`ubuntu-latest`, ao abrir/reabrir issues, de hora em hora ou via
+`workflow_dispatch`) para classificar issues abertas sem `prioridade-N` segundo
+`playtest/TRIAGE_RUBRIC.md`. O triador aplica atalhos determinísticos antes da
+IA (`crash`/`travou` → `5`, `ideia` sem perda de dados → máximo `3`, `explore`
+`elemento sem nome acessível` → `2`), valida o JSON do modelo (`priority` em
+`1–5`, `area` válida, `rationale`, `duplicate_of`), comenta uma única linha e
+nunca fecha issues nem altera o rótulo `em-andamento`. A variável `TRIAGE_MODELS`
+aceita modelos gratuitos (`-free` ou `:free`) e `-DryRun` mostra o plano sem
+escrever no GitHub:
+
+```powershell
+./playtest/triage.ps1 -Repository guilhermelramos/forja -DryRun -MaxIssues 20 -Models opencode/glm-5.3-flash-free
+./playtest/test-triage.ps1
 ```
 
 As opções de CLI e os controles de ferramentas seguem a documentação oficial

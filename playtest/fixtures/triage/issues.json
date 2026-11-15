@@ -1,0 +1,103 @@
+[
+  {
+    "number": 710,
+    "title": "[explore] App fechou inesperadamente em 'Projects | Extensions'",
+    "body": "**Missão:** en-2 · **Tipo:** crash · **Gravidade:** critical\n**Tela:** Projects | Extensions\n\n### Aconteceu\nPipe fechou (código Some(101)).",
+    "state": "OPEN",
+    "url": "https://github.com/fixture/repo/issues/710",
+    "labels": [{ "name": "playtest" }, { "name": "explore" }]
+  },
+  {
+    "number": 740,
+    "title": "[explore] App travou (>10 s) em 'Projetos | Terminal | Arquivos'",
+    "body": "**Missão:** pt-1 · **Tipo:** hang · **Gravidade:** critical\n**Tela:** Projetos | Terminal | Arquivos",
+    "state": "OPEN",
+    "url": "https://github.com/fixture/repo/issues/740",
+    "labels": [{ "name": "playtest" }, { "name": "explore" }]
+  },
+  {
+    "number": 690,
+    "title": "[ideia] Ideia: Uso mostra só tokens por dia — falta custo",
+    "body": "**Missão:** ideias-produto · **Tipo:** observation · **Gravidade:** high\n**Tela:** Uso",
+    "state": "OPEN",
+    "url": "https://github.com/fixture/repo/issues/690",
+    "labels": [{ "name": "ideia" }]
+  },
+  {
+    "number": 691,
+    "title": "[ideia] Salvar arquivo aberto pode causar perda de dados ao fechar sem confirmar",
+    "body": "**Missão:** ideias-fluxo · **Tipo:** observation · **Gravidade:** high\n**Tela:** Editor\n\n### Aconteceu\nPode haver perda de dados se fechar a aba sem confirmar.",
+    "state": "OPEN",
+    "url": "https://github.com/fixture/repo/issues/691",
+    "labels": [{ "name": "ideia" }]
+  },
+  {
+    "number": 801,
+    "title": "[explore] Elemento clicável sem nome acessível em 'Bigorna'",
+    "body": "**Missão:** pt-1 · **Tipo:** accessibility · **Gravidade:** low\n**Tela:** Bigorna",
+    "state": "OPEN",
+    "url": "https://github.com/fixture/repo/issues/801",
+    "labels": [{ "name": "playtest" }, { "name": "explore" }]
+  },
+  {
+    "number": 901,
+    "title": "[playtest] Editor não salva alterações com Ctrl+S após trocar de aba",
+    "body": "**Missão:** editor · **Tipo:** bug · **Gravidade:** high\n**Tela:** Editor",
+    "state": "OPEN",
+    "url": "https://github.com/fixture/repo/issues/901",
+    "labels": [{ "name": "playtest" }, { "name": "em-andamento" }]
+  },
+  {
+    "number": 902,
+    "title": "[playtest] Retriage preserva em-andamento e troca prioridade antiga",
+    "body": "**Missão:** editor · **Tipo:** bug · **Gravidade:** high\n**Tela:** Editor",
+    "state": "OPEN",
+    "url": "https://github.com/fixture/repo/issues/902",
+    "labels": [
+      { "name": "playtest" },
+      { "name": "em-andamento" },
+      { "name": "prioridade-2" },
+      { "name": "area-layout" }
+    ]
+  },
+  {
+    "number": 903,
+    "title": "[playtest] Issue fechada nunca deve ser modificada",
+    "body": "**Missão:** caos · **Tipo:** bug · **Gravidade:** high\n**Tela:** Terminal",
+    "state": "CLOSED",
+    "url": "https://github.com/fixture/repo/issues/903",
+    "labels": [{ "name": "playtest" }]
+  },
+  {
+    "number": 904,
+    "title": "[playtest] Issue já triada sem -Retriage deve ser pulada",
+    "body": "**Missão:** caos · **Tipo:** bug · **Gravidade:** medium\n**Tela:** Terminal",
+    "state": "OPEN",
+    "url": "https://github.com/fixture/repo/issues/904",
+    "labels": [{ "name": "playtest" }, { "name": "prioridade-3" }, { "name": "area-terminal" }]
+  },
+  {
+    "number": 905,
+    "title": "[playtest] Resposta com JSON inválido deve ser ignorada",
+    "body": "**Missão:** caos · **Tipo:** bug · **Gravidade:** medium\n**Tela:** Ajustes",
+    "state": "OPEN",
+    "url": "https://github.com/fixture/repo/issues/905",
+    "labels": [{ "name": "playtest" }]
+  },
+  {
+    "number": 906,
+    "title": "[playtest] Resposta com prioridade fora da faixa 1-5 deve ser ignorada",
+    "body": "**Missão:** caos · **Tipo:** bug · **Gravidade:** medium\n**Tela:** Ajustes",
+    "state": "OPEN",
+    "url": "https://github.com/fixture/repo/issues/906",
+    "labels": [{ "name": "playtest" }]
+  },
+  {
+    "number": 907,
+    "title": "[playtest] Fallback quando primeiro modelo atinge limite gratuito",
+    "body": "**Missão:** chat · **Tipo:** bug · **Gravidade:** high\n**Tela:** Chat",
+    "state": "OPEN",
+    "url": "https://github.com/fixture/repo/issues/907",
+    "labels": [{ "name": "playtest" }]
+  }
+]
