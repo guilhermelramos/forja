@@ -143,7 +143,9 @@ pub fn draw(
     for control in controls {
         match control {
             Control::Split(direction) => {
-                if let Err(error) = hub.split(direction, settings) {
+                if hub.pane_count() >= crate::panes::tree::MAX_PANES {
+                    hub.notice = Some(texts.max_panes.clone());
+                } else if let Err(error) = hub.split(direction, settings) {
                     hub.notice = Some(error);
                 }
             }
@@ -163,6 +165,23 @@ pub fn draw(
     }
     if hub.pending_recipe.is_some() {
         draw_recipe_modal(hub, ui.ctx(), &tokens, texts, settings);
+    }
+}
+
+/// Limites da proporção de uma divisão, dadas as medidas mínimas de cada lado
+/// e a extensão disponível (já sem o divisor).
+///
+/// No tamanho mínimo exato, `min_a / available` e `1.0 - min_b / available`
+/// são o mesmo número, mas o arredondamento pode deixar o segundo um ULP
+/// menor. `f32::clamp` entra em pânico quando `min > max`, então o limite
+/// superior nunca pode ficar abaixo do inferior. Refs #70, #71.
+fn split_bounds(min_a: f32, min_b: f32, available: f32) -> (f32, f32) {
+    if available > 0.0 && available >= min_a + min_b {
+        let lower = (min_a / available).clamp(0.0, 1.0);
+        let upper = (1.0 - min_b / available).max(lower).min(1.0);
+        (lower, upper)
+    } else {
+        (0.5, 0.5)
     }
 }
 
@@ -205,12 +224,9 @@ fn draw_node(
             let b = second.minimum_size();
             let min_a = if horizontal { a.x } else { a.y };
             let min_b = if horizontal { b.x } else { b.y };
-            let (lower, upper) = if available >= min_a + min_b {
-                (min_a / available, 1.0 - min_b / available)
-            } else {
-                (0.5, 0.5)
-            };
-            *ratio = ratio.clamp(lower, upper);
+            let (lower, upper) = split_bounds(min_a, min_b, available);
+            let current = if ratio.is_finite() { *ratio } else { lower };
+            *ratio = current.clamp(lower, upper);
             let size = available * *ratio;
             let mut divider = rect;
             if horizontal {
@@ -513,3 +529,43 @@ fn draw_close_modal(hub: &mut Hub, ctx: &egui::Context, tokens: &Tokens, texts: 
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::split_bounds;
+
+    #[test]
+    fn bounds_never_invert_at_the_minimum_size() {
+        // Values from the panic in #70/#71: 245 + 370 == 615, and the two
+        // divisions differ by one ULP in f32.
+        let (lower, upper) = split_bounds(245.0, 370.0, 615.0);
+        assert!(lower <= upper, "lower {lower:?} > upper {upper:?}");
+        assert!((lower - 0.398_374).abs() < 1e-5);
+    }
+
+    #[test]
+    fn bounds_never_invert_for_the_second_panic_signature() {
+        // Values from #71: 140 + 285 == 425, and `1.0 - 285/425` is one ULP
+        // below `140/425`.
+        let (lower, upper) = split_bounds(140.0, 285.0, 425.0);
+        assert!(lower <= upper, "lower {lower:?} > upper {upper:?}");
+        assert!((lower - 0.329_411_77).abs() < 1e-6);
+    }
+
+    #[test]
+    fn bounds_stay_ordered_for_other_rounding_cases() {
+        for (min_a, min_b) in [(1.0, 2.0), (100.0, 102.0), (140.0, 142.0)] {
+            let available = min_a + min_b;
+            let (lower, upper) = split_bounds(min_a, min_b, available);
+            assert!(
+                lower <= upper,
+                "min_a {min_a} min_b {min_b}: {lower:?} > {upper:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn too_small_pane_keeps_the_default_ratio() {
+        assert_eq!(split_bounds(140.0, 140.0, 200.0), (0.5, 0.5));
+        assert_eq!(split_bounds(140.0, 140.0, 0.0), (0.5, 0.5));
+    }
+}

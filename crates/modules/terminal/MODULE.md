@@ -30,6 +30,9 @@ Nenhum arquivo passa de 600 linhas.
 
 - View `terminal.tab` no slot `bench_tab` (ordem 10): painéis com abas,
   divisores arrastáveis, título dinâmico (OSC 0/2) e título personalizado.
+  Cada bancada mantém no máximo 8 painéis visíveis (`MAX_PANES`); um layout
+  antigo maior é podado ao restaurar. O limite evita quadros pesados demais
+  no renderizador por software usado nos testes (Refs #70, #71, #72, #74).
 - View `terminal.recipes` no slot `anvil_source`: lista as receitas carregadas
   como resultados da Bigorna; `terminal.recipe.run` confere o retrato escolhido,
   exige a aprovação existente para receitas de projeto e executa no terminal focado.

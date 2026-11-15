@@ -14,6 +14,11 @@ pub struct RegressionFile {
     pub issue: Option<u64>,
     #[serde(default)]
     pub locale: Option<String>,
+    /// Folder copied into the app data dir before it starts. It seeds stored
+    /// layouts (a terminal pane tree, for example) that a click sequence
+    /// cannot reach deterministically.
+    #[serde(default)]
+    pub seed: Option<String>,
     pub steps: Vec<Map<String, Value>>,
     pub expect: Vec<Expectation>,
 }
@@ -114,6 +119,31 @@ fn collect_json_files(dir: &Path) -> Result<Vec<PathBuf>, String> {
     Ok(files)
 }
 
+/// Copies a seed folder into the app data dir used by one regression.
+fn copy_tree(from: &Path, to: &Path) -> Result<(), String> {
+    std::fs::create_dir_all(to)
+        .map_err(|error| format!("could not create {}: {error}", to.display()))?;
+    let entries = std::fs::read_dir(from)
+        .map_err(|error| format!("could not read seed {}: {error}", from.display()))?;
+    for entry in entries {
+        let entry = entry.map_err(|error| error.to_string())?;
+        let target = to.join(entry.file_name());
+        let kind = entry.file_type().map_err(|error| error.to_string())?;
+        if kind.is_dir() {
+            copy_tree(&entry.path(), &target)?;
+        } else {
+            std::fs::copy(entry.path(), &target).map_err(|error| {
+                format!(
+                    "could not copy {} to {}: {error}",
+                    entry.path().display(),
+                    target.display()
+                )
+            })?;
+        }
+    }
+    Ok(())
+}
+
 fn run_file(
     path: &Path,
     app_exe: &Path,
@@ -142,6 +172,10 @@ fn run_file(
     let locale = spec.locale.as_deref().unwrap_or(default_locale).to_owned();
 
     let result = (|| {
+        if let Some(seed) = spec.seed.as_deref() {
+            let base = path.parent().unwrap_or_else(|| Path::new("."));
+            copy_tree(&base.join(seed), &temp_root.join("data"))?;
+        }
         let mut session = AppSession::start(
             app_exe.to_path_buf(),
             pipe,
@@ -308,6 +342,25 @@ mod tests {
             view: String::new(),
             elements,
         }
+    }
+
+    #[test]
+    fn copy_tree_brings_nested_seed_files() {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|duration| duration.as_nanos())
+            .unwrap_or(0);
+        let root = std::env::temp_dir().join(format!("forja-seed-test-{nanos}"));
+        let from = root.join("seed");
+        let to = root.join("data");
+        std::fs::create_dir_all(from.join("modules")).unwrap();
+        std::fs::write(from.join("modules").join("terminal.json"), b"{}").unwrap();
+        copy_tree(&from, &to).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(to.join("modules").join("terminal.json")).unwrap(),
+            "{}"
+        );
+        let _ = std::fs::remove_dir_all(root);
     }
 
     #[test]

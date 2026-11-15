@@ -61,7 +61,7 @@ O código de saída é `0` quando a exploração rodou, mesmo que tenha achados 
 O workflow `.github/workflows/explore.yml` roda 6 exploradores em paralelo de hora em hora (sementes e locales `pt-BR`/`en`), guarda achados (`findings.jsonl`) e trilhas (`trail.jsonl`) como artefatos e abre issues com os rótulos `playtest` e `explore` via `playtest/report.ps1`.
 
 ## Regressões gravadas (`playtest/regressions/`)
-Cada arquivo JSON em `playtest/regressions/` descreve um fluxo reproduzível no formato do `drive.ps1` e suas expectativas (`appeared`, `present`, `present_contains`, `absent`, `absent_contains`, `window_count`, `window_count_min`, `window_count_max`, com `step` opcional):
+Cada arquivo JSON em `playtest/regressions/` descreve um fluxo reproduzível no formato do `drive.ps1` e suas expectativas (`appeared`, `present`, `present_contains`, `absent`, `absent_contains`, `window_count`, `window_count_min`, `window_count_max`, com `step` opcional). O campo opcional `seed` aponta uma pasta, relativa ao JSON, copiada para a pasta de dados antes de o app abrir; use para layouts gravados que uma sequência de cliques não alcança de forma determinística:
 
 ```powershell
 ./target/debug/forja-explore.exe --app target/debug/forja-app.exe --replay playtest/regressions

@@ -32,6 +32,8 @@ downloads confinados e Mermaid offline.
 - A página nativa some quando a aba não está ativa, a janela perde foco, é
   minimizada, há overlay/popup aberto ou o histórico está aberto. O egui não
   pinta por cima de filho nativo, então ocultar é a regra de visibilidade.
+  O WebView2 só é criado quando a página está visível; criar o controle é
+  trabalho de processo/COM que não pode atrasar um quadro invisível (Refs #73).
 - Downloads usam `browser.download.dir`; o nome vem do servidor ou da URL e é
   reduzido a um nome simples (sem pastas, drives, ADS ou nomes de dispositivo).
 - O histórico fica em `<data>/browser-history.json`, com no máximo 500 entradas

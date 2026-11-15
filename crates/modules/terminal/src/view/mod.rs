@@ -37,6 +37,7 @@ pub struct UiText {
     pub new_tab: String,
     pub split_right: String,
     pub split_down: String,
+    pub max_panes: String,
     pub close_pane: String,
     pub click_to_type: String,
     pub empty_title: String,
@@ -99,6 +100,10 @@ impl UiText {
             new_tab: cx.t("terminal.view.new-tab"),
             split_right: cx.t("terminal.view.split-right"),
             split_down: cx.t("terminal.view.split-down"),
+            max_panes: cx.t_args(
+                "terminal.view.max-panes",
+                &[("max", &crate::panes::tree::MAX_PANES.to_string())],
+            ),
             close_pane: cx.t("terminal.view.close-pane"),
             click_to_type: cx.t("terminal.view.click-to-type"),
             empty_title: cx.t("terminal.view.empty-title"),

@@ -18,6 +18,7 @@ terminal-view-shell = Shell
 terminal-view-new-tab = Nova aba
 terminal-view-split-right = Dividir à direita
 terminal-view-split-down = Dividir abaixo
+terminal-view-max-panes = Limite de painéis de terminal atingido ({ $max } painéis por bancada).
 terminal-view-close-pane = Fechar painel
 terminal-view-click-to-type = Clique para digitar
 terminal-view-empty-title = Nenhum terminal nesta bancada

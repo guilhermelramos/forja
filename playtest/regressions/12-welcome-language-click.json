@@ -1,0 +1,13 @@
+{
+  "title": "Clique no texto do idioma não trava o assistente (#74)",
+  "issue": 74,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.wait", "ms": 800 },
+    { "m": "ui.click", "target": "Escolha o idioma da interface." },
+    { "m": "ui.wait", "ms": 500 }
+  ],
+  "expect": [
+    { "present_contains": ["Bem-vindo à Forja", "Escolha o idioma da interface."] }
+  ]
+}
