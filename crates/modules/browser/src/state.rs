@@ -27,6 +27,7 @@ pub struct Tab {
 
 impl Tab {
     pub fn new(id: u64, url: &str, kind: Kind, html: Option<String>) -> Self {
+        let is_home = kind == Kind::Url && crate::home::is_home_url(url);
         Self {
             id,
             url: url.to_owned(),
@@ -38,7 +39,7 @@ impl Tab {
             kind,
             html,
             zoom: 0,
-            loading: true,
+            loading: !is_home,
             can_back: false,
             can_forward: false,
             error: None,
@@ -136,20 +137,32 @@ impl Shared {
             } else {
                 let active = state.active;
                 if let Some(tab) = state.tabs.get_mut(active) {
+                    let is_home = html.is_none() && crate::home::is_home_url(url);
                     tab.url = url.to_owned();
+                    tab.title = if url.is_empty() {
+                        "Nova página".to_owned()
+                    } else {
+                        url.to_owned()
+                    };
                     tab.html = html.clone();
                     tab.kind = if html.is_some() {
                         Kind::Html
                     } else {
                         Kind::Url
                     };
-                    tab.loading = true;
+                    tab.loading = !is_home;
+                    tab.error = None;
                 }
             }
-            state.pending = Some(Pending::Navigate {
-                url: url.to_owned(),
-                html,
-            });
+            let is_home = html.is_none() && crate::home::is_home_url(url);
+            state.pending = if is_home {
+                None
+            } else {
+                Some(Pending::Navigate {
+                    url: url.to_owned(),
+                    html,
+                })
+            };
             state.error = None;
         }
     }
