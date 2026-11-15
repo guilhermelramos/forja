@@ -8,6 +8,7 @@ authors.workspace = true
 
 [dependencies]
 forja-kernel = { path = "../../kernel", features = ["egui"] }
+forja-ui-kit = { path = "../../ui-kit" }
 forja-contracts = { path = "../../contracts" }
 linkme.workspace = true
 serde.workspace = true
