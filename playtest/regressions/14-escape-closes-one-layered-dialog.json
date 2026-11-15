@@ -1,0 +1,30 @@
+{
+  "title": "Escape closes one of two open dialogs (#81)",
+  "issue": 81,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.click", "target": "Fechar pwsh" },
+    { "m": "ui.click", "target": "Receitas" },
+    { "m": "ui.click", "target": "Compilar pacote Python  ·  projeto" },
+    { "m": "ui.snapshot" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 6,
+      "present": ["Fechar terminal em execução?", "Aprovar conteúdo executável"],
+      "window_count": 2
+    },
+    {
+      "step": 8,
+      "present": "Fechar terminal em execução?",
+      "absent": "Aprovar conteúdo executável",
+      "window_count": 1
+    }
+  ]
+}

@@ -270,6 +270,11 @@ impl View for DialogsView {
                 }
             }
             Dialog::Approve(form) => {
+                let layer = egui::Id::new("forja.bench.approve.keyboard");
+                if forja_ui_kit::consume_layer_escape(ui.ctx(), layer) {
+                    self.state.set_dialog(Dialog::None);
+                    return;
+                }
                 let mut submit = false;
                 let mut cancel = false;
                 let title = cx.t("bench.dialog.approve.title");
@@ -279,6 +284,7 @@ impl View for DialogsView {
                     .resizable(false)
                     .default_width(480.0)
                     .show(ui.ctx(), |ui| {
+                        forja_ui_kit::register_keyboard_layer(ui, layer);
                         ui.set_min_width(480.0);
                         field_label(ui, &cx.t("bench.dialog.approve.setup"));
                         if form.setup.is_empty() {

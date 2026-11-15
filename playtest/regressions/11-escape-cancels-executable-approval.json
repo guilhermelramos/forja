@@ -1,0 +1,19 @@
+{
+  "title": "Escape cancels executable content approval (#81)",
+  "issue": 81,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.click", "target": "Receitas" },
+    { "m": "ui.click", "target": "Compilar workspace Rust  ·  projeto" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    { "step": 5, "present": "Aprovar conteúdo executável", "window_count": 1 },
+    { "step": 6, "absent": "Aprovar conteúdo executável", "window_count": 0 }
+  ]
+}

@@ -461,6 +461,11 @@ fn draw_recipe_modal(
     let Some(recipe) = hub.pending_recipe.clone() else {
         return;
     };
+    let layer = egui::Id::new("forja-terminal-recipe-confirm.keyboard");
+    if forja_ui_kit::consume_layer_escape(ctx, layer) {
+        hub.pending_recipe = None;
+        return;
+    }
     let mut accept = false;
     let mut cancel = false;
     egui::Window::new(texts.recipe_confirm_title.clone())
@@ -469,6 +474,7 @@ fn draw_recipe_modal(
         .resizable(false)
         .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
         .show(ctx, |ui| {
+            forja_ui_kit::register_keyboard_layer(ui, layer);
             ui.label(texts.recipe_confirm_body.clone());
             ui.label(
                 RichText::new(&recipe.command)
@@ -499,6 +505,11 @@ fn draw_close_modal(hub: &mut Hub, ctx: &egui::Context, tokens: &Tokens, texts: 
     let Some(pending) = hub.pending_close else {
         return;
     };
+    let layer = egui::Id::new("forja-terminal-close-confirm.keyboard");
+    if forja_ui_kit::consume_layer_escape(ctx, layer) {
+        hub.cancel_close();
+        return;
+    }
     let mut accept = false;
     let mut cancel = false;
     egui::Window::new(texts.confirm_close_title.clone())
@@ -507,6 +518,7 @@ fn draw_close_modal(hub: &mut Hub, ctx: &egui::Context, tokens: &Tokens, texts: 
         .resizable(false)
         .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
         .show(ctx, |ui| {
+            forja_ui_kit::register_keyboard_layer(ui, layer);
             ui.label(texts.confirm_close_body.clone());
             ui.label(
                 RichText::new(format!("{}: {}", texts.running, pending.running))
