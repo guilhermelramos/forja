@@ -17,6 +17,7 @@ pub mod commands;
 pub mod contract;
 pub mod error;
 pub mod events;
+pub mod human_error;
 pub mod i18n;
 pub mod keymap;
 pub mod manifest;
@@ -39,6 +40,7 @@ pub use commands::{
 };
 pub use error::{KernelError, Result};
 pub use events::{EventBus, EventSignature};
+pub use human_error::HumanError;
 pub use i18n::{BundleSource, I18n, Locale};
 pub use keymap::{
     BindingSource, KeyBinding, KeyChord, KeyConflict, Keymap, KeymapLayer, Scope,
