@@ -528,6 +528,15 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Três botões com o mesmo nome "Mais abas" (64,50), (324,50) e (1632,50) em grupos diferentes, o que gera ambiguidade para leitores de tela.
 - Textos de estado vazio em cinza itálico sobre fundo claro têm contraste reduzido para corpo pequeno ("Abra um arquivo no explorador ou pressione Ctrl+P.").
 
+## [pt-BR.light.rail.extension.page](pages/pt-BR.light.rail.extension.page.md)
+
+- O botão de alternar tema na barra superior (1741,5)–(1773,37) não tem nome acessível; só se identifica pela imagem do sol.
+- O campo de busca de extensões (324,186)–(1608,218) é um TextInput sem nome acessível; o rótulo "Buscar" fica fora do campo, sem associação.
+- O logotipo do app (imagem em 12,50) e os três ícones de estado vazio (168,201), (952,242) e (1756,117) estão sem nome acessível.
+- A instrução "Coloque uma pasta com extension.toml e init.lua em ~/.forja/extensions." é exposta com papel de Botão; semanticamente é um texto de ajuda, o que pode confundir leitores de tela.
+- O botão "Voltar à bancada" (324,50) aparece habilitado mesmo sem nenhuma bancada ativa (o painel de arquivos exibe "Nenhuma bancada ativa...").
+- Dois elementos genéricos sem nome acessível (os divisores em (304,42) e (1612,42)) são focáveis, mas não identificam sua função de redimensionamento.
+
 ## [pt-BR.light.bench-tab.extension.panels.bench](pages/pt-BR.light.bench-tab.extension.panels.bench.md)
 
 - Elementos sem nome acessível: alternador de tema (1741,5), os dois divisores verticais (304,42 e 1612,42) e o logotipo (12,50) — apenas "Unknown"/"Image" sem nome na árvore.
@@ -548,6 +557,22 @@ Juntado das seções "Problemas encontrados" de cada página. Gerado automaticam
 - Botão de tema na barra superior (1741,5)–(1773,37), os quatro controles da barra central (444–581,113–145), os dois divisores verticais (304–320 e 1612–1628) e a grande área de conteúdo central (328,150)–(1604,1036) sem nome acessível.
 - Rótulos de ícone expostos como "(ícone)" (grade e pasta dos estados vazios), sem nome descritivo.
 - Elemento de dimensão nula na árvore em (960,540)–(960,540).
+
+## [pt-BR.light.rail.helper.tab](pages/pt-BR.light.rail.helper.tab.md)
+
+- Campo de filtro "Filtrar ajudantes…" exposto como TextInput "(sem nome acessível)": o marcador não é publicado como nome acessível.
+- Botões de janela com nomes acessíveis simbólicos "–", "□" e "×" em vez de rótulos descritivos (Minimizar/Maximizar/Fechar).
+- Três ícones de estado vazio expostos com o nome acessível literal "(ícone)", que não descreve o significado (pasta, pessoas, grade).
+- Vários elementos sem nome acessível: o botão de tema (ícone de sol), os dois divisores arrastáveis e a imagem do logotipo.
+- Dois botões com o mesmo nome acessível "Mais abas" na mesma tela (painel esquerdo e painel direito), o que dificulta a identificação por leitor de tela.
+- Nenhum texto cortado, sobreposição ou elemento fora da janela nesta captura; os textos de estado vazio e as abas cabem integralmente nos 1920×1080 px.
+
+## [pt-BR.light.rail.muster.page](pages/pt-BR.light.rail.muster.page.md)
+
+- Dois botões com o mesmo nome acessível "Mais abas" em tiras diferentes (esquerda e direita), o que dificulta a identificação por leitores de tela.
+- Botão de alternância de tema, as duas divisórias verticais e a marca do app (Image) estão sem nome acessível.
+- O estado vazio central "Nenhum mutirão ainda. Crie um para dividir o trabalho em tarefas." fica a cerca de 170 px do topo da coluna (que tem ~1006 px de altura), em vez de centrado verticalmente.
+- Textos de estado vazio e subtítulo em cinza sobre fundo claro têm contraste reduzido (por exemplo, "Tarefas, ajudantes e recados num só lugar." e "Nenhuma bancada ativa. Abra uma bancada para ver os arquivos.").
 
 ## [pt-BR.light.bench-tab.review.tab](pages/pt-BR.light.bench-tab.review.tab.md)
 

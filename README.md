@@ -2,7 +2,7 @@
 
 Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pelo agente do atlas. Gerado automaticamente.
 
-**Progresso:** 41/160 telas documentadas · elementos citados 5506/5911 · completo: false
+**Progresso:** 44/160 telas documentadas · elementos citados 5599/6004 · completo: false
 
 | Estado | Página | Captura |
 |---|---|---|
@@ -69,15 +69,15 @@ Cada tela da Forja, capturada pelo `cargo xtask atlas capture` e documentada pel
 | `pt-BR.light.bench-tab.diff.tab` | [página](pages/pt-BR.light.bench-tab.diff.tab.md) | [png](captures/pt-BR.light.bench-tab.diff.tab.png) |
 | `pt-BR.light.bench-tab.editor.tab` | [página](pages/pt-BR.light.bench-tab.editor.tab.md) | [png](captures/pt-BR.light.bench-tab.editor.tab.png) |
 | `pt-BR.light.right-tab.explorer.panel` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.right-tab.explorer.panel.png) |
-| `pt-BR.light.rail.extension.page` | — | [png](captures/pt-BR.light.rail.extension.page.png) |
+| `pt-BR.light.rail.extension.page` | [página](pages/pt-BR.light.rail.extension.page.md) | [png](captures/pt-BR.light.rail.extension.page.png) |
 | `pt-BR.light.right-tab.extension.panels.right` | — | [png](captures/pt-BR.light.right-tab.extension.panels.right.png) |
 | `pt-BR.light.bench-tab.extension.panels.bench` | [página](pages/pt-BR.light.bench-tab.extension.panels.bench.md) | [png](captures/pt-BR.light.bench-tab.extension.panels.bench.png) |
 | `pt-BR.light.right-tab.git.changes` | — | [png](captures/pt-BR.light.right-tab.git.changes.png) |
 | `pt-BR.light.bench-tab.git.history` | [página](pages/pt-BR.light.bench-tab.git.history.md) | [png](captures/pt-BR.light.bench-tab.git.history.png) |
 | `pt-BR.light.modal.helper.profile_picker` | [página](pages/pt-BR.light.modal.helper.profile_picker.md) | [png](captures/pt-BR.light.modal.helper.profile_picker.png) |
-| `pt-BR.light.rail.helper.tab` | — | [png](captures/pt-BR.light.rail.helper.tab.png) |
+| `pt-BR.light.rail.helper.tab` | [página](pages/pt-BR.light.rail.helper.tab.md) | [png](captures/pt-BR.light.rail.helper.tab.png) |
 | `pt-BR.light.modal.mcp.approval` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.mcp.approval.png) |
-| `pt-BR.light.rail.muster.page` | — | [png](captures/pt-BR.light.rail.muster.page.png) |
+| `pt-BR.light.rail.muster.page` | [página](pages/pt-BR.light.rail.muster.page.md) | [png](captures/pt-BR.light.rail.muster.page.png) |
 | `pt-BR.light.modal.notify.toasts` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.notify.toasts.png) |
 | `pt-BR.light.modal.onboarding.wizard` | igual a [pt-BR.light.home.default](pages/pt-BR.light.home.default.md) | [png](captures/pt-BR.light.modal.onboarding.wizard.png) |
 | `pt-BR.light.right-tab.ports.panel` | — | [png](captures/pt-BR.light.right-tab.ports.panel.png) |
