@@ -126,6 +126,37 @@ muster-method-spend-result = The updated muster.
 muster-plan-approved = plan approved
 muster-plan-pending = plan pending approval
 muster-plan-approve = Approve plan
+muster-plan-confirm = Confirm approval
+muster-plan-view = View plan
+muster-plan-summary = Plan summary
+muster-plan-review-title = Muster plan
+muster-plan-review-hint = Review the tasks, dependencies, suggested helper and cost ceiling before approving.
+muster-plan-task-count =
+    { $count ->
+        [one] { $count } task
+       *[other] { $count } tasks
+    }
+muster-plan-dep-count =
+    { $count ->
+        [one] { $count } dependency
+       *[other] { $count } dependencies
+    }
+muster-plan-helper = Suggested helper
+muster-plan-helper-auto = Auto
+muster-plan-ceiling = Cost ceiling
+muster-plan-empty = The plan has no tasks yet.
+muster-plan-task-deps = Depends on: { $deps }
+muster-plan-no-deps = No dependencies
+muster-page-plan = Plan and tasks
+muster-cost-title = Cost
+muster-cost-auto = Read from Usage by bench
+muster-cost-manual = No usage data for this bench; record a manual cost.
+muster-cost-pending = Reading usage cost...
+muster-cost-shared = shared bench
+muster-cost-unpriced = partly unpriced
+muster-cost-unavailable = The Usage module is unavailable; use the manual cost.
+muster-cost-value = US$ { $amount }
+muster-cost-now = Cost so far
 muster-budget = Ceiling (USD)
 muster-budget-hint = 0 = no ceiling
 muster-budget-none = no cost ceiling

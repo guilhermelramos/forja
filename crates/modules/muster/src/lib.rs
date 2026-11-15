@@ -4,8 +4,10 @@
 //! fala com bancadas, ajudantes e terminais por comandos e eventos.
 
 mod commands;
+mod cost;
 mod delivery;
 mod model;
+mod plan;
 mod preamble;
 mod state;
 mod view;
@@ -382,6 +384,86 @@ mod tests {
                 ]),
             )
             .expect_err("budget is exhausted");
+        assert!(error.message.contains("teto"), "{}", error.message);
+    }
+
+    struct StubUsage {
+        usd: f64,
+    }
+
+    impl Module for StubUsage {
+        fn manifest(&self) -> ModuleManifest {
+            ModuleManifest::new("usage", "muster.name", "0.0.0")
+        }
+
+        fn register(&mut self, r: &mut Registrar<'_>) {
+            let usd = self.usd;
+            r.command("usage.spend", "muster.command.spend", move |_, _| {
+                Ok(json!({
+                    "period": "all",
+                    "project": "C:/bench",
+                    "matched_projects": 1,
+                    "usd": usd,
+                    "tokens": 100,
+                    "unpriced_tokens": 0,
+                    "priced": true,
+                    "pending": false
+                }))
+            });
+        }
+    }
+
+    #[test]
+    fn budget_gate_reads_usage_spend_when_available() {
+        let dir = temp_dir();
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(MusterModule::new()),
+                Box::new(StubUsage { usd: 10.0 }),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.0.clone()),
+                user_dir: Some(dir.0.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("muster and usage register");
+        runtime
+            .set_setting(
+                "muster.plan.require_approval",
+                SettingValue::Bool(false),
+            )
+            .unwrap();
+        let run = runtime
+            .call_method(
+                "muster.run",
+                Map::from_iter([
+                    ("title".to_owned(), json!("Uso")),
+                    ("bench_path".to_owned(), json!("C:/bench")),
+                    ("budget_usd".to_owned(), json!(5.0)),
+                ]),
+            )
+            .unwrap();
+        let run_id = run["id"].as_str().unwrap().to_owned();
+        let task = runtime
+            .call_method(
+                "muster.task",
+                Map::from_iter([
+                    ("run".to_owned(), json!(run_id)),
+                    ("title".to_owned(), json!("Task")),
+                ]),
+            )
+            .unwrap();
+        let error = runtime
+            .call_method(
+                "muster.start",
+                Map::from_iter([
+                    ("task".to_owned(), task["id"].clone()),
+                    ("bench_path".to_owned(), json!("C:/bench")),
+                ]),
+            )
+            .expect_err("usage spend exceeds the ceiling");
         assert!(error.message.contains("teto"), "{}", error.message);
     }
 

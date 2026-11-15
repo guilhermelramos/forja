@@ -1,0 +1,29 @@
+{
+  "title": "Mutirão em três colunas mostra o plano antes de aprovar",
+  "issue": 67,
+  "locale": "pt-BR",
+  "seed": "15-muster-three-columns",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Mutirão" },
+    { "m": "ui.snapshot", "view": true }
+  ],
+  "expect": [
+    {
+      "window_count": 0,
+      "present": [
+        "Plano e tarefas",
+        "Resumo do plano",
+        "Aprovar plano",
+        "Atribuições ao vivo",
+        "Caixa de entrada",
+        "Custo"
+      ],
+      "present_contains": [
+        "Depende de: Revisar o índice",
+        "Ajudante sugerido",
+        "Teto de custo"
+      ]
+    }
+  ]
+}
