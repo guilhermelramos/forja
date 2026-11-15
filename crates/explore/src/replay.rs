@@ -59,6 +59,8 @@ pub struct Expectation {
     #[serde(default)]
     pub absent_contains: Option<StringOrList>,
     #[serde(default)]
+    pub focused: Option<StringOrList>,
+    #[serde(default)]
     pub window_count: Option<usize>,
     #[serde(default)]
     pub window_count_min: Option<usize>,
@@ -280,6 +282,19 @@ pub fn evaluate_expectations(
                 }
             }
         }
+        if let Some(focused) = &exp.focused {
+            for needle in focused.as_slice() {
+                if !snap
+                    .elements
+                    .iter()
+                    .any(|element| element.name.trim() == needle && element.is_focused())
+                {
+                    return Err(format!(
+                        "expectation {exp_idx} (step {target_idx}): expected \"{needle}\" to have keyboard focus"
+                    ));
+                }
+            }
+        }
         if let Some(expected_count) = exp.window_count {
             let actual = snap.window_count();
             if actual != expected_count {
@@ -384,6 +399,19 @@ mod tests {
 
         let bad: Vec<Expectation> = serde_json::from_str(r#"[{ "window_count": 1 }]"#).unwrap();
         assert!(evaluate_expectations(&bad, &snapshots).is_err());
+    }
+
+    #[test]
+    fn evaluates_keyboard_focus_expectations() {
+        let mut snapshot = snap_with(&["Ajustes"], 1, &[]);
+        snapshot.elements[1].state.push("focused".to_owned());
+        let expectations: Vec<Expectation> =
+            serde_json::from_str(r#"[{"focused":"Ajustes"}]"#).unwrap();
+        assert!(evaluate_expectations(&expectations, &[snapshot.clone()]).is_ok());
+
+        let missing: Vec<Expectation> =
+            serde_json::from_str(r#"[{"focused":"Comandos"}]"#).unwrap();
+        assert!(evaluate_expectations(&missing, &[snapshot]).is_err());
     }
 
     #[test]

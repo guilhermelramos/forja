@@ -219,20 +219,43 @@ impl RequestsView {
             ui.label(cx.t("request-local-loading"));
             return;
         }
+        let mut submit = false;
         ui.group(|ui| {
-            text_field(ui, &mut self.local_title, &cx.t("request-local-title-hint"));
-            text_field(ui, &mut self.local_body, &cx.t("request-local-body-hint"));
+            ui.label(
+                egui::RichText::new(cx.t("request-local-title-label"))
+                    .small()
+                    .strong(),
+            );
+            let title = text_field(ui, &mut self.local_title, &cx.t("request-local-title-hint"));
+            ui.add_space(4.0);
+            ui.label(
+                egui::RichText::new(cx.t("request-local-body-label"))
+                    .small()
+                    .strong(),
+            );
+            let body = text_field(ui, &mut self.local_body, &cx.t("request-local-body-hint"));
+            let enter_pressed = ui.input(|input| input.key_pressed(egui::Key::Enter));
+            let title_active = title.has_focus() || title.lost_focus();
+            let body_active = body.has_focus() || body.lost_focus();
+            if enter_pressed && title_active && !body.has_focus() {
+                body.request_focus();
+            } else if enter_pressed && body_active {
+                submit = true;
+            }
             if button(ui, ButtonKind::Primary, &cx.t("request-local-create")).clicked() {
-                let body = self.local_body.trim().to_owned();
-                let body = (!body.is_empty()).then_some(body);
-                let title = self.local_title.clone();
-                if commands::create_local(cx, &self.shared, &title, body.as_deref()).is_ok() {
-                    self.local_title.clear();
-                    self.local_body.clear();
-                    self.local_open = false;
-                }
+                submit = true;
             }
         });
+        if submit {
+            let body = self.local_body.trim().to_owned();
+            let body = (!body.is_empty()).then_some(body);
+            let title = self.local_title.clone();
+            if commands::create_local(cx, &self.shared, &title, body.as_deref()).is_ok() {
+                self.local_title.clear();
+                self.local_body.clear();
+                self.local_open = false;
+            }
+        }
     }
 
     fn list(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, frame: &Frame) {
