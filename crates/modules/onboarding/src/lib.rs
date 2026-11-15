@@ -3,6 +3,7 @@
 mod steps;
 mod view;
 
+use forja_kernel::human_error::HumanError;
 use forja_kernel::ui_contract::View;
 use forja_kernel::{
     Module, ModuleManifest, Registrar, SettingKind, SettingSpec, SettingValue, Slot,
@@ -32,6 +33,9 @@ struct Gate {
     dismissed: bool,
     step: usize,
     picking: bool,
+    validating_folder: bool,
+    folder_draft: Option<String>,
+    folder_error: Option<HumanError>,
     helpers: Option<String>,
 }
 
@@ -53,6 +57,9 @@ impl Shared {
             dismissed: false,
             step: 0,
             picking: false,
+            validating_folder: false,
+            folder_draft: None,
+            folder_error: None,
             helpers: None,
         })))
     }
@@ -86,6 +93,9 @@ impl Shared {
             .ok()
             .and_then(|value| value.trim().parse().ok())
             .unwrap_or(0);
+        gate.validating_folder = false;
+        gate.folder_draft = None;
+        gate.folder_error = None;
         gate.helpers = None;
     }
 
@@ -129,6 +139,30 @@ impl Shared {
 
     pub fn set_picking(&self, picking: bool) {
         self.lock().picking = picking;
+    }
+
+    pub fn validating_folder(&self) -> bool {
+        self.lock().validating_folder
+    }
+
+    pub fn set_validating_folder(&self, busy: bool) {
+        self.lock().validating_folder = busy;
+    }
+
+    pub fn folder_draft(&self) -> Option<String> {
+        self.lock().folder_draft.clone()
+    }
+
+    pub fn set_folder_draft(&self, draft: Option<String>) {
+        self.lock().folder_draft = draft;
+    }
+
+    pub fn folder_error(&self) -> Option<HumanError> {
+        self.lock().folder_error.clone()
+    }
+
+    pub fn set_folder_error(&self, error: Option<HumanError>) {
+        self.lock().folder_error = error;
     }
 
     pub fn helpers_text(&self) -> Option<String> {
@@ -210,6 +244,8 @@ impl Module for OnboardingModule {
             "onboarding.folder.hint",
             "onboarding.folder.placeholder",
             "onboarding.folder.pick",
+            "onboarding.folder.validating",
+            "onboarding.error.dismiss",
             "onboarding.helpers.lead",
             "onboarding.helpers.detecting",
             "onboarding.helpers.found",

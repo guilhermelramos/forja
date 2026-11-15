@@ -2,10 +2,12 @@
 
 use crate::steps::{steps, Step};
 use crate::Shared;
+use forja_kernel::human_error::{humanize_ctx, humanize_io_error, HumanError};
 use forja_kernel::ui_contract::egui;
 use forja_kernel::{Args, Ctx, SettingValue};
 use forja_ui_kit::{button, modal_explicit_close, select, text_field, toggle, ButtonKind};
 use serde_json::Value;
+use std::path::{Path, PathBuf};
 
 pub struct WizardView {
     pub state: Shared,
@@ -79,10 +81,17 @@ fn render(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
     let sequence = steps(include_helpers, include_import);
     let mut index = state.step().min(sequence.len().saturating_sub(1));
     let step = sequence[index];
+    let last_step_id = egui::Id::new("forja.onboarding.last_step");
+    let prev_step: Option<Step> = ui.ctx().data(|data| data.get_temp(last_step_id));
+    if prev_step != Some(step) {
+        ui.ctx().data_mut(|data| data.insert_temp(last_step_id, step));
+        egui::Popup::close_all(ui.ctx());
+        clear_focus(ui.ctx());
+    }
     ui.set_min_width(420.0);
     ui.label(cx.t(step_key(step)));
     ui.add_space(8.0);
-    match step {
+    ui.push_id(step_key(step), |ui| match step {
         Step::Language => language(ui, cx),
         Step::Theme => theme(ui, cx),
         Step::Folder => folder(ui, cx, state),
@@ -90,7 +99,7 @@ fn render(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
         Step::Helpers => helpers(ui, cx, state),
         Step::Notices => notices(ui, cx),
         Step::Checklist => checklist(ui, cx, state),
-    }
+    });
     ui.add_space(12.0);
     ui.push_id("wizard.navigation", |ui| {
         ui.horizontal(|ui| {
@@ -102,6 +111,8 @@ fn render(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
                     .inner
                     .clicked()
             {
+                state.set_folder_error(None);
+                state.set_validating_folder(false);
                 index -= 1;
                 state.set_step(index);
             }
@@ -112,22 +123,20 @@ fn render(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
                 "onboarding.next"
             });
             let forward = ui
-                .push_id("forward", |ui| button(ui, ButtonKind::Primary, &label))
+                .add_enabled_ui(!state.validating_folder(), |ui| {
+                    ui.push_id("forward", |ui| button(ui, ButtonKind::Primary, &label))
+                        .inner
+                })
                 .inner;
-            let focus_id = egui::Id::new("forja.onboarding.focus_forward");
-            if ui
-                .ctx()
-                .data_mut(|data| data.remove_temp::<bool>(focus_id))
-                .unwrap_or(false)
-            {
-                forward.request_focus();
-            }
             if forward.clicked() {
                 if !last {
-                    mark(state, step, cx);
-                    index += 1;
-                    state.set_step(index);
-                    ui.ctx().data_mut(|data| data.insert_temp(focus_id, true));
+                    if step == Step::Folder {
+                        advance_folder_step(cx, state, index);
+                    } else {
+                        mark(state, step, cx);
+                        index += 1;
+                        state.set_step(index);
+                    }
                 } else {
                     state.finish();
                     let path = cx.store().path();
@@ -219,12 +228,41 @@ fn theme(ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
     }
 }
 
+fn clear_focus(ctx: &egui::Context) {
+    if let Some(id) = ctx.memory(|memory| memory.focused()) {
+        forja_ui_kit::release_keyboard_focus(ctx, id);
+    }
+}
+
+fn folder_input_value(cx: &Ctx<'_>, state: &Shared) -> String {
+    state
+        .folder_draft()
+        .unwrap_or_else(|| setting_str(cx, "onboarding.projects.dir", ""))
+}
+
 fn folder(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
     ui.label(cx.t("onboarding.folder.hint"));
     let placeholder = cx.t("onboarding.folder.placeholder");
-    let mut path = setting_str(cx, "onboarding.projects.dir", "");
+    let mut path = folder_input_value(cx, state);
     if text_field(ui, &mut path, &placeholder).changed() {
-        let _ = cx.set_setting("onboarding.projects.dir", SettingValue::Text(path));
+        state.set_folder_draft(Some(path));
+        state.set_folder_error(None);
+    }
+    if let Some(error) = state.folder_error() {
+        ui.add_space(6.0);
+        if forja_ui_kit::error_notice(
+            ui,
+            &error.summary,
+            error.detail.as_deref(),
+            &cx.t("kernel.error.details"),
+            Some(&cx.t("onboarding.error.dismiss")),
+        ) {
+            state.set_folder_error(None);
+        }
+    }
+    if state.validating_folder() {
+        ui.add_space(4.0);
+        ui.label(cx.t("onboarding.folder.validating"));
     }
     if !state.picking()
         && button(ui, ButtonKind::Secondary, &cx.t("onboarding.folder.pick")).clicked()
@@ -240,11 +278,108 @@ fn folder(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
             move |cx, picked| {
                 shared.set_picking(false);
                 if let Some(path) = picked {
+                    shared.set_folder_draft(Some(path.clone()));
+                    shared.set_folder_error(None);
                     let _ = cx.set_setting("onboarding.projects.dir", SettingValue::Text(path));
                 }
             },
         );
     }
+}
+
+enum FolderCheckError {
+    Io(std::io::Error),
+    Raw(String),
+}
+
+impl FolderCheckError {
+    fn into_human_error(self, cx: &Ctx<'_>) -> HumanError {
+        match self {
+            Self::Io(err) => humanize_io_error(cx.i18n(), &err),
+            Self::Raw(raw) => humanize_ctx(cx, &raw),
+        }
+    }
+}
+
+/// Validates path syntax in memory without touching disk.
+fn validate_folder_syntax(raw: &str) -> Result<(), String> {
+    if raw.chars().any(char::is_control) {
+        return Err(format!(
+            "The filename, directory name, or volume label syntax is incorrect. (os error 123): {raw}"
+        ));
+    }
+    let bytes = raw.as_bytes();
+    let has_drive_prefix = bytes.len() >= 2
+        && bytes[0].is_ascii_alphabetic()
+        && bytes[1] == b':'
+        && bytes
+            .get(2)
+            .is_none_or(|next| *next == b'\\' || *next == b'/');
+    for (byte_index, ch) in raw.char_indices() {
+        let forbidden_colon = ch == ':' && !(byte_index == 1 && has_drive_prefix);
+        if matches!(ch, '<' | '>' | '"' | '|' | '?' | '*') || forbidden_colon {
+            return Err(format!(
+                "The filename, directory name, or volume label syntax is incorrect. (os error 123): {raw}"
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn check_folder_exists(candidate: &Path) -> Result<String, FolderCheckError> {
+    let resolved = std::fs::canonicalize(candidate).map_err(FolderCheckError::Io)?;
+    let meta = std::fs::metadata(&resolved).map_err(FolderCheckError::Io)?;
+    if !meta.is_dir() {
+        return Err(FolderCheckError::Raw(format!(
+            "The directory name is invalid. (os error 267): {}",
+            candidate.display()
+        )));
+    }
+    Ok(forja_kernel::paths::clean_path(resolved)
+        .display()
+        .to_string())
+}
+
+fn advance_folder_step(cx: &mut Ctx<'_>, state: &Shared, index: usize) {
+    let trimmed = folder_input_value(cx, state).trim().to_owned();
+    if trimmed.is_empty() {
+        state.set_folder_draft(None);
+        state.set_folder_error(None);
+        let _ = cx.set_setting("onboarding.projects.dir", SettingValue::Text(String::new()));
+        mark(state, Step::Folder, cx);
+        state.set_step(index + 1);
+        return;
+    }
+    if let Err(raw) = validate_folder_syntax(&trimmed) {
+        state.set_folder_error(Some(humanize_ctx(cx, &raw)));
+        return;
+    }
+    state.set_validating_folder(true);
+    state.set_folder_error(None);
+    let shared = state.clone();
+    let candidate = PathBuf::from(&trimmed);
+    cx.spawn(
+        move || check_folder_exists(&candidate),
+        move |cx, result| {
+            shared.set_validating_folder(false);
+            match result {
+                Ok(clean) => {
+                    let _ = cx.set_setting("onboarding.projects.dir", SettingValue::Text(clean));
+                    shared.set_folder_draft(None);
+                    shared.set_folder_error(None);
+                    let mut progress = shared.progress();
+                    progress.folder = true;
+                    shared.set_progress(progress);
+                    if shared.step() == index {
+                        shared.set_step(index + 1);
+                    }
+                }
+                Err(error) => {
+                    shared.set_folder_error(Some(error.into_human_error(cx)));
+                }
+            }
+        },
+    );
 }
 
 fn helpers(ui: &mut egui::Ui, cx: &mut Ctx<'_>, _state: &Shared) {
@@ -468,26 +603,5 @@ fn format_helpers(cx: &Ctx<'_>, value: &Value) -> String {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use serde_json::json;
-
-    #[test]
-    fn summarize_helpers_never_leaks_started_json() {
-        assert_eq!(summarize_helpers(&json!({ "started": true })), HelperSummary::None);
-        assert_eq!(
-            summarize_helpers(&json!({ "detecting": true, "profiles": [] })),
-            HelperSummary::Detecting
-        );
-        assert_eq!(
-            summarize_helpers(&json!({
-                "detecting": false,
-                "profiles": [
-                    { "id": "claude-code", "name": "Claude Code", "installed": false },
-                    { "id": "codex", "name": "Codex", "installed": true }
-                ]
-            })),
-            HelperSummary::Found(vec!["Codex".to_owned()])
-        );
-    }
-}
+#[path = "view_tests.rs"]
+mod tests;
