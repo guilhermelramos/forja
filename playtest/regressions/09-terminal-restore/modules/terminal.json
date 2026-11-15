@@ -1,0 +1,461 @@
+{
+  "root": {
+    "Split": {
+      "dir": "Rows",
+      "ratio": 0.46564114,
+      "first": {
+        "Split": {
+          "dir": "Columns",
+          "ratio": 0.5,
+          "first": {
+            "Leaf": {
+              "pane": 1,
+              "tabs": [
+                1
+              ],
+              "active": 0
+            }
+          },
+          "second": {
+            "Split": {
+              "dir": "Columns",
+              "ratio": 0.5,
+              "first": {
+                "Split": {
+                  "dir": "Columns",
+                  "ratio": 0.5,
+                  "first": {
+                    "Leaf": {
+                      "pane": 4,
+                      "tabs": [
+                        4
+                      ],
+                      "active": 0
+                    }
+                  },
+                  "second": {
+                    "Leaf": {
+                      "pane": 19,
+                      "tabs": [
+                        19
+                      ],
+                      "active": 0
+                    }
+                  }
+                }
+              },
+              "second": {
+                "Split": {
+                  "dir": "Columns",
+                  "ratio": 0.5,
+                  "first": {
+                    "Leaf": {
+                      "pane": 14,
+                      "tabs": [
+                        14
+                      ],
+                      "active": 0
+                    }
+                  },
+                  "second": {
+                    "Leaf": {
+                      "pane": 16,
+                      "tabs": [
+                        16
+                      ],
+                      "active": 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "second": {
+        "Split": {
+          "dir": "Columns",
+          "ratio": 0.5,
+          "first": {
+            "Split": {
+              "dir": "Rows",
+              "ratio": 0.5,
+              "first": {
+                "Split": {
+                  "dir": "Columns",
+                  "ratio": 0.5,
+                  "first": {
+                    "Leaf": {
+                      "pane": 2,
+                      "tabs": [
+                        2
+                      ],
+                      "active": 0
+                    }
+                  },
+                  "second": {
+                    "Leaf": {
+                      "pane": 18,
+                      "tabs": [
+                        18
+                      ],
+                      "active": 0
+                    }
+                  }
+                }
+              },
+              "second": {
+                "Leaf": {
+                  "pane": 8,
+                  "tabs": [
+                    8
+                  ],
+                  "active": 0
+                }
+              }
+            }
+          },
+          "second": {
+            "Split": {
+              "dir": "Columns",
+              "ratio": 0.5,
+              "first": {
+                "Split": {
+                  "dir": "Rows",
+                  "ratio": 0.24489796,
+                  "first": {
+                    "Split": {
+                      "dir": "Rows",
+                      "ratio": 0.5,
+                      "first": {
+                        "Leaf": {
+                          "pane": 3,
+                          "tabs": [
+                            3
+                          ],
+                          "active": 0
+                        }
+                      },
+                      "second": {
+                        "Leaf": {
+                          "pane": 20,
+                          "tabs": [
+                            20
+                          ],
+                          "active": 0
+                        }
+                      }
+                    }
+                  },
+                  "second": {
+                    "Split": {
+                      "dir": "Rows",
+                      "ratio": 0.6712329,
+                      "first": {
+                        "Split": {
+                          "dir": "Rows",
+                          "ratio": 0.5,
+                          "first": {
+                            "Split": {
+                              "dir": "Columns",
+                              "ratio": 0.5,
+                              "first": {
+                                "Leaf": {
+                                  "pane": 6,
+                                  "tabs": [
+                                    6
+                                  ],
+                                  "active": 0
+                                }
+                              },
+                              "second": {
+                                "Leaf": {
+                                  "pane": 11,
+                                  "tabs": [
+                                    11
+                                  ],
+                                  "active": 0
+                                }
+                              }
+                            }
+                          },
+                          "second": {
+                            "Split": {
+                              "dir": "Columns",
+                              "ratio": 0.5,
+                              "first": {
+                                "Leaf": {
+                                  "pane": 10,
+                                  "tabs": [
+                                    10
+                                  ],
+                                  "active": 0
+                                }
+                              },
+                              "second": {
+                                "Leaf": {
+                                  "pane": 17,
+                                  "tabs": [
+                                    17
+                                  ],
+                                  "active": 0
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "second": {
+                        "Split": {
+                          "dir": "Columns",
+                          "ratio": 0.5,
+                          "first": {
+                            "Leaf": {
+                              "pane": 7,
+                              "tabs": [
+                                7
+                              ],
+                              "active": 0
+                            }
+                          },
+                          "second": {
+                            "Leaf": {
+                              "pane": 9,
+                              "tabs": [
+                                9
+                              ],
+                              "active": 0
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "second": {
+                "Split": {
+                  "dir": "Rows",
+                  "ratio": 0.5,
+                  "first": {
+                    "Split": {
+                      "dir": "Columns",
+                      "ratio": 0.5,
+                      "first": {
+                        "Leaf": {
+                          "pane": 5,
+                          "tabs": [
+                            5
+                          ],
+                          "active": 0
+                        }
+                      },
+                      "second": {
+                        "Leaf": {
+                          "pane": 13,
+                          "tabs": [
+                            13
+                          ],
+                          "active": 0
+                        }
+                      }
+                    }
+                  },
+                  "second": {
+                    "Split": {
+                      "dir": "Columns",
+                      "ratio": 0.5,
+                      "first": {
+                        "Leaf": {
+                          "pane": 12,
+                          "tabs": [
+                            12
+                          ],
+                          "active": 0
+                        }
+                      },
+                      "second": {
+                        "Leaf": {
+                          "pane": 15,
+                          "tabs": [
+                            15
+                          ],
+                          "active": 0
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "focused": 20,
+  "next_terminal": 21,
+  "next_pane": 21,
+  "terminals": [
+    {
+      "id": 1,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 2,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 3,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 4,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 5,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 6,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 7,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 8,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 9,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 10,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 11,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 12,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 13,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 14,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 15,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 16,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 17,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 18,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 19,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    },
+    {
+      "id": 20,
+      "dir": "",
+      "shell": "pwsh.exe",
+      "args": "-NoLogo",
+      "title": null,
+      "text": ""
+    }
+  ]
+}

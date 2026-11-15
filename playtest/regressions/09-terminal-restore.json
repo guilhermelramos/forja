@@ -1,0 +1,15 @@
+{
+  "title": "Layout de terminal restaurado não fecha o app (#70, #71)",
+  "issue": 70,
+  "locale": "pt-BR",
+  "seed": "09-terminal-restore",
+  "steps": [
+    { "m": "ui.wait", "ms": 800 },
+    { "m": "ui.click", "target": "Terminal" },
+    { "m": "ui.wait", "ms": 800 },
+    { "m": "ui.snapshot", "view": false }
+  ],
+  "expect": [
+    { "present_contains": "Terminal" }
+  ]
+}
