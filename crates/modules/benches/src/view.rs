@@ -215,11 +215,21 @@ impl DetailView {
         }
         if let Some(notice) = self.state.notice() {
             ui.add_space(6.0);
-            ui.label(
-                egui::RichText::new(cx.t_args("bench.detail.notice", &[("message", &notice)]))
-                    .small()
-                    .color(c32(tokens.color.info)),
-            );
+            let human = crate::create::humanize_error(cx, &notice);
+            if human.detail.is_some() {
+                forja_ui_kit::error_banner(
+                    ui,
+                    &human.summary,
+                    human.detail.as_deref(),
+                    &cx.t("kernel.error.details"),
+                );
+            } else {
+                ui.label(
+                    egui::RichText::new(cx.t_args("bench.detail.notice", &[("message", &human.summary)]))
+                        .small()
+                        .color(c32(tokens.color.info)),
+                );
+            }
         }
     }
 }
