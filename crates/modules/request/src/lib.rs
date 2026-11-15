@@ -9,6 +9,7 @@
 //! aba "Pedidos". Contratos em `design/contracts.md`, seção "Pedidos e balcões".
 
 mod commands;
+mod forge_preview;
 mod forge;
 mod local;
 mod sync;

@@ -10,6 +10,7 @@ mod config;
 mod create;
 mod git;
 mod model;
+mod preview;
 mod refresh;
 mod rpc;
 mod scripts;
@@ -112,6 +113,9 @@ fn used_keys() -> Vec<&'static str> {
         "bench.command.list_cards",
         "bench.command.activate",
         "bench.command.create",
+        "bench.command.preview_forge",
+        "bench.command.preview_status",
+        "bench.command.preview_cancel",
         "bench.command.store",
         "bench.command.stage_set",
         "bench.command.stage_list",

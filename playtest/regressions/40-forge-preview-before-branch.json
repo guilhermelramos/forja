@@ -1,0 +1,63 @@
+{
+  "title": "Forjar mostra a prévia antes de criar a bancada e Escape cancela (#114)",
+  "issue": 114,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.click", "target": "Pedidos" },
+    { "m": "ui.click", "target": "Novo pedido local" },
+    { "m": "ui.click", "x": 1000, "y": 480 },
+    { "m": "ui.type", "text": "Prévia de Forjar" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.type", "text": "Validar prévia antes de criar" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.wait", "ms": 300 },
+    { "m": "ui.click", "target": "LOCAL-1  Prévia de Forjar" },
+    { "m": "ui.click", "target": "Forjar" },
+    { "m": "ui.wait", "ms": 1500 },
+    { "m": "ui.snapshot" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.snapshot" },
+    { "m": "ui.click", "target": "Forjar" },
+    { "m": "ui.wait", "ms": 1500 },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 16,
+      "window_count": 1,
+      "present_contains": [
+        "Prévia de Forjar",
+        "Bancada: pedido-local-1-previa-de-forjar",
+        "Branch: forja/pedido-local-1-previa-de-forjar",
+        "Base: main",
+        "Pasta da bancada:",
+        "Comando de preparo",
+        "Nenhum comando de preparo configurado.",
+        "Ajudante:",
+        "Confirmar e Forjar",
+        "Cancelar"
+      ]
+    },
+    {
+      "step": 18,
+      "window_count": 0,
+      "absent": ["Prévia de Forjar", "Confirmar e Forjar"],
+      "present_contains": "LOCAL-1  Prévia de Forjar"
+    },
+    {
+      "step": 24,
+      "window_count": 0,
+      "absent": ["Prévia de Forjar", "Confirmar e Forjar"],
+      "present_contains": "LOCAL-1  Prévia de Forjar"
+    }
+  ]
+}

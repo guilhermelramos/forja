@@ -2,7 +2,6 @@ use crate::service;
 use crate::state::Shared;
 use forja_kernel::{CommandField, CommandFieldKind, Registrar};
 use serde_json::{json, Value};
-
 use crate::kernel_error;
 
 /// The Anvil asks for a bench from `bench.list`; the same mechanism serves
@@ -128,6 +127,97 @@ pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
                 map.insert("pending".to_owned(), json!(true));
             }
             Ok(value)
+        },
+    );
+
+    let s = shared.clone();
+    r.command(
+        "bench.preview_forge",
+        "bench.command.preview_forge",
+        move |cx, args| {
+            let preview_id = args.required_str("preview_id")?.to_owned();
+            let project_id = args.required_str("project_id")?.to_owned();
+            let name = args.required_str("name")?.to_owned();
+            let from_request = args
+                .str("from_request")
+                .map(str::to_owned)
+                .or_else(|| {
+                    args.get("from_request")
+                        .and_then(|value| value.get("key"))
+                        .and_then(Value::as_str)
+                        .map(str::to_owned)
+                })
+                .ok_or_else(|| forja_kernel::KernelError::message("from_request is required"))?;
+
+            let projects = service::projects(cx);
+            let project = projects
+                .iter()
+                .find(|project| project.id == project_id)
+                .cloned()
+                .ok_or_else(|| forja_kernel::KernelError::message("project is not registered"))?;
+            let bench_root = service::bench_root(cx, &project);
+            let job = crate::preview::PreviewJob {
+                project,
+                project_ids: projects.into_iter().map(|project| project.id).collect(),
+                request_key: from_request,
+                request_name: name,
+                name_template: service::setting_str(
+                    cx,
+                    "bench.worktree.name_template",
+                    "{pedido}-{slug}",
+                ),
+                branch_prefix: service::setting_str(
+                    cx,
+                    "bench.worktree.branch_prefix",
+                    "forja/",
+                ),
+                bench_root,
+                store_path: cx.store().path(),
+                base_mode: args
+                    .str("base")
+                    .filter(|base| !base.trim().is_empty())
+                    .map(str::to_owned)
+                    .unwrap_or_else(|| {
+                        service::setting_str(cx, "bench.worktree.base_branch", "auto")
+                    }),
+                setup_policy: service::setting_str(cx, "bench.setup.policy", "ask"),
+                fetch_before: service::setting_bool(cx, "bench.worktree.fetch_before", true),
+                helper: args.bool("helper").unwrap_or(false),
+            };
+            s.start_preview(preview_id.clone());
+            let state = s.clone();
+            let callback_id = preview_id.clone();
+            cx.spawn(
+                move || crate::preview::build(job),
+                move |_cx, result| state.finish_preview(&callback_id, result),
+            );
+            Ok(json!({ "started": true, "preview_id": preview_id }))
+        },
+    );
+
+    let s = shared.clone();
+    r.command(
+        "bench.preview_status",
+        "bench.command.preview_status",
+        move |_cx, args| {
+            let preview_id = args.required_str("preview_id")?;
+            Ok(match s.preview(preview_id) {
+                None => json!({ "state": "missing" }),
+                Some(None) => json!({ "state": "pending" }),
+                Some(Some(Ok(preview))) => json!({ "state": "ready", "preview": preview }),
+                Some(Some(Err(error))) => json!({ "state": "error", "error": error }),
+            })
+        },
+    );
+
+    let s = shared.clone();
+    r.command(
+        "bench.preview_cancel",
+        "bench.command.preview_cancel",
+        move |_cx, args| {
+            let preview_id = args.required_str("preview_id")?;
+            s.cancel_preview(preview_id);
+            Ok(json!({ "cancelled": true }))
         },
     );
 

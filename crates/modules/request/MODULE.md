@@ -36,9 +36,12 @@ Detalhes e formas de JSON: `design/contracts.md`, seção "Pedidos e balcões".
 
 ## Forjar
 
-`bench.create {project_id, name, from_request}`, com `name` = `pedido-<chave>-<título>`.
-Se a bancada não chega com o caminho, espera `bench.created` com o mesmo nome. Depois sobe
-o ajudante com `helper.launch`, se `helper.launch.auto_start` estiver ligado.
+O botão `Forjar` abre uma prévia preparada em segundo plano pelo módulo `bench`.
+Ela mostra nome, branch, base, pasta, preparo de `forja.toml` e o estado da aprovação
+por hash, além de indicar se o ajudante automático está ligado. Confirmar chama
+`bench.create {project_id, name, from_request}`; cancelar ou Escape remove a prévia.
+Se a bancada ainda está sendo criada, espera `bench.created` com o mesmo nome. Depois
+sobe o ajudante com `helper.launch`, se `helper.launch.auto_start` estiver ligado.
 
 ## Pedidos locais
 

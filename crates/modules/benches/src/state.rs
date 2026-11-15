@@ -2,6 +2,8 @@
 
 use crate::model::{BenchFile, BenchRecord, ScriptApproval};
 use forja_kernel::Ctx;
+use serde_json::Value;
+use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone, Debug, Default)]
@@ -51,6 +53,7 @@ struct State {
     error: Option<String>,
     notice: Option<String>,
     dialog: Dialog,
+    previews: BTreeMap<String, Option<Result<Value, String>>>,
 }
 
 #[derive(Clone)]
@@ -155,6 +158,39 @@ impl Shared {
     pub fn set_dialog(&self, dialog: Dialog) {
         if let Ok(mut state) = self.0.lock() {
             state.dialog = dialog;
+        }
+    }
+
+    pub fn start_preview(&self, id: String) {
+        if let Ok(mut state) = self.0.lock() {
+            while state.previews.len() >= 32 {
+                let Some(oldest) = state.previews.keys().next().cloned() else {
+                    break;
+                };
+                state.previews.remove(&oldest);
+            }
+            state.previews.insert(id, None);
+        }
+    }
+
+    pub fn finish_preview(&self, id: &str, result: Result<Value, String>) {
+        if let Ok(mut state) = self.0.lock() {
+            if let Some(slot) = state.previews.get_mut(id) {
+                *slot = Some(result);
+            }
+        }
+    }
+
+    pub fn preview(&self, id: &str) -> Option<Option<Result<Value, String>>> {
+        self.0
+            .lock()
+            .ok()
+            .and_then(|state| state.previews.get(id).cloned())
+    }
+
+    pub fn cancel_preview(&self, id: &str) {
+        if let Ok(mut state) = self.0.lock() {
+            state.previews.remove(id);
         }
     }
 

@@ -15,6 +15,13 @@ use std::time::{Duration, Instant};
 
 const DEBOUNCE: Duration = Duration::from_millis(300);
 
+#[derive(Clone, Debug)]
+pub struct InstallNotice {
+    pub summary: String,
+    pub detail: Option<String>,
+    pub is_error: bool,
+}
+
 /// Estado visível de uma extensão.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ExtensionState {
@@ -85,6 +92,7 @@ pub struct CoreState {
     pub dirty_at: Option<Instant>,
     pub last_tick: Option<Instant>,
     pub ready_sent: bool,
+    pub install_notice: Option<InstallNotice>,
 }
 
 impl Default for CoreState {
@@ -101,6 +109,7 @@ impl Default for CoreState {
             dirty_at: None,
             last_tick: None,
             ready_sent: false,
+            install_notice: None,
         }
     }
 }
@@ -131,6 +140,10 @@ impl ExtensionCore {
                 .collect()
         })
         .unwrap_or_default()
+    }
+
+    pub fn install_notice(&self) -> Option<InstallNotice> {
+        self.with(|state| state.install_notice.clone()).flatten()
     }
 }
 
@@ -1293,5 +1306,43 @@ forja.ui.panel({ id = "fresh", title = "Fresh", slot = "right_panel", tree = { f
             .expect("hashy");
         assert_eq!(item["state"], "active");
         assert_eq!(item["dev"], true);
+    }
+
+    #[test]
+    fn an_installed_folder_is_registered_pending_its_hash_approval() {
+        let dir = temp_dir("install-pending");
+        let source = dir.join("picked");
+        std::fs::create_dir_all(&source).unwrap();
+        std::fs::write(
+            source.join("extension.toml"),
+            "id = \"installed-addon\"\nname = \"Installed\"\nversion = \"1.0.0\"\nauthor = \"Forja\"\napi = \"1\"\n[capabilities]\ncommands = true\n",
+        )
+        .unwrap();
+        std::fs::write(
+            source.join("init.lua"),
+            "forja.commands.register({ id = 'hello', title = 'Hello', run = function() return true end })\n",
+        )
+        .unwrap();
+        let installed = crate::install::install_folder(&source, &dir.join("user/extensions"))
+            .expect("picked folder installs");
+
+        let mut runtime = runtime(&dir);
+        let value = wait_until(&mut runtime, |value| {
+            value["extensions"]
+                .as_array()
+                .is_some_and(|items| items.iter().any(|item| item["id"] == "installed-addon"))
+        });
+        let item = value["extensions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|item| item["id"] == "installed-addon")
+            .expect("installed extension is listed");
+        assert_eq!(item["state"], "pending");
+        let registered_path = Path::new(item["dir"].as_str().expect("extension path"));
+        assert_eq!(
+            std::fs::canonicalize(registered_path).unwrap(),
+            std::fs::canonicalize(installed).unwrap()
+        );
     }
 }
