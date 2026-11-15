@@ -8,8 +8,8 @@
     { "m": "ui.click", "target": "Escolher…" },
     { "m": "ui.click", "target": "Adicionar" },
     { "m": "ui.click", "target": "Dividir à direita" },
-    { "m": "ui.click", "target": "Dividir à direita" },
-    { "m": "ui.click", "target": "Dividir abaixo" },
+    { "m": "ui.key", "keys": "Alt+Shift+R" },
+    { "m": "ui.key", "keys": "Alt+Shift+D" },
     { "m": "ui.click", "target": "Mais" },
     { "m": "ui.snapshot" }
   ],
