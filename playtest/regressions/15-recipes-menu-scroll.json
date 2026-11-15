@@ -1,0 +1,68 @@
+{
+  "title": "Menu de receitas com rolagem não cobre controles da bancada",
+  "issue": 96,
+  "locale": "pt-BR",
+  "steps": [
+    {
+      "m": "ui.click",
+      "target": "Fechar"
+    },
+    {
+      "m": "ui.click",
+      "target": "Adicionar pasta"
+    },
+    {
+      "m": "ui.click",
+      "target": "Escolher…"
+    },
+    {
+      "m": "ui.click",
+      "id": 6810641461030805666
+    },
+    {
+      "m": "ui.type",
+      "text": "Exemplo"
+    },
+    {
+      "m": "ui.click",
+      "target": "Adicionar"
+    },
+    {
+      "m": "ui.wait",
+      "ms": 1000
+    },
+    {
+      "m": "ui.click",
+      "target": "Receitas"
+    },
+    {
+      "m": "ui.scroll",
+      "target": "Compilar pacotes Go",
+      "dy": -900
+    },
+    {
+      "m": "ui.snapshot",
+      "view": false
+    },
+    {
+      "m": "ui.click",
+      "target": "Mudanças"
+    },
+    {
+      "m": "ui.snapshot",
+      "view": false
+    }
+  ],
+  "expect": [
+    {
+      "step": 8,
+      "appeared": "Compilar workspace Rust  ·  projeto",
+      "present": "Executar testes com pytest  ·  projeto"
+    },
+    {
+      "step": 11,
+      "absent": "Aprovar conteúdo executável",
+      "window_count": 0
+    }
+  ]
+}
