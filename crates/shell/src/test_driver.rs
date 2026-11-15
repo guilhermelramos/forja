@@ -470,11 +470,11 @@ impl Driver {
                 parents.insert(*child, *id);
             }
         }
-        let window_of = |mut id: accesskit::NodeId| {
+        let enclosing_window_id = |mut id: accesskit::NodeId| {
             while let Some(parent) = parents.get(&id) {
                 if let Some(node) = nodes.get(parent) {
-                    if node.role() == accesskit::Role::Window {
-                        return node.bounds();
+                    if node.role() == accesskit::Role::Window && node.bounds().is_some() {
+                        return Some(parent.0);
                     }
                 }
                 id = *parent;
@@ -487,19 +487,8 @@ impl Driver {
             .filter(|(_, node)| node.role() != accesskit::Role::TextRun)
             .filter_map(|(id, node)| {
                 let bounds = node.bounds()?;
-                let outside = bounds.x1 <= f64::from(window.left())
-                    || bounds.y1 <= f64::from(window.top())
-                    || bounds.x0 >= f64::from(window.right())
-                    || bounds.y0 >= f64::from(window.bottom());
-                if bounds.x1 - bounds.x0 < 1.0 || bounds.y1 - bounds.y0 < 1.0 || outside {
+                if !element_visible_in_ancestors(*id, bounds, window, &parents, &nodes) {
                     return None;
-                }
-                if let Some(frame) = window_of(*id) {
-                    let centre_x = (bounds.x0 + bounds.x1) / 2.0;
-                    let centre_y = (bounds.y0 + bounds.y1) / 2.0;
-                    if centre_x < frame.x0 || centre_x > frame.x1 || centre_y < frame.y0 || centre_y > frame.y1 {
-                        return None;
-                    }
                 }
                 let label = node.label().unwrap_or("").trim();
                 let value = node.value().unwrap_or("").trim();
@@ -532,6 +521,9 @@ impl Driver {
                     "editable": editable,
                     "state": state,
                 });
+                if let Some(window_id) = enclosing_window_id(*id) {
+                    element["window_id"] = json!(window_id);
+                }
                 // A text field's label may differ from what was typed into it.
                 if !value.is_empty() && value != element["name"].as_str().unwrap_or("") {
                     element["value"] = Value::String(value.to_owned());
@@ -842,6 +834,50 @@ fn encode_png(image: &egui::ColorImage) -> Option<String> {
     Some(base64::engine::general_purpose::STANDARD.encode(bytes.into_inner()))
 }
 
+fn element_visible_in_ancestors(
+    mut id: accesskit::NodeId,
+    bounds: accesskit::Rect,
+    window: egui::Rect,
+    parents: &std::collections::HashMap<accesskit::NodeId, accesskit::NodeId>,
+    nodes: &std::collections::HashMap<accesskit::NodeId, &accesskit::Node>,
+) -> bool {
+    let outside = bounds.x1 <= f64::from(window.left())
+        || bounds.y1 <= f64::from(window.top())
+        || bounds.x0 >= f64::from(window.right())
+        || bounds.y0 >= f64::from(window.bottom());
+    if bounds.x1 - bounds.x0 < 1.0 || bounds.y1 - bounds.y0 < 1.0 || outside {
+        return false;
+    }
+    let centre_x = (bounds.x0 + bounds.x1) / 2.0;
+    let centre_y = (bounds.y0 + bounds.y1) / 2.0;
+    while let Some(parent) = parents.get(&id) {
+        if let Some(node) = nodes.get(parent) {
+            if let Some(frame) = node.bounds() {
+                if node.role() == accesskit::Role::Window
+                    && (centre_x < frame.x0
+                        || centre_x > frame.x1
+                        || centre_y < frame.y0
+                        || centre_y > frame.y1)
+                {
+                    return false;
+                }
+                if node.role() == accesskit::Role::Pane
+                    && (bounds.x1 <= frame.x0
+                        || bounds.x0 >= frame.x1
+                        || bounds.y1 <= frame.y0
+                        || bounds.y0 >= frame.y1
+                        || centre_y < frame.y0
+                        || centre_y > frame.y1)
+                {
+                    return false;
+                }
+            }
+        }
+        id = *parent;
+    }
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -916,5 +952,42 @@ mod tests {
         ];
         assert_eq!(best_named_region("ajustes", &regions).unwrap().0, "Ajustes internos");
         assert!(best_named_region("terminal", &regions).is_none());
+    }
+
+    #[test]
+    fn pane_clipping_hides_scrolled_rows_below_pane_while_keeping_horizontal_overflow() {
+        let mut pane = accesskit::Node::new(accesskit::Role::Pane);
+        pane.set_bounds(accesskit::Rect::new(1400.0, 42.0, 1920.0, 1048.0));
+        pane.set_children(vec![accesskit::NodeId(2), accesskit::NodeId(3)]);
+        let mut scrolled_row = accesskit::Node::new(accesskit::Role::Button);
+        scrolled_row.set_bounds(accesskit::Rect::new(1478.0, 1075.0, 1552.0, 1107.0));
+        let mut overflow_row = accesskit::Node::new(accesskit::Role::Button);
+        overflow_row.set_bounds(accesskit::Rect::new(1911.0, 444.0, 1945.0, 476.0));
+
+        let nodes = std::collections::HashMap::from([
+            (accesskit::NodeId(1), &pane),
+            (accesskit::NodeId(2), &scrolled_row),
+            (accesskit::NodeId(3), &overflow_row),
+        ]);
+        let parents = std::collections::HashMap::from([
+            (accesskit::NodeId(2), accesskit::NodeId(1)),
+            (accesskit::NodeId(3), accesskit::NodeId(1)),
+        ]);
+        let window = egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1920.0, 1080.0));
+
+        assert!(!element_visible_in_ancestors(
+            accesskit::NodeId(2),
+            scrolled_row.bounds().unwrap(),
+            window,
+            &parents,
+            &nodes,
+        ));
+        assert!(element_visible_in_ancestors(
+            accesskit::NodeId(3),
+            overflow_row.bounds().unwrap(),
+            window,
+            &parents,
+            &nodes,
+        ));
     }
 }

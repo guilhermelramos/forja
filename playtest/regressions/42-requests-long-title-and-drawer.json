@@ -1,0 +1,27 @@
+{
+  "title": "Requests drawer wraps long unbreakable title and URL inside window bounds (#138, #139)",
+  "issue": 138,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Pedidos" },
+    { "m": "ui.wait", "ms": 300 },
+    { "m": "ui.click", "target": "Novo pedido local" },
+    { "m": "ui.click", "x": 1000, "y": 525 },
+    { "m": "ui.type", "text": "reqtitle-superlong-unbreakable-0123456789-abcdefghijklmnopqrstuvwxyz-without-spaces-0123456789" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.type", "text": "https://example.com/very/long/unbreakable/url/path/segment_0123456789_abcdefghijklmnopqrstuvwxyz_without_whitespace" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.wait", "ms": 300 },
+    { "m": "ui.click", "target": "reqtitle-superlong-unbreakable-0123456789-abcdefghijklmnopqrstuvwxyz-without-spaces-0123456789" },
+    { "m": "ui.wait", "ms": 200 },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 12,
+      "present_contains": ["reqtitle-superlong-unbreakable", "https://example.com/very/long"],
+      "no_geometry_issues": true
+    }
+  ]
+}

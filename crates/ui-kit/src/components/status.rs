@@ -19,6 +19,56 @@ pub enum ToastKind {
     Danger,
 }
 
+/// Quebra `text` dentro da largura disponível do `Ui`, inclusive no meio de
+/// sequências contínuas sem espaços (caminhos, URLs, entradas longas).
+pub fn wrapped_label(ui: &mut Ui, text: &str, font: egui::FontId, color: Color32) -> Response {
+    let max_width = ui.available_width().max(1.0);
+    let mut job = egui::text::LayoutJob::single_section(
+        text.to_owned(),
+        egui::TextFormat {
+            font_id: font,
+            color,
+            ..Default::default()
+        },
+    );
+    job.wrap = egui::text::TextWrapping {
+        max_width,
+        max_rows: usize::MAX,
+        break_anywhere: true,
+        ..Default::default()
+    };
+    let galley = ui.painter().layout_job(job);
+    ui.add(egui::Label::new(galley))
+}
+
+/// Exibe `text` em uma linha com reticências quando ultrapassar a largura
+/// disponível, anexando o texto completo em dica ao passar o cursor.
+pub fn truncated_label(ui: &mut Ui, text: &str, font: egui::FontId, color: Color32) -> Response {
+    let max_width = ui.available_width().max(1.0);
+    let mut job = egui::text::LayoutJob::single_section(
+        text.to_owned(),
+        egui::TextFormat {
+            font_id: font,
+            color,
+            ..Default::default()
+        },
+    );
+    job.wrap = egui::text::TextWrapping {
+        max_width,
+        max_rows: 1,
+        break_anywhere: true,
+        overflow_character: Some('…'),
+    };
+    let galley = ui.painter().layout_job(job);
+    let truncated = galley.elided;
+    let response = ui.add(egui::Label::new(galley));
+    if truncated {
+        response.on_hover_text(text)
+    } else {
+        response
+    }
+}
+
 /// Faixa curta. O texto usa `text`; a cor fica na marca da esquerda.
 pub fn toast(ui: &mut Ui, kind: ToastKind, text: &str) -> Response {
     let tokens = paint::tokens(ui);
@@ -33,16 +83,18 @@ pub fn toast(ui: &mut Ui, kind: ToastKind, text: &str) -> Response {
             pad_i8(metrics.pad_y),
         ))
         .show(ui, |ui| {
-            ui.horizontal(|ui| {
+            let max_w = ui.available_width().max(1.0);
+            ui.set_max_width(max_w);
+            ui.horizontal_top(|ui| {
                 let (rect, _) = ui
                     .allocate_exact_size(egui::vec2(4.0, metrics.body + 4.0), egui::Sense::hover());
                 ui.painter()
                     .rect_filled(rect, CornerRadius::same(2), kind_color(&tokens, kind));
-                ui.label(
-                    egui::RichText::new(text)
-                        .font(body_font(&metrics))
-                        .color(tokens.color.text.to_color32()),
-                );
+                ui.vertical(|ui| {
+                    let text_max = ui.available_width().max(1.0);
+                    ui.set_max_width(text_max);
+                    wrapped_label(ui, text, body_font(&metrics), tokens.color.text.to_color32());
+                });
             });
         })
         .response
@@ -66,12 +118,9 @@ pub fn error_notice(
     let metrics = tokens.metrics();
     let mut dismissed = false;
     ui.vertical(|ui| {
-        ui.horizontal_wrapped(|ui| {
-            ui.label(
-                egui::RichText::new(message)
-                    .font(caption_font(&metrics))
-                    .color(tokens.color.danger.to_color32()),
-            );
+        let row_width = ui.available_width().max(1.0);
+        ui.set_max_width(row_width);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
             if let Some(dismiss) = dismiss_label {
                 let button = crate::icon_button(ui, crate::CLOSE).on_hover_text(dismiss);
                 button.widget_info(|| {
@@ -81,6 +130,16 @@ pub fn error_notice(
                     dismissed = true;
                 }
             }
+            ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+                let msg_max = ui.available_width().max(1.0);
+                ui.set_max_width(msg_max);
+                wrapped_label(
+                    ui,
+                    message,
+                    caption_font(&metrics),
+                    tokens.color.danger.to_color32(),
+                );
+            });
         });
         if let Some(detail) = detail.map(str::trim).filter(|text| !text.is_empty()) {
             egui::CollapsingHeader::new(
@@ -91,11 +150,13 @@ pub fn error_notice(
             .id_salt((details_label, message))
             .default_open(false)
             .show(ui, |ui| {
-                ui.label(
-                    egui::RichText::new(detail)
-                        .monospace()
-                        .font(caption_font(&metrics))
-                        .color(tokens.color.text_muted.to_color32()),
+                let detail_max = ui.available_width().max(1.0);
+                ui.set_max_width(detail_max);
+                wrapped_label(
+                    ui,
+                    detail,
+                    egui::FontId::monospace(metrics.caption),
+                    tokens.color.text_muted.to_color32(),
                 );
             });
         }
@@ -233,5 +294,67 @@ fn stage_color(tokens: &Tokens, stage: Stage) -> Color32 {
         Stage::Forging => tokens.color.accent.to_color32(),
         Stage::Review => tokens.color.spark.to_color32(),
         Stage::Ready => tokens.color.ok.to_color32(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use egui::{CentralPanel, Context, FontId, Pos2, RawInput, Rect};
+
+    fn run_in_width(width: f32, mut draw: impl FnMut(&mut Ui)) -> Rect {
+        let ctx = Context::default();
+        crate::fonts::install_fonts(&ctx).expect("fontes do Windows");
+        let input = RawInput {
+            screen_rect: Some(Rect::from_min_size(Pos2::ZERO, egui::vec2(width, 600.0))),
+            ..Default::default()
+        };
+        let mut used = Rect::NOTHING;
+        let _ = ctx.run(input, |ctx| {
+            CentralPanel::default()
+                .frame(Frame::NONE)
+                .show(ctx, |ui| {
+                    ui.set_max_width(width);
+                    draw(ui);
+                    used = ui.min_rect();
+                });
+        });
+        used
+    }
+
+    #[test]
+    fn wrapped_and_truncated_labels_stay_within_width_for_unbreakable_text() {
+        let long = "C:\\forja-missing-folder\\ghost\\999\\a-very-long-unbreakable-segment-0123456789-abcdefghijklmnopqrstuvwxyz";
+        let font = FontId::proportional(13.0);
+
+        let wrapped_rect = run_in_width(160.0, |ui| {
+            let r = wrapped_label(ui, long, font.clone(), Color32::WHITE);
+            assert!(r.rect.width() <= 160.5, "wrapped width {} > 160", r.rect.width());
+        });
+        assert!(wrapped_rect.width() <= 160.5);
+
+        let truncated_rect = run_in_width(160.0, |ui| {
+            let r = truncated_label(ui, long, font.clone(), Color32::WHITE);
+            assert!(r.rect.width() <= 160.5, "truncated width {} > 160", r.rect.width());
+            assert!(r.rect.height() <= 30.0, "truncated should stay single line: {}", r.rect.height());
+        });
+        assert!(truncated_rect.width() <= 160.5);
+    }
+
+    #[test]
+    fn toast_and_error_notice_wrap_within_panel_width() {
+        let long = "Não foi possível completar a operação: https://example.com/a-very-long-unbreakable-path-0123456789-abcdefghijklmnopqrstuvwxyz";
+
+        let toast_rect = run_in_width(280.0, |ui| {
+            let resp = toast(ui, ToastKind::Danger, long);
+            assert!(resp.rect.right() <= 281.0, "toast right {} > 280", resp.rect.right());
+        });
+        assert!(toast_rect.width() <= 281.0);
+
+        let notice_rect = run_in_width(280.0, |ui| {
+            let dismissed = error_notice(ui, long, Some(long), "Detalhes", Some("Fechar"));
+            assert!(!dismissed);
+        });
+        assert!(notice_rect.width() <= 281.0, "notice width {} > 280", notice_rect.width());
     }
 }

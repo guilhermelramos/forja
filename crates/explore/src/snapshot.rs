@@ -34,6 +34,8 @@ pub struct Element {
     pub editable: bool,
     #[serde(default)]
     pub state: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub window_id: Option<u64>,
 }
 
 impl Element {
@@ -151,6 +153,7 @@ mod tests {
                 clickable: true,
                 editable: false,
                 state: vec![],
+                window_id: None,
             },
             Element {
                 id: 2,
@@ -160,6 +163,7 @@ mod tests {
                 clickable: false,
                 editable: false,
                 state: vec![],
+                window_id: None,
             },
         ];
         let b = vec![
@@ -171,6 +175,7 @@ mod tests {
                 clickable: false,
                 editable: false,
                 state: vec![],
+                window_id: None,
             },
             Element {
                 id: 88,
@@ -180,6 +185,7 @@ mod tests {
                 clickable: true,
                 editable: false,
                 state: vec![],
+                window_id: None,
             },
         ];
         assert_eq!(screen_signature(&a), screen_signature(&b));
@@ -192,6 +198,7 @@ mod tests {
             clickable: false,
             editable: false,
             state: vec![],
+            window_id: None,
         }];
         assert_ne!(screen_signature(&a), screen_signature(&c));
     }

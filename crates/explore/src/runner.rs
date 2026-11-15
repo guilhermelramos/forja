@@ -339,6 +339,7 @@ mod tests {
                 clickable: false,
                 editable: false,
                 state: Vec::new(),
+                window_id: None,
             }],
         }
     }

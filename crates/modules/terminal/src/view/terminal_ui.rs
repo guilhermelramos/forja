@@ -31,7 +31,7 @@ pub(super) fn draw_terminal(
     pending_link: &mut Option<(TerminalId, Link)>,
     pending_paste: &mut Option<PendingPaste>,
 ) {
-    if terminal.search.open {
+    if terminal.search.open && ui.available_height() >= 26.0 {
         draw_search(ui, terminal, texts);
     }
     if pending_link
@@ -204,8 +204,9 @@ fn body_after(ui: &egui::Ui, body: Rect) -> Option<Rect> {
 }
 
 fn draw_search(ui: &mut egui::Ui, terminal: &mut Terminal, texts: &UiText) {
-    let field_width = (ui.available_width() - 180.0).clamp(80.0, 220.0);
-    ui.horizontal_wrapped(|ui| {
+    let single_row_only = ui.available_height() < 54.0;
+    let field_width = (ui.available_width() - 210.0).clamp(60.0, 220.0);
+    let mut contents = |ui: &mut egui::Ui| {
         let response = ui.add(
             egui::TextEdit::singleline(&mut terminal.search.query)
                 .hint_text(texts.search_hint.clone())
@@ -252,7 +253,16 @@ fn draw_search(ui: &mut egui::Ui, terminal: &mut Terminal, texts: &UiText) {
             terminal.search.editing = false;
             terminal.focus_request = true;
         }
-    });
+    };
+    if single_row_only {
+        ui.horizontal(|ui| {
+            contents(ui);
+        });
+    } else {
+        ui.horizontal_wrapped(|ui| {
+            contents(ui);
+        });
+    }
 }
 
 fn draw_link_bar(

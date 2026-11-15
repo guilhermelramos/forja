@@ -1,0 +1,18 @@
+{
+  "title": "Foreground dialog window isolates its widgets from background buttons without overlap findings (#94, #105)",
+  "issue": 94,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Clonar" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 2,
+      "present": "Clonar repositório",
+      "window_count_min": 1,
+      "no_geometry_issues": true
+    }
+  ]
+}

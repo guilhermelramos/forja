@@ -10,7 +10,7 @@ use forja_contracts::{RequestItem, RequestKind, RequestState};
 use forja_counter_kit::error_key;
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::Ctx;
-use forja_ui_kit::{button, segmented, text_field, ButtonKind};
+use forja_ui_kit::{button, segmented, text_field, wrapped_label, ButtonKind};
 use std::time::SystemTime;
 
 /// Cópia do estado usada por um quadro. Não guarda lock.
@@ -292,65 +292,96 @@ impl RequestsView {
         let Some(item) = frame.detail.clone() else {
             return;
         };
-        ui.horizontal(|ui| {
-            ui.strong(format!("{}  {}", item.key, item.title));
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if button(ui, ButtonKind::Ghost, &cx.t("request-detail-close")).clicked() {
-                    with_state(&self.shared, |state| {
-                        state.selected = None;
-                        state.detail = None;
+        let tokens = forja_ui_kit::applied_tokens(ui.ctx());
+        let metrics = tokens.metrics();
+        let text_color = tokens.color.text.to_color32();
+        let muted_color = tokens.color.text_muted.to_color32();
+        let body_font = egui::FontId::proportional(metrics.body);
+        let caption_font = egui::FontId::proportional(metrics.caption);
+
+        egui::ScrollArea::vertical()
+            .id_salt("request.drawer.scroll")
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                let max_w = ui.available_width().max(1.0);
+                ui.set_max_width(max_w);
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
+                    if button(ui, ButtonKind::Ghost, &cx.t("request-detail-close")).clicked() {
+                        with_state(&self.shared, |state| {
+                            state.selected = None;
+                            state.detail = None;
+                        });
+                    }
+                    ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
+                        let title_w = ui.available_width().max(1.0);
+                        ui.set_max_width(title_w);
+                        wrapped_label(
+                            ui,
+                            &format!("{}  {}", item.key, item.title),
+                            body_font.clone(),
+                            text_color,
+                        );
                     });
+                });
+                wrapped_label(ui, &row_meta(cx, &item), caption_font.clone(), muted_color);
+                if let Some(url) = &item.url {
+                    wrapped_label(ui, url, caption_font.clone(), muted_color);
+                }
+                ui.add_space(6.0);
+                match item.body.as_deref().map(str::trim).filter(|body| !body.is_empty()) {
+                    Some(body) => {
+                        wrapped_label(ui, body, body_font.clone(), text_color);
+                    }
+                    None => {
+                        wrapped_label(
+                            ui,
+                            &cx.t("request-detail-empty-body"),
+                            body_font.clone(),
+                            muted_color,
+                        );
+                    }
+                }
+                ui.add_space(8.0);
+                self.actions(ui, cx, &item, frame.project_known);
+                ui.add_space(8.0);
+                ui.label(egui::RichText::new(cx.t("request-detail-comments")).strong());
+                if item.comments.is_empty() {
+                    ui.label(egui::RichText::new(cx.t("request-detail-no-comments")).weak());
+                }
+                for comment in &item.comments {
+                    let who = if comment.author.is_empty() {
+                        cx.t("request-local-tag")
+                    } else {
+                        comment.author.clone()
+                    };
+                    wrapped_label(
+                        ui,
+                        &format!("{who}  {}", comment.created_at.clone().unwrap_or_default()),
+                        caption_font.clone(),
+                        muted_color,
+                    );
+                    wrapped_label(ui, comment.body.as_str(), body_font.clone(), text_color);
+                    ui.add_space(4.0);
+                }
+                ui.add(
+                    egui::TextEdit::multiline(&mut self.comment_draft)
+                        .hint_text(cx.t("request-comment-hint"))
+                        .desired_width(f32::INFINITY)
+                        .desired_rows(2),
+                );
+                if button(ui, ButtonKind::Secondary, &cx.t("request-action-comment")).clicked()
+                    && !self.comment_draft.trim().is_empty()
+                {
+                    let body = self.comment_draft.clone();
+                    if commands::comment(cx, &self.shared, &item.counter, &item.key, &body).is_ok() {
+                        self.comment_draft.clear();
+                    }
                 }
             });
-        });
-        ui.label(egui::RichText::new(row_meta(cx, &item)).small().weak());
-        if let Some(url) = &item.url {
-            ui.label(egui::RichText::new(url).small().weak());
-        }
-        ui.add_space(6.0);
-        match item.body.as_deref().map(str::trim).filter(|body| !body.is_empty()) {
-            Some(body) => {
-                ui.label(body);
-            }
-            None => {
-                ui.label(egui::RichText::new(cx.t("request-detail-empty-body")).weak());
-            }
-        }
-        ui.add_space(8.0);
-        self.actions(ui, cx, &item, frame.project_known);
-        ui.add_space(8.0);
-        ui.label(egui::RichText::new(cx.t("request-detail-comments")).strong());
-        if item.comments.is_empty() {
-            ui.label(egui::RichText::new(cx.t("request-detail-no-comments")).weak());
-        }
-        for comment in &item.comments {
-            let who = if comment.author.is_empty() {
-                cx.t("request-local-tag")
-            } else {
-                comment.author.clone()
-            };
-            ui.label(egui::RichText::new(format!("{who}  {}", comment.created_at.clone().unwrap_or_default())).small().weak());
-            ui.label(comment.body.as_str());
-            ui.add_space(4.0);
-        }
-        ui.add(
-            egui::TextEdit::multiline(&mut self.comment_draft)
-                .hint_text(cx.t("request-comment-hint"))
-                .desired_width(f32::INFINITY)
-                .desired_rows(2),
-        );
-        if button(ui, ButtonKind::Secondary, &cx.t("request-action-comment")).clicked()
-            && !self.comment_draft.trim().is_empty()
-        {
-            let body = self.comment_draft.clone();
-            if commands::comment(cx, &self.shared, &item.counter, &item.key, &body).is_ok() {
-                self.comment_draft.clear();
-            }
-        }
     }
 
     fn actions(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, item: &RequestItem, project_known: bool) {
-        ui.horizontal(|ui| {
+        ui.horizontal_wrapped(|ui| {
             let can_forge = project_known || forja_counter_kit::fixtures_enabled();
             ui.add_enabled_ui(can_forge, |ui| {
                 if button(ui, ButtonKind::Primary, &cx.t("request-action-forge")).clicked() {

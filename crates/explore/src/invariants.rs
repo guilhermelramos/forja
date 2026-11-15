@@ -93,6 +93,15 @@ pub fn check_snapshot(
     out
 }
 
+/// Returns human-readable descriptions of any geometry violations in `snapshot`.
+pub(crate) fn geometry_issues(snapshot: &Snapshot) -> Vec<String> {
+    let mut out = Vec::new();
+    check_geometry(snapshot, &snapshot.screen_label(), &[], &mut out);
+    out.into_iter()
+        .map(|v| format!("{}: {}", v.finding.title, v.finding.actual))
+        .collect()
+}
+
 /// Checks invariant 5: pressing `Escape` when at least one `Window` is open must close exactly one.
 pub fn check_escape_window(
     before: &Snapshot,
@@ -401,8 +410,10 @@ fn check_geometry(
             if overlap_x <= 4.0 {
                 continue;
             }
-            if popup_layers[idx_a] != popup_layers[idx_b]
-                || enclosing_windows(a, &window_rects) != enclosing_windows(b, &window_rects)
+            if a.window_id != b.window_id
+                || popup_layers[idx_a] != popup_layers[idx_b]
+                || (a.window_id.is_none()
+                    && enclosing_windows(a, &window_rects) != enclosing_windows(b, &window_rects))
             {
                 continue;
             }
@@ -468,7 +479,7 @@ fn detect_popup_layers(elements: &[Element]) -> Vec<Option<usize>> {
                     && el.rect[2] <= c.rect[2] + 2.0
                     && el.rect[1] >= c.rect[1] - 2.0
                     && el.rect[3] <= c.rect[3] + 2.0
-                    && el.width() >= c.width() - 32.0
+                    && el.width() >= (c.width() * 0.7).max(c.width() - 64.0)
             })
             .map(|(idx, el)| (idx, el.rect[1], el.rect[3]))
             .collect();
@@ -542,6 +553,21 @@ mod tests {
             clickable,
             editable: false,
             state: Vec::new(),
+            window_id: None,
+        }
+    }
+
+    fn el_in_window(
+        id: u64,
+        role: &str,
+        name: &str,
+        rect: [f64; 4],
+        clickable: bool,
+        window_id: Option<u64>,
+    ) -> Element {
+        Element {
+            window_id,
+            ..el(id, role, name, rect, clickable)
         }
     }
 
@@ -645,6 +671,35 @@ mod tests {
         assert!(
             !v.iter().any(|x| x.dedup_key.starts_with("overlap:")),
             "unexpected overlap findings for foreground popup: {v:?}"
+        );
+    }
+
+    #[test]
+    fn foreground_window_buttons_do_not_collide_with_background_buttons() {
+        let s = snap(vec![
+            el_in_window(1, "Window", "Clonar repositório", [300.0, 200.0, 800.0, 400.0], false, None),
+            el_in_window(2, "Button", "Criar", [340.0, 320.0, 410.0, 352.0], true, None),
+            el_in_window(3, "Button", "Clonar", [337.0, 320.0, 412.0, 352.0], true, Some(1)),
+        ]);
+        let v = check_snapshot(&s, "pt-BR", &TranslationDict::default(), &[]);
+        assert!(
+            !v.iter().any(|x| x.dedup_key.starts_with("overlap:")),
+            "background button should not collide with foreground window button: {v:?}"
+        );
+    }
+
+    #[test]
+    fn popup_menu_with_scrollbar_gap_does_not_collide_with_background_button() {
+        let s = snap(vec![
+            el(1, "Button", "Receitas", [1391.0, 979.0, 1464.0, 1011.0], true),
+            el(2, "Unknown", "", [1305.0, 860.0, 1939.0, 1020.0], true),
+            el(3, "Button", "PowerShell 7", [1311.0, 944.0, 1897.0, 976.0], true),
+            el(4, "Button", "WSL  ·  Distribuição padrão", [1311.0, 978.0, 1897.0, 1010.0], true),
+        ]);
+        let v = check_snapshot(&s, "pt-BR", &TranslationDict::default(), &[]);
+        assert!(
+            !v.iter().any(|x| x.dedup_key.starts_with("overlap:")),
+            "scrolled popup item should not collide with narrow background button: {v:?}"
         );
     }
 

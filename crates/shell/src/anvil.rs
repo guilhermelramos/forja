@@ -185,7 +185,13 @@ impl ForjaApp {
                 }
                 ui.add_space(6.0);
                 if let Some(prompt) = &ask_prompt {
-                    ui.label(RichText::new(prompt).strong());
+                    let metrics = tokens.metrics();
+                    forja_ui_kit::wrapped_label(
+                        ui,
+                        prompt,
+                        FontId::proportional(metrics.body),
+                        paint(tokens.color.text),
+                    );
                 }
                 if self.anvil_rail_select {
                     ui.label(self.text("shell.anvil.choose-rail"));
@@ -1124,14 +1130,36 @@ fn anvil_row(ui: &mut egui::Ui, tokens: &Tokens, hit: &Hit, selected: bool) -> e
         );
         title_pos.x += 22.0;
     }
-    ui.painter().text(
-        title_pos,
-        Align2::LEFT_CENTER,
-        &hit.title,
-        font.clone(),
-        paint(tokens.color.text),
-    );
     let right = right_label(hit);
+    let right_width = if right.is_empty() {
+        0.0
+    } else {
+        ui.painter()
+            .layout_no_wrap(right.to_owned(), font.clone(), paint(tokens.color.text_muted))
+            .size()
+            .x
+            + 8.0
+    };
+    let title_max_width = (text.right() - title_pos.x - right_width).max(24.0);
+    let mut title_job = egui::text::LayoutJob::single_section(
+        hit.title.clone(),
+        egui::TextFormat {
+            font_id: font.clone(),
+            color: paint(tokens.color.text),
+            ..Default::default()
+        },
+    );
+    title_job.wrap = egui::text::TextWrapping {
+        max_width: title_max_width,
+        max_rows: 1,
+        break_anywhere: true,
+        overflow_character: Some('…'),
+    };
+    let title_galley = ui.painter().layout_job(title_job);
+    let title_elided = title_galley.elided;
+    let draw_pos = egui::pos2(title_pos.x, title_pos.y - title_galley.size().y * 0.5);
+    ui.painter()
+        .galley(draw_pos, title_galley, paint(tokens.color.text));
     if !right.is_empty() {
         ui.painter().text(
             text.right_center(),
@@ -1141,7 +1169,11 @@ fn anvil_row(ui: &mut egui::Ui, tokens: &Tokens, hit: &Hit, selected: bool) -> e
             paint(tokens.color.text_muted),
         );
     }
-    response
+    if title_elided {
+        response.on_hover_text(&hit.title)
+    } else {
+        response
+    }
 }
 
 /// Column on the right shows a real shortcut chord when bound, or human file/action context.
