@@ -2,7 +2,9 @@
 
 use crate::commands;
 use crate::cost::{self, SpendBook};
-use crate::model::{Assignment, AssignmentState, MusterRun, Note, NoteKind, Task, TaskState};
+use crate::model::{
+    Assignment, AssignmentState, MusterRun, Note, NoteDeliveryState, NoteKind, Task, TaskState,
+};
 use crate::plan::{self, PlanGate};
 use crate::state::{self, Shared};
 use forja_kernel::ui_contract::{egui, View};
@@ -111,6 +113,13 @@ pub const USED_KEYS: &[&str] = &[
     "muster-notice-dismiss",
     "muster.profile-auto",
     "muster.profile-not-installed",
+    "muster.sender-coordinator",
+    "muster.note-state.delivered",
+    "muster.note-state.queued",
+    "muster.note-state.no-helper",
+    "muster.note-target-no-helper",
+    "muster.no-targets",
+    "muster.error.empty-note",
 ];
 
 #[derive(Clone)]
@@ -118,6 +127,13 @@ struct HelperOption {
     id: String,
     name: String,
     installed: bool,
+}
+
+#[derive(Clone)]
+struct NoteTarget {
+    id: String,
+    is_assignment: bool,
+    label: String,
 }
 
 #[derive(Default)]
@@ -1104,51 +1120,24 @@ impl MusterView {
 
     fn inbox(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, run: &str) {
         ui.label(egui::RichText::new(cx.t("muster.inbox")).strong());
-        let notes: Vec<Note> =
-            state::with(&self.shared, |state| state.store.inbox(Some(run), true))
-                .unwrap_or_default();
-        if notes.is_empty() {
-            ui.label(egui::RichText::new(cx.t("muster.no-notes")).weak());
-        }
-        for note in notes {
-            egui::Frame::group(ui.style()).show(ui, |ui| {
-                ui.set_min_width(ui.available_width());
-                ui.horizontal_wrapped(|ui| {
-                    if !note.read {
-                        ui.label(
-                            egui::RichText::new("●")
-                                .color(applied_tokens(ui.ctx()).color.spark.to_color32()),
-                        );
-                    }
-                    ui.label(egui::RichText::new(&note.from).strong());
-                    ui.label(egui::RichText::new(note_kind_label(cx, note.kind)).weak());
-                });
-                ui.label(&note.body);
-                if button(ui, ButtonKind::Ghost, &cx.t("muster.reply")).clicked() {
-                    self.reply_to = Some(note.id.clone());
-                }
-            });
-            if self.reply_to.as_deref() == Some(note.id.as_str()) {
-                text_field(ui, &mut self.reply_body, &cx.t("muster.reply-hint"));
-                if button(ui, ButtonKind::Primary, &cx.t("muster.send")).clicked() {
-                    let mut args = Args::new();
-                    args.insert("note", json!(note.id));
-                    args.insert("body", json!(self.reply_body));
-                    match cx.run_command("muster.reply", args) {
-                        Ok(_) => {
-                            self.notice = None;
-                            self.reply_to = None;
-                            self.reply_body.clear();
-                        }
-                        Err(error) => self.set_error(cx, &error.to_string()),
-                    }
-                }
-            }
-        }
-        ui.separator();
-        ui.label(egui::RichText::new(cx.t("muster.note")).strong());
-        let assignments: Vec<Assignment> = state::with(&self.shared, |state| {
-            state
+        let (notes, task_titles, assignments, tasks) = state::with(&self.shared, |state| {
+            let titles: BTreeMap<String, String> = state
+                .store
+                .tasks
+                .iter()
+                .filter(|task| task.run == run)
+                .map(|task| (task.id.clone(), task.title.clone()))
+                .collect();
+            let notes: Vec<(Note, Option<NoteDeliveryState>)> = state
+                .store
+                .conversation(Some(run))
+                .into_iter()
+                .map(|note| {
+                    let delivery_state = state.store.note_delivery_state(&note);
+                    (note, delivery_state)
+                })
+                .collect();
+            let assignments: Vec<Assignment> = state
                 .store
                 .assignments
                 .iter()
@@ -1162,55 +1151,238 @@ impl MusterView {
                         )
                 })
                 .cloned()
-                .collect()
+                .collect();
+            let tasks: Vec<Task> = state
+                .store
+                .tasks
+                .iter()
+                .filter(|task| task.run == run)
+                .cloned()
+                .collect();
+            (notes, titles, assignments, tasks)
         })
         .unwrap_or_default();
-        if assignments.is_empty() {
-            ui.label(egui::RichText::new(cx.t("muster.no-assignments")).weak());
+
+        if notes.is_empty() {
+            ui.label(egui::RichText::new(cx.t("muster.no-notes")).weak());
+        } else {
+            egui::ScrollArea::vertical()
+                .id_salt(("muster-inbox", run))
+                .max_height(260.0)
+                .show(ui, |ui| {
+                    for (note, delivery_state) in &notes {
+                        self.inbox_note_card(ui, cx, &task_titles, note, *delivery_state);
+                    }
+                });
+        }
+        ui.separator();
+        ui.label(egui::RichText::new(cx.t("muster.note")).strong());
+        let targets = self.note_targets(cx, &task_titles, &assignments, &tasks);
+        if targets.is_empty() {
+            ui.label(egui::RichText::new(cx.t("muster.no-targets")).weak());
             return;
         }
-        let label = self
+        let selected_target = self
             .note_target
             .as_ref()
-            .and_then(|id| assignments.iter().find(|assignment| &assignment.id == id))
-            .map(|assignment| assignment.profile_id.clone())
+            .and_then(|id| targets.iter().find(|target| &target.id == id))
+            .cloned();
+        let label = selected_target
+            .as_ref()
+            .map(|target| target.label.clone())
             .unwrap_or_else(|| cx.t("muster.note-target"));
         egui::ComboBox::from_id_salt("muster-note-target")
             .selected_text(label)
-            .width(ui.available_width().clamp(120.0, 220.0))
+            .width(ui.available_width().clamp(120.0, 260.0))
+            .truncate()
             .show_ui(ui, |ui| {
-                for assignment in &assignments {
+                for target in &targets {
                     ui.selectable_value(
                         &mut self.note_target,
-                        Some(assignment.id.clone()),
-                        format!("{} · {}", assignment.profile_id, assignment.id),
+                        Some(target.id.clone()),
+                        &target.label,
                     );
                 }
             });
         ui.horizontal_wrapped(|ui| {
-            ui.add(
+            let hint = cx.t("muster.note-hint");
+            let input = ui.add(
                 egui::TextEdit::singleline(&mut self.note_body)
-                    .hint_text(cx.t("muster.note-hint"))
+                    .hint_text(&hint)
                     .desired_width((ui.available_width() - 96.0).max(90.0)),
             );
+            input.widget_info(|| {
+                egui::WidgetInfo::labeled(
+                    egui::WidgetType::TextEdit,
+                    ui.is_enabled(),
+                    hint.clone(),
+                )
+            });
+            let enter =
+                input.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
+            if button(ui, ButtonKind::Primary, &cx.t("muster.send")).clicked() || enter {
+                self.submit_note(cx, selected_target.as_ref());
+            }
+        });
+    }
+
+    fn inbox_note_card(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        task_titles: &BTreeMap<String, String>,
+        note: &Note,
+        delivery_state: Option<NoteDeliveryState>,
+    ) {
+        let tokens = applied_tokens(ui.ctx());
+        let incoming = note.to == "coordinator";
+        let sender = if note.from == "coordinator" {
+            cx.t("muster.sender-coordinator")
+        } else {
+            self.helper_label(cx, &note.from)
+        };
+        let task_title = note
+            .task
+            .as_deref()
+            .and_then(|id| task_titles.get(id))
+            .map(String::as_str);
+
+        egui::Frame::group(ui.style()).show(ui, |ui| {
+            ui.set_min_width(ui.available_width());
+            ui.horizontal_wrapped(|ui| {
+                if incoming && !note.read {
+                    ui.label(
+                        egui::RichText::new("●").color(tokens.color.spark.to_color32()),
+                    );
+                }
+                ui.label(egui::RichText::new(sender).strong());
+                if let Some(title) = task_title {
+                    ui.label(egui::RichText::new(title).small().weak());
+                }
+                ui.label(egui::RichText::new(note_kind_label(cx, note.kind)).small().weak());
+                if let Some(state) = delivery_state {
+                    let (text, color) = match state {
+                        NoteDeliveryState::Delivered => (
+                            cx.t("muster.note-state.delivered"),
+                            tokens.color.ok.to_color32(),
+                        ),
+                        NoteDeliveryState::Queued => (
+                            cx.t("muster.note-state.queued"),
+                            tokens.color.spark.to_color32(),
+                        ),
+                        NoteDeliveryState::NoHelper => (
+                            cx.t("muster.note-state.no-helper"),
+                            tokens.color.danger.to_color32(),
+                        ),
+                    };
+                    ui.label(egui::RichText::new(text).small().color(color));
+                }
+            });
+            ui.label(&note.body);
+            if incoming && button(ui, ButtonKind::Ghost, &cx.t("muster.reply")).clicked() {
+                self.reply_to = Some(note.id.clone());
+            }
+        });
+        if incoming && self.reply_to.as_deref() == Some(note.id.as_str()) {
+            text_field(ui, &mut self.reply_body, &cx.t("muster.reply-hint"));
             if button(ui, ButtonKind::Primary, &cx.t("muster.send")).clicked() {
-                let Some(target) = self.note_target.clone() else {
-                    self.notice = Some(cx.t("muster.error.choose-assignment"));
-                    return;
-                };
                 let mut args = Args::new();
-                args.insert("assignment", json!(target));
-                args.insert("body", json!(self.note_body));
-                args.insert("from", json!("coordinator"));
-                match cx.run_command("muster.note", args) {
+                args.insert("note", json!(note.id));
+                args.insert("body", json!(self.reply_body));
+                match cx.run_command("muster.reply", args) {
                     Ok(_) => {
                         self.notice = None;
-                        self.note_body.clear();
+                        self.reply_to = None;
+                        self.reply_body.clear();
                     }
                     Err(error) => self.set_error(cx, &error.to_string()),
                 }
             }
-        });
+        }
+    }
+
+    fn note_targets(
+        &self,
+        cx: &Ctx<'_>,
+        task_titles: &BTreeMap<String, String>,
+        assignments: &[Assignment],
+        tasks: &[Task],
+    ) -> Vec<NoteTarget> {
+        let mut targets = Vec::new();
+        let mut covered_tasks = std::collections::BTreeSet::new();
+        for assignment in assignments {
+            covered_tasks.insert(assignment.task.clone());
+            let task_title = task_titles
+                .get(&assignment.task)
+                .map(String::as_str)
+                .unwrap_or(&assignment.task);
+            let helper_name = self.helper_display_name(cx, &assignment.profile_id);
+            let state_text = if (assignment.terminal_id.is_none()
+                && assignment.session_id.is_none())
+                || matches!(assignment.state, AssignmentState::Stopped)
+            {
+                cx.t("muster.note-target-no-helper")
+            } else {
+                assignment_state_label(cx, assignment.state)
+            };
+            targets.push(NoteTarget {
+                id: assignment.id.clone(),
+                is_assignment: true,
+                label: format!("{task_title} ({helper_name} · {state_text})"),
+            });
+        }
+        for task in tasks {
+            if !covered_tasks.contains(&task.id) {
+                targets.push(NoteTarget {
+                    id: task.id.clone(),
+                    is_assignment: false,
+                    label: format!(
+                        "{} ({})",
+                        task.title,
+                        cx.t("muster.note-target-no-helper")
+                    ),
+                });
+            }
+        }
+        targets
+    }
+
+    fn submit_note(&mut self, cx: &mut Ctx<'_>, target: Option<&NoteTarget>) {
+        let Some(target) = target else {
+            self.notice = Some(cx.t("muster.error.choose-assignment"));
+            return;
+        };
+        if self.note_body.trim().is_empty() {
+            self.notice = Some(cx.t("muster.error.empty-note"));
+            return;
+        }
+        let mut args = Args::new();
+        if target.is_assignment {
+            args.insert("assignment", json!(target.id));
+        } else {
+            args.insert("task", json!(target.id));
+        }
+        args.insert("body", json!(self.note_body));
+        args.insert("from", json!("coordinator"));
+        match cx.run_command("muster.note", args) {
+            Ok(_) => {
+                self.notice = None;
+                self.note_body.clear();
+            }
+            Err(error) => self.set_error(cx, &error.to_string()),
+        }
+    }
+
+    fn helper_display_name(&self, cx: &Ctx<'_>, profile: &str) -> String {
+        let profile = profile.trim();
+        if profile.is_empty() {
+            return cx.t("muster.plan-helper-auto");
+        }
+        self.helper_options
+            .iter()
+            .find(|option| option.id == profile)
+            .map(|option| option.name.clone())
+            .unwrap_or_else(|| profile.to_owned())
     }
 
     fn helper_label(&self, cx: &Ctx<'_>, profile: &str) -> String {

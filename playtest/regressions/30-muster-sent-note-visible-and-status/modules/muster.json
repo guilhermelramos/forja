@@ -1,0 +1,54 @@
+{
+  "runs": [
+    {
+      "id": "run-1",
+      "title": "Revisao de autenticacao",
+      "objective": "Revisar modulo de autenticacao.",
+      "coordinator": "coordinator",
+      "state": "open",
+      "created_ms": 0,
+      "bench_path": "C:/work/forja",
+      "plan_approved": false,
+      "budget_usd": 10.0,
+      "spent_usd": 0.0
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-1",
+      "run": "run-1",
+      "title": "Revisar testes",
+      "spec": "Conferir testes.",
+      "deps": [],
+      "state": "running"
+    },
+    {
+      "id": "task-2",
+      "run": "run-1",
+      "title": "Validar e-mail",
+      "spec": "Conferir e-mail.",
+      "deps": [],
+      "state": "pending"
+    }
+  ],
+  "assignments": [
+    {
+      "id": "assignment-1",
+      "task": "task-1",
+      "run": "run-1",
+      "profile_id": "opencode",
+      "bench_path": "C:/work/forja",
+      "terminal_id": "1",
+      "session_id": null,
+      "mode": "tui",
+      "state": "needs_you",
+      "last_status": "needs_you",
+      "started_ms": 0,
+      "last_event_ms": 0,
+      "retries": 0,
+      "escalated": false
+    }
+  ],
+  "notes": [],
+  "next_id": 2
+}

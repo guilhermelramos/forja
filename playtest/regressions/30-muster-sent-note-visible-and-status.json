@@ -1,0 +1,48 @@
+{
+  "title": "Recado enviado no Mutirão aparece na caixa com estado e títulos humanos (#106)",
+  "issue": 106,
+  "locale": "pt-BR",
+  "seed": "30-muster-sent-note-visible-and-status",
+  "test_helpers": "none",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Mutirão" },
+    { "m": "ui.click", "target": "escolha uma atribuição" },
+    { "m": "ui.click", "target": "Validar e-mail (sem ajudante)" },
+    { "m": "ui.click", "target": "Escreva um recado; ele espera se o ajudante estiver ocupado ou pedindo aprovação." },
+    { "m": "ui.type", "text": "Conferir regex do cadastro" },
+    { "m": "ui.click", "target": "Enviar" },
+    { "m": "ui.click", "target": "Validar e-mail (sem ajudante)" },
+    { "m": "ui.click", "target": "Revisar testes (OpenCode · precisa de você)" },
+    { "m": "ui.click", "target": "Escreva um recado; ele espera se o ajudante estiver ocupado ou pedindo aprovação." },
+    { "m": "ui.type", "text": "Aguarde minha revisao" },
+    { "m": "ui.key", "keys": "Enter" }
+  ],
+  "expect": [
+    {
+      "step": 6,
+      "present": [
+        "Você",
+        "Enviado · sem ajudante",
+        "Validar e-mail",
+        "Conferir regex do cadastro"
+      ],
+      "present_contains": ["\"Validar e-mail\" está sem ajudante ativo."],
+      "absent": ["Nenhum recado."],
+      "absent_contains": ["task-1", "task-2", "assignment-1"]
+    },
+    {
+      "step": 11,
+      "present": [
+        "Enviado · na fila",
+        "Revisar testes",
+        "Aguarde minha revisao",
+        "Enviado · sem ajudante",
+        "Conferir regex do cadastro"
+      ],
+      "present_contains": ["opencode aguardando em \"Revisar testes\""],
+      "absent": ["Nenhum recado."],
+      "absent_contains": ["task-1", "task-2", "assignment-1"]
+    }
+  ]
+}

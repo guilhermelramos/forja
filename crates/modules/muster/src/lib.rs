@@ -619,4 +619,72 @@ mod tests {
         assert!(!msg.contains("helper.launch"), "{msg}");
         assert!(msg.contains("não está instalado"), "{msg}");
     }
+
+    #[test]
+    fn coordinator_note_keeps_state_and_uses_task_title_in_notifications() {
+        let dir = temp_dir();
+        let shared = state::new_shared();
+        let mut runtime = runtime_with(&dir.0, shared.clone());
+        let run = runtime
+            .call_method(
+                "muster.run",
+                Map::from_iter([("title".to_owned(), json!("Revisão"))]),
+            )
+            .unwrap();
+        let run_id = run["id"].as_str().unwrap().to_owned();
+        let task = runtime
+            .call_method(
+                "muster.task",
+                Map::from_iter([
+                    ("run".to_owned(), json!(run_id)),
+                    ("title".to_owned(), json!("Validar e-mail")),
+                ]),
+            )
+            .unwrap();
+        let task_id = task["id"].as_str().unwrap().to_owned();
+
+        let no_helper_res = runtime
+            .call_method(
+                "muster.note",
+                Map::from_iter([
+                    ("task".to_owned(), json!(task_id)),
+                    ("body".to_owned(), json!("Conferir regex")),
+                    ("from".to_owned(), json!("coordinator")),
+                ]),
+            )
+            .unwrap();
+        assert_eq!(no_helper_res["no_helper"], true);
+        assert_eq!(no_helper_res["delivered"], false);
+        assert_eq!(no_helper_res["note"]["no_helper"], true);
+
+        state::with(&shared, |state| {
+            let assignment = state.store.start(&task_id, "opencode", "C:/bench").unwrap();
+            state
+                .store
+                .launched(&assignment.id, "opencode", Some("term-1".into()), None, "tui")
+                .unwrap();
+            state
+                .store
+                .update_status(&assignment.id, forja_contracts::HelperStatus::NeedsYou, "");
+        })
+        .unwrap();
+
+        let queued_res = runtime
+            .call_method(
+                "muster.note",
+                Map::from_iter([
+                    ("task".to_owned(), json!(task_id)),
+                    ("body".to_owned(), json!("Use RFC 5322")),
+                    ("from".to_owned(), json!("coordinator")),
+                ]),
+            )
+            .unwrap();
+        assert_eq!(queued_res["queued"], true);
+        assert_eq!(queued_res["no_helper"], false);
+        assert_eq!(queued_res["note"]["queued"], true);
+
+        let conversation =
+            state::with(&shared, |state| state.store.conversation(Some(&run_id))).unwrap();
+        assert_eq!(conversation.len(), 2);
+    }
 }
