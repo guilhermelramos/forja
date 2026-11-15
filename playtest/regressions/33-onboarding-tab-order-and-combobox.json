@@ -1,0 +1,28 @@
+{
+  "title": "Assistente de boas-vindas percorre conteúdo e rodapé em ordem consistente no Tab (#166)",
+  "issue": 166,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Tab" }
+  ],
+  "expect": [
+    { "step": 0, "focused": "Seguir o Windows" },
+    { "step": 3, "focused": "Seguir o Windows" },
+    { "step": 6, "present_contains": ["Escolha o tema"] },
+    { "step": 7, "focused": "Seguir o Windows" },
+    { "step": 8, "focused": "Voltar" },
+    { "step": 10, "focused": "Fechar" },
+    { "focused": "Seguir o Windows" }
+  ]
+}

@@ -4,6 +4,7 @@
 //! Contratos publicados e consumidos estão em `MODULE.md` e em `design/contracts.md`.
 
 mod commands;
+mod dialogs;
 mod ops;
 mod platform;
 mod state;

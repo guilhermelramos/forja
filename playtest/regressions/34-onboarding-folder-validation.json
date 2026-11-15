@@ -1,0 +1,29 @@
+{
+  "title": "Assistente bloqueia pasta de projetos inválida e explica com human_error (#165)",
+  "issue": 165,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.click", "target": "Avançar" },
+    { "m": "ui.click", "target": "Avançar" },
+    { "m": "ui.click", "target": "Escolher pasta" },
+    { "m": "ui.wait", "ms": 250 },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Ctrl+A" },
+    { "m": "ui.type", "text": "<>:\"/\\|?* esta pasta não existe 🚧" },
+    { "m": "ui.click", "target": "Avançar" },
+    { "m": "ui.click", "target": "Escolher pasta" },
+    { "m": "ui.wait", "ms": 250 },
+    { "m": "ui.click", "target": "Avançar" },
+    { "m": "ui.wait", "ms": 300 }
+  ],
+  "expect": [
+    {
+      "step": 7,
+      "present_contains": ["Onde a Forja procura os projetos?", "caracteres inválidos"]
+    },
+    {
+      "present_contains": ["Ajudantes disponíveis"],
+      "absent": ["Onde a Forja procura os projetos?"]
+    }
+  ]
+}
