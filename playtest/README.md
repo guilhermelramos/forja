@@ -71,11 +71,16 @@ O CI (`.github/workflows/ci.yml`, job `regressions`) executa todas as regressõe
 
 ## Verificar correções de issues
 
-O workflow `.github/workflows/verify.yml` seleciona até 8 issues, da mais antiga
-para a mais nova, com o rótulo `playtest`, `explore` ou `ideia` e um comentário
-do dono do repositório iniciado por `Corrigido na main`, `Tratado na main` ou
-`Concluído na main`. A issue entra quando a correção mais nova é posterior ao
-veredito mais novo; o comentário decisivo não precisa ser o último da thread.
+O workflow `.github/workflows/verify.yml` seleciona até 8 issues com o rótulo
+`playtest`, `explore` ou `ideia` e um comentário do dono do repositório iniciado
+por `Corrigido na main`, `Tratado na main` ou `Concluído na main`. A ordem segue
+o triador: primeiro as issues com `prioridade-5`, depois `prioridade-4`, `3`, `2`
+e `1`, e por último as que não têm rótulo de prioridade; dentro da mesma
+prioridade, a mais antiga vem primeiro. Issues com o rótulo `em-andamento` são
+puladas com uma linha de log, porque um worker ainda está mexendo nelas. A issue
+entra quando a correção mais nova é posterior ao veredito mais novo; o comentário
+decisivo não precisa ser o último da thread. Cada item do JSON selecionado traz
+`priority` (5 a 1, ou `0` quando não há rótulo).
 Issues fechadas também entram quando **já tinham um veredito**, a correção foi
 postada depois do fechamento e o **último evento de fechamento** foi do
 `github-actions[bot]` (consultado em `gh api repos/OWNER/REPO/issues/N/events`).
@@ -120,8 +125,10 @@ A opção `-DryRun` mostra o que o script faria sem alterar issues:
 
 As regras de tamanho, de veredito e de seleção têm testes de fixture que rodam
 sem abrir o app nem tocar no GitHub. O teste de seleção usa o histórico real da
-#13 (fechada por pessoa) e uma variante fechada pelo bot, e roda o
-`apply-verdicts.ps1 -DryRun` contra as duas:
+#13 (fechada por pessoa) e uma variante fechada pelo bot, roda o
+`apply-verdicts.ps1 -DryRun` contra as duas e cobre a escolha por prioridade com
+fixtures (mistura de prioridades, `em-andamento` e sem rótulo), inclusive o
+corte de `MaxIssues` depois da ordenação:
 
 ```powershell
 ./playtest/test-window-size.ps1

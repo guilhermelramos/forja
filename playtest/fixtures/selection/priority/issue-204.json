@@ -1,0 +1,31 @@
+{
+  "number": 204,
+  "title": "[playtest] Fixture prioridade 5 em andamento: não deve ser verificada",
+  "body": "**Tipo:** observation\n\nFixture de seleção por prioridade. A correção na main está aguardando verificação.\n",
+  "state": "OPEN",
+  "createdAt": "2026-11-04T10:00:00Z",
+  "closedAt": null,
+  "labels": [
+    {
+      "name": "playtest"
+    },
+    {
+      "name": "prioridade-5"
+    },
+    {
+      "name": "em-andamento"
+    }
+  ],
+  "url": "https://github.com/guilhermelramos/forja/issues/204",
+  "comments": [
+    {
+      "id": "fixture-204-correction",
+      "author": {
+        "login": "guilhermelramos"
+      },
+      "body": "Corrigido na main (fixture), aguardando verificação.",
+      "createdAt": "2026-11-10T10:00:00Z",
+      "url": "https://github.com/guilhermelramos/forja/issues/204#issuecomment-204"
+    }
+  ]
+}

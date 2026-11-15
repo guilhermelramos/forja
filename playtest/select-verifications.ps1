@@ -41,9 +41,51 @@ foreach ($item in $listed) {
 
 $selected = [System.Collections.Generic.List[object]]::new()
 $eligibleLabels = @("playtest", "explore", "ideia")
-foreach ($listedIssue in ($listedByNumber.Values | Sort-Object { [DateTimeOffset]$_.createdAt })) {
-    $labels = @($listedIssue.labels | ForEach-Object { $_.name })
+$inProgressLabel = "em-andamento"
+$priorityPattern = '^prioridade-([1-5])$'
+
+function Get-IssuePriorityRank($Issue) {
+    $rank = 0
+    foreach ($label in @($Issue.labels)) {
+        if ($null -eq $label) { continue }
+        $name = if ($label -is [string]) { $label } else { [string]$label.name }
+        if ($name -match $priorityPattern) {
+            $value = [int]$Matches[1]
+            if ($value -gt $rank) { $rank = $value }
+        }
+    }
+    return $rank
+}
+
+# Triaged issues are verified highest priority first (prioridade-5 down to
+# prioridade-1, then issues without a priority label); within the same priority,
+# the oldest issue comes first. The number only makes ties deterministic.
+$ordered = @(
+    $listedByNumber.Values |
+        Where-Object { $null -ne $_ } |
+        ForEach-Object {
+            [pscustomobject]@{
+                Issue = $_
+                Number = [int]$_.number
+                Priority = Get-IssuePriorityRank $_
+                CreatedAt = [DateTimeOffset]$_.createdAt
+            }
+        } |
+        Sort-Object -Property `
+            @{ Expression = 'Priority'; Descending = $true },
+            @{ Expression = 'CreatedAt'; Descending = $false },
+            @{ Expression = 'Number'; Descending = $false }
+)
+foreach ($entry in $ordered) {
+    $listedIssue = $entry.Issue
+    $labels = @($listedIssue.labels | ForEach-Object {
+        if ($_ -is [string]) { $_ } else { $_.name }
+    })
     if (-not ($labels | Where-Object { $_ -in $eligibleLabels })) { continue }
+    if ($labels -contains $inProgressLabel) {
+        Write-Host "skip #$($entry.Number): label em-andamento, a worker is still changing it; not verifying"
+        continue
+    }
 
     $detail = & gh issue view $listedIssue.number -R $Repository `
         --json number,title,body,state,labels,comments,url,closedAt | ConvertFrom-Json
@@ -75,6 +117,7 @@ foreach ($listedIssue in ($listedByNumber.Values | Sort-Object { [DateTimeOffset
         body = $detail.body
         url = $detail.url
         labels = $labels
+        priority = [int]$entry.Priority
         state = $detail.state
         recheck = [bool]$pending.recheck
         correction = [pscustomobject]@{
@@ -91,7 +134,15 @@ $outPath = [System.IO.Path]::GetFullPath($Out)
 $parent = Split-Path -Parent $outPath
 if ($parent) { New-Item -ItemType Directory -Force $parent | Out-Null }
 ConvertTo-Json -InputObject @($selected) -Depth 20 | Set-Content $outPath -Encoding utf8
-Write-Host "verification: selected $($selected.Count) issue(s) awaiting verification, oldest first"
+$orderText = if ($selected.Count -gt 0) {
+    ($selected | ForEach-Object {
+        $priorityText = if ($_.priority -gt 0) { "prioridade-$($_.priority)" } else { "sem prioridade" }
+        "#$($_.issue) ($priorityText)"
+    }) -join ', '
+} else {
+    "none"
+}
+Write-Host "verification: selected $($selected.Count) issue(s) awaiting verification, highest priority first and oldest first within the same priority: $orderText"
 if ($env:GITHUB_OUTPUT) {
     $hasIssues = if ($selected.Count -gt 0) { "true" } else { "false" }
     "has_issues=$hasIssues" | Add-Content $env:GITHUB_OUTPUT

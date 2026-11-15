@@ -1,0 +1,28 @@
+{
+  "number": 208,
+  "title": "[playtest] Fixture prioridade 4: correção aguardando verificação",
+  "body": "**Tipo:** observation\n\nFixture de seleção por prioridade. A correção na main está aguardando verificação.\n",
+  "state": "OPEN",
+  "createdAt": "2026-11-06T10:00:00Z",
+  "closedAt": null,
+  "labels": [
+    {
+      "name": "playtest"
+    },
+    {
+      "name": "prioridade-4"
+    }
+  ],
+  "url": "https://github.com/guilhermelramos/forja/issues/208",
+  "comments": [
+    {
+      "id": "fixture-208-correction",
+      "author": {
+        "login": "guilhermelramos"
+      },
+      "body": "Corrigido na main (fixture), aguardando verificação.",
+      "createdAt": "2026-11-10T10:00:00Z",
+      "url": "https://github.com/guilhermelramos/forja/issues/208#issuecomment-208"
+    }
+  ]
+}
