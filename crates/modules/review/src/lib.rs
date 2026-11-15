@@ -303,6 +303,11 @@ fn used_keys() -> Vec<&'static str> {
         "review.notice.rerun",
         "review.notice.generated",
         "review.error.no-bench",
+        "review.error.no-pr",
+        "review.error.no-changes",
+        "review.error.no-check-log",
+        "review.error.bad-origin",
+        "review.error.agent",
         "review.method.refresh.description",
         "review.method.refresh.result",
         "review.method.create.description",
@@ -369,6 +374,28 @@ mod tests {
         let mut args = Args::new();
         args.insert("kind", json!("nonsense"));
         assert!(runtime.run_command("review.generate", args).is_err());
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn raw_review_errors_are_humanized_in_pt_br_and_en() {
+        let dir = temp_dir();
+        let mut rt = runtime(&dir);
+        {
+            let cx = rt.ctx("review");
+            let git_err = commands::humanize_error(&cx, "git command failed");
+            assert!(!git_err.summary.to_lowercase().contains("failed"));
+            assert_eq!(git_err.detail.as_deref(), Some("git command failed"));
+
+            let no_pr = commands::humanize_error(&cx, "open a pull request first");
+            assert!(no_pr.summary.contains("pull request"));
+            assert!(no_pr.detail.is_none());
+        }
+        rt.set_locale(forja_kernel::Locale::En);
+        let cx = rt.ctx("review");
+        let git_err_en = commands::humanize_error(&cx, "git command failed");
+        assert!(!git_err_en.summary.to_lowercase().contains("failed"));
+        assert_eq!(git_err_en.detail.as_deref(), Some("git command failed"));
         let _ = std::fs::remove_dir_all(dir);
     }
 }

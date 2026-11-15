@@ -205,10 +205,12 @@ impl DetailView {
         let tokens = forja_ui_kit::applied_tokens(ui.ctx());
         if let Some(error) = self.state.error() {
             ui.add_space(6.0);
-            ui.label(
-                egui::RichText::new(error)
-                    .small()
-                    .color(c32(tokens.color.danger)),
+            let human = crate::create::humanize_error(cx, &error);
+            forja_ui_kit::error_banner(
+                ui,
+                &human.summary,
+                human.detail.as_deref(),
+                &cx.t("kernel.error.details"),
             );
         }
         if let Some(notice) = self.state.notice() {

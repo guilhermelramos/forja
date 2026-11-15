@@ -677,3 +677,30 @@ fn git_text(bench: &str, args: &[&str]) -> std::result::Result<String, String> {
     }
     Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
 }
+
+/// Converts raw review, agent, and git errors into human-facing summaries.
+pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> forja_kernel::HumanError {
+    let trimmed = raw.trim();
+    match trimmed {
+        "open a pull request first" => {
+            forja_kernel::HumanError::simple(cx.t("review.error.no-pr"))
+        }
+        "there are no changes to describe" => {
+            forja_kernel::HumanError::simple(cx.t("review.error.no-changes"))
+        }
+        "there is no failed check with a log" => {
+            forja_kernel::HumanError::simple(cx.t("review.error.no-check-log"))
+        }
+        "GitHub origin needs owner/repository" => {
+            forja_kernel::HumanError::simple(cx.t("review.error.bad-origin"))
+        }
+        "the agent failed without an error message"
+        | "the agent returned an empty response" => {
+            forja_kernel::HumanError::with_detail(cx.t("review.error.agent"), trimmed)
+        }
+        _ if trimmed.starts_with("the agent failed:") => {
+            forja_kernel::HumanError::with_detail(cx.t("review.error.agent"), trimmed)
+        }
+        _ => forja_kernel::human_error::humanize_ctx(cx, trimmed),
+    }
+}

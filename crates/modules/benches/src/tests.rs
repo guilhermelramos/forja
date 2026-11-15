@@ -551,3 +551,55 @@ fn failed_creation_keeps_the_form_and_shows_the_error() {
     shared.finish_create(None);
     assert!(matches!(shared.dialog(), Dialog::None));
 }
+
+#[test]
+fn bench_errors_are_humanized_without_raw_terms() {
+    let root = temp_dir("humanize-errors");
+    let project_path = repo(&root);
+    let project = forja_contracts::ProjectRef {
+        id: "proj-hum".to_owned(),
+        name: "projeto".to_owned(),
+        path: project_path.display().to_string(),
+    };
+    let mut runtime = Runtime::new(
+        vec![
+            Box::new(BenchModule {
+                state: Shared::new(),
+            }),
+            Box::new(TestProjects { project }),
+        ],
+        RuntimeOptions {
+            data_dir: Some(root.join("data")),
+            user_dir: Some(root.join("user")),
+            locale: Some("pt-BR".to_owned()),
+            wake: None,
+        },
+    )
+    .expect("modules register cleanly");
+
+    {
+        let cx = runtime.ctx("benches");
+        let base_missing = crate::create::humanize_error(&cx, "base branch `master` does not exist");
+        assert!(!base_missing.summary.contains("`master`"));
+        assert!(!base_missing.summary.contains("does not exist"));
+        assert_eq!(
+            base_missing.detail.as_deref(),
+            Some("base branch `master` does not exist")
+        );
+
+        let dirty = crate::create::humanize_error(&cx, "bench has uncommitted changes; confirm force");
+        assert!(dirty.summary.contains("mudanças não salvas"));
+        assert!(dirty.detail.is_none());
+
+        let git_fail = crate::create::humanize_error(&cx, "git worktree add failed: fatal: path already exists");
+        assert!(!git_fail.summary.to_lowercase().contains("failed"));
+        assert!(!git_fail.summary.to_lowercase().contains("fatal:"));
+    }
+
+    runtime.set_locale(forja_kernel::Locale::En);
+    let cx = runtime.ctx("benches");
+    let git_fail_en = crate::create::humanize_error(&cx, "git worktree add failed: Permission denied (os error 5)");
+    assert!(!git_fail_en.summary.to_lowercase().contains("failed"));
+    assert!(!git_fail_en.summary.to_lowercase().contains("os error"));
+    let _ = std::fs::remove_dir_all(root);
+}

@@ -190,13 +190,13 @@ fn finish_create(cx: &mut Ctx<'_>, shared: &Shared, result: Result<Created, Stri
     let created = match result {
         Ok(created) => created,
         Err(error) => {
-            let message = humanize_error(cx, &error);
-            shared.finish_create(Some(message.clone()));
-            shared.set_error(Some(message.clone()));
+            let human = humanize_error(cx, &error);
+            shared.finish_create(Some(error.clone()));
+            shared.set_error(Some(error));
             notify(
                 cx,
                 cx.t("bench.notify.create-failed.title"),
-                message,
+                human.summary,
                 "error",
             );
             return;
@@ -269,11 +269,29 @@ fn finish_create(cx: &mut Ctx<'_>, shared: &Shared, result: Result<Created, Stri
     }
 }
 
-/// Turns the low-level creation errors into the same text the dialog shows.
-pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> String {
-    match raw.trim() {
-        "bench name is required" => cx.t("bench.error.name-required"),
-        "no-commits" => cx.t("bench.error.no-commits"),
-        other => cx.t_args("bench.error.create", &[("detail", other)]),
+/// Turns low-level creation and bench errors into a human summary with optional technical detail.
+pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> forja_kernel::HumanError {
+    let trimmed = raw.trim();
+    match trimmed {
+        "bench name is required" => forja_kernel::HumanError::simple(cx.t("bench.error.name-required")),
+        "no-commits" => forja_kernel::HumanError::simple(cx.t("bench.error.no-commits")),
+        "bench has uncommitted changes; confirm force" => {
+            forja_kernel::HumanError::simple(cx.t("bench.error.uncommitted"))
+        }
+        "detached HEAD has no branch" => {
+            forja_kernel::HumanError::simple(cx.t("bench.error.detached-head"))
+        }
+        "forja.toml has no script to approve" => {
+            forja_kernel::HumanError::simple(cx.t("bench.error.no-scripts"))
+        }
+        _ if trimmed.contains("already uses this folder")
+            || trimmed.contains("bench folder already exists") =>
+        {
+            forja_kernel::HumanError::with_detail(cx.t("bench.error.folder-exists"), trimmed)
+        }
+        _ if trimmed.contains("is not registered") => {
+            forja_kernel::HumanError::with_detail(cx.t("bench.error.project-missing"), trimmed)
+        }
+        _ => forja_kernel::human_error::humanize_ctx(cx, trimmed),
     }
 }

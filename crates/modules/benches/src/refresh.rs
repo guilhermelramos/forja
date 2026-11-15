@@ -62,7 +62,8 @@ fn finish_refresh(
                 let entries = match result {
                     Ok(entries) => entries,
                     Err(error) => {
-                        warnings.push(format!("{}: {error}", project.name));
+                        let human = crate::create::humanize_error(cx, error);
+                        warnings.push(format!("{}: {}", project.name, human.summary));
                         continue;
                     }
                 };

@@ -153,7 +153,13 @@ impl View for HelperPage {
             }
         });
         if let Some(error) = &self.launch_error {
-            ui.label(egui::RichText::new(error).color(egui::Color32::from_rgb(0xE5, 0x53, 0x4B)));
+            let human = forja_kernel::human_error::humanize_ctx(cx, error);
+            forja_ui_kit::error_banner(
+                ui,
+                &human.summary,
+                human.detail.as_deref(),
+                &cx.t("kernel.error.details"),
+            );
         }
         if runs.is_empty() {
             forja_ui_kit::empty_state(ui, forja_ui_kit::HELPERS, &cx.t("helper.view.empty"), None);
@@ -291,7 +297,11 @@ impl View for HelperPage {
                 let mut args = Args::new();
                 args.insert("profile_id", json!(profile_id));
                 if let Err(error) = cx.run_command("helper.launch", args) {
-                    self.launch_error = Some(error.to_string());
+                    let message = match error {
+                        forja_kernel::KernelError::Command { message, .. } => message,
+                        other => other.to_string(),
+                    };
+                    self.launch_error = Some(message);
                 }
             }
             Some(ProfileAction::Chat(profile_id)) => {
@@ -299,7 +309,11 @@ impl View for HelperPage {
                 let mut args = Args::new();
                 args.insert("profile_id", json!(profile_id));
                 if let Err(error) = cx.run_command("chat.open", args) {
-                    self.launch_error = Some(error.to_string());
+                    let message = match error {
+                        forja_kernel::KernelError::Command { message, .. } => message,
+                        other => other.to_string(),
+                    };
+                    self.launch_error = Some(message);
                 } else if cx.registry().command("shell.tab.open").is_some() {
                     let mut tab = Args::new();
                     tab.insert("view_id", json!("chat.tab"));
@@ -365,7 +379,13 @@ impl HelperSettings {
         };
         ui.heading(cx.t("helper.settings.title"));
         if let Some(notice) = &self.notice {
-            ui.label(egui::RichText::new(notice).color(egui::Color32::from_rgb(0xE5, 0x53, 0x4B)));
+            let human = forja_kernel::human_error::humanize_ctx(cx, notice);
+            forja_ui_kit::error_banner(
+                ui,
+                &human.summary,
+                human.detail.as_deref(),
+                &cx.t("kernel.error.details"),
+            );
         }
         let mut changes: Vec<(String, ProfileOverride)> = Vec::new();
         let mut hook_action: Option<HookAction> = None;

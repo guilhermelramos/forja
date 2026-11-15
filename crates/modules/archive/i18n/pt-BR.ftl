@@ -49,3 +49,4 @@ archive-view-delete-confirm = Excluir
 archive-view-cancel = Cancelar
 archive-view-deleted = Sessão movida para a lixeira.
 archive-view-opened = Aberto
+archive-error-invalid-query = O texto da busca tem sintaxe inválida. Tente palavras mais simples.

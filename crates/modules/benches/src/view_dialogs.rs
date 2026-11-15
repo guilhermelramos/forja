@@ -121,10 +121,12 @@ impl View for DialogsView {
                             });
                         }
                         if let Some(error) = &form.error {
-                            ui.label(
-                                egui::RichText::new(error).small().color(c32(
-                                    forja_ui_kit::applied_tokens(ui.ctx()).color.danger,
-                                )),
+                            let human = crate::create::humanize_error(cx, error);
+                            forja_ui_kit::error_banner(
+                                ui,
+                                &human.summary,
+                                human.detail.as_deref(),
+                                &cx.t("kernel.error.details"),
                             );
                         }
                         ui.add_space(8.0);
@@ -180,7 +182,7 @@ impl View for DialogsView {
                             }
                             Err(error) => {
                                 form.creating = false;
-                                form.error = Some(crate::create::humanize_error(cx, &error));
+                                form.error = Some(error);
                             }
                         }
                     }
@@ -218,10 +220,12 @@ impl View for DialogsView {
                         &cx.t("bench.dialog.store.force"),
                     );
                     if let Some(error) = &form.error {
-                        ui.label(
-                            egui::RichText::new(error).small().color(c32(
-                                forja_ui_kit::applied_tokens(ui.ctx()).color.danger,
-                            )),
+                        let human = crate::create::humanize_error(cx, error);
+                        forja_ui_kit::error_banner(
+                            ui,
+                            &human.summary,
+                            human.detail.as_deref(),
+                            &cx.t("kernel.error.details"),
                         );
                     }
                     ui.add_space(8.0);
@@ -315,10 +319,12 @@ impl View for DialogsView {
                             );
                         }
                         if let Some(error) = &form.error {
-                            ui.label(
-                                egui::RichText::new(error).small().color(c32(
-                                    forja_ui_kit::applied_tokens(ui.ctx()).color.danger,
-                                )),
+                            let human = crate::create::humanize_error(cx, error);
+                            forja_ui_kit::error_banner(
+                                ui,
+                                &human.summary,
+                                human.detail.as_deref(),
+                                &cx.t("kernel.error.details"),
                             );
                         }
                         ui.add_space(8.0);
