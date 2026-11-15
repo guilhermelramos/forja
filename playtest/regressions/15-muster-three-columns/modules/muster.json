@@ -1,0 +1,77 @@
+{
+  "runs": [
+    {
+      "id": "run-1",
+      "title": "Revisão de release",
+      "objective": "Entregar a revisão de release com testes e resumo.",
+      "coordinator": "coordinator",
+      "state": "open",
+      "created_ms": 0,
+      "bench_path": "C:/work/forja",
+      "plan_approved": false,
+      "budget_usd": 12.0,
+      "spent_usd": 0.0
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-2",
+      "run": "run-1",
+      "title": "Revisar o índice",
+      "spec": "Conferir o índice e os testes.",
+      "deps": [],
+      "state": "running"
+    },
+    {
+      "id": "task-3",
+      "run": "run-1",
+      "title": "Revisar a página",
+      "spec": "",
+      "deps": ["task-2"],
+      "state": "pending"
+    },
+    {
+      "id": "task-4",
+      "run": "run-1",
+      "title": "Fechar a release",
+      "spec": "",
+      "deps": ["task-2", "task-3"],
+      "state": "pending"
+    }
+  ],
+  "assignments": [
+    {
+      "id": "assignment-5",
+      "task": "task-2",
+      "run": "run-1",
+      "profile_id": "claude-code",
+      "bench_path": "C:/work/forja",
+      "terminal_id": "1",
+      "session_id": null,
+      "mode": "tui",
+      "state": "running",
+      "last_status": "working",
+      "started_ms": 0,
+      "last_event_ms": 0,
+      "retries": 0,
+      "escalated": false
+    }
+  ],
+  "notes": [
+    {
+      "id": "note-6",
+      "run": "run-1",
+      "task": "task-2",
+      "assignment": "assignment-5",
+      "from": "claude-code",
+      "to": "coordinator",
+      "kind": "question",
+      "body": "Posso mexer no índice?",
+      "read": false,
+      "queued": false,
+      "delivered": true,
+      "created_ms": 4102444800000
+    }
+  ],
+  "next_id": 6
+}

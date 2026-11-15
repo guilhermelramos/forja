@@ -1,20 +1,25 @@
 //! Página "Mutirão" no trilho.
 
 use crate::commands;
-use crate::model::{
-    Assignment, AssignmentState, MusterRun, Note, NoteKind, Task, TaskState,
-};
+use crate::cost::{self, SpendBook};
+use crate::model::{Assignment, AssignmentState, MusterRun, Note, NoteKind, Task, TaskState};
+use crate::plan::{self, PlanGate};
 use crate::state::{self, Shared};
 use forja_kernel::ui_contract::{egui, View};
-use forja_kernel::{Args, Ctx};
-use forja_ui_kit::{applied_tokens, button, icon_button, progress_bar, text_field, ButtonKind, CLOSE};
+use forja_kernel::{Args, Ctx, Locale};
+use forja_ui_kit::{
+    applied_tokens, button, icon_button, modal_explicit_close, progress_bar, text_field,
+    ButtonKind, CLOSE,
+};
 use serde_json::json;
+use std::collections::BTreeMap;
 use std::time::{Duration, Instant};
 
 /// Chaves i18n usadas pela view.
 pub const USED_KEYS: &[&str] = &[
     "muster.page.title",
     "muster.page.subtitle",
+    "muster.page-plan",
     "muster.empty",
     "muster.new-run",
     "muster.run-title",
@@ -23,6 +28,19 @@ pub const USED_KEYS: &[&str] = &[
     "muster.plan-approved",
     "muster.plan-pending",
     "muster.plan-approve",
+    "muster.plan-confirm",
+    "muster.plan-view",
+    "muster.plan-summary",
+    "muster.plan-review-title",
+    "muster.plan-review-hint",
+    "muster.plan-task-count",
+    "muster.plan-dep-count",
+    "muster.plan-helper",
+    "muster.plan-helper-auto",
+    "muster.plan-ceiling",
+    "muster.plan-empty",
+    "muster.plan-task-deps",
+    "muster.plan-no-deps",
     "muster.budget",
     "muster.budget-hint",
     "muster.budget-none",
@@ -30,6 +48,15 @@ pub const USED_KEYS: &[&str] = &[
     "muster.spend",
     "muster.spend-hint",
     "muster.spend-add",
+    "muster.cost-title",
+    "muster.cost-auto",
+    "muster.cost-manual",
+    "muster.cost-pending",
+    "muster.cost-shared",
+    "muster.cost-unpriced",
+    "muster.cost-unavailable",
+    "muster.cost-value",
+    "muster.cost-now",
     "muster.cancel",
     "muster.tasks",
     "muster.no-tasks",
@@ -137,6 +164,9 @@ pub struct MusterView {
     notice: Option<String>,
     helper_options: Vec<HelperOption>,
     last_helper_sync: Option<Instant>,
+    plan_gate: PlanGate,
+    spend: SpendBook,
+    spend_run: Option<String>,
 }
 
 impl MusterView {
@@ -165,6 +195,9 @@ impl MusterView {
             notice: None,
             helper_options: Vec::new(),
             last_helper_sync: None,
+            plan_gate: PlanGate::default(),
+            spend: SpendBook::default(),
+            spend_run: None,
         }
     }
 
@@ -188,7 +221,10 @@ impl MusterView {
         let mut parsed: Vec<HelperOption> = items
             .iter()
             .filter_map(|item| {
-                let id = item.get("id").and_then(serde_json::Value::as_str)?.to_owned();
+                let id = item
+                    .get("id")
+                    .and_then(serde_json::Value::as_str)?
+                    .to_owned();
                 let name = item
                     .get("name")
                     .and_then(serde_json::Value::as_str)
@@ -198,11 +234,22 @@ impl MusterView {
                     .get("installed")
                     .and_then(serde_json::Value::as_bool)
                     .unwrap_or(false);
-                Some(HelperOption { id, name, installed })
+                Some(HelperOption {
+                    id,
+                    name,
+                    installed,
+                })
             })
             .collect();
         parsed.sort_by_key(|option| (!option.installed, option.name.to_lowercase()));
         self.helper_options = parsed;
+    }
+
+    fn sync_spend(&mut self, cx: &mut Ctx<'_>, snap: &Snapshot, run: &MusterRun) {
+        let benches = all_benches(run, &snap.assignments);
+        let force = self.spend_run.as_deref() != Some(run.id.as_str());
+        self.spend_run = Some(run.id.clone());
+        self.spend.sync(cx, &benches, force);
     }
 
     fn header(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snapshot) {
@@ -305,193 +352,178 @@ impl MusterView {
         });
     }
 
-    fn run_body(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snapshot) {
-        let Some(run) = snap.runs.iter().find(|run| {
-            self.selected.as_deref() == Some(run.id.as_str())
-        }) else {
-            return;
-        };
+    fn run_heading(&mut self, ui: &mut egui::Ui, cx: &Ctx<'_>, run: &MusterRun) {
         ui.add_space(8.0);
-        ui.label(egui::RichText::new(&run.title).heading());
+        ui.horizontal_wrapped(|ui| {
+            ui.label(egui::RichText::new(&run.title).heading());
+            ui.label(
+                egui::RichText::new(run_state_label(cx, run.state))
+                    .small()
+                    .weak(),
+            );
+        });
         if !run.objective.is_empty() {
             ui.label(egui::RichText::new(&run.objective).weak());
         }
-        self.run_controls(ui, cx, run);
-        let tasks: Vec<&Task> = snap.tasks.iter().filter(|task| task.run == run.id).collect();
-        ui.separator();
-        ui.horizontal(|ui| {
-            ui.label(egui::RichText::new(cx.t("muster.tasks")).strong());
-            if button(ui, ButtonKind::Secondary, &cx.t("muster.new-task")).clicked() {
-                self.new_task = !self.new_task;
-            }
-        });
-        if self.new_task {
-            self.new_task_form(ui, cx, &run.id);
-        }
-        self.sync_helpers(cx);
-        ui.horizontal_wrapped(|ui| {
-            ui.label(egui::RichText::new(cx.t("muster.profile")).small().weak());
-            let auto_label = cx.t("muster.profile-auto");
-            let not_installed = cx.t("muster.profile-not-installed");
-            let selected_label = if self.profile.trim().is_empty() {
-                auto_label.clone()
-            } else if let Some(found) = self.helper_options.iter().find(|opt| opt.id == self.profile)
-            {
-                if found.installed {
-                    found.name.clone()
-                } else {
-                    format!("{} ({not_installed})", found.name)
-                }
-            } else {
-                self.profile.clone()
-            };
-            egui::ComboBox::from_id_salt("muster-profile-picker")
-                .selected_text(selected_label)
-                .width(190.0)
-                .show_ui(ui, |ui| {
-                    if ui
-                        .selectable_label(self.profile.trim().is_empty(), &auto_label)
-                        .clicked()
-                    {
-                        self.profile.clear();
-                    }
-                    for option in &self.helper_options {
-                        let label = if option.installed {
-                            option.name.clone()
-                        } else {
-                            format!("{} ({not_installed})", option.name)
-                        };
-                        if ui
-                            .selectable_label(self.profile == option.id, label)
-                            .clicked()
-                        {
-                            self.profile = option.id.clone();
-                        }
-                    }
-                });
-            ui.label(egui::RichText::new(cx.t("muster.bench")).small().weak());
-            ui.add(
-                egui::TextEdit::singleline(&mut self.bench)
-                    .hint_text("C:/forja/pedido-123")
-                    .desired_width(170.0),
-            );
-            ui.add_enabled(false, egui::Checkbox::new(&mut self.new_bench, cx.t("muster.new-bench")))
-                .on_hover_text(cx.t("muster.error.bench-pending"));
-        });
-        if tasks.is_empty() {
-            ui.label(egui::RichText::new(cx.t("muster.no-tasks")).weak());
-        }
-        for task in tasks {
-            let assignment = snap
-                .assignments
-                .iter()
-                .rev()
-                .find(|assignment| assignment.task == task.id);
-            self.task_row(ui, cx, task, assignment);
-        }
-        ui.separator();
-        ui.label(egui::RichText::new(cx.t("muster.assignments")).strong());
-        let assignments: Vec<&Assignment> = snap
-            .assignments
-            .iter()
-            .filter(|assignment| {
-                assignment.run == run.id
-                    && matches!(
-                        assignment.state,
-                        AssignmentState::Starting
-                            | AssignmentState::Running
-                            | AssignmentState::NeedsYou
-                            | AssignmentState::Idle
-                    )
-            })
-            .collect();
-        if assignments.is_empty() {
-            ui.label(egui::RichText::new(cx.t("muster.no-assignments")).weak());
-        }
-        for assignment in assignments {
-            self.assignment_row(ui, cx, assignment);
-        }
-        ui.separator();
-        self.inbox(ui, cx, &run.id);
     }
 
-    fn run_controls(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, run: &MusterRun) {
-        ui.horizontal_wrapped(|ui| {
-            let (label, color) = if run.plan_approved {
-                (
-                    cx.t("muster.plan-approved"),
-                    applied_tokens(ui.ctx()).color.ok.to_color32(),
-                )
-            } else {
-                (
-                    cx.t("muster.plan-pending"),
-                    applied_tokens(ui.ctx()).color.spark.to_color32(),
-                )
-            };
-            ui.label(egui::RichText::new(label).color(color));
-            if !run.plan_approved
-                && button(ui, ButtonKind::Secondary, &cx.t("muster.plan-approve")).clicked()
-            {
-                let mut args = Args::new();
-                args.insert("run", json!(run.id));
-                match cx.run_command("muster.plan.approve", args) {
-                    Ok(_) => self.notice = None,
-                    Err(error) => self.set_error(cx, &error.to_string()),
+    fn plan_column(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        snap: &Snapshot,
+        run: &MusterRun,
+    ) {
+        egui::ScrollArea::vertical()
+            .id_salt("muster-plan-column")
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                ui.set_min_width(ui.available_width());
+                ui.horizontal_wrapped(|ui| {
+                    ui.label(egui::RichText::new(cx.t("muster.page-plan")).strong());
+                    let (label, color) = plan_state(ui, cx, run);
+                    ui.label(egui::RichText::new(label).small().color(color));
+                });
+                self.plan_summary(ui, cx, snap, run);
+                ui.add_space(6.0);
+                ui.horizontal_wrapped(|ui| {
+                    ui.label(egui::RichText::new(cx.t("muster.tasks")).strong());
+                    if button(ui, ButtonKind::Secondary, &cx.t("muster.new-task")).clicked() {
+                        self.new_task = !self.new_task;
+                    }
+                });
+                if self.new_task {
+                    self.new_task_form(ui, cx, &run.id);
                 }
-            }
-            if run.budget_usd > 0.0 {
-                let ratio = (run.spent_usd / run.budget_usd).clamp(0.0, 1.0) as f32;
-                ui.label(
-                    egui::RichText::new(format!(
-                        "US$ {:.2} / {:.2}",
-                        run.spent_usd, run.budget_usd
-                    ))
+                let tasks: Vec<&Task> = snap
+                    .tasks
+                    .iter()
+                    .filter(|task| task.run == run.id)
+                    .collect();
+                if tasks.is_empty() {
+                    ui.label(egui::RichText::new(cx.t("muster.no-tasks")).weak());
+                }
+                let shared = shared_benches(run, &snap.assignments);
+                for task in tasks {
+                    self.task_row(ui, cx, task, snap, &shared);
+                }
+                ui.add_space(6.0);
+                self.task_pickers(ui, cx);
+            });
+    }
+
+    fn plan_summary(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        snap: &Snapshot,
+        run: &MusterRun,
+    ) {
+        let task_count = snap.tasks.iter().filter(|task| task.run == run.id).count();
+        let dep_count: usize = snap
+            .tasks
+            .iter()
+            .filter(|task| task.run == run.id)
+            .map(|task| task.deps.len())
+            .sum();
+        let helper = self.helper_label(cx, self.profile.trim());
+        let count = cx.t_args(
+            "muster.plan-task-count",
+            &[("count", &task_count.to_string())],
+        );
+        let deps = cx.t_args(
+            "muster.plan-dep-count",
+            &[("count", &dep_count.to_string())],
+        );
+        let ceiling = budget_label(cx, run.budget_usd);
+        let title = cx.t("muster.plan-summary");
+        egui::Frame::group(ui.style()).show(ui, |ui| {
+            ui.set_min_width(ui.available_width());
+            ui.label(egui::RichText::new(&title).small().strong());
+            ui.label(
+                egui::RichText::new(format!("{count} · {deps}"))
+                    .small()
                     .weak(),
+            );
+            ui.label(
+                egui::RichText::new(format!("{}: {helper}", cx.t("muster.plan-helper")))
+                    .small()
+                    .weak(),
+            );
+            ui.horizontal_wrapped(|ui| {
+                ui.label(
+                    egui::RichText::new(format!("{}: ", cx.t("muster.plan-ceiling")))
+                        .small()
+                        .weak(),
                 );
-                progress_bar(ui, ratio);
+                ui.label(egui::RichText::new(ceiling).small());
+                if !run.plan_approved {
+                    if button(ui, ButtonKind::Primary, &cx.t("muster.plan-approve")).clicked() {
+                        self.plan_gate.open();
+                    }
+                } else if button(ui, ButtonKind::Ghost, &cx.t("muster.plan-view")).clicked() {
+                    self.plan_gate.open();
+                }
+            });
+        });
+    }
+
+    fn task_pickers(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
+        ui.add_space(4.0);
+        ui.label(egui::RichText::new(cx.t("muster.profile")).small().weak());
+        let auto_label = cx.t("muster.profile-auto");
+        let not_installed = cx.t("muster.profile-not-installed");
+        let selected_label = if self.profile.trim().is_empty() {
+            auto_label.clone()
+        } else if let Some(found) = self
+            .helper_options
+            .iter()
+            .find(|opt| opt.id == self.profile)
+        {
+            if found.installed {
+                found.name.clone()
             } else {
-                ui.label(egui::RichText::new(cx.t("muster.budget-none")).weak());
+                format!("{} ({not_installed})", found.name)
             }
-        });
-        ui.horizontal_wrapped(|ui| {
-            ui.label(egui::RichText::new(cx.t("muster.budget")).small().weak());
-            ui.add(
-                egui::TextEdit::singleline(&mut self.budget_input)
-                    .hint_text(cx.t("muster.budget-hint"))
-                    .desired_width(100.0),
-            );
-            if button(ui, ButtonKind::Ghost, &cx.t("muster.budget-save")).clicked() {
-                if let Ok(budget) = self.budget_input.trim().parse::<f64>() {
-                    let mut args = Args::new();
-                    args.insert("run", json!(run.id));
-                    args.insert("budget_usd", json!(budget.max(0.0)));
-                    match cx.run_command("muster.budget.set", args) {
-                        Ok(_) => self.notice = None,
-                        Err(error) => self.set_error(cx, &error.to_string()),
+        } else {
+            self.profile.clone()
+        };
+        egui::ComboBox::from_id_salt("muster-profile-picker")
+            .selected_text(selected_label)
+            .width(ui.available_width().clamp(120.0, 190.0))
+            .show_ui(ui, |ui| {
+                if ui
+                    .selectable_label(self.profile.trim().is_empty(), &auto_label)
+                    .clicked()
+                {
+                    self.profile.clear();
+                }
+                for option in &self.helper_options {
+                    let label = if option.installed {
+                        option.name.clone()
+                    } else {
+                        format!("{} ({not_installed})", option.name)
+                    };
+                    if ui
+                        .selectable_label(self.profile == option.id, label)
+                        .clicked()
+                    {
+                        self.profile = option.id.clone();
                     }
                 }
-            }
-            ui.label(egui::RichText::new(cx.t("muster.spend")).small().weak());
-            ui.add(
-                egui::TextEdit::singleline(&mut self.spend_input)
-                    .hint_text(cx.t("muster.spend-hint"))
-                    .desired_width(100.0),
-            );
-            if button(ui, ButtonKind::Ghost, &cx.t("muster.spend-add")).clicked() {
-                if let Ok(usd) = self.spend_input.trim().parse::<f64>() {
-                    let mut args = Args::new();
-                    args.insert("run", json!(run.id));
-                    args.insert("usd", json!(usd));
-                    match cx.run_command("muster.spend", args) {
-                        Ok(_) => {
-                            self.notice = None;
-                            self.spend_input.clear();
-                        }
-                        Err(error) => self.set_error(cx, &error.to_string()),
-                    }
-                }
-            }
-        });
+            });
+        ui.add_space(4.0);
+        ui.label(egui::RichText::new(cx.t("muster.bench")).small().weak());
+        ui.add(
+            egui::TextEdit::singleline(&mut self.bench)
+                .hint_text("C:/forja/pedido-123")
+                .desired_width(ui.available_width().clamp(120.0, 220.0)),
+        );
+        ui.add_enabled(
+            false,
+            egui::Checkbox::new(&mut self.new_bench, cx.t("muster.new-bench")),
+        )
+        .on_hover_text(cx.t("muster.error.bench-pending"));
     }
 
     fn new_task_form(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, run: &str) {
@@ -529,58 +561,50 @@ impl MusterView {
         ui: &mut egui::Ui,
         cx: &mut Ctx<'_>,
         task: &Task,
-        assignment: Option<&Assignment>,
+        snap: &Snapshot,
+        shared: &BTreeMap<String, usize>,
     ) {
+        let assignment = snap
+            .assignments
+            .iter()
+            .rev()
+            .find(|assignment| assignment.task == task.id);
+        let dependencies = plan::dependency_titles(task, &snap.tasks);
         egui::Frame::group(ui.style()).show(ui, |ui| {
             ui.set_min_width(ui.available_width());
-            ui.horizontal(|ui| {
+            ui.horizontal_wrapped(|ui| {
                 ui.label(
                     egui::RichText::new(task_state_label(cx, task.state))
+                        .small()
                         .color(task_state_color(ui, task.state)),
                 );
                 ui.label(egui::RichText::new(&task.title).strong());
-                if !task.deps.is_empty() {
-                    ui.label(
-                        egui::RichText::new(format!(
-                            "{}: {}",
-                            cx.t("muster.task-deps"),
-                            task.deps.join(", ")
-                        ))
-                        .weak(),
-                    );
-                }
-                if let Some(assignment) = assignment {
+            });
+            if !dependencies.is_empty() {
+                ui.label(
+                    egui::RichText::new(cx.t_args(
+                        "muster.plan-task-deps",
+                        &[("deps", &dependencies.join(", "))],
+                    ))
+                    .small()
+                    .weak(),
+                );
+            }
+            if let Some(assignment) = assignment {
+                ui.horizontal_wrapped(|ui| {
                     ui.label(
                         egui::RichText::new(assignment_state_label(cx, assignment.state))
+                            .small()
                             .weak(),
                     );
-                }
-            });
-            let can_start = !matches!(task.state, TaskState::Delivered)
-                && assignment.is_none_or(|assignment| {
-                    matches!(
-                        assignment.state,
-                        AssignmentState::Delivered
-                            | AssignmentState::Failed
-                            | AssignmentState::Blocked
-                            | AssignmentState::Stopped
-                    )
+                    ui.label(
+                        egui::RichText::new(self.helper_label(cx, &assignment.profile_id))
+                            .small()
+                            .monospace(),
+                    );
                 });
-            if can_start
-                && button(ui, ButtonKind::Secondary, &cx.t("muster.start")).clicked()
-            {
-                let mut args = Args::new();
-                args.insert("task", json!(task.id));
-                if !self.profile.trim().is_empty() {
-                    args.insert("profile_id", json!(self.profile.trim()));
-                }
-                if !self.bench.trim().is_empty() {
-                    args.insert("bench_path", json!(self.bench.trim()));
-                }
-                args.insert("new_bench", json!(self.new_bench));
-                match cx.run_command("muster.start", args) {
-                    Ok(_) => self.notice = None,
-                    Err(error) => self.set_error(cx, &error.to_string()),
+                if let Some(cost) = self.assignment_cost(cx, assignment, shared) {
+                    ui.label(egui::RichText::new(cost).small().weak());
                 }
             }
             if !task.spec.is_empty() {
@@ -596,84 +620,505 @@ impl MusterView {
                     .small(),
                 );
             }
+            let can_start = !matches!(task.state, TaskState::Delivered)
+                && assignment.is_none_or(|assignment| {
+                    matches!(
+                        assignment.state,
+                        AssignmentState::Delivered
+                            | AssignmentState::Failed
+                            | AssignmentState::Blocked
+                            | AssignmentState::Stopped
+                    )
+                });
+            if can_start && button(ui, ButtonKind::Secondary, &cx.t("muster.start")).clicked() {
+                let mut args = Args::new();
+                args.insert("task", json!(task.id));
+                if !self.profile.trim().is_empty() {
+                    args.insert("profile_id", json!(self.profile.trim()));
+                }
+                if !self.bench.trim().is_empty() {
+                    args.insert("bench_path", json!(self.bench.trim()));
+                }
+                args.insert("new_bench", json!(self.new_bench));
+                match cx.run_command("muster.start", args) {
+                    Ok(_) => self.notice = None,
+                    Err(error) => self.set_error(cx, &error.to_string()),
+                }
+            }
         });
     }
 
-    fn assignment_row(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, assignment: &Assignment) {
+    fn assignment_cost(
+        &self,
+        cx: &Ctx<'_>,
+        assignment: &Assignment,
+        shared: &BTreeMap<String, usize>,
+    ) -> Option<String> {
+        let info = self.spend.get(&assignment.bench_path)?;
+        if !info.available() {
+            return None;
+        }
+        let mut label = cost_value(cx, info.usd);
+        let count = shared
+            .get(&cost::normalize(&assignment.bench_path))
+            .copied()
+            .unwrap_or(0);
+        if count > 1 {
+            label.push_str(&format!(" · {}", cx.t("muster.cost-shared")));
+        }
+        Some(label)
+    }
+
+    fn assignment_column(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        snap: &Snapshot,
+        run: &MusterRun,
+    ) {
+        egui::ScrollArea::vertical()
+            .id_salt("muster-assignments-column")
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                ui.set_min_width(ui.available_width());
+                ui.label(egui::RichText::new(cx.t("muster.assignments")).strong());
+                let active: Vec<&Assignment> = snap
+                    .assignments
+                    .iter()
+                    .filter(|assignment| assignment.run == run.id)
+                    .filter(|assignment| {
+                        matches!(
+                            assignment.state,
+                            AssignmentState::Starting
+                                | AssignmentState::Running
+                                | AssignmentState::NeedsYou
+                                | AssignmentState::Idle
+                        )
+                    })
+                    .collect();
+                if active.is_empty() {
+                    ui.label(egui::RichText::new(cx.t("muster.no-assignments")).weak());
+                    return;
+                }
+                let shared = shared_benches(run, &snap.assignments);
+                let mut by_helper: BTreeMap<String, Vec<&Assignment>> = BTreeMap::new();
+                for assignment in active {
+                    by_helper
+                        .entry(assignment.profile_id.clone())
+                        .or_default()
+                        .push(assignment);
+                }
+                for (profile, assignments) in by_helper {
+                    ui.add_space(4.0);
+                    ui.label(
+                        egui::RichText::new(if profile.trim().is_empty() {
+                            cx.t("muster.profile-auto")
+                        } else {
+                            self.helper_label(cx, &profile)
+                        })
+                        .strong(),
+                    );
+                    for assignment in assignments {
+                        self.assignment_card(ui, cx, assignment, snap, &shared);
+                    }
+                }
+            });
+    }
+
+    fn assignment_card(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        assignment: &Assignment,
+        snap: &Snapshot,
+        shared: &BTreeMap<String, usize>,
+    ) {
+        let task_title = snap
+            .tasks
+            .iter()
+            .find(|task| task.id == assignment.task)
+            .map(|task| task.title.as_str())
+            .unwrap_or(&assignment.task);
         let bench_label = std::path::Path::new(&assignment.bench_path)
             .file_name()
             .and_then(|name| name.to_str())
             .filter(|name| !name.is_empty())
             .unwrap_or(&assignment.bench_path);
-        ui.horizontal_wrapped(|ui| {
-            ui.label(
-                egui::RichText::new(assignment_state_label(cx, assignment.state))
-                    .color(assignment_state_color(ui, assignment.state)),
-            );
-            ui.label(egui::RichText::new(&assignment.profile_id).monospace());
-            if let Some(terminal) = &assignment.terminal_id {
-                if button(ui, ButtonKind::Ghost, &cx.t("muster.focus")).clicked() {
-                    let mut args = Args::new();
-                    args.insert("terminal_id", json!(terminal));
-                    match cx.run_command("helper.focus", args) {
+        egui::Frame::group(ui.style()).show(ui, |ui| {
+            ui.set_min_width(ui.available_width());
+            ui.horizontal_wrapped(|ui| {
+                ui.label(
+                    egui::RichText::new(assignment_state_label(cx, assignment.state))
+                        .small()
+                        .color(assignment_state_color(ui, assignment.state)),
+                );
+                ui.label(egui::RichText::new(task_title).strong());
+            });
+            ui.horizontal_wrapped(|ui| {
+                ui.label(egui::RichText::new(bench_label).small().weak())
+                    .on_hover_text(&assignment.bench_path);
+                if let Some(terminal) = &assignment.terminal_id {
+                    if button(ui, ButtonKind::Ghost, &cx.t("muster.focus")).clicked() {
+                        let mut args = Args::new();
+                        args.insert("terminal_id", json!(terminal));
+                        match cx.run_command("helper.focus", args) {
+                            Ok(_) => self.notice = None,
+                            Err(error) => self.set_error(cx, &error.to_string()),
+                        }
+                    }
+                    ui.label(
+                        egui::RichText::new(format!("{} {terminal}", cx.t("muster.terminal")))
+                            .small()
+                            .weak(),
+                    );
+                } else if assignment.session_id.is_some()
+                    && button(ui, ButtonKind::Ghost, &cx.t("muster.focus")).clicked()
+                {
+                    if cx.registry().command("shell.bench.focus").is_some() {
+                        let mut focus_bench = Args::new();
+                        focus_bench.insert("path", json!(assignment.bench_path));
+                        let _ = cx.run_command("shell.bench.focus", focus_bench);
+                    }
+                    let mut open_chat = Args::new();
+                    open_chat.insert("view_id", json!("chat.tab"));
+                    match cx.run_command("shell.tab.open", open_chat) {
                         Ok(_) => self.notice = None,
                         Err(error) => self.set_error(cx, &error.to_string()),
                     }
                 }
-                ui.label(
-                    egui::RichText::new(format!("{} {terminal}", cx.t("muster.terminal")))
-                        .weak(),
-                );
-            } else if assignment.session_id.is_some()
-                && button(ui, ButtonKind::Ghost, &cx.t("muster.focus")).clicked()
-            {
-                if cx.registry().command("shell.bench.focus").is_some() {
-                    let mut focus_bench = Args::new();
-                    focus_bench.insert("path", json!(assignment.bench_path));
-                    let _ = cx.run_command("shell.bench.focus", focus_bench);
-                }
-                let mut open_chat = Args::new();
-                open_chat.insert("view_id", json!("chat.tab"));
-                match cx.run_command("shell.tab.open", open_chat) {
-                    Ok(_) => self.notice = None,
-                    Err(error) => self.set_error(cx, &error.to_string()),
-                }
-            }
-            ui.label(egui::RichText::new(bench_label).weak())
-                .on_hover_text(&assignment.bench_path);
+            });
             if let Some(session) = &assignment.session_id {
                 ui.label(
                     egui::RichText::new(format!("{} {session}", cx.t("muster.session")))
+                        .small()
                         .weak(),
                 );
             }
             if assignment.retries > 0 {
                 ui.label(
-                    egui::RichText::new(format!("{}: {}", cx.t("muster.retries"), assignment.retries))
-                        .weak(),
+                    egui::RichText::new(format!(
+                        "{}: {}",
+                        cx.t("muster.retries"),
+                        assignment.retries
+                    ))
+                    .small()
+                    .weak(),
                 );
+            }
+            if let Some(cost) = self.assignment_cost(cx, assignment, shared) {
+                ui.label(egui::RichText::new(cost).small());
             }
         });
     }
 
+    fn inbox_column(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        snap: &Snapshot,
+        run: &MusterRun,
+    ) {
+        egui::ScrollArea::vertical()
+            .id_salt("muster-inbox-column")
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                ui.set_min_width(ui.available_width());
+                self.cost_panel(ui, cx, snap, run);
+                ui.add_space(6.0);
+                ui.separator();
+                self.inbox(ui, cx, &run.id);
+            });
+    }
+
+    fn cost_panel(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        snap: &Snapshot,
+        run: &MusterRun,
+    ) {
+        let benches = run_benches(run, &snap.assignments);
+        let total = self.spend.total(&benches);
+        let pending = total.is_none() && self.spend.any_pending(&benches);
+        ui.label(egui::RichText::new(cx.t("muster.cost-title")).strong());
+        if let Some(total) = total {
+            ui.label(
+                egui::RichText::new(cost_value(cx, total.usd))
+                    .size(22.0)
+                    .strong(),
+            );
+            self.budget_bar(ui, cx, run, total.usd);
+            ui.label(egui::RichText::new(cx.t("muster.cost-auto")).small().weak());
+            if total.unpriced_tokens > 0 {
+                ui.label(
+                    egui::RichText::new(cx.t("muster.cost-unpriced"))
+                        .small()
+                        .color(applied_tokens(ui.ctx()).color.spark.to_color32()),
+                );
+            }
+            if total.pending {
+                ui.label(
+                    egui::RichText::new(cx.t("muster.cost-pending"))
+                        .small()
+                        .weak(),
+                );
+            }
+        } else if pending {
+            ui.label(
+                egui::RichText::new(cx.t("muster.cost-pending"))
+                    .small()
+                    .weak(),
+            );
+        } else {
+            ui.label(
+                egui::RichText::new(cx.t("muster.cost-manual"))
+                    .small()
+                    .weak(),
+            );
+            if !self.spend.contract_available() {
+                ui.label(
+                    egui::RichText::new(cx.t("muster.cost-unavailable"))
+                        .small()
+                        .weak(),
+                );
+            }
+            if run.spent_usd > 0.0 {
+                ui.label(
+                    egui::RichText::new(cost_value(cx, run.spent_usd))
+                        .size(22.0)
+                        .strong(),
+                );
+                self.budget_bar(ui, cx, run, run.spent_usd);
+            }
+            ui.label(egui::RichText::new(cx.t("muster.spend")).small().weak());
+            ui.horizontal_wrapped(|ui| {
+                ui.add(
+                    egui::TextEdit::singleline(&mut self.spend_input)
+                        .hint_text(cx.t("muster.spend-hint"))
+                        .desired_width(90.0),
+                );
+                if button(ui, ButtonKind::Ghost, &cx.t("muster.spend-add")).clicked() {
+                    if let Ok(usd) = self.spend_input.trim().parse::<f64>() {
+                        let mut args = Args::new();
+                        args.insert("run", json!(run.id));
+                        args.insert("usd", json!(usd));
+                        match cx.run_command("muster.spend", args) {
+                            Ok(_) => {
+                                self.notice = None;
+                                self.spend_input.clear();
+                            }
+                            Err(error) => self.set_error(cx, &error.to_string()),
+                        }
+                    }
+                }
+            });
+        }
+        ui.add_space(6.0);
+        ui.label(egui::RichText::new(cx.t("muster.budget")).small().weak());
+        ui.horizontal_wrapped(|ui| {
+            ui.add(
+                egui::TextEdit::singleline(&mut self.budget_input)
+                    .hint_text(cx.t("muster.budget-hint"))
+                    .desired_width(90.0),
+            );
+            if button(ui, ButtonKind::Ghost, &cx.t("muster.budget-save")).clicked() {
+                if let Ok(budget) = self.budget_input.trim().parse::<f64>() {
+                    let mut args = Args::new();
+                    args.insert("run", json!(run.id));
+                    args.insert("budget_usd", json!(budget.max(0.0)));
+                    match cx.run_command("muster.budget.set", args) {
+                        Ok(_) => self.notice = None,
+                        Err(error) => self.set_error(cx, &error.to_string()),
+                    }
+                }
+            }
+        });
+    }
+
+    fn budget_bar(&self, ui: &mut egui::Ui, cx: &Ctx<'_>, run: &MusterRun, spent: f64) {
+        if run.budget_usd > 0.0 {
+            let ratio = (spent / run.budget_usd).clamp(0.0, 1.0) as f32;
+            ui.label(
+                egui::RichText::new(format!(
+                    "{} / {}",
+                    cost_value(cx, spent),
+                    cost_value(cx, run.budget_usd)
+                ))
+                .small()
+                .weak(),
+            );
+            progress_bar(ui, ratio);
+        } else {
+            ui.label(
+                egui::RichText::new(cx.t("muster.budget-none"))
+                    .small()
+                    .weak(),
+            );
+        }
+    }
+
+    fn plan_review(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        snap: &Snapshot,
+        run: &MusterRun,
+    ) {
+        if !self.plan_gate.is_open() {
+            return;
+        }
+        let mut open = true;
+        let mut approve = false;
+        let mut cancel = false;
+        let title = cx.t("muster.plan-review-title");
+        let ctx = ui.ctx().clone();
+        modal_explicit_close(&ctx, &mut open, &title, |ui| {
+            ui.set_min_width(380.0);
+            ui.label(
+                egui::RichText::new(cx.t("muster.plan-review-hint"))
+                    .small()
+                    .weak(),
+            );
+            ui.add_space(6.0);
+            self.plan_details(ui, cx, snap, run);
+            ui.add_space(8.0);
+            ui.horizontal_wrapped(|ui| {
+                if !run.plan_approved
+                    && button(ui, ButtonKind::Primary, &cx.t("muster.plan-confirm")).clicked()
+                {
+                    approve = true;
+                }
+                if button(ui, ButtonKind::Ghost, &cx.t("muster.cancel")).clicked() {
+                    cancel = true;
+                }
+            });
+        });
+        if cancel {
+            open = false;
+        }
+        if !open {
+            self.plan_gate.close();
+        }
+        if approve && self.plan_gate.can_approve() {
+            let mut args = Args::new();
+            args.insert("run", json!(run.id));
+            match cx.run_command("muster.plan.approve", args) {
+                Ok(_) => {
+                    self.notice = None;
+                    self.plan_gate.approved();
+                }
+                Err(error) => self.set_error(cx, &error.to_string()),
+            }
+        }
+    }
+
+    fn plan_details(&self, ui: &mut egui::Ui, cx: &Ctx<'_>, snap: &Snapshot, run: &MusterRun) {
+        ui.label(egui::RichText::new(&run.title).strong());
+        if !run.objective.is_empty() {
+            ui.label(egui::RichText::new(&run.objective).weak());
+        }
+        let tasks: Vec<&Task> = snap
+            .tasks
+            .iter()
+            .filter(|task| task.run == run.id)
+            .collect();
+        let dep_count: usize = tasks.iter().map(|task| task.deps.len()).sum();
+        ui.label(
+            egui::RichText::new(format!(
+                "{} · {}",
+                cx.t_args(
+                    "muster.plan-task-count",
+                    &[("count", &tasks.len().to_string())],
+                ),
+                cx.t_args(
+                    "muster.plan-dep-count",
+                    &[("count", &dep_count.to_string())],
+                )
+            ))
+            .small()
+            .weak(),
+        );
+        ui.separator();
+        if tasks.is_empty() {
+            ui.label(egui::RichText::new(cx.t("muster.plan-empty")).weak());
+        }
+        for (index, task) in tasks.iter().enumerate() {
+            let dependencies = plan::dependency_titles(task, &snap.tasks);
+            let suggested = plan::suggested_profile(task, &snap.assignments, self.profile.trim());
+            egui::Frame::group(ui.style()).show(ui, |ui| {
+                ui.set_min_width(ui.available_width());
+                ui.horizontal_wrapped(|ui| {
+                    ui.label(
+                        egui::RichText::new(format!("{}.", index + 1))
+                            .small()
+                            .weak(),
+                    );
+                    ui.label(egui::RichText::new(&task.title).strong());
+                    ui.label(
+                        egui::RichText::new(task_state_label(cx, task.state))
+                            .small()
+                            .color(task_state_color(ui, task.state)),
+                    );
+                });
+                let deps = if dependencies.is_empty() {
+                    cx.t("muster.plan-no-deps")
+                } else {
+                    cx.t_args(
+                        "muster.plan-task-deps",
+                        &[("deps", &dependencies.join(", "))],
+                    )
+                };
+                ui.label(egui::RichText::new(deps).small().weak());
+                ui.label(
+                    egui::RichText::new(format!(
+                        "{}: {}",
+                        cx.t("muster.plan-helper"),
+                        self.helper_label(cx, suggested)
+                    ))
+                    .small()
+                    .weak(),
+                );
+            });
+        }
+        ui.separator();
+        ui.horizontal_wrapped(|ui| {
+            ui.label(
+                egui::RichText::new(format!("{}:", cx.t("muster.plan-ceiling")))
+                    .small()
+                    .weak(),
+            );
+            ui.label(egui::RichText::new(budget_label(cx, run.budget_usd)).small());
+        });
+        let benches = run_benches(run, &snap.assignments);
+        if let Some(total) = self.spend.total(&benches) {
+            ui.horizontal_wrapped(|ui| {
+                ui.label(
+                    egui::RichText::new(format!("{}:", cx.t("muster.cost-now")))
+                        .small()
+                        .weak(),
+                );
+                ui.label(egui::RichText::new(cost_value(cx, total.usd)).small());
+            });
+        }
+    }
+
     fn inbox(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, run: &str) {
         ui.label(egui::RichText::new(cx.t("muster.inbox")).strong());
-        let notes: Vec<Note> = state::with(&self.shared, |state| {
-            state
-                .store
-                .inbox(Some(run), true)
-        })
-        .unwrap_or_default();
+        let notes: Vec<Note> =
+            state::with(&self.shared, |state| state.store.inbox(Some(run), true))
+                .unwrap_or_default();
         if notes.is_empty() {
             ui.label(egui::RichText::new(cx.t("muster.no-notes")).weak());
         }
         for note in notes {
             egui::Frame::group(ui.style()).show(ui, |ui| {
-                ui.horizontal(|ui| {
+                ui.set_min_width(ui.available_width());
+                ui.horizontal_wrapped(|ui| {
                     if !note.read {
-                        ui.label(egui::RichText::new("●").color(
-                            applied_tokens(ui.ctx()).color.spark.to_color32(),
-                        ));
+                        ui.label(
+                            egui::RichText::new("●")
+                                .color(applied_tokens(ui.ctx()).color.spark.to_color32()),
+                        );
                     }
                     ui.label(egui::RichText::new(&note.from).strong());
                     ui.label(egui::RichText::new(note_kind_label(cx, note.kind)).weak());
@@ -732,6 +1177,7 @@ impl MusterView {
             .unwrap_or_else(|| cx.t("muster.note-target"));
         egui::ComboBox::from_id_salt("muster-note-target")
             .selected_text(label)
+            .width(ui.available_width().clamp(120.0, 220.0))
             .show_ui(ui, |ui| {
                 for assignment in &assignments {
                     ui.selectable_value(
@@ -741,24 +1187,48 @@ impl MusterView {
                     );
                 }
             });
-        text_field(ui, &mut self.note_body, &cx.t("muster.note-hint"));
-        if button(ui, ButtonKind::Primary, &cx.t("muster.send")).clicked() {
-            let Some(target) = self.note_target.clone() else {
-                self.notice = Some(cx.t("muster.error.choose-assignment"));
-                return;
-            };
-            let mut args = Args::new();
-            args.insert("assignment", json!(target));
-            args.insert("body", json!(self.note_body));
-            args.insert("from", json!("coordinator"));
-            match cx.run_command("muster.note", args) {
-                Ok(_) => {
-                    self.notice = None;
-                    self.note_body.clear();
+        ui.horizontal_wrapped(|ui| {
+            ui.add(
+                egui::TextEdit::singleline(&mut self.note_body)
+                    .hint_text(cx.t("muster.note-hint"))
+                    .desired_width((ui.available_width() - 96.0).max(90.0)),
+            );
+            if button(ui, ButtonKind::Primary, &cx.t("muster.send")).clicked() {
+                let Some(target) = self.note_target.clone() else {
+                    self.notice = Some(cx.t("muster.error.choose-assignment"));
+                    return;
+                };
+                let mut args = Args::new();
+                args.insert("assignment", json!(target));
+                args.insert("body", json!(self.note_body));
+                args.insert("from", json!("coordinator"));
+                match cx.run_command("muster.note", args) {
+                    Ok(_) => {
+                        self.notice = None;
+                        self.note_body.clear();
+                    }
+                    Err(error) => self.set_error(cx, &error.to_string()),
                 }
-                Err(error) => self.set_error(cx, &error.to_string()),
             }
+        });
+    }
+
+    fn helper_label(&self, cx: &Ctx<'_>, profile: &str) -> String {
+        let profile = profile.trim();
+        if profile.is_empty() {
+            return cx.t("muster.plan-helper-auto");
         }
+        self.helper_options
+            .iter()
+            .find(|option| option.id == profile)
+            .map(|option| {
+                if option.installed {
+                    option.name.clone()
+                } else {
+                    format!("{} ({})", option.name, cx.t("muster.profile-not-installed"))
+                }
+            })
+            .unwrap_or_else(|| profile.to_owned())
     }
 }
 
@@ -773,14 +1243,25 @@ impl View for MusterView {
             .flatten();
         }
         let snap = snapshot(&self.shared);
-        egui::ScrollArea::vertical()
-            .auto_shrink([false, false])
-            .show(ui, |ui| {
-                self.header(ui, cx, &snap);
-                self.new_run_form(ui, cx);
-                self.run_list(ui, cx, &snap);
-                self.run_body(ui, cx, &snap);
+        self.header(ui, cx, &snap);
+        self.new_run_form(ui, cx);
+        self.run_list(ui, cx, &snap);
+        let selected = snap
+            .runs
+            .iter()
+            .find(|run| self.selected.as_deref() == Some(run.id.as_str()));
+        if let Some(run) = selected {
+            self.run_heading(ui, cx, run);
+            self.sync_helpers(cx);
+            self.sync_spend(cx, &snap, run);
+            ui.add_space(4.0);
+            ui.columns(3, |columns| {
+                self.plan_column(&mut columns[0], cx, &snap, run);
+                self.assignment_column(&mut columns[1], cx, &snap, run);
+                self.inbox_column(&mut columns[2], cx, &snap, run);
             });
+            self.plan_review(ui, cx, &snap, run);
+        }
     }
 }
 
@@ -790,6 +1271,15 @@ fn run_state_label(cx: &Ctx<'_>, state: crate::model::RunState) -> String {
         crate::model::RunState::Done => "muster.run-done",
         crate::model::RunState::Failed => "muster.run-failed",
     })
+}
+
+fn plan_state(ui: &egui::Ui, cx: &Ctx<'_>, run: &MusterRun) -> (String, egui::Color32) {
+    let tokens = applied_tokens(ui.ctx());
+    if run.plan_approved {
+        (cx.t("muster.plan-approved"), tokens.color.ok.to_color32())
+    } else {
+        (cx.t("muster.plan-pending"), tokens.color.spark.to_color32())
+    }
 }
 
 fn task_state_label(cx: &Ctx<'_>, state: TaskState) -> String {
@@ -814,17 +1304,72 @@ fn assignment_state_label(cx: &Ctx<'_>, state: AssignmentState) -> String {
 fn assignment_state_color(ui: &egui::Ui, state: AssignmentState) -> egui::Color32 {
     let tokens = applied_tokens(ui.ctx());
     match state {
-        AssignmentState::Starting | AssignmentState::Idle => {
-            tokens.color.text_muted.to_color32()
-        }
+        AssignmentState::Starting | AssignmentState::Idle => tokens.color.text_muted.to_color32(),
         AssignmentState::Running => tokens.color.info.to_color32(),
         AssignmentState::NeedsYou => tokens.color.spark.to_color32(),
         AssignmentState::Delivered => tokens.color.ok.to_color32(),
-        AssignmentState::Failed | AssignmentState::Blocked => {
-            tokens.color.danger.to_color32()
-        }
+        AssignmentState::Failed | AssignmentState::Blocked => tokens.color.danger.to_color32(),
         AssignmentState::Stopped => tokens.color.text_muted.to_color32(),
     }
+}
+
+fn cost_value(cx: &Ctx<'_>, usd: f64) -> String {
+    let amount = match cx.i18n().locale() {
+        Locale::PtBr => format!("{usd:.2}").replace('.', ","),
+        Locale::En => format!("{usd:.2}"),
+    };
+    cx.t_args("muster.cost-value", &[("amount", &amount)])
+}
+
+fn budget_label(cx: &Ctx<'_>, usd: f64) -> String {
+    if usd > 0.0 {
+        cost_value(cx, usd)
+    } else {
+        cx.t("muster.budget-none")
+    }
+}
+
+fn all_benches(run: &MusterRun, assignments: &[Assignment]) -> Vec<String> {
+    let mut paths = Vec::new();
+    if let Some(bench) = &run.bench_path {
+        paths.push(bench.clone());
+    }
+    for assignment in assignments
+        .iter()
+        .filter(|assignment| assignment.run == run.id)
+    {
+        paths.push(assignment.bench_path.clone());
+    }
+    cost::distinct_benches(paths)
+}
+
+fn run_benches(run: &MusterRun, assignments: &[Assignment]) -> Vec<String> {
+    let mut paths = Vec::new();
+    if let Some(bench) = &run.bench_path {
+        paths.push(bench.clone());
+    }
+    for assignment in assignments
+        .iter()
+        .filter(|assignment| assignment.run == run.id)
+    {
+        paths.push(assignment.bench_path.clone());
+    }
+    cost::unique_benches(paths)
+}
+
+/// Quantas atribuições usam cada bancada, para avisar quando o custo é da
+/// bancada inteira e não só daquela tarefa.
+fn shared_benches(run: &MusterRun, assignments: &[Assignment]) -> BTreeMap<String, usize> {
+    let mut counts = BTreeMap::new();
+    for assignment in assignments
+        .iter()
+        .filter(|assignment| assignment.run == run.id)
+    {
+        *counts
+            .entry(cost::normalize(&assignment.bench_path))
+            .or_insert(0) += 1;
+    }
+    counts
 }
 
 /// Passo da barra de status: tenta entregar recados na fila no intervalo
@@ -902,13 +1447,23 @@ pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> String {
     if lower.contains("disabled") || lower.contains("desativad") {
         return cx.t("muster.error.disabled");
     }
-    if lower.contains("unknown command") || lower.contains("unavailable") || lower.contains("indispon") {
+    if lower.contains("unknown command")
+        || lower.contains("unavailable")
+        || lower.contains("indispon")
+    {
         return cx.t_args("muster.error.unavailable", &[("detail", trimmed)]);
     }
-    if lower.contains("not found") || lower.contains("nao encontrado") || lower.contains("não encontrado") {
+    if lower.contains("not found")
+        || lower.contains("nao encontrado")
+        || lower.contains("não encontrado")
+    {
         return cx.t_args("muster.error.not-found", &[("detail", trimmed)]);
     }
-    if lower.contains("ajudante") || lower.contains("plano") || lower.contains("teto") || lower.contains("bancada") {
+    if lower.contains("ajudante")
+        || lower.contains("plano")
+        || lower.contains("teto")
+        || lower.contains("bancada")
+    {
         return trimmed.to_owned();
     }
     cx.t_args("muster.error.command", &[("detail", trimmed)])

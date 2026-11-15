@@ -1,8 +1,9 @@
 //! Comandos, RPC e efeitos externos do Mutirão.
 
+use crate::cost;
 use crate::delivery::{self, Delivery};
 use crate::model::{
-    AssignmentState, HandoffResult, MusterRun, NoteKind, TaskState,
+    Assignment, AssignmentState, HandoffResult, MusterRun, NoteKind, TaskState,
 };
 use crate::preamble::helper_preamble;
 use crate::state::{self, with, Shared};
@@ -369,7 +370,9 @@ fn start(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kernel
             "o plano do mutirão precisa ser aprovado antes de iniciar".to_owned(),
         ));
     }
-    if run.budget_usd > 0.0 && run.spent_usd >= run.budget_usd {
+    let assignments = with(shared, |state| state.store.assignments.clone()).unwrap_or_default();
+    let spent = automatic_spend_usd(cx, &run, &assignments).unwrap_or(run.spent_usd);
+    if run.budget_usd > 0.0 && spent >= run.budget_usd {
         return Err(KernelError::Message(format!(
             "o teto de US$ {:.2} do mutirão já foi atingido",
             run.budget_usd
@@ -832,6 +835,44 @@ fn read_terminal(cx: &mut Ctx<'_>, terminal_id: &str) -> Option<String> {
     cx.run_command("terminal.read", args)
         .ok()
         .and_then(|value| value.get("text").and_then(Value::as_str).map(str::to_owned))
+}
+
+/// Custo do mutirão lido do contrato `usage.spend`, quando o módulo Uso está
+/// disponível. As bancadas aninhadas contam uma vez só.
+fn automatic_spend_usd(
+    cx: &mut Ctx<'_>,
+    run: &MusterRun,
+    assignments: &[Assignment],
+) -> Option<f64> {
+    cx.registry().command("usage.spend")?;
+    let mut paths = Vec::new();
+    if let Some(bench) = &run.bench_path {
+        paths.push(bench.clone());
+    }
+    for assignment in assignments
+        .iter()
+        .filter(|assignment| assignment.run == run.id)
+    {
+        paths.push(assignment.bench_path.clone());
+    }
+    let mut total = 0.0;
+    let mut any = false;
+    for bench in cost::unique_benches(paths) {
+        let mut args = Args::new();
+        args.insert("project", json!(bench));
+        args.insert("period", json!("all"));
+        let Ok(value) = cx.run_command("usage.spend", args) else {
+            continue;
+        };
+        let Some(info) = cost::parse(&value) else {
+            continue;
+        };
+        if info.available() {
+            any = true;
+            total += info.usd;
+        }
+    }
+    any.then_some(total)
 }
 
 fn current_bench(cx: &mut Ctx<'_>) -> Option<Value> {
