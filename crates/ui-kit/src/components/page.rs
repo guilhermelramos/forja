@@ -1,6 +1,6 @@
 //! Cabeçalho de página e estado vazio. Os rótulos vêm de quem chama.
 
-use eframe::egui::{Align, Layout, Response, RichText, Ui};
+use eframe::egui::{self, Align, Align2, Layout, Response, RichText, Sense, Ui};
 
 use super::button::{button, ButtonKind};
 use crate::icon;
@@ -50,7 +50,15 @@ pub fn empty_state(ui: &mut Ui, glyph: &str, message: &str, action: Option<&str>
     let mut response = None;
     ui.vertical_centered(|ui| {
         ui.add_space(metrics.gap * 2.0);
-        ui.label(RichText::new(glyph).font(icon::font_id(28.0)).color(muted));
+        // Pintura direta: um ícone PUA em ui.label() entra na árvore de acessibilidade como rótulo vazio/glifo.
+        let (icon_rect, _) = ui.allocate_exact_size(egui::vec2(28.0, 28.0), Sense::hover());
+        ui.painter().text(
+            icon_rect.center(),
+            Align2::CENTER_CENTER,
+            glyph,
+            icon::font_id(28.0),
+            muted,
+        );
         ui.label(RichText::new(message).color(muted));
         if let Some(action) = action {
             ui.add_space(metrics.gap);

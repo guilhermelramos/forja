@@ -1,6 +1,6 @@
 //! Chrome da aba de terminal: abas, divisores e confirmações.
 
-use super::chrome::{c32, icon_button, recipes_menu, shell_menu, tab_chip, TabChip};
+use super::chrome::{c32, draw_pane_header, HeaderControl, TabInfo};
 use super::terminal_ui::draw_terminal;
 use super::{UiText, ViewAction};
 use crate::core::{CloseTarget, Hub, PendingPaste};
@@ -176,10 +176,14 @@ pub fn draw(
 /// menor. `f32::clamp` entra em pânico quando `min > max`, então o limite
 /// superior nunca pode ficar abaixo do inferior. Refs #70, #71.
 fn split_bounds(min_a: f32, min_b: f32, available: f32) -> (f32, f32) {
-    if available > 0.0 && available >= min_a + min_b {
+    let min_sum = min_a + min_b;
+    if available > 0.0 && available >= min_sum {
         let lower = (min_a / available).clamp(0.0, 1.0);
         let upper = (1.0 - min_b / available).max(lower).min(1.0);
         (lower, upper)
+    } else if available > 0.0 && min_sum > 0.0 {
+        let share = (min_a / min_sum).clamp(0.0, 1.0);
+        (share, share)
     } else {
         (0.5, 0.5)
     }
@@ -343,80 +347,63 @@ fn draw_node(
                 |ui| {
                     ui.set_clip_rect(inner.intersect(ui.clip_rect()));
                     ui.spacing_mut().item_spacing = egui::vec2(4.0, 3.0);
-                    let mut close_tab = None;
-                    // Quebra de linha: com o painel estreito, o grupo de ícones e menus desce em vez de sair da área.
-                    ui.horizontal_wrapped(|ui| {
-                        ui.spacing_mut().item_spacing.x = 3.0;
-                        for (index, terminal_id) in tabs.iter().enumerate() {
-                            let Some(terminal) = terminals.get(terminal_id) else {
-                                continue;
-                            };
-                            let selected = index == *active;
-                            let (response, close) = tab_chip(
-                                ui,
-                                &TabChip {
-                                    tokens,
-                                    title: &terminal.title(),
-                                    alive: terminal.alive(),
-                                    has_error: terminal.error.is_some(),
-                                    is_helper: helper_terminals.contains(terminal_id),
-                                    selected,
-                                    terminal: *terminal_id,
-                                    texts,
-                                },
-                            );
-                            if close || response.middle_clicked() {
-                                close_tab = Some(*terminal_id);
-                            } else if response.clicked() {
-                                *active = index;
-                                *focused = *pane;
-                                if let Some(terminal) = terminals.get_mut(terminal_id) {
-                                    terminal.focus_request = true;
-                                }
-                            }
-                        }
-                        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, "+")
-                            .on_hover_text(texts.new_tab.clone())
-                            .clicked()
+                    let tab_info: Vec<TabInfo> = tabs
+                        .iter()
+                        .filter_map(|id| {
+                            terminals.get(id).map(|t| TabInfo {
+                                id: *id,
+                                title: t.title(),
+                                alive: t.alive(),
+                                has_error: t.error.is_some(),
+                                is_helper: helper_terminals.contains(id),
+                            })
+                        })
+                        .collect();
+                    let outcome = draw_pane_header(
+                        ui,
+                        tokens,
+                        texts,
+                        &tab_info,
+                        *active,
+                        recipes,
+                        wsl,
+                    );
+                    if outcome.focus_pane {
+                        *focused = *pane;
+                    }
+                    if let Some(index) = outcome.select_tab {
+                        *active = index;
+                        if let Some(terminal) = tabs.get(index).and_then(|id| terminals.get_mut(id))
                         {
-                            *new_tab = true;
-                            *new_tab_shell = None;
+                            terminal.focus_request = true;
                         }
-                        ui.horizontal(|ui| {
-                            if icon_button(ui, forja_ui_kit::CLOSE, &texts.close_pane).clicked() {
-                                *focused = *pane;
-                                controls.push(Control::ClosePane);
-                            }
-                            if icon_button(ui, forja_ui_kit::SPLIT_DOWN, &texts.split_down).clicked()
-                            {
-                                *focused = *pane;
+                    }
+                    if outcome.new_tab {
+                        *new_tab = true;
+                        *new_tab_shell = outcome.new_tab_shell;
+                    }
+                    if let Some(recipe) = outcome.run_recipe {
+                        *run_recipe = Some(recipe);
+                    }
+                    if outcome.toggle_search {
+                        if let Some(terminal) =
+                            tabs.get(*active).and_then(|id| terminals.get_mut(id))
+                        {
+                            terminal.toggle_search();
+                        }
+                    }
+                    if let Some(control) = outcome.control {
+                        match control {
+                            HeaderControl::ClosePane => controls.push(Control::ClosePane),
+                            HeaderControl::SplitDown => {
                                 controls.push(Control::Split(SplitDir::Rows));
                             }
-                            if icon_button(ui, forja_ui_kit::SPLIT_RIGHT, &texts.split_right)
-                                .clicked()
-                            {
-                                *focused = *pane;
+                            HeaderControl::SplitRight => {
                                 controls.push(Control::Split(SplitDir::Columns));
                             }
-                            if icon_button(ui, forja_ui_kit::SEARCH, &texts.search).clicked() {
-                                if let Some(terminal) = tabs
-                                    .get(*active)
-                                    .and_then(|id| terminals.get_mut(id))
-                                {
-                                    terminal.toggle_search();
-                                }
-                            }
-                            recipes_menu(ui, texts, recipes, run_recipe);
-                            shell_menu(
-                                ui,
-                                texts,
-                                wsl,
-                                new_tab,
-                                new_tab_shell,
-                            );
-                        });
-                    });
-                    if let Some(terminal_id) = close_tab {
+                        }
+                    }
+                    if let Some(terminal_id) = outcome.close_tab {
                         close_targets.push(CloseTarget::Tab(*pane, terminal_id));
                     }
                     ui.add_space(2.0);
@@ -579,5 +566,11 @@ mod tests {
     fn too_small_pane_keeps_the_default_ratio() {
         assert_eq!(split_bounds(140.0, 140.0, 200.0), (0.5, 0.5));
         assert_eq!(split_bounds(140.0, 140.0, 0.0), (0.5, 0.5));
+    }
+
+    #[test]
+    fn overloaded_asymmetric_split_allocates_proportionally() {
+        let (lower, upper) = split_bounds(120.0, 360.0, 400.0);
+        assert_eq!((lower, upper), (0.25, 0.25));
     }
 }

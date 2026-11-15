@@ -1,0 +1,17 @@
+{
+  "title": "Theme popup opens compact without overlapping top extensions button (#88)",
+  "issue": 88,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Seguir o Windows" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 1,
+      "present": ["Escuro", "Claro", "Painéis de extensões"],
+      "window_count": 0
+    }
+  ]
+}

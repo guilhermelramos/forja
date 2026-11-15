@@ -1,0 +1,24 @@
+{
+  "title": "Recipes and Shell popup menus keep toolbar buttons clickable (#89, #95)",
+  "issue": 89,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.click", "target": "Receitas" },
+    { "m": "ui.click", "target": "Shell" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 4,
+      "present": ["+", "Shell"]
+    },
+    {
+      "step": 5,
+      "present": ["PowerShell 7", "Prompt de comando"]
+    }
+  ]
+}

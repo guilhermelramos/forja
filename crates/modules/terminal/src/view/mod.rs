@@ -35,6 +35,7 @@ pub struct UiText {
     pub recipes: String,
     pub shell: String,
     pub new_tab: String,
+    pub more: String,
     pub split_right: String,
     pub split_down: String,
     pub max_panes: String,
@@ -98,6 +99,7 @@ impl UiText {
             recipes: cx.t("terminal.view.recipes"),
             shell: cx.t("terminal.view.shell"),
             new_tab: cx.t("terminal.view.new-tab"),
+            more: cx.t("terminal.view.more"),
             split_right: cx.t("terminal.view.split-right"),
             split_down: cx.t("terminal.view.split-down"),
             max_panes: cx.t_args(
