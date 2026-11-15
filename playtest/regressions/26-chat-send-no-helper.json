@@ -2,6 +2,7 @@
   "title": "Enviar sem ajudante explica como escolher ou instalar (#120, #123)",
   "issue": 123,
   "locale": "pt-BR",
+  "test_helpers": "none",
   "steps": [
     { "m": "ui.key", "keys": "Escape" },
     { "m": "ui.click", "target": "Ajudante (chat)" },

@@ -113,6 +113,7 @@ pub fn run(config: &ExploreConfig) -> Result<ExploreSummary, String> {
             config.locale.clone(),
             config.out_dir.clone(),
             pick_dir,
+            None,
         )?)
     } else {
         None
