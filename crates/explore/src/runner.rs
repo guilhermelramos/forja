@@ -341,6 +341,7 @@ mod tests {
                 state: Vec::new(),
                 window_id: None,
             }],
+            frames: 0,
         }
     }
 

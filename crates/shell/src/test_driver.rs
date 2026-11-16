@@ -68,6 +68,8 @@ pub struct Driver {
     pointer: Pos2,
     log: Option<std::fs::File>,
     started: Instant,
+    /// Frames drawn since the app started; reported as `frames` in every reply.
+    frames: u64,
 }
 
 impl Driver {
@@ -88,6 +90,7 @@ impl Driver {
             pointer: Pos2::new(1.0, 1.0),
             log,
             started: Instant::now(),
+            frames: 0,
         }
     }
 
@@ -299,6 +302,7 @@ impl Driver {
 
     /// Advances waits, screenshots and replies; called at the end of each frame.
     pub fn tick(&mut self, ctx: &egui::Context) {
+        self.frames += 1;
         loop {
             match self.steps.front_mut() {
                 None => return,
@@ -308,8 +312,9 @@ impl Driver {
                         *frames -= 1;
                         break;
                     }
-                    if Instant::now() < *until {
-                        ctx.request_repaint_after(Duration::from_millis(30));
+                    let now = Instant::now();
+                    if now < *until {
+                        ctx.request_repaint_after(until.saturating_duration_since(now));
                         return;
                     }
                     self.steps.pop_front();
@@ -413,6 +418,7 @@ impl Driver {
         let screen = ctx.content_rect();
         let mut result = json!({
             "window": { "width": (screen.width() * ppp).round(), "height": (screen.height() * ppp).round() },
+            "frames": self.frames,
             "changes": {
                 "appeared": appeared,
                 "disappeared": disappeared,

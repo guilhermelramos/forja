@@ -12,7 +12,6 @@ use chrono::{Local, TimeZone, Utc};
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::{Args, Ctx, SettingValue};
 use forja_ui_kit::{button, segmented, text_field, ButtonKind};
-use std::time::Duration;
 
 /// Execuções mostradas no histórico da página.
 const HISTORY_SHOWN: usize = 30;
@@ -340,7 +339,9 @@ fn routine_field(ui: &mut egui::Ui, value: &mut String, label: &str) {
 impl View for RoutinesView {
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         actions::ensure_loaded(cx, &self.shared);
-        ui.ctx().request_repaint_after(Duration::from_secs(1));
+        if let Some(delay) = actions::next_wake(cx, &self.shared) {
+            forja_ui_kit::request_repaint_after_active(ui.ctx(), delay);
+        }
         let snap = snapshot(&self.shared);
         if !self.auto_opened && state::fixtures_enabled() && self.draft.is_none() {
             if let Some(first) = snap.routines.first() {
@@ -399,7 +400,9 @@ pub struct TickView {
 impl View for TickView {
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         actions::tick(cx, &self.shared);
-        ui.ctx().request_repaint_after(Duration::from_secs(1));
+        if let Some(delay) = actions::next_wake(cx, &self.shared) {
+            forja_ui_kit::request_repaint_after_active(ui.ctx(), delay);
+        }
         let busy = with(&self.shared, |state| state.runner.running() + state.runner.queued()).unwrap_or(0);
         if busy > 0 {
             ui.label(cx.t_args("routine-tick-running", &[("count", &busy.to_string())]));

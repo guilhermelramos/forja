@@ -12,7 +12,6 @@ use crate::state::{lock, Shared, Which};
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::{AnvilHit, Ctx};
 use serde_json::{json, Map};
-use std::time::Duration;
 
 /// Rows shown in the Anvil source section.
 const ANVIL_ROWS: usize = 12;
@@ -42,10 +41,6 @@ enum Action {
 impl View for FindView {
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         commands::sync_root(cx, &self.shared);
-        // No bench yet: check again later, since one may appear. Otherwise bench events wake the panel.
-        if lock(&self.shared).root.is_none() {
-            ui.ctx().request_repaint_after(Duration::from_millis(800));
-        }
         // Mesmo componente e mesmo estilo do botão da Bigorna: rótulo e atalho no mesmo botão.
         ui.horizontal(|ui| {
             let label = format!("{}  {}", cx.t("find.trigger"), cx.t("find.shortcut"));

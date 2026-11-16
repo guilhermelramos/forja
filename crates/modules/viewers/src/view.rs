@@ -7,7 +7,7 @@ use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::{Args, Ctx};
 use serde_json::{json, Map};
 use std::sync::{Arc, Mutex};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 pub struct ViewerView {
     state: Shared,
@@ -221,14 +221,19 @@ impl ViewerView {
             let elapsed = visual.started.elapsed().as_secs_f32() % total.max(0.05);
             let mut cursor = 0.0;
             let mut index = 0;
+            let mut remaining = 0.1_f32;
             for (position, duration) in visual.delays.iter().enumerate() {
                 cursor += duration;
                 if elapsed <= cursor {
                     index = position;
+                    remaining = (cursor - elapsed).max(0.016);
                     break;
                 }
             }
-            ui.ctx().request_repaint();
+            forja_ui_kit::request_repaint_after_active(
+                ui.ctx(),
+                Duration::from_secs_f32(remaining),
+            );
             index
         } else {
             0

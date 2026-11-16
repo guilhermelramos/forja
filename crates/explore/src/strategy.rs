@@ -486,6 +486,7 @@ mod tests {
                 button(2, "Beta", 100.0),
                 button(3, "Gamma", 200.0),
             ],
+            frames: 0,
         };
         let mut strat = Strategy::new(123, vec![]);
         let mut clicked = HashSet::new();
@@ -508,6 +509,7 @@ mod tests {
             changes: Default::default(),
             view: String::new(),
             elements: vec![button(1, "Alpha", 10.0)],
+            frames: 0,
         };
         let keybinds = vec![CatalogKeybind {
             id: "anvil.open".into(),
@@ -541,6 +543,7 @@ mod tests {
                 state: vec!["focused".to_owned()],
                 window_id: None,
             }],
+            frames: 0,
         };
         let mut strat = Strategy::new(9, vec![]);
         let a1 = strat.next_action(&snap);
@@ -556,12 +559,14 @@ mod tests {
             changes: Default::default(),
             view: String::new(),
             elements: vec![button(1, "SharedRail", 10.0)],
+            frames: 0,
         };
         let s2 = Snapshot {
             window: WindowSize { width: 1920.0, height: 1080.0 },
             changes: Default::default(),
             view: String::new(),
             elements: vec![button(1, "SharedRail", 10.0), button(2, "ScreenSpecific", 100.0)],
+            frames: 0,
         };
         let mut strat = Strategy::new(1, vec![]);
         assert_eq!(

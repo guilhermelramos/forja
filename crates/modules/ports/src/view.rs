@@ -63,7 +63,7 @@ impl View for PortsView {
                 let _ = cx.run_command("ports.refresh", Args::new());
             }
             if busy {
-                ui.spinner();
+                forja_ui_kit::spinner_if_active(ui);
             }
         });
 

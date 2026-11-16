@@ -451,7 +451,7 @@ impl View for ArchiveView {
                 }
             }
             if scanning {
-                ui.spinner();
+                forja_ui_kit::spinner_if_active(ui);
                 ui.label(egui::RichText::new(cx.t("archive.view.indexing")).weak());
             } else {
                 let files = format!(
@@ -510,11 +510,9 @@ impl View for ArchiveView {
             self.draw_results(ui, cx, &mut state);
         }
         self.draw_delete_modal(ui, cx);
-        ui.ctx().request_repaint_after(Duration::from_millis(if scanning {
-            250
-        } else {
-            800
-        }));
+        if scanning {
+            forja_ui_kit::request_repaint_after_active(ui.ctx(), Duration::from_millis(250));
+        }
     }
 }
 

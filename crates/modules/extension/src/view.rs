@@ -331,7 +331,6 @@ impl View for ExtensionPage {
 
     fn poll(&mut self, cx: &mut Ctx<'_>) {
         state::ensure(&self.core, cx);
-        cx.request_repaint();
     }
 }
 
@@ -588,7 +587,6 @@ impl View for ExtensionPanels {
 
     fn poll(&mut self, cx: &mut Ctx<'_>) {
         state::ensure(&self.core, cx);
-        cx.request_repaint();
     }
 }
 
@@ -639,7 +637,6 @@ impl View for ExtensionAnvil {
 
     fn poll(&mut self, cx: &mut Ctx<'_>) {
         state::ensure(&self.core, cx);
-        cx.request_repaint();
     }
 
     fn ui(&mut self, _ui: &mut egui::Ui, _cx: &mut Ctx<'_>) {}

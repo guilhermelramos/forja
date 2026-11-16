@@ -82,14 +82,17 @@ impl Module for ExplorerModule {
         let shared = Arc::clone(&self.shared);
         r.subscribe(move |cx, event: &BenchActivated| {
             commands::on_bench_activated(cx, &shared, &event.0);
+            cx.request_repaint();
         });
         let shared_proj = Arc::clone(&self.shared);
         r.subscribe(move |cx, event: &ProjectActivated| {
             commands::on_project_activated(cx, &shared_proj, &event.0);
+            cx.request_repaint();
         });
         let shared_removed = Arc::clone(&self.shared);
         r.subscribe(move |cx, _event: &ProjectRemoved| {
             commands::on_project_removed(cx, &shared_removed);
+            cx.request_repaint();
         });
 
         let shared = Arc::clone(&self.shared);

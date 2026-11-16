@@ -31,6 +31,7 @@ pub struct PtyProcess {
     console: HPCON,
     process: HANDLE,
     job: HANDLE,
+    exit_cancel: HANDLE,
     context: Arc<Mutex<Option<egui::Context>>>,
     repaint_pending: Arc<AtomicBool>,
     /// Bytes digitados pela interface.
@@ -234,17 +235,16 @@ impl PtyProcess {
                     let mut buffer = [0u8; 8192];
                     loop {
                         match reader.read(&mut buffer) {
-                            Ok(0) | Err(_) => break,
+                            Ok(0) | Err(_) => {
+                                wake_context(&reader_context);
+                                break;
+                            }
                             Ok(count) => {
                                 // Continua drenando mesmo sem receptor: fechar o
                                 // pseudoconsola pode esperar por esta leitura.
                                 let _ = sender.send(buffer[..count].to_vec());
                                 if !reader_pending.swap(true, Ordering::AcqRel) {
-                                    if let Ok(guard) = reader_context.lock() {
-                                        if let Some(context) = guard.as_ref() {
-                                            context.request_repaint();
-                                        }
-                                    }
+                                    wake_context(&reader_context);
                                 }
                             }
                         }
@@ -252,10 +252,13 @@ impl PtyProcess {
                 })
                 .map_err(|error| error.to_string())?;
 
+            let exit_cancel = spawn_exit_waiter(process_info.hProcess, Arc::clone(&context));
+
             Ok(Self {
                 console,
                 process: process_info.hProcess,
                 job,
+                exit_cancel,
                 context,
                 repaint_pending,
                 input,
@@ -328,6 +331,13 @@ unsafe impl Send for PtyProcess {}
 
 impl Drop for PtyProcess {
     fn drop(&mut self) {
+        if !self.exit_cancel.is_null() {
+            unsafe {
+                SetEvent(self.exit_cancel);
+                CloseHandle(self.exit_cancel);
+            }
+            self.exit_cancel = ptr::null_mut();
+        }
         self.stop();
         let process = self.process as usize;
         let console = self.console;
@@ -345,6 +355,78 @@ impl Drop for PtyProcess {
                 CloseHandle(process as HANDLE);
             });
     }
+}
+
+fn wake_context(context: &Mutex<Option<egui::Context>>) {
+    if let Ok(guard) = context.lock() {
+        if let Some(context) = guard.as_ref() {
+            context.request_repaint();
+        }
+    }
+}
+
+/// Aguarda o término do processo filho sem polling: o ConPTY mantém o pipe de
+/// saída aberto após a saída do shell até `ClosePseudoConsole` no Drop.
+unsafe fn spawn_exit_waiter(
+    process: HANDLE,
+    context: Arc<Mutex<Option<egui::Context>>>,
+) -> HANDLE {
+    let cancel = CreateEventW(ptr::null(), 1, 0, ptr::null());
+    if cancel.is_null() {
+        return ptr::null_mut();
+    }
+    let current = GetCurrentProcess();
+    let mut dup_process = ptr::null_mut();
+    if DuplicateHandle(
+        current,
+        process,
+        current,
+        &mut dup_process,
+        0,
+        0,
+        DUPLICATE_SAME_ACCESS,
+    ) == 0
+    {
+        CloseHandle(cancel);
+        return ptr::null_mut();
+    }
+    let mut thread_cancel = ptr::null_mut();
+    if DuplicateHandle(
+        current,
+        cancel,
+        current,
+        &mut thread_cancel,
+        0,
+        0,
+        DUPLICATE_SAME_ACCESS,
+    ) == 0
+    {
+        CloseHandle(dup_process);
+        CloseHandle(cancel);
+        return ptr::null_mut();
+    }
+    let process_raw = dup_process as usize;
+    let cancel_raw = thread_cancel as usize;
+    let spawned = std::thread::Builder::new()
+        .name("forja-pty-exit".to_owned())
+        .spawn(move || {
+            let handles = [process_raw as HANDLE, cancel_raw as HANDLE];
+            let signaled = unsafe { WaitForMultipleObjects(2, handles.as_ptr(), 0, INFINITE) };
+            if signaled == WAIT_OBJECT_0 {
+                wake_context(&context);
+            }
+            unsafe {
+                CloseHandle(handles[0]);
+                CloseHandle(handles[1]);
+            }
+        });
+    if spawned.is_err() {
+        CloseHandle(dup_process);
+        CloseHandle(thread_cancel);
+        CloseHandle(cancel);
+        return ptr::null_mut();
+    }
+    cancel
 }
 
 /// Bloco de ambiente UTF-16 com TERM e COLORTERM próprios.

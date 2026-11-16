@@ -114,7 +114,7 @@ impl RequestsView {
         let Some(every) = state::refresh_interval(interval) else {
             return;
         };
-        ui.ctx().request_repaint_after(every);
+        forja_ui_kit::request_repaint_after_active(ui.ctx(), every);
         let due = with_state(&self.shared, |state| {
             state.needs_refresh
                 || state
