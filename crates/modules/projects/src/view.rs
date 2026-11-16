@@ -92,6 +92,18 @@ impl View for ProjectsView {
                 dialog = Dialog::Clone(CloneForm::default());
             }
         });
+        if self.state.active_id().is_some()
+            && forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Ghost,
+                &cx.t("project.command.close"),
+            )
+            .clicked()
+        {
+            if let Err(error) = self.state.close(cx) {
+                self.state.set_error(Some(error));
+            }
+        }
         ui.add_space(4.0);
 
         if let Some(error) = self.state.error() {

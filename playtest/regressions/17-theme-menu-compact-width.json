@@ -3,6 +3,10 @@
   "issue": 88,
   "locale": "pt-BR",
   "steps": [
+    {"m": "ui.key", "keys": "Escape"},
+    {"m": "ui.click", "target": "Abrir pasta"},
+    {"m": "ui.click", "target": "Escolher…"},
+    {"m": "ui.click", "target": "Adicionar"},
     { "m": "ui.key", "keys": "Escape" },
     { "m": "ui.click", "target": "Mais abas", "index": 2 },
     { "m": "ui.click", "target": "Painéis de extensões" },
@@ -11,7 +15,7 @@
   ],
   "expect": [
     {
-      "step": 3,
+      "step": 7,
       "present": ["Escuro", "Claro", "Painéis de extensões"],
       "window_count": 0
     }

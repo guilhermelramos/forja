@@ -67,3 +67,51 @@ pub fn empty_state(ui: &mut Ui, glyph: &str, message: &str, action: Option<&str>
     });
     response
 }
+
+/// Read-only theme sample. Uses explicit tokens without changing the page theme.
+pub fn theme_sample(ui: &mut Ui, tokens: &crate::Tokens, title: &str, body: &str) {
+    let (rect, _) = ui.allocate_exact_size(egui::vec2(210.0, 100.0), Sense::hover());
+    let colors = tokens.color;
+    ui.painter().rect(
+        rect,
+        8.0,
+        colors.surface.to_color32(),
+        egui::Stroke::new(1.0, colors.border.to_color32()),
+        egui::StrokeKind::Inside,
+    );
+    ui.painter().rect_filled(
+        egui::Rect::from_min_size(rect.min, egui::vec2(4.0, 100.0)),
+        2.0,
+        colors.accent.to_color32(),
+    );
+    ui.put(
+        egui::Rect::from_min_size(rect.min + egui::vec2(16.0, 12.0), egui::vec2(180.0, 30.0)),
+        egui::Label::new(
+            RichText::new(title)
+                .strong()
+                .color(colors.text.to_color32()),
+        ),
+    );
+    ui.put(
+        egui::Rect::from_min_size(rect.min + egui::vec2(16.0, 46.0), egui::vec2(180.0, 42.0)),
+        egui::Label::new(RichText::new(body).color(colors.text_muted.to_color32())).wrap(),
+    );
+}
+
+#[cfg(test)]
+mod preview_tests {
+    #[test]
+    fn theme_preview_uses_explicit_colors_without_changing_the_page() {
+        let ctx = eframe::egui::Context::default();
+        let dark = crate::Tokens::brasa_dark();
+        let light = crate::Tokens::brasa_light();
+        crate::apply(&ctx, &dark);
+        let output = ctx.run(Default::default(), |ctx| {
+            eframe::egui::CentralPanel::default().show(ctx, |ui| {
+                super::theme_sample(ui, &light, "Preview", "Sample")
+            });
+        });
+        assert_eq!(crate::applied_tokens(&ctx).mode, dark.mode);
+        assert!(output.shapes.iter().any(|shape|matches!(&shape.shape,eframe::egui::Shape::Rect(rect) if rect.fill==light.color.surface.to_color32())));
+    }
+}

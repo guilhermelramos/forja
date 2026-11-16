@@ -94,6 +94,16 @@ impl forja_kernel::Module for FakeHelpers {
     }
 
     fn register(&mut self, r: &mut forja_kernel::Registrar<'_>) {
+        r.setting(forja_kernel::SettingSpec::new(
+            "helper.default.profile",
+            forja_kernel::SettingKind::Text { max_len: None },
+            SettingValue::Text("auto".into()),
+            "onboarding.helpers.default",
+            "onboarding.helpers.lead",
+        ));
+        r.command("helper.list", "onboarding.name", |_, _| {
+            Ok(json!({"profiles":[{"id":"test-helper","name":"Test helper","installed":false}]}))
+        });
         r.command("helper.detect", "onboarding.name", |_, _| {
             Ok(json!({ "detecting": false, "profiles": [] }))
         });
@@ -219,10 +229,10 @@ fn tab_order_starts_with_content_and_wraps_cleanly_across_steps() {
     assert_eq!(
         helpers_cycle,
         vec![
+            Some("Choose automatically".into()),
             Some("Back".into()),
             Some("Next".into()),
             Some("Close".into()),
-            Some("Back".into()),
         ]
     );
     let _ = std::fs::remove_dir_all(dir);
@@ -318,5 +328,29 @@ fn folder_validation_rejects_invalid_and_missing_paths_with_human_error() {
         .setting("onboarding.projects.dir")
         .and_then(|v| v.as_str().map(str::to_owned));
     assert!(saved.is_some_and(|s| !s.is_empty()));
+    let _ = std::fs::remove_dir_all(dir);
+}
+
+#[test]
+fn helper_step_has_progress_and_saves_the_default_choice() {
+    let (mut runtime, state, ctx, dir) = setup_wizard("default-choice");
+    state.set_step(3);
+    let mut view = WizardView {
+        state: state.clone(),
+    };
+    let _ = render_wizard(&mut runtime, &mut view, &ctx, empty_frame());
+    let _ = render_wizard(&mut runtime, &mut view, &ctx, empty_frame());
+    let out = press_key(&mut runtime, &mut view, &ctx, egui::Key::Tab);
+    assert_eq!(focused_label(&out).as_deref(), Some("Choose automatically"));
+    let _ = press_key(&mut runtime, &mut view, &ctx, egui::Key::Space);
+    let _ = press_key(&mut runtime, &mut view, &ctx, egui::Key::ArrowDown);
+    let _ = press_key(&mut runtime, &mut view, &ctx, egui::Key::Enter);
+    assert_eq!(
+        runtime
+            .ctx("onboarding")
+            .setting("helper.default.profile")
+            .and_then(SettingValue::as_str),
+        Some("test-helper")
+    );
     let _ = std::fs::remove_dir_all(dir);
 }

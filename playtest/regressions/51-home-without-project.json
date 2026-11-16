@@ -1,0 +1,39 @@
+{
+  "title": "Início reúne ações, recentes, ajudantes e atalhos sem painéis vazios (#194)",
+  "steps": [
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.wait",
+      "ms": 800
+    }
+  ],
+  "expect": [
+    {
+      "present_contains": [
+        "Início",
+        "Abrir pasta",
+        "Clonar repositório",
+        "Novo projeto",
+        "Projetos recentes",
+        "Ajudantes encontrados",
+        "Nenhum ajudante encontrado",
+        "Ctrl+K",
+        "Ctrl+P",
+        "Ctrl+Shift+N"
+      ],
+      "absent": [
+        "Terminal",
+        "Editor",
+        "Navegador",
+        "Arquivos"
+      ],
+      "no_geometry_issues": true
+    }
+  ],
+  "issue": 194,
+  "locale": "pt-BR",
+  "test_helpers": "none"
+}

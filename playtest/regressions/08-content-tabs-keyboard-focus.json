@@ -3,6 +3,10 @@
   "issue": 51,
   "locale": "pt-BR",
   "steps": [
+    {"m": "ui.key", "keys": "Escape"},
+    {"m": "ui.click", "target": "Abrir pasta"},
+    {"m": "ui.click", "target": "Escolher…"},
+    {"m": "ui.click", "target": "Adicionar"},
     { "m": "ui.key", "keys": "Escape" },
     { "m": "ui.click", "x": 900, "y": 500 },
     { "m": "ui.key", "keys": "F6" },
@@ -18,22 +22,22 @@
   ],
   "expect": [
     {
-      "step": 4,
+      "step": 8,
       "present": ["Abra um arquivo no explorador ou pressione Ctrl+P."],
       "absent": ["Receitas", "Nova aba"]
     },
     {
-      "step": 6,
+      "step": 10,
       "present": ["Nova aba"],
       "absent": ["Abra um arquivo no explorador ou pressione Ctrl+P.", "Receitas"]
     },
     {
-      "step": 9,
+      "step": 13,
       "present": ["Receitas"],
       "absent": ["Abra um arquivo no explorador ou pressione Ctrl+P.", "Nova aba"]
     },
     {
-      "step": 11,
+      "step": 15,
       "present": ["Abra um arquivo no explorador ou pressione Ctrl+P."],
       "absent": ["Receitas"]
     }

@@ -62,6 +62,7 @@ pub struct EditForm {
 struct State {
     loaded: bool,
     projects: Vec<Project>,
+    recent: Vec<Project>,
     active_id: Option<String>,
     expanded: BTreeSet<String>,
     dialog: Dialog,
@@ -91,6 +92,10 @@ impl Shared {
             forja_kernel::LoadResult::Loaded(file) => {
                 let file = file.sorted();
                 let mut projects = file.projects;
+                state.recent = file.recent;
+                if state.recent.is_empty() {
+                    state.recent = projects.clone();
+                }
                 for project in &mut projects {
                     project.path = forja_kernel::paths::clean_path_str(&project.path);
                 }
@@ -108,6 +113,20 @@ impl Shared {
             }
             forja_kernel::LoadResult::Missing => {}
         }
+    }
+
+    pub fn recent(&self) -> Vec<Project> {
+        self.0
+            .lock()
+            .map(|state| state.recent.clone())
+            .unwrap_or_default()
+    }
+
+    pub fn close(&self, cx: &mut Ctx<'_>) -> Result<(), String> {
+        let Some(id) = self.active_id() else {
+            return Ok(());
+        };
+        self.remove_open(cx, &id, false)
     }
 
     pub fn projects(&self) -> Vec<Project> {
@@ -221,6 +240,7 @@ impl Shared {
             ProjectsFile {
                 schema_version: model::SCHEMA_VERSION,
                 projects: state.projects.clone(),
+                recent: state.recent.clone(),
                 active_id: state.active_id.clone(),
             }
         };
@@ -254,6 +274,9 @@ impl Shared {
         let previous_active = {
             let mut state = self.0.lock().map_err(|_| "project state is poisoned")?;
             let previous_active = state.active_id.clone();
+            state.recent.retain(|item| item.id != project.id);
+            state.recent.insert(0, project.clone());
+            state.recent.truncate(8);
             state.projects.push(project.clone());
             state.projects.sort_by_key(|a| a.name.to_lowercase());
             state.active_id = Some(project.id.clone());
@@ -323,16 +346,27 @@ impl Shared {
                 project.color = model::normalize_color(color)
                     .ok_or_else(|| "color must be #RRGGBB".to_owned())?;
             }
-            project.clone()
+            let updated = project.clone();
+            if let Some(recent) = state.recent.iter_mut().find(|item| item.id == id) {
+                *recent = updated.clone();
+            }
+            updated
         };
         self.save(cx)?;
         Ok(updated)
     }
 
     pub fn remove(&self, cx: &mut Ctx<'_>, id: &str) -> Result<(), String> {
+        self.remove_open(cx, id, true)
+    }
+
+    fn remove_open(&self, cx: &mut Ctx<'_>, id: &str, forget: bool) -> Result<(), String> {
         let next_active = {
             let mut state = self.0.lock().map_err(|_| "project state is poisoned")?;
             state.projects.retain(|project| project.id != id);
+            if forget {
+                state.recent.retain(|project| project.id != id);
+            }
             state.expanded.remove(id);
             if state.active_id.as_deref() == Some(id) {
                 state.active_id = state.projects.first().map(|project| project.id.clone());

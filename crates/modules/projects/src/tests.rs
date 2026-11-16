@@ -288,3 +288,36 @@ fn create_folder_rejects_non_empty_dir_and_finish_dialog_keeps_form_on_error() {
     assert!(matches!(shared.dialog(), state::Dialog::None));
     let _ = std::fs::remove_dir_all(root);
 }
+
+#[test]
+fn closing_last_project_keeps_a_recent_entry_and_reopening_activates_it() {
+    let root = temp_dir("home-close");
+    let folder = root.join("example");
+    std::fs::create_dir_all(&folder).unwrap();
+    let mut runtime = runtime(&root);
+    let args = || Args::from_map(Map::from_iter([("path".to_owned(), json!(folder))]));
+    let first = runtime.run_command("project.add", args()).unwrap();
+    runtime
+        .run_command(
+            "project.update",
+            Args::from_map(Map::from_iter([
+                ("project_id".to_owned(), first["id"].clone()),
+                ("name".to_owned(), json!("Renamed example")),
+            ])),
+        )
+        .unwrap();
+    runtime.run_command("project.close", Args::new()).unwrap();
+    assert!(runtime
+        .run_command("project.current", Args::new())
+        .unwrap()
+        .is_null());
+    let file: model::ProjectsFile =
+        serde_json::from_slice(&std::fs::read(root.join("modules/project.json")).unwrap()).unwrap();
+    assert!(file.projects.is_empty());
+    assert_eq!(file.recent[0].id, first["id"]);
+    assert_eq!(file.recent[0].name, "Renamed example");
+    let reopened = runtime.run_command("project.add", args()).unwrap();
+    assert_eq!(first["id"], reopened["id"]);
+    assert!(folder.exists());
+    let _ = std::fs::remove_dir_all(root);
+}

@@ -93,6 +93,8 @@ pub struct ForjaApp {
     pub(crate) rail_views: Vec<ViewInstance>,
     pub(crate) sidebar_views: Vec<ViewInstance>,
     pub(crate) bench_views: Vec<ViewInstance>,
+    pub(crate) home_view: Option<ViewInstance>,
+    pub(crate) project_was_open: bool,
     pub(crate) right_views: Vec<ViewInstance>,
     pub(crate) status_views: Vec<ViewInstance>,
     pub(crate) settings_views: Vec<ViewInstance>,
@@ -192,7 +194,11 @@ impl ForjaApp {
         }
         let rail_views = ViewInstance::collect(runtime.registry(), Slot::Rail);
         let sidebar_views = ViewInstance::collect(runtime.registry(), Slot::Sidebar);
-        let bench_views = ViewInstance::collect(runtime.registry(), Slot::BenchTab);
+        let mut bench_views = ViewInstance::collect(runtime.registry(), Slot::BenchTab);
+        let home_view = bench_views
+            .iter()
+            .position(|view| view.id == "project.home")
+            .map(|index| bench_views.remove(index));
         let right_views = ViewInstance::collect(runtime.registry(), Slot::RightPanel);
         let status_views = ViewInstance::collect(runtime.registry(), Slot::StatusBar);
         let settings_views = ViewInstance::collect(runtime.registry(), Slot::SettingsSection);
@@ -230,6 +236,8 @@ impl ForjaApp {
             rail_views,
             sidebar_views,
             bench_views,
+            home_view,
+            project_was_open: false,
             right_views,
             status_views,
             settings_views,
@@ -468,6 +476,14 @@ impl ForjaApp {
         self.status_details_open = false;
     }
 
+    pub(crate) fn no_project(&mut self) -> bool {
+        self.home_view.is_some()
+            && self
+                .runtime
+                .run_command("project.current", Args::new())
+                .is_ok_and(|value| value.is_null())
+    }
+
     pub(crate) fn active_project_crumb(&mut self) -> String {
         let stale = self
             .active_crumb_checked
@@ -482,6 +498,9 @@ impl ForjaApp {
     }
 
     fn resolve_active_crumb(&mut self) -> Option<String> {
+        if self.no_project() {
+            return None;
+        }
         let projects = if self.runtime.registry().command("project.list").is_some() {
             self.runtime
                 .run_command("project.list", Args::new())
