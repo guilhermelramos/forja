@@ -1,0 +1,43 @@
+{
+  "title": "Bench layout (tabs, closed tabs, rail page, side panels) persists across restart (#195)",
+  "issue": 195,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.key", "keys": "Ctrl+B" },
+    { "m": "ui.open_tab", "target": "Diferenças" },
+    { "m": "ui.key", "keys": "Ctrl+Shift+W" },
+    { "m": "ui.open_tab", "target": "Busca" },
+    { "m": "ui.open_tab", "target": "Editor" },
+    { "m": "ui.key", "keys": "Ctrl+Shift+B" },
+    { "m": "ui.click", "target": "Rotinas" },
+    { "m": "ui.wait", "ms": 250 },
+    { "m": "app.restart" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.snapshot" },
+    { "m": "ui.click", "target": "Voltar à bancada" },
+    { "m": "ui.key", "keys": "Ctrl+Shift+B" }
+  ],
+  "expect": [
+    {
+      "step": 14,
+      "present": ["Voltar à bancada", "Nova rotina"],
+      "absent": ["Adicionar pasta", "Busca"],
+      "no_geometry_issues": true
+    },
+    {
+      "step": 15,
+      "present": ["Editor", "Terminal", "Navegador"],
+      "absent": ["Voltar à bancada", "Diferenças", "Adicionar pasta", "Busca"]
+    },
+    {
+      "step": 16,
+      "present": ["Arquivos", "Busca"],
+      "absent": ["Diferenças", "Adicionar pasta"],
+      "no_geometry_issues": true
+    }
+  ]
+}

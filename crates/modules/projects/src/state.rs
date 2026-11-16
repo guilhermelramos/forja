@@ -88,6 +88,10 @@ impl Shared {
             return;
         }
         state.loaded = true;
+        let open_last = !matches!(
+            cx.setting("app.startup.open_last"),
+            Some(forja_kernel::SettingValue::Bool(false))
+        );
         match cx.store().load::<ProjectsFile>() {
             forja_kernel::LoadResult::Loaded(file) => {
                 let file = file.sorted();
@@ -99,10 +103,13 @@ impl Shared {
                 for project in &mut projects {
                     project.path = forja_kernel::paths::clean_path_str(&project.path);
                 }
-                state.active_id = file
-                    .active_id
-                    .filter(|id| projects.iter().any(|project| project.id == *id))
-                    .or_else(|| projects.first().map(|project| project.id.clone()));
+                state.active_id = if open_last {
+                    file.active_id
+                        .filter(|id| projects.iter().any(|project| project.id == *id))
+                        .or_else(|| projects.first().map(|project| project.id.clone()))
+                } else {
+                    None
+                };
                 state.projects = projects;
             }
             forja_kernel::LoadResult::Quarantined(path) => {

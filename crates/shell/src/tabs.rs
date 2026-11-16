@@ -6,7 +6,7 @@
 
 use std::collections::BTreeSet;
 
-#[derive(Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct TabSet {
     hidden: BTreeSet<usize>,
     closed: Vec<usize>,
@@ -96,6 +96,21 @@ impl TabSet {
             }
         }
         None
+    }
+
+    pub fn closed_indexes(&self) -> &[usize] {
+        &self.closed
+    }
+
+    pub fn from_closed(indexes: Vec<usize>, total: usize) -> Self {
+        let mut hidden = BTreeSet::new();
+        let mut closed = Vec::new();
+        for index in indexes {
+            if index < total && hidden.insert(index) {
+                closed.push(index);
+            }
+        }
+        Self { hidden, closed }
     }
 }
 

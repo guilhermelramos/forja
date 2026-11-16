@@ -342,6 +342,7 @@ mod tests {
                 window_id: None,
             }],
             frames: 0,
+            closed: false,
         }
     }
 

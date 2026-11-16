@@ -7,11 +7,11 @@
 | Métrica | Valor |
 |---|---|
 | Configurações no catálogo | 311 |
-| Configurações registradas no app | 273 (272 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 272 (271 do catálogo) |
+| Configurações registradas no app | 275 (274 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 274 (273 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
-| Configurações adiadas | 37 |
+| Configurações adiadas | 35 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
 | Atalhos no catálogo | 110 |
@@ -53,8 +53,6 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 - `mcp.log.requests`: Aguardando observação de requisições na ponte MCP e serviço de log.
 - `browser.privacy.third_party_cookies`: Aguardando a API de perfil do WebView2 para bloquear cookies de terceiros.
 - `remote.sync.mode`: Aguardando contrato de sincronização de arquivos com bancada remota; o módulo ainda não sincroniza arquivos.
-- `app.startup.open_last`: Aguardando política de restauração na inicialização de projetos e bancadas.
-- `app.close.confirm`: Aguardando contrato agregado de trabalho em andamento para confirmação ao fechar.
 - `app.cli.enabled`: Aguardando ciclo de vida cancelável do servidor RPC local.
 - `app.storage.data_dir`: Aguardando configuração de bootstrap do diretório de dados no kernel.
 - `app.storage.content_dir`: Aguardando configuração de bootstrap do diretório de conteúdo no kernel.
@@ -358,8 +356,8 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `anvil.history.show_recent` | `anvil` | `anvil` | sim | ok | sim |
 | `keymap.file.custom_path` | `keymap` | `keymap` | sim | ok | sim |
 | `keymap.conflict.policy` | `keymap` | `keymap` | sim | ok | sim |
-| `app.startup.open_last` | `app` | `-` | adiada | - | adiada |
-| `app.close.confirm` | `app` | `-` | adiada | - | adiada |
+| `app.startup.open_last` | `app` | `app` | sim | ok | sim |
+| `app.close.confirm` | `app` | `app` | sim | ok | sim |
 | `app.tray.enabled` | `app` | `app` | sim | ok | sim |
 | `app.cli.enabled` | `app` | `-` | adiada | - | adiada |
 | `app.storage.data_dir` | `app` | `-` | adiada | - | adiada |

@@ -438,7 +438,7 @@ O nível do log, a rotação por tamanho, a retenção de arquivos e a inclusão
 | `anvil.history.show_recent` | alternar | sim — Recentes são o atalho mais usado na paleta. | — | Mostrar recentes · Show recent | Mostra comandos recentes ao abrir a Bigorna. | `anvil` |
 | `keymap.file.custom_path` | caminho | `~/.forja/atalhos.toml` — Um arquivo de texto editável por pessoa e por modelo. | arquivo | Arquivo de atalhos · Keymap file | Arquivo de atalhos personalizados. | `keymap` |
 | `keymap.conflict.policy` | escolha | `warn` — Avisar ensina; bloquear protege quem já tem atalhos demais. | `warn`, `block` | Conflito de atalho · Shortcut conflict | O que fazer quando um atalho personalizado conflita. | `keymap` |
-| `app.startup.open_last` | alternar | sim — Retomar o último projeto é o fluxo de quem trabalha todo dia. | — | Abrir último projeto · Open last project | Abre o último projeto ao iniciar a Forja. | `app` |
+| `app.startup.open_last` | alternar | sim — Retomar o último projeto é o fluxo de quem trabalha todo dia. | — | Abrir último projeto · Open last project | Abre o último projeto e a última bancada ao iniciar a Forja. | `app` |
 | `app.close.confirm` | alternar | sim — Fechar com ajudante ou rotina ativa não pode ser silencioso. | — | Confirmar ao fechar · Confirm on close | Pede confirmação ao fechar com trabalho em andamento. | `app` |
 | `app.tray.enabled` | alternar | não — Bandeja é opcional; fechar deve fechar, não esconder. | — | Bandeja do Windows · Windows tray | Mantém a Forja na bandeja do Windows. | `app` |
 | `app.cli.enabled` | alternar | sim — O CLI forja é a interface dos modelos e da automação. | — | CLI e RPC local · Local CLI and RPC | Liga o servidor local do CLI e do RPC. | `app` |

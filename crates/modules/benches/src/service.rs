@@ -78,11 +78,14 @@ pub fn ensure_main(cx: &mut Ctx<'_>, shared: &Shared) -> Result<(), String> {
         return Ok(());
     }
     let default_stage = setting_str(cx, "bench.stage.creation_default", stages::DRAFT);
+    let open_last = setting_bool(cx, "app.startup.open_last", true);
+    let allow_auto_current = open_last || !shared.startup_suppressed();
     let existing = shared.file();
-    let need_current = existing
-        .current
-        .as_deref()
-        .is_none_or(|id| existing.find(id).is_none())
+    let need_current = allow_auto_current
+        && existing
+            .current
+            .as_deref()
+            .is_none_or(|id| existing.find(id).is_none())
         && (!existing.benches.is_empty() || !projects.is_empty());
     let missing = projects.iter().any(|project| {
         existing.main_for(&project.id).is_none()
@@ -131,10 +134,11 @@ pub fn ensure_main(cx: &mut Ctx<'_>, shared: &Shared) -> Result<(), String> {
                 }),
             }
         }
-        if file
-            .current
-            .as_deref()
-            .is_none_or(|id| file.find(id).is_none())
+        if (allow_auto_current || preferred_project.is_some())
+            && file
+                .current
+                .as_deref()
+                .is_none_or(|id| file.find(id).is_none())
         {
             file.current = preferred_project
                 .as_deref()
@@ -272,6 +276,7 @@ fn activate_inner(
         }
         file.current = Some(bench_id.to_owned());
     })?;
+    shared.clear_startup_suppression();
     let bench = shared.find(bench_id).unwrap_or(bench);
     cx.emit(&BenchActivated(bench.to_ref()));
     // The shell leaves the rail page and shows the active bench's tabs. The
@@ -280,6 +285,7 @@ fn activate_inner(
         let mut args = Map::new();
         args.insert("project".to_owned(), json!(project.name));
         args.insert("bench".to_owned(), json!(bench.name));
+        args.insert("bench_id".to_owned(), json!(bench.bench_id));
         if !focus_shell {
             args.insert("keep_page".to_owned(), json!(true));
         }

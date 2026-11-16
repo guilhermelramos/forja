@@ -4,13 +4,18 @@
 //! of every region comes from registered slots. The shell knows nothing about
 //! specific product modules.
 
+#[path = "close_confirm.rs"]
+pub(crate) mod close_confirm;
+#[path = "shell_store.rs"]
+pub(crate) mod shell_store;
+
 use crate::actions::{self, AnvilMode};
 use crate::hosts;
 use crate::rpc::RpcHost;
 use crate::screenshot::{self, ScreenshotJob};
 use crate::shell_module::ShellModule;
 use crate::tabs::TabSet;
-use crate::tray::{self, TrayAction};
+use crate::tray;
 use eframe::egui::{self, Key, Modifiers, ViewportCommand};
 use forja_kernel::keymap::{KeyChord, Scope};
 use forja_kernel::settings::SettingValue;
@@ -133,7 +138,11 @@ pub struct ForjaApp {
     pub(crate) anvil_ask: Option<crate::anvil_ask::Ask>,
     pub(crate) anvil_helper_notice: Option<crate::anvil::AnvilHelperNotice>,
     pub(crate) anvil_group: usize,
-    pub(crate) anvil_history: Vec<String>,
+    pub(crate) shell_data: shell_store::ShellData,
+    pub(crate) shell_writer: shell_store::ShellWriter,
+    pub(crate) current_bench_id: Option<String>,
+    pub(crate) show_sidebar: bool,
+    pub(crate) last_sidebar_setting: bool,
     pub(crate) focus_anvil: bool,
     pub(crate) focus_content_tab: bool,
     pub(crate) bench_cache: Vec<(String, String)>,
@@ -159,14 +168,17 @@ pub struct ForjaApp {
     pub(crate) quitting: bool,
     pub(crate) pending_toast: bool,
     pub(crate) pending_onboarding: bool,
-    screenshot: Option<ScreenshotJob>,
+    pub(crate) screenshot: Option<ScreenshotJob>,
     screenshot_error: Arc<Mutex<Option<String>>>,
     rpc: Option<RpcHost>,
     pub(crate) driver: Option<crate::test_driver::Driver>,
-    geometry_writer: crate::window_geometry::GeometryWriter,
-    geometry_checked: Instant,
-    geometry_close_pending: bool,
-    geometry_close_allowed: bool,
+    pub(crate) geometry_writer: crate::window_geometry::GeometryWriter,
+    pub(crate) geometry_checked: Instant,
+    pub(crate) close_pending: bool,
+    pub(crate) close_allowed: bool,
+    pub(crate) close_confirm: Option<close_confirm::ActiveWork>,
+    pub(crate) close_confirmed: bool,
+    pub(crate) driver_close_flushed: bool,
 }
 
 impl ForjaApp {
@@ -211,25 +223,45 @@ impl ForjaApp {
                 format!("forja: {warning}"),
             );
         }
-        let anvil_history = match runtime.store().load::<Value>("shell") {
-            LoadResult::Loaded(value) => crate::anvil::load_history(&value),
-            _ => Vec::new(),
+        let mut runtime = runtime;
+        let default_sidebar_open =
+            Self::runtime_setting_bool(&runtime, "appearance.sidebar.visible", true);
+        let shell_data = match runtime.store().load::<Value>("shell") {
+            LoadResult::Loaded(ref value) => {
+                shell_store::ShellData::from_json(value, default_sidebar_open)
+            }
+            _ => shell_store::ShellData::default(),
         };
-        let right_tab = session
-            .right_tab
-            .as_deref()
-            .and_then(|id| right_views.iter().position(|view| view.id == id))
-            .or_else(|| {
-                std::env::var("FORJA_RIGHT_TAB")
-                    .ok()
-                    .and_then(|name| right_views.iter().position(|view| view.id.contains(&name)))
-            })
-            .unwrap_or(0);
-        let active_tab = session
-            .bench_tab
-            .as_deref()
-            .and_then(|id| bench_views.iter().position(|view| view.id == id))
-            .unwrap_or(0);
+        let mut shell_writer = shell_store::ShellWriter::default();
+        shell_writer.seed(shell_data.clone());
+        let current_bench_id = Self::query_current_bench_id(&mut runtime);
+        let resolved = {
+            let base_layout = current_bench_id
+                .as_deref()
+                .and_then(|id| shell_data.layout.get(id))
+                .cloned()
+                .unwrap_or_else(|| shell_store::BenchLayout {
+                    sidebar_open: default_sidebar_open,
+                    ..Default::default()
+                });
+            let bench_ids: Vec<&str> = bench_views.iter().map(|view| view.id.as_str()).collect();
+            let rail_ids: Vec<&str> = rail_views.iter().map(|view| view.id.as_str()).collect();
+            let sidebar_ids: Vec<&str> =
+                sidebar_views.iter().map(|view| view.id.as_str()).collect();
+            let right_ids: Vec<&str> = right_views.iter().map(|view| view.id.as_str()).collect();
+            let mut resolved =
+                base_layout.resolve(&bench_ids, &rail_ids, &sidebar_ids, &right_ids);
+            let env_right_tab = std::env::var("FORJA_RIGHT_TAB").ok();
+            let cli = shell_store::CliOverrides {
+                open: session.open.as_deref(),
+                rail: session.rail.as_deref(),
+                bench_tab: session.bench_tab.as_deref(),
+                right_tab: session.right_tab.as_deref(),
+                env_right_tab: env_right_tab.as_deref(),
+            };
+            resolved.apply_cli_overrides(&cli, &bench_ids, &rail_ids, &right_ids);
+            resolved
+        };
         let mut app = Self {
             runtime,
             tokens: Tokens::brasa_dark(),
@@ -244,13 +276,13 @@ impl ForjaApp {
             modal_views,
             anvil_views,
             top_views,
-            rail_page: None,
+            rail_page: resolved.rail_page,
             active_bench: None,
             rail_icons: BTreeMap::new(),
-            active_tab,
-            tabs: TabSet::default(),
-            sidebar_tab: 0,
-            right_tab,
+            active_tab: resolved.active_tab,
+            tabs: resolved.tabs,
+            sidebar_tab: resolved.sidebar_tab,
+            right_tab: resolved.right_tab,
             settings_open: false,
             keymap_open: false,
             settings_section: None,
@@ -269,7 +301,11 @@ impl ForjaApp {
             anvil_ask: None,
             anvil_helper_notice: None,
             anvil_group: 0,
-            anvil_history,
+            shell_data,
+            shell_writer,
+            current_bench_id,
+            show_sidebar: resolved.sidebar_open,
+            last_sidebar_setting: default_sidebar_open,
             focus_anvil: false,
             focus_content_tab: false,
             bench_cache: Vec::new(),
@@ -278,7 +314,7 @@ impl ForjaApp {
             active_crumb_checked: None,
             file_cache: Vec::new(),
             file_cache_query: String::new(),
-            show_right_panel: true,
+            show_right_panel: resolved.right_panel_open,
             fullscreen: false,
             status: None,
             status_details_open: false,
@@ -301,8 +337,11 @@ impl ForjaApp {
             driver: None,
             geometry_writer: crate::window_geometry::GeometryWriter::default(),
             geometry_checked: Instant::now(),
-            geometry_close_pending: false,
-            geometry_close_allowed: false,
+            close_pending: false,
+            close_allowed: false,
+            close_confirm: None,
+            close_confirmed: false,
+            driver_close_flushed: false,
         };
         if session.test_driver {
             let driver = crate::test_driver::Driver::new();
@@ -331,13 +370,8 @@ impl ForjaApp {
         if session.open.as_deref() == Some("anvil") {
             app.open_anvil(AnvilMode::All);
         }
-        if session.open.as_deref() == Some("rail") {
-            app.rail_page = app.rail_views.first().map(|view| view.id.clone());
-        }
         if let Some(view_id) = session.rail.clone() {
-            if app.rail_views.iter().any(|view| view.id == view_id) {
-                app.rail_page = Some(view_id);
-            } else {
+            if !app.rail_views.iter().any(|view| view.id == view_id) {
                 forja_kernel::logging::log(
                     forja_kernel::logging::LogLevel::Warn,
                     format!("forja-app: --rail {view_id}: no rail page has that id"),
@@ -524,6 +558,15 @@ impl ForjaApp {
         };
         if self.runtime.registry().command("bench.current").is_some() {
             if let Ok(value) = self.runtime.run_command("bench.current", Args::new()) {
+                let bench_id = value
+                    .get("bench_id")
+                    .and_then(Value::as_str)
+                    .map(str::trim)
+                    .filter(|id| !id.is_empty())
+                    .map(str::to_owned);
+                if bench_id.is_some() && self.current_bench_id != bench_id {
+                    self.switch_bench_layout(bench_id, false);
+                }
                 let bench_name = value
                     .get("name")
                     .and_then(Value::as_str)
@@ -561,6 +604,9 @@ impl ForjaApp {
         if let Some((_, active_name)) = active_project {
             return Some(active_name);
         }
+        if !self.setting_bool("app.startup.open_last", true) {
+            return None;
+        }
         projects
             .first()
             .and_then(|p| p.get("name").and_then(Value::as_str))
@@ -595,13 +641,16 @@ impl ForjaApp {
                         self.status_details_open = false;
                     }
                 }
-                actions::Action::OpenBench { project, bench } => {
+                actions::Action::OpenBench {
+                    project,
+                    bench,
+                    bench_id,
+                    keep_page,
+                } => {
+                    let next_id =
+                        bench_id.or_else(|| Self::query_current_bench_id(&mut self.runtime));
+                    self.switch_bench_layout(next_id, keep_page);
                     self.active_bench = Some((project, bench));
-                    self.active_crumb_checked = None;
-                    self.rail_page = None;
-                    self.tabs.show(self.active_tab, self.bench_views.len());
-                }
-                actions::Action::RefreshProjectCrumb => {
                     self.active_crumb_checked = None;
                 }
                 actions::Action::ShowBenchTab(view_id) => {
@@ -613,10 +662,12 @@ impl ForjaApp {
                     }
                 }
                 actions::Action::ToggleSidebar => {
-                    let visible = self.setting_bool("appearance.sidebar.visible", true);
-                    let _ = self
-                        .runtime
-                        .set_setting("appearance.sidebar.visible", SettingValue::Bool(!visible));
+                    self.show_sidebar = !self.show_sidebar;
+                    self.last_sidebar_setting = self.show_sidebar;
+                    let _ = self.runtime.set_setting(
+                        "appearance.sidebar.visible",
+                        SettingValue::Bool(self.show_sidebar),
+                    );
                 }
                 actions::Action::TogglePanel => self.show_right_panel = !self.show_right_panel,
                 actions::Action::ZoomIn => {
@@ -714,35 +765,6 @@ impl ForjaApp {
         }
     }
 
-    fn sync_tray(&mut self, ctx: &egui::Context) {
-        let enabled = self.setting_bool("app.tray.enabled", false) && self.screenshot.is_none();
-        if !enabled {
-            tray::remove();
-            return;
-        }
-        match tray::poll() {
-            Some(TrayAction::Show) => {
-                ctx.send_viewport_cmd(ViewportCommand::Visible(true));
-                ctx.send_viewport_cmd(ViewportCommand::Focus);
-            }
-            Some(TrayAction::Quit) => {
-                self.quitting = true;
-                tray::remove();
-                ctx.send_viewport_cmd(ViewportCommand::Close);
-            }
-            None => {}
-        }
-        let closing = ctx.input(|input| input.viewport().close_requested());
-        if closing && !self.quitting {
-            ctx.send_viewport_cmd(ViewportCommand::CancelClose);
-            ctx.send_viewport_cmd(ViewportCommand::Visible(false));
-            let open = self.text("shell.tray.show");
-            let quit = self.text("shell.tray.quit");
-            let tip = self.text("shell.tray.tip");
-            tray::ensure(&open, &quit, &tip);
-        }
-    }
-
     fn handle_shortcuts(&mut self, ctx: &egui::Context) {
         // Only the Anvil shortcuts may open above these shell windows. Other
         // modal layers, including dialogs and popups, keep exclusive control.
@@ -750,7 +772,9 @@ impl ForjaApp {
             && forja_ui_kit::keyboard_layer_active(ctx, egui::Id::new("forja.settings.keyboard")))
             || (self.keymap_open
                 && forja_ui_kit::keyboard_layer_active(ctx, egui::Id::new("forja.keymap.keyboard")));
-        if self.anvil_open || egui::Popup::is_any_open(ctx)
+        if self.anvil_open
+            || self.close_confirm.is_some()
+            || egui::Popup::is_any_open(ctx)
             || (ctx.memory(|memory| memory.top_modal_layer().is_some()) && !shell_window_active)
         {
             return;
@@ -878,43 +902,7 @@ impl ForjaApp {
 
 impl eframe::App for ForjaApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let closing = ctx.input(|input| input.viewport().close_requested());
-        // Test-driver windows sit off-screen on purpose: never remember that position.
-        if self.screenshot.is_none()
-            && self.driver.is_none()
-            && self.setting_bool("appearance.window.remember_geometry", true)
-            && (closing || self.geometry_checked.elapsed() >= std::time::Duration::from_secs(1))
-        {
-            self.geometry_checked = Instant::now();
-            if let Some(geometry) =
-                ctx.input(|input| crate::window_geometry::Geometry::from_viewport(input.viewport()))
-            {
-                if geometry.on_screen() {
-                    self.geometry_writer.record(&mut self.runtime, geometry);
-                }
-            }
-        }
-        let hiding_in_tray = self.setting_bool("app.tray.enabled", false) && !self.quitting;
-        if closing
-            && !self.geometry_close_allowed
-            && !hiding_in_tray
-            && self.screenshot.is_none()
-            && self.driver.is_none()
-            && self.setting_bool("appearance.window.remember_geometry", true)
-        {
-            ctx.send_viewport_cmd(ViewportCommand::CancelClose);
-            self.geometry_close_pending = true;
-        }
-        if self.geometry_close_pending {
-            if self.geometry_writer.busy() {
-                ctx.request_repaint_after(std::time::Duration::from_millis(50));
-            } else {
-                self.geometry_close_pending = false;
-                self.geometry_close_allowed = true;
-                ctx.send_viewport_cmd(ViewportCommand::Close);
-            }
-        }
-        self.sync_tray(ctx);
+        self.handle_close(ctx);
         let focused = ctx.input(|input| input.viewport().focused.unwrap_or(true));
         self.runtime.set_viewport_focused(focused);
         self.drain_rpc(ctx);
@@ -930,6 +918,7 @@ impl eframe::App for ForjaApp {
         self.drain_actions(ctx);
         self.show_demos();
         self.refresh_look(ctx);
+        self.sync_sidebar_setting();
         self.top_bar(ctx);
         self.status_bar(ctx);
         self.left_panels(ctx);
@@ -939,6 +928,7 @@ impl eframe::App for ForjaApp {
         self.keymap_window(ctx);
         self.anvil_window(ctx);
         self.modal_windows(ctx);
+        self.sync_shell_store();
         self.capture(ctx);
         if let Some(driver) = self.driver.as_mut() {
             driver.tick(ctx);
@@ -949,6 +939,12 @@ impl eframe::App for ForjaApp {
         if let Some(driver) = self.driver.as_mut() {
             driver.feed(raw_input);
         }
+    }
+}
+
+impl Drop for ForjaApp {
+    fn drop(&mut self) {
+        tray::remove();
     }
 }
 

@@ -878,3 +878,92 @@ fn store_warnings_and_worktree_delete_errors_are_humanized() {
     assert_eq!(human.detail.as_deref(), Some(combined));
     let _ = std::fs::remove_dir_all(root);
 }
+
+#[test]
+fn open_last_false_suppresses_startup_bench_without_losing_saved_current() {
+    struct AppSettingStub;
+    impl Module for AppSettingStub {
+        fn manifest(&self) -> forja_kernel::ModuleManifest {
+            forja_kernel::ModuleManifest::new("app", "test.app.name", "0.1.0")
+        }
+        fn register(&mut self, r: &mut Registrar<'_>) {
+            r.i18n("test-app-name = App\n", "test-app-name = App\n");
+            r.setting(forja_kernel::SettingSpec::new(
+                "app.startup.open_last",
+                forja_kernel::SettingKind::Bool,
+                forja_kernel::SettingValue::Bool(true),
+                "test-app-name",
+                "test-app-name",
+            ));
+        }
+    }
+
+    let root = temp_dir("open-last");
+    let project_path = repo(&root);
+    let project = forja_contracts::ProjectRef {
+        id: "proj-last".to_owned(),
+        name: "projeto".to_owned(),
+        path: project_path.display().to_string(),
+    };
+
+    let make = || {
+        Runtime::new(
+            vec![
+                Box::new(AppSettingStub),
+                Box::new(TestProjects {
+                    project: project.clone(),
+                }),
+                Box::new(BenchModule {
+                    state: Shared::new(),
+                }),
+            ],
+            RuntimeOptions {
+                data_dir: Some(root.join("data")),
+                user_dir: Some(root.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("modules register cleanly")
+    };
+
+    let mut rt = make();
+    let first = rt.call_method("bench.current", Map::new()).unwrap();
+    assert!(!first.is_null(), "expected main bench on default open_last=true");
+    rt.set_setting(
+        "app.startup.open_last",
+        forja_kernel::SettingValue::Bool(false),
+    )
+    .unwrap();
+    let deadline = std::time::Instant::now() + std::time::Duration::from_millis(500);
+    while std::time::Instant::now() < deadline {
+        rt.poll_tasks();
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
+    drop(rt);
+
+    let mut rt_off = make();
+    let suppressed = rt_off.call_method("bench.current", Map::new()).unwrap();
+    assert!(
+        suppressed.is_null(),
+        "expected no current bench when open_last is false, got {suppressed}"
+    );
+    rt_off
+        .set_setting(
+            "app.startup.open_last",
+            forja_kernel::SettingValue::Bool(true),
+        )
+        .unwrap();
+    let deadline = std::time::Instant::now() + std::time::Duration::from_millis(500);
+    while std::time::Instant::now() < deadline {
+        rt_off.poll_tasks();
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
+    drop(rt_off);
+
+    let mut rt_on = make();
+    let restored = rt_on.call_method("bench.current", Map::new()).unwrap();
+    assert_eq!(restored["bench_id"], first["bench_id"]);
+    drop(rt_on);
+    let _ = std::fs::remove_dir_all(root);
+}

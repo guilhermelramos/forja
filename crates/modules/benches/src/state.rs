@@ -49,6 +49,9 @@ pub struct ApproveForm {
 #[derive(Default)]
 struct State {
     loaded: bool,
+    /// When `app.startup.open_last` is off, suppress restoring `file.current`
+    /// in memory without erasing the saved bench id on disk.
+    suppress_startup_current: bool,
     file: BenchFile,
     error: Option<String>,
     notice: Option<String>,
@@ -73,6 +76,10 @@ impl Shared {
             return;
         }
         state.loaded = true;
+        state.suppress_startup_current = matches!(
+            cx.setting("app.startup.open_last"),
+            Some(forja_kernel::SettingValue::Bool(false))
+        );
         match cx.store().load::<BenchFile>() {
             forja_kernel::LoadResult::Loaded(file) => state.file = file,
             forja_kernel::LoadResult::Quarantined(path) => {
@@ -101,6 +108,9 @@ impl Shared {
 
     pub fn current(&self) -> Option<BenchRecord> {
         self.0.lock().ok().and_then(|state| {
+            if state.suppress_startup_current {
+                return None;
+            }
             state
                 .file
                 .current
@@ -113,7 +123,20 @@ impl Shared {
         self.0
             .lock()
             .ok()
-            .and_then(|state| state.file.current.clone())
+            .and_then(|state| (!state.suppress_startup_current).then(|| state.file.current.clone())?)
+    }
+
+    pub fn startup_suppressed(&self) -> bool {
+        self.0
+            .lock()
+            .map(|state| state.suppress_startup_current)
+            .unwrap_or(false)
+    }
+
+    pub fn clear_startup_suppression(&self) {
+        if let Ok(mut state) = self.0.lock() {
+            state.suppress_startup_current = false;
+        }
     }
 
     pub fn approval(&self, project_id: &str) -> ScriptApproval {
