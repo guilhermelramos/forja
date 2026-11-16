@@ -514,7 +514,6 @@ help_key = "setting-appearance-window-start_maximized-help"
 
 [[setting]]
 key = "appearance.tabs.middle_click"
-deferred = "Aguardando contrato de fechamento das abas do shell."
 module = "appearance"
 group = "appearance"
 type = "toggle"
@@ -868,6 +867,21 @@ help_en = "Tabs opened automatically when creating a bench."
 why = "Terminal e ajudante são o par mínimo do fluxo de forja."
 label_key = "setting-bench-layout-tabs-label"
 help_key = "setting-bench-layout-tabs-help"
+
+[[setting]]
+key = "bench.layout.tool_tabs"
+module = "bench"
+group = "benches"
+type = "list"
+default = ["terminal", "chat", "diff", "editor"]
+item = "id de aba"
+label_pt = "Abas de ferramenta"
+label_en = "Tool tabs"
+help_pt = "Abas de ferramenta abertas ao iniciar uma bancada nova."
+help_en = "Tool tabs opened automatically on a new bench."
+why = "Mantém apenas as quatro abas essenciais na faixa; as demais abrem sob demanda pelo botão +."
+label_key = "setting-bench-layout-tool_tabs-label"
+help_key = "setting-bench-layout-tool_tabs-help"
 
 [[setting]]
 key = "bench.layout.restore"

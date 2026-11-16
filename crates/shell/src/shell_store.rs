@@ -10,10 +10,11 @@ use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 
 /// Per-bench workspace chrome layout saved under `"layout.<bench_id>"` in the `"shell"` store.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct BenchLayout {
     pub active_tab: Option<String>,
     pub rail_page: Option<String>,
+    pub open_tabs: Option<Vec<String>>,
     pub closed_tabs: Vec<String>,
     pub sidebar_tab: Option<String>,
     pub right_tab: Option<String>,
@@ -21,18 +22,16 @@ pub struct BenchLayout {
     pub right_panel_open: bool,
 }
 
-impl Default for BenchLayout {
-    fn default() -> Self {
-        Self {
-            active_tab: None,
-            rail_page: None,
-            closed_tabs: Vec::new(),
-            sidebar_tab: None,
-            right_tab: None,
-            sidebar_open: true,
-            right_panel_open: true,
-        }
-    }
+fn json_string_list(value: &Value, key: &str) -> Option<Vec<String>> {
+    value.get(key).and_then(Value::as_array).map(|items| {
+        items
+            .iter()
+            .filter_map(Value::as_str)
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(str::to_owned)
+            .collect()
+    })
 }
 
 impl BenchLayout {
@@ -45,33 +44,18 @@ impl BenchLayout {
                 .filter(|s| !s.is_empty())
                 .map(str::to_owned)
         };
-        let closed_tabs = value
-            .get("closed_tabs")
-            .and_then(Value::as_array)
-            .map(|items| {
-                items
-                    .iter()
-                    .filter_map(Value::as_str)
-                    .map(str::trim)
-                    .filter(|s| !s.is_empty())
-                    .map(str::to_owned)
-                    .collect()
-            })
-            .unwrap_or_default();
+        let bool_or = |key: &str, fallback: bool| {
+            value.get(key).and_then(Value::as_bool).unwrap_or(fallback)
+        };
         Self {
             active_tab: str_opt("active_tab"),
             rail_page: str_opt("rail_page"),
-            closed_tabs,
+            open_tabs: json_string_list(value, "open_tabs"),
+            closed_tabs: json_string_list(value, "closed_tabs").unwrap_or_default(),
             sidebar_tab: str_opt("sidebar_tab"),
             right_tab: str_opt("right_tab"),
-            sidebar_open: value
-                .get("sidebar_open")
-                .and_then(Value::as_bool)
-                .unwrap_or(default_sidebar_open),
-            right_panel_open: value
-                .get("right_panel_open")
-                .and_then(Value::as_bool)
-                .unwrap_or(true),
+            sidebar_open: bool_or("sidebar_open", default_sidebar_open),
+            right_panel_open: bool_or("right_panel_open", true),
         }
     }
 
@@ -79,6 +63,7 @@ impl BenchLayout {
         json!({
             "active_tab": self.active_tab,
             "rail_page": self.rail_page,
+            "open_tabs": self.open_tabs,
             "closed_tabs": self.closed_tabs,
             "sidebar_tab": self.sidebar_tab,
             "right_tab": self.right_tab,
@@ -88,6 +73,7 @@ impl BenchLayout {
     }
 
     /// Resolves persisted view IDs into current runtime slot indices.
+    #[cfg(test)]
     pub fn resolve(
         &self,
         bench_views: &[&str],
@@ -95,12 +81,31 @@ impl BenchLayout {
         sidebar_views: &[&str],
         right_views: &[&str],
     ) -> ResolvedLayout {
+        self.resolve_with_defaults(bench_views, rail_views, sidebar_views, right_views, None)
+    }
+
+    /// Resolves persisted view IDs into runtime indices, applying `initial_open` when `open_tabs` was not saved.
+    pub fn resolve_with_defaults(
+        &self,
+        bench_views: &[&str],
+        rail_views: &[&str],
+        sidebar_views: &[&str],
+        right_views: &[&str],
+        initial_open: Option<&[String]>,
+    ) -> ResolvedLayout {
         let closed_indexes: Vec<usize> = self
             .closed_tabs
             .iter()
             .filter_map(|id| bench_views.iter().position(|known| known == id))
             .collect();
-        let tabs = TabSet::from_closed(closed_indexes, bench_views.len());
+        let active_list = self.open_tabs.as_deref().or(initial_open);
+        let hidden_indexes: Vec<usize> = match active_list {
+            Some(open_ids) => (0..bench_views.len())
+                .filter(|&idx| !open_ids.iter().any(|id| id == bench_views[idx]))
+                .collect(),
+            None => Vec::new(),
+        };
+        let tabs = TabSet::from_hidden_and_closed(hidden_indexes, closed_indexes, bench_views.len());
         let active_tab = self
             .active_tab
             .as_ref()
@@ -326,11 +331,18 @@ impl ForjaApp {
     pub(crate) fn default_bench_layout(&self) -> BenchLayout {
         BenchLayout {
             sidebar_open: self.last_sidebar_setting,
+            right_panel_open: true,
             ..Default::default()
         }
     }
 
     pub(crate) fn capture_bench_layout(&self) -> BenchLayout {
+        let open_tabs = self
+            .tabs
+            .visible(self.bench_views.len())
+            .into_iter()
+            .filter_map(|index| self.bench_views.get(index).map(|view| view.id.clone()))
+            .collect();
         let closed_tabs = self
             .tabs
             .closed_indexes()
@@ -340,6 +352,7 @@ impl ForjaApp {
         BenchLayout {
             active_tab: self.bench_views.get(self.active_tab).map(|view| view.id.clone()),
             rail_page: self.rail_page.clone(),
+            open_tabs: Some(open_tabs),
             closed_tabs,
             sidebar_tab: self
                 .sidebar_views
@@ -354,7 +367,20 @@ impl ForjaApp {
         }
     }
 
-    pub(crate) fn resolve_layout(&self, layout: &BenchLayout) -> ResolvedLayout {
+    pub(crate) fn resolve_layout(
+        &mut self,
+        layout: &BenchLayout,
+        bench_id: Option<&str>,
+    ) -> ResolvedLayout {
+        let initial_open = if layout.open_tabs.is_none() {
+            Some(Self::initial_open_views(
+                &mut self.runtime,
+                &self.bench_views,
+                bench_id,
+            ))
+        } else {
+            None
+        };
         let bench_ids: Vec<&str> = self.bench_views.iter().map(|view| view.id.as_str()).collect();
         let rail_ids: Vec<&str> = self.rail_views.iter().map(|view| view.id.as_str()).collect();
         let sidebar_ids: Vec<&str> = self
@@ -363,7 +389,13 @@ impl ForjaApp {
             .map(|view| view.id.as_str())
             .collect();
         let right_ids: Vec<&str> = self.right_views.iter().map(|view| view.id.as_str()).collect();
-        layout.resolve(&bench_ids, &rail_ids, &sidebar_ids, &right_ids)
+        layout.resolve_with_defaults(
+            &bench_ids,
+            &rail_ids,
+            &sidebar_ids,
+            &right_ids,
+            initial_open.as_deref(),
+        )
     }
 
     pub(crate) fn apply_resolved_layout(&mut self, resolved: ResolvedLayout) {
@@ -387,7 +419,7 @@ impl ForjaApp {
             .and_then(|id| self.shell_data.layout.get(id))
             .cloned()
             .unwrap_or_else(|| self.default_bench_layout());
-        let mut resolved = self.resolve_layout(&next_layout);
+        let mut resolved = self.resolve_layout(&next_layout, next_bench_id.as_deref());
         if keep_page {
             resolved.rail_page = preserved_rail;
         }
@@ -460,6 +492,7 @@ mod tests {
         let layout = BenchLayout {
             active_tab: Some("git.tab".to_owned()),
             rail_page: Some("routine.page".to_owned()),
+            open_tabs: None,
             closed_tabs: vec!["browser.tab".to_owned(), "terminal.tab".to_owned()],
             sidebar_tab: Some("benches.tree".to_owned()),
             right_tab: Some("helper.runs".to_owned()),
@@ -488,6 +521,7 @@ mod tests {
         let saved = BenchLayout {
             active_tab: Some("editor.tab".to_owned()),
             rail_page: Some("board.page".to_owned()),
+            open_tabs: None,
             closed_tabs: vec!["git.tab".to_owned()],
             sidebar_tab: Some("projects.list".to_owned()),
             right_tab: Some("chat.panel".to_owned()),
@@ -515,6 +549,28 @@ mod tests {
     }
 
     #[test]
+    fn resolve_with_defaults_applies_initial_open_until_overridden() {
+        let bench_views = ["terminal.tab", "chat.tab", "browser.tab"];
+        let initial = vec!["terminal.tab".to_owned(), "chat.tab".to_owned()];
+        let fresh = BenchLayout::default().resolve_with_defaults(
+            &bench_views,
+            &[],
+            &[],
+            &[],
+            Some(&initial),
+        );
+        assert_eq!(fresh.tabs.visible(bench_views.len()), vec![0, 1]);
+        assert!(!fresh.tabs.was_closed(2));
+
+        let saved = BenchLayout {
+            open_tabs: Some(vec!["terminal.tab".to_owned(), "browser.tab".to_owned()]),
+            ..BenchLayout::default()
+        };
+        let restored = saved.resolve_with_defaults(&bench_views, &[], &[], &[], Some(&initial));
+        assert_eq!(restored.tabs.visible(bench_views.len()), vec![0, 2]);
+    }
+
+    #[test]
     fn writer_persists_layout_and_history_together_via_runtime_tasks() {
         let root = temp_dir("writer");
         let mut runtime = Runtime::new(
@@ -538,6 +594,7 @@ mod tests {
             BenchLayout {
                 active_tab: Some("git.tab".to_owned()),
                 rail_page: Some("board.page".to_owned()),
+                open_tabs: Some(vec!["terminal.tab".to_owned(), "git.tab".to_owned()]),
                 closed_tabs: vec!["browser.tab".to_owned()],
                 sidebar_tab: Some("projects.list".to_owned()),
                 right_tab: Some("helper.runs".to_owned()),

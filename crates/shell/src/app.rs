@@ -8,6 +8,8 @@
 pub(crate) mod close_confirm;
 #[path = "shell_store.rs"]
 pub(crate) mod shell_store;
+#[path = "tab_bar.rs"]
+pub(crate) mod tab_bar;
 
 use crate::actions::{self, AnvilMode};
 use crate::hosts;
@@ -111,6 +113,7 @@ pub struct ForjaApp {
     pub(crate) rail_icons: BTreeMap<String, egui::TextureHandle>,
     pub(crate) active_tab: usize,
     pub(crate) tabs: TabSet,
+    pub(crate) known_tab_content: BTreeMap<String, bool>,
     /// Remembered sidebar contribution when more than one module fills the slot.
     pub(crate) sidebar_tab: usize,
     /// Remembered right-panel contribution when more than one module fills the slot.
@@ -243,8 +246,22 @@ impl ForjaApp {
             let sidebar_ids: Vec<&str> =
                 sidebar_views.iter().map(|view| view.id.as_str()).collect();
             let right_ids: Vec<&str> = right_views.iter().map(|view| view.id.as_str()).collect();
-            let mut resolved =
-                base_layout.resolve(&bench_ids, &rail_ids, &sidebar_ids, &right_ids);
+            let initial_open = if base_layout.open_tabs.is_none() {
+                Some(Self::initial_open_views(
+                    &mut runtime,
+                    &bench_views,
+                    current_bench_id.as_deref(),
+                ))
+            } else {
+                None
+            };
+            let mut resolved = base_layout.resolve_with_defaults(
+                &bench_ids,
+                &rail_ids,
+                &sidebar_ids,
+                &right_ids,
+                initial_open.as_deref(),
+            );
             let env_right_tab = std::env::var("FORJA_RIGHT_TAB").ok();
             let cli = shell_store::CliOverrides {
                 open: session.open.as_deref(),
@@ -256,6 +273,11 @@ impl ForjaApp {
             resolved.apply_cli_overrides(&cli, &bench_ids, &rail_ids, &right_ids);
             resolved
         };
+        let known_tab_content = bench_views
+            .iter()
+            .filter(|view| view.view.empty_by_nature())
+            .map(|view| (view.id.clone(), view.view.has_content()))
+            .collect();
         let mut app = Self {
             runtime,
             tokens: Tokens::brasa_dark(),
@@ -273,6 +295,7 @@ impl ForjaApp {
             rail_icons: BTreeMap::new(),
             active_tab: resolved.active_tab,
             tabs: resolved.tabs,
+            known_tab_content,
             sidebar_tab: resolved.sidebar_tab,
             right_tab: resolved.right_tab,
             settings_open: false,
@@ -546,7 +569,7 @@ impl ForjaApp {
                     .filter(|id| !id.is_empty())
                     .map(str::to_owned);
                 if bench_id.is_some() && self.current_bench_id != bench_id {
-                    self.switch_bench_layout(bench_id, false);
+                    self.switch_bench_layout(bench_id, true);
                 }
                 let bench_name = value
                     .get("name")
@@ -900,6 +923,7 @@ impl eframe::App for ForjaApp {
         self.show_demos();
         self.refresh_look(ctx);
         self.sync_sidebar_setting();
+        self.sync_dynamic_tabs();
         self.top_bar(ctx);
         self.status_bar(ctx);
         self.left_panels(ctx);

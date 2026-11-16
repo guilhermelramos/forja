@@ -30,7 +30,7 @@
     },
     {
       "step": 15,
-      "present": ["Editor", "Terminal", "Navegador"],
+      "present": ["Editor", "Terminal", "Ajudante (chat)"],
       "absent": ["Voltar à bancada", "Diferenças", "Adicionar pasta", "Busca"]
     },
     {

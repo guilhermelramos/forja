@@ -36,6 +36,16 @@ impl ViewerView {
 }
 
 impl View for ViewerView {
+    fn empty_by_nature(&self) -> bool {
+        true
+    }
+
+    fn has_content(&self) -> bool {
+        self.state.document().is_some()
+            || self.state.path().is_some()
+            || std::env::var("FORJA_VIEWER").is_ok_and(|value| !value.trim().is_empty())
+    }
+
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         let tokens = forja_ui_kit::applied_tokens(ui.ctx());
         if self.state.document().is_none() {

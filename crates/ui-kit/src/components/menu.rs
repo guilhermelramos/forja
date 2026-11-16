@@ -27,6 +27,11 @@ pub fn context_menu(ui: &mut Ui, label: &str, items: &[MenuItem<'_>]) -> Option<
     open_menu(&response, items)
 }
 
+/// Abre um menu contextual ancorado em qualquer [`Response`] clicável.
+pub fn popup_menu(response: &Response, items: &[MenuItem<'_>]) -> Option<usize> {
+    open_menu(response, items)
+}
+
 /// Ícone que abre o mesmo menu. O tooltip é o nome da ação.
 pub fn icon_menu(ui: &mut Ui, glyph: &str, tooltip: &str, items: &[MenuItem<'_>]) -> Option<usize> {
     let response = crate::icon::icon_button(ui, glyph).on_hover_text(tooltip.to_owned());

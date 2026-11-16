@@ -37,6 +37,36 @@ pub const SPLIT_RIGHT: &str = "\u{E90D}";
 pub const SPLIT_DOWN: &str = "\u{E90E}";
 /// Brightness. Theme.
 pub const THEME: &str = "\u{E706}";
+/// Plus. Add / open item.
+pub const ADD: &str = "\u{E710}";
+/// Chevron down. Overflow menu trigger.
+pub const CHEVRON_DOWN: &str = "\u{E70D}";
+/// Chevron right.
+pub const CHEVRON_RIGHT: &str = "\u{E76C}";
+/// Code brackets. Editor.
+pub const CODE: &str = "\u{E943}";
+/// Chat bubble. Helper chat.
+pub const CHAT: &str = "\u{E8BD}";
+/// Compare / Diff opposing arrows.
+pub const DIFF: &str = "\u{E8AB}";
+/// Globe. Browser.
+pub const GLOBE: &str = "\u{E774}";
+/// Eye / Preview. Viewer.
+pub const PREVIEW: &str = "\u{E7B3}";
+/// Clock. History.
+pub const HISTORY: &str = "\u{E81C}";
+/// Checkmark. Review.
+pub const REVIEW: &str = "\u{E73E}";
+/// Folder. Files.
+pub const FOLDER: &str = "\u{E8B7}";
+/// Library books. Projects / Repositories.
+pub const PROJECTS: &str = "\u{E8F1}";
+/// Stacked layers. Bench workspace.
+pub const LAYERS: &str = "\u{E81E}";
+/// Checklist. Git changes.
+pub const CHANGES: &str = "\u{E9D5}";
+/// Network adapter / Ports.
+pub const PORTS: &str = "\u{E839}";
 
 pub fn font_id(size: f32) -> FontId {
     FontId::new(size, FontFamily::Name(ICON_FAMILY.into()))

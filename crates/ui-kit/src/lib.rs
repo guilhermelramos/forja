@@ -41,17 +41,20 @@ pub use apply::{applied_tokens, apply};
 pub use color::{contrast_ratio, luminance, Color};
 pub use components::{
     button, card, context_menu, empty_state, error_banner, error_notice, helper_missing_guide,
-    icon_menu, list, menu_panel, modal, modal_explicit_close, modal_preview, page_heading,
-    progress_bar, segmented, select, stage_badge, tabs, text_field, toast, toggle, tree,
-    truncated_label, virtual_table, window_header, window_header_with_focus, wrapped_label,
-    ButtonKind, Column, HelperMissingGuide,
-    ListItem, MenuItem, Stage, ToastKind, TreeNode,
+    icon_menu, list, measure_tab_width, menu_panel, modal, modal_explicit_close, modal_preview,
+    page_heading, panel_icon_tabs, plan_tab_fit, popup_menu, progress_bar, segmented, select,
+    stage_badge, tab_strip, tabs, text_field, toast, toggle, tree, truncated_label,
+    virtual_table, window_header, window_header_with_focus, wrapped_label, ButtonKind, Column,
+    HelperMissingGuide, ListItem, MenuItem, PanelIconTab, Stage, TabFitPlan, TabItem,
+    TabStripOutcome, ToastKind, TreeNode,
 };
 pub use eframe::egui;
 pub use fonts::{install_fonts, FontError};
 pub use icon::{
-    font_id as icon_font, icon_button, ARCHIVE, BOARD, CLOSE, EXTENSION, HELPERS, REQUESTS,
-    ROUTINES, SEARCH, SETTINGS, SKILLS, SPLIT_DOWN, SPLIT_RIGHT, TERMINAL, THEME,
+    font_id as icon_font, icon_button, ADD, ARCHIVE, BOARD, CHANGES, CHAT, CHEVRON_DOWN,
+    CHEVRON_RIGHT, CLOSE, CODE, DIFF, EXTENSION, FOLDER, GLOBE, HELPERS, HISTORY, LAYERS, PORTS,
+    PREVIEW, PROJECTS, REQUESTS, REVIEW, ROUTINES, SEARCH, SETTINGS, SKILLS, SPLIT_DOWN,
+    SPLIT_RIGHT, TERMINAL, THEME,
 };
 pub use keyboard_layer::{
     consume_layer_escape, keyboard_layer_active, register_keyboard_layer, release_keyboard_focus,

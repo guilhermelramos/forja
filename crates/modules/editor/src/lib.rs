@@ -81,7 +81,7 @@ impl Module for EditorModule {
             Slot::BenchTab,
             "editor.tab",
             "editor.tab.title",
-            bench_tab_order(15),
+            bench_tab_order(16),
             move || Box::new(view::EditorView::new(view_state.clone())),
         );
     }

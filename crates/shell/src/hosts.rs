@@ -250,6 +250,13 @@ fn register_appearance(registrar: &mut Registrar<'_>) {
             60,
         ),
         flag(
+            "appearance.tabs.middle_click",
+            true,
+            "setting-appearance-tabs-middle_click-label",
+            "setting-appearance-tabs-middle_click-help",
+            65,
+        ),
+        flag(
             "appearance.sidebar.visible",
             true,
             "setting-appearance-sidebar-visible-label",

@@ -9,7 +9,9 @@
     { "m": "ui.key", "keys": "Tab" },
     { "m": "ui.key", "keys": "Enter" },
     { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "Tab" },
     { "m": "ui.key", "keys": "Space" },
+    { "m": "ui.key", "keys": "Shift+Tab" },
     { "m": "ui.key", "keys": "Shift+Tab" },
     { "m": "ui.key", "keys": "Shift+Tab" },
     { "m": "ui.key", "keys": "Enter" },
@@ -19,22 +21,24 @@
   "expect": [
     {
       "step": 4,
+      "present_contains": ["Escreva um pedido."],
+      "absent": ["Receitas", "Abra um arquivo no explorador ou pressione Ctrl+P."]
+    },
+    {
+      "step": 7,
       "present": ["Abra um arquivo no explorador ou pressione Ctrl+P."],
-      "absent": ["Receitas", "Nova aba"]
-    },
-    {
-      "step": 6,
-      "present": ["Nova aba"],
-      "absent": ["Abra um arquivo no explorador ou pressione Ctrl+P.", "Receitas"]
-    },
-    {
-      "step": 9,
-      "present": ["Receitas"],
-      "absent": ["Abra um arquivo no explorador ou pressione Ctrl+P.", "Nova aba"]
+      "absent": ["Receitas"],
+      "absent_contains": ["Escreva um pedido."]
     },
     {
       "step": 11,
-      "present": ["Abra um arquivo no explorador ou pressione Ctrl+P."],
+      "present": ["Receitas"],
+      "absent": ["Abra um arquivo no explorador ou pressione Ctrl+P."],
+      "absent_contains": ["Escreva um pedido."]
+    },
+    {
+      "step": 13,
+      "present_contains": ["Escreva um pedido."],
       "absent": ["Receitas"]
     }
   ]

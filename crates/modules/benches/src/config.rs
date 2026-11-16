@@ -136,8 +136,63 @@ pub fn tabs(config: &ForjaConfig, fallback: &[String]) -> Vec<String> {
     if config.tabs.is_empty() {
         fallback.to_vec()
     } else {
-        config.tabs.clone()
+        config
+            .tabs
+            .iter()
+            .filter(|tab| tool_tab_view_id(tab).is_none())
+            .cloned()
+            .collect()
     }
+}
+
+/// Maps a `forja.toml` tab entry that names a tool tab onto its [`Slot::BenchTab`] view ID.
+pub fn tool_tab_view_id(tab: &str) -> Option<&'static str> {
+    match tab.trim().to_ascii_lowercase().as_str() {
+        "terminal.tab" => Some("terminal.tab"),
+        "chat" | "chat.tab" => Some("chat.tab"),
+        "diff" | "diff.tab" => Some("diff.tab"),
+        "editor" | "editor.tab" => Some("editor.tab"),
+        "browser" | "browser.tab" => Some("browser.tab"),
+        "viewer" | "viewers" | "viewers.tab" => Some("viewers.tab"),
+        "bench" | "benches" | "bench.detail" => Some("bench.detail"),
+        "review" | "review.tab" => Some("review.tab"),
+        "history" | "git.history" => Some("git.history"),
+        "extensions" | "extension" | "extension.panels.bench" => Some("extension.panels.bench"),
+        _ => None,
+    }
+}
+
+/// Maps a `bench.layout.tool_tabs` entry (allowing `"terminal"`/`"helper"` short ids)
+/// onto its [`Slot::BenchTab`] view ID.
+pub fn setting_tool_tab_view_id(tab: &str) -> Option<&'static str> {
+    match tab.trim().to_ascii_lowercase().as_str() {
+        "terminal" => Some("terminal.tab"),
+        "helper" => Some("chat.tab"),
+        _ => tool_tab_view_id(tab),
+    }
+}
+
+/// Resolves initial tool tab view IDs from `bench.layout.tool_tabs` extended by `forja.toml`.
+pub fn tool_tabs(config: &ForjaConfig, configured: &[String]) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut push = |id: &str| {
+        if !out.iter().any(|existing: &String| existing == id) {
+            out.push(id.to_owned());
+        }
+    };
+    for entry in configured {
+        if let Some(view_id) = setting_tool_tab_view_id(entry) {
+            push(view_id);
+        }
+    }
+    for entry in &config.tabs {
+        if let Some(view_id) = tool_tab_view_id(entry) {
+            push(view_id);
+        } else if entry == "terminal" {
+            push("terminal.tab");
+        }
+    }
+    out
 }
 
 pub fn request_command(config: &ForjaConfig, request: &str) -> Option<String> {
@@ -207,5 +262,37 @@ mod tests {
         assert_eq!(loaded.config.tabs, vec!["terminal", "helper"]);
         assert_eq!(loaded.warnings.len(), 2);
         let _ = std::fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn tabs_partition_terminals_from_tool_tabs_and_extend_defaults() {
+        let config = ForjaConfig {
+            tabs: vec![
+                "terminal".to_owned(),
+                "helper".to_owned(),
+                "browser".to_owned(),
+                "review.tab".to_owned(),
+            ],
+            ..Default::default()
+        };
+        let fallback = vec!["terminal".to_owned(), "helper".to_owned()];
+        assert_eq!(tabs(&config, &fallback), vec!["terminal", "helper"]);
+        let defaults = vec![
+            "terminal".to_owned(),
+            "chat".to_owned(),
+            "diff".to_owned(),
+            "editor".to_owned(),
+        ];
+        assert_eq!(
+            tool_tabs(&config, &defaults),
+            vec![
+                "terminal.tab",
+                "chat.tab",
+                "diff.tab",
+                "editor.tab",
+                "browser.tab",
+                "review.tab",
+            ]
+        );
     }
 }

@@ -31,6 +31,17 @@ pub trait View {
     fn anvil_hits(&mut self, _query: &str, _cx: &mut Ctx<'_>) -> Vec<AnvilHit> {
         Vec::new()
     }
+
+    /// True for views that start empty until content arrives or the user opens
+    /// them explicitly (e.g., Viewer, Extension panels, History).
+    fn empty_by_nature(&self) -> bool {
+        false
+    }
+
+    /// True while this view has content to display.
+    fn has_content(&self) -> bool {
+        true
+    }
 }
 
 /// Wraps a typed factory into the opaque shape stored by the registry.

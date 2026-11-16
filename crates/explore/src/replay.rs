@@ -257,10 +257,32 @@ fn run_file(
     result
 }
 
-const MORE_TABS_LABELS: &[&str] = &["Mais abas", "More tabs"];
+const OVERFLOW_PREFIXES: &[&str] = &["mais abas", "more tabs"];
+const ADD_TOOL_LABELS: &[&str] = &["Abrir aba de ferramenta", "Open tool tab"];
 
-/// Opens a slot tab directly when visible on the tab bar, or through any
-/// `"Mais abas"` / `"More tabs"` overflow menu when the window is too narrow.
+fn is_overflow_button(name: &str) -> bool {
+    let trimmed = name.trim();
+    let lower = trimmed.to_lowercase();
+    if OVERFLOW_PREFIXES
+        .iter()
+        .any(|prefix| lower.starts_with(prefix))
+    {
+        return true;
+    }
+    trimmed
+        .strip_prefix('+')
+        .is_some_and(|rest| !rest.is_empty() && rest.chars().all(|ch| ch.is_ascii_digit()))
+}
+
+fn is_add_tool_button(name: &str) -> bool {
+    let trimmed = name.trim();
+    ADD_TOOL_LABELS
+        .iter()
+        .any(|label| label.eq_ignore_ascii_case(trimmed))
+}
+
+/// Opens a slot tab directly when visible on the tab bar, through any
+/// overflow menu (`"Mais abas (+N)"` / `"+N"`), or through the `"+"` tool-tab menu.
 fn open_tab(pipe: &str, target: &str) -> Result<Snapshot, String> {
     open_tab_with(target, |method, params| {
         call_ui(pipe, method, params, CALL_TIMEOUT).map_err(|err| err.to_string())
@@ -279,15 +301,21 @@ where
     }
 
     let initial_ids: BTreeSet<u64> = initial.elements.iter().map(|el| el.id).collect();
-    let more_ids: Vec<u64> = initial
+    let overflow_ids: Vec<u64> = initial
         .elements
         .iter()
-        .filter(|el| el.clickable && MORE_TABS_LABELS.contains(&el.name.trim()))
+        .filter(|el| el.clickable && is_overflow_button(&el.name))
+        .map(|el| el.id)
+        .collect();
+    let add_ids: Vec<u64> = initial
+        .elements
+        .iter()
+        .filter(|el| el.clickable && is_add_tool_button(&el.name))
         .map(|el| el.id)
         .collect();
 
-    for more_id in more_ids {
-        let menu_val = call("ui.click", json!({ "id": more_id }))?;
+    for menu_id in overflow_ids.into_iter().chain(add_ids) {
+        let menu_val = call("ui.click", json!({ "id": menu_id }))?;
         let menu_snap = Snapshot::from_rpc_result(&menu_val)?;
         if let Some(item) = find_clickable_tab(&menu_snap.elements, target, Some(&initial_ids))
             .or_else(|| find_clickable_tab(&menu_snap.elements, target, None))
@@ -299,7 +327,7 @@ where
     }
 
     Err(format!(
-        "tab \"{target}\" not found directly or inside any \"Mais abas\"/\"More tabs\" menu"
+        "tab \"{target}\" not found directly, in overflow menu, or in \"+\" tool menu"
     ))
 }
 
@@ -687,6 +715,37 @@ mod tests {
 
         assert_eq!(keys_sent, 1);
         assert!(err.contains("Inexistente"));
+    }
+
+    #[test]
+    fn open_tab_opens_tool_tab_via_plus_button_and_counts_overflow() {
+        let mut log = Vec::new();
+        let result = open_tab_with("Navegador", |method, params| {
+            log.push((method.to_owned(), params.clone()));
+            match method {
+                "ui.snapshot" => Ok(rpc_snapshot(vec![
+                    tab_el(10, "Mais abas (+2)", true),
+                    tab_el(11, "Abrir aba de ferramenta", true),
+                ])),
+                "ui.click" => match params["id"].as_u64() {
+                    Some(10) => Ok(rpc_snapshot(vec![tab_el(20, "Editor", true)])),
+                    Some(11) => Ok(rpc_snapshot(vec![
+                        tab_el(30, "Navegador", true),
+                        tab_el(31, "Bancada", true),
+                    ])),
+                    Some(30) => Ok(rpc_snapshot(vec![tab_el(30, "Navegador", true)])),
+                    other => panic!("unexpected click {other:?}"),
+                },
+                "ui.key" => Ok(rpc_snapshot(vec![
+                    tab_el(10, "Mais abas (+2)", true),
+                    tab_el(11, "Abrir aba de ferramenta", true),
+                ])),
+                other => panic!("unexpected {other}"),
+            }
+        })
+        .unwrap();
+
+        assert_eq!(result.elements[0].name, "Navegador");
     }
 
     #[test]

@@ -183,6 +183,30 @@ pub fn current(shared: &Shared) -> Option<BenchRef> {
     shared.current().map(|bench| bench.to_ref())
 }
 
+pub fn initial_tool_tabs(
+    cx: &mut Ctx<'_>,
+    shared: &Shared,
+    bench_id: Option<&str>,
+) -> Vec<String> {
+    let configured = setting_list(
+        cx,
+        "bench.layout.tool_tabs",
+        &["terminal", "chat", "diff", "editor"],
+    );
+    let project_path = bench_id
+        .and_then(|id| shared.find(id))
+        .or_else(|| shared.current())
+        .and_then(|bench| project_by_id(cx, &bench.project_id))
+        .map(|project| project.path);
+    match project_path {
+        Some(path) => {
+            let loaded = config::load(&path);
+            config::tool_tabs(&loaded.config, &configured)
+        }
+        None => config::tool_tabs(&config::ForjaConfig::default(), &configured),
+    }
+}
+
 /// Saves the terminal tabs open in the bench being left, so returning to it can
 /// restore them (`bench.layout.restore`).
 fn remember_tabs_when_leaving(cx: &mut Ctx<'_>, shared: &Shared) {

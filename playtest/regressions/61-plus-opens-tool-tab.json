@@ -1,0 +1,34 @@
+{
+  "title": "Plus button lists on-demand tool tabs and opens Navegador (#193)",
+  "issue": 193,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 250 },
+    { "m": "ui.click", "target": "Abrir aba de ferramenta" },
+    { "m": "ui.click", "target": "Navegador" },
+    { "m": "ui.wait", "ms": 300 }
+  ],
+  "expect": [
+    {
+      "step": 5,
+      "present": [
+        "Navegador",
+        "Visualizador",
+        "Bancada",
+        "Revisão",
+        "Histórico",
+        "Painéis de extensões"
+      ],
+      "no_geometry_issues": true
+    },
+    {
+      "step": 7,
+      "present": ["Navegador", "Servidores locais das bancadas"],
+      "no_geometry_issues": true
+    }
+  ]
+}

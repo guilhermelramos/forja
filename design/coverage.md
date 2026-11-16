@@ -6,12 +6,12 @@
 
 | Métrica | Valor |
 |---|---|
-| Configurações no catálogo | 311 |
-| Configurações registradas no app | 275 (274 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 274 (273 do catálogo) |
+| Configurações no catálogo | 312 |
+| Configurações registradas no app | 277 (276 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 276 (275 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
-| Configurações adiadas | 35 |
+| Configurações adiadas | 34 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
 | Atalhos no catálogo | 110 |
@@ -31,7 +31,6 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 - `appearance.ui.code_size`: Aguardando métricas tipográficas configuráveis no ui-kit.
 - `appearance.ui.ligatures`: Aguardando suporte de composição tipográfica a ligaduras no renderizador.
 - `appearance.motion.duration_ms`: Aguardando duração de animação configurável nos tokens do ui-kit.
-- `appearance.tabs.middle_click`: Aguardando contrato de fechamento das abas do shell.
 - `appearance.tooltips.enabled`: Aguardando controle compartilhado de dicas nos componentes da interface.
 - `helper.launch.initial_context`: Aguardando contrato de contexto do pedido e preparação assíncrona do lançamento.
 - `helper.launch.include_rules`: Aguardando leitura assíncrona de regras no contrato de lançamento do ajudante.
@@ -84,7 +83,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `appearance.status_bar.visible` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.window.remember_geometry` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.window.start_maximized` | `appearance` | `appearance` | sim | ok | sim |
-| `appearance.tabs.middle_click` | `appearance` | `-` | adiada | - | adiada |
+| `appearance.tabs.middle_click` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.tooltips.enabled` | `appearance` | `-` | adiada | - | adiada |
 | `i18n.language.mode` | `i18n` | `i18n` | sim | ok | sim |
 | `i18n.language.fallback` | `i18n` | `i18n` | sim | ok | sim |
@@ -108,6 +107,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `bench.worktree.fetch_before` | `bench` | `bench` | sim | ok | sim |
 | `bench.worktree.auto_prune_days` | `bench` | `bench` | sim | ok | sim |
 | `bench.layout.tabs` | `bench` | `bench` | sim | ok | sim |
+| `bench.layout.tool_tabs` | `bench` | `bench` | sim | ok | sim |
 | `bench.layout.restore` | `bench` | `bench` | sim | ok | sim |
 | `bench.setup.policy` | `bench` | `bench` | sim | ok | sim |
 | `bench.setup.timeout_s` | `bench` | `bench` | sim | ok | sim |

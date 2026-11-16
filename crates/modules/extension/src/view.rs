@@ -575,6 +575,14 @@ impl ExtensionPanels {
 }
 
 impl View for ExtensionPanels {
+    fn empty_by_nature(&self) -> bool {
+        true
+    }
+
+    fn has_content(&self) -> bool {
+        !state::panels(&self.core, &self.slot).is_empty()
+    }
+
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         state::ensure(&self.core, cx);
         let panels = state::panels(&self.core, &self.slot);

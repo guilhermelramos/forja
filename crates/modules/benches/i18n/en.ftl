@@ -1,5 +1,6 @@
 bench-name = Benches
 bench-command-current = Current bench
+bench-command-tool_tabs = Bench tool tabs
 bench-command-list = List benches
 bench-command-list_cards = List bench cards
 bench-command-activate = Activate bench
@@ -147,6 +148,8 @@ setting-bench-worktree-auto_prune_days-label = Prune old benches (days)
 setting-bench-worktree-auto_prune_days-help = Removes archived benches after this period; 0 disables.
 setting-bench-layout-tabs-label = Initial tabs
 setting-bench-layout-tabs-help = Tabs opened automatically when creating a bench.
+setting-bench-layout-tool_tabs-label = Tool tabs
+setting-bench-layout-tool_tabs-help = Tool tabs opened automatically on a new bench.
 setting-bench-layout-restore-label = Restore tabs
 setting-bench-layout-restore-help = Reopens each bench's tabs from the last visit.
 setting-bench-setup-policy-label = Run forja.toml setup
