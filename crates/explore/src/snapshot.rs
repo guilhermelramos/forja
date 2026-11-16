@@ -75,6 +75,8 @@ pub struct Snapshot {
     pub view: String,
     #[serde(default)]
     pub elements: Vec<Element>,
+    #[serde(default)]
+    pub frames: u64,
 }
 
 impl Snapshot {

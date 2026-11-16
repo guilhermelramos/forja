@@ -1,0 +1,25 @@
+{
+  "title": "Idle app with live terminal draws at most 30 frames over 5s (#191)",
+  "issue": 191,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 2000 },
+    { "m": "ui.wait", "ms": 5000 }
+  ],
+  "expect": [
+    {
+      "step": 4,
+      "present_contains": ["pwsh", "Fechar pwsh"]
+    },
+    {
+      "step": 5,
+      "present_contains": ["pwsh", "Fechar pwsh"],
+      "max_frames_delta": 30
+    }
+  ]
+}

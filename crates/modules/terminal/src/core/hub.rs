@@ -18,6 +18,9 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
+/// Espera entre a última saída e a gravação do layout com o texto das telas.
+const PERSIST_DELAY: Duration = Duration::from_secs(10);
+
 impl Hub {
     /// Cria um hub vazio com a pasta base atual.
     pub fn new(base_dir: PathBuf, preview: Option<String>) -> Self {
@@ -143,6 +146,7 @@ impl Hub {
             settings,
             request.title,
             None,
+            self.ui_context.clone(),
         );
         self.terminals.insert(id, terminal);
         let mut attached = false;
@@ -193,7 +197,16 @@ impl Hub {
         let id = self.next_terminal;
         self.next_terminal += 1;
         let environment = shells::environment(&settings.environment);
-        let terminal = Terminal::start(id, dir, shell, environment, settings, None, None);
+        let terminal = Terminal::start(
+            id,
+            dir,
+            shell,
+            environment,
+            settings,
+            None,
+            None,
+            self.ui_context.clone(),
+        );
         self.terminals.insert(id, terminal);
         if self.root.is_none() {
             self.install_first_pane(id);
@@ -495,13 +508,26 @@ impl Hub {
         }
     }
 
+    /// Próximo quadro que o hub precisa sem novidade de fora: o menor pedido
+    /// dos terminais e a gravação adiada do layout. `None` = nenhum.
+    pub fn next_wake(&self, now: Instant) -> Option<Duration> {
+        let persist = self.dirty_since.map(|since| {
+            (since + PERSIST_DELAY).saturating_duration_since(now)
+        });
+        self.terminals
+            .values()
+            .filter_map(|terminal| terminal.next_wake(now))
+            .chain(persist)
+            .min()
+    }
+
     /// Prepara a gravação do layout quando há novidades.
     pub fn persist_if_due(&mut self, now: Instant, force: bool) -> Option<StoredLayout> {
         let due = self.structure_dirty
             || force
             || self
                 .dirty_since
-                .is_some_and(|since| now.duration_since(since) >= Duration::from_secs(10));
+                .is_some_and(|since| now.duration_since(since) >= PERSIST_DELAY);
         if !due {
             return None;
         }
@@ -581,6 +607,7 @@ impl Hub {
                 settings,
                 entry.title.clone(),
                 Some(entry.text.clone()),
+                self.ui_context.clone(),
             );
             self.terminals.insert(id, terminal);
         }

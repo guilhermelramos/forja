@@ -12,7 +12,6 @@ use crate::state::{lock, Form, Shared};
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::Ctx;
 use std::path::PathBuf;
-use std::time::Duration;
 
 /// Hits drawn per frame. Further hits are counted but not drawn, so a big result stays responsive.
 const MAX_RENDER_HITS: usize = 400;
@@ -34,10 +33,6 @@ enum Action {
 impl View for SearchView {
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         commands::sync_root(cx, &self.shared);
-        // No bench yet: check again later, since one may appear. Otherwise bench events wake the panel.
-        if lock(&self.shared).root.is_none() {
-            ui.ctx().request_repaint_after(Duration::from_millis(800));
-        }
 
         let mut actions: Vec<Action> = Vec::new();
         let (form, focus, has_root) = {

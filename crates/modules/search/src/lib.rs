@@ -63,8 +63,9 @@ impl Module for SearchModule {
         r.contract_event::<FileOpenRequested>(names::FILE_OPEN_REQUESTED);
         r.contract_event::<BenchActivated>(names::BENCH_ACTIVATED);
         let shared = Arc::clone(&self.shared);
-        r.subscribe(move |_cx, event: &BenchActivated| {
+        r.subscribe(move |cx, event: &BenchActivated| {
             commands::on_bench_activated(&shared, &event.0);
+            cx.request_repaint();
         });
 
         let shared = Arc::clone(&self.shared);

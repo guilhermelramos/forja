@@ -15,6 +15,9 @@ use forja_kernel::ui_contract::egui::{self, FontId, Rect, RichText};
 use forja_ui_kit::applied_tokens;
 use std::collections::HashMap;
 
+/// Tique enquanto uma seleção é arrastada (rolagem automática na borda).
+const SELECTION_TICK: std::time::Duration = std::time::Duration::from_millis(30);
+
 #[allow(clippy::too_many_arguments)]
 pub(super) fn draw_terminal(
     ui: &mut egui::Ui,
@@ -95,6 +98,9 @@ pub(super) fn draw_terminal(
             }
             response.request_focus();
         }
+        // Arrastar para fora do corpo rola sozinho: o ponteiro parado não gera
+        // eventos, então um tique rápido mantém a rolagem só durante o arraste.
+        forja_ui_kit::request_repaint_after_active(ui.ctx(), SELECTION_TICK);
     }
     if response.drag_stopped() && settings.copy_on_select {
         if let Some(text) = terminal.selected_text(settings) {
@@ -555,7 +561,7 @@ fn draw_error_banner(
             )
             .clicked()
             {
-                terminal.retry();
+                terminal.retry(Some(ui.ctx().clone()));
             }
             if forja_ui_kit::button(
                 ui,

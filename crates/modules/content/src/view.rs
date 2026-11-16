@@ -88,13 +88,6 @@ impl View for ContentAnvilView {
     }
 
     fn poll(&mut self, cx: &mut Ctx<'_>) {
-        let watch = cx
-            .setting("content.reload.watch")
-            .and_then(|value| value.as_bool())
-            .unwrap_or(true);
-        if watch {
-            cx.request_repaint();
-        }
         let due = self
             .last_poll
             .is_none_or(|at| at.elapsed() >= std::time::Duration::from_millis(500));

@@ -13,7 +13,6 @@ use forja_kernel::{Args, Ctx, Result as KResult};
 use serde_json::{json, Value};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-use std::time::Duration;
 
 /// Indentation per tree level, in points.
 const INDENT: f32 = 14.0;
@@ -52,10 +51,6 @@ struct Frame {
 impl View for ExplorerView {
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         commands::sync(cx, &self.shared);
-        // No bench yet: check again later, since one may appear. Otherwise bench events wake the panel.
-        if lock(&self.shared).tree.root().is_none() {
-            ui.ctx().request_repaint_after(Duration::from_millis(800));
-        }
 
         let (frame, pending_copy) = {
             let mut state = lock(&self.shared);

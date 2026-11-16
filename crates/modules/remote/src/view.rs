@@ -232,7 +232,7 @@ impl RemoteView {
                 actions::list_distros(cx, &self.shared);
             }
             if snap.distros_loading {
-                ui.spinner();
+                forja_ui_kit::spinner_if_active(ui);
             }
         });
         match &snap.distros {
@@ -267,7 +267,7 @@ impl View for RemoteView {
         }
         let snap = snapshot(&self.shared, &self.forwards);
         if snap.busy || snap.distros_loading {
-            ui.ctx().request_repaint_after(Duration::from_secs(1));
+            forja_ui_kit::request_repaint_after_active(ui.ctx(), Duration::from_secs(1));
         }
         ui.heading(cx.t("remote-name"));
         if let Some(notice) = &snap.notice {

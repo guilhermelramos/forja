@@ -193,6 +193,27 @@ pub fn ensure_loaded(cx: &mut Ctx<'_>, shared: &Shared) {
     });
 }
 
+/// Quando o agendador precisa rodar de novo sem interação: 1 s com execução
+/// ativa, até o próximo minuto se houver rotina cron ligada e `None` em repouso.
+pub fn next_wake(cx: &Ctx<'_>, shared: &Shared) -> Option<Duration> {
+    let scheduling = state::scheduling_enabled(cx);
+    with(shared, |state| {
+        if !state.loaded {
+            return None;
+        }
+        if state.runner.running() + state.runner.queued() > 0 {
+            return Some(Duration::from_secs(1));
+        }
+        if scheduling && state.store.routines.iter().any(|routine| routine.enabled) {
+            let now = state::now_unix().max(0) as u64;
+            let wait = (60 - (now % 60)).max(1);
+            return Some(Duration::from_secs(wait));
+        }
+        None
+    })
+    .flatten()
+}
+
 /// Passo periódico, chamado pela barra de status a cada quadro. Limita a um passo por segundo.
 pub fn tick(cx: &mut Ctx<'_>, shared: &Shared) {
     ensure_loaded(cx, shared);

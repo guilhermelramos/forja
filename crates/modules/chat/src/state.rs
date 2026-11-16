@@ -465,6 +465,31 @@ impl ChatState {
     }
 }
 
+/// Máximo de eventos consumidos por quadro no stream (~40 ms em batch).
+pub const STREAM_BATCH_LIMIT: usize = 2000;
+
+impl ChatSession {
+    /// Intervalo até o próximo repaint automático desta sessão (`None` = em repouso).
+    pub fn repaint_delay(&self) -> Option<Duration> {
+        let active_working = matches!(self.status, SessionStatus::Working);
+        let live_transcript =
+            self.live_from_transcript && self.turn.is_none() && self.transcript.is_some();
+        repaint_delay(active_working, live_transcript)
+    }
+}
+
+/// Intervalo entre repaints do chat: 40 ms ao transmitir (33–50 ms), 750 ms só ao
+/// acompanhar transcrição externa ligada, e `None` em repouso.
+pub fn repaint_delay(active_working: bool, live_transcript: bool) -> Option<Duration> {
+    if active_working {
+        Some(Duration::from_millis(40))
+    } else if live_transcript {
+        Some(Duration::from_millis(750))
+    } else {
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -492,5 +517,38 @@ mod tests {
         session.cancel();
         assert_eq!(session.pending(), 0);
         assert_eq!(session.status, SessionStatus::Cancelled);
+    }
+
+    #[test]
+    fn poll_turn_batches_chunks_and_repaint_delay_skips_idle() {
+        let mut session = ChatSession::new(
+            profile(),
+            std::env::temp_dir(),
+            "ask".to_owned(),
+        );
+        let (tx, rx) = std::sync::mpsc::channel();
+        for chunk in ["um ", "dois ", "tres"] {
+            tx.send(StreamEvent::Message(ChatMessage::text(
+                ChatRole::Assistant,
+                chunk,
+            )))
+            .unwrap();
+        }
+        session.turn = Some(TurnHandle {
+            turn: crate::runner::Turn { rx, pid: 0 },
+            started: Instant::now(),
+        });
+        assert_eq!(session.poll_turn(STREAM_BATCH_LIMIT), 3);
+        assert_eq!(session.messages.len(), 3);
+        assert_eq!(
+            repaint_delay(true, false),
+            Some(Duration::from_millis(40))
+        );
+        assert_eq!(repaint_delay(false, false), None);
+        assert_eq!(
+            repaint_delay(false, true),
+            Some(Duration::from_millis(750))
+        );
+        session.turn = None;
     }
 }

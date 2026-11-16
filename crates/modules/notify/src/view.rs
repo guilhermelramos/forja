@@ -185,7 +185,7 @@ fn draw_toasts(ctx: &egui::Context, cx: &mut Ctx<'_>, state: &Shared) {
         }
         return;
     }
-    ctx.request_repaint_after(std::time::Duration::from_millis(200));
+    forja_ui_kit::request_repaint_after_active(ctx, std::time::Duration::from_millis(200));
     let position = text(cx, "notifications.toast.position", "bottom_right");
     let (align, offset) = anchor(position);
     let dismiss = cx.t("notify.toast.dismiss");

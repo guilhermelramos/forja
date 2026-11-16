@@ -68,6 +68,10 @@ pub struct Expectation {
     pub window_count_max: Option<usize>,
     #[serde(default)]
     pub no_geometry_issues: Option<bool>,
+    #[serde(default)]
+    pub from_step: Option<usize>,
+    #[serde(default)]
+    pub max_frames_delta: Option<u64>,
 }
 
 /// Runs every `*.json` regression file in `dir` against a fresh clean app instance.
@@ -330,6 +334,29 @@ pub fn evaluate_expectations(
                 ));
             }
         }
+        if let Some(limit) = exp.max_frames_delta {
+            let baseline_idx = match exp.from_step {
+                Some(idx) => idx,
+                None => target_idx.checked_sub(1).ok_or_else(|| {
+                    format!(
+                        "expectation {exp_idx} (step {target_idx}): max_frames_delta needs a previous step or from_step"
+                    )
+                })?,
+            };
+            let baseline = snapshots.get(baseline_idx).ok_or_else(|| {
+                format!(
+                    "expectation {exp_idx} targets from_step {baseline_idx}, but only {} step(s) ran",
+                    snapshots.len()
+                )
+            })?;
+            let delta = snap.frames.saturating_sub(baseline.frames);
+            if delta > limit {
+                return Err(format!(
+                    "expectation {exp_idx} (step {target_idx}): frame delta {delta} exceeded max_frames_delta {limit} (from step {baseline_idx}: {} -> {})",
+                    baseline.frames, snap.frames
+                ));
+            }
+        }
     }
     Ok(())
 }
@@ -373,6 +400,7 @@ mod tests {
             },
             view: String::new(),
             elements,
+            frames: 0,
         }
     }
 
@@ -435,5 +463,27 @@ mod tests {
         .unwrap();
 
         assert_eq!(spec.test_helpers.as_deref(), Some("none"));
+    }
+
+    #[test]
+    fn evaluates_max_frames_delta_expectation() {
+        let mut before = snap_with(&["Terminal"], 0, &[]);
+        before.frames = 10;
+        let mut ok_after = snap_with(&["Terminal"], 0, &[]);
+        ok_after.frames = 18;
+        let mut busy_after = snap_with(&["Terminal"], 0, &[]);
+        busy_after.frames = 310;
+
+        let exps: Vec<Expectation> =
+            serde_json::from_str(r#"[{"max_frames_delta": 30}]"#).unwrap();
+        assert!(evaluate_expectations(&exps, &[before.clone(), ok_after]).is_ok());
+        assert!(evaluate_expectations(&exps, &[before.clone(), busy_after.clone()]).is_err());
+
+        let explicit: Vec<Expectation> =
+            serde_json::from_str(r#"[{"step": 2, "from_step": 0, "max_frames_delta": 30}]"#)
+                .unwrap();
+        let mut middle = snap_with(&["Terminal"], 0, &[]);
+        middle.frames = 20;
+        assert!(evaluate_expectations(&explicit, &[before, middle, busy_after]).is_err());
     }
 }
