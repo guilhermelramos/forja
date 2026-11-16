@@ -85,14 +85,14 @@ fn focus_bench(registrar: &mut Registrar<'_>) {
         |_, args| {
             let project = args.required_str("project")?.to_owned();
             let bench = args.required_str("bench")?.to_owned();
-            if args.bool("keep_page").unwrap_or(false) {
-                actions::push(Action::RefreshProjectCrumb);
-            } else {
-                actions::push(Action::OpenBench {
-                    project: project.clone(),
-                    bench: bench.clone(),
-                });
-            }
+            let bench_id = args.str("bench_id").map(str::to_owned);
+            let keep_page = args.bool("keep_page").unwrap_or(false);
+            actions::push(Action::OpenBench {
+                project: project.clone(),
+                bench: bench.clone(),
+                bench_id,
+                keep_page,
+            });
             Ok(json!({ "project": project, "bench": bench }))
         },
     );
@@ -204,6 +204,13 @@ const CHROME_KEYS: &[&str] = &[
     "shell.tray.show",
     "shell.tray.quit",
     "shell.tray.tip",
+    "shell.close.confirm.title",
+    "shell.close.confirm.body",
+    "shell.close.confirm.helpers",
+    "shell.close.confirm.routines",
+    "shell.close.confirm.close",
+    "shell.close.confirm.tray",
+    "shell.close.confirm.cancel",
     "shell.toast.title",
     "shell.toast.body",
     "shell.theme.system",
@@ -323,6 +330,8 @@ mod tests {
                 Action::OpenBench {
                     project: "projeto".to_owned(),
                     bench: "bancada".to_owned(),
+                    bench_id: None,
+                    keep_page: false,
                 },
                 Action::ShowBenchTab("editor.tab".to_owned()),
             ]

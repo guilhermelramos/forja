@@ -1,0 +1,63 @@
+{
+  "title": "Closing window confirms active work and gates tray button on app.tray.enabled (#195)",
+  "issue": 195,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    {
+      "m": "routine.save",
+      "routine": {
+        "id": "close-guard",
+        "name": "close-guard",
+        "enabled": true,
+        "schedule": { "kind": "cron", "expression": "0 9 * * *" },
+        "target": { "kind": "fixed", "bench_path": "." },
+        "action": { "kind": "command", "command": "Start-Sleep -Seconds 20" }
+      }
+    },
+    { "m": "routine.run", "id": "close-guard" },
+    { "m": "ui.request_close" },
+    { "m": "ui.click", "target": "Cancelar" },
+    { "m": "ui.click", "target": "Ajustes" },
+    { "m": "ui.type", "text": "bandeja" },
+    { "m": "ui.click", "target": "Bandeja do Windows" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.request_close" },
+    { "m": "ui.click", "target": "Fechar mesmo assim" },
+    { "m": "app.restart" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Ajustes" },
+    { "m": "ui.type", "text": "bandeja" },
+    { "m": "ui.click", "target": "Bandeja do Windows" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.request_close" }
+  ],
+  "expect": [
+    {
+      "step": 3,
+      "closed": false,
+      "present": ["Trabalho em andamento", "Fechar mesmo assim", "Cancelar"],
+      "absent": ["Minimizar para a bandeja"],
+      "no_geometry_issues": true
+    },
+    {
+      "step": 4,
+      "closed": false,
+      "absent": ["Trabalho em andamento", "Fechar mesmo assim"]
+    },
+    {
+      "step": 9,
+      "closed": false,
+      "present": ["Trabalho em andamento", "Fechar mesmo assim", "Minimizar para a bandeja", "Cancelar"],
+      "no_geometry_issues": true
+    },
+    {
+      "step": 10,
+      "closed": true
+    },
+    {
+      "step": 17,
+      "closed": true
+    }
+  ]
+}

@@ -581,6 +581,7 @@ mod tests {
             view: String::new(),
             elements,
             frames: 0,
+            closed: false,
         }
     }
 

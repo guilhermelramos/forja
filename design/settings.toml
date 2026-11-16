@@ -4571,22 +4571,20 @@ help_key = "setting-keymap-conflict-policy-help"
 
 [[setting]]
 key = "app.startup.open_last"
-deferred = "Aguardando política de restauração na inicialização de projetos e bancadas."
 module = "app"
 group = "advanced"
 type = "toggle"
 default = true
 label_pt = "Abrir último projeto"
 label_en = "Open last project"
-help_pt = "Abre o último projeto ao iniciar a Forja."
-help_en = "Opens the last project when Forja starts."
+help_pt = "Abre o último projeto e a última bancada ao iniciar a Forja."
+help_en = "Opens the last project and bench when Forja starts."
 why = "Retomar o último projeto é o fluxo de quem trabalha todo dia."
 label_key = "setting-app-startup-open_last-label"
 help_key = "setting-app-startup-open_last-help"
 
 [[setting]]
 key = "app.close.confirm"
-deferred = "Aguardando contrato agregado de trabalho em andamento para confirmação ao fechar."
 module = "app"
 group = "advanced"
 type = "toggle"
