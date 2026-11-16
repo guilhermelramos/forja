@@ -291,7 +291,7 @@ impl HomeState {
 
             if scanning {
                 ui.horizontal(|ui| {
-                    ui.spinner();
+                    forja_ui_kit::spinner_if_active(ui);
                     ui.label(
                         egui::RichText::new(cx.t("browser.home.docs-loading"))
                             .small()

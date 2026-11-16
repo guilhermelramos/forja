@@ -58,3 +58,33 @@ pub use keyboard_layer::{
 };
 pub use terminal::{AnsiPalette, TerminalTheme};
 pub use tokens::{Density, Metrics, Mode, Palette, ThemeError, Tokens, GRID};
+
+/// Verdadeiro enquanto a janela principal está visível e em foco.
+///
+/// Timers visuais e spinners usam este sinal para não agendar quadros quando a
+/// janela está minimizada ou sem foco; eventos de I/O (como saída do ConPTY)
+/// continuam acordando a interface direto pelo contexto.
+pub fn window_active(ctx: &egui::Context) -> bool {
+    ctx.input(|input| {
+        input.viewport().focused.unwrap_or(true) && !input.viewport().minimized.unwrap_or(false)
+    })
+}
+
+/// Agenda um repaint após `delay` apenas quando a janela está ativa (focada e
+/// não minimizada).
+pub fn request_repaint_after_active(ctx: &egui::Context, delay: std::time::Duration) {
+    if window_active(ctx) {
+        ctx.request_repaint_after(delay);
+    }
+}
+
+/// Desenha o spinner quando a janela está ativa; quando minimizada ou sem foco,
+/// apenas reserva o espaço sem pedir quadros a 60 fps.
+pub fn spinner_if_active(ui: &mut egui::Ui) {
+    if window_active(ui.ctx()) {
+        ui.spinner();
+    } else {
+        let size = ui.spacing().interact_size.y;
+        ui.allocate_exact_size(egui::vec2(size, size), egui::Sense::hover());
+    }
+}

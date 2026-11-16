@@ -139,7 +139,7 @@ impl View for DialogsView {
                         form.fetch = Some(fetch);
                         if form.creating {
                             ui.horizontal(|ui| {
-                                ui.spinner();
+                                forja_ui_kit::spinner_if_active(ui);
                                 ui.label(
                                     egui::RichText::new(cx.t("bench.dialog.create.creating"))
                                         .small(),

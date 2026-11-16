@@ -45,7 +45,7 @@ impl View for UsagePage {
                 let _ = cx.run_command("usage.refresh", Args::new());
             }
             if self.shared.with(|state| state.busy).unwrap_or(false) {
-                ui.spinner();
+                forja_ui_kit::spinner_if_active(ui);
             }
         });
         let mut period_index = UsagePeriod::ALL

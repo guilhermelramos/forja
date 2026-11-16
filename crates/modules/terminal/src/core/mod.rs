@@ -397,4 +397,32 @@ mod tests {
             terminal.stop();
         }
     }
+
+    #[test]
+    fn next_wake_stops_scheduling_once_terminal_is_idle() {
+        let guard = temp_guard("idle-wake");
+        let dir = &guard.0;
+        let mut hub = Hub::new(dir.clone(), None);
+        let settings = TermSettings::default();
+        let id = hub.open(&settings, OpenRequest::default()).unwrap();
+        let now = std::time::Instant::now();
+        {
+            let terminal = hub.terminal_mut(id).unwrap();
+            assert_eq!(terminal.next_wake(now), Some(crate::terminal::SPAWN_TICK));
+            terminal.freeze_preview();
+            assert_eq!(terminal.next_wake(now), None);
+            terminal.bell_until = Some(now + std::time::Duration::from_millis(120));
+            assert_eq!(
+                terminal.next_wake(now),
+                Some(std::time::Duration::from_millis(120))
+            );
+            assert_eq!(
+                terminal.next_wake(now + std::time::Duration::from_millis(120)),
+                None
+            );
+        }
+        for terminal in hub.terminals.values_mut() {
+            terminal.stop();
+        }
+    }
 }

@@ -23,6 +23,8 @@ pub type TerminalId = u64;
 
 const MAX_SNAPSHOT_BYTES: usize = 256 * 1024;
 const WORD_SEPARATORS: &str = "/\\()[]{}<>\"'`,;:=|";
+/// Tique enquanto o shell nasce: a thread que o abre não acorda a interface.
+pub const SPAWN_TICK: Duration = Duration::from_millis(50);
 
 /// Evento produzido por um terminal.
 #[derive(Clone, Debug, PartialEq)]
@@ -82,7 +84,6 @@ pub struct Terminal {
     exit_reported: bool,
     /// Falha ao iniciar.
     pub error: Option<String>,
-    next_exit_check: Instant,
     /// Acompanha a saída.
     pub follow: bool,
     /// Primeira linha visível quando `follow` é falso.
@@ -103,6 +104,7 @@ pub struct Terminal {
 
 impl Terminal {
     /// Cria o terminal e começa a abrir o processo em uma thread própria.
+    #[allow(clippy::too_many_arguments)]
     pub fn start(
         id: TerminalId,
         dir: PathBuf,
@@ -111,6 +113,7 @@ impl Terminal {
         settings: &TermSettings,
         custom_title: Option<String>,
         restored_text: Option<String>,
+        context: Option<egui::Context>,
     ) -> Self {
         let had_restore = restored_text.is_some();
         let mut surface = Surface::new();
@@ -122,19 +125,14 @@ impl Terminal {
             surface.feed(b"\r\n\x1b[0m");
         }
         let shell_label = shell.label();
-        let (sender, receiver) = mpsc::channel();
-        let program = shell.program.clone();
-        let arguments = shell.arguments.clone();
-        let cwd = dir.clone();
-        let env = environment.clone();
-        std::thread::Builder::new()
-            .name("forja-terminal-launch".to_owned())
-            .spawn(move || {
-                let result = PtyProcess::spawn_with_env(&program, &arguments, &cwd, &env);
-                // Se a aba foi fechada, soltar o resultado encerra a árvore.
-                let _ = sender.send(result);
-            })
-            .ok();
+        let receiver = spawn_pty_worker(
+            "forja-terminal-launch",
+            shell.program.clone(),
+            shell.arguments.clone(),
+            dir.clone(),
+            environment.clone(),
+            context,
+        );
         let title = custom_title.clone().unwrap_or_else(|| shell_label.clone());
         Self {
             id,
@@ -152,7 +150,6 @@ impl Terminal {
             last_title: title,
             exit_reported: false,
             error: None,
-            next_exit_check: Instant::now(),
             follow: settings.follow_output,
             scroll_row: 0,
             visible_rows: 24,
@@ -247,8 +244,7 @@ impl Terminal {
         if !responses.is_empty() {
             self.write(&responses);
         }
-        if !self.exit_reported && now >= self.next_exit_check {
-            self.next_exit_check = now + Duration::from_millis(220);
+        if !self.exit_reported {
             if let Some(code) = self.pty.as_ref().and_then(PtyProcess::exit_code) {
                 self.surface.feed(
                     format!("\r\n[process exited with code {code}]\r\n").as_bytes(),
@@ -316,6 +312,25 @@ impl Terminal {
             || self.pty.as_ref().is_some_and(PtyProcess::alive)
     }
 
+    /// Quando este terminal precisa de outro quadro sem que chegue saída.
+    ///
+    /// A saída acorda a interface sozinha (leitor do ConPTY) e o fim do
+    /// processo também (vigia do processo). Sobra um tique rápido só enquanto
+    /// o shell nasce e enquanto a campainha visual está acesa. `None` = nenhum quadro.
+    pub fn next_wake(&self, now: Instant) -> Option<Duration> {
+        let mut wake: Option<Duration> = None;
+        let mut want = |delay: Duration| {
+            wake = Some(wake.map_or(delay, |current| current.min(delay)));
+        };
+        if self.spawning.is_some() {
+            want(SPAWN_TICK);
+        }
+        if let Some(until) = self.bell_until.filter(|until| *until > now) {
+            want(until - now);
+        }
+        wake
+    }
+
     /// Congela um terminal de captura de tela para o shell não limpar o quadro.
     pub fn freeze_preview(&mut self) {
         self.pty.take();
@@ -325,26 +340,21 @@ impl Terminal {
     }
 
     /// Tenta iniciar novamente o processo com o mesmo comando e pasta.
-    pub fn retry(&mut self) {
+    pub fn retry(&mut self, context: Option<egui::Context>) {
         if self.alive() {
             return;
         }
         self.error = None;
         self.exit_reported = false;
         self.pending_input.clear();
-        let (sender, receiver) = mpsc::channel();
-        let program = self.shell.clone();
-        let arguments = self.args.clone();
-        let cwd = self.dir.clone();
-        let env = self.launch_env.clone();
-        std::thread::Builder::new()
-            .name("forja-terminal-retry".to_owned())
-            .spawn(move || {
-                let result = PtyProcess::spawn_with_env(&program, &arguments, &cwd, &env);
-                let _ = sender.send(result);
-            })
-            .ok();
-        self.spawning = Some(receiver);
+        self.spawning = Some(spawn_pty_worker(
+            "forja-terminal-retry",
+            self.shell.clone(),
+            self.args.clone(),
+            self.dir.clone(),
+            self.launch_env.clone(),
+            context,
+        ));
     }
 
     /// Título mostrado na aba.
@@ -613,6 +623,32 @@ impl Terminal {
             pty.stop();
         }
     }
+}
+
+fn spawn_pty_worker(
+    thread_name: &str,
+    program: String,
+    arguments: String,
+    cwd: PathBuf,
+    environment: BTreeMap<String, String>,
+    context: Option<egui::Context>,
+) -> mpsc::Receiver<Result<PtyProcess, String>> {
+    let (sender, receiver) = mpsc::channel();
+    std::thread::Builder::new()
+        .name(thread_name.to_owned())
+        .spawn(move || {
+            let result = PtyProcess::spawn_with_env(&program, &arguments, &cwd, &environment);
+            if let (Ok(pty), Some(context)) = (&result, &context) {
+                pty.set_context(context);
+            }
+            // Se a aba foi fechada, soltar o resultado encerra a árvore.
+            let _ = sender.send(result);
+            if let Some(context) = context {
+                context.request_repaint();
+            }
+        })
+        .ok();
+    receiver
 }
 
 

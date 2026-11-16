@@ -14,7 +14,6 @@ use serde_json::json;
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::Duration;
 
 /// Aba de chat de uma sessão.
 pub struct ChatView {
@@ -461,7 +460,7 @@ impl ChatView {
         let Some(session) = &mut state.active else {
             return;
         };
-        session.poll_turn(200);
+        session.poll_turn(crate::state::STREAM_BATCH_LIMIT);
         session.poll_transcript();
         if session.idle_expired(minutes) {
             session.stop_idle();
@@ -647,14 +646,14 @@ impl View for ChatView {
                 ),
             )
         };
-        let active_working = {
+        let session_delay = {
             let Ok(state) = core.state.lock() else {
                 return;
             };
             state
                 .active
                 .as_ref()
-                .is_some_and(|session| matches!(session.status, SessionStatus::Working))
+                .and_then(|session| session.repaint_delay())
         };
         let mut switch_profile = None;
         egui::TopBottomPanel::top("forja-chat-header")
@@ -728,11 +727,9 @@ impl View for ChatView {
                 );
             });
         });
-        ui.ctx().request_repaint_after(Duration::from_millis(if active_working {
-            16
-        } else {
-            350
-        }));
+        if let Some(delay) = session_delay {
+            forja_ui_kit::request_repaint_after_active(ui.ctx(), delay);
+        }
     }
 }
 

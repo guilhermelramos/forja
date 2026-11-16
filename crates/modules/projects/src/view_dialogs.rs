@@ -192,7 +192,7 @@ pub(crate) fn render_dialog(
                     });
                     if form.busy {
                         ui.horizontal(|ui| {
-                            ui.spinner();
+                            forja_ui_kit::spinner_if_active(ui);
                             ui.label(egui::RichText::new(cx.t("project.status.creating")).small());
                         });
                     }
@@ -299,7 +299,7 @@ pub(crate) fn render_dialog(
                     );
                     if clone.form.busy {
                         ui.horizontal(|ui| {
-                            ui.spinner();
+                            forja_ui_kit::spinner_if_active(ui);
                             ui.label(egui::RichText::new(cx.t("project.status.cloning")).small());
                         });
                     }

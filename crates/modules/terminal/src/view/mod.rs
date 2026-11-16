@@ -395,7 +395,7 @@ impl View for TerminalView {
         let wsl = self.core.wsl_distros();
         let now = Instant::now();
         let mut actions = Vec::new();
-        let (events, persist, alive) = {
+        let (events, persist, wake) = {
             let Ok(mut hub) = self.core.hub.lock() else {
                 ui.label(texts.error_launch.clone());
                 return;
@@ -407,7 +407,6 @@ impl View for TerminalView {
             }
             hub.seed_preview(&settings);
             let events = hub.poll(now, &settings, Some(ui.ctx()));
-            let alive = hub.terminals.values().any(|terminal| terminal.alive());
             let mut approve_recipe =
                 |recipe: &crate::recipes::Recipe| crate::recipe_trust::approve(cx, recipe);
             hub_ui::draw(
@@ -421,7 +420,7 @@ impl View for TerminalView {
                 &mut actions,
             );
             let persist = hub.persist_if_due(now, false);
-            (events, persist, alive)
+            (events, persist, hub.next_wake(Instant::now()))
         };
         for action in actions {
             self.apply(action, cx, &settings);
@@ -440,7 +439,12 @@ impl View for TerminalView {
                 |_, _| {},
             );
         }
-        ui.ctx().request_repaint_after(Duration::from_millis(if alive { 16 } else { 350 }));
+        // Sem tique fixo: a saída do ConPTY e o fim do processo acordam a
+        // interface sozinhos. Só pedimos quadro quando o hub tem um prazo
+        // (shell nascendo, gravação adiada do layout, campainha) e a janela está ativa.
+        if let Some(delay) = wake {
+            forja_ui_kit::request_repaint_after_active(ui.ctx(), delay);
+        }
     }
 }
 

@@ -72,7 +72,6 @@ impl View for ReviewView {
                 );
             }
         }
-        ui.ctx().request_repaint_after(Duration::from_secs(5));
         if self
             .comparison_debounce
             .is_some_and(|deadline| Instant::now() >= deadline)
@@ -132,7 +131,7 @@ impl ReviewView {
             ui.label(egui::RichText::new(cx.t("review.summary.title")).strong());
             if state.comparison_loading {
                 ui.horizontal(|ui| {
-                    ui.spinner();
+                    forja_ui_kit::spinner_if_active(ui);
                     ui.label(cx.t("review.summary.loading"));
                 });
             }
@@ -317,7 +316,7 @@ impl ReviewView {
             }
             if changed_base {
                 self.comparison_debounce = Some(Instant::now() + Duration::from_millis(250));
-                ui.ctx().request_repaint_after(Duration::from_millis(260));
+                forja_ui_kit::request_repaint_after_active(ui.ctx(), Duration::from_millis(260));
             }
         });
         ui.add_space(8.0);
@@ -339,7 +338,7 @@ impl ReviewView {
                 );
             }
             if state.loading {
-                ui.spinner();
+                forja_ui_kit::spinner_if_active(ui);
             }
         });
         ui.separator();
@@ -365,7 +364,7 @@ impl ReviewView {
         self.summary(ui, cx, state, &mut form.base, muted);
         if form.base != previous_base {
             self.comparison_debounce = Some(Instant::now() + Duration::from_millis(250));
-            ui.ctx().request_repaint_after(Duration::from_millis(260));
+            forja_ui_kit::request_repaint_after_active(ui.ctx(), Duration::from_millis(260));
         }
         ui.label(egui::RichText::new(cx.t("review.create.title")).strong());
         ui.label(
@@ -404,7 +403,7 @@ impl ReviewView {
             let response = ui.add(egui::TextEdit::singleline(&mut form.base).desired_width(140.0));
             if response.changed() {
                 self.comparison_debounce = Some(Instant::now() + Duration::from_millis(250));
-                ui.ctx().request_repaint_after(Duration::from_millis(260));
+                forja_ui_kit::request_repaint_after_active(ui.ctx(), Duration::from_millis(260));
             }
             ui.checkbox(&mut form.draft, cx.t("review.create.draft"));
             if forja_ui_kit::button(

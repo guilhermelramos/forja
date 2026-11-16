@@ -163,7 +163,7 @@ impl ForgePreview {
                 match &preview_state {
                     ForgePreviewState::Loading { .. } => {
                         ui.horizontal(|ui| {
-                            ui.spinner();
+                            forja_ui_kit::spinner_if_active(ui);
                             ui.label(cx.t("request.forge.preview.loading"));
                         });
                     }

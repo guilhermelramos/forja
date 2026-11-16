@@ -580,6 +580,7 @@ mod tests {
             changes: Default::default(),
             view: String::new(),
             elements,
+            frames: 0,
         }
     }
 
