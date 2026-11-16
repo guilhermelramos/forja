@@ -207,3 +207,9 @@ A confirmação de fechamento considera `helper.close.confirm_running` para term
   `terminal.recipes.show_scope` e `terminal.recipes.shell` (antes `recipe.*`): Enter após
   colar, confirmação antes de rodar (`hub_ui.rs`), escopo do seletor e shell que roda a
   receita numa aba nova (`core/hub.rs`).
+
+## Protocolos de redesenho
+
+O modo 2026 publica uma tela completa ao desligar, com limite fixo de 150 ms e resposta DECRQM; consultas e sinais continuam sendo processados durante a acumulação. O modo 1004 reporta transições de foco do painel e da janela por um callback ao terminar o quadro, inclusive ao esconder a aba. DECSCUSR aceita 0–6; só formas explicitamente piscantes e focadas agendam a próxima troca. SGR 9/29 e 53/55 desenham tachado e sobrelinha; 4:3 usa sublinhado simples, sem ligar itálico.
+
+Testes: `cargo test -p forja-module-terminal`; roteiro com ferramentas reais para o dono: `playtest/terminal-manual.md`.

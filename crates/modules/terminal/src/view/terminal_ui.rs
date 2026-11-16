@@ -56,6 +56,8 @@ pub(super) fn draw_terminal(
         return;
     };
     let focus_id = ui.id().with(("forja-terminal-body", terminal.id));
+    terminal.focus_id = Some(focus_id);
+    terminal.drawn_frame = focused_pane.then_some(ui.ctx().cumulative_frame_nr());
     let keyboard_focus = ui.memory(|memory| memory.has_focus(focus_id));
     let grid = render::draw_grid(
         ui,
@@ -64,7 +66,7 @@ pub(super) fn draw_terminal(
         palette,
         textures,
         body,
-        focused_pane && keyboard_focus,
+        focused_pane && keyboard_focus && ui.input(|input| input.focused),
     );
     let response = grid.response;
     let metrics = grid.metrics;

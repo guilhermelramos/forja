@@ -1,0 +1,44 @@
+{
+  "title": "Terminal processa atributos e quadro sincronizado sem perder o painel (#192)",
+  "issue": 192,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.wait",
+      "ms": 1000
+    },
+    {
+      "m": "ui.click",
+      "x": 900,
+      "y": 500
+    },
+    {
+      "m": "ui.type",
+      "text": "$e=[char]27; [Console]::Write(\"${e}[?2026h${e}[9mtachado${e}[29m ${e}[2mesmaecido${e}[22m ${e}[3mitalico${e}[23m ${e}[4:3msublinhado${e}[24m ${e}[53msobrelinha${e}[55m${e}[2 q${e}[?2026l${e}]2;forja-vt-192$([char]7)\")"
+    },
+    {
+      "m": "ui.key",
+      "keys": "Enter"
+    },
+    {
+      "m": "ui.wait",
+      "ms": 700
+    }
+  ],
+  "expect": [
+    {
+      "step": 5,
+      "present_contains": [
+        "forja-vt-192"
+      ],
+      "absent_contains": [
+        "Esta visualização parou"
+      ]
+    }
+  ]
+}

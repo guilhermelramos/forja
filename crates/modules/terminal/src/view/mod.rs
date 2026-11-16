@@ -387,6 +387,18 @@ impl TerminalView {
 
 impl View for TerminalView {
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
+        let focus_core = std::sync::Arc::downgrade(&self.core);
+        ui.ctx().on_end_pass("forja.terminal.focus", std::sync::Arc::new(move |ctx| {
+            let Some(focus_core) = focus_core.upgrade() else { return; };
+            if let Ok(mut hub) = focus_core.hub.lock() {
+                for terminal in hub.terminals.values_mut() {
+                    let focused = ctx.input(|input| input.focused)
+                        && terminal.drawn_frame == Some(ctx.cumulative_frame_nr())
+                        && terminal.focus_id.is_some_and(|id| ctx.memory(|memory| memory.has_focus(id)));
+                    terminal.report_focus(focused);
+                }
+            };
+        }));
         let settings = TermSettings::from_ctx(cx);
         let texts = UiText::new(cx);
         let store = cx.store().path();
