@@ -208,9 +208,11 @@ impl ForjaApp {
                     );
                 }
 
+                let mut open_logs = false;
                 for (module_id, mut module_specs) in by_module {
                     module_specs
                         .sort_by(|a, b| a.order.cmp(&b.order).then_with(|| a.key.cmp(&b.key)));
+                    let show_logs_button = module_id == "app";
                     let name = modules
                         .iter()
                         .find(|manifest| manifest.id == module_id)
@@ -222,7 +224,22 @@ impl ForjaApp {
                             for spec in &module_specs {
                                 self.setting_row(ui, spec, values.get(&spec.key));
                             }
+                            if show_logs_button {
+                                ui.add_space(8.0);
+                                if forja_ui_kit::button(
+                                    ui,
+                                    forja_ui_kit::ButtonKind::Secondary,
+                                    &self.text("shell.command.logs-open"),
+                                )
+                                .clicked()
+                                {
+                                    open_logs = true;
+                                }
+                            }
                         });
+                }
+                if open_logs {
+                    self.run_command("shell.logs.open");
                 }
 
                 if query.is_empty() && !self.settings_views.is_empty() {

@@ -1837,6 +1837,7 @@ dependencies = [
 name = "forja-kernel"
 version = "0.2.2"
 dependencies = [
+ "chrono",
  "eframe",
  "fluent-bundle",
  "forja-kernel-macros",

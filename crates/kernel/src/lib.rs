@@ -20,6 +20,7 @@ pub mod events;
 pub mod human_error;
 pub mod i18n;
 pub mod keymap;
+pub mod logging;
 pub mod manifest;
 pub mod module;
 pub mod paths;

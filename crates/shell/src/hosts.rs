@@ -314,6 +314,39 @@ fn register_app(registrar: &mut Registrar<'_>) {
         "setting-app-tray-enabled-help",
         10,
     ));
+    registrar.setting(choice(
+        "app.log.level",
+        &["error", "warn", "info", "debug", "trace"],
+        "info",
+        "setting-app-log-level-label",
+        "setting-app-log-level-help",
+        20,
+    ));
+    registrar.setting(number(
+        "app.log.max_mb",
+        20.0,
+        1.0,
+        100.0,
+        "setting-app-log-max_mb-label",
+        "setting-app-log-max_mb-help",
+        30,
+    ));
+    registrar.setting(number(
+        "app.log.keep",
+        5.0,
+        1.0,
+        20.0,
+        "setting-app-log-keep-label",
+        "setting-app-log-keep-help",
+        40,
+    ));
+    registrar.setting(flag(
+        "app.log.include_terminal_output",
+        false,
+        "setting-app-log-include_terminal_output-label",
+        "setting-app-log-include_terminal_output-help",
+        50,
+    ));
 }
 
 fn register_i18n(registrar: &mut Registrar<'_>) {

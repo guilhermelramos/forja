@@ -11,6 +11,7 @@ mod anvil_ask;
 mod anvil_keys;
 mod app;
 mod appearance;
+mod crash;
 mod hosts;
 mod icon;
 mod layout;
@@ -56,8 +57,10 @@ struct Flags {
 }
 
 fn main() {
+    crash::install_panic_hook();
     attach_parent_console();
     let code = run();
+    forja_kernel::logging::flush();
     std::process::exit(code);
 }
 
@@ -66,8 +69,10 @@ fn run() -> i32 {
         Ok(Some(flags)) => flags,
         Ok(None) => return 0,
         Err(error) => {
-            eprintln!("forja-app: {error}");
-            eprintln!("Use `forja-app --help` para ver as opções.");
+            forja_kernel::logging::log(
+                forja_kernel::logging::LogLevel::Error,
+                format!("forja-app: {error}; use `forja-app --help` para ver as opções"),
+            );
             return 2;
         }
     };
@@ -101,16 +106,27 @@ fn run() -> i32 {
     } else {
         None
     };
+    let effective_data_dir = data_dir
+        .clone()
+        .unwrap_or_else(forja_kernel::paths::default_data_dir);
+    crash::configure_data_dir(effective_data_dir);
 
     let locale_locked = flags.locale.is_some();
+    if let Some(locale) = flags.locale.as_deref() {
+        crash::set_locale(forja_kernel::Locale::parse(locale));
+    }
     let runtime =
         match app::build_runtime(flags.locale.clone(), data_dir, user_dir, !flags.no_modules) {
             Ok(runtime) => runtime,
             Err(error) => {
-                eprintln!("forja-app: could not start: {error}");
+                forja_kernel::logging::log(
+                    forja_kernel::logging::LogLevel::Error,
+                    format!("forja-app: could not start: {error}"),
+                );
                 return 1;
             }
         };
+    crash::set_locale(runtime.i18n().locale());
 
     let background = (flags.test_driver || flags.screenshot.is_some())
         && std::env::var("FORJA_TEST_WINDOW").as_deref() != Ok("visible");
@@ -188,7 +204,10 @@ fn run() -> i32 {
         }),
     );
     if let Err(error) = result {
-        eprintln!("forja-app: {error}");
+        forja_kernel::logging::log(
+            forja_kernel::logging::LogLevel::Error,
+            format!("forja-app: {error}"),
+        );
         return 1;
     }
     if let Some(error) = screenshot_error
@@ -196,14 +215,17 @@ fn run() -> i32 {
         .ok()
         .and_then(|mut slot| slot.take())
     {
-        eprintln!("forja-app: screenshot failed: {error}");
+        forja_kernel::logging::log(
+            forja_kernel::logging::LogLevel::Error,
+            format!("forja-app: screenshot failed: {error}"),
+        );
         return 1;
     }
     if let Some(path) = expected {
         if !path.exists() {
-            eprintln!(
-                "forja-app: screenshot was not written to {}",
-                path.display()
+            forja_kernel::logging::log(
+                forja_kernel::logging::LogLevel::Error,
+                format!("forja-app: screenshot was not written to {}", path.display()),
             );
             return 1;
         }
@@ -222,8 +244,9 @@ fn test_window_size() -> [f32; 2] {
         Ok(value) => match parse_window_size(&value) {
             Some(size) => size,
             None => {
-                eprintln!(
-                    "forja-app: FORJA_TEST_WINDOW_SIZE=`{value}` is not WIDTHxHEIGHT; using 1920x1080"
+                forja_kernel::logging::log(
+                    forja_kernel::logging::LogLevel::Warn,
+                    format!("forja-app: FORJA_TEST_WINDOW_SIZE=`{value}` is not WIDTHxHEIGHT; using 1920x1080"),
                 );
                 [1920.0, 1080.0]
             }
@@ -258,7 +281,10 @@ fn dump_catalog(flags: &Flags) -> i32 {
             0
         }
         Err(error) => {
-            eprintln!("forja-app: --dump-catalog failed: {error}");
+            forja_kernel::logging::log(
+                forja_kernel::logging::LogLevel::Error,
+                format!("forja-app: --dump-catalog failed: {error}"),
+            );
             1
         }
     }

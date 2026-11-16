@@ -437,7 +437,10 @@ impl SettingsWriter {
             .spawn(move || {
                 while let Ok(message) = receiver.recv() {
                     if let Err(error) = message.snapshot.save() {
-                        eprintln!("forja: could not save settings: {error}");
+                        crate::logging::log(
+                            crate::logging::LogLevel::Error,
+                            format!("forja: could not save settings: {error}"),
+                        );
                     }
                     if let Some(ack) = message.ack {
                         let _ = ack.send(());

@@ -6,6 +6,7 @@ Agentes de IA gratuitos usam a Forja **ao vivo, como uma pessoa**: olham a tela,
 1. **`forja-app --test-driver`**: só com essa opção, o app responde aos métodos `ui.*` pelo pipe local.
    - `ui.snapshot` devolve os elementos visíveis a partir da árvore de acessibilidade: nome, papel, estado e retângulo de cada um. `region` limita a uma parte (`cima`, `baixo`, `esquerda`, `direita`, `centro` ou o nome de uma janela) e `filter` a nomes/papéis que contenham o texto.
    - `ui.click`, `ui.type`, `ui.key` e `ui.scroll` viram **eventos reais de mouse e teclado** dentro do egui, um passo por quadro.
+   - `ui.debug_panic` provoca uma falha de teste em `where: "view"` com `view_id` ou no laço principal com `where: "main"`; só existe com `--test-driver`.
    - Cada ação responde depois que a interface assentou, só com o que **apareceu**, **sumiu**, **mudou** ou é novo.
    - Tudo é registrado em `FORJA_TEST_LOG` (JSONL).
    - Seletores nativos de pasta e arquivo respondem sozinhos (`FORJA_TEST_PICK_DIR`, `FORJA_TEST_PICK_FILE`; veja `crates/kernel/src/test_pick.rs`).

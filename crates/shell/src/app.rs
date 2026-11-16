@@ -32,6 +32,7 @@ pub(crate) struct ViewInstance {
     pub(crate) icon_glyph: Option<String>,
     pub(crate) icon_png: Option<Arc<[u8]>>,
     pub(crate) view: Box<dyn View>,
+    pub(crate) failure: Option<String>,
 }
 
 impl ViewInstance {
@@ -42,9 +43,12 @@ impl ViewInstance {
             .filter_map(|contribution| {
                 let view = ui_contract::downcast(contribution.instantiate());
                 if view.is_none() {
-                    eprintln!(
-                        "forja: view `{}` did not return a ui_contract::View",
-                        contribution.id
+                    forja_kernel::logging::log(
+                        forja_kernel::logging::LogLevel::Warn,
+                        format!(
+                            "forja: view `{}` did not return a ui_contract::View",
+                            contribution.id
+                        ),
                     );
                 }
                 view.map(|view| Self {
@@ -54,6 +58,7 @@ impl ViewInstance {
                     icon_glyph: contribution.icon_glyph.clone(),
                     icon_png: contribution.icon_png.clone(),
                     view,
+                    failure: None,
                 })
             })
             .collect()
@@ -155,7 +160,7 @@ pub struct ForjaApp {
     screenshot: Option<ScreenshotJob>,
     screenshot_error: Arc<Mutex<Option<String>>>,
     rpc: Option<RpcHost>,
-    driver: Option<crate::test_driver::Driver>,
+    pub(crate) driver: Option<crate::test_driver::Driver>,
     pub(crate) module_count: usize,
     geometry_writer: crate::window_geometry::GeometryWriter,
     geometry_checked: Instant,
@@ -197,7 +202,10 @@ impl ForjaApp {
         let top_views = ViewInstance::collect(runtime.registry(), Slot::TopBar);
         let module_count = runtime.registry().modules().len();
         for warning in runtime.warnings() {
-            eprintln!("forja: {warning}");
+            forja_kernel::logging::log(
+                forja_kernel::logging::LogLevel::Warn,
+                format!("forja: {warning}"),
+            );
         }
         let anvil_history = match runtime.store().load::<Value>("shell") {
             LoadResult::Loaded(value) => crate::anvil::load_history(&value),
@@ -325,12 +333,18 @@ impl ForjaApp {
             if app.rail_views.iter().any(|view| view.id == view_id) {
                 app.rail_page = Some(view_id);
             } else {
-                eprintln!("forja-app: --rail {view_id}: no rail page has that id");
+                forja_kernel::logging::log(
+                    forja_kernel::logging::LogLevel::Warn,
+                    format!("forja-app: --rail {view_id}: no rail page has that id"),
+                );
             }
         }
         if let Some(view_id) = session.modal.clone() {
             if !app.modal_views.iter().any(|view| view.id == view_id) {
-                eprintln!("forja-app: --modal {view_id}: no modal view has that id");
+                forja_kernel::logging::log(
+                    forja_kernel::logging::LogLevel::Warn,
+                    format!("forja-app: --modal {view_id}: no modal view has that id"),
+                );
             }
         }
         if let Some(module) = session.settings.clone() {
@@ -821,7 +835,10 @@ impl ForjaApp {
             }
             if let Some(path) = job.ui_tree.clone() {
                 match crate::ui_tree::write(&path, &job.tree, ctx.pixels_per_point()) {
-                    Ok(()) => eprintln!("forja: ui tree saved to {}", path.display()),
+                    Ok(()) => forja_kernel::logging::log(
+                        forja_kernel::logging::LogLevel::Info,
+                        format!("forja: ui tree saved to {}", path.display()),
+                    ),
                     Err(error) => {
                         if let Ok(mut slot) = self.screenshot_error.lock() {
                             *slot = Some(format!("ui tree: {error}"));
@@ -830,7 +847,10 @@ impl ForjaApp {
                 }
             }
             job.done = true;
-            eprintln!("forja: screenshot saved to {}", job.path.display());
+            forja_kernel::logging::log(
+                forja_kernel::logging::LogLevel::Info,
+                format!("forja: screenshot saved to {}", job.path.display()),
+            );
             self.quitting = true;
             ctx.send_viewport_cmd(ViewportCommand::Close);
         } else {
@@ -882,6 +902,13 @@ impl eframe::App for ForjaApp {
         let focused = ctx.input(|input| input.viewport().focused.unwrap_or(true));
         self.runtime.set_viewport_focused(focused);
         self.drain_rpc(ctx);
+        if self
+            .driver
+            .as_mut()
+            .is_some_and(crate::test_driver::Driver::take_main_panic)
+        {
+            panic!("test-driver requested a panic in the main loop");
+        }
         self.runtime.poll_tasks();
         self.handle_shortcuts(ctx);
         self.drain_actions(ctx);

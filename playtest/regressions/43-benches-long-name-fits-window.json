@@ -3,16 +3,45 @@
   "issue": 98,
   "locale": "pt-BR",
   "steps": [
-    { "m": "ui.key", "keys": "Escape" },
-    { "m": "ui.click", "target": "Adicionar pasta" },
-    { "m": "ui.click", "target": "Escolher…" },
-    { "m": "ui.click", "target": "Adicionar" },
-    { "m": "ui.open_tab", "target": "Bancada" },
-    { "m": "ui.click", "target": "Nova bancada" },
-    { "m": "ui.type", "text": "bench-superlong-unbreakable-0123456789-abcdefghijklmnopqrstuvwxyz-without-spaces-0123456789-end" },
-    { "m": "ui.click", "target": "Criar bancada" },
-    { "m": "ui.wait", "ms": 500 },
-    { "m": "ui.snapshot" }
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.click",
+      "target": "Adicionar pasta"
+    },
+    {
+      "m": "ui.click",
+      "target": "Escolher…"
+    },
+    {
+      "m": "ui.click",
+      "target": "Adicionar"
+    },
+    {
+      "m": "ui.open_tab",
+      "target": "Bancada"
+    },
+    {
+      "m": "ui.click",
+      "target": "Nova bancada"
+    },
+    {
+      "m": "ui.type",
+      "text": "bench-superlong-unbreakable-0123456789-abcdefghijklmnopqrstuvwxyz-without-spaces-0123456789-end"
+    },
+    {
+      "m": "ui.click",
+      "target": "Criar bancada"
+    },
+    {
+      "m": "ui.wait",
+      "ms": 500
+    },
+    {
+      "m": "ui.snapshot"
+    }
   ],
   "expect": [
     {

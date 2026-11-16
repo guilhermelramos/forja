@@ -1,0 +1,15 @@
+{
+  "title": "A view que falha fica em um cartão recuperável (#190)",
+  "issue": 190,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    { "m": "ui.debug_panic", "where": "view", "view_id": "project.sidebar" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    { "step": 0, "present": "Não foi possível mostrar este painel" },
+    { "step": 0, "present": "Tentar de novo" },
+    { "step": 1, "present": "Não foi possível mostrar este painel" }
+  ]
+}

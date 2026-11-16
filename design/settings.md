@@ -430,6 +430,7 @@ Privacidade reúne histórico local, segredos, cookies, proxy e rede. A Forja n�
 ## 3.13 Avançado (`advanced`)
 
 Avançado cobre Bigorna, atalhos, armazenamento, atualizações, logs e desempenho. São ajustes de operação: mudam pouco, mas precisam ser claros quando mudam.
+O nível do log, a rotação por tamanho, a retenção de arquivos e a inclusão opcional da saída do terminal já são aplicados pelo serviço local. A saída do terminal continua desligada por padrão porque pode conter segredos.
 
 | Chave | Tipo | Padrão (por quê) | Faixa / opções | Rótulo pt-BR · en | Ajuda | Dono |
 |---|---|---|---|---|---|---|
