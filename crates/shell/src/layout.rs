@@ -83,21 +83,13 @@ impl ForjaApp {
                         self.open_anvil(AnvilMode::All);
                     }
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        if button(
-                            ui,
-                            ButtonKind::Ghost,
-                            &self.text("shell.window.close-glyph"),
-                        )
+                        if window_button(ui, &self.text("shell.window.close-glyph"), &self.text("shell.window.close"))
                         .on_hover_text(self.text("shell.window.close"))
                         .clicked()
                         {
                             ui.ctx().send_viewport_cmd(ViewportCommand::Close);
                         }
-                        if button(
-                            ui,
-                            ButtonKind::Ghost,
-                            &self.text("shell.window.maximize-glyph"),
-                        )
+                        if window_button(ui, &self.text("shell.window.maximize-glyph"), &self.text("shell.window.maximize"))
                         .on_hover_text(self.text("shell.window.maximize"))
                         .clicked()
                         {
@@ -107,11 +99,7 @@ impl ForjaApp {
                             ui.ctx()
                                 .send_viewport_cmd(ViewportCommand::Maximized(!maximized));
                         }
-                        if button(
-                            ui,
-                            ButtonKind::Ghost,
-                            &self.text("shell.window.minimize-glyph"),
-                        )
+                        if window_button(ui, &self.text("shell.window.minimize-glyph"), &self.text("shell.window.minimize"))
                         .on_hover_text(self.text("shell.window.minimize"))
                         .clicked()
                         {
@@ -156,22 +144,11 @@ impl ForjaApp {
             .fill(self.paint(self.tokens.color.surface_alt))
             .inner_margin(Margin::symmetric(10, 2));
         let status = self.status.clone();
-        let modules = self.module_count;
-        let module_key = if modules == 1 {
-            "shell.status.module"
-        } else {
-            "shell.status.modules"
-        };
-        let module_label = format!("{modules} {}", self.text(module_key));
-        let ready = self.text("shell.status.ready");
         let response = egui::TopBottomPanel::bottom("forja.status")
             .exact_height(self.tokens.metrics().row)
             .frame(frame)
             .show(ctx, |ui| {
                 ui.horizontal_centered(|ui| {
-                    ui.label(RichText::new(ready).color(self.paint(self.tokens.color.ok)));
-                    ui.separator();
-                    ui.label(module_label);
                     if let Some(status) = status {
                         ui.separator();
                         let summary_max = (ui.available_width() - 280.0).max(120.0);
@@ -783,6 +760,12 @@ fn single_line(text: &str) -> String {
     } else {
         message
     }
+}
+
+fn window_button(ui: &mut egui::Ui, glyph: &str, label: &str) -> egui::Response {
+    let response = button(ui, ButtonKind::Ghost, glyph);
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label));
+    response
 }
 
 #[cfg(test)]

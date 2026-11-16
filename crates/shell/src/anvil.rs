@@ -1161,13 +1161,8 @@ fn anvil_row(ui: &mut egui::Ui, tokens: &Tokens, hit: &Hit, selected: bool) -> e
     ui.painter()
         .galley(draw_pos, title_galley, paint(tokens.color.text));
     if !right.is_empty() {
-        ui.painter().text(
-            text.right_center(),
-            Align2::RIGHT_CENTER,
-            right,
-            font,
-            paint(tokens.color.text_muted),
-        );
+        let detail_rect = egui::Rect::from_min_max(egui::pos2(text.right() - right_width + 8.0, text.top()), text.right_bottom());
+        ui.put(detail_rect, egui::Label::new(RichText::new(right).font(font).color(paint(tokens.color.text_muted))).truncate());
     }
     if title_elided {
         response.on_hover_text(&hit.title)

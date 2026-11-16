@@ -126,6 +126,9 @@ pub struct ResumeHeadless {
 /// `[models]`.
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Models {
+    /// Model choices declared by this helper profile.
+    #[serde(default)]
+    pub values: Vec<String>,
     /// Flags de modelo.
     #[serde(default)]
     pub model_args: Vec<String>,

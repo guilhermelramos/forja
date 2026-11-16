@@ -39,3 +39,5 @@ aprovação ele aparece desabilitado e `content.run` responde `[trust]`.
 ```sh
 cargo test -p forja-module-content
 ```
+
+Na Bigorna, as categorias são traduzidas e os atalhos declarados acompanham o comando; diagnósticos mostram caminho relativo e mensagem legível, com detalhes recolhidos.

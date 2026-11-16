@@ -14,6 +14,7 @@ mod profile_cards;
 mod profile_data;
 mod rpc;
 mod status;
+mod status_view;
 mod store;
 mod views;
 
@@ -246,6 +247,9 @@ impl Module for HelperModule {
             r.uses_i18n(key);
         }
 
+        let status_core = Arc::clone(&self.core);
+        r.view(Slot::StatusBar, "helper.status-bar", "helper.view.title", 10,
+            move || Box::new(status_view::HelperStatusView(status_core.clone())));
         let page_core = Arc::clone(&self.core);
         let page_order = if std::env::var_os("FORJA_HELPER_PREVIEW").is_some() {
             1

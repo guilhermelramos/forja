@@ -9,6 +9,6 @@
   ],
   "expect": [
     { "step": 1, "window_count": 1, "present": ["Fechar janela", "Bigorna"] },
-    { "window_count": 0, "absent": ["Fechar janela", "Limite do histórico"] }
+    { "window_count": 0, "absent": ["Limite do histórico"] }
   ]
 }

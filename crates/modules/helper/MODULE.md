@@ -119,3 +119,5 @@ forja terminal read --terminal_id <id>
 
 - Comando `helper.launch.profile` (Ctrl+Alt+Shift+A): abre o seletor de perfis
   (`picker.rs`, view modal `helper.profile_picker`); escolher um perfil chama `helper.launch`.
+
+Contribui `helper.status-bar` para `StatusBar`, com contagem de ajudantes trabalhando e esperando.

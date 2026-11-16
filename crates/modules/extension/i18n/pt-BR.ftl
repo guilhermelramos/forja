@@ -82,3 +82,5 @@ extension-setting-log-label = Nível de log
 extension-setting-log-help = Nível mínimo gravado no log da extensão.
 extension-setting-dev-label = Recarregar ao editar
 extension-setting-dev-help = Pastas de desenvolvimento recarregam sem pedir de novo quando as capacidades não mudam.
+
+extension-details = Detalhes

@@ -144,15 +144,11 @@ impl forja_kernel::ui_contract::View for CenterView {
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         let notices = self.state.snapshot();
         let unread = notices.iter().filter(|notice| !notice.read).count();
-        let label = if unread == 0 {
-            cx.t("notify.center.title")
-        } else {
-            let count = unread.to_string();
-            cx.t_args("notify.center.count", &[("count", &count)])
-        };
+        let count = unread.to_string();
+        let label = cx.t_args("notify.center.count", &[("count", &count)]);
         let color = if unread == 0 { muted(ui) } else { accent(ui) };
         let response =
-            ui.add(egui::Label::new(egui::RichText::new(label).color(color)).sense(Sense::click()));
+            ui.add(egui::Label::new(egui::RichText::new(format!("🔔 {label}")).color(color)).sense(Sense::click()));
         if response.clicked() {
             self.state.toggle_center();
         }
@@ -501,5 +497,17 @@ mod keyboard_tests {
             assert!(rect.right() <= w, "{w}x{h} right={}", rect.right());
             assert!(rect.bottom() <= h, "{w}x{h} bottom={}", rect.bottom());
         }
+    }
+}
+
+#[cfg(test)]
+mod plural_tests {
+    #[test]
+    fn notification_count_uses_real_localized_fluent_plural() {
+        let source = forja_kernel::i18n::BundleSource { module: "notify".into(), en: include_str!("../i18n/en.ftl").into(), pt_br: include_str!("../i18n/pt-BR.ftl").into() };
+        let (i18n, warnings) = forja_kernel::I18n::build(&[source], forja_kernel::Locale::PtBr);
+        assert!(warnings.is_empty());
+        assert_eq!(i18n.t_args("notify.center.count", &[("count", "1")]), "1 aviso");
+        assert_eq!(i18n.t_args("notify.center.count", &[("count", "2")]), "2 avisos");
     }
 }

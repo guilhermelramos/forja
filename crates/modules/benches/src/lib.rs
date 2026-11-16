@@ -18,6 +18,7 @@ mod service;
 mod settings;
 mod stages;
 mod state;
+mod status_view;
 mod store;
 mod tabs;
 #[cfg(test)]
@@ -90,6 +91,9 @@ impl Module for BenchModule {
             30,
             move || Box::new(view_dialogs::DialogsView::new(dialog_state.clone())),
         );
+        let status_state = self.state.clone();
+        r.view(Slot::StatusBar, "bench.status", "bench.tab.title", 5,
+            move || Box::new(status_view::BenchStatus::new(status_state.clone())));
         let detail_state = self.state.clone();
         r.view(
             Slot::BenchTab,

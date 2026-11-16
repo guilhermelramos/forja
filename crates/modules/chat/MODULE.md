@@ -96,3 +96,5 @@ forja chat status
 - `chat.attachments.paste_images` (`clipboard.rs`): Ctrl+V com imagem na área de
   transferência do Windows salva um PNG em `<dados>/modules/chat-pastes/` em segundo
   plano e anexa o arquivo.
+
+O seletor Modelo usa `[models].values` do perfil e permite outro nome; o caminho visível mostra somente a pasta final.

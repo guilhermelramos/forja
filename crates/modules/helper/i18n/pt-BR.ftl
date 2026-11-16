@@ -125,3 +125,5 @@ helper-view-chat-action = Conversar
 helper-view-default-badge = padrão
 helper-view-set-default = Definir padrão
 helper-launch-not-installed = O ajudante { $name } não está instalado neste computador.
+
+helper-status-summary = { $working } trabalhando · { $waiting } esperando

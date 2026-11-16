@@ -161,7 +161,6 @@ pub struct ForjaApp {
     screenshot_error: Arc<Mutex<Option<String>>>,
     rpc: Option<RpcHost>,
     pub(crate) driver: Option<crate::test_driver::Driver>,
-    pub(crate) module_count: usize,
     geometry_writer: crate::window_geometry::GeometryWriter,
     geometry_checked: Instant,
     geometry_close_pending: bool,
@@ -200,7 +199,6 @@ impl ForjaApp {
         let modal_views = ViewInstance::collect(runtime.registry(), Slot::Modal);
         let anvil_views = ViewInstance::collect(runtime.registry(), Slot::AnvilSource);
         let top_views = ViewInstance::collect(runtime.registry(), Slot::TopBar);
-        let module_count = runtime.registry().modules().len();
         for warning in runtime.warnings() {
             forja_kernel::logging::log(
                 forja_kernel::logging::LogLevel::Warn,
@@ -293,7 +291,6 @@ impl ForjaApp {
             screenshot_error,
             rpc: None,
             driver: None,
-            module_count,
             geometry_writer: crate::window_geometry::GeometryWriter::default(),
             geometry_checked: Instant::now(),
             geometry_close_pending: false,

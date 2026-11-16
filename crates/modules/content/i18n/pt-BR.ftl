@@ -33,3 +33,15 @@ content-setting-reload-watch-label = Recarregar conteúdo ao editar
 content-setting-reload-watch-help = Observa comandos, temas, modelos e receitas e recarrega depois de uma mudança.
 content-setting-trust-review-label = Pedir nova confirmação ao mudar item de risco
 content-setting-trust-review-help = Uma receita ou comando de projeto com permissão ampla pede nova aprovação quando o conteúdo muda.
+
+content-anvil-helper = Ajudante
+content-anvil-terminal = Terminal
+content-anvil-command = Comando
+content-anvil-approval = Requer aprovação
+content-layer-builtin = Incluído na Forja
+content-layer-user = Pessoal
+content-layer-project = Projeto
+content-settings-details = Detalhes técnicos
+content-error-header-missing = Falta o cabeçalho de configuração entre +++ no início do arquivo.
+content-error-header-unclosed = Feche o cabeçalho de configuração com +++.
+content-error-invalid-file = Não foi possível ler este conteúdo. Confira a configuração do arquivo.
