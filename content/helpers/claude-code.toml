@@ -45,6 +45,7 @@ id = ["--resume", "{id}"]       # por id ou nome; sem valor abre o seletor
 adds = ["--fork-session"]       # somado a retomar: ao retomar, cria um id de sessão novo
 
 [models]
+values = ["sonnet", "opus", "fable"]
 model_args = ["--model", "{model}"]     # aceita alias (sonnet, opus, fable) ou nome completo
 effort_args = ["--effort", "{effort}"]
 effort_values = ["low", "medium", "high", "xhigh", "max"]

@@ -110,3 +110,5 @@ hash e conferem que o preparo só roda depois da aprovação.
   (`BenchRecord.open_tabs`); ao voltar, reabre as que foram fechadas (`tabs.rs`).
 - `bench.stage.sync_request`: liga o pedido de origem (`BenchRecord.request_key`) em
   `stage.changed.request`; sem a configuração, o campo fica vazio.
+
+Contribui `bench.status` para `StatusBar`, com branch e nome da bancada atual, truncados com dica completa.

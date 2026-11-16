@@ -95,6 +95,7 @@ impl ExtensionPage {
                 );
             }
         });
+        ui.collapsing(cx.t("extension.details"), |ui| {
         ui.label(
             egui::RichText::new(format!("{} · {}", entry.layer, entry.dir)).monospace().weak(),
         );
@@ -104,6 +105,7 @@ impl ExtensionPage {
                     .weak(),
             );
         }
+        });
         if let Some(error) = &entry.error {
             ui.label(egui::RichText::new(error).color(ui.visuals().error_fg_color));
         }

@@ -70,10 +70,12 @@ impl View for ContentAnvilView {
                 continue;
             }
             let blocked = blocked_ids.contains(&command.id);
-            let detail = if blocked {
-                format!("{} · trust", command.layer.label())
-            } else {
-                format!("{} · {}", command.layer.label(), command.run)
+            let category = cx.t(if blocked { "content.anvil.approval" } else { match command.run.as_str() {
+                "helper" => "content.anvil.helper", "terminal" => "content.anvil.terminal", _ => "content.anvil.command",
+            }});
+            let detail = match command.shortcut.as_deref() {
+                Some(shortcut) => format!("{category} · {shortcut}"),
+                None => category,
             };
             hits.push(AnvilHit {
                 title,
@@ -115,7 +117,7 @@ impl ContentSettingsView {
 impl View for ContentSettingsView {
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         state::ensure(&self.core, cx, false);
-        let (revision, diagnostics, commands, themes, templates, recipes) = self
+        let (_revision, diagnostics, commands, themes, templates, recipes) = self
             .core
             .with(|state| {
                 (
@@ -131,7 +133,7 @@ impl View for ContentSettingsView {
         forja_ui_kit::page_heading(
             ui,
             &cx.t("content.settings.title"),
-            Some(&format!("rev {revision}")),
+            None,
             |_| {},
         );
         ui.label(
@@ -161,13 +163,39 @@ impl View for ContentSettingsView {
                 ui.label(
                     egui::RichText::new(format!(
                         "{} · {}",
-                        diagnostic.layer,
-                        diagnostic.path
+                        cx.t(&format!("content.layer.{}", diagnostic.layer)),
+                        diagnostic_path(&diagnostic.path, state::current_project(cx).as_deref(), cx.user_dir())
                     ))
                     .weak(),
                 );
-                ui.label(diagnostic.message);
+                ui.label(cx.t(if diagnostic.message.contains("missing `+++`") {
+                    "content.error.header-missing"
+                } else if diagnostic.message.contains("closing `+++`") {
+                    "content.error.header-unclosed"
+                } else { "content.error.invalid-file" }));
+                ui.collapsing(cx.t("content.settings.details"), |ui| { ui.label(&diagnostic.message); });
             }
         });
+    }
+}
+
+fn diagnostic_path(path: &str, project: Option<&std::path::Path>, user: &std::path::Path) -> String {
+    let normalized = std::path::PathBuf::from(path).components().fold(std::path::PathBuf::new(), |mut out, part| {
+        match part { std::path::Component::ParentDir => { out.pop(); }, std::path::Component::CurDir => {}, part => out.push(part.as_os_str()) }; out
+    });
+    for root in project.into_iter().chain(std::iter::once(user)) {
+        if let Ok(relative) = normalized.strip_prefix(root) { return relative.display().to_string(); }
+    }
+    normalized.file_name().unwrap_or_default().to_string_lossy().into_owned()
+}
+
+#[cfg(test)]
+mod presentation_tests {
+    use super::*;
+    #[test]
+    fn diagnostics_use_project_relative_paths_without_parent_segments() {
+        let root = std::path::Path::new("C:/sample");
+        assert_eq!(diagnostic_path("C:/sample/.forja/commands/../commands/bad.md", Some(root), root), ".forja\\commands\\bad.md");
+        assert_eq!(diagnostic_path("C:/elsewhere/../../../bad.md", Some(root), root), "bad.md");
     }
 }

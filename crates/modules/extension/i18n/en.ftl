@@ -82,3 +82,5 @@ extension-setting-log-label = Log level
 extension-setting-log-help = Minimum level written to the extension log.
 extension-setting-dev-label = Reload on edit
 extension-setting-dev-help = Development folders reload without asking again when capabilities do not change.
+
+extension-details = Details

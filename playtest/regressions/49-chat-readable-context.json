@@ -1,0 +1,33 @@
+{
+  "title": "Chat apresenta modelo e pasta sem dados internos (#201)",
+  "issue": 201,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.open_tab",
+      "target": "Ajudante (chat)"
+    },
+    {
+      "m": "ui.snapshot"
+    }
+  ],
+  "expect": [
+    {
+      "step": 1,
+      "present_contains": [
+        "Modelo",
+        "…\\"
+      ],
+      "absent_contains": [
+        "ANTHROPIC_MODEL",
+        " ·  ·",
+        "preview-session"
+      ]
+    }
+  ]
+}

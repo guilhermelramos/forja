@@ -404,9 +404,6 @@ impl View for UsageStatus {
         }
         ensure_refresh(cx, &self.shared);
         let summary = self.shared.summary();
-        if summary.total.is_empty() {
-            return;
-        }
         let locale = cx.i18n().locale();
         let tokens = forja_ui_kit::applied_tokens(ui.ctx());
         let text = if summary.today.has_unpriced() {

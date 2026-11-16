@@ -71,3 +71,13 @@ chat-view-copy-install = Copy command
 chat-view-copied = Copied
 chat-view-error-not-found = The { $helper } executable was not found on PATH. Check installation in Helpers.
 chat-view-error-launch = Could not start { $helper }. Check installation in Helpers.
+
+chat-view-model = Model
+
+chat-effort-low = Low
+chat-effort-medium = Medium
+chat-effort-high = High
+chat-effort-xhigh = Very high
+chat-effort-max = Maximum
+
+chat-view-custom-model = Another model

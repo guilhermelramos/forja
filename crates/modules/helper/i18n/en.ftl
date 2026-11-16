@@ -125,3 +125,5 @@ helper-view-chat-action = Chat
 helper-view-default-badge = default
 helper-view-set-default = Set default
 helper-launch-not-installed = Helper { $name } is not installed on this machine.
+
+helper-status-summary = { $working } working · { $waiting } waiting

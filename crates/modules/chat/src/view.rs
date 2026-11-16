@@ -156,10 +156,7 @@ impl ChatView {
                 if !effort_values.is_empty() {
                     egui::ComboBox::from_id_salt("chat-effort")
                         .selected_text(
-                            session
-                                .effort
-                                .clone()
-                                .unwrap_or_else(|| cx.t("chat.view.effort")),
+                            session.effort.as_deref().map(|value| effort_label(cx, value)).unwrap_or_else(|| cx.t("chat.view.effort")),
                         )
                         .width(110.0)
                         .show_ui(ui, |ui| {
@@ -168,35 +165,34 @@ impl ChatView {
                                 ui.selectable_value(
                                     &mut session.effort,
                                     Some(value.clone()),
-                                    value,
+                                    effort_label(cx, value),
                                 );
                             }
                         });
                 }
-                if let Some(model_env) = &session.profile.models.model_env {
-                    let mut model = session.model.clone().unwrap_or_default();
-                    if ui
-                        .add(
-                            egui::TextEdit::singleline(&mut model)
-                                .hint_text(model_env)
-                                .desired_width(140.0),
-                        )
-                        .changed()
-                    {
-                        session.model = (!model.trim().is_empty()).then_some(model);
-                    }
+                if session.profile.models.model_env.is_some() || !session.profile.models.model_args.is_empty() {
+                    egui::ComboBox::from_label(cx.t("chat.view.model"))
+                        .selected_text(session.model.clone().unwrap_or_else(|| cx.t("chat.view.model")))
+                        .show_ui(ui, |ui| {
+                            ui.selectable_value(&mut session.model, None, cx.t("chat.view.default"));
+                            let mut values = session.profile.models.values.clone();
+                            if let Some(current) = &session.model { if !values.contains(current) { values.push(current.clone()); } }
+                            for value in values { ui.selectable_value(&mut session.model, Some(value.clone()), value); }
+                            ui.separator();
+                            let mut custom = session.model.clone().unwrap_or_default();
+                            if ui.add(egui::TextEdit::singleline(&mut custom).hint_text(cx.t("chat.view.custom-model"))).changed() {
+                                session.model = (!custom.trim().is_empty()).then_some(custom);
+                            }
+                        });
                 }
             });
         });
         ui.horizontal(|ui| {
             ui.label(
-                egui::RichText::new(session.bench_path.display().to_string())
+                egui::RichText::new(short_folder(&session.bench_path))
                     .monospace()
                     .weak(),
             );
-            if let Some(session_id) = &session.session_id {
-                ui.label(egui::RichText::new(session_id).weak());
-            }
         });
         switch_to
     }
@@ -623,7 +619,6 @@ impl View for ChatView {
                 HeaderInfo {
                     profile_name: session.profile.name.clone(),
                     bench_path: session.bench_path.clone(),
-                    session_id: session.session_id.clone(),
                     usage: session.usage,
                 },
                 state.profiles.clone(),
@@ -736,7 +731,6 @@ impl View for ChatView {
 struct HeaderInfo {
     profile_name: String,
     bench_path: PathBuf,
-    session_id: Option<String>,
     usage: ChatUsage,
 }
 
@@ -776,10 +770,9 @@ fn draw_message_list(
     ui.horizontal(|ui| {
         ui.label(
             egui::RichText::new(format!(
-                "{} · {} · {}",
+                "{} · {}",
                 header.profile_name,
-                header.bench_path.display(),
-                header.session_id.clone().unwrap_or_default()
+                short_folder(&header.bench_path)
             ))
             .weak(),
         );
@@ -1006,3 +999,32 @@ fn replace_last_token(text: &mut String, replacement: &str) {
     *text = next;
 }
 
+
+fn short_folder(path: &std::path::Path) -> String {
+    let text = path.to_string_lossy();
+    let leaf = text.trim_end_matches(['/', '\\']).rsplit(['/', '\\']).next().unwrap_or_default();
+    format!("…\\{leaf}")
+}
+
+fn effort_label(cx: &Ctx<'_>, value: &str) -> String {
+    match value {
+        "low" | "medium" | "high" | "xhigh" | "max" => cx.t(&format!("chat.effort.{value}")),
+        _ => value.to_owned(),
+    }
+}
+
+#[cfg(test)]
+mod presentation_tests {
+    use super::*;
+    #[test]
+    fn folder_label_is_short_and_has_no_session_separator() {
+        assert_eq!(short_folder(std::path::Path::new("D:/a/forja/forja")), "…\\forja");
+        assert_eq!(short_folder(std::path::Path::new(r"D:\a\forja\forja")), "…\\forja");
+    }
+    #[test]
+    fn model_selector_uses_profile_choices() {
+        let profile: ChatProfile = toml::from_str(crate::profile::builtin_text("claude-code").unwrap()).unwrap();
+        assert!(!profile.models.values.is_empty());
+        assert!(profile.models.values.iter().all(|value| !value.contains("MODEL")));
+    }
+}

@@ -33,3 +33,15 @@ content-setting-reload-watch-label = Reload content on edit
 content-setting-reload-watch-help = Watches commands, themes, templates and recipes and reloads after a change.
 content-setting-trust-review-label = Ask again when a risky item changes
 content-setting-trust-review-help = A project recipe or broad-permission command needs a new approval when its content changes.
+
+content-anvil-helper = Helper
+content-anvil-terminal = Terminal
+content-anvil-command = Command
+content-anvil-approval = Approval required
+content-layer-builtin = Included with Forja
+content-layer-user = Personal
+content-layer-project = Project
+content-settings-details = Technical details
+content-error-header-missing = Add a configuration header between +++ at the start of the file.
+content-error-header-unclosed = Close the configuration header with +++.
+content-error-invalid-file = Could not read this content. Check the file configuration.
