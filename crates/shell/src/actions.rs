@@ -14,13 +14,13 @@ pub enum Action {
     OpenSettingsSection(String),
     ShowKeymap,
     OpenRail(String),
-    /// A bench was activated: leave the rail page, show its tabs and name it.
+    /// A bench was activated: leave the rail page unless `keep_page` is set.
     OpenBench {
         project: String,
         bench: String,
+        bench_id: Option<String>,
+        keep_page: bool,
     },
-    /// Active project or bench changed; refresh the top bar project crumb.
-    RefreshProjectCrumb,
     /// Bring a bench tab (for example the editor) to the front.
     ShowBenchTab(String),
     ToggleSidebar,

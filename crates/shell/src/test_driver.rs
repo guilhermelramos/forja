@@ -10,6 +10,7 @@
 //! | `ui.key` | `{keys}` e.g. `"Ctrl+K"`, `"Enter"`, `"Escape"` | key press and release |
 //! | `ui.scroll` | `{target? \| id? \| x?,y?, dy}` | mouse wheel over a point |
 //! | `ui.wait` | `{ms}` | lets background work finish |
+//! | `ui.request_close` | `{}` | requests closing the main window |
 //!
 //! Input goes through [`eframe::App::raw_input_hook`] as egui events, one step
 //! per frame, so widgets see exactly what a mouse and keyboard would send.
@@ -47,6 +48,8 @@ enum Step {
     Settle { frames: u32, until: Instant },
     /// Asks egui for a screenshot and waits for it.
     Screenshot,
+    /// Requests closing the main window on the next update frame.
+    RequestClose,
     /// Builds the reply from the current tree.
     Reply(Box<Pending>),
 }
@@ -70,6 +73,7 @@ pub struct Driver {
     started: Instant,
     /// Frames drawn since the app started; reported as `frames` in every reply.
     frames: u64,
+    close_requested: bool,
 }
 
 impl Driver {
@@ -91,7 +95,49 @@ impl Driver {
             log,
             started: Instant::now(),
             frames: 0,
+            close_requested: false,
         }
+    }
+
+    pub fn take_close_requested(&mut self) -> bool {
+        std::mem::take(&mut self.close_requested)
+    }
+
+    /// Completes any pending reply with a `closed` snapshot when the window is shutting down.
+    pub fn finish_closing_if_pending(&mut self, ctx: &egui::Context) -> bool {
+        let mut pending = None;
+        while let Some(step) = self.steps.pop_front() {
+            if let Step::Reply(reply) = step {
+                pending = Some(*reply);
+                break;
+            }
+        }
+        let Some(pending) = pending else {
+            return false;
+        };
+        let ppp = ctx.pixels_per_point();
+        let screen = ctx.content_rect();
+        let result = json!({
+            "closed": true,
+            "window": { "width": (screen.width() * ppp).round(), "height": (screen.height() * ppp).round() },
+            "frames": self.frames,
+            "changes": {
+                "appeared": [],
+                "disappeared": [],
+                "appeared_more": 0,
+                "disappeared_more": 0,
+                "new": [],
+                "changed": [],
+                "new_more": 0,
+                "changed_more": 0,
+            },
+            "view": "",
+            "elements": [],
+        });
+        self.write_log(&pending.method, &pending.params, &json!({ "closed": true }));
+        let _ = pending.reply.send(Some(codec::ok_response(&pending.id, result)));
+        self.steps.clear();
+        true
     }
 
     /// Takes an RPC line when it is a `ui.*` request; returns it back otherwise.
@@ -239,6 +285,7 @@ impl Driver {
                 steps.push(settle(0));
                 Ok((steps, Value::Null))
             }
+            "ui.request_close" => Ok((vec![Step::RequestClose, settle(0)], Value::Null)),
             other => Err(RpcError::new(
                 codec::METHOD_NOT_FOUND,
                 format!("unknown test-driver method `{other}`"),
@@ -335,6 +382,12 @@ impl Driver {
                     self.image = encode_png(&image);
                     self.screenshot_requested = false;
                     self.steps.pop_front();
+                }
+                Some(Step::RequestClose) => {
+                    self.close_requested = true;
+                    self.steps.pop_front();
+                    ctx.request_repaint();
+                    return;
                 }
                 Some(Step::Reply(_)) => {
                     let Some(Step::Reply(pending)) = self.steps.pop_front() else { return };

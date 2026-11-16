@@ -492,7 +492,7 @@ impl ForjaApp {
             self.push_settings(&mut hits, &query);
         }
         let show_recent = self.setting_bool("anvil.history.show_recent", true);
-        apply_history_boost(&mut hits, &self.anvil_history, &query, show_recent);
+        apply_history_boost(&mut hits, &self.shell_data.anvil_history, &query, show_recent);
         let sort_query = if group == 0 || group == 1 {
             command_query.as_deref().unwrap_or(&query)
         } else {
@@ -872,22 +872,11 @@ impl ForjaApp {
     }
 
     fn remember(&mut self, id: &str) {
-        self.anvil_history.retain(|item| item != id);
-        self.anvil_history.insert(0, id.to_owned());
+        self.shell_data.anvil_history.retain(|item| item != id);
+        self.shell_data.anvil_history.insert(0, id.to_owned());
         let limit = clamp_history_limit(self.setting_number("anvil.history.limit", 100.0));
-        self.anvil_history.truncate(limit);
-        let path = self.runtime.store().path_for("shell");
-        let bytes = serde_json::to_vec(&serde_json::json!({
-            "anvil_history": self.anvil_history
-        }))
-        .unwrap_or_default();
-        self.runtime.tasks().spawn(
-            "shell",
-            move || {
-                let _ = forja_kernel::store::write_atomic_bytes(&path, &bytes);
-            },
-            |_, _| {},
-        );
+        self.shell_data.anvil_history.truncate(limit);
+        self.save_shell_data();
     }
 }
 

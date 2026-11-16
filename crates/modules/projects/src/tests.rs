@@ -288,3 +288,114 @@ fn create_folder_rejects_non_empty_dir_and_finish_dialog_keeps_form_on_error() {
     assert!(matches!(shared.dialog(), state::Dialog::None));
     let _ = std::fs::remove_dir_all(root);
 }
+
+#[test]
+fn open_last_false_starts_without_active_project_and_preserves_saved_id() {
+    struct AppSettingStub;
+    impl forja_kernel::Module for AppSettingStub {
+        fn manifest(&self) -> forja_kernel::ModuleManifest {
+            forja_kernel::ModuleManifest::new("app", "test.app.name", "0.1.0")
+        }
+        fn register(&mut self, r: &mut forja_kernel::Registrar<'_>) {
+            r.i18n("test-app-name = App\n", "test-app-name = App\n");
+            r.setting(forja_kernel::SettingSpec::new(
+                "app.startup.open_last",
+                forja_kernel::SettingKind::Bool,
+                forja_kernel::SettingValue::Bool(true),
+                "test-app-name",
+                "test-app-name",
+            ));
+        }
+    }
+
+    let root = temp_dir("open-last");
+    let first = root.join("alpha");
+    let second = root.join("beta");
+    std::fs::create_dir_all(&first).unwrap();
+    std::fs::create_dir_all(&second).unwrap();
+
+    let make = || {
+        Runtime::new(
+            vec![
+                Box::new(AppSettingStub),
+                Box::new(ProjectsModule {
+                    state: Shared::new(),
+                }),
+            ],
+            RuntimeOptions {
+                data_dir: Some(root.join("data")),
+                user_dir: Some(root.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("runtime boots")
+    };
+
+    let mut rt = make();
+    for (dir, name) in [(&first, "Alpha"), (&second, "Beta")] {
+        rt.call_method(
+            "project.add",
+            Map::from_iter([
+                ("path".to_owned(), json!(dir)),
+                ("name".to_owned(), json!(name)),
+                ("icon".to_owned(), json!("F")),
+                ("color".to_owned(), json!("#f2762e")),
+            ]),
+        )
+        .unwrap();
+    }
+    let list = rt.call_method("project.list", Map::new()).unwrap();
+    let beta_id = list["projects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|p| p["name"] == "Beta")
+        .unwrap()["id"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    rt.call_method(
+        "project.switch",
+        Map::from_iter([("project_id".to_owned(), json!(beta_id))]),
+    )
+    .unwrap();
+    rt.set_setting(
+        "app.startup.open_last",
+        forja_kernel::SettingValue::Bool(false),
+    )
+    .unwrap();
+    let start = std::time::Instant::now();
+    while start.elapsed() < std::time::Duration::from_secs(2) {
+        rt.poll_tasks();
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+    drop(rt);
+
+    let mut rt_off = make();
+    let current_off = rt_off.call_method("project.current", Map::new()).unwrap();
+    assert!(
+        current_off.is_null(),
+        "expected no active project when open_last is false, got {current_off}"
+    );
+    let list_off = rt_off.call_method("project.list", Map::new()).unwrap();
+    assert_eq!(list_off["projects"].as_array().unwrap().len(), 2);
+    rt_off
+        .set_setting(
+            "app.startup.open_last",
+            forja_kernel::SettingValue::Bool(true),
+        )
+        .unwrap();
+    let start = std::time::Instant::now();
+    while start.elapsed() < std::time::Duration::from_secs(2) {
+        rt_off.poll_tasks();
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    }
+    drop(rt_off);
+
+    let mut rt_on = make();
+    let current_on = rt_on.call_method("project.current", Map::new()).unwrap();
+    assert_eq!(current_on["id"], json!(beta_id));
+    drop(rt_on);
+    let _ = std::fs::remove_dir_all(root);
+}

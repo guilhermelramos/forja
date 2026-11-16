@@ -308,6 +308,20 @@ fn register_appearance(registrar: &mut Registrar<'_>) {
 
 fn register_app(registrar: &mut Registrar<'_>) {
     registrar.setting(flag(
+        "app.startup.open_last",
+        true,
+        "setting-app-startup-open_last-label",
+        "setting-app-startup-open_last-help",
+        2,
+    ));
+    registrar.setting(flag(
+        "app.close.confirm",
+        true,
+        "setting-app-close-confirm-label",
+        "setting-app-close-confirm-help",
+        6,
+    ));
+    registrar.setting(flag(
         "app.tray.enabled",
         false,
         "setting-app-tray-enabled-label",

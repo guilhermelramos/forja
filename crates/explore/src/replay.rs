@@ -73,6 +73,8 @@ pub struct Expectation {
     pub from_step: Option<usize>,
     #[serde(default)]
     pub max_frames_delta: Option<u64>,
+    #[serde(default)]
+    pub closed: Option<bool>,
 }
 
 /// Runs every `*.json` regression file in `dir` against a fresh clean app instance.
@@ -203,7 +205,15 @@ fn run_file(
                 .get("m")
                 .and_then(Value::as_str)
                 .ok_or_else(|| format!("step {step_idx} missing string field `m`"))?;
-            let snap = if method == "ui.open_tab" {
+            let snap = if method == "app.restart" {
+                session
+                    .spawn_and_wait()
+                    .map_err(|err| format!("step {step_idx} (app.restart) failed: {err}"))?;
+                let reply = call_ui(session.pipe(), "ui.snapshot", json!({}), CALL_TIMEOUT)
+                    .map_err(|err| format!("step {step_idx} (app.restart snapshot) failed: {err}"))?;
+                Snapshot::from_rpc_result(&reply)
+                    .map_err(|err| format!("step {step_idx} (app.restart) invalid snapshot: {err}"))?
+            } else if method == "ui.open_tab" {
                 let target = step
                     .get("target")
                     .and_then(Value::as_str)
@@ -223,8 +233,17 @@ fn run_file(
                 }
                 let reply = call_ui(session.pipe(), method, Value::Object(params), CALL_TIMEOUT)
                     .map_err(|err| format!("step {step_idx} ({method}) failed: {err}"))?;
-                Snapshot::from_rpc_result(&reply)
-                    .map_err(|err| format!("step {step_idx} ({method}) invalid snapshot: {err}"))?
+                if method.starts_with("ui.") {
+                    Snapshot::from_rpc_result(&reply)
+                        .map_err(|err| format!("step {step_idx} ({method}) invalid snapshot: {err}"))?
+                } else {
+                    let snap_reply =
+                        call_ui(session.pipe(), "ui.snapshot", json!({}), CALL_TIMEOUT).map_err(
+                            |err| format!("step {step_idx} ({method} snapshot) failed: {err}"),
+                        )?;
+                    Snapshot::from_rpc_result(&snap_reply)
+                        .map_err(|err| format!("step {step_idx} ({method}) invalid snapshot: {err}"))?
+                }
             };
             snapshots.push(snap);
         }
@@ -436,6 +455,14 @@ pub fn evaluate_expectations(
                 ));
             }
         }
+        if let Some(expected_closed) = exp.closed {
+            if snap.closed != expected_closed {
+                return Err(format!(
+                    "expectation {exp_idx} (step {target_idx}): expected closed={expected_closed}, got {}",
+                    snap.closed
+                ));
+            }
+        }
     }
     Ok(())
 }
@@ -480,6 +507,7 @@ mod tests {
             view: String::new(),
             elements,
             frames: 0,
+            closed: false,
         }
     }
 
@@ -554,6 +582,7 @@ mod tests {
             view: String::new(),
             elements,
             frames: 0,
+            closed: false,
         })
         .unwrap()
     }
@@ -680,5 +709,20 @@ mod tests {
         let mut middle = snap_with(&["Terminal"], 0, &[]);
         middle.frames = 20;
         assert!(evaluate_expectations(&explicit, &[before, middle, busy_after]).is_err());
+    }
+
+    #[test]
+    fn evaluates_closed_expectation() {
+        let mut open_snap = snap_with(&["Trabalho em andamento"], 1, &[]);
+        open_snap.closed = false;
+        let mut closed_snap = snap_with(&[], 0, &[]);
+        closed_snap.closed = true;
+
+        let stay_open: Vec<Expectation> =
+            serde_json::from_str(r#"[{"step": 0, "closed": false}]"#).unwrap();
+        let did_close: Vec<Expectation> =
+            serde_json::from_str(r#"[{"step": 1, "closed": true}]"#).unwrap();
+        assert!(evaluate_expectations(&stay_open, &[open_snap.clone(), closed_snap.clone()]).is_ok());
+        assert!(evaluate_expectations(&did_close, &[open_snap, closed_snap]).is_ok());
     }
 }
