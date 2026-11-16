@@ -695,10 +695,59 @@ impl ForjaApp {
             return;
         };
         let module = view.module.clone();
-        let mut cx = self.runtime.ctx(&module);
-        egui::ScrollArea::vertical().id_salt(salt).show(ui, |ui| {
-            ui.push_id(&view.id, |ui| view.view.ui(ui, &mut cx));
+        let view_id = view.id.clone();
+        let title = self.runtime.i18n().t("shell.view-error.title");
+        let retry_label = self.runtime.i18n().t("shell.view-error.retry");
+        let failure_body = view.failure.as_deref().map(|message| {
+            self.runtime.i18n().t_args(
+                "shell.view-error.message",
+                &[("view", &view_id), ("message", message)],
+            )
         });
+        let unknown_panic = self.runtime.i18n().t("shell.view-error.unknown");
+        let debug_message = self.runtime.i18n().t("shell.view-error.debug-panic");
+        let mut retry = false;
+        egui::ScrollArea::vertical().id_salt(salt).show(ui, |ui| {
+            if failure_body.is_some() {
+                ui.vertical_centered(|ui| {
+                    ui.heading(&title);
+                    ui.add_space(8.0);
+                    ui.label(failure_body.as_deref().unwrap_or_default());
+                    ui.add_space(8.0);
+                    retry = button(ui, ButtonKind::Secondary, &retry_label).clicked();
+                });
+            } else {
+                let debug_panic = self
+                    .driver
+                    .as_mut()
+                    .is_some_and(|driver| driver.take_view_panic(&view_id));
+                let result = crate::crash::catch_view_panic(|| {
+                    if debug_panic {
+                        panic!("{debug_message}");
+                    }
+                    let mut cx = self.runtime.ctx(&module);
+                    ui.push_id(&view_id, |ui| view.view.ui(ui, &mut cx));
+                });
+                if let Err(payload) = result {
+                    let mut message = crate::crash::panic_payload_message(payload.as_ref());
+                    if message == "non-string panic payload" {
+                        message = unknown_panic.clone();
+                    }
+                    message = single_line(&message);
+                    forja_kernel::logging::log(
+                        forja_kernel::logging::LogLevel::Error,
+                        format!(
+                            "view panic in module `{module}`, view `{view_id}`: {message}"
+                        ),
+                    );
+                    view.failure = Some(message);
+                }
+            }
+        });
+        if retry {
+            view.failure = None;
+            ui.ctx().request_repaint();
+        }
     }
 
     pub(crate) fn modal_windows(&mut self, ctx: &egui::Context) {
@@ -725,9 +774,20 @@ impl ForjaApp {
     }
 }
 
+fn single_line(text: &str) -> String {
+    let collapsed = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    let mut characters = collapsed.chars();
+    let message: String = characters.by_ref().take(180).collect();
+    if characters.next().is_some() {
+        format!("{}…", message.trim_end())
+    } else {
+        message
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::panel_max_width;
+    use super::{panel_max_width, single_line};
 
     #[test]
     fn side_panels_leave_room_for_the_center() {
@@ -736,5 +796,13 @@ mod tests {
         let right = panel_max_width(after_rail - sidebar, 480.0);
         assert!(after_rail - sidebar - right >= 480.0);
         assert_eq!(panel_max_width(4000.0, 480.0), 480.0);
+    }
+
+    #[test]
+    fn panic_summary_is_kept_on_one_line_and_capped() {
+        assert_eq!(single_line("first line\n second line"), "first line second line");
+        let message = single_line(&"x".repeat(200));
+        assert_eq!(message.chars().count(), 181);
+        assert!(message.ends_with('…'));
     }
 }

@@ -25,7 +25,57 @@ impl Module for ShellModule {
         }
         open_rail(registrar);
         focus_bench(registrar);
+        open_logs(registrar);
     }
+}
+
+fn open_logs(registrar: &mut Registrar<'_>) {
+    registrar.command(
+        "shell.logs.open",
+        "shell.command.logs-open",
+        |cx, _args| {
+            let path = forja_kernel::logging::logs_dir(cx.data_dir());
+            let displayed = path.display().to_string();
+            #[cfg(not(test))]
+            {
+                let task_path = path.clone();
+                let error_path = displayed.clone();
+                cx.spawn(
+                    move || {
+                        std::fs::create_dir_all(&task_path)
+                            .and_then(|()| open_folder(&task_path))
+                            .map_err(|error| error.to_string())
+                    },
+                    move |_cx, result| {
+                        if let Err(error) = result {
+                            forja_kernel::logging::log(
+                                forja_kernel::logging::LogLevel::Error,
+                                format!("could not open log folder `{error_path}`: {error}"),
+                            );
+                        }
+                    },
+                );
+            }
+            Ok(json!({ "path": displayed }))
+        },
+    );
+}
+
+#[cfg(all(windows, not(test)))]
+fn open_folder(path: &std::path::Path) -> std::io::Result<()> {
+    forja_kernel::process::command("explorer.exe")
+        .arg(path)
+        .stdin(std::process::Stdio::null())
+        .spawn()
+        .map(|_| ())
+}
+
+#[cfg(all(not(windows), not(test)))]
+fn open_folder(_path: &std::path::Path) -> std::io::Result<()> {
+    Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "opening a folder is only available on Windows",
+    ))
 }
 
 fn focus_bench(registrar: &mut Registrar<'_>) {
@@ -164,6 +214,27 @@ const CHROME_KEYS: &[&str] = &[
     "shell.method.rail-open.result",
     "shell.command.bench-focus",
     "shell.command.tab-open",
+    "shell.command.logs-open",
+    "shell.crash.title",
+    "shell.crash.body",
+    "shell.view-error.title",
+    "shell.view-error.message",
+    "shell.view-error.retry",
+    "shell.view-error.unknown",
+    "shell.view-error.debug-panic",
+    "setting-app-log-level-label",
+    "setting-app-log-level-help",
+    "setting-app-log-level-option-error",
+    "setting-app-log-level-option-warn",
+    "setting-app-log-level-option-info",
+    "setting-app-log-level-option-debug",
+    "setting-app-log-level-option-trace",
+    "setting-app-log-max_mb-label",
+    "setting-app-log-max_mb-help",
+    "setting-app-log-keep-label",
+    "setting-app-log-keep-help",
+    "setting-app-log-include_terminal_output-label",
+    "setting-app-log-include_terminal_output-help",
 ];
 
 #[cfg(test)]
@@ -256,6 +327,39 @@ mod tests {
                 Action::ShowBenchTab("editor.tab".to_owned()),
             ]
         );
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn open_logs_command_targets_the_runtime_log_folder_without_opening_it() {
+        let dir = std::env::temp_dir().join(format!(
+            "forja-shell-logs-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let mut runtime = Runtime::new(
+            vec![Box::new(ShellModule)],
+            RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("shell module registers");
+        assert!(runtime
+            .registry()
+            .command("shell.logs.open")
+            .is_some());
+        let result = runtime
+            .run_command("shell.logs.open", forja_kernel::Args::new())
+            .expect("log folder command");
+        let expected = forja_kernel::logging::logs_dir(&dir).to_string_lossy().into_owned();
+        assert_eq!(result["path"].as_str(), Some(expected.as_str()));
         drop(runtime);
         let _ = std::fs::remove_dir_all(dir);
     }

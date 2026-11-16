@@ -236,6 +236,7 @@ impl PtyProcess {
                         match reader.read(&mut buffer) {
                             Ok(0) | Err(_) => break,
                             Ok(count) => {
+                                forja_kernel::logging::log_terminal_output(&buffer[..count]);
                                 // Continua drenando mesmo sem receptor: fechar o
                                 // pseudoconsola pode esperar por esta leitura.
                                 let _ = sender.send(buffer[..count].to_vec());

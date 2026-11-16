@@ -7,6 +7,7 @@
     { "m": "ui.click", "target": "Adicionar pasta" },
     { "m": "ui.click", "target": "Escolher…" },
     { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.click", "target": "Mais abas", "index": 1 },
     { "m": "ui.click", "target": "Bancada" },
     { "m": "ui.click", "target": "Nova bancada" },
     { "m": "ui.type", "text": "bench-superlong-unbreakable-0123456789-abcdefghijklmnopqrstuvwxyz-without-spaces-0123456789-end" },
@@ -16,7 +17,7 @@
   ],
   "expect": [
     {
-      "step": 9,
+      "step": 10,
       "present_contains": "bench-superlong-unbreakable",
       "no_geometry_issues": true
     }

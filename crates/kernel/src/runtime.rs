@@ -10,6 +10,7 @@ use crate::error::{KernelError, Result};
 use crate::events::EventBus;
 use crate::i18n::{BundleSource, I18n, Locale, TimeFormat, WeekStart};
 use crate::keymap::{BindingSource, Keymap, KeymapLayer};
+use crate::logging::{self, LogConfig};
 use crate::registry::{build_registry, Registry};
 use crate::settings::{SettingSpec, SettingValue, Settings, SettingsWriter};
 use crate::store::{LoadResult, Store};
@@ -88,6 +89,7 @@ impl Runtime {
         let (mut i18n, mut warnings) = I18n::build(&bundles, locale);
         let (settings, setting_warnings) =
             Settings::load(data_dir.join("settings.toml"), registry.settings());
+        logging::configure(data_dir.clone(), LogConfig::from_settings(&settings));
         warnings.extend(setting_warnings);
         i18n.set_fallback(Locale::parse(
             settings
@@ -366,6 +368,12 @@ impl Runtime {
         self.settings
             .set_memory(key, value, self.registry.settings())?;
         self.apply_i18n_setting(key);
+        if key.starts_with("app.log.") {
+            logging::configure(
+                self.data_dir.clone(),
+                LogConfig::from_settings(&self.settings),
+            );
+        }
         self.settings_writer.submit(self.settings.snapshot());
         Ok(())
     }

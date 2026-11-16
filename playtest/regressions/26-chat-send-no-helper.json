@@ -5,6 +5,7 @@
   "test_helpers": "none",
   "steps": [
     { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Mais abas", "index": 1 },
     { "m": "ui.click", "target": "Ajudante (chat)" },
     { "m": "ui.click", "target": "Ajudante" },
     { "m": "ui.click", "target": "OpenCode · não instalado" },
@@ -14,7 +15,7 @@
   ],
   "expect": [
     {
-      "step": 6,
+      "step": 7,
       "present_contains": ["Este ajudante não está instalado", "Escolher ou instalar ajudante", "Escreva um pedido."]
     }
   ]

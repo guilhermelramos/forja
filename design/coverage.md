@@ -7,11 +7,11 @@
 | Métrica | Valor |
 |---|---|
 | Configurações no catálogo | 311 |
-| Configurações registradas no app | 269 (268 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 268 (267 do catálogo) |
+| Configurações registradas no app | 273 (272 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 272 (271 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
-| Configurações adiadas | 41 |
+| Configurações adiadas | 37 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
 | Atalhos no catálogo | 110 |
@@ -59,10 +59,6 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 - `app.storage.data_dir`: Aguardando configuração de bootstrap do diretório de dados no kernel.
 - `app.storage.content_dir`: Aguardando configuração de bootstrap do diretório de conteúdo no kernel.
 - `app.storage.cleanup_days`: Aguardando contrato de retenção e limpeza dos caches de módulos.
-- `app.log.level`: Aguardando serviço de log configurável da aplicação.
-- `app.log.max_mb`: Aguardando serviço de log com rotação por tamanho.
-- `app.log.keep`: Aguardando serviço de log com retenção de arquivos.
-- `app.log.include_terminal_output`: Aguardando integração explícita e controlada da saída de terminal ao log.
 - `app.performance.max_fps`: Aguardando limitador de quadros no ciclo de janela.
 - `app.performance.worker_threads`: Aguardando configuração de bootstrap do executor de tarefas do kernel.
 - `app.dev.mode`: Aguardando ferramentas internas e painel de diagnóstico.
@@ -372,10 +368,10 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `update.channel.name` | `update` | `update` | sim | ok | sim |
 | `update.check.frequency` | `update` | `update` | sim | ok | sim |
 | `update.download.auto` | `update` | `update` | sim | ok | sim |
-| `app.log.level` | `app` | `-` | adiada | - | adiada |
-| `app.log.max_mb` | `app` | `-` | adiada | - | adiada |
-| `app.log.keep` | `app` | `-` | adiada | - | adiada |
-| `app.log.include_terminal_output` | `app` | `-` | adiada | - | adiada |
+| `app.log.level` | `app` | `app` | sim | ok | sim |
+| `app.log.max_mb` | `app` | `app` | sim | ok | sim |
+| `app.log.keep` | `app` | `app` | sim | ok | sim |
+| `app.log.include_terminal_output` | `app` | `app` | sim | ok | sim |
 | `app.performance.max_fps` | `app` | `-` | adiada | - | adiada |
 | `app.performance.worker_threads` | `app` | `-` | adiada | - | adiada |
 | `app.dev.mode` | `app` | `-` | adiada | - | adiada |

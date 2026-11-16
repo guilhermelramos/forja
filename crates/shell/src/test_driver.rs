@@ -10,6 +10,7 @@
 //! | `ui.key` | `{keys}` e.g. `"Ctrl+K"`, `"Enter"`, `"Escape"` | key press and release |
 //! | `ui.scroll` | `{target? \| id? \| x?,y?, dy}` | mouse wheel over a point |
 //! | `ui.wait` | `{ms}` | lets background work finish |
+//! | `ui.debug_panic` | `{where:"view", view_id:"<id>"}` or `{where:"main"}` | test-only panic injection |
 //!
 //! Input goes through [`eframe::App::raw_input_hook`] as egui events, one step
 //! per frame, so widgets see exactly what a mouse and keyboard would send.
@@ -68,6 +69,8 @@ pub struct Driver {
     pointer: Pos2,
     log: Option<std::fs::File>,
     started: Instant,
+    debug_view_panic: Option<String>,
+    debug_main_panic: bool,
 }
 
 impl Driver {
@@ -88,7 +91,22 @@ impl Driver {
             pointer: Pos2::new(1.0, 1.0),
             log,
             started: Instant::now(),
+            debug_view_panic: None,
+            debug_main_panic: false,
         }
+    }
+
+    pub fn take_view_panic(&mut self, view_id: &str) -> bool {
+        if self.debug_view_panic.as_deref() == Some(view_id) {
+            self.debug_view_panic = None;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn take_main_panic(&mut self) -> bool {
+        std::mem::take(&mut self.debug_main_panic)
     }
 
     /// Takes an RPC line when it is a `ui.*` request; returns it back otherwise.
@@ -168,6 +186,25 @@ impl Driver {
             "ui.wait" => {
                 let ms = params.get("ms").and_then(Value::as_u64).unwrap_or(500).min(20_000);
                 Ok((vec![settle(ms)], Value::Null))
+            }
+            "ui.debug_panic" => {
+                match params.get("where").and_then(Value::as_str) {
+                    Some("main") => self.debug_main_panic = true,
+                    Some("view") => {
+                        let view = params
+                            .get("view_id")
+                            .and_then(Value::as_str)
+                            .filter(|view| !view.trim().is_empty())
+                            .ok_or_else(|| RpcError::invalid_params("view_id is required for a view panic"))?;
+                        self.debug_view_panic = Some(view.to_owned());
+                    }
+                    _ => {
+                        return Err(RpcError::invalid_params(
+                            "where must be `view` or `main`",
+                        ));
+                    }
+                }
+                Ok((vec![settle(0)], Value::Null))
             }
             "ui.click" => {
                 let (pos, note) = self.locate(params, ctx)?;

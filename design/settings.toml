@@ -4725,7 +4725,6 @@ help_key = "setting-update-download-auto-help"
 
 [[setting]]
 key = "app.log.level"
-deferred = "Aguardando serviço de log configurável da aplicação."
 module = "app"
 group = "advanced"
 type = "choice"
@@ -4741,7 +4740,6 @@ help_key = "setting-app-log-level-help"
 
 [[setting]]
 key = "app.log.max_mb"
-deferred = "Aguardando serviço de log com rotação por tamanho."
 module = "app"
 group = "advanced"
 type = "number"
@@ -4758,7 +4756,6 @@ help_key = "setting-app-log-max_mb-help"
 
 [[setting]]
 key = "app.log.keep"
-deferred = "Aguardando serviço de log com retenção de arquivos."
 module = "app"
 group = "advanced"
 type = "number"
@@ -4775,7 +4772,6 @@ help_key = "setting-app-log-keep-help"
 
 [[setting]]
 key = "app.log.include_terminal_output"
-deferred = "Aguardando integração explícita e controlada da saída de terminal ao log."
 module = "app"
 group = "advanced"
 type = "toggle"
