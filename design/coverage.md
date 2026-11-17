@@ -7,11 +7,11 @@
 | Métrica | Valor |
 |---|---|
 | Configurações no catálogo | 311 |
-| Configurações registradas no app | 275 (274 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 274 (273 do catálogo) |
+| Configurações registradas no app | 276 (275 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 275 (274 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
-| Configurações adiadas | 35 |
+| Configurações adiadas | 34 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
 | Atalhos no catálogo | 110 |
@@ -58,7 +58,6 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 - `app.storage.content_dir`: Aguardando configuração de bootstrap do diretório de conteúdo no kernel.
 - `app.storage.cleanup_days`: Aguardando contrato de retenção e limpeza dos caches de módulos.
 - `app.performance.max_fps`: Aguardando limitador de quadros no ciclo de janela.
-- `app.performance.worker_threads`: Aguardando configuração de bootstrap do executor de tarefas do kernel.
 - `app.dev.mode`: Aguardando ferramentas internas e painel de diagnóstico.
 
 ## Configurações (`design/settings.toml`)
@@ -371,7 +370,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `app.log.keep` | `app` | `app` | sim | ok | sim |
 | `app.log.include_terminal_output` | `app` | `app` | sim | ok | sim |
 | `app.performance.max_fps` | `app` | `-` | adiada | - | adiada |
-| `app.performance.worker_threads` | `app` | `-` | adiada | - | adiada |
+| `app.performance.worker_threads` | `app` | `app` | sim | ok | sim |
 | `app.dev.mode` | `app` | `-` | adiada | - | adiada |
 | `ports.scan.interval_s` | `ports` | `ports` | sim | ok | sim |
 | `ports.confirm.kill` | `ports` | `ports` | sim | ok | sim |
