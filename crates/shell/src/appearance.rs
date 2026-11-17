@@ -10,12 +10,125 @@ use forja_ui_kit::{Color, Tokens};
 use serde_json::json;
 use std::time::{Duration, Instant};
 
+/// Everything the theme depends on, cheap to compare every frame.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct Look {
+    settings: u64,
+    theme: u64,
+    system_dark: bool,
+    scale: u32,
+    native: u32,
+}
+
+impl Look {
+    pub(crate) fn new(settings: u64, theme: u64, system_dark: bool, scale: f32, native: f32) -> Self {
+        Self {
+            settings,
+            theme,
+            system_dark,
+            scale: scale.to_bits(),
+            native: native.to_bits(),
+        }
+    }
+}
+
+/// Remembers the look that was applied so the theme is rebuilt only when one
+/// of its inputs changed.
+#[derive(Default)]
+pub(crate) struct LookGate {
+    applied: Option<Look>,
+}
+
+impl LookGate {
+    /// True when the theme must be rebuilt; records `look` as applied.
+    pub(crate) fn accepts(&mut self, look: Look) -> bool {
+        if self.applied == Some(look) {
+            return false;
+        }
+        self.applied = Some(look);
+        true
+    }
+}
+
 impl ForjaApp {
     pub(crate) fn refresh_look(&mut self, ctx: &egui::Context) {
         if self.system_probed.elapsed() > Duration::from_secs(1) {
             self.system_dark = system::system_is_dark();
             self.system_probed = Instant::now();
         }
+        self.poll_interface_theme();
+        let scale = self
+            .setting_number("appearance.ui.scale", 1.0)
+            .clamp(0.8, 1.5) as f32;
+        let native = ctx.native_pixels_per_point().unwrap_or(1.0);
+        let look = Look::new(
+            self.runtime.settings_generation(),
+            self.theme_revision,
+            self.system_dark,
+            scale,
+            native,
+        );
+        if self.look_gate.accepts(look) {
+            self.apply_look(ctx, scale, native);
+        }
+
+        let fallback = Locale::parse(&self.setting_text("i18n.language.fallback", "en"));
+        if self.runtime.i18n().fallback() != fallback {
+            self.runtime.set_fallback_locale(fallback);
+        }
+        if self.runtime.take_locale_setting_changed() {
+            self.locale_locked = false;
+        }
+        if !self.locale_locked {
+            let mode = self.setting_text("i18n.language.mode", "auto");
+            let locale = match mode.as_str() {
+                "en" => Locale::En,
+                "pt_BR" => Locale::PtBr,
+                _ => system::system_locale(),
+            };
+            if self.runtime.i18n().locale() != locale {
+                self.runtime.set_locale(locale);
+            }
+        }
+    }
+
+    /// Reads the user's interface theme file every couple of seconds. Only a
+    /// real change is recorded, so unchanged themes never rebuild the style.
+    fn poll_interface_theme(&mut self) {
+        if self.theme_checked.elapsed() <= Duration::from_secs(2) {
+            return;
+        }
+        self.theme_checked = Instant::now();
+        let mode = self
+            .theme_override
+            .clone()
+            .unwrap_or_else(|| self.setting_text("appearance.theme.mode", "system"));
+        let dark = match mode.as_str() {
+            "light" => false,
+            "dark" => true,
+            _ => self.system_dark,
+        };
+        let mut args = Args::new();
+        args.insert("mode", json!(if dark { "dark" } else { "light" }));
+        let theme = self
+            .runtime
+            .run_command("content.themes.ui", args)
+            .ok()
+            .and_then(|value| {
+                value
+                    .get("toml")
+                    .and_then(serde_json::Value::as_str)
+                    .map(str::to_owned)
+            });
+        if theme != self.interface_theme {
+            self.interface_theme = theme;
+            self.theme_revision = self.theme_revision.wrapping_add(1);
+        }
+    }
+
+    /// Rebuilds the tokens from the settings and applies the whole egui style.
+    /// Runs only when [`LookGate`] says something changed.
+    fn apply_look(&mut self, ctx: &egui::Context, scale: f32, native: f32) {
         let mode = self
             .theme_override
             .clone()
@@ -40,21 +153,6 @@ impl ForjaApp {
             &dark_name,
             &light_name,
         );
-        if self.theme_checked.elapsed() > Duration::from_secs(2) {
-            self.theme_checked = Instant::now();
-            let mut args = Args::new();
-            args.insert("mode", json!(if tokens.mode == forja_ui_kit::Mode::Light { "light" } else { "dark" }));
-            self.interface_theme = self
-                .runtime
-                .run_command("content.themes.ui", args)
-                .ok()
-                .and_then(|value| {
-                    value
-                        .get("toml")
-                        .and_then(serde_json::Value::as_str)
-                        .map(str::to_owned)
-                });
-        }
         if let Some(toml) = &self.interface_theme {
             if let Ok(mut themed) = Tokens::from_toml(toml) {
                 themed.density = tokens.density;
@@ -70,30 +168,7 @@ impl ForjaApp {
             self.fonts_ready = true;
         }
         forja_ui_kit::apply(ctx, &self.tokens);
-        let scale = self
-            .setting_number("appearance.ui.scale", 1.0)
-            .clamp(0.8, 1.5) as f32;
-        let native = ctx.native_pixels_per_point().unwrap_or(1.0);
         ctx.set_pixels_per_point(native * scale);
-
-        let fallback = Locale::parse(&self.setting_text("i18n.language.fallback", "en"));
-        if self.runtime.i18n().fallback() != fallback {
-            self.runtime.set_fallback_locale(fallback);
-        }
-        if self.runtime.take_locale_setting_changed() {
-            self.locale_locked = false;
-        }
-        if !self.locale_locked {
-            let mode = self.setting_text("i18n.language.mode", "auto");
-            let locale = match mode.as_str() {
-                "en" => Locale::En,
-                "pt_BR" => Locale::PtBr,
-                _ => system::system_locale(),
-            };
-            if self.runtime.i18n().locale() != locale {
-                self.runtime.set_locale(locale);
-            }
-        }
     }
 
     pub(crate) fn set_theme_mode(&mut self, mode: &str) {
@@ -163,6 +238,66 @@ fn apply_accent(tokens: &mut forja_ui_kit::Tokens, value: &str) {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use forja_kernel::settings::{SettingKind, SettingSpec, SettingValue, Settings};
+    use std::path::PathBuf;
+
+    fn specs() -> Vec<SettingSpec> {
+        vec![SettingSpec::new(
+            "appearance.theme.mode",
+            SettingKind::Choice {
+                options: vec!["system".into(), "dark".into()],
+            },
+            SettingValue::Text("system".into()),
+            "appearance.theme.mode.label",
+            "appearance.theme.mode.help",
+        )]
+    }
+
+    fn applies(gate: &mut LookGate, settings: &Settings, dark: bool, scale: f32) -> bool {
+        gate.accepts(Look::new(
+            settings.generation(),
+            0,
+            dark,
+            scale,
+            1.0,
+        ))
+    }
+
+    #[test]
+    fn theme_is_reapplied_only_when_an_input_changed() {
+        let specs = specs();
+        let (mut settings, _) = Settings::load(PathBuf::from("forja-test/settings.toml"), &specs);
+        let mut gate = LookGate::default();
+        assert!(applies(&mut gate, &settings, true, 1.0));
+        assert!(
+            !applies(&mut gate, &settings, true, 1.0),
+            "two frames without a change must apply the theme once"
+        );
+
+        settings
+            .set_memory(
+                "appearance.theme.mode",
+                SettingValue::Text("dark".into()),
+                &specs,
+            )
+            .unwrap();
+        assert!(
+            applies(&mut gate, &settings, true, 1.0),
+            "an appearance setting change must reapply the theme"
+        );
+        assert!(!applies(&mut gate, &settings, true, 1.0));
+
+        assert!(
+            applies(&mut gate, &settings, false, 1.0),
+            "a system theme flip must reapply the theme"
+        );
+        assert!(
+            applies(&mut gate, &settings, false, 1.25),
+            "a screen scale change must reapply the theme"
+        );
+    }
+
     #[test]
     fn accent_changes_palette_and_selects_a_readable_foreground() {
         let mut tokens = forja_ui_kit::Tokens::brasa_dark();

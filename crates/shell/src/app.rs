@@ -162,6 +162,10 @@ pub struct ForjaApp {
     pub(crate) theme_override: Option<String>,
     pub(crate) interface_theme: Option<String>,
     pub(crate) theme_checked: Instant,
+    /// Bumped when the interface theme file hands out a different theme.
+    pub(crate) theme_revision: u64,
+    /// Avoids rebuilding the theme and the style on every frame.
+    pub(crate) look_gate: crate::appearance::LookGate,
     pub(crate) density_override: Option<String>,
     pub(crate) locale_locked: bool,
     pub(crate) system_dark: bool,
@@ -345,6 +349,8 @@ impl ForjaApp {
             theme_override: session.theme,
             interface_theme: None,
             theme_checked: Instant::now() - std::time::Duration::from_secs(2),
+            theme_revision: 0,
+            look_gate: crate::appearance::LookGate::default(),
             density_override: session.density,
             locale_locked: session.locale_locked,
             system_dark: true,

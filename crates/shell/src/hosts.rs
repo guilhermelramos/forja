@@ -368,6 +368,15 @@ fn register_app(registrar: &mut Registrar<'_>) {
         "setting-app-log-include_terminal_output-help",
         50,
     ));
+    registrar.setting(number(
+        "app.performance.worker_threads",
+        0.0,
+        0.0,
+        32.0,
+        "setting-app-performance-worker_threads-label",
+        "setting-app-performance-worker_threads-help",
+        60,
+    ));
 }
 
 fn register_i18n(registrar: &mut Registrar<'_>) {

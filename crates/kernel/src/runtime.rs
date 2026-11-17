@@ -172,7 +172,11 @@ impl Runtime {
             );
         }
 
-        let tasks = Tasks::new();
+        let workers = settings
+            .get("app.performance.worker_threads")
+            .and_then(|value| value.as_f64().or_else(|| value.as_i64().map(|n| n as f64)))
+            .unwrap_or(0.0);
+        let tasks = Tasks::with_workers(crate::tasks::resolve_workers(workers));
         let wake = options.wake.unwrap_or_else(|| Arc::new(|| {}));
         tasks.set_wake(Arc::clone(&wake));
 
@@ -248,6 +252,11 @@ impl Runtime {
 
     pub fn settings(&self) -> &Settings {
         &self.settings
+    }
+
+    /// Changes whenever a setting value really changed; cheap to compare.
+    pub fn settings_generation(&self) -> u64 {
+        self.settings.generation()
     }
 
     pub fn keymap(&self) -> &Keymap {
