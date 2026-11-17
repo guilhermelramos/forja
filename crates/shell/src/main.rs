@@ -16,20 +16,22 @@ mod demo;
 mod diagnostics;
 mod hosts;
 mod icon;
+#[cfg(test)]
+mod icon_contract_tests;
 mod layout;
 mod overlays;
 mod pacer;
+mod rpc;
+mod screenshot;
 mod settings_catalog;
 mod settings_controls;
 mod settings_page;
 mod settings_transfer;
-mod rpc;
-mod screenshot;
 mod shell_module;
 mod system;
 mod tabs;
-mod theme;
 mod test_driver;
+mod theme;
 mod tray;
 mod ui_tree;
 mod window_geometry;
@@ -153,10 +155,9 @@ fn run() -> i32 {
     let screenshot_error = Arc::new(Mutex::new(None::<String>));
     let error_slot = Arc::clone(&screenshot_error);
     let expected = flags.screenshot.clone();
-    let job = flags
-        .screenshot
-        .clone()
-        .map(|path| ScreenshotJob::new(path, flags.slot.clone()).with_ui_tree(flags.ui_tree.clone()));
+    let job = flags.screenshot.clone().map(|path| {
+        ScreenshotJob::new(path, flags.slot.clone()).with_ui_tree(flags.ui_tree.clone())
+    });
     let session = app::Session {
         theme: flags.theme.clone(),
         density: flags.density.clone(),
@@ -177,17 +178,22 @@ fn run() -> i32 {
         .with_decorations(false)
         .with_inner_size([1280.0, 800.0])
         .with_min_inner_size([900.0, 600.0]);
-    if flags.screenshot.is_none() && runtime.settings().values()
-        .get("appearance.window.remember_geometry")
-        .and_then(forja_kernel::SettingValue::as_bool).unwrap_or(true)
+    if flags.screenshot.is_none()
+        && runtime
+            .settings()
+            .values()
+            .get("appearance.window.remember_geometry")
+            .and_then(forja_kernel::SettingValue::as_bool)
+            .unwrap_or(true)
     {
         if let forja_kernel::store::LoadResult::Loaded(value) =
             runtime.store().load::<serde_json::Value>("window_geometry")
         {
-            if let Some(geometry) = window_geometry::Geometry::from_json(&value)
-                .filter(|geometry| geometry.on_screen())
+            if let Some(geometry) =
+                window_geometry::Geometry::from_json(&value).filter(|geometry| geometry.on_screen())
             {
-                viewport = viewport.with_position([geometry.x, geometry.y])
+                viewport = viewport
+                    .with_position([geometry.x, geometry.y])
                     .with_inner_size([geometry.width, geometry.height]);
             }
         }
@@ -201,7 +207,13 @@ fn run() -> i32 {
             .with_taskbar(false)
             .with_position([-20000.0, -20000.0])
             .with_inner_size(test_size.unwrap_or([1920.0, 1080.0]));
-    } else if start_maximized(runtime.settings().values().get("appearance.window.start_maximized"), flags.screenshot.is_some()) {
+    } else if start_maximized(
+        runtime
+            .settings()
+            .values()
+            .get("appearance.window.start_maximized"),
+        flags.screenshot.is_some(),
+    ) {
         viewport = viewport.with_maximized(true);
     }
     if let Some(icon) = icon::window_icon() {
@@ -242,7 +254,10 @@ fn run() -> i32 {
         if !path.exists() {
             forja_kernel::logging::log(
                 forja_kernel::logging::LogLevel::Error,
-                format!("forja-app: screenshot was not written to {}", path.display()),
+                format!(
+                    "forja-app: screenshot was not written to {}",
+                    path.display()
+                ),
             );
             return 1;
         }
@@ -251,7 +266,10 @@ fn run() -> i32 {
 }
 
 fn start_maximized(value: Option<&forja_kernel::SettingValue>, screenshot: bool) -> bool {
-    !screenshot && value.and_then(forja_kernel::SettingValue::as_bool).unwrap_or(false)
+    !screenshot
+        && value
+            .and_then(forja_kernel::SettingValue::as_bool)
+            .unwrap_or(false)
 }
 
 /// Test windows default to 1920x1080. `FORJA_TEST_WINDOW_SIZE=1280x800`
@@ -289,7 +307,8 @@ fn dump_catalog(flags: &Flags) -> i32 {
         .duration_since(std::time::UNIX_EPOCH)
         .map(|duration| duration.as_nanos())
         .unwrap_or(0);
-    let dir = std::env::temp_dir().join(format!("forja-dump-catalog-{}-{nanos}", std::process::id()));
+    let dir =
+        std::env::temp_dir().join(format!("forja-dump-catalog-{}-{nanos}", std::process::id()));
     let result = build_catalog_json(flags, &dir);
     let _ = std::fs::remove_dir_all(&dir);
     match result {
@@ -464,16 +483,15 @@ fn parse_flags() -> Result<Option<Flags>, String> {
                 flags.open = Some(value);
             }
             "--rail" => {
-                flags.rail = Some(
-                    args.next()
-                        .ok_or_else(|| "--rail needs a rail page id, e.g. board.page".to_owned())?,
-                );
+                flags.rail =
+                    Some(args.next().ok_or_else(|| {
+                        "--rail needs a rail page id, e.g. board.page".to_owned()
+                    })?);
             }
             "--modal" => {
-                flags.modal = Some(
-                    args.next()
-                        .ok_or_else(|| "--modal needs a modal view id, e.g. voice.overlay".to_owned())?,
-                );
+                flags.modal = Some(args.next().ok_or_else(|| {
+                    "--modal needs a modal view id, e.g. voice.overlay".to_owned()
+                })?);
             }
             "--settings" => {
                 flags.settings = Some(
@@ -564,9 +582,18 @@ mod tests {
     #[test]
     fn maximize_setting_is_applied_only_to_normal_windows() {
         use forja_kernel::SettingValue;
-        assert!(super::start_maximized(Some(&SettingValue::Bool(true)), false));
-        assert!(!super::start_maximized(Some(&SettingValue::Bool(false)), false));
-        assert!(!super::start_maximized(Some(&SettingValue::Bool(true)), true));
+        assert!(super::start_maximized(
+            Some(&SettingValue::Bool(true)),
+            false
+        ));
+        assert!(!super::start_maximized(
+            Some(&SettingValue::Bool(false)),
+            false
+        ));
+        assert!(!super::start_maximized(
+            Some(&SettingValue::Bool(true)),
+            true
+        ));
     }
     use super::*;
 
@@ -658,4 +685,3 @@ mod tests {
         assert!(parsed["keybinds"].as_array().is_some_and(|k| !k.is_empty()));
     }
 }
-

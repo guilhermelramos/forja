@@ -291,7 +291,7 @@ impl MusterView {
                     egui::RichText::new(notice)
                         .color(applied_tokens(ui.ctx()).color.danger.to_color32()),
                 );
-                if icon_button(ui, CLOSE)
+                if icon_button(ui, CLOSE, &cx.t("muster.notice.dismiss"))
                     .on_hover_text(cx.t("muster.notice.dismiss"))
                     .clicked()
                 {
@@ -1232,14 +1232,9 @@ impl MusterView {
                     .desired_width((ui.available_width() - 96.0).max(90.0)),
             );
             input.widget_info(|| {
-                egui::WidgetInfo::labeled(
-                    egui::WidgetType::TextEdit,
-                    ui.is_enabled(),
-                    hint.clone(),
-                )
+                egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, ui.is_enabled(), hint.clone())
             });
-            let enter =
-                input.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
+            let enter = input.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
             if button(ui, ButtonKind::Primary, &cx.t("muster.send")).clicked() || enter {
                 self.submit_note(cx, selected_target.as_ref());
             }
@@ -1271,15 +1266,17 @@ impl MusterView {
             ui.set_min_width(ui.available_width());
             ui.horizontal_wrapped(|ui| {
                 if incoming && !note.read {
-                    ui.label(
-                        egui::RichText::new("●").color(tokens.color.spark.to_color32()),
-                    );
+                    forja_ui_kit::icon(ui, forja_ui_kit::Icon::Info, 16.0);
                 }
                 ui.label(egui::RichText::new(sender).strong());
                 if let Some(title) = task_title {
                     ui.label(egui::RichText::new(title).small().weak());
                 }
-                ui.label(egui::RichText::new(note_kind_label(cx, note.kind)).small().weak());
+                ui.label(
+                    egui::RichText::new(note_kind_label(cx, note.kind))
+                        .small()
+                        .weak(),
+                );
                 if let Some(state) = delivery_state {
                     let (text, color) = match state {
                         NoteDeliveryState::Delivered => (
@@ -1356,11 +1353,7 @@ impl MusterView {
                 targets.push(NoteTarget {
                     id: task.id.clone(),
                     is_assignment: false,
-                    label: format!(
-                        "{} ({})",
-                        task.title,
-                        cx.t("muster.note-target-no-helper")
-                    ),
+                    label: format!("{} ({})", task.title, cx.t("muster.note-target-no-helper")),
                 });
             }
         }

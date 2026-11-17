@@ -24,9 +24,14 @@ use forja_contracts::{
     names, BenchCreated, HelperStatus, HelperStatusChanged, NotifyRequested,
     TerminalCommandFinished, TerminalExited,
 };
-use forja_kernel::forja_protocol::{Method, MethodEffect, ParamKind, ParamSchema, ResultSchema, RpcError};
+use forja_kernel::forja_protocol::{
+    Method, MethodEffect, ParamKind, ParamSchema, ResultSchema, RpcError,
+};
 use forja_kernel::ui_contract::View;
-use forja_kernel::{Args, KernelError, Module, ModuleManifest, Registrar, SettingKind, SettingSpec, SettingValue, Slot};
+use forja_kernel::{
+    Args, KernelError, Module, ModuleManifest, Registrar, SettingKind, SettingSpec, SettingValue,
+    Slot,
+};
 use serde_json::{json, Value};
 use std::sync::Arc;
 
@@ -73,12 +78,24 @@ impl Module for RoutineModule {
 
         let shared = Arc::clone(&self.shared);
         r.subscribe(move |cx, event: &TerminalCommandFinished| {
-            actions::terminal_done(cx, &shared, &event.terminal.terminal_id, event.exit_code, false);
+            actions::terminal_done(
+                cx,
+                &shared,
+                &event.terminal.terminal_id,
+                event.exit_code,
+                false,
+            );
         });
 
         let shared = Arc::clone(&self.shared);
         r.subscribe(move |cx, event: &TerminalExited| {
-            actions::terminal_done(cx, &shared, &event.terminal.terminal_id, event.exit_code, true);
+            actions::terminal_done(
+                cx,
+                &shared,
+                &event.terminal.terminal_id,
+                event.exit_code,
+                true,
+            );
         });
 
         let shared = Arc::clone(&self.shared);
@@ -99,10 +116,14 @@ impl Module for RoutineModule {
         });
 
         let shared = Arc::clone(&self.shared);
-        r.command("routine.delete", "routine.command.delete", move |cx, args| {
-            let id = args.required_str("id")?.to_owned();
-            commands::delete(cx, &shared, &id)
-        });
+        r.command(
+            "routine.delete",
+            "routine.command.delete",
+            move |cx, args| {
+                let id = args.required_str("id")?.to_owned();
+                commands::delete(cx, &shared, &id)
+            },
+        );
 
         let shared = Arc::clone(&self.shared);
         r.command("routine.run", "routine.command.run", move |cx, args| {
@@ -115,11 +136,13 @@ impl Module for RoutineModule {
             Method::new("routine.list", "routine.method.list.description")
                 .effect(MethodEffect::Read)
                 .idempotent(true)
-                .result(ResultSchema::new("routine.method.list.result").schema(json!({
-                    "type": "object",
-                    "properties": { "routines": { "type": "array" } },
-                    "required": ["routines"]
-                }))),
+                .result(
+                    ResultSchema::new("routine.method.list.result").schema(json!({
+                        "type": "object",
+                        "properties": { "routines": { "type": "array" } },
+                        "required": ["routines"]
+                    })),
+                ),
             move |cx, _params| Ok(commands::list_snapshot(cx, &shared)),
         );
 
@@ -140,7 +163,11 @@ impl Module for RoutineModule {
             move |_cx, params| {
                 let args = Args::from_map(params);
                 let (routine_id, limit) = commands::runs_args(&args);
-                Ok(commands::runs_snapshot(&shared, routine_id.as_deref(), limit))
+                Ok(commands::runs_snapshot(
+                    &shared,
+                    routine_id.as_deref(),
+                    limit,
+                ))
             },
         );
 
@@ -156,7 +183,8 @@ impl Module for RoutineModule {
                     .and_then(Value::as_str)
                     .ok_or_else(|| RpcError::invalid_params("id is required"))?
                     .to_owned();
-                commands::run_now(cx, &shared, &id).map_err(|error: KernelError| RpcError::app(error.to_string()))
+                commands::run_now(cx, &shared, &id)
+                    .map_err(|error: KernelError| RpcError::app(error.to_string()))
             },
         );
 
@@ -182,17 +210,27 @@ impl Module for RoutineModule {
         );
 
         let shared = Arc::clone(&self.shared);
-        r.view(Slot::Rail, "routine.page", "routine.tab.title", 40, move || {
-            Box::new(view::RoutinesView::new(Arc::clone(&shared))) as Box<dyn View>
-        });
-        r.view_glyph("routine.page", forja_ui_kit::ROUTINES);
+        r.view(
+            Slot::Rail,
+            "routine.page",
+            "routine.tab.title",
+            40,
+            move || Box::new(view::RoutinesView::new(Arc::clone(&shared))) as Box<dyn View>,
+        );
+        r.view_glyph("routine.page", forja_ui_kit::ROUTINES.id());
 
         let shared = Arc::clone(&self.shared);
-        r.view(Slot::StatusBar, "routine.tick", "routine.tab.title", 20, move || {
-            Box::new(view::TickView {
-                shared: Arc::clone(&shared),
-            }) as Box<dyn View>
-        });
+        r.view(
+            Slot::StatusBar,
+            "routine.tick",
+            "routine.tab.title",
+            20,
+            move || {
+                Box::new(view::TickView {
+                    shared: Arc::clone(&shared),
+                }) as Box<dyn View>
+            },
+        );
 
         for key in view::USED_KEYS.iter().copied() {
             r.uses_i18n(key);

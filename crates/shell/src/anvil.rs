@@ -58,7 +58,8 @@ impl ForjaApp {
         let ask = self.anvil_ask.clone();
         let search_id = egui::Id::new("forja.anvil.search_id");
         let search_widget = ctx.data(|data| data.get_temp::<egui::Id>(search_id));
-        let search_focused = search_widget.is_some_and(|id| ctx.memory(|memory| memory.has_focus(id)));
+        let search_focused =
+            search_widget.is_some_and(|id| ctx.memory(|memory| memory.has_focus(id)));
         refocus_search_for_text(ctx, active, search_widget);
         // TextEdit consumes Ctrl+Enter, so route the Anvil binding first.
         let keep = active
@@ -151,7 +152,13 @@ impl ForjaApp {
                 "shell.anvil.helper-copy-install"
             });
             let open_label = self.text("shell.anvil.helper-open-helpers");
-            (headline, body, notice.install_command.clone(), copy_label, open_label)
+            (
+                headline,
+                body,
+                notice.install_command.clone(),
+                copy_label,
+                open_label,
+            )
         });
         let modal = egui::Window::new(title)
             .collapsible(false)
@@ -225,7 +232,8 @@ impl ForjaApp {
                     self.anvil_selection_id = Some(history_id(&hits[self.anvil_selected].kind));
                     self.anvil_selection_missing = false;
                 }
-                if active && !hits.is_empty()
+                if active
+                    && !hits.is_empty()
                     && ui.input_mut(|input| input.consume_key(keys.previous.0, keys.previous.1))
                 {
                     self.anvil_selected = self.anvil_selected.saturating_sub(1);
@@ -286,12 +294,22 @@ impl ForjaApp {
                         search.request_focus();
                     } else {
                         let index = self.anvil_selected.min(hits.len() - 1);
-                        let raw_query = self.anvil_query.trim().trim_start_matches('>').trim().to_owned();
+                        let raw_query = self
+                            .anvil_query
+                            .trim()
+                            .trim_start_matches('>')
+                            .trim()
+                            .to_owned();
                         let query = split_command_query_with_arguments(&raw_query)
                             .map(|(command, _)| command.to_lowercase())
                             .unwrap_or_else(|| raw_query.to_lowercase());
                         if !self.anvil_selection_missing
-                            && can_run_selection(&query, &hits[index], self.anvil_selection_explicit) {
+                            && can_run_selection(
+                                &query,
+                                &hits[index],
+                                self.anvil_selection_explicit,
+                            )
+                        {
                             chosen = Some((hits[index].kind.clone(), keep));
                         }
                     }
@@ -306,8 +324,7 @@ impl ForjaApp {
                 }
                 if ask_is_text {
                     ui.label(
-                        RichText::new(self.text("shell.anvil.ask-text-hint"))
-                            .color(muted(&tokens)),
+                        RichText::new(self.text("shell.anvil.ask-text-hint")).color(muted(&tokens)),
                     );
                 } else if !self.anvil_muster_title {
                     egui::ScrollArea::vertical()
@@ -492,7 +509,12 @@ impl ForjaApp {
             self.push_settings(&mut hits, &query);
         }
         let show_recent = self.setting_bool("anvil.history.show_recent", true);
-        apply_history_boost(&mut hits, &self.shell_data.anvil_history, &query, show_recent);
+        apply_history_boost(
+            &mut hits,
+            &self.shell_data.anvil_history,
+            &query,
+            show_recent,
+        );
         let sort_query = if group == 0 || group == 1 {
             command_query.as_deref().unwrap_or(&query)
         } else {
@@ -797,9 +819,9 @@ impl ForjaApp {
                     Ok(_) if command == "muster.run" => {
                         crate::actions::push(crate::actions::Action::OpenRail("muster.page".into()))
                     }
-                    Ok(_) if command == "terminal.recipe.run" => {
-                        crate::actions::push(crate::actions::Action::ShowBenchTab("terminal.tab".into()))
-                    }
+                    Ok(_) if command == "terminal.recipe.run" => crate::actions::push(
+                        crate::actions::Action::ShowBenchTab("terminal.tab".into()),
+                    ),
                     Ok(_) => {}
                     Err(error) => {
                         self.set_command_error(&command, &error);
@@ -846,9 +868,7 @@ impl ForjaApp {
             return Some(profile_id);
         }
         if command == "content.run" {
-            let content_id = args
-                .and_then(|map| map.get("id"))
-                .and_then(Value::as_str)?;
+            let content_id = args.and_then(|map| map.get("id")).and_then(Value::as_str)?;
             let list = self
                 .runtime
                 .run_command("content.commands.list", Args::new())
@@ -921,8 +941,11 @@ fn history_id(kind: &HitKind) -> String {
         HitKind::File(path) => format!("file:{path}"),
         HitKind::Setting(key) => format!("setting:{key}"),
         HitKind::Action { command, args } => {
-            let path = args.get("path").or_else(|| args.get("recipe_id"))
-                .and_then(Value::as_str).unwrap_or("");
+            let path = args
+                .get("path")
+                .or_else(|| args.get("recipe_id"))
+                .and_then(Value::as_str)
+                .unwrap_or("");
             format!("action:{command}:{path}")
         }
         HitKind::Ask(index) => format!("ask:{index}"),
@@ -941,13 +964,14 @@ fn selected_hit_index(hits: &[Hit], id: &str) -> Option<usize> {
 }
 
 fn has_printable_text(events: &[egui::Event]) -> bool {
-    events.iter().any(|event| {
-        matches!(event, egui::Event::Text(text) if text.chars().any(|ch| !ch.is_control()))
-    })
+    events.iter().any(
+        |event| matches!(event, egui::Event::Text(text) if text.chars().any(|ch| !ch.is_control())),
+    )
 }
 
 fn refocus_search_for_text(ctx: &egui::Context, active: bool, search: Option<egui::Id>) {
-    if !active || egui::Popup::is_any_open(ctx)
+    if !active
+        || egui::Popup::is_any_open(ctx)
         || !ctx.input(|input| has_printable_text(&input.events))
     {
         return;
@@ -962,18 +986,31 @@ fn match_quality(query: &str, title: &str, detail: &str) -> u8 {
         return 0;
     }
     let title = title.to_lowercase();
-    if title == query { return 5; }
-    if title.starts_with(query) { return 4; }
-    if word_starts_with(&title, query) { return 3; }
+    if title == query {
+        return 5;
+    }
+    if title.starts_with(query) {
+        return 4;
+    }
+    if word_starts_with(&title, query) {
+        return 3;
+    }
     let detail = detail.to_lowercase();
-    if detail == query { return 2; }
-    if word_starts_with(&detail, query) { return 1; }
+    if detail == query {
+        return 2;
+    }
+    if word_starts_with(&detail, query) {
+        return 1;
+    }
     0
 }
 
 fn word_starts_with(text: &str, query: &str) -> bool {
     text.match_indices(query).any(|(index, _)| {
-        text[..index].chars().next_back().is_none_or(|ch| !ch.is_alphanumeric())
+        text[..index]
+            .chars()
+            .next_back()
+            .is_none_or(|ch| !ch.is_alphanumeric())
     })
 }
 
@@ -982,7 +1019,13 @@ fn sort_hits(hits: &mut [Hit], query: &str) {
         match_quality(query, &b.title, &b.detail)
             .cmp(&match_quality(query, &a.title, &a.detail))
             .then_with(|| b.score.cmp(&a.score))
-            .then_with(|| if query.is_empty() { a.title.cmp(&b.title) } else { std::cmp::Ordering::Equal })
+            .then_with(|| {
+                if query.is_empty() {
+                    a.title.cmp(&b.title)
+                } else {
+                    std::cmp::Ordering::Equal
+                }
+            })
     });
 }
 
@@ -1109,7 +1152,15 @@ fn anvil_row(ui: &mut egui::Ui, tokens: &Tokens, hit: &Hit, selected: bool) -> e
     let font = FontId::new(metrics.body, egui::FontFamily::Proportional);
     let text = rect.shrink2(egui::vec2(8.0, 0.0));
     let mut title_pos = text.left_center();
-    if let Some(icon) = &hit.icon {
+    if let Some(id) = hit.icon.as_deref().and_then(forja_ui_kit::Icon::from_id) {
+        forja_ui_kit::paint_icon(
+            ui.painter(),
+            id,
+            egui::Rect::from_center_size(title_pos + egui::vec2(8.0, 0.0), egui::vec2(16.0, 16.0)),
+            paint(tokens.color.text),
+        );
+        title_pos.x += 22.0;
+    } else if let Some(icon) = &hit.icon {
         ui.painter().text(
             title_pos,
             Align2::LEFT_CENTER,
@@ -1124,7 +1175,11 @@ fn anvil_row(ui: &mut egui::Ui, tokens: &Tokens, hit: &Hit, selected: bool) -> e
         0.0
     } else {
         ui.painter()
-            .layout_no_wrap(right.to_owned(), font.clone(), paint(tokens.color.text_muted))
+            .layout_no_wrap(
+                right.to_owned(),
+                font.clone(),
+                paint(tokens.color.text_muted),
+            )
             .size()
             .x
             + 8.0
@@ -1150,8 +1205,19 @@ fn anvil_row(ui: &mut egui::Ui, tokens: &Tokens, hit: &Hit, selected: bool) -> e
     ui.painter()
         .galley(draw_pos, title_galley, paint(tokens.color.text));
     if !right.is_empty() {
-        let detail_rect = egui::Rect::from_min_max(egui::pos2(text.right() - right_width + 8.0, text.top()), text.right_bottom());
-        ui.put(detail_rect, egui::Label::new(RichText::new(right).font(font).color(paint(tokens.color.text_muted))).truncate());
+        let detail_rect = egui::Rect::from_min_max(
+            egui::pos2(text.right() - right_width + 8.0, text.top()),
+            text.right_bottom(),
+        );
+        ui.put(
+            detail_rect,
+            egui::Label::new(
+                RichText::new(right)
+                    .font(font)
+                    .color(paint(tokens.color.text_muted)),
+            )
+            .truncate(),
+        );
     }
     if title_elided {
         response.on_hover_text(&hit.title)
@@ -1259,10 +1325,17 @@ mod tests {
     #[test]
     fn literal_matches_beat_recent_fuzzy_hits_and_fuzzy_needs_selection() {
         let make_hit = |title: &str, score| Hit {
-            kind: HitKind::Command(title.to_owned()), title: title.to_owned(), detail: String::new(),
-            icon: None, chord: String::new(), score,
+            kind: HitKind::Command(title.to_owned()),
+            title: title.to_owned(),
+            detail: String::new(),
+            icon: None,
+            chord: String::new(),
+            score,
         };
-        let mut hits = vec![make_hit("Compartilhar com ajudante", 1000), make_hit("Compilar pacotes Go", 1)];
+        let mut hits = vec![
+            make_hit("Compartilhar com ajudante", 1000),
+            make_hit("Compilar pacotes Go", 1),
+        ];
         sort_hits(&mut hits, "compilar");
         assert_eq!(hits[0].title, "Compilar pacotes Go");
         assert!(can_run_selection("compilar", &hits[0], false));
@@ -1276,12 +1349,21 @@ mod tests {
             let mut args = serde_json::Map::new();
             args.insert("recipe_id".into(), Value::String(id.to_owned()));
             Hit {
-                kind: HitKind::Action { command: "terminal.recipe.run".into(), args },
-                title: title.into(), detail: "projeto".into(), icon: None,
-                chord: String::new(), score: 100,
+                kind: HitKind::Action {
+                    command: "terminal.recipe.run".into(),
+                    args,
+                },
+                title: title.into(),
+                detail: "projeto".into(),
+                icon: None,
+                chord: String::new(),
+                score: 100,
             }
         };
-        let mut hits = vec![recipe("go-build", "Compilar pacotes Go"), recipe("python-build", "Compilar pacote Python")];
+        let mut hits = vec![
+            recipe("go-build", "Compilar pacotes Go"),
+            recipe("python-build", "Compilar pacote Python"),
+        ];
         let recent = vec![history_id(&hits[1].kind)];
         assert_ne!(history_id(&hits[0].kind), recent[0]);
         apply_history_boost(&mut hits, &recent, "compilar", true);
@@ -1316,8 +1398,14 @@ mod tests {
                 refocus_search_for_text(ctx, true, Some(search));
                 egui::CentralPanel::default().show(ctx, |ui| {
                     ui.add(egui::TextEdit::singleline(&mut query).id(search));
-                    let response = ui.interact(ui.available_rect_before_wrap(), filter, egui::Sense::click());
-                    if frame == 1 { response.request_focus(); }
+                    let response = ui.interact(
+                        ui.available_rect_before_wrap(),
+                        filter,
+                        egui::Sense::click(),
+                    );
+                    if frame == 1 {
+                        response.request_focus();
+                    }
                 });
             });
         }
@@ -1358,7 +1446,10 @@ mod tests {
             setting_search_label("archive.sessions.index", Some("Indexar sessões no Acervo")),
             "Indexar sessões no Acervo"
         );
-        assert_eq!(setting_search_label("archive.sessions.index", None), "archive.sessions.index");
+        assert_eq!(
+            setting_search_label("archive.sessions.index", None),
+            "archive.sessions.index"
+        );
     }
 
     #[test]
@@ -1421,10 +1512,7 @@ mod tests {
             split,
             Some(("bench.stage.set", "bench_id=exemplo stage=forjando"))
         );
-        assert_eq!(
-            split_command_query_with_arguments("Mudar etapa"),
-            None
-        );
+        assert_eq!(split_command_query_with_arguments("Mudar etapa"), None);
         let hit = Hit {
             kind: HitKind::Command("bench.stage.set".into()),
             title: "Mudar etapa".into(),
@@ -1446,7 +1534,8 @@ mod tests {
             "default": true,
             "install_hint": "npm install -g @anthropic-ai/claude-code"
         })];
-        let notice = evaluate_missing_helper(&none_profiles, None).expect("notice when none installed");
+        let notice =
+            evaluate_missing_helper(&none_profiles, None).expect("notice when none installed");
         assert!(!notice.any_installed);
         assert_eq!(notice.profile_name, None);
         assert_eq!(
@@ -1471,11 +1560,17 @@ mod tests {
             }),
         ];
         assert_eq!(evaluate_missing_helper(&mixed_profiles, None), None);
-        assert_eq!(evaluate_missing_helper(&mixed_profiles, Some("claude-code")), None);
-        let codex_notice =
-            evaluate_missing_helper(&mixed_profiles, Some("codex")).expect("missing requested codex");
+        assert_eq!(
+            evaluate_missing_helper(&mixed_profiles, Some("claude-code")),
+            None
+        );
+        let codex_notice = evaluate_missing_helper(&mixed_profiles, Some("codex"))
+            .expect("missing requested codex");
         assert!(codex_notice.any_installed);
-        assert_eq!(codex_notice.profile_name.as_deref(), Some("OpenAI Codex CLI"));
+        assert_eq!(
+            codex_notice.profile_name.as_deref(),
+            Some("OpenAI Codex CLI")
+        );
         assert_eq!(
             codex_notice.install_command.as_deref(),
             Some("npm install -g @openai/codex")

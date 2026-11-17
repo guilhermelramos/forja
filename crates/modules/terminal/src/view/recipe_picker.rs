@@ -123,13 +123,15 @@ pub(super) fn draw(
                 }
                 if !others.is_empty() {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        let chevron = if picker.others_open { "▾" } else { "▸" };
-                        let label = format!(
-                            "{chevron} {} ({})",
-                            texts.recipe_picker_others,
-                            others.len()
-                        );
-                        if forja_ui_kit::button(ui, ButtonKind::Ghost, &label).clicked() {
+                        let chevron = if picker.others_open {
+                            forja_ui_kit::Icon::ChevronDown
+                        } else {
+                            forja_ui_kit::Icon::ChevronRight
+                        };
+                        let label = format!("{} ({})", texts.recipe_picker_others, others.len());
+                        if forja_ui_kit::button_with_icon(ui, chevron, &label, ButtonKind::Ghost)
+                            .clicked()
+                        {
                             picker.others_open = !picker.others_open;
                             refocus_search = true;
                             if !picker.others_open {

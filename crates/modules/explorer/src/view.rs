@@ -74,7 +74,12 @@ impl View for ExplorerView {
         // O título do painel já está na aba: não repetimos aqui.
         match frame.root.clone() {
             None => {
-                forja_ui_kit::empty_state(ui, forja_ui_kit::BOARD, &cx.t("explorer.panel.empty"), None);
+                forja_ui_kit::empty_state(
+                    ui,
+                    forja_ui_kit::BOARD,
+                    &cx.t("explorer.panel.empty"),
+                    None,
+                );
             }
             Some(root) => {
                 self.toolbar(ui, cx, &root, &frame, &mut requests);
@@ -116,7 +121,7 @@ fn render_notice(ui: &mut egui::Ui, cx: &Ctx<'_>, shared: &Shared, notice: Optio
     };
     ui.horizontal_wrapped(|ui| {
         ui.label(egui::RichText::new(notice).weak());
-        if forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE)
+        if forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE, &cx.t("explorer.notice.dismiss"))
             .on_hover_text(cx.t("explorer.notice.dismiss"))
             .clicked()
         {
@@ -190,10 +195,11 @@ impl ExplorerView {
                     requests.push(Request::Redo);
                 }
             });
-            if forja_ui_kit::button(
+            if forja_ui_kit::button_with_icon(
                 ui,
-                forja_ui_kit::ButtonKind::Ghost,
+                forja_ui_kit::Icon::Refresh,
                 &cx.t("explorer.command.refresh"),
+                forja_ui_kit::ButtonKind::Ghost,
             )
             .clicked()
             {
@@ -221,7 +227,12 @@ impl ExplorerView {
             return;
         };
         if children.is_empty() && depth == 0 {
-            forja_ui_kit::empty_state(ui, forja_ui_kit::ARCHIVE, &cx.t("explorer.panel.empty_folder"), None);
+            forja_ui_kit::empty_state(
+                ui,
+                forja_ui_kit::ARCHIVE,
+                &cx.t("explorer.panel.empty_folder"),
+                None,
+            );
         }
         for entry in children.iter() {
             self.render_entry(ui, cx, entry, depth, frame, requests);
@@ -250,10 +261,18 @@ impl ExplorerView {
             ui.add_space(depth as f32 * INDENT);
             if entry.is_dir {
                 let open = frame.expanded.contains(&entry.path);
-                if forja_ui_kit::button(
+                if forja_ui_kit::icon_button(
                     ui,
-                    forja_ui_kit::ButtonKind::Ghost,
-                    if open { "\u{25BE}" } else { "\u{25B8}" },
+                    if open {
+                        forja_ui_kit::Icon::ChevronDown
+                    } else {
+                        forja_ui_kit::Icon::ChevronRight
+                    },
+                    &cx.t(if open {
+                        "explorer.tree.collapse"
+                    } else {
+                        "explorer.tree.expand"
+                    }),
                 )
                 .clicked()
                 {
@@ -262,11 +281,23 @@ impl ExplorerView {
             } else {
                 ui.add_space(INDENT + 6.0);
             }
+            let glyph = if entry.is_dir {
+                forja_ui_kit::Icon::Folder
+            } else {
+                forja_ui_kit::Icon::for_extension(
+                    entry
+                        .path
+                        .extension()
+                        .and_then(|ext| ext.to_str())
+                        .unwrap_or(""),
+                )
+            };
+            forja_ui_kit::icon(ui, glyph, 16.0);
             let mut text = egui::RichText::new(&entry.name);
             if entry.ignored {
                 text = text.weak();
             }
-            let response = ui.selectable_label(is_selected, text);
+            let response = ui.add(egui::Button::selectable(is_selected, text).truncate());
             if response.clicked() {
                 requests.push(Request::Select(entry.path.clone()));
                 if entry.is_dir {
@@ -373,12 +404,9 @@ impl ExplorerView {
                 } else {
                     cx.t("explorer.dialog.new_file.title")
                 };
-                let templates = if is_dir {
-                    Vec::new()
-                } else {
-                    templates(cx)
-                };
-                let outcome = new_entry_window(ctx, cx, &title, &mut name, &templates, &mut template);
+                let templates = if is_dir { Vec::new() } else { templates(cx) };
+                let outcome =
+                    new_entry_window(ctx, cx, &title, &mut name, &templates, &mut template);
                 match outcome {
                     Outcome::Open => {
                         lock(&self.shared).dialog = Some(Dialog::NewEntry {
@@ -425,16 +453,14 @@ impl ExplorerView {
                     }
                 }
             }
-            Dialog::ConfirmTrash { path } => {
-                match confirm_trash_window(ctx, cx, &path) {
-                    Some(true) => {
-                        let result = commands::trash(cx, &self.shared, path);
-                        report(&self.shared, result);
-                    }
-                    Some(false) => {}
-                    None => lock(&self.shared).dialog = Some(Dialog::ConfirmTrash { path }),
+            Dialog::ConfirmTrash { path } => match confirm_trash_window(ctx, cx, &path) {
+                Some(true) => {
+                    let result = commands::trash(cx, &self.shared, path);
+                    report(&self.shared, result);
                 }
-            }
+                Some(false) => {}
+                None => lock(&self.shared).dialog = Some(Dialog::ConfirmTrash { path }),
+            },
         }
     }
 

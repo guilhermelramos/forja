@@ -50,8 +50,7 @@ fn modal_impl(
     let close = if close_on_backdrop {
         response.should_close()
     } else {
-        response.response.should_close()
-            || crate::keyboard_layer::consume_layer_escape(ctx, layer)
+        response.response.should_close() || crate::keyboard_layer::consume_layer_escape(ctx, layer)
     };
     if close {
         *open = false;
@@ -103,7 +102,12 @@ pub fn window_header(ui: &mut Ui, title: &str, close_label: &str) -> bool {
 }
 
 /// Window header that can place initial keyboard focus on its close button.
-pub fn window_header_with_focus(ui: &mut Ui, title: &str, close_label: &str, focus_close: bool) -> bool {
+pub fn window_header_with_focus(
+    ui: &mut Ui,
+    title: &str,
+    close_label: &str,
+    focus_close: bool,
+) -> bool {
     let tokens = paint::tokens(ui);
     let metrics = tokens.metrics();
     let mut close = false;
@@ -114,7 +118,7 @@ pub fn window_header_with_focus(ui: &mut Ui, title: &str, close_label: &str, foc
                 .color(tokens.color.text.to_color32()),
         );
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let response = crate::icon::icon_button(ui, crate::icon::CLOSE)
+            let response = crate::icon::icon_button(ui, crate::icon::CLOSE, close_label)
                 .on_hover_text(close_label);
             response.widget_info(|| {
                 egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), close_label)
@@ -189,7 +193,10 @@ mod tests {
         let mut background_clicks = 0;
         click_backdrop(&ctx, |ctx| {
             egui::CentralPanel::default().show(ctx, |ui| {
-                if ui.allocate_rect(ctx.content_rect(), egui::Sense::click()).clicked() {
+                if ui
+                    .allocate_rect(ctx.content_rect(), egui::Sense::click())
+                    .clicked()
+                {
                     background_clicks += 1;
                 }
             });

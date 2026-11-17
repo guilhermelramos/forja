@@ -92,3 +92,5 @@ project-home-shortcut-anvil = Anvil
 project-home-shortcut-find = Find file
 project-home-shortcut-bench = New bench
 project-home-more-install = More install commands
+projects-tree-collapse = Collapse project
+projects-tree-expand = Expand project

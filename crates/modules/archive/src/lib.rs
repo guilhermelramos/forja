@@ -24,8 +24,10 @@ use state::{ArchiveState, ScanOptions};
 
 fn keep_transcripts(cx: &forja_kernel::Ctx<'_>) -> bool {
     transcript_policy(
-        cx.setting("archive.transcripts.keep").and_then(|value| value.as_bool()),
-        cx.setting("helper.sessions.keep_transcripts").and_then(|value| value.as_bool()),
+        cx.setting("archive.transcripts.keep")
+            .and_then(|value| value.as_bool()),
+        cx.setting("helper.sessions.keep_transcripts")
+            .and_then(|value| value.as_bool()),
     )
 }
 
@@ -71,7 +73,10 @@ impl Module for ArchiveModule {
     }
 
     fn register(&mut self, r: &mut Registrar<'_>) {
-        r.i18n(include_str!("../i18n/en.ftl"), include_str!("../i18n/pt-BR.ftl"));
+        r.i18n(
+            include_str!("../i18n/en.ftl"),
+            include_str!("../i18n/pt-BR.ftl"),
+        );
         r.keymap(include_str!("../keymap.toml"));
         register_settings(r);
         commands::register(r, &self.core);
@@ -123,7 +128,7 @@ impl Module for ArchiveModule {
             order,
             move || Box::new(ArchiveView::new(Arc::clone(&view_core))),
         );
-        r.view_glyph("archive.tab", forja_ui_kit::ARCHIVE);
+        r.view_glyph("archive.tab", forja_ui_kit::ARCHIVE.id());
     }
 }
 
@@ -169,80 +174,94 @@ mod commands {
 
     pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
         let search_core = Arc::clone(core);
-        r.command("archive.search", "archive.command.search", move |cx, args| {
-            let query = args.str("query").unwrap_or_default().to_owned();
-            let profile_id = args.str("profile_id").map(str::to_owned);
-            let project = args.str("project").map(str::to_owned);
-            let since_ms = args
-                .i64("since_days")
-                .filter(|days| *days > 0)
-                .map(|days| chrono::Utc::now().timestamp_millis() - days * 24 * 60 * 60 * 1000);
-            let limit = args.i64("limit").unwrap_or(50).clamp(1, 500) as usize;
-            let filters = Filters {
-                profile_id,
-                project,
-                since_ms,
-                until_ms: None,
-            };
-            let dir = state::index_dir(&cx.store().path());
-            let hits = state::search_task(&dir, &query, &filters, limit)
-                .map_err(KernelError::Message)?;
-            if let Ok(mut state) = search_core.state.lock() {
-                state.results = hits.clone();
-            }
-            Ok(json!({ "hits": hits }))
-        });
+        r.command(
+            "archive.search",
+            "archive.command.search",
+            move |cx, args| {
+                let query = args.str("query").unwrap_or_default().to_owned();
+                let profile_id = args.str("profile_id").map(str::to_owned);
+                let project = args.str("project").map(str::to_owned);
+                let since_ms = args
+                    .i64("since_days")
+                    .filter(|days| *days > 0)
+                    .map(|days| chrono::Utc::now().timestamp_millis() - days * 24 * 60 * 60 * 1000);
+                let limit = args.i64("limit").unwrap_or(50).clamp(1, 500) as usize;
+                let filters = Filters {
+                    profile_id,
+                    project,
+                    since_ms,
+                    until_ms: None,
+                };
+                let dir = state::index_dir(&cx.store().path());
+                let hits = state::search_task(&dir, &query, &filters, limit)
+                    .map_err(KernelError::Message)?;
+                if let Ok(mut state) = search_core.state.lock() {
+                    state.results = hits.clone();
+                }
+                Ok(json!({ "hits": hits }))
+            },
+        );
 
         let resume_core = Arc::clone(core);
-        r.command("archive.resume", "archive.command.resume", move |cx, args| {
-            let profile_id = args.required_str("profile_id")?.to_owned();
-            let session_id = args
-                .str("session_id")
-                .ok_or_else(|| KernelError::Message("missing session_id".to_owned()))?
-                .to_owned();
-            let fork = args.bool("fork").unwrap_or(false);
-            let bench = args
-                .str("bench_path")
-                .map(PathBuf::from)
-                .or_else(|| current_bench(cx));
-            let path = args.str("path").map(PathBuf::from);
-            resume(
-                cx,
-                &resume_core,
-                &profile_id,
-                &session_id,
-                bench,
-                path,
-                fork,
-            )
-        });
+        r.command(
+            "archive.resume",
+            "archive.command.resume",
+            move |cx, args| {
+                let profile_id = args.required_str("profile_id")?.to_owned();
+                let session_id = args
+                    .str("session_id")
+                    .ok_or_else(|| KernelError::Message("missing session_id".to_owned()))?
+                    .to_owned();
+                let fork = args.bool("fork").unwrap_or(false);
+                let bench = args
+                    .str("bench_path")
+                    .map(PathBuf::from)
+                    .or_else(|| current_bench(cx));
+                let path = args.str("path").map(PathBuf::from);
+                resume(
+                    cx,
+                    &resume_core,
+                    &profile_id,
+                    &session_id,
+                    bench,
+                    path,
+                    fork,
+                )
+            },
+        );
 
         let delete_core = Arc::clone(core);
-        r.command("archive.delete", "archive.command.delete", move |cx, args| {
-            let path = PathBuf::from(args.required_str("path")?);
-            let confirm = args.bool("confirm").unwrap_or(false);
-            if !confirm {
-                return Err(KernelError::Message(
-                    "deleting a session requires confirmation".to_owned(),
-                ));
-            }
-            if path.exists() {
-                trash::delete(&path).map_err(|error| {
-                    KernelError::Message(format!("não foi possível mover para a lixeira: {error}"))
-                })?;
-            }
-            let dir = state::index_dir(&cx.store().path());
-            if let Ok(index) = index::ArchiveIndex::open(&dir) {
-                let _ = index.delete_path(&path);
-            }
-            if let Ok(mut state) = delete_core.state.lock() {
-                let text = path.display().to_string();
-                state.cache.forget(&path);
-                state.sessions.retain(|session| session.path != text);
-                state.results.retain(|hit| hit.path != text);
-            }
-            Ok(json!({ "deleted": true }))
-        });
+        r.command(
+            "archive.delete",
+            "archive.command.delete",
+            move |cx, args| {
+                let path = PathBuf::from(args.required_str("path")?);
+                let confirm = args.bool("confirm").unwrap_or(false);
+                if !confirm {
+                    return Err(KernelError::Message(
+                        "deleting a session requires confirmation".to_owned(),
+                    ));
+                }
+                if path.exists() {
+                    trash::delete(&path).map_err(|error| {
+                        KernelError::Message(format!(
+                            "não foi possível mover para a lixeira: {error}"
+                        ))
+                    })?;
+                }
+                let dir = state::index_dir(&cx.store().path());
+                if let Ok(index) = index::ArchiveIndex::open(&dir) {
+                    let _ = index.delete_path(&path);
+                }
+                if let Ok(mut state) = delete_core.state.lock() {
+                    let text = path.display().to_string();
+                    state.cache.forget(&path);
+                    state.sessions.retain(|session| session.path != text);
+                    state.results.retain(|hit| hit.path != text);
+                }
+                Ok(json!({ "deleted": true }))
+            },
+        );
 
         let list_core = Arc::clone(core);
         r.command("archive.list", "archive.command.list", move |cx, _| {
@@ -256,10 +275,14 @@ mod commands {
         });
 
         let reindex_core = Arc::clone(core);
-        r.command("archive.reindex", "archive.command.reindex", move |cx, _| {
-            let started = start_scan(cx, &reindex_core)?;
-            Ok(json!({ "started": started }))
-        });
+        r.command(
+            "archive.reindex",
+            "archive.command.reindex",
+            move |cx, _| {
+                let started = start_scan(cx, &reindex_core)?;
+                Ok(json!({ "started": started }))
+            },
+        );
     }
 
     fn resume(
@@ -279,14 +302,11 @@ mod commands {
             .profile(profile_id)
             .cloned()
             .ok_or_else(|| KernelError::Message(format!("perfil `{profile_id}` não encontrado")))?;
-        let session = state
-            .find(profile_id, session_id)
-            .cloned()
-            .or_else(|| {
-                let path = path.clone()?;
-                let format = profile.format()?;
-                parse::parse_file(format, profile_id, &path).ok().flatten()
-            });
+        let session = state.find(profile_id, session_id).cloned().or_else(|| {
+            let path = path.clone()?;
+            let format = profile.format()?;
+            parse::parse_file(format, profile_id, &path).ok().flatten()
+        });
         let argv = if fork {
             profile.fork_argv(session_id)
         } else {
@@ -314,13 +334,9 @@ mod commands {
             .map(|arg| quote_arg(arg))
             .collect::<Vec<_>>()
             .join(" ");
-        let command_line = format!(
-            "{} {}",
-            quote_arg(&profile.start.command),
-            args_text
-        )
-        .trim()
-        .to_owned();
+        let command_line = format!("{} {}", quote_arg(&profile.start.command), args_text)
+            .trim()
+            .to_owned();
         let mut command = Args::new();
         command.insert("cwd", json!(cwd.display().to_string()));
         command.insert("command", json!(profile.start.command.clone()));
@@ -400,12 +416,7 @@ mod commands {
     fn current_bench(cx: &mut Ctx<'_>) -> Option<PathBuf> {
         cx.run_command("bench.current", Args::new())
             .ok()
-            .and_then(|value| {
-                value
-                    .get("path")
-                    .and_then(Value::as_str)
-                    .map(PathBuf::from)
-            })
+            .and_then(|value| value.get("path").and_then(Value::as_str).map(PathBuf::from))
     }
 }
 
@@ -464,11 +475,13 @@ mod rpc {
                 .param(ParamSchema::optional("project", ParamKind::String))
                 .param(ParamSchema::optional("since_days", ParamKind::Integer))
                 .param(ParamSchema::optional("limit", ParamKind::Integer))
-                .result(ResultSchema::new("archive.method.search.result").schema(json!({
-                    "type": "object",
-                    "properties": { "hits": { "type": "array" } },
-                    "required": ["hits"]
-                }))),
+                .result(
+                    ResultSchema::new("archive.method.search.result").schema(json!({
+                        "type": "object",
+                        "properties": { "hits": { "type": "array" } },
+                        "required": ["hits"]
+                    })),
+                ),
             move |cx, params| run(cx, &search_core, "archive.search", params),
         );
 
@@ -481,17 +494,19 @@ mod rpc {
                 .param(ParamSchema::optional("bench_path", ParamKind::String))
                 .param(ParamSchema::optional("path", ParamKind::String))
                 .param(ParamSchema::optional("fork", ParamKind::Boolean))
-                .result(ResultSchema::new("archive.method.resume.result").schema(json!({
-                    "type": "object",
-                    "properties": {
-                        "terminal_id": { "type": "string" },
-                        "profile_id": { "type": "string" },
-                        "session_id": { "type": "string" },
-                        "fork": { "type": "boolean" },
-                        "command_line": { "type": "string" }
-                    },
-                    "required": ["terminal_id", "command_line"]
-                }))),
+                .result(
+                    ResultSchema::new("archive.method.resume.result").schema(json!({
+                        "type": "object",
+                        "properties": {
+                            "terminal_id": { "type": "string" },
+                            "profile_id": { "type": "string" },
+                            "session_id": { "type": "string" },
+                            "fork": { "type": "boolean" },
+                            "command_line": { "type": "string" }
+                        },
+                        "required": ["terminal_id", "command_line"]
+                    })),
+                ),
             move |cx, params| run(cx, &resume_core, "archive.resume", params),
         );
 
@@ -501,11 +516,13 @@ mod rpc {
                 .effect(MethodEffect::Write)
                 .param(ParamSchema::required("path", ParamKind::String))
                 .param(ParamSchema::optional("confirm", ParamKind::Boolean))
-                .result(ResultSchema::new("archive.method.delete.result").schema(json!({
-                    "type": "object",
-                    "properties": { "deleted": { "type": "boolean" } },
-                    "required": ["deleted"]
-                }))),
+                .result(
+                    ResultSchema::new("archive.method.delete.result").schema(json!({
+                        "type": "object",
+                        "properties": { "deleted": { "type": "boolean" } },
+                        "required": ["deleted"]
+                    })),
+                ),
             move |cx, params| run(cx, &delete_core, "archive.delete", params),
         );
 
@@ -514,11 +531,13 @@ mod rpc {
             Method::new("archive.list", "archive.method.list.description")
                 .effect(MethodEffect::Read)
                 .idempotent(true)
-                .result(ResultSchema::new("archive.method.list.result").schema(json!({
-                    "type": "object",
-                    "properties": { "sessions": { "type": "array" } },
-                    "required": ["sessions"]
-                }))),
+                .result(
+                    ResultSchema::new("archive.method.list.result").schema(json!({
+                        "type": "object",
+                        "properties": { "sessions": { "type": "array" } },
+                        "required": ["sessions"]
+                    })),
+                ),
             move |cx, params| run(cx, &list_core, "archive.list", params),
         );
 
@@ -526,11 +545,13 @@ mod rpc {
         r.rpc(
             Method::new("archive.reindex", "archive.method.reindex.description")
                 .effect(MethodEffect::Write)
-                .result(ResultSchema::new("archive.method.reindex.result").schema(json!({
-                    "type": "object",
-                    "properties": { "started": { "type": "boolean" } },
-                    "required": ["started"]
-                }))),
+                .result(
+                    ResultSchema::new("archive.method.reindex.result").schema(json!({
+                        "type": "object",
+                        "properties": { "started": { "type": "boolean" } },
+                        "required": ["started"]
+                    })),
+                ),
             move |cx, params| run(cx, &reindex_core, "archive.reindex", params),
         );
     }
@@ -652,7 +673,10 @@ mod tests {
             );
             assert!(!io_err.summary.contains("os error"));
             assert!(!io_err.summary.contains("IO error"));
-            assert!(io_err.detail.as_deref().is_some_and(|d| d.contains("os error 5")));
+            assert!(io_err
+                .detail
+                .as_deref()
+                .is_some_and(|d| d.contains("os error 5")));
 
             let query_err = view::humanize_error(&cx, "busca inválida: syntax error");
             assert!(query_err.summary.contains("sintaxe inválida"));

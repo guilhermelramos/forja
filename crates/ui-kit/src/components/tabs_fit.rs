@@ -111,13 +111,13 @@ fn pick_fitting_tabs(
 /// Calcula a largura natural de uma aba com ícone e reserva opcional de "×".
 pub fn measure_tab_width(
     ui: &Ui,
-    icon: &str,
+    _icon: crate::Icon,
     label: &str,
     closable: bool,
     metrics: &Metrics,
 ) -> f32 {
     let text_w = paint::text_size(ui, label, body_font(metrics), Color32::WHITE).x;
-    let icon_w = if icon.is_empty() { 0.0 } else { 16.0 };
+    let icon_w = 16.0;
     let tail_w = if closable { CLOSE_RESERVE + 2.0 } else { 6.0 };
     (6.0 + icon_w + text_w + tail_w).max(metrics.control)
 }

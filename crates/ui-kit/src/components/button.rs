@@ -27,7 +27,9 @@ pub fn button(ui: &mut Ui, kind: ButtonKind, label: &str) -> Response {
     let text_size = paint::text_size(ui, label, font.clone(), text);
     let width = (text_size.x + metrics.pad_x * 2.0).max(metrics.control);
     let (rect, response) = click_zone(ui, egui::vec2(width, metrics.control));
-    response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label));
+    response.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label)
+    });
 
     let fill = if kind == ButtonKind::Ghost {
         if response.hovered() || response.is_pointer_button_down_on() {
@@ -80,7 +82,13 @@ fn colors(kind: ButtonKind, tokens: &Tokens) -> (Color32, Color32, Stroke) {
 
 /// Large action with an icon, for a page's main starting choices.
 /// Labels are supplied by the caller and remain accessible by keyboard.
-pub fn action_tile(ui: &mut Ui, glyph: &str, label: &str, width: f32, primary: bool) -> Response {
+pub fn action_tile(
+    ui: &mut Ui,
+    glyph: crate::Icon,
+    label: &str,
+    width: f32,
+    primary: bool,
+) -> Response {
     let tokens = paint::tokens(ui);
     let metrics = tokens.metrics();
     let (rect, response) = click_zone(ui, egui::vec2(width, 80.0));
@@ -101,11 +109,13 @@ pub fn action_tile(ui: &mut Ui, glyph: &str, label: &str, width: f32, primary: b
         stroke,
         egui::StrokeKind::Inside,
     );
-    painter.text(
-        rect.left_center() + egui::vec2(24.0, 0.0),
-        Align2::CENTER_CENTER,
+    crate::paint_icon(
+        &painter,
         glyph,
-        crate::icon::font_id(24.0),
+        egui::Rect::from_center_size(
+            rect.left_center() + egui::vec2(24.0, 0.0),
+            egui::vec2(24.0, 24.0),
+        ),
         text,
     );
     let label_rect = rect.shrink2(egui::vec2(12.0, 0.0));

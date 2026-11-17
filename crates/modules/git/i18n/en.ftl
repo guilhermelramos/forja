@@ -145,3 +145,5 @@ git-generate-no-review = The review module is not available.
 git-generate-running = Generating the message with the helper...
 git-error-no-remote = This repository has no remote configured. Add a remote before fetching, pulling or publishing.
 git-error-nothing-to-abort = There is no merge or rebase in progress to abort.
+git-changes-stage = Stage file
+git-changes-unstage = Unstage file

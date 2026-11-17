@@ -4,7 +4,7 @@
   "locale": "pt-BR",
   "steps": [
     { "m": "ui.key", "keys": "Escape" },
-    { "m": "ui.click", "target": "Bigorna  Ctrl+K" },
+    { "m": "ui.click", "target": "Buscar ou executar… Ctrl+K" },
     { "m": "ui.key", "keys": "Tab" },
     { "m": "ui.key", "keys": "ArrowRight" },
     { "m": "ui.key", "keys": "ArrowRight" },

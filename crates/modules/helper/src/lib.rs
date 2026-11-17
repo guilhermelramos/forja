@@ -159,7 +159,10 @@ impl Module for HelperModule {
     }
 
     fn register(&mut self, r: &mut Registrar<'_>) {
-        r.i18n(include_str!("../i18n/en.ftl"), include_str!("../i18n/pt-BR.ftl"));
+        r.i18n(
+            include_str!("../i18n/en.ftl"),
+            include_str!("../i18n/pt-BR.ftl"),
+        );
         r.keymap(include_str!("../keymap.toml"));
         register_settings(r);
         commands::register(r, &self.core);
@@ -249,8 +252,13 @@ impl Module for HelperModule {
         }
 
         let status_core = Arc::clone(&self.core);
-        r.view(Slot::StatusBar, "helper.status-bar", "helper.view.title", 10,
-            move || Box::new(status_view::HelperStatusView(status_core.clone())));
+        r.view(
+            Slot::StatusBar,
+            "helper.status-bar",
+            "helper.view.title",
+            10,
+            move || Box::new(status_view::HelperStatusView(status_core.clone())),
+        );
         let page_core = Arc::clone(&self.core);
         let page_order = if std::env::var_os("FORJA_HELPER_PREVIEW").is_some() {
             1
@@ -264,7 +272,7 @@ impl Module for HelperModule {
             page_order,
             move || Box::new(HelperPage::new(Arc::clone(&page_core))),
         );
-        r.view_glyph("helper.tab", forja_ui_kit::HELPERS);
+        r.view_glyph("helper.tab", forja_ui_kit::HELPERS.id());
         let settings_core = Arc::clone(&self.core);
         r.view(
             Slot::SettingsSection,
@@ -332,10 +340,7 @@ fn register_settings(r: &mut Registrar<'_>) {
     add(
         "helper.launch.mode",
         SettingKind::Choice {
-            options: ["tui", "chat"]
-                .into_iter()
-                .map(str::to_owned)
-                .collect(),
+            options: ["tui", "chat"].into_iter().map(str::to_owned).collect(),
         },
         SettingValue::Text("tui".to_owned()),
     );
@@ -397,12 +402,7 @@ fn register_events(r: &mut Registrar<'_>, core: &Shared) {
     let exited_core = Arc::clone(core);
     r.subscribe(move |cx, event: &TerminalExited| {
         let _ = commands::ensure_current(cx, &exited_core);
-        status::update_exited_run(
-            cx,
-            &exited_core,
-            &event.terminal,
-            event.exit_code,
-        );
+        status::update_exited_run(cx, &exited_core, &event.terminal, event.exit_code);
     });
     let bell_core = Arc::clone(core);
     r.subscribe(move |cx, event: &TerminalBell| {
@@ -440,7 +440,12 @@ pub(crate) fn read_output(cx: &mut forja_kernel::Ctx<'_>, terminal_id: &str) -> 
     args.insert("lines", serde_json::json!(24));
     cx.run_command("terminal.read", args)
         .ok()
-        .and_then(|value| value.get("text").and_then(serde_json::Value::as_str).map(str::to_owned))
+        .and_then(|value| {
+            value
+                .get("text")
+                .and_then(serde_json::Value::as_str)
+                .map(str::to_owned)
+        })
 }
 
 #[cfg(test)]
@@ -501,7 +506,10 @@ mod tests {
             fn register(&mut self, r: &mut Registrar<'_>) {
                 let calls = Arc::clone(&self.0);
                 r.command("notify.show", "helper.name", move |_, args| {
-                    calls.lock().unwrap().push(args.str("title").unwrap_or("").to_owned());
+                    calls
+                        .lock()
+                        .unwrap()
+                        .push(args.str("title").unwrap_or("").to_owned());
                     Ok(json!({}))
                 });
             }
@@ -510,20 +518,49 @@ mod tests {
         let dir = &dir.0;
         let core = Arc::new(Core::new());
         let calls = Arc::new(std::sync::Mutex::new(Vec::new()));
-        let mut runtime = Runtime::new(vec![Box::new(HelperModule { core: Arc::clone(&core) }), Box::new(NotifyStub(Arc::clone(&calls)))], RuntimeOptions {
-            data_dir: Some(dir.clone()), user_dir: Some(dir.join("user")), locale: Some("en".into()), wake: None,
-        }).unwrap();
-        core.state.lock().unwrap().runs.insert("1".into(), status::Run {
-            terminal_id: "1".into(), profile_id: "test".into(), bench_path: dir.display().to_string(),
-            started_at: String::new(), hook_token: String::new(), status: HelperStatus::Working, last_event: None,
-        });
-        let event = TerminalExited { terminal: forja_contracts::TerminalRef {
-            terminal_id: "1".into(), bench_path: dir.display().to_string(), title: String::new(),
-        }, exit_code: Some(1) };
-        runtime.set_setting("helper.notifications.error", SettingValue::Bool(false)).unwrap();
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(HelperModule {
+                    core: Arc::clone(&core),
+                }),
+                Box::new(NotifyStub(Arc::clone(&calls))),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("en".into()),
+                wake: None,
+            },
+        )
+        .unwrap();
+        core.state.lock().unwrap().runs.insert(
+            "1".into(),
+            status::Run {
+                terminal_id: "1".into(),
+                profile_id: "test".into(),
+                bench_path: dir.display().to_string(),
+                started_at: String::new(),
+                hook_token: String::new(),
+                status: HelperStatus::Working,
+                last_event: None,
+            },
+        );
+        let event = TerminalExited {
+            terminal: forja_contracts::TerminalRef {
+                terminal_id: "1".into(),
+                bench_path: dir.display().to_string(),
+                title: String::new(),
+            },
+            exit_code: Some(1),
+        };
+        runtime
+            .set_setting("helper.notifications.error", SettingValue::Bool(false))
+            .unwrap();
         runtime.emit(&event);
         assert!(calls.lock().unwrap().is_empty());
-        runtime.set_setting("helper.notifications.error", SettingValue::Bool(true)).unwrap();
+        runtime
+            .set_setting("helper.notifications.error", SettingValue::Bool(true))
+            .unwrap();
         runtime.emit(&event);
         assert_eq!(calls.lock().unwrap().as_slice(), ["Helper failed"]);
         drop(runtime);
@@ -554,7 +591,10 @@ mod tests {
         let error = launch.expect_err("terminal module is absent");
         assert!(error.message.contains("terminal"), "{}", error.message);
         let hook = runtime
-            .call_method("helper.hook", Map::from_iter([("payload".to_owned(), json!({}))]))
+            .call_method(
+                "helper.hook",
+                Map::from_iter([("payload".to_owned(), json!({}))]),
+            )
             .expect("hook without runs");
         assert_eq!(hook, json!({}));
         drop(runtime);
@@ -585,7 +625,8 @@ events = ["Stop"]
 "#,
             dir.join("profile.toml"),
             profile::Layer::User,
-        ).unwrap();
+        )
+        .unwrap();
         profile.trusted = true;
         profile.hooks.config = vec![dir.join("settings.json").display().to_string()];
         {
@@ -595,16 +636,24 @@ events = ["Stop"]
         }
         let params = || Map::from_iter([("profile_id".to_owned(), json!("claude-code"))]);
         let (sender, receiver) = std::sync::mpsc::channel();
-        runtime.set_wake(Arc::new(move || { let _ = sender.send(()); }));
-        let first = runtime.call_method("helper.hooks.status", params()).unwrap();
+        runtime.set_wake(Arc::new(move || {
+            let _ = sender.send(());
+        }));
+        let first = runtime
+            .call_method("helper.hooks.status", params())
+            .unwrap();
         assert_eq!(first["pending"], true);
         while core.state.lock().unwrap().hook_busy {
             runtime.poll_tasks();
             if core.state.lock().unwrap().hook_busy {
-                receiver.recv_timeout(std::time::Duration::from_secs(60)).expect("hook task did not signal completion");
+                receiver
+                    .recv_timeout(std::time::Duration::from_secs(60))
+                    .expect("hook task did not signal completion");
             }
         }
-        let result = runtime.call_method("helper.hooks.status", params()).unwrap();
+        let result = runtime
+            .call_method("helper.hooks.status", params())
+            .unwrap();
         assert!(result["state"].is_string(), "{result}");
         assert!(!core.state.lock().unwrap().hook_busy);
         for method in ["helper.hooks.install", "helper.hooks.remove"] {
@@ -667,10 +716,7 @@ events = ["Stop"]
         )
         .expect("helper and stub chat register");
         runtime
-            .set_setting(
-                "helper.launch.mode",
-                SettingValue::Text("chat".to_owned()),
-            )
+            .set_setting("helper.launch.mode", SettingValue::Text("chat".to_owned()))
             .unwrap();
         let value = runtime
             .call_method(
@@ -914,7 +960,11 @@ events = ["Stop"]
                 Map::from_iter([("profile_id".to_owned(), json!("claude-code"))]),
             )
             .expect_err("uninstalled helper must fail");
-        assert!(error.message.contains("não está instalado"), "{}", error.message);
+        assert!(
+            error.message.contains("não está instalado"),
+            "{}",
+            error.message
+        );
         assert!(calls.lock().unwrap().is_empty());
     }
 
@@ -1025,10 +1075,9 @@ events = ["Stop"]
                 "claude-code".to_owned(),
                 Some(std::path::PathBuf::from("claude")),
             );
-            state.detection.insert(
-                "claude-code".to_owned(),
-                detect::Detection::default(),
-            );
+            state
+                .detection
+                .insert("claude-code".to_owned(), detect::Detection::default());
             assert!(
                 !state.is_installed("claude-code"),
                 "explicit detection verdict must override probed cache"
@@ -1052,7 +1101,10 @@ events = ["Stop"]
                 Map::from_iter([("profile_id".to_owned(), json!("claude-code"))]),
             )
             .expect_err("launch must obey the same installed verdict");
-        assert!(error.message.contains("não está instalado"), "{}", error.message);
+        assert!(
+            error.message.contains("não está instalado"),
+            "{}",
+            error.message
+        );
     }
 }
-

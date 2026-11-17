@@ -201,7 +201,9 @@ impl ForjaApp {
         screenshot_error: Arc<Mutex<Option<String>>>,
         session: Session,
     ) -> Self {
-        let _ = forja_ui_kit::install_fonts(&creation.egui_ctx);
+        if let Err(error) = forja_ui_kit::install_fonts(&creation.egui_ctx) {
+            forja_kernel::logging::log(forja_kernel::logging::LogLevel::Warn, error.to_string());
+        }
         if let Some(size) = session.test_window_size {
             // Windows clamps a window larger than the monitor at creation time.
             // Re-applying the size here keeps test layouts at the requested
@@ -406,8 +408,7 @@ impl ForjaApp {
                 }
             });
             app.runtime.set_wake(Arc::clone(&task_wake));
-            let rpc_wake: forja_kernel::tasks::Wake =
-                Arc::new(move || context.request_repaint());
+            let rpc_wake: forja_kernel::tasks::Wake = Arc::new(move || context.request_repaint());
             match RpcHost::start(rpc_wake) {
                 Ok(host) => app.rpc = Some(host),
                 Err(error) => app.set_status_error(&error.to_string()),
@@ -508,8 +509,13 @@ impl ForjaApp {
         self.active_crumb_checked = None;
         if id == "terminal.toggle"
             && self.rail_page.is_none()
-            && self.bench_views.get(self.active_tab).is_some_and(|view| view.id == "terminal.tab")
-            && self.tabs.is_visible(self.active_tab, self.bench_views.len())
+            && self
+                .bench_views
+                .get(self.active_tab)
+                .is_some_and(|view| view.id == "terminal.tab")
+            && self
+                .tabs
+                .is_visible(self.active_tab, self.bench_views.len())
         {
             actions::push(actions::Action::CloseTab);
             return;
@@ -517,7 +523,10 @@ impl ForjaApp {
         match self.runtime.run_command(id, args) {
             Ok(_) => {
                 self.clear_status();
-                if matches!(id, "terminal.open" | "terminal.search" | "terminal.toggle" | "terminal.focus") {
+                if matches!(
+                    id,
+                    "terminal.open" | "terminal.search" | "terminal.toggle" | "terminal.focus"
+                ) {
                     actions::push(actions::Action::ShowBenchTab("terminal.tab".to_owned()));
                 }
                 if matches!(id, "helper.list" | "helper.status") {
@@ -824,7 +833,10 @@ impl ForjaApp {
         let shell_window_active = (self.settings_open
             && ctx.memory(|memory| memory.top_modal_layer().is_none()))
             || (self.keymap_open
-                && forja_ui_kit::keyboard_layer_active(ctx, egui::Id::new("forja.keymap.keyboard")));
+                && forja_ui_kit::keyboard_layer_active(
+                    ctx,
+                    egui::Id::new("forja.keymap.keyboard"),
+                ));
         if self.anvil_open
             || self.close_confirm.is_some()
             || egui::Popup::is_any_open(ctx)
@@ -879,7 +891,11 @@ impl ForjaApp {
                 fired.push(id);
             }
         }
-        let has_create_dialog = self.runtime.registry().command("bench.create_dialog").is_some();
+        let has_create_dialog = self
+            .runtime
+            .registry()
+            .command("bench.create_dialog")
+            .is_some();
         for id in fired {
             let target = shortcut_target(&id, has_create_dialog);
             // A command that needs context asks for it in the Anvil instead of
@@ -1171,11 +1187,19 @@ mod shortcut_tests {
             physical_key: None,
             pressed: true,
             repeat: false,
-            modifiers: egui::Modifiers { ctrl: true, shift: true, command: true, ..Default::default() },
+            modifiers: egui::Modifiers {
+                ctrl: true,
+                shift: true,
+                command: true,
+                ..Default::default()
+            },
         });
         let _ = ctx.run(raw, |ctx| {
             assert!(!chord_pressed(ctx, &KeyChord::parse("Ctrl+K").unwrap()));
-            assert!(chord_pressed(ctx, &KeyChord::parse("Ctrl+Shift+K").unwrap()));
+            assert!(chord_pressed(
+                ctx,
+                &KeyChord::parse("Ctrl+Shift+K").unwrap()
+            ));
         });
     }
 

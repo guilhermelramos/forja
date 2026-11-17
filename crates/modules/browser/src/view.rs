@@ -473,13 +473,31 @@ impl BrowserView {
         ui.horizontal_wrapped(|ui| {
             let active = self.state.active();
             if let Some(tab) = &active {
-                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, "<").clicked() {
+                if forja_ui_kit::icon_button(
+                    ui,
+                    forja_ui_kit::Icon::Back,
+                    &cx.t("browser.view.back"),
+                )
+                .clicked()
+                {
                     self.state.request(Pending::Back);
                 }
-                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, ">").clicked() {
+                if forja_ui_kit::icon_button(
+                    ui,
+                    forja_ui_kit::Icon::Forward,
+                    &cx.t("browser.view.forward"),
+                )
+                .clicked()
+                {
                     self.state.request(Pending::Forward);
                 }
-                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, "R").clicked() {
+                if forja_ui_kit::icon_button(
+                    ui,
+                    forja_ui_kit::Icon::Refresh,
+                    &cx.t("browser.view.reload"),
+                )
+                .clicked()
+                {
                     if tab.kind == Kind::Url && crate::home::is_home_url(&tab.url) {
                         self.home.force_refresh(cx);
                     } else {
@@ -565,10 +583,13 @@ impl BrowserView {
                 if ui.selectable_label(index == active, label).clicked() {
                     self.state.set_active(index);
                 }
-                if ui
-                    .small_button("x")
-                    .on_hover_text(cx.t("browser.view.close-tab"))
-                    .clicked()
+                if forja_ui_kit::icon_button(
+                    ui,
+                    forja_ui_kit::Icon::Close,
+                    &cx.t("browser.view.close-tab"),
+                )
+                .on_hover_text(cx.t("browser.view.close-tab"))
+                .clicked()
                 {
                     self.state.close(index);
                 }
@@ -600,7 +621,13 @@ impl BrowserView {
                     backwards: false,
                 });
             }
-            if ui.small_button("x").clicked() {
+            if forja_ui_kit::icon_button(
+                ui,
+                forja_ui_kit::Icon::Close,
+                &cx.t("browser.view.close-find"),
+            )
+            .clicked()
+            {
                 self.state.set_find(false, None);
             }
             ui.label(

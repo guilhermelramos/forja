@@ -19,7 +19,7 @@
     { "m": "ui.wait", "ms": 300 },
     { "m": "ui.click", "target": "sample-beta" },
     { "m": "ui.wait", "ms": 300 },
-    { "m": "ui.click", "target": "Bigorna" },
+    { "m": "ui.click", "target": "Buscar ou executar… Ctrl+K" },
     { "m": "ui.type", "text": "Trocar de projeto" },
     { "m": "ui.key", "keys": "Return" },
     { "m": "ui.type", "text": "sample" },

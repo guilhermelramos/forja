@@ -17,9 +17,9 @@
 //!
 //! # Fontes
 //!
-//! [`install_fonts`] lê Segoe UI Variable, Segoe UI, Cascadia Code e os ícones
-//! Segoe Fluent Icons (com Segoe MDL2 Assets atrás) em `C:\Windows\Fonts`.
-//! Nada é redistribuído.
+//! [`install_fonts`] lê fontes de texto em `%WINDIR%/Fonts`, com fallback.
+//! [`Icon`] e [`icon`] usam traços autorais embutidos, sem fonte de ícones.
+//! [`icon_button`] exige nome acessível/dica e [`button_with_icon`] combina texto e ícone.
 //!
 //! # Terminal
 //!
@@ -32,6 +32,8 @@ mod color;
 mod components;
 mod fonts;
 mod icon;
+#[rustfmt::skip]
+mod icons_gen;
 mod keyboard_layer;
 mod paint;
 mod terminal;
@@ -48,14 +50,16 @@ pub use components::{
     wrapped_label, ButtonKind, Column, HelperMissingGuide, ListItem, MenuItem, PanelIconTab, Stage,
     TabFitPlan, TabItem, TabStripOutcome, ToastKind, TreeNode,
 };
-pub use components::{highlighted_text, setting_row, settings_navigation, settings_viewport, SettingRow};
+pub use components::{
+    highlighted_text, setting_row, settings_navigation, settings_viewport, SettingRow,
+};
 pub use eframe::egui;
 pub use fonts::{install_fonts, FontError};
 pub use icon::{
-    font_id as icon_font, icon_button, ADD, ARCHIVE, BOARD, CHANGES, CHAT, CHEVRON_DOWN,
-    CHEVRON_RIGHT, CLOSE, CODE, DIFF, EXTENSION, FOLDER, GLOBE, HELPERS, HISTORY, LAYERS, PORTS,
-    PREVIEW, PROJECTS, REQUESTS, REVIEW, ROUTINES, SEARCH, SETTINGS, SKILLS, SPLIT_DOWN,
-    SPLIT_RIGHT, TERMINAL, THEME,
+    button_with_icon, icon, icon_button, paint_icon, Icon, ADD, ARCHIVE, BOARD, CHANGES, CHAT,
+    CHEVRON_DOWN, CHEVRON_RIGHT, CLOSE, CODE, DIFF, EXTENSION, FOLDER, GLOBE, HELPERS, HISTORY,
+    LAYERS, PORTS, PREVIEW, PROJECTS, REQUESTS, REVIEW, ROUTINES, SEARCH, SETTINGS, SKILLS,
+    SPLIT_DOWN, SPLIT_RIGHT, TERMINAL, THEME,
 };
 pub use keyboard_layer::{
     consume_layer_escape, keyboard_layer_active, register_keyboard_layer, release_keyboard_focus,

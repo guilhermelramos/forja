@@ -11,10 +11,13 @@ Nada no kernel. Este crate não é um módulo. O shell chama `apply` e desenha c
 - `Tokens::brasa_dark` / `Tokens::brasa_light` são a paleta de `design/brand.md`.
 - `Tokens::from_toml` lê um tema de extensão. Campo ausente fica com o preset do `mode`.
 - `apply(ctx, &tokens)` guarda os tokens e ajusta estilo, tipo e sombras.
-- `install_fonts(ctx)` lê Segoe UI Variable, Segoe UI Semibold, Cascadia Code e
-  Segoe Fluent Icons (`SegoeIcons.ttf`, com `segmdl2.ttf` atrás) em `C:\Windows\Fonts`.
-  Os glifos nomeados ficam em `icon` (`BOARD`, `REQUESTS`, `HELPERS`, `ROUTINES`,
-  `ARCHIVE`, `SKILLS`, `SETTINGS`, `SEARCH`, `CLOSE`, `SPLIT_RIGHT`, `SPLIT_DOWN`, `THEME`).
+- `install_fonts(ctx)` lê somente fontes de texto em `%WINDIR%/Fonts`, conserva
+  fallbacks e informa ausências para o log do shell. Não há fonte de ícones.
+- `Icon` contém 80 desenhos autorais de `design/icons/`, gerados por `cargo xtask icons`.
+  `icon(ui, Icon, size)` e `paint_icon` desenham os traços; `icon_button(ui, Icon, label)`
+  exige nome acessível/dica; `button_with_icon(ui, Icon, text, kind)` conserva a hierarquia.
+  Linhas, curvas cúbicas e quadráticas usam a mesma espessura e os tokens da Forja.
+  `cargo test -p xtask icons::` verifica a identidade entre SVGs e o arquivo comitado.
 - `TerminalTheme::load_dir` lê `content/themes/*.toml`.
 - Componentes recebem o rótulo. Não há string de produto embutida.
 - `setting_row` padroniza rótulo/ajuda, controle à direita, marca de alteração,

@@ -23,7 +23,11 @@ impl View for DetailView {
         let tokens = forja_ui_kit::applied_tokens(ui.ctx());
         forja_ui_kit::page_heading(ui, &cx.t("bench.detail.title"), None, |_| {});
         let Some(bench) = self.state.current() else {
-            let message = format!("{}\n{}", cx.t("bench.detail.empty"), cx.t("bench.detail.empty-hint"));
+            let message = format!(
+                "{}\n{}",
+                cx.t("bench.detail.empty"),
+                cx.t("bench.detail.empty-hint")
+            );
             let create = forja_ui_kit::empty_state(
                 ui,
                 forja_ui_kit::BOARD,
@@ -75,10 +79,10 @@ impl View for DetailView {
                         );
                     }
                     if bench.unread {
-                        ui.label(egui::RichText::new("\u{25cf}").color(c32(tokens.color.accent)));
+                        forja_ui_kit::icon(ui, forja_ui_kit::Icon::Info, 16.0);
                     }
                     if bench.pinned {
-                        ui.label(egui::RichText::new("\u{2605}").color(c32(tokens.color.spark)));
+                        forja_ui_kit::icon(ui, forja_ui_kit::Icon::Pin, 16.0);
                     }
                     stage_badge(ui, &stage.0, &stage.1, &tokens);
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
@@ -232,9 +236,11 @@ impl DetailView {
                 );
             } else {
                 ui.label(
-                    egui::RichText::new(cx.t_args("bench.detail.notice", &[("message", &human.summary)]))
-                        .small()
-                        .color(c32(tokens.color.info)),
+                    egui::RichText::new(
+                        cx.t_args("bench.detail.notice", &[("message", &human.summary)]),
+                    )
+                    .small()
+                    .color(c32(tokens.color.info)),
                 );
             }
         }

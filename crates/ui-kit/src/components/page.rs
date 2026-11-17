@@ -1,6 +1,6 @@
 //! Cabeçalho de página e estado vazio. Os rótulos vêm de quem chama.
 
-use eframe::egui::{self, Align, Align2, Layout, Response, RichText, Sense, Ui};
+use eframe::egui::{self, Align, Layout, Response, RichText, Sense, Ui};
 
 use super::button::{button, ButtonKind};
 use crate::icon;
@@ -43,7 +43,12 @@ pub fn page_heading<R>(
 
 /// Estado vazio: um ícone grande, uma frase curta e, se houver, a ação principal. Devolve a
 /// resposta da ação (para `.clicked()`), ou `None` quando não há ação.
-pub fn empty_state(ui: &mut Ui, glyph: &str, message: &str, action: Option<&str>) -> Option<Response> {
+pub fn empty_state(
+    ui: &mut Ui,
+    glyph: crate::Icon,
+    message: &str,
+    action: Option<&str>,
+) -> Option<Response> {
     let tokens = paint::tokens(ui);
     let metrics = tokens.metrics();
     let muted = tokens.color.text_muted.to_color32();
@@ -52,13 +57,7 @@ pub fn empty_state(ui: &mut Ui, glyph: &str, message: &str, action: Option<&str>
         ui.add_space(metrics.gap * 2.0);
         // Pintura direta: um ícone PUA em ui.label() entra na árvore de acessibilidade como rótulo vazio/glifo.
         let (icon_rect, _) = ui.allocate_exact_size(egui::vec2(28.0, 28.0), Sense::hover());
-        ui.painter().text(
-            icon_rect.center(),
-            Align2::CENTER_CENTER,
-            glyph,
-            icon::font_id(28.0),
-            muted,
-        );
+        icon::paint_icon(ui.painter(), glyph, icon_rect, muted);
         ui.label(RichText::new(message).color(muted));
         if let Some(action) = action {
             ui.add_space(metrics.gap);

@@ -3,7 +3,7 @@
 use crate::images;
 use crate::model::{self, Row, RowKind};
 use crate::state::{Mode, Shared};
-use forja_kernel::ui_contract::{View, egui};
+use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::{Args, Ctx, SettingValue};
 use serde_json::json;
 use std::collections::BTreeMap;
@@ -150,10 +150,11 @@ impl DiffView {
             if before != (self.ignore_whitespace, self.collapse) {
                 self.rows_version = u64::MAX;
             }
-            if forja_ui_kit::button(
+            if forja_ui_kit::button_with_icon(
                 ui,
-                forja_ui_kit::ButtonKind::Ghost,
+                forja_ui_kit::Icon::Refresh,
                 &cx.t("diff.toolbar.refresh"),
+                forja_ui_kit::ButtonKind::Ghost,
             )
             .clicked()
             {

@@ -93,7 +93,12 @@ pub fn toast(ui: &mut Ui, kind: ToastKind, text: &str) -> Response {
                 ui.vertical(|ui| {
                     let text_max = ui.available_width().max(1.0);
                     ui.set_max_width(text_max);
-                    wrapped_label(ui, text, body_font(&metrics), tokens.color.text.to_color32());
+                    wrapped_label(
+                        ui,
+                        text,
+                        body_font(&metrics),
+                        tokens.color.text.to_color32(),
+                    );
                 });
             });
         })
@@ -122,7 +127,7 @@ pub fn error_notice(
         ui.set_max_width(row_width);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
             if let Some(dismiss) = dismiss_label {
-                let button = crate::icon_button(ui, crate::CLOSE).on_hover_text(dismiss);
+                let button = crate::icon_button(ui, crate::CLOSE, dismiss);
                 button.widget_info(|| {
                     egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), dismiss)
                 });
@@ -311,13 +316,11 @@ mod tests {
         };
         let mut used = Rect::NOTHING;
         let _ = ctx.run(input, |ctx| {
-            CentralPanel::default()
-                .frame(Frame::NONE)
-                .show(ctx, |ui| {
-                    ui.set_max_width(width);
-                    draw(ui);
-                    used = ui.min_rect();
-                });
+            CentralPanel::default().frame(Frame::NONE).show(ctx, |ui| {
+                ui.set_max_width(width);
+                draw(ui);
+                used = ui.min_rect();
+            });
         });
         used
     }
@@ -329,14 +332,26 @@ mod tests {
 
         let wrapped_rect = run_in_width(160.0, |ui| {
             let r = wrapped_label(ui, long, font.clone(), Color32::WHITE);
-            assert!(r.rect.width() <= 160.5, "wrapped width {} > 160", r.rect.width());
+            assert!(
+                r.rect.width() <= 160.5,
+                "wrapped width {} > 160",
+                r.rect.width()
+            );
         });
         assert!(wrapped_rect.width() <= 160.5);
 
         let truncated_rect = run_in_width(160.0, |ui| {
             let r = truncated_label(ui, long, font.clone(), Color32::WHITE);
-            assert!(r.rect.width() <= 160.5, "truncated width {} > 160", r.rect.width());
-            assert!(r.rect.height() <= 30.0, "truncated should stay single line: {}", r.rect.height());
+            assert!(
+                r.rect.width() <= 160.5,
+                "truncated width {} > 160",
+                r.rect.width()
+            );
+            assert!(
+                r.rect.height() <= 30.0,
+                "truncated should stay single line: {}",
+                r.rect.height()
+            );
         });
         assert!(truncated_rect.width() <= 160.5);
     }
@@ -347,7 +362,11 @@ mod tests {
 
         let toast_rect = run_in_width(280.0, |ui| {
             let resp = toast(ui, ToastKind::Danger, long);
-            assert!(resp.rect.right() <= 281.0, "toast right {} > 280", resp.rect.right());
+            assert!(
+                resp.rect.right() <= 281.0,
+                "toast right {} > 280",
+                resp.rect.right()
+            );
         });
         assert!(toast_rect.width() <= 281.0);
 
@@ -355,6 +374,10 @@ mod tests {
             let dismissed = error_notice(ui, long, Some(long), "Detalhes", Some("Fechar"));
             assert!(!dismissed);
         });
-        assert!(notice_rect.width() <= 281.0, "notice width {} > 280", notice_rect.width());
+        assert!(
+            notice_rect.width() <= 281.0,
+            "notice width {} > 280",
+            notice_rect.width()
+        );
     }
 }

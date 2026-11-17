@@ -92,3 +92,5 @@ project-home-shortcut-anvil = Bigorna
 project-home-shortcut-find = Achar arquivo
 project-home-shortcut-bench = Nova bancada
 project-home-more-install = Mais comandos de instalação
+projects-tree-collapse = Recolher projeto
+projects-tree-expand = Expandir projeto

@@ -145,3 +145,5 @@ git-generate-no-review = O módulo de revisão não está disponível.
 git-generate-running = Gerando a mensagem com o ajudante...
 git-error-no-remote = Este repositório não tem remote configurado. Adicione um remote antes de buscar, puxar ou publicar.
 git-error-nothing-to-abort = Não há merge nem rebase em andamento para abortar.
+git-changes-stage = Preparar arquivo
+git-changes-unstage = Despreparar arquivo

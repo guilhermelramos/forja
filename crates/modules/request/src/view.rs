@@ -100,7 +100,8 @@ impl RequestsView {
             return;
         }
         self.started = true;
-        self.query_draft = with_state(&self.shared, |state| state.query.clone()).unwrap_or_default();
+        self.query_draft =
+            with_state(&self.shared, |state| state.query.clone()).unwrap_or_default();
         commands::ensure_local(cx, &self.shared);
         let _ = commands::refresh(cx, &self.shared);
     }
@@ -132,7 +133,14 @@ impl RequestsView {
         let title = cx.t("request-name");
         let loading = frame.loading.then(|| cx.t("request-loading"));
         forja_ui_kit::page_heading(ui, &title, loading.as_deref(), |ui| {
-            if button(ui, ButtonKind::Secondary, &cx.t("request-refresh")).clicked() {
+            if forja_ui_kit::button_with_icon(
+                ui,
+                forja_ui_kit::Icon::Refresh,
+                &cx.t("request-refresh"),
+                ButtonKind::Secondary,
+            )
+            .clicked()
+            {
                 let _ = commands::refresh(cx, &self.shared);
             }
             let label = cx.t("request-local-create");
@@ -208,7 +216,10 @@ impl RequestsView {
             let error_text = cx.t(key);
             let line = cx.t_args(
                 "request-error-line",
-                &[("counter", counter_name.as_str()), ("error", error_text.as_str())],
+                &[
+                    ("counter", counter_name.as_str()),
+                    ("error", error_text.as_str()),
+                ],
             );
             ui.colored_label(egui::Color32::from_rgb(0xE5, 0x53, 0x4B), line);
         }
@@ -278,11 +289,7 @@ impl RequestsView {
                     if ui.selectable_label(selected, title).clicked() {
                         let _ = commands::open(cx, &self.shared, &item.counter, &item.key);
                     }
-                    ui.label(
-                        egui::RichText::new(row_meta(cx, item))
-                            .small()
-                            .weak(),
-                    );
+                    ui.label(egui::RichText::new(row_meta(cx, item)).small().weak());
                     ui.add_space(4.0);
                 }
             });
@@ -328,7 +335,12 @@ impl RequestsView {
                     wrapped_label(ui, url, caption_font.clone(), muted_color);
                 }
                 ui.add_space(6.0);
-                match item.body.as_deref().map(str::trim).filter(|body| !body.is_empty()) {
+                match item
+                    .body
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|body| !body.is_empty())
+                {
                     Some(body) => {
                         wrapped_label(ui, body, body_font.clone(), text_color);
                     }
@@ -373,14 +385,21 @@ impl RequestsView {
                     && !self.comment_draft.trim().is_empty()
                 {
                     let body = self.comment_draft.clone();
-                    if commands::comment(cx, &self.shared, &item.counter, &item.key, &body).is_ok() {
+                    if commands::comment(cx, &self.shared, &item.counter, &item.key, &body).is_ok()
+                    {
                         self.comment_draft.clear();
                     }
                 }
             });
     }
 
-    fn actions(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, item: &RequestItem, project_known: bool) {
+    fn actions(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        item: &RequestItem,
+        project_known: bool,
+    ) {
         ui.horizontal_wrapped(|ui| {
             let can_forge = project_known || forja_counter_kit::fixtures_enabled();
             ui.add_enabled_ui(can_forge, |ui| {
@@ -405,7 +424,8 @@ impl View for RequestsView {
         self.start(cx);
         self.maybe_refresh(cx, ui);
         let frame = self.frame();
-        if !self.auto_selected && forja_counter_kit::fixtures_enabled() && frame.selected.is_none() {
+        if !self.auto_selected && forja_counter_kit::fixtures_enabled() && frame.selected.is_none()
+        {
             if let Some(first) = frame.items.first().cloned() {
                 self.auto_selected = true;
                 let _ = commands::open(cx, &self.shared, &first.counter, &first.key);
@@ -455,4 +475,3 @@ fn row_meta(cx: &Ctx<'_>, item: &RequestItem) -> String {
     }
     parts.join(" · ")
 }
-

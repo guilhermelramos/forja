@@ -5,7 +5,7 @@ use eframe::egui::{
     Ui,
 };
 
-use super::button::{ButtonKind, button};
+use super::button::{button, ButtonKind};
 use crate::apply::{elevation_shadow, pad_i8, radius_u8};
 use crate::paint::{self, body_font, paint_text};
 
@@ -33,8 +33,13 @@ pub fn popup_menu(response: &Response, items: &[MenuItem<'_>]) -> Option<usize> 
 }
 
 /// Ícone que abre o mesmo menu. O tooltip é o nome da ação.
-pub fn icon_menu(ui: &mut Ui, glyph: &str, tooltip: &str, items: &[MenuItem<'_>]) -> Option<usize> {
-    let response = crate::icon::icon_button(ui, glyph).on_hover_text(tooltip.to_owned());
+pub fn icon_menu(
+    ui: &mut Ui,
+    glyph: crate::Icon,
+    tooltip: &str,
+    items: &[MenuItem<'_>],
+) -> Option<usize> {
+    let response = crate::icon::icon_button(ui, glyph, tooltip);
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), tooltip)
     });
@@ -47,9 +52,10 @@ fn open_menu(response: &Response, items: &[MenuItem<'_>]) -> Option<usize> {
     let max_width = (screen.width() - 24.0).clamp(160.0, 420.0);
     let below = (screen.bottom() - response.rect.bottom() - 12.0).max(0.0);
     let above = (response.rect.top() - screen.top() - 12.0).max(0.0);
-    let available_height = below
-        .max(above)
-        .clamp(MENU_MIN_HEIGHT, (screen.height() - 24.0).max(MENU_MIN_HEIGHT));
+    let available_height = below.max(above).clamp(
+        MENU_MIN_HEIGHT,
+        (screen.height() - 24.0).max(MENU_MIN_HEIGHT),
+    );
     let max_height = menu_height_limit(screen.height()).min(available_height);
     let tokens = crate::applied_tokens(&response.ctx);
     let row_height = tokens.metrics().row;
@@ -153,7 +159,9 @@ fn menu_row(ui: &mut Ui, item: &MenuItem<'_>, width: f32) -> Response {
     );
     ui.painter().rect_filled(bar, CornerRadius::same(2), mark);
     let text_rect = rect.shrink2(egui::vec2(12.0, 0.0));
-    let text_painter = ui.painter().with_clip_rect(text_rect.intersect(ui.clip_rect()));
+    let text_painter = ui
+        .painter()
+        .with_clip_rect(text_rect.intersect(ui.clip_rect()));
     paint_text(
         &text_painter,
         text_rect,

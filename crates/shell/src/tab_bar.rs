@@ -7,7 +7,7 @@ use forja_ui_kit::{MenuItem, PanelIconTab, TabItem};
 use serde_json::Value;
 
 /// Maps each bench tab or side-panel view ID to its UI glyph (easily swappable in Item 7).
-pub(crate) fn tab_icon(view_id: &str) -> &'static str {
+pub(crate) fn tab_icon(view_id: &str) -> forja_ui_kit::Icon {
     match view_id {
         "terminal.tab" => forja_ui_kit::TERMINAL,
         "chat.tab" => forja_ui_kit::CHAT,
@@ -18,16 +18,25 @@ pub(crate) fn tab_icon(view_id: &str) -> &'static str {
         "bench.detail" => forja_ui_kit::LAYERS,
         "review.tab" => forja_ui_kit::REVIEW,
         "git.history" => forja_ui_kit::HISTORY,
-        "extension.panels.bench" | "extension.panels.side" | "extension.panels.right" => {
-            forja_ui_kit::EXTENSION
-        }
+        "extension.panels.bench" => forja_ui_kit::Icon::ExtensionBench,
+        "extension.panels.side" => forja_ui_kit::Icon::ExtensionSide,
+        "extension.panels.right" => forja_ui_kit::Icon::ExtensionRight,
         "project.sidebar" => forja_ui_kit::PROJECTS,
-        "board.sidebar" => forja_ui_kit::BOARD,
-        "explorer.panel" => forja_ui_kit::FOLDER,
+        "board.sidebar" => forja_ui_kit::Icon::Benches,
+        "explorer.panel" => forja_ui_kit::Icon::Files,
         "git.changes" => forja_ui_kit::CHANGES,
-        "search.panel" => forja_ui_kit::SEARCH,
+        "search.panel" => forja_ui_kit::Icon::SearchResults,
         "ports.panel" => forja_ui_kit::PORTS,
-        _ => forja_ui_kit::BOARD,
+        "board.page" => forja_ui_kit::Icon::Board,
+        "helper.tab" => forja_ui_kit::Icon::Helpers,
+        "request.page" => forja_ui_kit::Icon::Requests,
+        "routine.page" => forja_ui_kit::Icon::Routines,
+        "muster.page" => forja_ui_kit::Icon::Muster,
+        "archive.tab" => forja_ui_kit::Icon::Archive,
+        "skill.page" => forja_ui_kit::Icon::Skills,
+        "usage.page" => forja_ui_kit::Icon::Usage,
+        "extension.page" => forja_ui_kit::Icon::Extensions,
+        _ => forja_ui_kit::Icon::Info,
     }
 }
 
@@ -48,9 +57,10 @@ pub(crate) fn resolve_tool_tab_setting_id(entry: &str) -> Option<&'static str> {
     }
 }
 
-pub(crate) fn view_icon(view: &ViewInstance) -> &str {
+pub(crate) fn view_icon(view: &ViewInstance) -> forja_ui_kit::Icon {
     view.icon_glyph
         .as_deref()
+        .and_then(forja_ui_kit::Icon::from_id)
         .unwrap_or_else(|| tab_icon(&view.id))
 }
 
@@ -217,7 +227,10 @@ impl ForjaApp {
                 .t_args("shell.tabs.overflow", &[("count", &count_str)])
         });
         ui.add_space(6.0);
-        shown_indices.get(chosen).copied().unwrap_or(shown_indices[0])
+        shown_indices
+            .get(chosen)
+            .copied()
+            .unwrap_or(shown_indices[0])
     }
 
     /// Renders the central bench tab bar (`tab_strip` + tool-tab `+` menu).

@@ -14,7 +14,7 @@
   "expect": [
     {
       "step": 4,
-      "present": ["+", "Shell"]
+      "present": ["Nova aba", "Shell"]
     },
     {
       "step": 5,

@@ -51,16 +51,23 @@ impl View for BoardRail {
             .iter()
             .filter(|card| card.unread && !card.archived)
             .count();
+        let title = cx.t("board.page.title");
         let label = if unread > 0 {
-            format!("\u{25a6}\u{00b7}{unread}")
+            format!("{title} · {unread}")
         } else {
-            "\u{25a6}".to_owned()
+            title
         };
-        let response = ui.add(
-            egui::Button::new(egui::RichText::new(label).color(c32(tokens.color.text)))
-                .frame(false),
-        );
-        if response.on_hover_text(cx.t("board.page.title")).clicked() {
+        let response = forja_ui_kit::icon_button(ui, forja_ui_kit::Icon::Board, &label);
+        if unread > 0 {
+            ui.painter().text(
+                response.rect.right_top(),
+                egui::Align2::RIGHT_TOP,
+                unread.to_string(),
+                egui::FontId::proportional(10.0),
+                c32(tokens.color.spark),
+            );
+        }
+        if response.clicked() {
             self.state.request_refresh();
         }
     }
@@ -285,7 +292,10 @@ mod helper_status_tests {
     #[test]
     fn malformed_runs_are_ignored() {
         let cards = vec![card("a", "C:/bancadas/a")];
-        let runs = vec![json!({"status": "working"}), json!({"bench_path": "C:/bancadas/a"})];
+        let runs = vec![
+            json!({"status": "working"}),
+            json!({"bench_path": "C:/bancadas/a"}),
+        ];
         assert!(card_helper_statuses(&cards, &runs).is_empty());
     }
 }

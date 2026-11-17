@@ -62,14 +62,13 @@ impl View for ViewerView {
                 match cx.run_command("viewers.preview", Args::from_map(args)) {
                     Ok(value) => match serde_json::from_value(value) {
                         Ok(document) => self.state.set_document(document),
-                        Err(error) => self
-                            .state
-                            .set_notice(Some(cx.t_args("viewers.notice.preview", &[("message", &error.to_string())]))),
+                        Err(error) => self.state.set_notice(Some(
+                            cx.t_args("viewers.notice.preview", &[("message", &error.to_string())]),
+                        )),
                     },
-                    Err(error) => self.state.set_notice(Some(cx.t_args(
-                        "viewers.notice.preview",
-                        &[("message", &error.to_string())],
-                    ))),
+                    Err(error) => self.state.set_notice(Some(
+                        cx.t_args("viewers.notice.preview", &[("message", &error.to_string())]),
+                    )),
                 }
             }
         }
@@ -135,10 +134,7 @@ impl View for ViewerView {
             }
             "pdf" => {
                 if let Some(pdf) = &document.pdf {
-                    ui.label(cx.t_args(
-                        "viewers.pdf.pages",
-                        &[("pages", &pdf.pages.to_string())],
-                    ));
+                    ui.label(cx.t_args("viewers.pdf.pages", &[("pages", &pdf.pages.to_string())]));
                     ui.label(
                         egui::RichText::new(cx.t("viewers.pdf.hint"))
                             .small()
@@ -159,17 +155,18 @@ impl View for ViewerView {
 }
 
 impl ViewerView {
-    fn render_image(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, image: &forja_contracts::ImageView) {
+    fn render_image(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        image: &forja_contracts::ImageView,
+    ) {
         let tokens = forja_ui_kit::applied_tokens(ui.ctx());
         if self.image_key.as_deref() != Some(image.path.as_str()) && !self.loading {
             self.start_image(cx, &image.path);
         }
         if self.images.is_none() {
-            let frames = self
-                .image_slot
-                .lock()
-                .ok()
-                .and_then(|mut slot| slot.take());
+            let frames = self.image_slot.lock().ok().and_then(|mut slot| slot.take());
             if let Some(frames) = frames {
                 self.loading = false;
                 let textures = frames
@@ -197,11 +194,23 @@ impl ViewerView {
         }
         let zoom = self.state.zoom();
         ui.horizontal(|ui| {
-            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, "-").clicked() {
+            if forja_ui_kit::icon_button(
+                ui,
+                forja_ui_kit::Icon::Minimize,
+                &cx.t("viewers.action.zoom-out"),
+            )
+            .clicked()
+            {
                 self.state.add_zoom(-0.25);
             }
             ui.label(format!("{:.0}%", zoom * 100.0));
-            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, "+").clicked() {
+            if forja_ui_kit::icon_button(
+                ui,
+                forja_ui_kit::Icon::Add,
+                &cx.t("viewers.action.zoom-in"),
+            )
+            .clicked()
+            {
                 self.state.add_zoom(0.25);
             }
             if image.frames > 1 {
@@ -454,11 +463,23 @@ fn render_table(
                 });
         });
     ui.horizontal(|ui| {
-        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, "<").clicked() {
+        if forja_ui_kit::icon_button(
+            ui,
+            forja_ui_kit::Icon::Back,
+            &cx.t("viewers.action.previous"),
+        )
+        .clicked()
+        {
             state.set_page(page_index.saturating_sub(1));
         }
         ui.label(format!("{}/{}", page_index + 1, pages));
-        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, ">").clicked() {
+        if forja_ui_kit::icon_button(
+            ui,
+            forja_ui_kit::Icon::Forward,
+            &cx.t("viewers.action.next"),
+        )
+        .clicked()
+        {
             state.set_page((page_index + 1).min(pages - 1));
         }
     });

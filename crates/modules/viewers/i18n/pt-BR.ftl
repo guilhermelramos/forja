@@ -36,3 +36,7 @@ viewers-method-list-description = Lista os visualizadores instalados e suas exte
 viewers-method-list-result = Descritores de visualizador.
 viewers-method-preview-description = Converte um arquivo no modelo somente leitura do visualizador.
 viewers-method-preview-result = Documento do visualizador.
+viewers-action-zoom-out = Reduzir zoom
+viewers-action-zoom-in = Aumentar zoom
+viewers-action-previous = Página anterior
+viewers-action-next = Próxima página

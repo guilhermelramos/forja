@@ -35,10 +35,11 @@ impl View for UsagePage {
         let muted = c32(tokens.color.text_muted);
         ui.horizontal_wrapped(|ui| {
             ui.heading(cx.t("usage.page.title"));
-            if forja_ui_kit::button(
+            if forja_ui_kit::button_with_icon(
                 ui,
-                forja_ui_kit::ButtonKind::Ghost,
+                forja_ui_kit::Icon::Refresh,
                 &cx.t("usage.page.refresh"),
+                forja_ui_kit::ButtonKind::Ghost,
             )
             .clicked()
             {

@@ -13,6 +13,7 @@
 mod atlas;
 mod atlas_agent;
 mod catalog;
+mod icons;
 mod installer;
 mod new_extension;
 mod new_module;
@@ -27,6 +28,7 @@ fn main() {
         [command, name] if command == "new-extension" => new_extension::run(name),
         [command] if command == "provenance" => provenance::run(),
         [command] if command == "catalog" => catalog::run(),
+        [command] if command == "icons" => icons::run(),
         [command] if command == "package" => package::run(false),
         [command, flag] if command == "package" && flag == "--skip-build" => package::run(true),
         [command, rest @ ..] if command == "atlas" => atlas::run(rest),
@@ -51,6 +53,7 @@ fn print_help() {
            cargo xtask new-module <nome>     cria crates/modules/<nome> e vincula ao shell\n\
            cargo xtask new-extension <nome>  cria extensions/<nome> (carregador na Fase D)\n\
            cargo xtask provenance            recusa termos da lista de proveniência\n\
+           cargo xtask icons                 gera os traços dos ícones autorais\n\
            cargo xtask catalog               compara settings e atalhos contra design/*.toml\n\
            cargo xtask package [--skip-build] empacota o release em dist/\n\
            cargo xtask installer [--skip-build] gera dist/Forja-Setup-<versão>.exe (Inno Setup 6)"

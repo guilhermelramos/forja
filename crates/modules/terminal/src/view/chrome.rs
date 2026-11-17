@@ -114,14 +114,16 @@ pub(super) fn tab_chip(ui: &mut egui::Ui, chip: &TabChip<'_>) -> (egui::Response
     });
     if hovered || close.hovered() {
         if close.hovered() {
-            ui.painter()
-                .rect_filled(close_rect, egui::CornerRadius::same(4), c32(tokens.color.surface));
+            ui.painter().rect_filled(
+                close_rect,
+                egui::CornerRadius::same(4),
+                c32(tokens.color.surface),
+            );
         }
-        ui.painter().text(
-            close_rect.center(),
-            egui::Align2::CENTER_CENTER,
-            "×",
-            FontId::proportional(11.0),
+        forja_ui_kit::paint_icon(
+            ui.painter(),
+            forja_ui_kit::Icon::Close,
+            close_rect,
             c32(tokens.color.text_muted),
         );
     }
@@ -149,7 +151,10 @@ fn shell_options(texts: &UiText, wsl: &[String]) -> Vec<(String, String)> {
         ));
     } else {
         for distro in wsl {
-            options.push((format!("{}  ·  {distro}", texts.wsl), format!("wsl:{distro}")));
+            options.push((
+                format!("{}  ·  {distro}", texts.wsl),
+                format!("wsl:{distro}"),
+            ));
         }
     }
     options
@@ -180,8 +185,12 @@ pub(super) fn shell_menu(
 }
 
 /// Botão de ícone do ui-kit, com o nome da ação como dica e rótulo de acessibilidade.
-pub(super) fn icon_button(ui: &mut egui::Ui, glyph: &str, tooltip: &str) -> egui::Response {
-    let response = forja_ui_kit::icon_button(ui, glyph);
+pub(super) fn icon_button(
+    ui: &mut egui::Ui,
+    glyph: forja_ui_kit::Icon,
+    tooltip: &str,
+) -> egui::Response {
+    let response = forja_ui_kit::icon_button(ui, glyph, tooltip);
     let label = tooltip.to_owned();
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label.clone())
@@ -276,11 +285,8 @@ fn budget_header(
     controls: &ControlWidths,
 ) -> HeaderBudget {
     let mut tab_widths = vec![None; tabs.len()];
-    let fixed_sum = controls.plus
-        + controls.icon * 4.0
-        + controls.recipes
-        + controls.shell
-        + gap * 6.0;
+    let fixed_sum =
+        controls.plus + controls.icon * 4.0 + controls.recipes + controls.shell + gap * 6.0;
     let tabs_sum: f32 = tabs.iter().sum::<f32>() + gap * tabs.len() as f32;
     if fixed_sum + tabs_sum <= avail {
         for (slot, &w) in tab_widths.iter_mut().zip(tabs.iter()) {
@@ -383,7 +389,7 @@ pub(super) fn draw_pane_header(
     let gap = 3.0;
     let tab_measured: Vec<f32> = tabs.iter().map(|t| tab_chip_width(ui, &t.title)).collect();
     let controls = ControlWidths {
-        plus: text_button_width(ui, "+"),
+        plus: ctrl,
         icon: ctrl,
         recipes: text_button_width(ui, &texts.recipes),
         shell: text_button_width(ui, &texts.shell),
@@ -420,7 +426,7 @@ pub(super) fn draw_pane_header(
             }
         }
         if plan.show_plus
-            && forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, "+")
+            && forja_ui_kit::icon_button(ui, forja_ui_kit::Icon::Add, &texts.new_tab)
                 .on_hover_text(texts.new_tab.clone())
                 .clicked()
         {
@@ -486,9 +492,21 @@ fn draw_overflow_menu(
     }
     for (visible, label, action) in [
         (plan.show_plus, &texts.new_tab, OverflowAction::NewTab),
-        (plan.show_close, &texts.close_pane, OverflowAction::Control(HeaderControl::ClosePane)),
-        (plan.show_split_down, &texts.split_down, OverflowAction::Control(HeaderControl::SplitDown)),
-        (plan.show_split_right, &texts.split_right, OverflowAction::Control(HeaderControl::SplitRight)),
+        (
+            plan.show_close,
+            &texts.close_pane,
+            OverflowAction::Control(HeaderControl::ClosePane),
+        ),
+        (
+            plan.show_split_down,
+            &texts.split_down,
+            OverflowAction::Control(HeaderControl::SplitDown),
+        ),
+        (
+            plan.show_split_right,
+            &texts.split_right,
+            OverflowAction::Control(HeaderControl::SplitRight),
+        ),
         (plan.show_search, &texts.search, OverflowAction::Search),
     ] {
         if !visible {
@@ -508,7 +526,10 @@ fn draw_overflow_menu(
     }
     if !plan.show_shell {
         for (label, id) in shell_options(texts, wsl) {
-            entries.push((format!("{}: {label}", texts.shell), OverflowAction::OpenShell(id)));
+            entries.push((
+                format!("{}: {label}", texts.shell),
+                OverflowAction::OpenShell(id),
+            ));
         }
     }
     let items: Vec<MenuItem<'_>> = entries
@@ -553,7 +574,13 @@ mod tests {
     use super::*;
 
     fn sample_controls() -> ControlWidths {
-        ControlWidths { plus: 32.0, icon: 32.0, recipes: 76.0, shell: 56.0, more: 52.0 }
+        ControlWidths {
+            plus: 32.0,
+            icon: 32.0,
+            recipes: 76.0,
+            shell: 56.0,
+            more: 52.0,
+        }
     }
 
     #[test]

@@ -260,7 +260,14 @@ fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &m
     });
 
     ui.horizontal_wrapped(|ui| {
-        if small(ui, &cx.t("git.changes.refresh")) {
+        if forja_ui_kit::button_with_icon(
+            ui,
+            forja_ui_kit::Icon::Refresh,
+            &cx.t("git.changes.refresh"),
+            forja_ui_kit::ButtonKind::Secondary,
+        )
+        .clicked()
+        {
             let mut args = Map::new();
             args.insert("path".to_owned(), json!(path));
             let _ = run(cx, "git.refresh", args);
@@ -364,13 +371,34 @@ fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &m
                     ui.horizontal(|ui| {
                         ui.set_max_width(ui.available_width().max(1.0));
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if small(ui, "\u{21ba}") {
+                            if forja_ui_kit::icon_button(
+                                ui,
+                                forja_ui_kit::Icon::Delete,
+                                &cx.t("git.changes.discard"),
+                            )
+                            .clicked()
+                            {
                                 state.set_discard(Some(vec![file.path.clone()]));
                             }
-                            if file.staged && small(ui, "\u{2212}") {
+                            if file.staged
+                                && forja_ui_kit::icon_button(
+                                    ui,
+                                    forja_ui_kit::Icon::Back,
+                                    &cx.t("git.changes.unstage"),
+                                )
+                                .clicked()
+                            {
                                 unstage(cx, &path, std::slice::from_ref(&file.path));
                             }
-                            if !file.staged && !file.conflict && !file.untracked && small(ui, "+")
+                            if !file.staged
+                                && !file.conflict
+                                && !file.untracked
+                                && forja_ui_kit::icon_button(
+                                    ui,
+                                    forja_ui_kit::Icon::Add,
+                                    &cx.t("git.changes.stage"),
+                                )
+                                .clicked()
                             {
                                 stage(cx, &path, std::slice::from_ref(&file.path));
                             }
@@ -434,7 +462,9 @@ fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &m
                 .default_width(360.0)
                 .show(ui.ctx(), |ui| {
                     forja_ui_kit::register_keyboard_layer(ui, layer);
-                    ui.label(cx.t_args("git.changes.discard-body", &[("files", &files.join(", "))]));
+                    ui.label(
+                        cx.t_args("git.changes.discard-body", &[("files", &files.join(", "))]),
+                    );
                     ui.add_space(8.0);
                     ui.horizontal(|ui| {
                         if forja_ui_kit::button(
@@ -593,7 +623,9 @@ pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> forja_kernel::HumanErro
         return forja_kernel::HumanError::simple(cx.t("git.error.nothing-to-abort"));
     }
     if let Some(branch) = trimmed.strip_prefix("protected:") {
-        return forja_kernel::HumanError::simple(cx.t_args("git.error.protected", &[("branch", branch)]));
+        return forja_kernel::HumanError::simple(
+            cx.t_args("git.error.protected", &[("branch", branch)]),
+        );
     }
     if trimmed == "no file selected" {
         return forja_kernel::HumanError::simple(cx.t("git.error.no-file"));

@@ -128,7 +128,12 @@ impl View for ProjectsView {
         }
 
         if projects.is_empty() {
-            forja_ui_kit::empty_state(ui, forja_ui_kit::ARCHIVE, &cx.t("project.sidebar.empty"), None);
+            forja_ui_kit::empty_state(
+                ui,
+                forja_ui_kit::ARCHIVE,
+                &cx.t("project.sidebar.empty"),
+                None,
+            );
         }
 
         let active_id = self.state.active_id();
@@ -161,19 +166,28 @@ impl View for ProjectsView {
                     let (dot, _) =
                         ui.allocate_exact_size(egui::vec2(10.0, 10.0), egui::Sense::hover());
                     ui.painter().circle_filled(dot.center(), 4.0, color);
-                    if ui
-                        .add(
-                            egui::Button::new(
-                                egui::RichText::new(if expanded { "\u{25be}" } else { "\u{25b8}" })
-                                    .color(tokens.color.text_muted.forja_color()),
-                            )
-                            .frame(false),
-                        )
-                        .clicked()
+                    if forja_ui_kit::icon_button(
+                        ui,
+                        if expanded {
+                            forja_ui_kit::Icon::ChevronDown
+                        } else {
+                            forja_ui_kit::Icon::ChevronRight
+                        },
+                        &cx.t(if expanded {
+                            "project.tree.collapse"
+                        } else {
+                            "project.tree.expand"
+                        }),
+                    )
+                    .clicked()
                     {
                         self.state.toggle_expanded(&project.id);
                     }
-                    ui.label(egui::RichText::new(&project.icon).size(16.0));
+                    if project.icon == crate::model::DEFAULT_ICON {
+                        forja_ui_kit::icon(ui, forja_ui_kit::Icon::Projects, 16.0);
+                    } else {
+                        ui.label(egui::RichText::new(&project.icon).size(16.0));
+                    }
                     let name = ui.add(
                         egui::Label::new(
                             egui::RichText::new(&project.name)
@@ -339,7 +353,10 @@ pub(crate) fn humanize_error_detail(cx: &Ctx<'_>, raw: &str) -> forja_kernel::Hu
         return forja_kernel::HumanError::simple(cx.t("project.error.missing-destination"));
     }
     for (prefix, key) in [
-        ("could not create the folder:", "project.error.create-folder"),
+        (
+            "could not create the folder:",
+            "project.error.create-folder",
+        ),
         (
             "could not create the destination:",
             "project.error.create-folder",

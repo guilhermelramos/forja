@@ -46,17 +46,16 @@ impl Module for MusterModule {
     }
 
     fn register(&mut self, r: &mut Registrar<'_>) {
-        r.i18n(include_str!("../i18n/en.ftl"), include_str!("../i18n/pt-BR.ftl"));
+        r.i18n(
+            include_str!("../i18n/en.ftl"),
+            include_str!("../i18n/pt-BR.ftl"),
+        );
         r.keymap(include_str!("../keymap.toml"));
         register_settings(r);
         commands::register(r, &self.shared);
         commands::subscribe_events(r, &self.shared);
 
-        for key in view::USED_KEYS
-            .iter()
-            .chain(commands::USED_KEYS)
-            .copied()
-        {
+        for key in view::USED_KEYS.iter().chain(commands::USED_KEYS).copied() {
             r.uses_i18n(key);
         }
 
@@ -66,10 +65,14 @@ impl Module for MusterModule {
         } else {
             50
         };
-        r.view(Slot::Rail, "muster.page", "muster.page.title", order, move || {
-            Box::new(view::MusterView::new(shared.clone()))
-        });
-        r.view_glyph("muster.page", forja_ui_kit::HELPERS);
+        r.view(
+            Slot::Rail,
+            "muster.page",
+            "muster.page.title",
+            order,
+            move || Box::new(view::MusterView::new(shared.clone())),
+        );
+        r.view_glyph("muster.page", forja_ui_kit::Icon::Muster.id());
 
         let tick_shared = self.shared.clone();
         r.view(
@@ -81,7 +84,6 @@ impl Module for MusterModule {
         );
     }
 }
-
 
 fn register_settings(r: &mut Registrar<'_>) {
     r.setting(SettingSpec::new(
@@ -221,7 +223,12 @@ mod tests {
     fn run_rejects_whitespace_titles() {
         let dir = temp_dir();
         let mut runtime = runtime(&dir.0);
-        let error = runtime.call_method("muster.run", Map::from_iter([("title".into(), json!("  \t  "))])).unwrap_err();
+        let error = runtime
+            .call_method(
+                "muster.run",
+                Map::from_iter([("title".into(), json!("  \t  "))]),
+            )
+            .unwrap_err();
         assert!(error.message.contains("Digite um título"));
     }
 
@@ -231,10 +238,7 @@ mod tests {
         let mut runtime = runtime(&dir.0);
         contract::assert_ok(runtime.registry(), runtime.i18n());
         runtime
-            .set_setting(
-                "muster.plan.require_approval",
-                SettingValue::Bool(false),
-            )
+            .set_setting("muster.plan.require_approval", SettingValue::Bool(false))
             .unwrap();
         let run = runtime
             .call_method(
@@ -431,10 +435,7 @@ mod tests {
         )
         .expect("muster and usage register");
         runtime
-            .set_setting(
-                "muster.plan.require_approval",
-                SettingValue::Bool(false),
-            )
+            .set_setting("muster.plan.require_approval", SettingValue::Bool(false))
             .unwrap();
         let run = runtime
             .call_method(
@@ -472,24 +473,39 @@ mod tests {
     fn disabled_muster_rejects_new_runs() {
         let dir = temp_dir();
         let mut runtime = runtime(&dir.0);
-        runtime.set_setting("muster.mode.enabled", SettingValue::Bool(false)).unwrap();
-        assert!(runtime.call_method("muster.run", Map::from_iter([
-            ("title".to_owned(), json!("Run")),
-        ])).is_err());
-        runtime.set_setting("muster.mode.enabled", SettingValue::Bool(true)).unwrap();
-        assert!(runtime.call_method("muster.run", Map::from_iter([
-            ("title".to_owned(), json!("Run")),
-        ])).is_ok());
+        runtime
+            .set_setting("muster.mode.enabled", SettingValue::Bool(false))
+            .unwrap();
+        assert!(runtime
+            .call_method(
+                "muster.run",
+                Map::from_iter([("title".to_owned(), json!("Run")),])
+            )
+            .is_err());
+        runtime
+            .set_setting("muster.mode.enabled", SettingValue::Bool(true))
+            .unwrap();
+        assert!(runtime
+            .call_method(
+                "muster.run",
+                Map::from_iter([("title".to_owned(), json!("Run")),])
+            )
+            .is_ok());
     }
 
     #[test]
     fn dispatch_rejects_new_bench_until_creation_can_be_awaited() {
         let dir = temp_dir();
         let mut runtime = runtime(&dir.0);
-        let result = runtime.call_method("muster.start", Map::from_iter([
-            ("task".to_owned(), json!("task-1")),
-            ("new_bench".to_owned(), json!(true)),
-        ])).unwrap_err();
+        let result = runtime
+            .call_method(
+                "muster.start",
+                Map::from_iter([
+                    ("task".to_owned(), json!("task-1")),
+                    ("new_bench".to_owned(), json!(true)),
+                ]),
+            )
+            .unwrap_err();
         assert!(result.message.contains("bancada"), "{}", result.message);
     }
 
@@ -588,9 +604,7 @@ mod tests {
             )
             .expect("handoff");
         assert_eq!(delivery["result"], "feito");
-        let status = runtime
-            .call_method("muster.status", Map::new())
-            .unwrap();
+        let status = runtime.call_method("muster.status", Map::new()).unwrap();
         assert_eq!(status["tasks"][0]["state"], "delivered");
         assert_eq!(status["runs"][0]["state"], "done");
     }
@@ -662,7 +676,13 @@ mod tests {
             let assignment = state.store.start(&task_id, "opencode", "C:/bench").unwrap();
             state
                 .store
-                .launched(&assignment.id, "opencode", Some("term-1".into()), None, "tui")
+                .launched(
+                    &assignment.id,
+                    "opencode",
+                    Some("term-1".into()),
+                    None,
+                    "tui",
+                )
                 .unwrap();
             state
                 .store

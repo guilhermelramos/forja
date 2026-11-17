@@ -1,0 +1,32 @@
+{
+  "title": "Trilho autoral identifica todos os destinos e oferece Bancada primeiro (#196)",
+  "issue": 196,
+  "locale": "pt-BR",
+  "steps": [
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.snapshot"
+    }
+  ],
+  "expect": [
+    {
+      "present": [
+        "Bancada",
+        "Quadro",
+        "Pedidos",
+        "Ajudantes",
+        "Rotinas",
+        "Mutirão",
+        "Acervo",
+        "Skills",
+        "Uso",
+        "Extensões",
+        "Ajustes"
+      ],
+      "no_geometry_issues": true
+    }
+  ]
+}

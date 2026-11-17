@@ -73,6 +73,8 @@ pub struct Expectation {
     #[serde(default)]
     pub no_geometry_issues: Option<bool>,
     #[serde(default)]
+    pub no_unnamed_buttons: Option<bool>,
+    #[serde(default)]
     pub from_step: Option<usize>,
     #[serde(default)]
     pub max_frames_delta: Option<u64>,
@@ -81,15 +83,14 @@ pub struct Expectation {
 }
 
 /// Runs every `*.json` regression file in `dir` against a fresh clean app instance.
-pub fn run_directory(
-    dir: &Path,
-    app_exe: &Path,
-    default_locale: &str,
-) -> Result<(), String> {
+pub fn run_directory(dir: &Path, app_exe: &Path, default_locale: &str) -> Result<(), String> {
     let mut files = collect_json_files(dir)?;
     files.sort();
     if files.is_empty() {
-        return Err(format!("no *.json regression files found in {}", dir.display()));
+        return Err(format!(
+            "no *.json regression files found in {}",
+            dir.display()
+        ));
     }
 
     let mut failures = Vec::new();
@@ -124,8 +125,8 @@ pub fn run_directory(
 }
 
 fn collect_json_files(dir: &Path) -> Result<Vec<PathBuf>, String> {
-    let entries = std::fs::read_dir(dir)
-        .map_err(|e| format!("could not read {}: {e}", dir.display()))?;
+    let entries =
+        std::fs::read_dir(dir).map_err(|e| format!("could not read {}: {e}", dir.display()))?;
     let mut files = Vec::new();
     for entry in entries.flatten() {
         let path = entry.path();
@@ -214,9 +215,12 @@ fn run_file(
                     .spawn_and_wait()
                     .map_err(|err| format!("step {step_idx} (app.restart) failed: {err}"))?;
                 let reply = call_ui(session.pipe(), "ui.snapshot", json!({}), CALL_TIMEOUT)
-                    .map_err(|err| format!("step {step_idx} (app.restart snapshot) failed: {err}"))?;
-                Snapshot::from_rpc_result(&reply)
-                    .map_err(|err| format!("step {step_idx} (app.restart) invalid snapshot: {err}"))?
+                    .map_err(|err| {
+                        format!("step {step_idx} (app.restart snapshot) failed: {err}")
+                    })?;
+                Snapshot::from_rpc_result(&reply).map_err(|err| {
+                    format!("step {step_idx} (app.restart) invalid snapshot: {err}")
+                })?
             } else if method == "ui.open_tab" {
                 let target = step
                     .get("target")
@@ -238,15 +242,17 @@ fn run_file(
                 let reply = call_ui(session.pipe(), method, Value::Object(params), CALL_TIMEOUT)
                     .map_err(|err| format!("step {step_idx} ({method}) failed: {err}"))?;
                 if method.starts_with("ui.") {
-                    Snapshot::from_rpc_result(&reply)
-                        .map_err(|err| format!("step {step_idx} ({method}) invalid snapshot: {err}"))?
+                    Snapshot::from_rpc_result(&reply).map_err(|err| {
+                        format!("step {step_idx} ({method}) invalid snapshot: {err}")
+                    })?
                 } else {
                     let snap_reply =
                         call_ui(session.pipe(), "ui.snapshot", json!({}), CALL_TIMEOUT).map_err(
                             |err| format!("step {step_idx} ({method} snapshot) failed: {err}"),
                         )?;
-                    Snapshot::from_rpc_result(&snap_reply)
-                        .map_err(|err| format!("step {step_idx} ({method}) invalid snapshot: {err}"))?
+                    Snapshot::from_rpc_result(&snap_reply).map_err(|err| {
+                        format!("step {step_idx} ({method}) invalid snapshot: {err}")
+                    })?
                 }
             };
             snapshots.push(snap);
@@ -299,7 +305,16 @@ where
 {
     let snap_val = call("ui.snapshot", json!({}))?;
     let initial = Snapshot::from_rpc_result(&snap_val)?;
-    if let Some(el) = find_clickable_tab(&initial.elements, target, None) {
+    // Rail navigation can share a title with a tool tab (Bancada/Bench).
+    // A slot-tab request must not activate a rail item instead of its tool.
+    let rail_right = initial
+        .elements
+        .iter()
+        .find(|el| el.role == "Button" && ["Ajustes", "Settings"].contains(&el.name.as_str()))
+        .map(|el| el.rect[2]);
+    if let Some(el) = find_clickable_tab(&initial.elements, target, None)
+        .filter(|el| rail_right.is_none_or(|right| el.rect[0] > right))
+    {
         let reply = call("ui.click", json!({ "id": el.id }))?;
         return Snapshot::from_rpc_result(&reply);
     }
@@ -455,6 +470,18 @@ pub fn evaluate_expectations(
                 ));
             }
         }
+        if exp.no_unnamed_buttons == Some(true) {
+            if let Some(element) = snap
+                .elements
+                .iter()
+                .find(|element| element.role == "Button" && element.name.trim().is_empty())
+            {
+                return Err(format!(
+                    "expectation {exp_idx} (step {target_idx}): button {} has no accessible name",
+                    element.id
+                ));
+            }
+        }
         if exp.no_geometry_issues == Some(true) {
             let issues = crate::invariants::geometry_issues(snap);
             if !issues.is_empty() {
@@ -531,7 +558,10 @@ mod tests {
             });
         }
         Snapshot {
-            window: WindowSize { width: 1920.0, height: 1080.0 },
+            window: WindowSize {
+                width: 1920.0,
+                height: 1080.0,
+            },
             changes: Changes {
                 appeared: appeared.iter().map(|s| (*s).to_owned()).collect(),
                 disappeared: vec![],
@@ -541,6 +571,14 @@ mod tests {
             frames: 0,
             closed: false,
         }
+    }
+
+    #[test]
+    fn rejects_icon_controls_without_accessible_names() {
+        let expectations: Vec<Expectation> =
+            serde_json::from_str(r#"[{"no_unnamed_buttons":true}]"#).unwrap();
+        assert!(evaluate_expectations(&expectations, &[snap_with(&["Refresh"], 0, &[])]).is_ok());
+        assert!(evaluate_expectations(&expectations, &[snap_with(&[""], 0, &[])]).is_err());
     }
 
     #[test]
@@ -761,8 +799,7 @@ mod tests {
         let mut busy_after = snap_with(&["Terminal"], 0, &[]);
         busy_after.frames = 310;
 
-        let exps: Vec<Expectation> =
-            serde_json::from_str(r#"[{"max_frames_delta": 30}]"#).unwrap();
+        let exps: Vec<Expectation> = serde_json::from_str(r#"[{"max_frames_delta": 30}]"#).unwrap();
         assert!(evaluate_expectations(&exps, &[before.clone(), ok_after]).is_ok());
         assert!(evaluate_expectations(&exps, &[before.clone(), busy_after.clone()]).is_err());
 
@@ -785,7 +822,9 @@ mod tests {
             serde_json::from_str(r#"[{"step": 0, "closed": false}]"#).unwrap();
         let did_close: Vec<Expectation> =
             serde_json::from_str(r#"[{"step": 1, "closed": true}]"#).unwrap();
-        assert!(evaluate_expectations(&stay_open, &[open_snap.clone(), closed_snap.clone()]).is_ok());
+        assert!(
+            evaluate_expectations(&stay_open, &[open_snap.clone(), closed_snap.clone()]).is_ok()
+        );
         assert!(evaluate_expectations(&did_close, &[open_snap, closed_snap]).is_ok());
     }
 }

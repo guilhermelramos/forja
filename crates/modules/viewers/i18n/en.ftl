@@ -36,3 +36,7 @@ viewers-method-list-description = Lists the installed viewers and their file ext
 viewers-method-list-result = Viewer descriptors.
 viewers-method-preview-description = Parses a file into the read-only viewer model.
 viewers-method-preview-result = Viewer document.
+viewers-action-zoom-out = Zoom out
+viewers-action-zoom-in = Zoom in
+viewers-action-previous = Previous page
+viewers-action-next = Next page

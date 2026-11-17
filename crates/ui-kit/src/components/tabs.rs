@@ -1,6 +1,6 @@
 //! Faixa de abas com ícones, medição antes do desenho, fechamento e fileira de ícones laterais.
 
-use eframe::egui::{self, Align2, CornerRadius, FontId, Rect, Response, Sense, Stroke, Ui};
+use eframe::egui::{self, Align2, CornerRadius, Rect, Response, Sense, Stroke, Ui};
 
 use crate::apply::radius_u8;
 use crate::paint::{self, body_font, caption_font, painter_for};
@@ -14,7 +14,7 @@ const CLOSE_SIZE: f32 = 14.0;
 
 /// Entrada de uma aba na faixa principal com ícone e botão de fechar opcional.
 pub struct TabItem<'a> {
-    pub icon: &'a str,
+    pub icon: crate::Icon,
     pub label: &'a str,
     pub close_label: Option<&'a str>,
     pub tooltip: Option<&'a str>,
@@ -22,7 +22,7 @@ pub struct TabItem<'a> {
 
 /// Entrada de uma aba de ícone nos painéis laterais.
 pub struct PanelIconTab<'a> {
-    pub icon: &'a str,
+    pub icon: crate::Icon,
     pub label: &'a str,
     pub tooltip: &'a str,
 }
@@ -192,11 +192,19 @@ fn draw_tab_chip(
     let body_rect = Rect::from_min_max(rect.min, egui::pos2(body_right, rect.bottom()));
     let body_resp = ui.interact(body_rect, ui.id().with(("tab-body", index)), Sense::click());
     body_resp.widget_info(|| {
-        egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, ui.is_enabled(), active, item.label)
+        egui::WidgetInfo::selected(
+            egui::WidgetType::SelectableLabel,
+            ui.is_enabled(),
+            active,
+            item.label,
+        )
     });
 
     let close_rect = Rect::from_center_size(
-        egui::pos2((rect.right() - 10.0).max(body_right + 10.0), rect.center().y),
+        egui::pos2(
+            (rect.right() - 10.0).max(body_right + 10.0),
+            rect.center().y,
+        ),
         egui::vec2(CLOSE_SIZE, CLOSE_SIZE),
     );
     let close_resp = item.close_label.map(|close_label| {
@@ -226,16 +234,16 @@ fn draw_tab_chip(
     };
 
     let mut text_left = rect.left() + 6.0;
-    if !item.icon.is_empty() {
-        painter.text(
+    crate::paint_icon(
+        &painter,
+        item.icon,
+        Rect::from_center_size(
             egui::pos2(rect.left() + 13.0, rect.center().y),
-            Align2::CENTER_CENTER,
-            item.icon,
-            crate::icon::font_id(13.0),
-            fg,
-        );
-        text_left += 16.0;
-    }
+            egui::vec2(16.0, 16.0),
+        ),
+        fg,
+    );
+    text_left += 16.0;
 
     let label_right = if closable {
         rect.right() - CLOSE_RESERVE
@@ -247,13 +255,15 @@ fn draw_tab_chip(
             egui::pos2(text_left, rect.top()),
             egui::pos2(label_right, rect.bottom()),
         );
-        painter.with_clip_rect(text_clip.intersect(ui.clip_rect())).text(
-            egui::pos2(text_clip.left(), text_clip.center().y),
-            Align2::LEFT_CENTER,
-            item.label,
-            body_font(metrics),
-            fg,
-        );
+        painter
+            .with_clip_rect(text_clip.intersect(ui.clip_rect()))
+            .text(
+                egui::pos2(text_clip.left(), text_clip.center().y),
+                Align2::LEFT_CENTER,
+                item.label,
+                body_font(metrics),
+                fg,
+            );
     }
 
     if let Some(_close_resp) = &close_resp {
@@ -265,11 +275,10 @@ fn draw_tab_chip(
                     tokens.color.surface_alt.to_color32(),
                 );
             }
-            painter.text(
-                close_rect.center(),
-                Align2::CENTER_CENTER,
-                "×",
-                FontId::proportional(12.0),
+            crate::paint_icon(
+                &painter,
+                crate::Icon::Close,
+                close_rect,
                 if close_hovered {
                     tokens.color.text.to_color32()
                 } else {
@@ -291,8 +300,8 @@ fn draw_tab_chip(
     let tip = item.tooltip.unwrap_or(item.label);
     let body_with_tip = body_resp.on_hover_text(tip.to_owned());
     let close_clicked = close_resp.as_ref().is_some_and(Response::clicked);
-    let middle_clicked = body_with_tip.middle_clicked()
-        || close_resp.as_ref().is_some_and(Response::middle_clicked);
+    let middle_clicked =
+        body_with_tip.middle_clicked() || close_resp.as_ref().is_some_and(Response::middle_clicked);
     (body_with_tip, close_clicked, middle_clicked)
 }
 
@@ -316,11 +325,13 @@ fn draw_overflow_button(
         fill,
     );
     let fg = tokens.color.text.to_color32();
-    painter.text(
-        egui::pos2(rect.left() + 12.0, rect.center().y),
-        Align2::CENTER_CENTER,
-        crate::icon::CHEVRON_DOWN,
-        crate::icon::font_id(11.0),
+    crate::paint_icon(
+        &painter,
+        crate::Icon::ChevronDown,
+        Rect::from_center_size(
+            egui::pos2(rect.left() + 12.0, rect.center().y),
+            egui::vec2(12.0, 12.0),
+        ),
         fg,
     );
     let count_text = format!("+{hidden_count}");
@@ -371,11 +382,10 @@ fn draw_add_button(
     } else {
         tokens.color.text_muted.to_color32().gamma_multiply(0.4)
     };
-    painter.text(
-        rect.center(),
-        Align2::CENTER_CENTER,
-        crate::icon::ADD,
-        crate::icon::font_id(14.0),
+    crate::paint_icon(
+        &painter,
+        crate::Icon::Add,
+        Rect::from_center_size(rect.center(), egui::vec2(16.0, 16.0)),
         fg,
     );
     paint::paint_focus(
@@ -487,11 +497,10 @@ fn draw_panel_icon_button(
     } else {
         tokens.color.text_muted.to_color32()
     };
-    painter.text(
-        rect.center(),
-        Align2::CENTER_CENTER,
+    crate::paint_icon(
+        &painter,
         item.icon,
-        crate::icon::font_id(15.0),
+        Rect::from_center_size(rect.center(), egui::vec2(18.0, 18.0)),
         fg,
     );
     if active_now {

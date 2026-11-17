@@ -421,3 +421,5 @@ shell-settings-section-trust = Confiança
 shell-settings-section-mcp = Servidor MCP
 shell-settings-section-voice = Voz
 shell-settings-section-import = Importar
+shell-top-search = Buscar ou executar…
+shell-window-restore = Restaurar

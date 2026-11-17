@@ -238,7 +238,8 @@ fn draw_search(ui: &mut egui::Ui, terminal: &mut Terminal, texts: &UiText) {
             terminal.search.editing = false;
             terminal.focus_request = true;
         }
-        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &texts.previous).clicked() {
+        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &texts.previous).clicked()
+        {
             terminal.search_step(true);
         }
         if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &texts.next).clicked() {
@@ -251,7 +252,7 @@ fn draw_search(ui: &mut egui::Ui, terminal: &mut Terminal, texts: &UiText) {
             format!("{count} {}", texts.match_plural)
         };
         ui.label(RichText::new(label).weak());
-        let close_btn = forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE);
+        let close_btn = forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE, &texts.close);
         let close_label = texts.close.clone();
         close_btn.widget_info(|| {
             egui::WidgetInfo::labeled(egui::WidgetType::Button, true, close_label.clone())
@@ -312,7 +313,9 @@ fn draw_paste_bar(
     ui.horizontal_wrapped(|ui| {
         ui.label(RichText::new(texts.paste_title.clone()).strong());
         ui.label(RichText::new(texts.paste_body.clone()).weak());
-        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, &texts.paste_accept).clicked() {
+        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, &texts.paste_accept)
+            .clicked()
+        {
             let bytes = paste_bytes(&pending.text, true);
             terminal.write(&bytes);
             *pending_paste = None;
@@ -552,25 +555,21 @@ fn draw_error_banner(
     };
     ui.group(|ui| {
         ui.horizontal_wrapped(|ui| {
-            ui.label(RichText::new(title).strong().color(c32(tokens.color.danger)));
+            ui.label(
+                RichText::new(title)
+                    .strong()
+                    .color(c32(tokens.color.danger)),
+            );
             ui.label(RichText::new(&body).weak());
         });
         ui.horizontal(|ui| {
-            if forja_ui_kit::button(
-                ui,
-                forja_ui_kit::ButtonKind::Secondary,
-                &texts.error_retry,
-            )
-            .clicked()
+            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &texts.error_retry)
+                .clicked()
             {
                 terminal.retry(Some(ui.ctx().clone()));
             }
-            if forja_ui_kit::button(
-                ui,
-                forja_ui_kit::ButtonKind::Ghost,
-                &texts.error_settings,
-            )
-            .clicked()
+            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &texts.error_settings)
+                .clicked()
             {
                 actions.push(ViewAction::OpenSettings);
             }
@@ -580,5 +579,3 @@ fn draw_error_banner(
         });
     });
 }
-
-

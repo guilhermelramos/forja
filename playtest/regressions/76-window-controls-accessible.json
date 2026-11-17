@@ -1,0 +1,25 @@
+{
+  "title": "Barra superior central e controles de janela têm nomes acessíveis (#196)",
+  "issue": 196,
+  "locale": "pt-BR",
+  "steps": [
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.snapshot"
+    }
+  ],
+  "expect": [
+    {
+      "present": [
+        "Buscar ou executar… Ctrl+K",
+        "Minimizar",
+        "Maximizar",
+        "Fechar janela"
+      ],
+      "no_geometry_issues": true
+    }
+  ]
+}

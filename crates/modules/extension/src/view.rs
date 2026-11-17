@@ -1,7 +1,7 @@
 //! Página Extensões, painéis declarativos e fonte da Bigorna.
 
-use crate::state::{self, EntrySnapshot, ExtensionCore, ExtensionState};
 use crate::runtime::PanelSnapshot;
+use crate::state::{self, EntrySnapshot, ExtensionCore, ExtensionState};
 use forja_kernel::ui::AnvilHit;
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::{Args, Ctx};
@@ -38,8 +38,13 @@ impl ExtensionPage {
             {
                 self.pick_folder(cx);
             }
-            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &cx.t("extension.page.rescan"))
-                .clicked()
+            if forja_ui_kit::button_with_icon(
+                ui,
+                forja_ui_kit::Icon::Refresh,
+                &cx.t("extension.page.rescan"),
+                forja_ui_kit::ButtonKind::Secondary,
+            )
+            .clicked()
             {
                 let _ = cx.run_command("extension.rescan", Args::new());
             }
@@ -84,10 +89,7 @@ impl ExtensionPage {
         let state_label = cx.t(&format!("extension.state.{}", entry.state.as_str()));
         ui.horizontal_wrapped(|ui| {
             ui.heading(title);
-            ui.label(
-                egui::RichText::new(format!("{} {}", entry.version, state_label))
-                    .weak(),
-            );
+            ui.label(egui::RichText::new(format!("{} {}", entry.version, state_label)).weak());
             if entry.dev {
                 ui.label(
                     egui::RichText::new(cx.t("extension.badge.dev"))
@@ -96,15 +98,21 @@ impl ExtensionPage {
             }
         });
         ui.collapsing(cx.t("extension.details"), |ui| {
-        ui.label(
-            egui::RichText::new(format!("{} · {}", entry.layer, entry.dir)).monospace().weak(),
-        );
-        if !entry.hash.is_empty() {
             ui.label(
-                egui::RichText::new(format!("{}: {}", cx.t("extension.hash"), short(&entry.hash)))
+                egui::RichText::new(format!("{} · {}", entry.layer, entry.dir))
+                    .monospace()
                     .weak(),
             );
-        }
+            if !entry.hash.is_empty() {
+                ui.label(
+                    egui::RichText::new(format!(
+                        "{}: {}",
+                        cx.t("extension.hash"),
+                        short(&entry.hash)
+                    ))
+                    .weak(),
+                );
+            }
         });
         if let Some(error) = &entry.error {
             ui.label(egui::RichText::new(error).color(ui.visuals().error_fg_color));
@@ -168,7 +176,11 @@ impl ExtensionPage {
         if !entry.commands.is_empty() {
             ui.label(egui::RichText::new(cx.t("extension.commands")).strong());
             for command in &entry.commands {
-                ui.label(format!("  {} · {}", command.id, command.title.resolve(cx.i18n().locale().id())));
+                ui.label(format!(
+                    "  {} · {}",
+                    command.id,
+                    command.title.resolve(cx.i18n().locale().id())
+                ));
             }
         }
         self.settings(ui, cx, entry);
@@ -200,7 +212,11 @@ impl ExtensionPage {
         }
         ui.label(egui::RichText::new(cx.t("extension.settings")).strong());
         for setting in &entry.settings {
-            let value = entry.values.get(&setting.name).cloned().unwrap_or(Value::Null);
+            let value = entry
+                .values
+                .get(&setting.name)
+                .cloned()
+                .unwrap_or(Value::Null);
             let label = setting.label.resolve(cx.i18n().locale().id());
             match setting.kind.as_str() {
                 "toggle" => {
@@ -218,7 +234,8 @@ impl ExtensionPage {
                         .unwrap_or(0);
                     ui.horizontal(|ui| {
                         ui.label(label);
-                        let options: Vec<&str> = setting.options.iter().map(String::as_str).collect();
+                        let options: Vec<&str> =
+                            setting.options.iter().map(String::as_str).collect();
                         if forja_ui_kit::select(ui, &mut index, &options).changed() {
                             if let Some(option) = setting.options.get(index) {
                                 state::set_setting(
@@ -261,20 +278,13 @@ impl ExtensionPage {
                         ui.label(label);
                         if forja_ui_kit::text_field(ui, &mut text, "").changed() {
                             self.field_drafts.insert(key.clone(), text.clone());
-                            state::set_setting(
-                                &self.core,
-                                &entry.id,
-                                &setting.name,
-                                json!(text),
-                            );
+                            state::set_setting(&self.core, &entry.id, &setting.name, json!(text));
                         }
                     });
                 }
             }
             if !setting.help.en.is_empty() {
-                ui.label(
-                    egui::RichText::new(setting.help.resolve(cx.i18n().locale().id())).weak(),
-                );
+                ui.label(egui::RichText::new(setting.help.resolve(cx.i18n().locale().id())).weak());
             }
         }
     }
@@ -371,8 +381,14 @@ impl ExtensionPanels {
         let kind = node.get("type").and_then(Value::as_str).unwrap_or_default();
         match kind {
             "text" => {
-                let value = node.get("value").and_then(Value::as_str).unwrap_or_default();
-                let style = node.get("style").and_then(Value::as_str).unwrap_or("normal");
+                let value = node
+                    .get("value")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default();
+                let style = node
+                    .get("style")
+                    .and_then(Value::as_str)
+                    .unwrap_or("normal");
                 let mut text = egui::RichText::new(value);
                 text = match style {
                     "title" => text.strong().size(18.0),
@@ -385,9 +401,18 @@ impl ExtensionPanels {
                 ui.label(text);
             }
             "button" => {
-                let label = node.get("label").and_then(Value::as_str).unwrap_or_default();
-                let primary = node.get("primary").and_then(Value::as_bool).unwrap_or(false);
-                let disabled = node.get("disabled").and_then(Value::as_bool).unwrap_or(false);
+                let label = node
+                    .get("label")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default();
+                let primary = node
+                    .get("primary")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+                let disabled = node
+                    .get("disabled")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
                 ui.add_enabled_ui(!disabled, |ui| {
                     let button = if primary {
                         forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, label)
@@ -400,11 +425,21 @@ impl ExtensionPanels {
                 });
             }
             "list" => {
-                let items = node.get("items").and_then(Value::as_array).cloned().unwrap_or_default();
+                let items = node
+                    .get("items")
+                    .and_then(Value::as_array)
+                    .cloned()
+                    .unwrap_or_default();
                 for item in items {
                     let id = item.get("id").and_then(Value::as_str).unwrap_or_default();
-                    let label = item.get("label").and_then(Value::as_str).unwrap_or_default();
-                    let detail = item.get("detail").and_then(Value::as_str).unwrap_or_default();
+                    let label = item
+                        .get("label")
+                        .and_then(Value::as_str)
+                        .unwrap_or_default();
+                    let detail = item
+                        .get("detail")
+                        .and_then(Value::as_str)
+                        .unwrap_or_default();
                     let response = ui.selectable_label(false, format!("{label}  {detail}"));
                     if response.clicked() {
                         self.action(cx, panel, node, "select", json!({ "item": id }));
@@ -412,25 +447,46 @@ impl ExtensionPanels {
                 }
             }
             "table" => {
-                let columns = node.get("columns").and_then(Value::as_array).cloned().unwrap_or_default();
-                let rows = node.get("rows").and_then(Value::as_array).cloned().unwrap_or_default();
-                egui::Grid::new(format!("{}:{}", panel.id, node.get("id").and_then(Value::as_str).unwrap_or_default()))
-                    .striped(true)
-                    .show(ui, |ui| {
+                let columns = node
+                    .get("columns")
+                    .and_then(Value::as_array)
+                    .cloned()
+                    .unwrap_or_default();
+                let rows = node
+                    .get("rows")
+                    .and_then(Value::as_array)
+                    .cloned()
+                    .unwrap_or_default();
+                egui::Grid::new(format!(
+                    "{}:{}",
+                    panel.id,
+                    node.get("id").and_then(Value::as_str).unwrap_or_default()
+                ))
+                .striped(true)
+                .show(ui, |ui| {
+                    for column in &columns {
+                        let label = column
+                            .get("label")
+                            .and_then(Value::as_str)
+                            .unwrap_or_default();
+                        ui.label(egui::RichText::new(label).strong());
+                    }
+                    ui.end_row();
+                    for row in rows.iter().take(1000) {
                         for column in &columns {
-                            let label = column.get("label").and_then(Value::as_str).unwrap_or_default();
-                            ui.label(egui::RichText::new(label).strong());
+                            let key = column
+                                .get("key")
+                                .and_then(Value::as_str)
+                                .unwrap_or_default();
+                            let value = row
+                                .get(key)
+                                .map(|value| value.to_string())
+                                .unwrap_or_default();
+                            ui.label(value.trim_matches('"'));
                         }
                         ui.end_row();
-                        for row in rows.iter().take(1000) {
-                            for column in &columns {
-                                let key = column.get("key").and_then(Value::as_str).unwrap_or_default();
-                                let value = row.get(key).map(|value| value.to_string()).unwrap_or_default();
-                                ui.label(value.trim_matches('"'));
-                            }
-                            ui.end_row();
-                        }
-                    });
+                    }
+                });
                 if node.get("action").and_then(Value::as_str).is_some() {
                     for row in rows.iter().take(1000) {
                         let id = row.get("id").and_then(Value::as_str).unwrap_or_default();
@@ -441,19 +497,27 @@ impl ExtensionPanels {
                 }
             }
             "form" => {
-                let fields = node.get("fields").and_then(Value::as_array).cloned().unwrap_or_default();
+                let fields = node
+                    .get("fields")
+                    .and_then(Value::as_array)
+                    .cloned()
+                    .unwrap_or_default();
                 for field in &fields {
                     self.field(ui, cx, panel, field);
                 }
                 if let Some(submit) = node.get("submit") {
                     let label = submit.get("label").and_then(Value::as_str).unwrap_or("OK");
-                    if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, label).clicked() {
+                    if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, label).clicked()
+                    {
                         let values: serde_json::Map<String, Value> = fields
                             .iter()
                             .filter_map(|field| {
                                 let id = field.get("id").and_then(Value::as_str)?;
                                 let key = format!("{}:{id}", panel.id);
-                                Some((id.to_owned(), json!(self.drafts.get(&key).cloned().unwrap_or_default())))
+                                Some((
+                                    id.to_owned(),
+                                    json!(self.drafts.get(&key).cloned().unwrap_or_default()),
+                                ))
                             })
                             .collect();
                         self.action(cx, panel, node, "submit", json!({ "values": values }));
@@ -468,7 +532,12 @@ impl ExtensionPanels {
                 if let Some(title) = node.get("title").and_then(Value::as_str) {
                     ui.label(egui::RichText::new(title).strong());
                 }
-                for child in node.get("children").and_then(Value::as_array).cloned().unwrap_or_default() {
+                for child in node
+                    .get("children")
+                    .and_then(Value::as_array)
+                    .cloned()
+                    .unwrap_or_default()
+                {
                     self.node(ui, cx, panel, &child);
                 }
             }
@@ -476,7 +545,13 @@ impl ExtensionPanels {
         }
     }
 
-    fn field(&mut self, ui: &mut egui::Ui, _cx: &mut Ctx<'_>, panel: &PanelSnapshot, field: &Value) {
+    fn field(
+        &mut self,
+        ui: &mut egui::Ui,
+        _cx: &mut Ctx<'_>,
+        panel: &PanelSnapshot,
+        field: &Value,
+    ) {
         let id = field.get("id").and_then(Value::as_str).unwrap_or_default();
         let label = field.get("label").and_then(Value::as_str).unwrap_or(id);
         let kind = field.get("type").and_then(Value::as_str).unwrap_or("text");
@@ -521,7 +596,10 @@ impl ExtensionPanels {
                         })
                         .unwrap_or_default();
                     let refs: Vec<&str> = options.iter().map(String::as_str).collect();
-                    let mut index = options.iter().position(|option| option == &value).unwrap_or(0);
+                    let mut index = options
+                        .iter()
+                        .position(|option| option == &value)
+                        .unwrap_or(0);
                     if forja_ui_kit::select(ui, &mut index, &refs).changed() {
                         if let Some(option) = options.get(index) {
                             self.drafts.insert(key.clone(), option.clone());
@@ -551,7 +629,14 @@ impl ExtensionPanels {
         });
     }
 
-    fn action(&self, cx: &mut Ctx<'_>, panel: &PanelSnapshot, node: &Value, kind: &str, extra: Value) {
+    fn action(
+        &self,
+        cx: &mut Ctx<'_>,
+        panel: &PanelSnapshot,
+        node: &Value,
+        kind: &str,
+        extra: Value,
+    ) {
         let Some(action) = node.get("action").and_then(Value::as_str) else {
             return;
         };
@@ -630,7 +715,7 @@ impl View for ExtensionAnvil {
             hits.push(AnvilHit {
                 title,
                 detail: command.id.clone(),
-                icon_glyph: Some("⚙".to_owned()),
+                icon_glyph: Some(forja_ui_kit::Icon::Configure.id().to_owned()),
                 score: 25,
                 command: "extension.run".to_owned(),
                 args: json!({

@@ -37,9 +37,13 @@ pub(crate) fn render_board(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) 
         )
     });
     forja_ui_kit::page_heading(ui, &cx.t("board.page.title"), wip_note.as_deref(), |ui| {
-        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, "\u{27f3}")
-            .on_hover_text(cx.t("board.action.refresh"))
-            .clicked()
+        if forja_ui_kit::icon_button(
+            ui,
+            forja_ui_kit::Icon::Refresh,
+            &cx.t("board.action.refresh"),
+        )
+        .on_hover_text(cx.t("board.action.refresh"))
+        .clicked()
         {
             state.request_refresh();
         }
@@ -139,9 +143,7 @@ pub(crate) fn render_board(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) 
         });
     }
     if let Some(offer) = &helper_offer {
-        if ui.input(|i| i.key_pressed(egui::Key::Escape))
-            && !egui::Popup::is_any_open(ui.ctx())
-        {
+        if ui.input(|i| i.key_pressed(egui::Key::Escape)) && !egui::Popup::is_any_open(ui.ctx()) {
             state.set_helper_offer(None);
         } else {
             render_helper_offer(ui, cx, state, &tokens, offer);
@@ -300,11 +302,7 @@ fn render_card(
         ui.set_width(154.0);
         ui.horizontal(|ui| {
             if card.pinned {
-                ui.label(
-                    egui::RichText::new("\u{2605}")
-                        .small()
-                        .color(c32(tokens.color.spark)),
-                );
+                forja_ui_kit::icon(ui, forja_ui_kit::Icon::Pin, 16.0);
             }
             let title = ui.add(
                 egui::Label::new(

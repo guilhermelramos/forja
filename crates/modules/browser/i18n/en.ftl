@@ -84,3 +84,4 @@ browser-home-docs-open-failed = Could not open the document in the Viewer.
 browser-home-recent-title = Recent shortcuts
 browser-home-recent-empty = Recent pages you visit in the browser will appear here.
 browser-home-offline-note = Offline home page — no external network requests.
+browser-view-close-find = Close search
