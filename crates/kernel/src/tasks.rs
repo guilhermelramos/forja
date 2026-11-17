@@ -1,17 +1,48 @@
 //! Background tasks whose results return to the module on the UI thread.
 //!
-//! Threads are used instead of an async runtime: the V1 contract is a closure
-//! that does blocking work and a completion callback that receives `Ctx` on
-//! the UI thread. The shell calls [`crate::Runtime::poll_tasks`] every frame
-//! and the task queue wakes it through egui's repaint callback.
+//! Work runs on a fixed pool of std threads instead of one thread per task: the
+//! closure does blocking work and the completion callback receives `Ctx` on the
+//! UI thread. The shell calls [`crate::Runtime::poll_tasks`] every frame and the
+//! pool wakes it through egui's repaint callback.
+//!
+//! The pool size comes from `app.performance.worker_threads` (0 = automatic,
+//! between [`MIN_AUTO_WORKERS`] and [`MAX_AUTO_WORKERS`] threads). A task that
+//! panics is logged and the worker keeps taking jobs, so one bad task cannot
+//! stall the queue.
 
+use crate::logging::{self, LogLevel};
 use crate::runtime::Ctx;
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Condvar, Mutex};
+use std::sync::{mpsc, Arc, Condvar, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
 
 pub type Wake = Arc<dyn Fn() + Send + Sync>;
+
+/// Lowest worker count used when the setting says "automatic" (0).
+pub const MIN_AUTO_WORKERS: usize = 2;
+/// Highest worker count used when the setting says "automatic" (0).
+pub const MAX_AUTO_WORKERS: usize = 8;
+/// Highest worker count accepted from the setting.
+pub const MAX_WORKERS: usize = 32;
+
+/// Workers for `app.performance.worker_threads`: 0 means automatic.
+pub fn resolve_workers(setting: f64) -> usize {
+    if setting >= 1.0 {
+        (setting.round() as usize).min(MAX_WORKERS)
+    } else {
+        automatic_workers()
+    }
+}
+
+fn automatic_workers() -> usize {
+    std::thread::available_parallelism()
+        .map(|count| count.get())
+        .unwrap_or(MIN_AUTO_WORKERS)
+        .clamp(MIN_AUTO_WORKERS, MAX_AUTO_WORKERS)
+}
+
+type Job = Box<dyn FnOnce() + Send + 'static>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct TaskId(u64);
@@ -33,6 +64,32 @@ struct Inner {
     wake: Mutex<Wake>,
     inflight: Mutex<usize>,
     done_signal: Condvar,
+    jobs: Mutex<mpsc::Sender<Job>>,
+}
+
+/// Locks without failing on poisoning: a panicking task must not take the
+/// queue down with it.
+fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
+    mutex.lock().unwrap_or_else(|error| error.into_inner())
+}
+
+impl Inner {
+    fn acquire(&self) {
+        *lock(&self.inflight) += 1;
+    }
+
+    fn release(&self) {
+        let mut count = lock(&self.inflight);
+        *count = count.saturating_sub(1);
+        if *count == 0 {
+            self.done_signal.notify_all();
+        }
+    }
+
+    fn finish(&self, completion: Completion) {
+        lock(&self.queue).push_back(completion);
+        (lock(&self.wake))();
+    }
 }
 
 struct InflightGuard {
@@ -41,12 +98,7 @@ struct InflightGuard {
 
 impl Drop for InflightGuard {
     fn drop(&mut self) {
-        if let Ok(mut count) = self.inner.inflight.lock() {
-            *count = count.saturating_sub(1);
-            if *count == 0 {
-                self.inner.done_signal.notify_all();
-            }
-        }
+        self.inner.release();
     }
 }
 
@@ -63,7 +115,41 @@ impl Default for Tasks {
 }
 
 impl Tasks {
+    /// Pool sized from the machine (`app.performance.worker_threads` = 0).
     pub fn new() -> Self {
+        Self::with_workers(automatic_workers())
+    }
+
+    /// Pool with a fixed number of worker threads.
+    pub fn with_workers(workers: usize) -> Self {
+        let workers = workers.clamp(1, MAX_WORKERS);
+        let (sender, receiver) = mpsc::channel::<Job>();
+        let receiver = Arc::new(Mutex::new(receiver));
+        for index in 0..workers {
+            let receiver = Arc::clone(&receiver);
+            let spawned = std::thread::Builder::new()
+                .name(format!("forja-worker-{index}"))
+                .spawn(move || loop {
+                    // The receiver lock is only held while a worker waits for a
+                    // job, so the waiting workers do not block the running ones.
+                    let job = {
+                        let receiver = lock(&receiver);
+                        match receiver.recv() {
+                            Ok(job) => job,
+                            // Every sender is gone: the runtime is shutting down.
+                            Err(_) => break,
+                        }
+                    };
+                    let _ = std::panic::catch_unwind(std::panic::AssertUnwindSafe(job));
+                });
+            if let Err(error) = spawned {
+                logging::log(
+                    LogLevel::Error,
+                    format!("forja: worker thread {index} could not start: {error}"),
+                );
+                break;
+            }
+        }
         Self {
             inner: Arc::new(Inner {
                 next: AtomicU64::new(1),
@@ -71,18 +157,19 @@ impl Tasks {
                 wake: Mutex::new(Arc::new(|| {})),
                 inflight: Mutex::new(0),
                 done_signal: Condvar::new(),
+                jobs: Mutex::new(sender),
             }),
         }
     }
 
     pub fn set_wake(&self, wake: Wake) {
-        if let Ok(mut slot) = self.inner.wake.lock() {
-            *slot = wake;
-        }
+        *lock(&self.inner.wake) = wake;
     }
 
-    /// Runs `work` on a worker thread, then `done` on the UI thread with the
+    /// Queues `work` on the pool, then runs `done` on the UI thread with the
     /// result. The callback keeps the module id used for `Ctx::store`/`Ctx::t`.
+    ///
+    /// A task that panics logs the panic and never calls `done`.
     pub fn spawn<T, W, D>(&self, module_id: &str, work: W, done: D) -> TaskId
     where
         T: Send + 'static,
@@ -92,41 +179,40 @@ impl Tasks {
         let id = TaskId(self.inner.next.fetch_add(1, Ordering::SeqCst));
         let module_id = module_id.to_owned();
         let inner = Arc::clone(&self.inner);
-        if let Ok(mut count) = inner.inflight.lock() {
-            *count += 1;
-        }
-        let spawned = std::thread::Builder::new()
-            .name(format!("forja-{id}"))
-            .spawn(move || {
-                let _guard = InflightGuard {
-                    inner: Arc::clone(&inner),
-                };
-                let result = work();
-                let completion = Completion {
-                    module_id,
-                    run: Box::new(move |cx| done(cx, result)),
-                };
-                if let Ok(mut queue) = inner.queue.lock() {
-                    queue.push_back(completion);
-                }
-                if let Ok(wake) = inner.wake.lock() {
-                    wake();
-                }
-            });
-        if let Err(error) = spawned {
-            let _ = InflightGuard {
-                inner: Arc::clone(&self.inner),
+        inner.acquire();
+        let task_inner = Arc::clone(&inner);
+        let job: Job = Box::new(move || {
+            let _guard = InflightGuard {
+                inner: Arc::clone(&task_inner),
             };
-            panic!("forja task thread could not start: {error}");
+            let Some(result) = run_guarded(id, work) else {
+                return;
+            };
+            task_inner.finish(Completion {
+                module_id,
+                run: Box::new(move |cx| done(cx, result)),
+            });
+        });
+        let queued = match lock(&self.inner.jobs).send(job) {
+            Ok(()) => true,
+            Err(mpsc::SendError(job)) => {
+                drop(job);
+                false
+            }
+        };
+        if !queued {
+            inner.release();
+            logging::log(
+                LogLevel::Error,
+                format!("forja: task {id} was dropped: the task queue is closed"),
+            );
         }
         id
     }
 
     pub(crate) fn wait_inflight(&self, timeout: Duration) {
         let deadline = Instant::now() + timeout;
-        let Ok(mut count) = self.inner.inflight.lock() else {
-            return;
-        };
+        let mut count = lock(&self.inner.inflight);
         while *count > 0 {
             let remaining = deadline.saturating_duration_since(Instant::now());
             if remaining.is_zero() {
@@ -143,17 +229,130 @@ impl Tasks {
     }
 
     pub(crate) fn take_completed(&self) -> Vec<Completion> {
-        match self.inner.queue.lock() {
-            Ok(mut queue) => queue.drain(..).collect(),
-            Err(_) => Vec::new(),
-        }
+        lock(&self.inner.queue).drain(..).collect()
     }
 
     pub fn pending(&self) -> usize {
-        self.inner
-            .queue
-            .lock()
-            .map(|queue| queue.len())
-            .unwrap_or(0)
+        lock(&self.inner.queue).len()
+    }
+}
+
+/// Runs `work`, turning a panic into a log line instead of a dead worker.
+fn run_guarded<T>(id: TaskId, work: impl FnOnce() -> T) -> Option<T> {
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(work)) {
+        Ok(result) => Some(result),
+        Err(payload) => {
+            logging::log(
+                LogLevel::Error,
+                format!("forja: task {id} panicked: {}", panic_message(&*payload)),
+            );
+            None
+        }
+    }
+}
+
+fn panic_message(payload: &(dyn std::any::Any + Send)) -> &str {
+    payload
+        .downcast_ref::<&str>()
+        .copied()
+        .or_else(|| payload.downcast_ref::<String>().map(String::as_str))
+        .unwrap_or("unknown panic")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::AtomicUsize;
+
+    /// Pumps the completion queue until it holds `wanted` entries.
+    fn collect(tasks: &Tasks, wanted: usize) -> Vec<Completion> {
+        let deadline = Instant::now() + Duration::from_secs(10);
+        let mut done = Vec::new();
+        while done.len() < wanted && Instant::now() < deadline {
+            done.extend(tasks.take_completed());
+            if done.len() < wanted {
+                std::thread::sleep(Duration::from_millis(2));
+            }
+        }
+        done
+    }
+
+    #[test]
+    fn two_workers_finish_every_queued_task() {
+        let tasks = Tasks::with_workers(2);
+        let ran = Arc::new(AtomicUsize::new(0));
+        for index in 0..8 {
+            let ran = Arc::clone(&ran);
+            tasks.spawn(
+                "testing",
+                move || {
+                    ran.fetch_add(1, Ordering::SeqCst);
+                    index
+                },
+                |_cx, _value| {},
+            );
+        }
+        let done = collect(&tasks, 8);
+        assert_eq!(done.len(), 8);
+        assert_eq!(ran.load(Ordering::SeqCst), 8);
+        assert!(tasks.take_completed().is_empty());
+    }
+
+    #[test]
+    fn a_panicking_task_does_not_stop_the_queue() {
+        let tasks = Tasks::with_workers(2);
+        let ran = Arc::new(AtomicUsize::new(0));
+        tasks.spawn(
+            "testing",
+            || -> u8 { panic!("provoked failure") },
+            |_cx, _value| {},
+        );
+        for _ in 0..3 {
+            let ran = Arc::clone(&ran);
+            tasks.spawn(
+                "testing",
+                move || ran.fetch_add(1, Ordering::SeqCst),
+                |_cx, _value| {},
+            );
+        }
+        let done = collect(&tasks, 3);
+        assert_eq!(done.len(), 3, "the panicking task must not deliver a result");
+        assert_eq!(ran.load(Ordering::SeqCst), 3);
+    }
+
+    #[test]
+    fn worker_count_comes_from_the_setting() {
+        assert_eq!(resolve_workers(3.0), 3);
+        assert_eq!(resolve_workers(99.0), MAX_WORKERS);
+        let automatic = resolve_workers(0.0);
+        assert!((MIN_AUTO_WORKERS..=MAX_AUTO_WORKERS).contains(&automatic));
+        assert_eq!(resolve_workers(0.0), automatic_workers());
+    }
+
+    #[test]
+    fn a_fixed_pool_bounds_how_many_tasks_run_at_once() {
+        let tasks = Tasks::with_workers(2);
+        let active = Arc::new(AtomicUsize::new(0));
+        let peak = Arc::new(AtomicUsize::new(0));
+        for _ in 0..6 {
+            let active = Arc::clone(&active);
+            let peak = Arc::clone(&peak);
+            tasks.spawn(
+                "testing",
+                move || {
+                    let now = active.fetch_add(1, Ordering::SeqCst) + 1;
+                    peak.fetch_max(now, Ordering::SeqCst);
+                    std::thread::sleep(Duration::from_millis(20));
+                    active.fetch_sub(1, Ordering::SeqCst);
+                },
+                |_cx, _value| {},
+            );
+        }
+        assert_eq!(collect(&tasks, 6).len(), 6);
+        assert_eq!(
+            peak.load(Ordering::SeqCst),
+            2,
+            "the pool must run exactly its two workers, never more"
+        );
     }
 }

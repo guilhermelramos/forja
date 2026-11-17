@@ -4801,7 +4801,6 @@ help_key = "setting-app-performance-max_fps-help"
 
 [[setting]]
 key = "app.performance.worker_threads"
-deferred = "Aguardando configuração de bootstrap do executor de tarefas do kernel."
 module = "app"
 group = "advanced"
 type = "number"
@@ -4810,9 +4809,9 @@ min = 0
 max = 32
 label_pt = "Threads de trabalho"
 label_en = "Worker threads"
-help_pt = "Threads para tarefas de disco; 0 é automático."
-help_en = "Threads for disk tasks; 0 is automatic."
-why = "0 deixa o sistema escolher o número certo de núcleos."
+help_pt = "Threads da fila de tarefas de fundo; 0 escolhe entre 2 e 8 conforme os núcleos."
+help_en = "Threads in the background task queue; 0 picks between 2 and 8 from the core count."
+why = "0 deixa o sistema escolher entre 2 e 8 threads, conforme os núcleos."
 label_key = "setting-app-performance-worker_threads-label"
 help_key = "setting-app-performance-worker_threads-help"
 restart = true

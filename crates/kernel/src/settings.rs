@@ -304,6 +304,7 @@ pub struct Settings {
     path: PathBuf,
     values: BTreeMap<String, SettingValue>,
     original: toml::Table,
+    generation: u64,
 }
 
 impl Settings {
@@ -347,6 +348,7 @@ impl Settings {
                 path,
                 values,
                 original,
+                generation: 0,
             },
             warnings,
         )
@@ -368,6 +370,12 @@ impl Settings {
         &self.values
     }
 
+    /// Counter bumped every time a value really changes. The shell uses it to
+    /// skip work that only depends on settings, such as rebuilding the theme.
+    pub fn generation(&self) -> u64 {
+        self.generation
+    }
+
     /// Validates against `specs`, updates memory and writes the file
     /// synchronously. The shell uses [`Settings::set_memory`] plus
     /// [`SettingsWriter`] to keep disk work off the UI thread.
@@ -387,7 +395,10 @@ impl Settings {
             .find(|spec| spec.key == key)
             .ok_or_else(|| KernelError::Settings(format!("unknown setting `{key}`")))?;
         spec.validate_value(&value)?;
-        self.values.insert(key.to_owned(), value);
+        if self.values.get(key) != Some(&value) {
+            self.values.insert(key.to_owned(), value);
+            self.generation += 1;
+        }
         Ok(())
     }
 
