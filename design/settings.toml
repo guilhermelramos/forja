@@ -3574,7 +3574,6 @@ help_key = "setting-mcp-startup-timeout_s-help"
 
 [[setting]]
 key = "mcp.tools.auto_approve"
-deferred = "Cliente MCP ainda não implementado."
 module = "mcp"
 group = "integrations"
 type = "list"
@@ -3590,7 +3589,6 @@ help_key = "setting-mcp-tools-auto_approve-help"
 
 [[setting]]
 key = "mcp.log.requests"
-deferred = "Aguardando observação de requisições na ponte MCP e serviço de log."
 module = "mcp"
 group = "integrations"
 type = "toggle"
