@@ -359,11 +359,19 @@ impl ForjaApp {
             let context = creation.egui_ctx.clone();
             // Background work wakes the UI, but never sooner than the frame
             // budget: coalescing these wakes is what `max_fps` caps. The RPC
-            // pipe stays immediate, because a request is a user action.
+            // pipe stays immediate, because a request is a user action, and so
+            // does every wake while a driver or a capture waits for a frame:
+            // deferring it there means losing exactly the frame being awaited.
+            let paced = app.driver.is_none() && app.screenshot.is_none();
             let gate = app.pacer.gate();
             let task_context = context.clone();
-            let task_wake: forja_kernel::tasks::Wake =
-                Arc::new(move || gate.request_repaint(&task_context));
+            let task_wake: forja_kernel::tasks::Wake = Arc::new(move || {
+                if paced {
+                    gate.request_repaint(&task_context);
+                } else {
+                    task_context.request_repaint();
+                }
+            });
             app.runtime.set_wake(Arc::clone(&task_wake));
             let rpc_wake: forja_kernel::tasks::Wake =
                 Arc::new(move || context.request_repaint());
