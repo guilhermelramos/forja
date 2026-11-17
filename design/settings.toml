@@ -4798,20 +4798,49 @@ help_key = "setting-app-log-include_terminal_output-help"
 
 [[setting]]
 key = "app.performance.max_fps"
-deferred = "Aguardando limitador de quadros no ciclo de janela."
 module = "app"
 group = "advanced"
 type = "number"
 default = 60
-min = 30
+min = 0
 max = 240
 label_pt = "Quadros por segundo"
 label_en = "Frames per second"
-help_pt = "Limite de quadros por segundo da interface."
-help_en = "Interface frame rate limit."
+help_pt = "Limite de quadros com a janela em foco; 0 tira o limite."
+help_en = "Frame rate limit while the window is focused; 0 removes the limit."
 why = "60 fps é fluido e economiza bateria."
 label_key = "setting-app-performance-max_fps-label"
 help_key = "setting-app-performance-max_fps-help"
+
+[[setting]]
+key = "app.performance.unfocused_fps"
+module = "app"
+group = "advanced"
+type = "number"
+default = 10
+min = 0
+max = 120
+label_pt = "Quadros sem foco"
+label_en = "Frames without focus"
+help_pt = "Limite de quadros com a janela em segundo plano; 0 tira o limite."
+help_en = "Frame rate limit while the window is in the background; 0 removes the limit."
+why = "10 fps mostra recado e tarefa chegando sem gastar bateria na janela de trás."
+label_key = "setting-app-performance-unfocused_fps-label"
+help_key = "setting-app-performance-unfocused_fps-help"
+
+[[setting]]
+key = "app.diagnostics.overlay"
+module = "app"
+group = "advanced"
+type = "toggle"
+default = false
+label_pt = "Painel de diagnóstico"
+label_en = "Diagnostics panel"
+help_pt = "Mostra quadros por segundo, tempo do quadro, memória e threads sobre a janela."
+help_en = "Shows frames per second, frame time, memory and threads over the window."
+why = "Medir antes de otimizar: sem números, ajuste de desempenho é chute."
+label_key = "setting-app-diagnostics-overlay-label"
+help_key = "setting-app-diagnostics-overlay-help"
 
 [[setting]]
 key = "app.performance.worker_threads"

@@ -182,6 +182,7 @@ pub struct AppSession {
     out_dir: PathBuf,
     pick_dir: PathBuf,
     test_helpers: Option<String>,
+    demo: bool,
     restarts: u32,
 }
 
@@ -193,6 +194,7 @@ impl AppSession {
         out_dir: PathBuf,
         pick_dir: PathBuf,
         test_helpers: Option<String>,
+        demo: bool,
     ) -> Result<Self, String> {
         std::fs::create_dir_all(out_dir.join("data")).map_err(|e| e.to_string())?;
         std::fs::create_dir_all(out_dir.join("user")).map_err(|e| e.to_string())?;
@@ -207,6 +209,7 @@ impl AppSession {
             out_dir,
             pick_dir,
             test_helpers,
+            demo,
             restarts: 0,
         };
         session.spawn_and_wait()?;
@@ -228,8 +231,13 @@ impl AppSession {
             .map_err(|e| format!("failed to open {}: {e}", stderr_path.display()))?;
 
         let pick_file = self.pick_dir.join("README.md");
+        let mut args = vec!["--test-driver".to_owned(), "--locale".to_owned(), self.locale.clone()];
+        if self.demo {
+            // Fixed sample data: the regression exercises the demo mode itself.
+            args.push("--demo".to_owned());
+        }
         let child = Command::new(&self.app_exe)
-            .args(["--test-driver", "--locale", &self.locale])
+            .args(&args)
             .env("FORJA_PIPE", &self.pipe)
             .env("FORJA_DATA_DIR", self.out_dir.join("data"))
             .env("FORJA_CONTENT_DIR", self.out_dir.join("user"))

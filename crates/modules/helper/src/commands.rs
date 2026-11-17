@@ -311,6 +311,13 @@ pub(crate) fn ensure(
     state.profiles = profiles;
     state.file = file;
     state.loaded_for = bench;
+    if state.runs.is_empty() {
+        // `--demo` leaves two stored runs so the page has state to show; the
+        // real file never carries them and no process is started.
+        for run in crate::demo::load(&forja_kernel::Store::new(cx.data_dir())) {
+            state.runs.insert(run.terminal_id.clone(), run);
+        }
+    }
     Ok(())
 }
 

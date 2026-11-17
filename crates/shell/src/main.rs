@@ -12,10 +12,13 @@ mod anvil_keys;
 mod app;
 mod appearance;
 mod crash;
+mod demo;
+mod diagnostics;
 mod hosts;
 mod icon;
 mod layout;
 mod overlays;
+mod pacer;
 mod settings_catalog;
 mod settings_controls;
 mod settings_page;
@@ -58,6 +61,7 @@ struct Flags {
     bench_tab: Option<String>,
     right_tab: Option<String>,
     test_driver: bool,
+    demo: bool,
 }
 
 fn main() {
@@ -97,7 +101,7 @@ fn run() -> i32 {
 
     // Captures and test-driver runs never touch the person's real data (window
     // position, projects, settings) unless a data dir is given explicitly.
-    let isolated = flags.screenshot.is_some() || flags.test_driver;
+    let isolated = flags.screenshot.is_some() || flags.test_driver || flags.demo;
     let isolated_dir =
         std::env::temp_dir().join(format!("forja-screenshot-{}", std::process::id()));
     let data_dir = if isolated && std::env::var_os("FORJA_DATA_DIR").is_none() {
@@ -113,7 +117,16 @@ fn run() -> i32 {
     let effective_data_dir = data_dir
         .clone()
         .unwrap_or_else(forja_kernel::paths::default_data_dir);
-    crash::configure_data_dir(effective_data_dir);
+    crash::configure_data_dir(effective_data_dir.clone());
+    if flags.demo && !flags.no_modules {
+        // Sample state must exist before the modules read their files.
+        if let Err(error) = demo::seed(&effective_data_dir) {
+            forja_kernel::logging::log(
+                forja_kernel::logging::LogLevel::Error,
+                format!("forja-app: --demo could not prepare the sample data: {error}"),
+            );
+        }
+    }
 
     let locale_locked = flags.locale.is_some();
     if let Some(locale) = flags.locale.as_deref() {
@@ -384,6 +397,7 @@ fn parse_flags() -> Result<Option<Flags>, String> {
         bench_tab: None,
         right_tab: None,
         test_driver: false,
+        demo: false,
     };
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
@@ -467,6 +481,7 @@ fn parse_flags() -> Result<Option<Flags>, String> {
                         .ok_or_else(|| "--settings needs a module id, e.g. remote".to_owned())?,
                 );
             }
+            "--demo" => flags.demo = true,
             "--test-driver" => flags.test_driver = true,
             "--ui-tree" => {
                 flags.ui_tree = Some(PathBuf::from(
@@ -520,6 +535,9 @@ fn print_help() {
            --anvil-query <texto>  texto inicial da Bigorna\n\
            --bench-tab <id>     abre essa aba da bancada (ex.: editor.tab)\n\
            --right-tab <id>     abre essa aba do painel direito\n\
+           --demo               dados de demonstração fixos (2 projetos, 6 bancadas,
+                                mutirão, 30 dias de uso, 10 pedidos) numa pasta
+                                temporária; combina com --test-driver e --screenshot
            --test-driver        modo de teste: responde ui.snapshot, ui.click, ui.type,\n\
                                 ui.key, ui.scroll e ui.wait pelo RPC (agente testador)\n\
            --ui-tree <json>     com --screenshot: grava a árvore de elementos (papel,\n\
@@ -617,6 +635,7 @@ mod tests {
         let flags = Flags {
             screenshot: None,
             slot: None,
+            demo: false,
             no_modules: false,
             dump_catalog: true,
             locale: Some("pt-BR".to_owned()),

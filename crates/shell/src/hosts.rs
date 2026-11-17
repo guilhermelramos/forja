@@ -369,6 +369,31 @@ fn register_app(registrar: &mut Registrar<'_>) {
         50,
     ));
     registrar.setting(number(
+        "app.performance.max_fps",
+        60.0,
+        0.0,
+        240.0,
+        "setting-app-performance-max_fps-label",
+        "setting-app-performance-max_fps-help",
+        55,
+    ));
+    registrar.setting(number(
+        "app.performance.unfocused_fps",
+        10.0,
+        0.0,
+        120.0,
+        "setting-app-performance-unfocused_fps-label",
+        "setting-app-performance-unfocused_fps-help",
+        58,
+    ));
+    registrar.setting(flag(
+        "app.diagnostics.overlay",
+        false,
+        "setting-app-diagnostics-overlay-label",
+        "setting-app-diagnostics-overlay-help",
+        70,
+    ));
+    registrar.setting(number(
         "app.performance.worker_threads",
         0.0,
         0.0,

@@ -7,6 +7,7 @@
 
 mod commands;
 mod config;
+pub mod demo;
 mod create;
 mod git;
 mod model;

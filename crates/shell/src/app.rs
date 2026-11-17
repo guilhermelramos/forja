@@ -182,6 +182,10 @@ pub struct ForjaApp {
     pub(crate) driver: Option<crate::test_driver::Driver>,
     pub(crate) geometry_writer: crate::window_geometry::GeometryWriter,
     pub(crate) geometry_checked: Instant,
+    /// Frame counter and the `app.performance.*` budget.
+    pub(crate) pacer: crate::pacer::FramePacer,
+    /// Numbers behind the diagnostics overlay.
+    pub(crate) diagnostics: crate::diagnostics::Diagnostics,
     pub(crate) close_pending: bool,
     pub(crate) close_allowed: bool,
     pub(crate) close_confirm: Option<close_confirm::ActiveWork>,
@@ -368,6 +372,8 @@ impl ForjaApp {
             driver: None,
             geometry_writer: crate::window_geometry::GeometryWriter::default(),
             geometry_checked: Instant::now(),
+            pacer: crate::pacer::FramePacer::new(),
+            diagnostics: crate::diagnostics::Diagnostics::default(),
             close_pending: false,
             close_allowed: false,
             close_confirm: None,
@@ -384,9 +390,25 @@ impl ForjaApp {
         }
         if app.screenshot.is_none() {
             let context = creation.egui_ctx.clone();
-            let wake: forja_kernel::tasks::Wake = Arc::new(move || context.request_repaint());
-            app.runtime.set_wake(Arc::clone(&wake));
-            match RpcHost::start(wake) {
+            // Background work wakes the UI, but never sooner than the frame
+            // budget: coalescing these wakes is what `max_fps` caps. The RPC
+            // pipe stays immediate, because a request is a user action, and so
+            // does every wake while a driver or a capture waits for a frame:
+            // deferring it there means losing exactly the frame being awaited.
+            let paced = app.driver.is_none() && app.screenshot.is_none();
+            let gate = app.pacer.gate();
+            let task_context = context.clone();
+            let task_wake: forja_kernel::tasks::Wake = Arc::new(move || {
+                if paced {
+                    gate.request_repaint(&task_context);
+                } else {
+                    task_context.request_repaint();
+                }
+            });
+            app.runtime.set_wake(Arc::clone(&task_wake));
+            let rpc_wake: forja_kernel::tasks::Wake =
+                Arc::new(move || context.request_repaint());
+            match RpcHost::start(rpc_wake) {
                 Ok(host) => app.rpc = Some(host),
                 Err(error) => app.set_status_error(&error.to_string()),
             }
@@ -933,9 +955,11 @@ impl ForjaApp {
 
 impl eframe::App for ForjaApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.pacer.begin();
         self.handle_close(ctx);
         let focused = ctx.input(|input| input.viewport().focused.unwrap_or(true));
         self.runtime.set_viewport_focused(focused);
+        let budget = self.frame_budget(focused);
         self.drain_rpc(ctx);
         if self
             .driver
@@ -961,10 +985,12 @@ impl eframe::App for ForjaApp {
         self.anvil_window(ctx);
         self.modal_windows(ctx);
         self.sync_shell_store();
+        self.diagnostics_overlay(ctx);
         self.capture(ctx);
         if let Some(driver) = self.driver.as_mut() {
             driver.tick(ctx);
         }
+        self.pacer.end(budget);
     }
 
     fn raw_input_hook(&mut self, _ctx: &egui::Context, raw_input: &mut egui::RawInput) {

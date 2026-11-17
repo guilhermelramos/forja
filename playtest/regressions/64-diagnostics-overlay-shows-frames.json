@@ -1,0 +1,26 @@
+{
+  "title": "A Bigorna liga o painel de diagnóstico e ele mostra quadros por segundo (#205)",
+  "issue": 205,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.key", "keys": "Ctrl+K" },
+    { "m": "ui.type", "text": "Mostrar diag" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.wait", "ms": 900 }
+  ],
+  "expect": [
+    {
+      "step": 4,
+      "present_contains": [
+        "Diagnóstico",
+        "Quadros por segundo",
+        "Último quadro",
+        "Memória (conjunto de trabalho)",
+        "Threads"
+      ],
+      "absent_contains": ["Aguardando limitador de quadros"]
+    }
+  ]
+}
