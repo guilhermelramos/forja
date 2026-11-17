@@ -44,8 +44,25 @@ pub(super) fn parse(text: &str) -> Result<Vec<Command>, String> {
         let split = tag.find(char::is_whitespace).unwrap_or(tag.len());
         let name = &tag[..split];
         let attrs = attributes(&tag[split..])?;
-        if attrs.contains_key("transform") || attrs.contains_key("style") {
-            return Err("transforms and styles are not supported".into());
+        let allowed: &[&str] = match name {
+            "svg" => &[
+                "xmlns",
+                "viewBox",
+                "fill",
+                "stroke",
+                "stroke-width",
+                "stroke-linecap",
+                "stroke-linejoin",
+            ],
+            "path" => &["d"],
+            "line" => &["x1", "y1", "x2", "y2"],
+            "polyline" => &["points"],
+            "circle" => &["cx", "cy", "r"],
+            "rect" => &["x", "y", "width", "height", "rx", "ry"],
+            _ => return Err(format!("unsupported SVG element {name}")),
+        };
+        if let Some(key) = attrs.keys().find(|key| !allowed.contains(&key.as_str())) {
+            return Err(format!("unsupported {name} attribute {key}"));
         }
         let number = |key: &str, default: Option<f64>| -> Result<f64, String> {
             let value = match attrs.get(key) {
@@ -134,6 +151,22 @@ pub(super) fn parse(text: &str) -> Result<Vec<Command>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn rejects_shape_overrides_that_the_stroke_table_cannot_represent() {
+        let root = "<svg viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>";
+        for attribute in [
+            "fill='red'",
+            "stroke-width='5'",
+            "stroke-linecap='square'",
+            "opacity='0.2'",
+        ] {
+            let svg = format!("{root}<path d='M3 3L9 9' {attribute}/></svg>");
+            assert!(
+                parse(&svg).is_err(),
+                "ignored appearance override: {attribute}"
+            );
+        }
+    }
     #[test]
     fn shapes_share_the_stroke_contract() {
         let svg="<svg viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='6'/><rect x='3' y='4' width='12' height='15' rx='2'/><line x1='1' y1='2' x2='3' y2='4'/><polyline points='2,3 4,5'/></svg>";

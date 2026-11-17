@@ -147,8 +147,17 @@ impl forja_kernel::ui_contract::View for CenterView {
         let count = unread.to_string();
         let label = cx.t_args("notify.center.count", &[("count", &count)]);
         let color = if unread == 0 { muted(ui) } else { accent(ui) };
-        let response =
-            ui.add(egui::Label::new(egui::RichText::new(format!("🔔 {label}")).color(color)).sense(Sense::click()));
+        let response = ui
+            .horizontal(|ui| {
+                let (rect, _) = ui.allocate_exact_size(egui::vec2(16.0, 16.0), Sense::hover());
+                forja_ui_kit::paint_icon(ui.painter(), forja_ui_kit::Icon::Bell, rect, color);
+                ui.label(egui::RichText::new(&label).color(color));
+            })
+            .response
+            .interact(Sense::click());
+        response.widget_info(|| {
+            egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), &label)
+        });
         if response.clicked() {
             self.state.toggle_center();
         }
@@ -504,10 +513,20 @@ mod keyboard_tests {
 mod plural_tests {
     #[test]
     fn notification_count_uses_real_localized_fluent_plural() {
-        let source = forja_kernel::i18n::BundleSource { module: "notify".into(), en: include_str!("../i18n/en.ftl").into(), pt_br: include_str!("../i18n/pt-BR.ftl").into() };
+        let source = forja_kernel::i18n::BundleSource {
+            module: "notify".into(),
+            en: include_str!("../i18n/en.ftl").into(),
+            pt_br: include_str!("../i18n/pt-BR.ftl").into(),
+        };
         let (i18n, warnings) = forja_kernel::I18n::build(&[source], forja_kernel::Locale::PtBr);
         assert!(warnings.is_empty());
-        assert_eq!(i18n.t_args("notify.center.count", &[("count", "1")]), "1 aviso");
-        assert_eq!(i18n.t_args("notify.center.count", &[("count", "2")]), "2 avisos");
+        assert_eq!(
+            i18n.t_args("notify.center.count", &[("count", "1")]),
+            "1 aviso"
+        );
+        assert_eq!(
+            i18n.t_args("notify.center.count", &[("count", "2")]),
+            "2 avisos"
+        );
     }
 }

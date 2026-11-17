@@ -71,7 +71,7 @@ pub fn paint_icon(painter: &egui::Painter, icon: Icon, rect: Rect, color: Color3
 pub fn icon(ui: &mut Ui, icon: Icon, size: f32) -> Response {
     let (rect, response) = ui.allocate_exact_size(egui::vec2(size, size), egui::Sense::hover());
     paint_icon(
-        ui.painter(),
+        &crate::paint::painter_for(ui),
         icon,
         rect,
         crate::paint::tokens(ui).color.text.to_color32(),
@@ -88,11 +88,10 @@ pub fn icon_button(ui: &mut Ui, icon: Icon, label: &str) -> Response {
         egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label)
     });
     if response.hovered() {
-        ui.painter()
-            .rect_filled(rect, 6.0, tokens.color.surface_alt.to_color32());
+        crate::paint::painter_for(ui).rect_filled(rect, 6.0, tokens.color.surface_alt.to_color32());
     }
     paint_icon(
-        ui.painter(),
+        &crate::paint::painter_for(ui),
         icon,
         Rect::from_center_size(rect.center(), egui::vec2(16.0, 16.0)),
         tokens.color.text.to_color32(),
@@ -121,14 +120,14 @@ pub fn button_with_icon(ui: &mut Ui, icon: Icon, text: &str, kind: crate::Button
         crate::ButtonKind::Ghost => (tokens.color.surface, tokens.color.text, false),
     };
     if kind != crate::ButtonKind::Ghost || response.hovered() {
-        ui.painter().rect_filled(
+        crate::paint::painter_for(ui).rect_filled(
             rect,
             6.0,
             crate::paint::hover_fill(fill.to_color32(), &response, &tokens),
         );
     }
     if outline {
-        ui.painter().rect_stroke(
+        crate::paint::painter_for(ui).rect_stroke(
             rect,
             6.0,
             Stroke::new(1.0, tokens.color.border.to_color32()),
@@ -136,7 +135,7 @@ pub fn button_with_icon(ui: &mut Ui, icon: Icon, text: &str, kind: crate::Button
         );
     }
     paint_icon(
-        ui.painter(),
+        &crate::paint::painter_for(ui),
         icon,
         Rect::from_center_size(
             egui::pos2(rect.left() + metrics.pad_x + 8.0, rect.center().y),
@@ -149,7 +148,7 @@ pub fn button_with_icon(ui: &mut Ui, icon: Icon, text: &str, kind: crate::Button
         rect.max - egui::vec2(metrics.pad_x, 0.0),
     );
     crate::paint::paint_text(
-        ui.painter(),
+        &crate::paint::painter_for(ui),
         label_rect,
         egui::Align2::LEFT_CENTER,
         text,
@@ -215,27 +214,43 @@ mod tests {
     use super::*;
     #[test]
     fn vector_actions_expose_accessible_names() {
-        let ctx=egui::Context::default();
+        let ctx = egui::Context::default();
         ctx.enable_accesskit();
-        let output=ctx.run(Default::default(),|ctx| {egui::CentralPanel::default().show(ctx,|ui| {
-            icon_button(ui,Icon::Refresh,"Refresh data");
-            button_with_icon(ui,Icon::Copy,"Copy path",crate::ButtonKind::Secondary);
-        });});
-        let update=output.platform_output.accesskit_update.unwrap();
-        for label in ["Refresh data","Copy path"] {
-            assert!(update.nodes.iter().any(|(_,node)|node.label()==Some(label)));
+        let output = ctx.run(Default::default(), |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                icon_button(ui, Icon::Refresh, "Refresh data");
+                button_with_icon(ui, Icon::Copy, "Copy path", crate::ButtonKind::Secondary);
+            });
+        });
+        let update = output.platform_output.accesskit_update.unwrap();
+        for label in ["Refresh data", "Copy path"] {
+            assert!(update
+                .nodes
+                .iter()
+                .any(|(_, node)| node.label() == Some(label)));
         }
     }
     #[test]
     fn disabled_icon_actions_use_the_disabled_opacity() {
-        let render=|enabled| {
-            let ctx=egui::Context::default();
-            let output=ctx.run(Default::default(),|ctx|{egui::CentralPanel::default().show(ctx,|ui| {
-                ui.add_enabled_ui(enabled,|ui| {icon_button(ui,Icon::Add,"Add");});
-            });});
-            output.shapes.into_iter().find_map(|shape|match shape.shape {egui::Shape::Circle(circle)=>Some(circle.fill.a()),_=>None}).unwrap()
+        let render = |enabled| {
+            let ctx = egui::Context::default();
+            let output = ctx.run(Default::default(), |ctx| {
+                egui::CentralPanel::default().show(ctx, |ui| {
+                    ui.add_enabled_ui(enabled, |ui| {
+                        icon_button(ui, Icon::Add, "Add");
+                    });
+                });
+            });
+            output
+                .shapes
+                .into_iter()
+                .find_map(|shape| match shape.shape {
+                    egui::Shape::Circle(circle) => Some(circle.fill.a()),
+                    _ => None,
+                })
+                .unwrap()
         };
-        assert_eq!(render(false), (f32::from(render(true))*0.4).round() as u8);
+        assert_eq!(render(false), (f32::from(render(true)) * 0.4).round() as u8);
     }
     #[test]
     fn every_original_icon_draws_without_an_icon_font() {

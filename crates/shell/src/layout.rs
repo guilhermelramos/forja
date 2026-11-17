@@ -300,11 +300,9 @@ impl ForjaApp {
             .fill(self.paint(self.tokens.color.surface_alt))
             .inner_margin(Margin::symmetric(6, 8));
         let settings_tip = self.text("shell.rail.settings");
-        let bench_tip = format!(
-            "{}\n{}",
-            self.text("shell.rail.bench"),
-            self.chord_for("tab.switch_1")
-        );
+        // Ctrl+1 selects the first tool tab, not the Bancada destination.
+        // Do not advertise a shortcut that navigates somewhere else.
+        let bench_tip = self.text("shell.rail.bench");
         let pages: Vec<RailPage> = self
             .rail_views
             .iter()
