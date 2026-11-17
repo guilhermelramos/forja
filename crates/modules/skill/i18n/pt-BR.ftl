@@ -67,3 +67,7 @@ skill-error-consent = Escrever fora da Forja precisa da sua confirmação.
 skill-error-unknown-skill = Esta skill não está na lista. Atualize e tente de novo.
 skill-error-same-root = A skill já está nessa pasta.
 skill-error-fixtures = Escritas ficam desligadas enquanto os dados de captura estão ativos.
+skill-page-state-refresh = Atualizar
+skill-page-state-empty = Ainda não há itens.
+skill-page-state-loading = Carregando…
+skill-page-state-error = Não foi possível carregar.

@@ -32,7 +32,14 @@ fn snapshot(shared: &Shared) -> Snapshot {
     with(shared, |state| Snapshot {
         loaded: state.loaded,
         routines: state.store.routines.clone(),
-        runs: state.store.runs.iter().rev().take(HISTORY_SHOWN).cloned().collect(),
+        runs: state
+            .store
+            .runs
+            .iter()
+            .rev()
+            .take(HISTORY_SHOWN)
+            .cloned()
+            .collect(),
         running: state.runner.running(),
         queued: state.runner.queued(),
         notice: state.notice.clone(),
@@ -67,31 +74,43 @@ impl RoutinesView {
         }
     }
 
-    fn header(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snapshot) {
+    fn header(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        snap: &Snapshot,
+    ) -> forja_ui_kit::Page {
         let title = cx.t("routine-tab-title");
         let running = snap.running + snap.queued;
-        let subtitle = (running > 0).then(|| {
-            cx.t_args("routine-tick-running", &[("count", &running.to_string())])
-        });
-        forja_ui_kit::page_heading(ui, &title, subtitle.as_deref(), |ui| {
-            if button(ui, ButtonKind::Primary, &cx.t("routine-new")).clicked() {
-                let target = target_default(cx);
-                self.draft = Some(Draft::new(target));
-                self.draft_error = None;
-            }
-        });
-        if let Some(notice) = &snap.notice {
-            ui.colored_label(egui::Color32::from_rgb(0xFF, 0xC1, 0x4D), cx.t(notice));
+        let subtitle = (running > 0)
+            .then(|| cx.t_args("routine-tick-running", &[("count", &running.to_string())]));
+        let create = cx.t("routine-new");
+        let refresh = cx.t("routine.page-state.refresh");
+        let mut spec = forja_ui_kit::PageSpec::new("routine.page", &title)
+            .primary(&create)
+            .refresh(&refresh);
+        spec.subtitle = subtitle.as_deref();
+        let page = forja_ui_kit::page(ui, spec);
+        if page.response.primary_clicked {
+            self.draft = Some(Draft::new(target_default(cx)));
+            self.draft_error = None;
         }
-        if !snap.loaded {
-            ui.label(cx.t("routine-loading"));
+        // The scheduler's in-memory state is authoritative; refreshing must not restart runs.
+        if page.response.refresh_clicked {
+            cx.request_repaint();
         }
+        page
     }
 
     fn list(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snapshot) {
         if snap.routines.is_empty() && snap.loaded {
             // A ação principal, "Nova rotina", fica logo acima, na barra.
-            forja_ui_kit::empty_state(ui, forja_ui_kit::ROUTINES, &cx.t("routine-empty"), None);
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Empty,
+                &cx.t("routine.page-state.empty"),
+                Some(&cx.t("routine-empty")),
+            );
             return;
         }
         let utc = state::schedule_in_utc(cx);
@@ -99,7 +118,10 @@ impl RoutinesView {
         for routine in &snap.routines {
             let selected = self.selected.as_deref() == Some(routine.id.as_str());
             ui.horizontal(|ui| {
-                if ui.selectable_label(selected, routine.name.as_str()).clicked() {
+                if ui
+                    .selectable_label(selected, routine.name.as_str())
+                    .clicked()
+                {
                     self.selected = Some(routine.id.clone());
                 }
                 let next = commands::next_fire(&routine.schedule, utc, now)
@@ -111,16 +133,17 @@ impl RoutinesView {
                     .find(|run| run.routine_id == routine.id)
                     .map(|run| cx.t(state::status_key(&run.status)))
                     .unwrap_or_else(|| cx.t("routine-never-ran"));
-                let mut line = format!("{}  ·  {}  ·  {}", routine.schedule.expression(), next, last);
+                let mut line = format!(
+                    "{}  ·  {}  ·  {}",
+                    routine.schedule.expression(),
+                    next,
+                    last
+                );
                 if !routine.enabled {
                     line.push_str("  ·  ");
                     line.push_str(&cx.t("routine-disabled"));
                 }
-                ui.label(
-                    egui::RichText::new(line)
-                        .small()
-                        .weak(),
-                );
+                ui.label(egui::RichText::new(line).small().weak());
             });
             ui.horizontal(|ui| {
                 if button(ui, ButtonKind::Ghost, &cx.t("routine-edit")).clicked() {
@@ -150,7 +173,11 @@ impl RoutinesView {
         let kinds = [cx.t("routine-kind-preset"), cx.t("routine-kind-cron")];
         let mut kind = usize::from(draft.schedule_kind == ScheduleKind::Cron);
         if segmented(ui, &mut kind, &[kinds[0].as_str(), kinds[1].as_str()]).changed() {
-            draft.schedule_kind = if kind == 1 { ScheduleKind::Cron } else { ScheduleKind::Preset };
+            draft.schedule_kind = if kind == 1 {
+                ScheduleKind::Cron
+            } else {
+                ScheduleKind::Preset
+            };
         }
         match draft.schedule_kind {
             ScheduleKind::Cron => {
@@ -171,7 +198,12 @@ impl RoutinesView {
                     PresetKind::Weekly => 3,
                 };
                 if segmented(ui, &mut preset, &refs).changed() {
-                    draft.preset = [PresetKind::Hourly, PresetKind::Daily, PresetKind::Weekdays, PresetKind::Weekly][preset];
+                    draft.preset = [
+                        PresetKind::Hourly,
+                        PresetKind::Daily,
+                        PresetKind::Weekdays,
+                        PresetKind::Weekly,
+                    ][preset];
                 }
                 if draft.preset != PresetKind::Hourly {
                     routine_field(ui, &mut draft.time, &cx.t("routine-field-time"));
@@ -184,13 +216,27 @@ impl RoutinesView {
             }
         }
 
-        let targets = [cx.t("routine-target-ask"), cx.t("routine-target-fixed"), cx.t("routine-target-new")];
+        let targets = [
+            cx.t("routine-target-ask"),
+            cx.t("routine-target-fixed"),
+            cx.t("routine-target-new"),
+        ];
         let mut target = match draft.target {
             TargetKind::Ask => 0,
             TargetKind::Fixed => 1,
             TargetKind::New => 2,
         };
-        if segmented(ui, &mut target, &[targets[0].as_str(), targets[1].as_str(), targets[2].as_str()]).changed() {
+        if segmented(
+            ui,
+            &mut target,
+            &[
+                targets[0].as_str(),
+                targets[1].as_str(),
+                targets[2].as_str(),
+            ],
+        )
+        .changed()
+        {
             draft.target = [TargetKind::Ask, TargetKind::Fixed, TargetKind::New][target];
         }
         match draft.target {
@@ -200,15 +246,30 @@ impl RoutinesView {
             }
             TargetKind::New => {
                 routine_field(ui, &mut draft.project_id, &cx.t("routine-field-project_id"));
-                routine_field(ui, &mut draft.project_path, &cx.t("routine-field-project_path"));
-                routine_field(ui, &mut draft.name_template, &cx.t("routine-field-name_template"));
+                routine_field(
+                    ui,
+                    &mut draft.project_path,
+                    &cx.t("routine-field-project_path"),
+                );
+                routine_field(
+                    ui,
+                    &mut draft.name_template,
+                    &cx.t("routine-field-name_template"),
+                );
             }
         }
 
-        let actions = [cx.t("routine-action-command"), cx.t("routine-action-prompt")];
+        let actions = [
+            cx.t("routine-action-command"),
+            cx.t("routine-action-prompt"),
+        ];
         let mut action = usize::from(draft.action == ActionKind::Prompt);
         if segmented(ui, &mut action, &[actions[0].as_str(), actions[1].as_str()]).changed() {
-            draft.action = if action == 1 { ActionKind::Prompt } else { ActionKind::Command };
+            draft.action = if action == 1 {
+                ActionKind::Prompt
+            } else {
+                ActionKind::Command
+            };
         }
         match draft.action {
             ActionKind::Command => {
@@ -262,7 +323,9 @@ impl RoutinesView {
                                 Ok(result) => {
                                     self.draft_error = result["error"].as_str().map(str::to_owned);
                                 }
-                                Err(_) => self.draft_error = Some("routine-error-invalid".to_owned()),
+                                Err(_) => {
+                                    self.draft_error = Some("routine-error-invalid".to_owned())
+                                }
                             }
                         }
                     },
@@ -283,20 +346,35 @@ impl RoutinesView {
             Err(_) => cx.t("routine-error-time"),
             Ok(schedule) => {
                 let runs = if utc {
-                    schedule.next_runs(&Utc::now(), PREVIEW_COUNT)
-                        .map(|runs| runs.into_iter().map(|at| format_time(at.timestamp(), true)).collect::<Vec<_>>())
+                    schedule.next_runs(&Utc::now(), PREVIEW_COUNT).map(|runs| {
+                        runs.into_iter()
+                            .map(|at| format_time(at.timestamp(), true))
+                            .collect::<Vec<_>>()
+                    })
                 } else {
-                    schedule.next_runs(&Local::now(), PREVIEW_COUNT)
-                        .map(|runs| runs.into_iter().map(|at| format_time(at.timestamp(), false)).collect::<Vec<_>>())
+                    schedule
+                        .next_runs(&Local::now(), PREVIEW_COUNT)
+                        .map(|runs| {
+                            runs.into_iter()
+                                .map(|at| format_time(at.timestamp(), false))
+                                .collect::<Vec<_>>()
+                        })
                 };
                 match runs {
-                    Err(message) => cx.t_args("routine-error-schedule-detail", &[("message", message.as_str())]),
+                    Err(message) => cx.t_args(
+                        "routine-error-schedule-detail",
+                        &[("message", message.as_str())],
+                    ),
                     Ok(list) if list.is_empty() => cx.t("routine-no-next"),
                     Ok(list) => list.join("  ·  "),
                 }
             }
         };
-        ui.label(egui::RichText::new(format!("{}: {text}", cx.t("routine-next-runs"))).small().weak());
+        ui.label(
+            egui::RichText::new(format!("{}: {text}", cx.t("routine-next-runs")))
+                .small()
+                .weak(),
+        );
     }
 
     fn history(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snapshot) {
@@ -306,34 +384,54 @@ impl RoutinesView {
         let runs: Vec<&Run> = snap
             .runs
             .iter()
-            .filter(|run| self.selected.as_deref().is_none_or(|id| run.routine_id == id))
+            .filter(|run| {
+                self.selected
+                    .as_deref()
+                    .is_none_or(|id| run.routine_id == id)
+            })
             .collect();
         if runs.is_empty() {
-            forja_ui_kit::empty_state(ui, forja_ui_kit::ROUTINES, &cx.t("routine-history-empty"), None);
+            forja_ui_kit::empty_state(
+                ui,
+                forja_ui_kit::ROUTINES,
+                &cx.t("routine-history-empty"),
+                None,
+            );
             return;
         }
-        egui::ScrollArea::vertical().id_salt("routine.history").max_height(260.0).show(ui, |ui| {
-            for run in runs {
-                let when = format_time(run.started, utc);
-                let trigger = cx.t(trigger_key(run.trigger));
-                let status = cx.t(state::status_key(&run.status));
-                let reason = reason_text(cx, &run.status).map(|text| format!(" · {text}")).unwrap_or_default();
-                ui.label(format!("{when}  {}  ·  {trigger}  ·  {status}{reason}", run.routine_name));
-                if !run.summary.is_empty() {
-                    // Saída de terminal é dado: aparece como texto, sem interpretação.
-                    ui.label(egui::RichText::new(run.summary.as_str()).small().monospace().weak());
+        egui::ScrollArea::vertical()
+            .id_salt("routine.history")
+            .max_height(260.0)
+            .show(ui, |ui| {
+                for run in runs {
+                    let when = format_time(run.started, utc);
+                    let trigger = cx.t(trigger_key(run.trigger));
+                    let status = cx.t(state::status_key(&run.status));
+                    let reason = reason_text(cx, &run.status)
+                        .map(|text| format!(" · {text}"))
+                        .unwrap_or_default();
+                    ui.label(format!(
+                        "{when}  {}  ·  {trigger}  ·  {status}{reason}",
+                        run.routine_name
+                    ));
+                    if !run.summary.is_empty() {
+                        // Saída de terminal é dado: aparece como texto, sem interpretação.
+                        ui.label(
+                            egui::RichText::new(run.summary.as_str())
+                                .small()
+                                .monospace()
+                                .weak(),
+                        );
+                    }
+                    ui.add_space(4.0);
                 }
-                ui.add_space(4.0);
-            }
-        });
+            });
     }
 }
 
 fn routine_field(ui: &mut egui::Ui, value: &mut String, label: &str) {
     let response = text_field(ui, value, label);
-    response.widget_info(|| {
-        egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, true, label)
-    });
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, true, label));
 }
 
 impl View for RoutinesView {
@@ -350,10 +448,30 @@ impl View for RoutinesView {
                 self.draft = Some(Draft::from_routine(first));
             }
         }
-        self.header(ui, cx, &snap);
-        egui::ScrollArea::vertical().id_salt("routine.page").show(ui, |ui| {
-            self.list(ui, cx, &snap);
-            self.history(ui, cx, &snap);
+        let mut page = self.header(ui, cx, &snap);
+        page.body(|ui| {
+            egui::ScrollArea::vertical()
+                .id_salt("routine.page")
+                .show(ui, |ui| {
+                    if let Some(notice) = &snap.notice {
+                        forja_ui_kit::page_state(
+                            ui,
+                            forja_ui_kit::PageState::Error,
+                            &cx.t("routine.page-state.error"),
+                            Some(&cx.t(notice)),
+                        );
+                    }
+                    if !snap.loaded {
+                        forja_ui_kit::page_state(
+                            ui,
+                            forja_ui_kit::PageState::Loading,
+                            &cx.t("routine.page-state.loading"),
+                            None,
+                        );
+                    }
+                    self.list(ui, cx, &snap);
+                    self.history(ui, cx, &snap);
+                });
         });
         if self.draft.is_some() {
             let context = ui.ctx().clone();
@@ -403,7 +521,10 @@ impl View for TickView {
         if let Some(delay) = actions::next_wake(cx, &self.shared) {
             forja_ui_kit::request_repaint_after_active(ui.ctx(), delay);
         }
-        let busy = with(&self.shared, |state| state.runner.running() + state.runner.queued()).unwrap_or(0);
+        let busy = with(&self.shared, |state| {
+            state.runner.running() + state.runner.queued()
+        })
+        .unwrap_or(0);
         if busy > 0 {
             ui.label(cx.t_args("routine-tick-running", &[("count", &busy.to_string())]));
         }
@@ -411,7 +532,10 @@ impl View for TickView {
 }
 
 fn target_default(cx: &Ctx<'_>) -> TargetKind {
-    match cx.setting("routine.run.target").and_then(SettingValue::as_str) {
+    match cx
+        .setting("routine.run.target")
+        .and_then(SettingValue::as_str)
+    {
         Some("fixed") => TargetKind::Fixed,
         Some("new") => TargetKind::New,
         _ => TargetKind::Ask,
@@ -441,16 +565,22 @@ fn reason_text(cx: &Ctx<'_>, status: &RunStatus) -> Option<String> {
     match status {
         RunStatus::Failed { reason } => Some(match reason {
             Failure::Timeout => cx.t("routine-reason-timeout"),
-            Failure::CommandExit { code } => cx.t_args("routine-reason-exit", &[("code", &code.to_string())]),
+            Failure::CommandExit { code } => {
+                cx.t_args("routine-reason-exit", &[("code", &code.to_string())])
+            }
             Failure::TerminalUnavailable => cx.t("routine-reason-terminal_unavailable"),
             Failure::HelperUnavailable => cx.t("routine-reason-helper_unavailable"),
             Failure::BenchUnavailable => cx.t("routine-reason-bench_unavailable"),
             Failure::TerminalClosed => cx.t("routine-reason-terminal_closed"),
             Failure::Interrupted => cx.t("routine-reason-interrupted"),
-            Failure::Detail { message } => cx.t_args("routine-reason-detail", &[("message", message.as_str())]),
+            Failure::Detail { message } => {
+                cx.t_args("routine-reason-detail", &[("message", message.as_str())])
+            }
         }),
         RunStatus::Skipped { reason } => Some(match reason {
-            Skip::PrecheckFailed { code } => cx.t_args("routine-reason-precheck", &[("code", &code.to_string())]),
+            Skip::PrecheckFailed { code } => {
+                cx.t_args("routine-reason-precheck", &[("code", &code.to_string())])
+            }
             Skip::NeedsTarget => cx.t("routine-reason-needs_target"),
             Skip::MissedSkipped => cx.t("routine-reason-missed_skipped"),
         }),

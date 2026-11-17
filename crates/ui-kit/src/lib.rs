@@ -21,6 +21,13 @@
 //! [`Icon`] e [`icon`] usam traços autorais embutidos, sem fonte de ícones.
 //! [`icon_button`] exige nome acessível/dica e [`button_with_icon`] combina texto e ícone.
 //!
+//! # Páginas
+//!
+//! [`page`] cria as cinco zonas de [`PageSpec`]: cabeçalho, filtros, corpo,
+//! estados via [`page_state`] e rodapé opcional. [`PageWidth`] distingue leitura
+//! e formulários (até 960 px) de quadros/tabelas. [`page_marker`] permite testar
+//! as views reais sem acoplar o kernel ao design system.
+//!
 //! # Terminal
 //!
 //! [`TerminalTheme`] lê os arquivos de `content/themes/`.
@@ -44,11 +51,12 @@ pub use color::{contrast_ratio, luminance, Color};
 pub use components::{
     action_tile, button, card, context_menu, empty_state, error_banner, error_notice,
     helper_missing_guide, icon_menu, list, measure_tab_width, menu_panel, modal,
-    modal_explicit_close, modal_preview, page_heading, panel_icon_tabs, plan_tab_fit, popup_menu,
-    progress_bar, segmented, select, stage_badge, tab_strip, tabs, text_field, theme_sample, toast,
-    toggle, tree, truncated_label, virtual_table, window_header, window_header_with_focus,
-    wrapped_label, ButtonKind, Column, HelperMissingGuide, ListItem, MenuItem, PanelIconTab, Stage,
-    TabFitPlan, TabItem, TabStripOutcome, ToastKind, TreeNode,
+    modal_explicit_close, modal_preview, page, page_heading, page_marker, page_state,
+    panel_icon_tabs, plan_tab_fit, popup_menu, progress_bar, segmented, select, stage_badge,
+    tab_strip, tabs, text_field, theme_sample, toast, toggle, tree, truncated_label, virtual_table,
+    window_header, window_header_with_focus, wrapped_label, ButtonKind, Column, HelperMissingGuide,
+    ListItem, MenuItem, Page, PageIconAction, PageMarker, PageResponse, PageSpec, PageState,
+    PageWidth, PanelIconTab, Stage, TabFitPlan, TabItem, TabStripOutcome, ToastKind, TreeNode,
 };
 pub use components::{
     highlighted_text, setting_row, settings_navigation, settings_viewport, SettingRow,

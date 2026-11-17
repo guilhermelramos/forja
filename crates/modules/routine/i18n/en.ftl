@@ -116,3 +116,7 @@ setting-routine-notifications-failure-label = Notify failure
 setting-routine-notifications-failure-help = Notifies when a routine fails.
 setting-routine-notifications-success-label = Notify success
 setting-routine-notifications-success-help = Notifies when a routine finishes successfully.
+routine-page-state-refresh = Refresh
+routine-page-state-empty = No items yet.
+routine-page-state-loading = Loading…
+routine-page-state-error = Could not load.

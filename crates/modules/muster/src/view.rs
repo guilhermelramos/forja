@@ -268,28 +268,46 @@ impl MusterView {
         self.spend.sync(cx, &benches, force);
     }
 
-    fn header(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snapshot) {
-        ui.horizontal(|ui| {
-            ui.heading(cx.t("muster.page.title"));
-            ui.label(
-                egui::RichText::new(cx.t("muster.page.subtitle"))
-                    .small()
-                    .weak(),
-            );
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if button(ui, ButtonKind::Primary, &cx.t("muster.new-run")).clicked() {
-                    self.new_run = !self.new_run;
-                }
-            });
-        });
+    fn header(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) -> forja_ui_kit::Page {
+        let title = cx.t("muster.page.title");
+        let subtitle = cx.t("muster.page.subtitle");
+        let create = cx.t("muster.new-run");
+        let refresh = cx.t("muster.page-state.refresh");
+        let page = forja_ui_kit::page(
+            ui,
+            forja_ui_kit::PageSpec::new("muster.page", &title)
+                .wide()
+                .subtitle(&subtitle)
+                .primary(&create)
+                .refresh(&refresh),
+        );
+        if page.response.primary_clicked {
+            self.new_run = !self.new_run;
+        }
+        if page.response.refresh_clicked {
+            self.last_helper_sync = None;
+            self.spend_run = None;
+            self.sync_helpers(cx);
+        }
+        page
+    }
+
+    fn notices(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snapshot) {
         if let Some(notice) = &snap.notice {
-            ui.label(egui::RichText::new(cx.t(notice)).weak());
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Error,
+                &cx.t("muster.page-state.error"),
+                Some(&cx.t(notice)),
+            );
         }
         if let Some(notice) = self.notice.clone() {
             ui.horizontal_wrapped(|ui| {
-                ui.label(
-                    egui::RichText::new(notice)
-                        .color(applied_tokens(ui.ctx()).color.danger.to_color32()),
+                forja_ui_kit::page_state(
+                    ui,
+                    forja_ui_kit::PageState::Error,
+                    &cx.t("muster.page-state.error"),
+                    Some(&notice),
                 );
                 if icon_button(ui, CLOSE, &cx.t("muster.notice.dismiss"))
                     .on_hover_text(cx.t("muster.notice.dismiss"))
@@ -300,7 +318,12 @@ impl MusterView {
             });
         }
         if !snap.loaded {
-            ui.label(egui::RichText::new(cx.t("muster.page-loading")).weak());
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Loading,
+                &cx.t("muster.page-state.loading"),
+                None,
+            );
         }
     }
 
@@ -350,10 +373,12 @@ impl MusterView {
 
     fn run_list(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snapshot) {
         if snap.runs.is_empty() {
-            ui.add_space(40.0);
-            ui.vertical_centered(|ui| {
-                ui.label(egui::RichText::new(cx.t("muster.empty")).weak());
-            });
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Empty,
+                &cx.t("muster.page-state.empty"),
+                Some(&cx.t("muster.empty")),
+            );
             return;
         }
         ui.add_space(6.0);
@@ -1429,31 +1454,39 @@ impl View for MusterView {
         }
         let snap = snapshot(&self.shared);
         let column_height = (ui.available_height() - 200.0).clamp(240.0, 560.0);
-        egui::ScrollArea::vertical()
-            .id_salt("muster.page.scroll")
-            .auto_shrink([false, false])
-            .show(ui, |ui| {
-                ui.set_max_width(ui.available_width().max(1.0));
-                self.header(ui, cx, &snap);
-                self.new_run_form(ui, cx);
-                self.run_list(ui, cx, &snap);
-                let selected = snap
-                    .runs
-                    .iter()
-                    .find(|run| self.selected.as_deref() == Some(run.id.as_str()));
-                if let Some(run) = selected {
-                    self.run_heading(ui, cx, run);
-                    self.sync_helpers(cx);
-                    self.sync_spend(cx, &snap, run);
-                    ui.add_space(4.0);
-                    ui.columns(3, |columns| {
-                        self.plan_column(&mut columns[0], cx, &snap, run, column_height);
-                        self.assignment_column(&mut columns[1], cx, &snap, run, column_height);
-                        self.inbox_column(&mut columns[2], cx, &snap, run, column_height);
-                    });
-                    self.plan_review(ui, cx, &snap, run);
-                }
-            });
+        let mut page = self.header(ui, cx);
+        if !snap.runs.is_empty() {
+            page.filters(|ui| self.run_list(ui, cx, &snap));
+        }
+        page.body(|ui| {
+            egui::ScrollArea::vertical()
+                .id_salt("muster.page.scroll")
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    ui.set_max_width(ui.available_width().max(1.0));
+                    self.notices(ui, cx, &snap);
+                    self.new_run_form(ui, cx);
+                    if snap.runs.is_empty() {
+                        self.run_list(ui, cx, &snap);
+                    }
+                    let selected = snap
+                        .runs
+                        .iter()
+                        .find(|run| self.selected.as_deref() == Some(run.id.as_str()));
+                    if let Some(run) = selected {
+                        self.run_heading(ui, cx, run);
+                        self.sync_helpers(cx);
+                        self.sync_spend(cx, &snap, run);
+                        ui.add_space(4.0);
+                        ui.columns(3, |columns| {
+                            self.plan_column(&mut columns[0], cx, &snap, run, column_height);
+                            self.assignment_column(&mut columns[1], cx, &snap, run, column_height);
+                            self.inbox_column(&mut columns[2], cx, &snap, run, column_height);
+                        });
+                        self.plan_review(ui, cx, &snap, run);
+                    }
+                });
+        });
     }
 }
 

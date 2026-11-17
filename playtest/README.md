@@ -75,6 +75,8 @@ O workflow `.github/workflows/explore.yml` roda 6 exploradores em paralelo de ho
 ## Regressões gravadas (`playtest/regressions/`)
 Cada arquivo JSON em `playtest/regressions/` descreve um fluxo reproduzível no formato do `drive.ps1` e suas expectativas (`appeared`, `present`, `present_contains`, `absent`, `absent_contains`, `focused`, `window_count`, `window_count_min`, `window_count_max`, com `step` opcional). `focused` exige foco de teclado num elemento com esse nome. O campo opcional `seed` aponta uma pasta, relativa ao JSON, copiada para a pasta de dados antes de o app abrir; use para layouts gravados que uma sequência de cliques não alcança de forma determinística:
 
+`present_elements: [{ "name": "Rotinas", "role": "Heading" }]` exige o nome e o papel acessíveis exatos no mesmo elemento; use para contratos semânticos de títulos e estados, não apenas presença de texto. `no_unnamed_buttons: true` recusa botões sem nome.
+
 O campo opcional `test_helpers` configura `FORJA_TEST_HELPERS` só no processo do app durante o replay. Use `"test_helpers": "none"` quando o cenário exigir nenhum ajudante instalado; a detecção e o fallback do chat ignoram executáveis reais da máquina, então o fluxo é determinístico mesmo em um computador com ajudantes instalados. Regressões sem esse campo também usam `none`: o replay nunca detecta nem inicia um ajudante real por omissão.
 
 ```powershell

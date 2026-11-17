@@ -39,10 +39,14 @@ impl ForjaApp {
         let width = ui.available_width().min(960.0);
         ui.set_width(width);
         ui.horizontal(|ui| {
+            ui.set_min_height(56.0);
             ui.add(
                 egui::Label::new(
                     egui::RichText::new(self.text("shell.settings.title"))
-                        .size(self.tokens.metrics().title)
+                        .font(egui::FontId::new(
+                            20.0,
+                            egui::FontFamily::Name("forja-semibold".into()),
+                        ))
                         .strong(),
                 )
                 .selectable(false),

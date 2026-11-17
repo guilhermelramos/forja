@@ -36,179 +36,181 @@ pub(crate) fn render_board(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) 
             ],
         )
     });
-    forja_ui_kit::page_heading(ui, &cx.t("board.page.title"), wip_note.as_deref(), |ui| {
-        if forja_ui_kit::icon_button(
-            ui,
-            forja_ui_kit::Icon::Refresh,
-            &cx.t("board.action.refresh"),
-        )
-        .on_hover_text(cx.t("board.action.refresh"))
-        .clicked()
-        {
-            state.request_refresh();
-        }
-        if forja_ui_kit::button(
-            ui,
-            forja_ui_kit::ButtonKind::Primary,
-            &cx.t("board.action.create"),
-        )
-        .clicked()
-        {
-            create_dialog(cx, state.active_project().as_deref());
-        }
-        let mut archived = prefs.show_archived;
-        if forja_ui_kit::toggle(ui, &mut archived, &cx.t("board.show-archived")).changed() {
-            prefs.show_archived = archived;
-            save_prefs(cx, state, |prefs| prefs.show_archived = archived);
-        }
-    });
-    ui.horizontal(|ui| {
-        let width = ui.available_width().min(240.0);
-        let mut filter = prefs.filter.clone();
-        ui.scope(|ui| {
-            ui.set_max_width(width);
-            forja_ui_kit::text_field(ui, &mut filter, &cx.t("board.filter.hint"));
-        });
-        if filter != prefs.filter {
-            let new_filter = filter.clone();
-            prefs.filter = new_filter.clone();
-            save_prefs(cx, state, move |prefs| prefs.filter = new_filter);
-        }
-        ui.label(
-            egui::RichText::new(cx.t_args(
-                "board.count",
-                &[(
-                    "count",
-                    &visible_cards(&cards, &prefs, &names).len().to_string(),
-                )],
-            ))
-            .small()
-            .color(c32(tokens.color.text_muted)),
-        );
-    });
-    ui.separator();
-    if let Some(error) = &error {
-        ui.label(
-            egui::RichText::new(error)
-                .small()
-                .color(c32(tokens.color.danger)),
-        );
+    let title = cx.t("board.page.title");
+    let refresh = cx.t("board.page-state.refresh");
+    let create = cx.t("board.action.create");
+    let mut spec = forja_ui_kit::PageSpec::new("board.page", &title)
+        .wide()
+        .primary(&create)
+        .refresh(&refresh)
+        .footer();
+    spec.subtitle = wip_note.as_deref();
+    let mut page = forja_ui_kit::page(ui, spec);
+    if page.response.refresh_clicked {
+        state.request_refresh();
     }
-    if let Some(pending) = &pending {
-        let frame = egui::Frame::new()
-            .fill(c32(tokens.color.surface_alt))
-            .stroke(egui::Stroke::new(1.0_f32, c32(tokens.color.spark)))
-            .corner_radius(6)
-            .inner_margin(egui::Margin::symmetric(8, 6));
-        frame.show(ui, |ui| {
-            ui.horizontal(|ui| {
-                ui.label(
-                    egui::RichText::new(cx.t_args(
-                        "board.drag.backward",
-                        &[("name", &pending.bench_name), ("stage", &pending.to_label)],
-                    ))
-                    .color(c32(tokens.color.text)),
-                );
-                if forja_ui_kit::button(
-                    ui,
-                    forja_ui_kit::ButtonKind::Primary,
-                    &cx.t("board.drag.confirm"),
-                )
-                .clicked()
-                {
-                    if let Err(error) = apply_stage_move(
-                        cx,
-                        state,
-                        &pending.bench_id,
-                        &pending.bench_name,
-                        &pending.bench_path,
-                        &pending.to,
-                        &stages,
-                        true,
-                    ) {
-                        state.set_error(Some(error));
-                    }
-                    state.set_pending(None);
-                }
-                if forja_ui_kit::button(
-                    ui,
-                    forja_ui_kit::ButtonKind::Ghost,
-                    &cx.t("board.drag.cancel"),
-                )
-                .clicked()
-                {
-                    state.set_pending(None);
-                }
+    if page.response.primary_clicked {
+        create_dialog(cx, state.active_project().as_deref());
+    }
+    page.filters(|ui| {
+        ui.horizontal_wrapped(|ui| {
+            let width = ui.available_width().min(240.0);
+            let mut filter = prefs.filter.clone();
+            ui.scope(|ui| {
+                ui.set_max_width(width);
+                forja_ui_kit::text_field(ui, &mut filter, &cx.t("board.filter.hint"));
             });
-        });
-    }
-    if let Some(offer) = &helper_offer {
-        if ui.input(|i| i.key_pressed(egui::Key::Escape)) && !egui::Popup::is_any_open(ui.ctx()) {
-            state.set_helper_offer(None);
-        } else {
-            render_helper_offer(ui, cx, state, &tokens, offer);
-        }
-    }
-
-    let visible = visible_cards(&cards, &prefs, &names);
-    if !stages.is_empty() && cards.is_empty() {
-        forja_ui_kit::empty_state(ui, forja_ui_kit::BOARD, &cx.t("board.empty"), None);
-        ui.add_space(8.0);
-    }
-    let mut column_rects: Vec<(String, egui::Rect)> = Vec::new();
-    let options = CardOptions::from_ctx(cx);
-    egui::ScrollArea::horizontal()
-        .auto_shrink([false, false])
-        .show(ui, |ui| {
-            ui.horizontal_top(|ui| {
-                for stage in &stages {
-                    let cards: Vec<&BenchCard> = visible
-                        .iter()
-                        .copied()
-                        .filter(|card| card.stage == stage.id)
-                        .collect();
-                    let height = ui.available_height().max(160.0);
-                    let inner = ui.allocate_ui_with_layout(
-                        egui::vec2(176.0, height),
-                        egui::Layout::top_down(egui::Align::Min),
-                        |ui| {
-                            ui.set_width(176.0);
-                            render_column(
-                                ui,
-                                cx,
-                                state,
-                                stage,
-                                &cards,
-                                &tokens,
-                                &options,
-                                dragging.as_deref(),
-                                &stages,
-                            );
-                        },
-                    );
-                    column_rects.push((stage.id.clone(), inner.response.rect));
-                }
-            });
-        });
-
-    if let Some(bench_id) = dragging {
-        let released = ui.ctx().input(|input| input.pointer.any_released());
-        if released {
-            let pointer = ui.ctx().input(|input| input.pointer.interact_pos());
-            let target = pointer.and_then(|pointer| {
-                column_rects
-                    .iter()
-                    .find(|(_, rect)| rect.contains(pointer))
-                    .map(|(stage, _)| stage.clone())
-            });
-            if let Some(target) = target {
-                if let Some(card) = cards.iter().find(|card| card.bench.bench_id == bench_id) {
-                    move_card(cx, state, card, &target, &stages);
-                }
+            if filter != prefs.filter {
+                let new_filter = filter.clone();
+                prefs.filter = new_filter.clone();
+                save_prefs(cx, state, move |prefs| prefs.filter = new_filter);
             }
-            state.set_dragging(None);
+            let mut archived = prefs.show_archived;
+            if forja_ui_kit::toggle(ui, &mut archived, &cx.t("board.show-archived")).changed() {
+                prefs.show_archived = archived;
+                save_prefs(cx, state, |prefs| prefs.show_archived = archived);
+            }
+        });
+    });
+    page.body(|ui| {
+        if let Some(error) = &error {
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Error,
+                &cx.t("board.page-state.error"),
+                Some(error),
+            );
         }
-    }
+        if let Some(pending) = &pending {
+            let frame = egui::Frame::new()
+                .fill(c32(tokens.color.surface_alt))
+                .stroke(egui::Stroke::new(1.0_f32, c32(tokens.color.spark)))
+                .corner_radius(6)
+                .inner_margin(egui::Margin::symmetric(8, 6));
+            frame.show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.label(
+                        egui::RichText::new(cx.t_args(
+                            "board.drag.backward",
+                            &[("name", &pending.bench_name), ("stage", &pending.to_label)],
+                        ))
+                        .color(c32(tokens.color.text)),
+                    );
+                    if forja_ui_kit::button(
+                        ui,
+                        forja_ui_kit::ButtonKind::Primary,
+                        &cx.t("board.drag.confirm"),
+                    )
+                    .clicked()
+                    {
+                        if let Err(error) = apply_stage_move(
+                            cx,
+                            state,
+                            &pending.bench_id,
+                            &pending.bench_name,
+                            &pending.bench_path,
+                            &pending.to,
+                            &stages,
+                            true,
+                        ) {
+                            state.set_error(Some(error));
+                        }
+                        state.set_pending(None);
+                    }
+                    if forja_ui_kit::button(
+                        ui,
+                        forja_ui_kit::ButtonKind::Ghost,
+                        &cx.t("board.drag.cancel"),
+                    )
+                    .clicked()
+                    {
+                        state.set_pending(None);
+                    }
+                });
+            });
+        }
+        if let Some(offer) = &helper_offer {
+            if ui.input(|i| i.key_pressed(egui::Key::Escape)) && !egui::Popup::is_any_open(ui.ctx())
+            {
+                state.set_helper_offer(None);
+            } else {
+                render_helper_offer(ui, cx, state, &tokens, offer);
+            }
+        }
+
+        let visible = visible_cards(&cards, &prefs, &names);
+        if !stages.is_empty() && cards.is_empty() {
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Empty,
+                &cx.t("board.page-state.empty"),
+                Some(&cx.t("board.empty")),
+            );
+            ui.add_space(8.0);
+        }
+        let mut column_rects: Vec<(String, egui::Rect)> = Vec::new();
+        let options = CardOptions::from_ctx(cx);
+        egui::ScrollArea::horizontal()
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                ui.horizontal_top(|ui| {
+                    for stage in &stages {
+                        let cards: Vec<&BenchCard> = visible
+                            .iter()
+                            .copied()
+                            .filter(|card| card.stage == stage.id)
+                            .collect();
+                        let height = ui.available_height().max(160.0);
+                        let inner = ui.allocate_ui_with_layout(
+                            egui::vec2(176.0, height),
+                            egui::Layout::top_down(egui::Align::Min),
+                            |ui| {
+                                ui.set_width(176.0);
+                                render_column(
+                                    ui,
+                                    cx,
+                                    state,
+                                    stage,
+                                    &cards,
+                                    &tokens,
+                                    &options,
+                                    dragging.as_deref(),
+                                    &stages,
+                                );
+                            },
+                        );
+                        column_rects.push((stage.id.clone(), inner.response.rect));
+                    }
+                });
+            });
+
+        if let Some(bench_id) = dragging {
+            let released = ui.ctx().input(|input| input.pointer.any_released());
+            if released {
+                let pointer = ui.ctx().input(|input| input.pointer.interact_pos());
+                let target = pointer.and_then(|pointer| {
+                    column_rects
+                        .iter()
+                        .find(|(_, rect)| rect.contains(pointer))
+                        .map(|(stage, _)| stage.clone())
+                });
+                if let Some(target) = target {
+                    if let Some(card) = cards.iter().find(|card| card.bench.bench_id == bench_id) {
+                        move_card(cx, state, card, &target, &stages);
+                    }
+                }
+                state.set_dragging(None);
+            }
+        }
+    });
+    let count = cx.t_args(
+        "board.count",
+        &[(
+            "count",
+            &visible_cards(&cards, &prefs, &names).len().to_string(),
+        )],
+    );
+    page.footer(Some(&count), |_| {});
 }
 
 #[allow(clippy::too_many_arguments)]

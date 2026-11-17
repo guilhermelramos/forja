@@ -19,6 +19,14 @@ Nada no kernel. Este crate não é um módulo. O shell chama `apply` e desenha c
   Linhas, curvas cúbicas e quadráticas usam a mesma espessura e os tokens da Forja.
   `cargo test -p xtask icons::` verifica a identidade entre SVGs e o arquivo comitado.
 - `TerminalTheme::load_dir` lê `content/themes/*.toml`.
+- `page(ui, PageSpec)` é o molde de cinco zonas das páginas do trilho: cabeçalho
+  20/600 com no máximo uma ação principal, atualizar fixo à direita, filtros na ordem
+  busca/segmentos/seletores, corpo com largura `Content` (até 960 px) ou `Wide`,
+  estados compartilhados por `page_state` e rodapé opcional ancorado.
+  As closures de `Page::filters`, `body` e `footer` são sequenciais para compartilhar
+  o contexto mutável sem callbacks simultâneos. Os chamadores conservam a rolagem
+  interna de quadros e tabelas. `page_marker(ctx, view_id)` expõe o contrato real de
+  identidade/geometria para testes; nenhum id interno vira texto de interface.
 - Componentes recebem o rótulo. Não há string de produto embutida.
 - `setting_row` padroniza rótulo/ajuda, controle à direita, marca de alteração,
   restauração e avisos por linha. `settings_navigation` oferece linhas de seção
@@ -40,6 +48,7 @@ Nada no kernel. Este crate não é um módulo. O shell chama `apply` e desenha c
 
 ```
 cargo test -p forja-ui-kit
+cargo test -p forja-app every_registered_rail_view_uses_the_page_component
 cargo clippy -p forja-ui-kit --all-targets -- -D warnings
 cargo run -p forja-ui-kit --example gallery -- --theme dark --screenshot design/assets/galeria-escuro.png
 cargo run -p forja-ui-kit --example gallery -- --theme light --screenshot design/assets/galeria-claro.png

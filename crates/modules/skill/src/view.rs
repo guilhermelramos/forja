@@ -106,29 +106,17 @@ impl SkillView {
     fn toolbar(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snap) {
         let owners = owners(&snap.roots);
         let owner_names: Vec<&str> = owners.iter().map(|(_, name)| name.as_str()).collect();
-        let install_owner = self.install_owner.min(owners.len().saturating_sub(1));
         let scope_labels = [cx.t("skill.scope.user"), cx.t("skill.scope.project")];
         let scope_refs: Vec<&str> = scope_labels.iter().map(String::as_str).collect();
 
         ui.horizontal_wrapped(|ui| {
-            if button(ui, ButtonKind::Primary, &cx.t("skill.action.install-folder")).clicked() {
-                self.pick(cx, InstallKind::Folder, &owners, install_owner);
-            }
-            if button(ui, ButtonKind::Secondary, &cx.t("skill.action.install-zip")).clicked() {
-                self.pick(cx, InstallKind::Zip, &owners, install_owner);
-            }
-            if button(ui, ButtonKind::Ghost, &cx.t("skill.action.refresh")).clicked() {
-                actions::refresh(cx, &self.shared);
-            }
-        });
-        ui.horizontal_wrapped(|ui| {
+            segmented(ui, &mut self.install_scope, &scope_refs);
             ui.label(cx.t("skill.target.label"));
             if !owner_names.is_empty() {
-                let mut index = install_owner;
+                let mut index = self.install_owner.min(owners.len().saturating_sub(1));
                 select(ui, &mut index, &owner_names);
                 self.install_owner = index;
             }
-            segmented(ui, &mut self.install_scope, &scope_refs);
         });
         if snap.project.is_none() {
             ui.label(egui::RichText::new(cx.t("skill.hint.no-project")).weak());
@@ -146,7 +134,9 @@ impl SkillView {
                 InstallKind::Folder => forja_kernel::test_pick::folder()
                     .unwrap_or_else(|| rfd::FileDialog::new().pick_folder()),
                 InstallKind::Zip => forja_kernel::test_pick::file().unwrap_or_else(|| {
-                    rfd::FileDialog::new().add_filter("zip", &["zip"]).pick_file()
+                    rfd::FileDialog::new()
+                        .add_filter("zip", &["zip"])
+                        .pick_file()
                 }),
             },
             move |_cx, picked: Option<PathBuf>| {
@@ -170,23 +160,36 @@ impl SkillView {
         if let Some(notice) = &snap.notice {
             let text = cx.t_args(&notice.key, &[("detail", notice.detail.as_str())]);
             let failed = notice.key.starts_with("skill-error");
-            let color = if failed {
-                ui.visuals().error_fg_color
+            if failed {
+                forja_ui_kit::page_state(
+                    ui,
+                    forja_ui_kit::PageState::Error,
+                    &cx.t("skill.page-state.error"),
+                    Some(&text),
+                );
             } else {
-                ui.visuals().text_color()
-            };
-            ui.label(egui::RichText::new(text).color(color));
+                ui.label(text);
+            }
         }
     }
 
     fn list(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snap) {
-        text_field(ui, &mut self.query, &cx.t("skill.search.hint"));
         if !snap.scanned {
-            ui.label(egui::RichText::new(cx.t("skill.list.loading")).weak());
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Loading,
+                &cx.t("skill.page-state.loading"),
+                None,
+            );
             return;
         }
         if snap.scanning {
-            ui.label(egui::RichText::new(cx.t("skill.list.loading")).weak());
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Loading,
+                &cx.t("skill.page-state.loading"),
+                None,
+            );
         }
         let query = self.query.trim().to_lowercase();
         let visible: Vec<&Skill> = snap
@@ -195,7 +198,12 @@ impl SkillView {
             .filter(|skill| query.is_empty() || matches_query(skill, &query))
             .collect();
         if visible.is_empty() {
-            forja_ui_kit::empty_state(ui, forja_ui_kit::SKILLS, &cx.t("skill.list.empty"), None);
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Empty,
+                &cx.t("skill.page-state.empty"),
+                Some(&cx.t("skill.list.empty")),
+            );
             return;
         }
         egui::ScrollArea::vertical()
@@ -212,7 +220,8 @@ impl SkillView {
                         .default_open(true)
                         .show(ui, |ui| {
                             for scope in [Scope::User, Scope::Project] {
-                                let rows: Vec<&&Skill> = items.iter().filter(|s| s.scope == scope).copied().collect();
+                                let rows: Vec<&&Skill> =
+                                    items.iter().filter(|s| s.scope == scope).copied().collect();
                                 if rows.is_empty() {
                                     continue;
                                 }
@@ -242,14 +251,23 @@ impl SkillView {
                 ui.label(egui::RichText::new(description).weak().small());
             }
             if let Some(error) = &skill.error {
-                ui.label(egui::RichText::new(cx.t(error)).color(ui.visuals().error_fg_color).small());
+                ui.label(
+                    egui::RichText::new(cx.t(error))
+                        .color(ui.visuals().error_fg_color)
+                        .small(),
+                );
             }
         });
     }
 
     fn detail(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snap) {
         let Some(path) = snap.selected.clone() else {
-            forja_ui_kit::empty_state(ui, forja_ui_kit::SKILLS, &cx.t("skill.detail.empty"), None);
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Empty,
+                &cx.t("skill.page-state.empty"),
+                Some(&cx.t("skill.detail.empty")),
+            );
             return;
         };
         let Some(skill) = snap.skills.iter().find(|skill| skill.path == path) else {
@@ -259,7 +277,11 @@ impl SkillView {
         if let Some(description) = &skill.description {
             ui.label(description);
         }
-        ui.label(egui::RichText::new(cx.t_args("skill.detail.path", &[("path", skill.path.as_str())])).weak().small());
+        ui.label(
+            egui::RichText::new(cx.t_args("skill.detail.path", &[("path", skill.path.as_str())]))
+                .weak()
+                .small(),
+        );
         if let Some(error) = &skill.error {
             ui.label(egui::RichText::new(cx.t(error)).color(ui.visuals().error_fg_color));
         }
@@ -273,7 +295,12 @@ impl SkillView {
                     });
             }
             _ => {
-                ui.label(egui::RichText::new(cx.t("skill.detail.loading")).weak());
+                forja_ui_kit::page_state(
+                    ui,
+                    forja_ui_kit::PageState::Loading,
+                    &cx.t("skill.page-state.loading"),
+                    None,
+                );
             }
         }
         ui.separator();
@@ -294,7 +321,10 @@ impl SkillView {
             }
             segmented(ui, &mut self.copy_scope, &scope_refs);
             if button(ui, ButtonKind::Secondary, &cx.t("skill.copy.action")).clicked() {
-                if let Some((owner, owner_name)) = owners.get(self.copy_owner.min(owners.len().saturating_sub(1))).cloned() {
+                if let Some((owner, owner_name)) = owners
+                    .get(self.copy_owner.min(owners.len().saturating_sub(1)))
+                    .cloned()
+                {
                     let pending = Pending::Copy {
                         from: PathBuf::from(&skill.path),
                         owner,
@@ -331,8 +361,10 @@ impl SkillView {
                 .show(ctx, |ui| {
                     ui.label(cx.t_args("skill.conflict.body", &[("path", existing.as_str())]));
                     ui.horizontal(|ui| {
-                        replace = button(ui, ButtonKind::Danger, &cx.t("skill.conflict.replace")).clicked();
-                        cancel = button(ui, ButtonKind::Ghost, &cx.t("skill.dialog.cancel")).clicked();
+                        replace = button(ui, ButtonKind::Danger, &cx.t("skill.conflict.replace"))
+                            .clicked();
+                        cancel =
+                            button(ui, ButtonKind::Ghost, &cx.t("skill.dialog.cancel")).clicked();
                     });
                 });
             if replace {
@@ -385,14 +417,45 @@ impl View for SkillView {
             actions::refresh(cx, &self.shared);
         }
         let snap = self.snapshot();
-        forja_ui_kit::page_heading(ui, &cx.t("skill.tab.title"), Some(&cx.t("skill.intro")), |_| {});
-        self.toolbar(ui, cx, &snap);
-        self.notice(ui, cx, &snap);
-        ui.separator();
-        ui.columns(2, |columns| {
-            let (left, right) = columns.split_at_mut(1);
-            self.list(&mut left[0], cx, &snap);
-            self.detail(&mut right[0], cx, &snap);
+        let title = cx.t("skill.tab.title");
+        let subtitle = cx.t("skill.intro");
+        let refresh = cx.t("skill.page-state.refresh");
+        let install = cx.t("skill.action.install-folder");
+        let zip = cx.t("skill.action.install-zip");
+        let icons = [forja_ui_kit::PageIconAction {
+            icon: forja_ui_kit::Icon::Attach,
+            label: &zip,
+        }];
+        let mut page = forja_ui_kit::page(
+            ui,
+            forja_ui_kit::PageSpec::new("skill.page", &title)
+                .subtitle(&subtitle)
+                .primary(&install)
+                .refresh(&refresh)
+                .icons(&icons),
+        );
+        let owners = owners(&snap.roots);
+        let index = self.install_owner.min(owners.len().saturating_sub(1));
+        if page.response.primary_clicked {
+            self.pick(cx, InstallKind::Folder, &owners, index);
+        }
+        if page.response.icon_clicked == Some(0) {
+            self.pick(cx, InstallKind::Zip, &owners, index);
+        }
+        if page.response.refresh_clicked {
+            actions::refresh(cx, &self.shared);
+        }
+        page.filters(|ui| {
+            text_field(ui, &mut self.query, &cx.t("skill.search.hint"));
+            self.toolbar(ui, cx, &snap);
+        });
+        page.body(|ui| {
+            self.notice(ui, cx, &snap);
+            ui.columns(2, |columns| {
+                let (left, right) = columns.split_at_mut(1);
+                self.list(&mut left[0], cx, &snap);
+                self.detail(&mut right[0], cx, &snap);
+            });
         });
         self.dialogs(ui.ctx(), cx, &snap);
     }
@@ -443,7 +506,9 @@ fn matches_query(skill: &Skill, query: &str) -> bool {
 /// Dono e escopo de uma operação pendente.
 fn target_of(pending: &Pending) -> (&str, Scope) {
     match pending {
-        Pending::Install { owner, scope, .. } | Pending::Copy { owner, scope, .. } => (owner.as_str(), *scope),
+        Pending::Install { owner, scope, .. } | Pending::Copy { owner, scope, .. } => {
+            (owner.as_str(), *scope)
+        }
         Pending::Remove { owner, scope, .. } => (owner.as_str(), *scope),
     }
 }
@@ -466,18 +531,32 @@ fn root_path(pending: &Pending, roots: &[RootInfo]) -> String {
 /// Título e texto da confirmação de uma operação pendente.
 fn describe(cx: &Ctx<'_>, pending: &Pending) -> (String, String) {
     match pending {
-        Pending::Install { source, owner_name, scope, .. } => {
+        Pending::Install {
+            source,
+            owner_name,
+            scope,
+            ..
+        } => {
             let source = source.display().to_string();
             let scope = scope_label(cx, *scope);
             (
                 cx.t("skill.confirm.install.title"),
                 cx.t_args(
                     "skill.confirm.install.body",
-                    &[("source", source.as_str()), ("owner", owner_name.as_str()), ("scope", scope.as_str())],
+                    &[
+                        ("source", source.as_str()),
+                        ("owner", owner_name.as_str()),
+                        ("scope", scope.as_str()),
+                    ],
                 ),
             )
         }
-        Pending::Copy { from, owner_name, scope, .. } => {
+        Pending::Copy {
+            from,
+            owner_name,
+            scope,
+            ..
+        } => {
             let folder = from
                 .file_name()
                 .map(|name| name.to_string_lossy().into_owned())
@@ -487,11 +566,17 @@ fn describe(cx: &Ctx<'_>, pending: &Pending) -> (String, String) {
                 cx.t("skill.confirm.copy.title"),
                 cx.t_args(
                     "skill.confirm.copy.body",
-                    &[("folder", folder.as_str()), ("owner", owner_name.as_str()), ("scope", scope.as_str())],
+                    &[
+                        ("folder", folder.as_str()),
+                        ("owner", owner_name.as_str()),
+                        ("scope", scope.as_str()),
+                    ],
                 ),
             )
         }
-        Pending::Remove { folder, owner_name, .. } => (
+        Pending::Remove {
+            folder, owner_name, ..
+        } => (
             cx.t("skill.confirm.remove.title"),
             cx.t_args(
                 "skill.confirm.remove.body",

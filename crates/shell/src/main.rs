@@ -21,6 +21,8 @@ mod icon_contract_tests;
 mod layout;
 mod overlays;
 mod pacer;
+#[cfg(test)]
+mod page_contract_tests;
 mod rpc;
 mod screenshot;
 mod settings_catalog;

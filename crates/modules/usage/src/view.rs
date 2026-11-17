@@ -33,22 +33,17 @@ impl View for UsagePage {
         let locale = cx.i18n().locale();
         let tokens = forja_ui_kit::applied_tokens(ui.ctx());
         let muted = c32(tokens.color.text_muted);
-        ui.horizontal_wrapped(|ui| {
-            ui.heading(cx.t("usage.page.title"));
-            if forja_ui_kit::button_with_icon(
-                ui,
-                forja_ui_kit::Icon::Refresh,
-                &cx.t("usage.page.refresh"),
-                forja_ui_kit::ButtonKind::Ghost,
-            )
-            .clicked()
-            {
-                let _ = cx.run_command("usage.refresh", Args::new());
-            }
-            if self.shared.with(|state| state.busy).unwrap_or(false) {
-                forja_ui_kit::spinner_if_active(ui);
-            }
-        });
+        let title = cx.t("usage.page.title");
+        let refresh = cx.t("usage.page-state.refresh");
+        let mut page = forja_ui_kit::page(
+            ui,
+            forja_ui_kit::PageSpec::new("usage.page", &title)
+                .wide()
+                .refresh(&refresh),
+        );
+        if page.response.refresh_clicked {
+            let _ = cx.run_command("usage.refresh", Args::new());
+        }
         let mut period_index = UsagePeriod::ALL
             .iter()
             .position(|period| *period == self.period)
@@ -59,105 +54,104 @@ impl View for UsagePage {
             .collect();
         let label_refs: Vec<&str> = labels.iter().map(String::as_str).collect();
         let filter = cx.t("usage.filter");
-        ui.horizontal(|ui| {
-            ui.label(egui::RichText::new(filter).small().color(muted));
-            forja_ui_kit::segmented(ui, &mut period_index, &label_refs);
+        page.filters(|ui| {
+            ui.horizontal(|ui| {
+                ui.label(egui::RichText::new(filter).small().color(muted));
+                forja_ui_kit::segmented(ui, &mut period_index, &label_refs);
+            });
         });
         self.period = UsagePeriod::ALL[period_index];
-        if let Some(error) = self.shared.error() {
-            ui.label(
-                egui::RichText::new(error)
-                    .small()
-                    .color(c32(tokens.color.danger)),
-            );
-        }
-        let pricing_errors = self.shared.pricing_errors();
-        if !pricing_errors.is_empty() {
-            let text = cx.t_args(
-                "usage.pricing.errors",
-                &[("count", &pricing_errors.len().to_string())],
-            );
-            ui.label(
-                egui::RichText::new(text)
-                    .small()
-                    .color(c32(tokens.color.danger)),
-            )
-            .on_hover_text(pricing_errors.join("\n"));
-        }
-        ui.add_space(8.0);
-        egui::ScrollArea::vertical()
-            .id_salt("usage-body")
-            .auto_shrink([false, false])
-            .show(ui, |ui| {
-                if summary.total.is_empty() {
-                    self.empty(ui, cx);
-                }
-                self.totals(ui, cx, &summary, locale, muted);
-                if summary.total.is_empty() {
-                    return;
-                }
-                let slice = summary.slice(self.period);
-                self.days(ui, cx, &summary, locale);
-                self.group(
+        page.body(|ui| {
+            if self.shared.with(|state| state.busy).unwrap_or(false) {
+                forja_ui_kit::page_state(
                     ui,
-                    cx,
-                    "usage.section.agents",
-                    &slice.by_agent,
-                    slice.totals.total_tokens,
-                    locale,
-                    |name| agent_label(cx, name),
+                    forja_ui_kit::PageState::Loading,
+                    &cx.t("usage.page-state.loading"),
+                    None,
                 );
-                self.group(
+            }
+            if let Some(error) = self.shared.error() {
+                forja_ui_kit::page_state(
                     ui,
-                    cx,
-                    "usage.section.models",
-                    &slice.by_model,
-                    slice.totals.total_tokens,
-                    locale,
-                    |name| name.to_owned(),
+                    forja_ui_kit::PageState::Error,
+                    &cx.t("usage.page-state.error"),
+                    Some(&error),
                 );
-                self.group(
-                    ui,
-                    cx,
-                    "usage.section.projects",
-                    &slice.by_project,
-                    slice.totals.total_tokens,
-                    locale,
-                    |name| {
-                        if name.is_empty() {
-                            cx.t("usage.unknown")
-                        } else {
-                            name.to_owned()
-                        }
-                    },
+            }
+            let pricing_errors = self.shared.pricing_errors();
+            if !pricing_errors.is_empty() {
+                let text = cx.t_args(
+                    "usage.pricing.errors",
+                    &[("count", &pricing_errors.len().to_string())],
                 );
-                self.sessions(ui, cx, &summary, locale, muted);
-            });
+                ui.label(
+                    egui::RichText::new(text)
+                        .small()
+                        .color(c32(tokens.color.danger)),
+                )
+                .on_hover_text(pricing_errors.join("\n"));
+            }
+            ui.add_space(8.0);
+            egui::ScrollArea::vertical()
+                .id_salt("usage-body")
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    if summary.total.is_empty() {
+                        self.empty(ui, cx);
+                    }
+                    self.totals(ui, cx, &summary, locale, muted);
+                    if summary.total.is_empty() {
+                        return;
+                    }
+                    let slice = summary.slice(self.period);
+                    self.days(ui, cx, &summary, locale);
+                    self.group(
+                        ui,
+                        cx,
+                        "usage.section.agents",
+                        &slice.by_agent,
+                        slice.totals.total_tokens,
+                        locale,
+                        |name| agent_label(cx, name),
+                    );
+                    self.group(
+                        ui,
+                        cx,
+                        "usage.section.models",
+                        &slice.by_model,
+                        slice.totals.total_tokens,
+                        locale,
+                        |name| name.to_owned(),
+                    );
+                    self.group(
+                        ui,
+                        cx,
+                        "usage.section.projects",
+                        &slice.by_project,
+                        slice.totals.total_tokens,
+                        locale,
+                        |name| {
+                            if name.is_empty() {
+                                cx.t("usage.unknown")
+                            } else {
+                                name.to_owned()
+                            }
+                        },
+                    );
+                    self.sessions(ui, cx, &summary, locale, muted);
+                });
+        });
     }
 }
 
 impl UsagePage {
     fn empty(&self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
-        let title = cx.t("usage.empty.title");
-        forja_ui_kit::card(ui, Some(&title), |ui| {
-            ui.set_min_width(ui.available_width());
-            ui.add(
-                egui::Label::new(cx.t("usage.empty.body"))
-                    .wrap()
-                    .selectable(false),
-            );
-            ui.add_space(6.0);
-            if forja_ui_kit::button(
-                ui,
-                forja_ui_kit::ButtonKind::Secondary,
-                &cx.t("usage.empty.action"),
-            )
-            .clicked()
-            {
-                let _ = cx.run_command("usage.refresh", Args::new());
-            }
-        });
-        ui.add_space(4.0);
+        forja_ui_kit::page_state(
+            ui,
+            forja_ui_kit::PageState::Empty,
+            &cx.t("usage.page-state.empty"),
+            Some(&cx.t("usage.empty.body")),
+        );
     }
 
     fn totals(

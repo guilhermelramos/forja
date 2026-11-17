@@ -88,7 +88,9 @@ impl ArchiveView {
                 started_ms: session.started_ms,
                 updated_ms: session.updated_ms,
                 title: session.title.clone(),
-                snippet: "…o parser do Acervo precisa aceitar a transcrição e o filtro por ajudante…".to_owned(),
+                snippet:
+                    "…o parser do Acervo precisa aceitar a transcrição e o filtro por ajudante…"
+                        .to_owned(),
                 score: 1,
             })
             .collect();
@@ -183,13 +185,23 @@ impl ArchiveView {
                 ui.set_max_width(180.0);
                 forja_ui_kit::text_field(ui, &mut self.query, &cx.t("archive.view.search-hint"));
             });
+            ui.label(cx.t("archive.view.project"));
+            ui.scope(|ui| {
+                ui.set_max_width(100.0);
+                forja_ui_kit::text_field(
+                    ui,
+                    &mut self.project_filter,
+                    &cx.t("archive.view.project-hint"),
+                );
+            });
             // `select` não marca `changed()`: comparamos o índice antes e depois.
             let mut helpers: Vec<(Option<String>, String)> =
                 vec![(None, cx.t("archive.view.all-helpers"))];
             for profile in &state.profiles {
                 helpers.push((Some(profile.id.clone()), profile.name.clone()));
             }
-            let helper_labels: Vec<&str> = helpers.iter().map(|(_, label)| label.as_str()).collect();
+            let helper_labels: Vec<&str> =
+                helpers.iter().map(|(_, label)| label.as_str()).collect();
             let current = helpers
                 .iter()
                 .position(|(id, _)| *id == self.profile_filter)
@@ -198,11 +210,6 @@ impl ArchiveView {
             if forja_ui_kit::select(ui, &mut index, &helper_labels).changed() {
                 self.profile_filter = helpers[index].0.clone();
             }
-            ui.label(cx.t("archive.view.project"));
-            ui.scope(|ui| {
-                ui.set_max_width(100.0);
-                forja_ui_kit::text_field(ui, &mut self.project_filter, &cx.t("archive.view.project-hint"));
-            });
             let dates = ["all", "7", "30", "365"];
             let date_texts: Vec<String> = dates.iter().map(|value| date_label(cx, value)).collect();
             let date_labels: Vec<&str> = date_texts.iter().map(String::as_str).collect();
@@ -231,7 +238,20 @@ impl ArchiveView {
             } else {
                 "archive.view.empty"
             };
-            forja_ui_kit::empty_state(ui, forja_ui_kit::ARCHIVE, &cx.t(key), None);
+            forja_ui_kit::page_state(
+                ui,
+                if state.scanning {
+                    forja_ui_kit::PageState::Loading
+                } else {
+                    forja_ui_kit::PageState::Empty
+                },
+                &cx.t(if state.scanning {
+                    "archive.page-state.loading"
+                } else {
+                    "archive.page-state.empty"
+                }),
+                Some(&cx.t(key)),
+            );
             return;
         }
         let mut resume = None;
@@ -249,35 +269,47 @@ impl ArchiveView {
                             ui.label(
                                 egui::RichText::new(helper_name(state, &hit.profile_id)).weak(),
                             );
-                            ui.label(
-                                egui::RichText::new(format_date(hit.updated_ms)).weak(),
-                            );
+                            ui.label(egui::RichText::new(format_date(hit.updated_ms)).weak());
                         });
                         if !hit.snippet.is_empty() {
                             ui.label(egui::RichText::new(&hit.snippet).italics());
                         }
                         ui.horizontal(|ui| {
-                            ui.label(
-                                egui::RichText::new(&hit.project)
-                                    .monospace()
-                                    .weak(),
-                            );
+                            ui.label(egui::RichText::new(&hit.project).monospace().weak());
                             ui.add_space(12.0);
-                            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &cx.t("archive.view.resume")).clicked() {
+                            if forja_ui_kit::button(
+                                ui,
+                                forja_ui_kit::ButtonKind::Secondary,
+                                &cx.t("archive.view.resume"),
+                            )
+                            .clicked()
+                            {
                                 resume = Some((
                                     hit.profile_id.clone(),
                                     hit.session_id.clone(),
                                     hit.project.clone(),
                                 ));
                             }
-                            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &cx.t("archive.view.fork")).clicked() {
+                            if forja_ui_kit::button(
+                                ui,
+                                forja_ui_kit::ButtonKind::Secondary,
+                                &cx.t("archive.view.fork"),
+                            )
+                            .clicked()
+                            {
                                 fork = Some((
                                     hit.profile_id.clone(),
                                     hit.session_id.clone(),
                                     hit.project.clone(),
                                 ));
                             }
-                            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Danger, &cx.t("archive.view.delete")).clicked() {
+                            if forja_ui_kit::button(
+                                ui,
+                                forja_ui_kit::ButtonKind::Danger,
+                                &cx.t("archive.view.delete"),
+                            )
+                            .clicked()
+                            {
                                 delete = Some(PathBuf::from(&hit.path));
                             }
                         });
@@ -345,10 +377,22 @@ impl ArchiveView {
                 ui.label(cx.t("archive.view.delete-body"));
                 ui.label(egui::RichText::new(path.display().to_string()).monospace());
                 ui.horizontal(|ui| {
-                    if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Danger, &cx.t("archive.view.delete-confirm")).clicked() {
+                    if forja_ui_kit::button(
+                        ui,
+                        forja_ui_kit::ButtonKind::Danger,
+                        &cx.t("archive.view.delete-confirm"),
+                    )
+                    .clicked()
+                    {
                         confirm = true;
                     }
-                    if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t("archive.view.cancel")).clicked() {
+                    if forja_ui_kit::button(
+                        ui,
+                        forja_ui_kit::ButtonKind::Ghost,
+                        &cx.t("archive.view.cancel"),
+                    )
+                    .clicked()
+                    {
                         cancel = true;
                     }
                 });
@@ -412,25 +456,11 @@ impl View for ArchiveView {
             state.ensure_profiles(Some(&bench));
             self.maybe_scan(cx, &mut state, index_enabled);
         }
-        forja_ui_kit::page_heading(ui, &cx.t("archive.view.title"), None, |_| {});
-        if let Some(notice) = &self.notice {
-            ui.label(egui::RichText::new(notice).weak());
-        }
-        if let Some(error) = &self.action_error {
-            let human = humanize_error(cx, error);
-            forja_ui_kit::error_banner(
-                ui,
-                &human.summary,
-                human.detail.as_deref(),
-                &cx.t("kernel.error.details"),
-            );
-        }
-        let (profiles, report, scanning, error, results_count, sessions_count) = {
+        let (report, scanning, error, results_count, sessions_count) = {
             let Ok(state) = core.state.lock() else {
                 return;
             };
             (
-                state.profiles.clone(),
                 state.report.clone(),
                 state.scanning,
                 state.error.clone(),
@@ -438,77 +468,77 @@ impl View for ArchiveView {
                 state.sessions.len(),
             )
         };
-        let _ = profiles;
-        ui.horizontal(|ui| {
-            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, &cx.t("archive.view.search-button")).clicked() {
-                if let Ok(mut state) = core.state.lock() {
-                    self.search(cx, &mut state);
-                }
-            }
-            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &cx.t("archive.view.refresh")).clicked() {
-                if let Ok(mut state) = core.state.lock() {
-                    state.last_scan = None;
-                }
-            }
-            if scanning {
-                forja_ui_kit::spinner_if_active(ui);
-                ui.label(egui::RichText::new(cx.t("archive.view.indexing")).weak());
-            } else {
-                let files = format!(
-                    "{} {}",
-                    report.discovered,
-                    cx.t("archive.view.files")
-                );
-                ui.label(
-                    egui::RichText::new(format!(
-                        "{} · {} · {}",
-                        cx.t("archive.view.sessions"),
-                        sessions_count,
-                        files
-                    ))
-                    .weak(),
-                );
-            }
-            if results_count > 0 {
-                ui.label(
-                    egui::RichText::new(format!(
-                        "{}: {}",
-                        cx.t("archive.view.results"),
-                        results_count
-                    ))
-                    .weak(),
-                );
-            }
-        });
-        if let Some(error) = error {
-            let human = humanize_error(cx, &error);
-            forja_ui_kit::error_banner(
-                ui,
-                &human.summary,
-                human.detail.as_deref(),
-                &cx.t("kernel.error.details"),
-            );
-        }
-        {
-            let Ok(state) = core.state.lock() else {
-                return;
-            };
-            self.draw_filters(ui, cx, &state);
-        }
-        let auto_search = {
-            let Ok(state) = core.state.lock() else {
-                return;
-            };
-            !self.searched && !state.scanning && !state.sessions.is_empty()
-        };
-        if auto_search {
+        let title = cx.t("archive.view.title");
+        let refresh = cx.t("archive.page-state.refresh");
+        let search = cx.t("archive.view.search-button");
+        let mut page = forja_ui_kit::page(
+            ui,
+            forja_ui_kit::PageSpec::new("archive.tab", &title)
+                .primary(&search)
+                .refresh(&refresh)
+                .footer(),
+        );
+        if page.response.primary_clicked {
             if let Ok(mut state) = core.state.lock() {
                 self.search(cx, &mut state);
             }
         }
-        if let Ok(mut state) = core.state.lock() {
-            self.draw_results(ui, cx, &mut state);
+        if page.response.refresh_clicked {
+            if let Ok(mut state) = core.state.lock() {
+                state.last_scan = None;
+            }
         }
+        page.filters(|ui| {
+            if let Ok(state) = core.state.lock() {
+                self.draw_filters(ui, cx, &state);
+            }
+        });
+        page.body(|ui| {
+            if scanning && results_count > 0 {
+                forja_ui_kit::page_state(
+                    ui,
+                    forja_ui_kit::PageState::Loading,
+                    &cx.t("archive.page-state.loading"),
+                    None,
+                );
+            }
+            if let Some(notice) = &self.notice {
+                ui.label(egui::RichText::new(notice).weak());
+            }
+            for raw in [self.action_error.as_ref(), error.as_ref()]
+                .into_iter()
+                .flatten()
+            {
+                let human = humanize_error(cx, raw);
+                forja_ui_kit::page_state(
+                    ui,
+                    forja_ui_kit::PageState::Error,
+                    &cx.t("archive.page-state.error"),
+                    Some(&human.summary),
+                );
+            }
+            let auto_search = core
+                .state
+                .lock()
+                .map(|state| !self.searched && !state.scanning && !state.sessions.is_empty())
+                .unwrap_or(false);
+            if let Ok(mut state) = core.state.lock() {
+                if auto_search {
+                    self.search(cx, &mut state);
+                }
+                self.draw_results(ui, cx, &mut state);
+            }
+        });
+        let count = format!(
+            "{} · {} · {} {} · {}: {}",
+            cx.t("archive.view.sessions"),
+            sessions_count,
+            report.discovered,
+            cx.t("archive.view.files"),
+            cx.t("archive.view.results"),
+            results_count
+        );
+        page.footer(Some(&count), |_| {});
         self.draw_delete_modal(ui, cx);
         if scanning {
             forja_ui_kit::request_repaint_after_active(ui.ctx(), Duration::from_millis(250));
@@ -543,10 +573,7 @@ fn format_date(ms: i64) -> String {
 pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> forja_kernel::HumanError {
     let trimmed = raw.trim();
     if trimmed.starts_with("busca inválida:") || trimmed.starts_with("invalid query:") {
-        return forja_kernel::HumanError::with_detail(
-            cx.t("archive.error.invalid-query"),
-            trimmed,
-        );
+        return forja_kernel::HumanError::with_detail(cx.t("archive.error.invalid-query"), trimmed);
     }
     forja_kernel::human_error::humanize_ctx(cx, trimmed)
 }

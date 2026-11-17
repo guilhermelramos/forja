@@ -572,7 +572,11 @@ impl ForjaApp {
         self.project_was_open = !home;
         let frame = egui::Frame::NONE
             .fill(self.paint(self.tokens.color.bg))
-            .inner_margin(Margin::symmetric(12, 8));
+            .inner_margin(if self.rail_page.is_some() && !self.settings_open {
+                Margin::ZERO
+            } else {
+                Margin::symmetric(12, 8)
+            });
         let response = egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
             if self.settings_open {
                 self.settings_page_ui(ui);
@@ -580,20 +584,6 @@ impl ForjaApp {
             }
             if let Some(page) = self.rail_page.clone() {
                 if self.rail_views.iter().any(|view| view.id == page) {
-                    if button(
-                        ui,
-                        ButtonKind::Ghost,
-                        &self.text(if home {
-                            "shell.rail.back-to-home"
-                        } else {
-                            "shell.rail.back-to-bench"
-                        }),
-                    )
-                    .clicked()
-                    {
-                        self.rail_page = None;
-                        return;
-                    }
                     if let Some(view) = self.rail_views.iter_mut().find(|view| view.id == page) {
                         let module = view.module.clone();
                         let mut cx = self.runtime.ctx(&module);

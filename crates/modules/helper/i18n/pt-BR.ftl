@@ -130,3 +130,7 @@ helper-status-summary = { $working } trabalhando · { $waiting } esperando
 helper-settings-cli-installed = CLI instalado
 helper-settings-cli-missing = CLI não instalado
 helper-settings-enabled-help = Habilita um CLI instalado para uso na Forja; isto não instala o ajudante.
+helper-page-state-refresh = Atualizar
+helper-page-state-empty = Ainda não há itens.
+helper-page-state-loading = Carregando…
+helper-page-state-error = Não foi possível carregar.

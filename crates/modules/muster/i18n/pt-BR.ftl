@@ -183,3 +183,7 @@ muster-note-state-no-helper = Enviado · sem ajudante
 muster-note-target-no-helper = sem ajudante
 muster-no-targets = Nenhuma tarefa ainda para receber recados.
 muster-error-empty-note = Digite um recado antes de enviar.
+muster-page-state-refresh = Atualizar
+muster-page-state-empty = Ainda não há itens.
+muster-page-state-loading = Carregando…
+muster-page-state-error = Não foi possível carregar.

@@ -50,3 +50,7 @@ archive-view-cancel = Cancel
 archive-view-deleted = Session moved to the trash.
 archive-view-opened = Opened
 archive-error-invalid-query = The search text has invalid syntax. Try simpler words.
+archive-page-state-refresh = Refresh
+archive-page-state-empty = No items yet.
+archive-page-state-loading = Loading…
+archive-page-state-error = Could not load.

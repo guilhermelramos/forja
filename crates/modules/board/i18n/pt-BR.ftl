@@ -59,3 +59,7 @@ board-forging-offer-copied = Copiado
 board-forging-offer-open-helpers = Abrir Ajudantes
 board-forging-offer-close = Fechar
 board-forging-offer-error = Não foi possível iniciar { $helper }: { $detail }
+board-page-state-refresh = Atualizar
+board-page-state-empty = Ainda não há itens.
+board-page-state-loading = Carregando…
+board-page-state-error = Não foi possível carregar.

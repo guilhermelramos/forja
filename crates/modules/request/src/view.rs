@@ -129,28 +129,30 @@ impl RequestsView {
         }
     }
 
-    fn header(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, frame: &Frame) {
+    fn header(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) -> forja_ui_kit::Page {
         let title = cx.t("request-name");
-        let loading = frame.loading.then(|| cx.t("request-loading"));
-        forja_ui_kit::page_heading(ui, &title, loading.as_deref(), |ui| {
-            if forja_ui_kit::button_with_icon(
-                ui,
-                forja_ui_kit::Icon::Refresh,
-                &cx.t("request-refresh"),
-                ButtonKind::Secondary,
-            )
-            .clicked()
-            {
-                let _ = commands::refresh(cx, &self.shared);
-            }
-            let label = cx.t("request-local-create");
-            if button(ui, ButtonKind::Ghost, &label).clicked() {
-                self.local_open = !self.local_open;
-            }
-        });
+        let refresh = cx.t("request.page-state.refresh");
+        let create = cx.t("request-local-create");
+        let page = forja_ui_kit::page(
+            ui,
+            forja_ui_kit::PageSpec::new("request.page", &title)
+                .wide()
+                .primary(&create)
+                .refresh(&refresh),
+        );
+        if page.response.refresh_clicked {
+            let _ = commands::refresh(cx, &self.shared);
+        }
+        if page.response.primary_clicked {
+            self.local_open = !self.local_open;
+        }
+        page
     }
 
     fn filters(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, frame: &Frame) {
+        if text_field(ui, &mut self.query_draft, &cx.t("request-search-hint")).changed() {
+            self.set_query(&self.query_draft.clone());
+        }
         let labels: Vec<String> = Filter::ALL.iter().map(|f| cx.t(f.label_key())).collect();
         let refs: Vec<&str> = labels.iter().map(String::as_str).collect();
         let mut selected = Filter::ALL
@@ -164,9 +166,6 @@ impl RequestsView {
             }
         }
         self.source_row(ui, cx, frame);
-        if text_field(ui, &mut self.query_draft, &cx.t("request-search-hint")).changed() {
-            self.set_query(&self.query_draft.clone());
-        }
     }
 
     /// Balcão mostrado: local, cada balcão instalado e todos.
@@ -221,7 +220,12 @@ impl RequestsView {
                     ("error", error_text.as_str()),
                 ],
             );
-            ui.colored_label(egui::Color32::from_rgb(0xE5, 0x53, 0x4B), line);
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Error,
+                &cx.t("request.page-state.error"),
+                Some(&line),
+            );
         }
     }
 
@@ -274,7 +278,20 @@ impl RequestsView {
 
     fn list(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, frame: &Frame) {
         if frame.items.is_empty() {
-            forja_ui_kit::empty_state(ui, forja_ui_kit::REQUESTS, &cx.t("request-empty"), None);
+            forja_ui_kit::page_state(
+                ui,
+                if frame.loading {
+                    forja_ui_kit::PageState::Loading
+                } else {
+                    forja_ui_kit::PageState::Empty
+                },
+                &cx.t(if frame.loading {
+                    "request.page-state.loading"
+                } else {
+                    "request.page-state.empty"
+                }),
+                Some(&cx.t("request-empty")),
+            );
             return;
         }
         egui::ScrollArea::vertical()
@@ -431,19 +448,21 @@ impl View for RequestsView {
                 let _ = commands::open(cx, &self.shared, &first.counter, &first.key);
             }
         }
-        self.header(ui, cx, &frame);
-        self.filters(ui, cx, &frame);
-        self.notices(ui, cx, &frame);
-        self.local_form(ui, cx, &frame);
-        ui.separator();
-        if frame.selected.is_some() {
-            ui.columns(2, |columns| {
-                self.list(&mut columns[0], cx, &frame);
-                self.drawer(&mut columns[1], cx, &frame);
-            });
-        } else {
-            self.list(ui, cx, &frame);
-        }
+        let mut page = self.header(ui, cx);
+        page.filters(|ui| self.filters(ui, cx, &frame));
+        page.body(|ui| {
+            self.notices(ui, cx, &frame);
+            self.local_form(ui, cx, &frame);
+            ui.separator();
+            if frame.selected.is_some() {
+                ui.columns(2, |columns| {
+                    self.list(&mut columns[0], cx, &frame);
+                    self.drawer(&mut columns[1], cx, &frame);
+                });
+            } else {
+                self.list(ui, cx, &frame);
+            }
+        });
         self.forge_preview.ui(ui, cx, &self.shared);
     }
 }

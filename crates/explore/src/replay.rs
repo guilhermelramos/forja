@@ -47,9 +47,18 @@ impl StringOrList {
     }
 }
 
+/// Exact accessible identity, including semantic role rather than text alone.
+#[derive(Debug, Clone, Deserialize)]
+pub struct ElementExpectation {
+    pub name: String,
+    pub role: String,
+}
+
 /// Assertion checked against a specific step (or the final step when `step` is omitted).
 #[derive(Debug, Clone, Deserialize)]
 pub struct Expectation {
+    #[serde(default)]
+    pub present_elements: Vec<ElementExpectation>,
     #[serde(default)]
     pub step: Option<usize>,
     #[serde(default)]
@@ -470,6 +479,18 @@ pub fn evaluate_expectations(
                 ));
             }
         }
+        for expected in &exp.present_elements {
+            if !snap
+                .elements
+                .iter()
+                .any(|element| element.name == expected.name && element.role == expected.role)
+            {
+                return Err(format!(
+                    "expectation {exp_idx} (step {target_idx}): missing {} named {:?}",
+                    expected.role, expected.name
+                ));
+            }
+        }
         if exp.no_unnamed_buttons == Some(true) {
             if let Some(element) = snap
                 .elements
@@ -571,6 +592,21 @@ mod tests {
             frames: 0,
             closed: false,
         }
+    }
+
+    #[test]
+    fn element_expectations_require_both_name_and_role() {
+        let expected: Vec<Expectation> = serde_json::from_str(
+            r#"[{"present_elements":[{"name":"Shared state","role":"Label"}]}]"#,
+        )
+        .unwrap();
+        let mut snap = snap_with(&["Shared state"], 0, &[]);
+        assert!(
+            evaluate_expectations(&expected, &[snap.clone()]).is_err(),
+            "a Button must not satisfy a Label contract"
+        );
+        snap.elements[0].role = "Label".into();
+        assert!(evaluate_expectations(&expected, &[snap]).is_ok());
     }
 
     #[test]

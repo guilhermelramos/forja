@@ -69,7 +69,6 @@ shell-toast-body = A notificação chegou.
 shell-theme-system = Seguir o Windows
 shell-theme-dark = Escuro
 shell-theme-light = Claro
-shell-rail-back-to-bench = Voltar à bancada
 shell-anvil-choose-rail = Escolha uma página
 shell-anvil-muster-title = Digite o título do mutirão
 shell-anvil-helper-not-installed = não instalado
@@ -393,7 +392,6 @@ shell-view-error-retry = Tentar de novo
 shell-view-error-unknown = A visualização do módulo falhou.
 shell-view-error-debug-panic = Falha de teste solicitada para esta visualização.
 
-shell-rail-back-to-home = Voltar ao início
 
 shell-settings-back = Voltar
 shell-settings-modified = Alterado

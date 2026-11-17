@@ -18,13 +18,13 @@
     { "m": "app.restart" },
     { "m": "ui.key", "keys": "Escape" },
     { "m": "ui.snapshot" },
-    { "m": "ui.click", "target": "Voltar à bancada" },
+    { "m": "ui.click", "target": "Bancada" },
     { "m": "ui.key", "keys": "Ctrl+Shift+B" }
   ],
   "expect": [
     {
       "step": 14,
-      "present": ["Voltar à bancada", "Nova rotina"],
+      "present": ["Rotinas", "Nova rotina"],
       "absent": ["Adicionar pasta", "Busca"],
       "no_geometry_issues": true
     },

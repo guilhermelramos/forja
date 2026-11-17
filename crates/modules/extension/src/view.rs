@@ -27,30 +27,8 @@ impl ExtensionPage {
         }
     }
 
-    fn toolbar(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
-        ui.horizontal_wrapped(|ui| {
-            if forja_ui_kit::button(
-                ui,
-                forja_ui_kit::ButtonKind::Primary,
-                &cx.t("extension.page.install"),
-            )
-            .clicked()
-            {
-                self.pick_folder(cx);
-            }
-            if forja_ui_kit::button_with_icon(
-                ui,
-                forja_ui_kit::Icon::Refresh,
-                &cx.t("extension.page.rescan"),
-                forja_ui_kit::ButtonKind::Secondary,
-            )
-            .clicked()
-            {
-                let _ = cx.run_command("extension.rescan", Args::new());
-            }
-            ui.label(cx.t("extension.page.search"));
-            forja_ui_kit::text_field(ui, &mut self.query, "");
-        });
+    fn filters(&mut self, ui: &mut egui::Ui, cx: &Ctx<'_>) {
+        forja_ui_kit::text_field(ui, &mut self.query, &cx.t("extension.page.search"));
     }
 
     fn pick_folder(&self, cx: &mut Ctx<'_>) {
@@ -68,16 +46,20 @@ impl ExtensionPage {
         );
     }
 
-    fn install_notice(&self, ui: &mut egui::Ui) {
+    fn install_notice(&self, ui: &mut egui::Ui, cx: &Ctx<'_>) {
         let Some(notice) = self.core.install_notice() else {
             return;
         };
-        let color = if notice.is_error {
-            ui.visuals().error_fg_color
+        if notice.is_error {
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Error,
+                &cx.t("extension.page-state.error"),
+                Some(&notice.summary),
+            );
         } else {
-            ui.visuals().text_color()
-        };
-        ui.colored_label(color, notice.summary);
+            ui.label(&notice.summary);
+        }
         if let Some(detail) = notice.detail {
             ui.label(egui::RichText::new(detail).weak().monospace());
         }
@@ -302,43 +284,57 @@ impl View for ExtensionPage {
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         state::ensure(&self.core, cx);
         let entries = self.core.snapshot();
-        forja_ui_kit::page_heading(
-            ui,
-            &cx.t("extension.page.title"),
-            Some(&cx.t_args(
-                "extension.page.count",
-                &[("count", &entries.len().to_string())],
-            )),
-            |_| {},
+        let title = cx.t("extension.page.title");
+        let refresh = cx.t("extension.page-state.refresh");
+        let install = cx.t("extension.page.install");
+        let count = cx.t_args(
+            "extension.page.count",
+            &[("count", &entries.len().to_string())],
         );
-        self.install_notice(ui);
-        self.toolbar(ui, cx);
-        if entries.is_empty() {
-            forja_ui_kit::empty_state(
-                ui,
-                forja_ui_kit::SETTINGS,
-                &cx.t("extension.page.empty"),
-                None,
-            );
-            ui.label(egui::RichText::new(cx.t("extension.page.empty-hint")).weak());
-            return;
+        let mut page = forja_ui_kit::page(
+            ui,
+            forja_ui_kit::PageSpec::new("extension.page", &title)
+                .primary(&install)
+                .refresh(&refresh)
+                .footer(),
+        );
+        if page.response.primary_clicked {
+            self.pick_folder(cx);
         }
-        let query = self.query.to_ascii_lowercase();
-        egui::ScrollArea::vertical().show(ui, |ui| {
-            for entry in entries {
-                if !query.is_empty()
-                    && !entry.id.to_ascii_lowercase().contains(&query)
-                    && !entry
-                        .name
-                        .resolve(cx.i18n().locale().id())
-                        .to_ascii_lowercase()
-                        .contains(&query)
-                {
-                    continue;
-                }
-                self.row(ui, cx, &entry);
+        if page.response.refresh_clicked {
+            let _ = cx.run_command("extension.rescan", Args::new());
+        }
+        page.filters(|ui| self.filters(ui, cx));
+        page.body(|ui| {
+            self.install_notice(ui, cx);
+            if entries.is_empty() {
+                forja_ui_kit::page_state(
+                    ui,
+                    forja_ui_kit::PageState::Empty,
+                    &cx.t("extension.page-state.empty"),
+                    Some(&cx.t("extension.page.empty")),
+                );
+                ui.label(egui::RichText::new(cx.t("extension.page.empty-hint")).weak());
+                return;
             }
+            let query = self.query.to_ascii_lowercase();
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                for entry in entries {
+                    if !query.is_empty()
+                        && !entry.id.to_ascii_lowercase().contains(&query)
+                        && !entry
+                            .name
+                            .resolve(cx.i18n().locale().id())
+                            .to_ascii_lowercase()
+                            .contains(&query)
+                    {
+                        continue;
+                    }
+                    self.row(ui, cx, &entry);
+                }
+            });
         });
+        page.footer(Some(&count), |_| {});
     }
 
     fn poll(&mut self, cx: &mut Ctx<'_>) {

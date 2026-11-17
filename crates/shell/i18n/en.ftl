@@ -69,7 +69,6 @@ shell-toast-body = The notification arrived.
 shell-theme-system = Follow Windows
 shell-theme-dark = Dark
 shell-theme-light = Light
-shell-rail-back-to-bench = Back to bench
 shell-anvil-choose-rail = Choose a page
 shell-anvil-muster-title = Enter a muster title
 shell-anvil-helper-not-installed = not installed
@@ -393,7 +392,6 @@ shell-view-error-retry = Try again
 shell-view-error-unknown = The module view panicked.
 shell-view-error-debug-panic = Test panic requested for this view.
 
-shell-rail-back-to-home = Back to Home
 
 shell-settings-back = Back
 shell-settings-modified = Modified
