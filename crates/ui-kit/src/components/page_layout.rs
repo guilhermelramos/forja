@@ -305,9 +305,15 @@ impl Page {
             );
             label.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, count));
         }
-        let result = child
-            .with_layout(Layout::right_to_left(Align::Center), pagination)
-            .inner;
+        // Pagination is a sibling on the same row, not a child after the count's
+        // vertical cursor (which would push a 32px button below the footer).
+        let mut actions = child.new_child(
+            egui::UiBuilder::new()
+                .id_salt("pagination")
+                .max_rect(rect)
+                .layout(Layout::right_to_left(Align::Center)),
+        );
+        let result = pagination(&mut actions);
         self.record();
         result
     }

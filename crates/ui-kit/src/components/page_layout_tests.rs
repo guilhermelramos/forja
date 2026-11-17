@@ -80,6 +80,16 @@ fn page_exposes_its_title_and_named_header_actions() {
         );
     }
     assert_eq!(marker.refresh.unwrap().right(), marker.bounds.right());
+    let next = update
+        .nodes
+        .iter()
+        .find_map(|(_, node)| (node.label() == Some("Next")).then(|| node.bounds().unwrap()))
+        .unwrap();
+    let footer = marker.footer.unwrap();
+    assert!(
+        next.y0 >= f64::from(footer.top()) && next.y1 <= f64::from(footer.bottom()),
+        "pagination must share the footer row with the count: {next:?}"
+    );
 }
 
 #[test]
