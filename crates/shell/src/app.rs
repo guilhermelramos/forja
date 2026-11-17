@@ -948,9 +948,9 @@ impl eframe::App for ForjaApp {
         self.pacer.end(budget);
     }
 
-    fn raw_input_hook(&mut self, _ctx: &egui::Context, raw_input: &mut egui::RawInput) {
+    fn raw_input_hook(&mut self, ctx: &egui::Context, raw_input: &mut egui::RawInput) {
         if let Some(driver) = self.driver.as_mut() {
-            driver.feed(raw_input);
+            driver.feed(ctx, raw_input);
         }
     }
 }

@@ -34,6 +34,8 @@ use std::time::{Duration, Instant};
 /// Frames and minimum time an action waits before it reports the new state.
 const SETTLE_FRAMES: u32 = 4;
 const SETTLE_TIME: Duration = Duration::from_millis(250);
+/// Longest nap between settle frames; keeps the app painting while it waits.
+const SETTLE_STEP: Duration = Duration::from_millis(16);
 
 /// Names listed per direction before the reply is capped.
 const MAX_CHANGE_NAMES: usize = 12;
@@ -45,6 +47,17 @@ const MAX_SUGGESTED_NAMES: usize = 20;
 enum Step {
     /// Events fed to egui in one frame.
     Input(Vec<Event>),
+    /// One pointer event whose position is resolved on the frame it is fed.
+    ///
+    /// A click planned from the tree of an earlier frame can land on empty
+    /// space when the layout moved in between (a project arriving, a panel
+    /// opening). Resolving the widget by name again in the frame that feeds
+    /// the event is what a person does: look, then press where it is now.
+    Pointer {
+        kind: PointerKind,
+        button: PointerButton,
+        target: String,
+    },
     /// Waits until both the frame count and the instant are reached.
     Settle { frames: u32, until: Instant },
     /// Asks egui for a screenshot and waits for it.
@@ -53,6 +66,13 @@ enum Step {
     RequestClose,
     /// Builds the reply from the current tree.
     Reply(Box<Pending>),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PointerKind {
+    Move,
+    Press,
+    Release,
 }
 
 struct Pending {
@@ -263,16 +283,23 @@ impl Driver {
                     _ => PointerButton::Primary,
                 };
                 let double = params.get("double").and_then(Value::as_bool) == Some(true);
-                let press = |pressed| Event::PointerButton {
-                    pos,
+                let target = params.get("target").and_then(Value::as_str).unwrap_or_default();
+                let mut steps = vec![Step::Pointer {
+                    kind: PointerKind::Move,
                     button,
-                    pressed,
-                    modifiers: Modifiers::NONE,
-                };
-                let mut steps = vec![Step::Input(vec![Event::PointerMoved(pos)])];
+                    target: target.to_owned(),
+                }];
                 for _ in 0..if double { 2 } else { 1 } {
-                    steps.push(Step::Input(vec![press(true)]));
-                    steps.push(Step::Input(vec![press(false)]));
+                    steps.push(Step::Pointer {
+                        kind: PointerKind::Press,
+                        button,
+                        target: target.to_owned(),
+                    });
+                    steps.push(Step::Pointer {
+                        kind: PointerKind::Release,
+                        button,
+                        target: target.to_owned(),
+                    });
                 }
                 self.pointer = pos;
                 steps.push(settle(0));
@@ -365,22 +392,52 @@ impl Driver {
         } else {
             return Err(RpcError::invalid_params("give target (widget name), id, or x and y"));
         };
-        let rect = chosen["rect"].as_array().cloned().unwrap_or_default();
-        let value = |index: usize| rect.get(index).and_then(Value::as_f64).unwrap_or(0.0) as f32;
-        let screen = ctx.content_rect();
-        let centre = Pos2::new(
-            ((value(0) + value(2)) / 2.0 / ppp).clamp(screen.left() + 1.0, screen.right() - 1.0),
-            ((value(1) + value(3)) / 2.0 / ppp).clamp(screen.top() + 1.0, screen.bottom() - 1.0),
-        );
+        let centre = centre_of(chosen, ctx);
         Ok((centre, json!({ "clicked": chosen })))
     }
 
     /// Feeds the next input step to egui; called from `raw_input_hook`.
-    pub fn feed(&mut self, raw: &mut egui::RawInput) {
-        if let Some(Step::Input(_)) = self.steps.front() {
-            if let Some(Step::Input(events)) = self.steps.pop_front() {
-                raw.events.extend(events);
+    pub fn feed(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
+        match self.steps.front() {
+            Some(Step::Input(_)) => {
+                if let Some(Step::Input(events)) = self.steps.pop_front() {
+                    raw.events.extend(events);
+                }
             }
+            Some(Step::Pointer { .. }) => {
+                let Some(Step::Pointer {
+                    kind,
+                    button,
+                    target,
+                }) = self.steps.pop_front()
+                else {
+                    return;
+                };
+                // Resolve against the tree of the frame that is about to run.
+                let pos = self.pointer_now(ctx, &target);
+                let event = match kind {
+                    PointerKind::Move => Event::PointerMoved(pos),
+                    PointerKind::Press | PointerKind::Release => Event::PointerButton {
+                        pos,
+                        button,
+                        pressed: kind == PointerKind::Press,
+                        modifiers: Modifiers::NONE,
+                    },
+                };
+                raw.events.push(event);
+            }
+            _ => {}
+        }
+    }
+
+    /// Centre of the widget named `target` as the last frame drew it, or the
+    /// last pointer position when the name is gone.
+    fn pointer_now(&self, ctx: &egui::Context, target: &str) -> Pos2 {
+        let elements = self.elements(ctx);
+        let found = find_by_name(&elements, target).into_iter().next();
+        match found {
+            Some(element) => centre_of(element, ctx),
+            None => self.pointer,
         }
     }
 
@@ -390,7 +447,7 @@ impl Driver {
         loop {
             match self.steps.front_mut() {
                 None => return,
-                Some(Step::Input(_)) => break,
+                Some(Step::Input(_) | Step::Pointer { .. }) => break,
                 Some(Step::Settle { frames, until }) => {
                     if *frames > 0 {
                         *frames -= 1;
@@ -398,7 +455,12 @@ impl Driver {
                     }
                     let now = Instant::now();
                     if now < *until {
-                        ctx.request_repaint_after(until.saturating_duration_since(now));
+                        // Keep painting during the window instead of sleeping
+                        // until the deadline: a task that lands meanwhile (the
+                        // local request list, a page that just opened) is
+                        // applied and drawn before the reply is built.
+                        let remaining = until.saturating_duration_since(now);
+                        ctx.request_repaint_after(remaining.min(SETTLE_STEP));
                         return;
                     }
                     self.steps.pop_front();
@@ -766,6 +828,18 @@ pub fn parse_keys(keys: &str) -> Result<(Key, Modifiers), RpcError> {
 }
 
 /// Widgets whose name matches: exact, then case-insensitive, then containing.
+/// Centre of a widget rect in screen points, clamped to the content rect.
+fn centre_of(element: &Value, ctx: &egui::Context) -> Pos2 {
+    let ppp = ctx.pixels_per_point();
+    let rect = element["rect"].as_array().cloned().unwrap_or_default();
+    let value = |index: usize| rect.get(index).and_then(Value::as_f64).unwrap_or(0.0) as f32;
+    let screen = ctx.content_rect();
+    Pos2::new(
+        ((value(0) + value(2)) / 2.0 / ppp).clamp(screen.left() + 1.0, screen.right() - 1.0),
+        ((value(1) + value(3)) / 2.0 / ppp).clamp(screen.top() + 1.0, screen.bottom() - 1.0),
+    )
+}
+
 fn find_by_name<'a>(elements: &'a [Value], target: &str) -> Vec<&'a Value> {
     let lower = target.to_lowercase();
     let matches = |tier: u8, name: &str| match tier {
