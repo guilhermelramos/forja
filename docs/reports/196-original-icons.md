@@ -31,7 +31,7 @@
 - `cargo test --workspace` inicial encontrou a opacidade de ícones desabilitados em 0,5, quando o contrato pede 0,4 (128 vs 102 de alfa). Corrigido usando o mesmo `painter_for` dos componentes existentes; teste dirigido passou.
 - A árvore ao vivo revelou `project.tree.expand` sem tradução: a chave nova tinha prefixo incorreto `projects-`. Novo teste pt-BR/en falhou com o id cru, antes da correção dos dois FTLs.
 - O sino da barra de status ainda era emoji. Novo teste de nome acessível falhou; agora usa `Icon::Bell`, conserva as cores de leitura e expõe o nome traduzido sem emoji.
-- Removida a dica incorreta Ctrl+1 em Bancada: esse atalho troca a primeira aba de ferramenta, não é um atalho dedicado ao destino do trilho. Destinos sem atalho não inventam um.
+- Removida a dica incorreta Ctrl+1 em Bancada: esse atalho troca a primeira aba de ferramenta, não é um atalho dedicado ao destino do trilho. Destinos sem atalho não inventam um; Mutirão e Ajustes mostram os atalhos reais cadastrados (Ctrl+Shift+M e Ctrl+Comma), em linha separada do nome acessível. Teste de formatação da dica visto falhar e passar.
 
 ### Evidência visual
 
@@ -51,11 +51,11 @@ Os botões da janela já possuíam nome na base; a melhoria é preservá-los dur
 
 ### Verificação
 
-- `cargo build --workspace`: passou (36,08 s no último build completo).
-- `cargo test --workspace`: **1.258 testes, zero falhas**, 114 executáveis/suítes incluindo doc-tests sem casos.
-- `cargo clippy --workspace --all-targets -- -D warnings`: passou (16,17 s na última execução).
+- `cargo build --workspace`: passou (8,52 s na última execução incremental de todo o workspace).
+- `cargo test --workspace`: **1.259 testes, zero falhas**, 114 executáveis/suítes incluindo doc-tests sem casos.
+- `cargo clippy --workspace --all-targets -- -D warnings`: passou (9,66 s na última execução).
 - `cargo xtask icons`: passou; sem diferença no gerado comitado.
-- `cargo xtask provenance`: passou; 1.114 arquivos na execução anterior às capturas finais (nova execução final abaixo).
+- `cargo xtask provenance`: passou também com as capturas adicionadas ao índice; sem termos de proveniência recusados.
 - `cargo xtask catalog`: passou; 281/314 configurações registradas (+1 extra), 280 com efeito, 2 ausências preexistentes; 110/110 atalhos; `design/coverage.md` sem alterações.
 
 A primeira execução ao vivo das regressões identificou uma altura excessiva no novo sino da barra de status: a composição horizontal reservava 32 px dentro de uma área útil de 28 px. O teste foi reproduzido com os tokens reais (limite inferior 802 > 800), corrigido por medição explícita do rótulo e passou; as capturas finais mostram o botão dentro da janela. Uma tentativa de catálogo após compilar a base anterior no mesmo `target` reutilizou metadados antigos do ui-kit; limpeza **somente desse pacote** e reconstrução do código corrente eliminaram a contaminação, e o catálogo passou.

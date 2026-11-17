@@ -1,0 +1,52 @@
+{
+  "stage": "after",
+  "size": "1280x720",
+  "native_window": {
+    "width": 1920.0,
+    "height": 1080.0
+  },
+  "pixels_per_point": 1.5,
+  "buttons": 49,
+  "unnamed_buttons": 0,
+  "window_controls": [
+    {
+      "logical_size": [
+        46.0,
+        32.0
+      ],
+      "rect": [
+        1697.0,
+        8.0,
+        1766.0,
+        56.0
+      ],
+      "name": "Minimizar"
+    },
+    {
+      "logical_size": [
+        46.0,
+        32.0
+      ],
+      "rect": [
+        1766.0,
+        8.0,
+        1835.0,
+        56.0
+      ],
+      "name": "Maximizar"
+    },
+    {
+      "logical_size": [
+        46.0,
+        32.0
+      ],
+      "rect": [
+        1835.0,
+        8.0,
+        1904.0,
+        56.0
+      ],
+      "name": "Fechar janela"
+    }
+  ]
+}

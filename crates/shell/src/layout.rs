@@ -14,6 +14,14 @@ struct RailPage {
     png: Option<Arc<[u8]>>,
 }
 
+fn rail_tooltip(title: &str, shortcut: &str) -> String {
+    if shortcut.is_empty() {
+        title.to_owned()
+    } else {
+        format!("{title}\n{shortcut}")
+    }
+}
+
 fn panel_max_width(available: f32, reserved: f32) -> f32 {
     (available - reserved).clamp(180.0, 480.0)
 }
@@ -299,7 +307,10 @@ impl ForjaApp {
         let frame = egui::Frame::NONE
             .fill(self.paint(self.tokens.color.surface_alt))
             .inner_margin(Margin::symmetric(6, 8));
-        let settings_tip = self.text("shell.rail.settings");
+        let settings_tip = rail_tooltip(
+            &self.text("shell.rail.settings"),
+            &self.chord_for("settings.open"),
+        );
         // Ctrl+1 selects the first tool tab, not the Bancada destination.
         // Do not advertise a shortcut that navigates somewhere else.
         let bench_tip = self.text("shell.rail.bench");
@@ -308,7 +319,14 @@ impl ForjaApp {
             .iter()
             .map(|view| RailPage {
                 id: view.id.clone(),
-                title: self.text(&view.title_key),
+                title: rail_tooltip(
+                    &self.text(&view.title_key),
+                    &if view.id == "muster.page" {
+                        self.chord_for("muster.open")
+                    } else {
+                        String::new()
+                    },
+                ),
                 glyph: super::app::tab_bar::view_icon(view),
                 png: view.icon_png.clone(),
             })
@@ -756,7 +774,20 @@ fn window_button(ui: &mut egui::Ui, glyph: forja_ui_kit::Icon, label: &str) -> e
 
 #[cfg(test)]
 mod tests {
-    use super::{panel_max_width, single_line};
+    use super::{panel_max_width, rail_tooltip, single_line};
+
+    #[test]
+    fn rail_tooltips_keep_the_accessible_name_separate_from_the_shortcut() {
+        assert_eq!(
+            rail_tooltip("Mutirão", "Ctrl+Shift+M"),
+            "Mutirão\nCtrl+Shift+M"
+        );
+        assert_eq!(
+            rail_tooltip("Ajustes", "Ctrl+Comma").lines().next(),
+            Some("Ajustes")
+        );
+        assert_eq!(rail_tooltip("Bancada", ""), "Bancada");
+    }
 
     #[test]
     fn side_panels_leave_room_for_the_center() {
