@@ -127,6 +127,11 @@ impl FramePacer {
 impl ForjaApp {
     /// Frame budget for the current window state (`app.performance.*`).
     pub(crate) fn frame_budget(&self, focused: bool) -> Option<Duration> {
+        // Screenshot and test-driver windows never take focus on purpose, and
+        // they drive the frames themselves while they wait for the interface to
+        // settle. Applying the background budget there would delay exactly the
+        // frame the driver is waiting for, so it counts as focused.
+        let focused = focused || self.driver.is_some() || self.screenshot.is_some();
         interval(
             self.setting_number("app.performance.max_fps", 60.0),
             self.setting_number("app.performance.unfocused_fps", 10.0),
