@@ -419,8 +419,10 @@ impl HelperSettings {
 impl HelperSettings {
     fn draw(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         let _ = ensure_current(cx, &self.core);
-        let (profiles, file) = match self.core.state.lock() {
-            Ok(state) => (state.profiles.clone(), state.file.clone()),
+        maybe_detect(cx, &self.core);
+        let (profiles, file, installed) = match self.core.state.lock() {
+            Ok(state) => (state.profiles.clone(), state.file.clone(), state.profiles.iter()
+                .filter(|profile| state.is_installed(&profile.id)).map(|profile| profile.id.clone()).collect::<BTreeSet<_>>()),
             Err(_) => return,
         };
         for profile in profiles.iter().filter(|profile| profile.hooks.supported) {
@@ -450,7 +452,8 @@ impl HelperSettings {
                 .get(&profile.id)
                 .cloned()
                 .unwrap_or_default();
-            let mut enabled = !overrides.disabled;
+            let is_installed = installed.contains(&profile.id);
+            let mut enabled = is_installed && !overrides.disabled;
             let mut extra = overrides.extra_args.join(" ");
             let mut environment = overrides
                 .environment
@@ -466,7 +469,10 @@ impl HelperSettings {
             ui.separator();
             ui.horizontal(|ui| {
                 ui.label(egui::RichText::new(&profile.name).strong());
-                if ui.checkbox(&mut enabled, cx.t("helper.settings.enabled")).changed() {
+                ui.label(cx.t(if is_installed { "helper.settings.cli-installed" } else { "helper.settings.cli-missing" }));
+                let response = ui.add_enabled(is_installed, egui::Checkbox::new(&mut enabled, cx.t("helper.settings.enabled")))
+                    .on_hover_text(cx.t("helper.settings.enabled-help"));
+                if response.changed() {
                     let mut next = overrides.clone();
                     next.disabled = !enabled;
                     changes.push((profile.id.clone(), next));

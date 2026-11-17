@@ -8,7 +8,7 @@
     { "m": "ui.key", "keys": "Escape" }
   ],
   "expect": [
-    { "step": 1, "window_count": 1, "present": ["Fechar janela", "Bigorna"] },
-    { "window_count": 0, "absent": ["Limite do histórico"] }
+    { "step": 1, "window_count": 0, "present": ["Buscar ajustes", "Aparência", "Restaurar tudo"] },
+    { "window_count": 0, "absent": ["Buscar ajustes", "Restaurar tudo"] }
   ]
 }

@@ -127,3 +127,6 @@ helper-view-set-default = Set default
 helper-launch-not-installed = Helper { $name } is not installed on this machine.
 
 helper-status-summary = { $working } working · { $waiting } waiting
+helper-settings-cli-installed = CLI installed
+helper-settings-cli-missing = CLI not installed
+helper-settings-enabled-help = Enable an installed CLI for use in Forja; this does not install the helper.

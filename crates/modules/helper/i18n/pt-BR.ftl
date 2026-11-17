@@ -127,3 +127,6 @@ helper-view-set-default = Definir padrão
 helper-launch-not-installed = O ajudante { $name } não está instalado neste computador.
 
 helper-status-summary = { $working } trabalhando · { $waiting } esperando
+helper-settings-cli-installed = CLI instalado
+helper-settings-cli-missing = CLI não instalado
+helper-settings-enabled-help = Habilita um CLI instalado para uso na Forja; isto não instala o ajudante.

@@ -1,0 +1,59 @@
+{
+  "title": "Esc e engrenagem retornam à página anterior (#199)",
+  "issue": 199,
+  "locale": "pt-BR",
+  "steps": [
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.click",
+      "target": "Rotinas"
+    },
+    {
+      "m": "ui.click",
+      "target": "Ajustes"
+    },
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.click",
+      "target": "Ajustes"
+    },
+    {
+      "m": "ui.click",
+      "target": "Ajustes"
+    }
+  ],
+  "expect": [
+    {
+      "step": 2,
+      "window_count": 0,
+      "present": [
+        "Buscar ajustes"
+      ]
+    },
+    {
+      "step": 3,
+      "present": [
+        "Nova rotina"
+      ],
+      "absent": [
+        "Buscar ajustes"
+      ]
+    },
+    {
+      "step": 5,
+      "present": [
+        "Nova rotina"
+      ],
+      "absent": [
+        "Buscar ajustes"
+      ],
+      "no_geometry_issues": true
+    }
+  ]
+}

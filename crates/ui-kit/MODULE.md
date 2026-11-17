@@ -17,6 +17,10 @@ Nada no kernel. Este crate não é um módulo. O shell chama `apply` e desenha c
   `ARCHIVE`, `SKILLS`, `SETTINGS`, `SEARCH`, `CLOSE`, `SPLIT_RIGHT`, `SPLIT_DOWN`, `THEME`).
 - `TerminalTheme::load_dir` lê `content/themes/*.toml`.
 - Componentes recebem o rótulo. Não há string de produto embutida.
+- `setting_row` padroniza rótulo/ajuda, controle à direita, marca de alteração,
+  restauração e avisos por linha. `settings_navigation` oferece linhas de seção
+  com estado selecionado acessível e indicador Brasa; `highlighted_text` mantém
+  limites Unicode ao enfatizar termos de busca.
 - `select` abre com clique, Space ou Enter no gatilho focado; as setas movem o
   destaque da lista, Enter escolhe e Escape fecha. As opções abertas aparecem na
   árvore de acessibilidade como botões.

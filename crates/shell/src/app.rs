@@ -121,6 +121,7 @@ pub struct ForjaApp {
     /// Remembered right-panel contribution when more than one module fills the slot.
     pub(crate) right_tab: usize,
     pub(crate) settings_open: bool,
+    pub(crate) settings_page: crate::settings_page::State,
     pub(crate) keymap_open: bool,
     /// Módulo cuja seção é a única mostrada nos Ajustes (`--settings`).
     pub(crate) settings_section: Option<String>,
@@ -311,6 +312,7 @@ impl ForjaApp {
             sidebar_tab: resolved.sidebar_tab,
             right_tab: resolved.right_tab,
             settings_open: false,
+            settings_page: crate::settings_page::State::default(),
             keymap_open: false,
             settings_section: None,
             modal_capture: session.modal.clone(),
@@ -798,7 +800,7 @@ impl ForjaApp {
         // Only the Anvil shortcuts may open above these shell windows. Other
         // modal layers, including dialogs and popups, keep exclusive control.
         let shell_window_active = (self.settings_open
-            && forja_ui_kit::keyboard_layer_active(ctx, egui::Id::new("forja.settings.keyboard")))
+            && ctx.memory(|memory| memory.top_modal_layer().is_none()))
             || (self.keymap_open
                 && forja_ui_kit::keyboard_layer_active(ctx, egui::Id::new("forja.keymap.keyboard")));
         if self.anvil_open

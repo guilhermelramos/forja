@@ -1,0 +1,57 @@
+{
+  "title": "Busca de Ajustes cruza grupos e informa ausência de resultados (#199, #164)",
+  "issue": 199,
+  "locale": "pt-BR",
+  "steps": [
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.click",
+      "target": "Ajustes"
+    },
+    {
+      "m": "ui.click",
+      "target": "Buscar ajustes"
+    },
+    {
+      "m": "ui.type",
+      "text": "Limite do histórico"
+    },
+    {
+      "m": "ui.snapshot"
+    },
+    {
+      "m": "ui.key",
+      "keys": "Ctrl+A"
+    },
+    {
+      "m": "ui.type",
+      "text": "zzznosettingsfound"
+    },
+    {
+      "m": "ui.snapshot"
+    }
+  ],
+  "expect": [
+    {
+      "step": 4,
+      "present": [
+        "Limite do histórico"
+      ],
+      "absent": [
+        "Tema"
+      ],
+      "window_count": 0,
+      "no_geometry_issues": true
+    },
+    {
+      "step": 7,
+      "present": [
+        "Nenhum ajuste encontrado."
+      ],
+      "no_geometry_issues": true
+    }
+  ]
+}

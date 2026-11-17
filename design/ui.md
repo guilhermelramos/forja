@@ -156,6 +156,12 @@ Um trilho `surface_alt` com segmentos iguais. O ativo preenche `accent` com text
 
 Texto `text_muted` em repouso, `text` na ativa e no hover. A ativa ganha um sublinhado de 2 px em `accent`. No tema claro o laranja não serve de texto pequeno (3.51:1 sobre `bg`), por isso a aba ativa não pinta o rótulo de `accent`.
 
+### Página de Ajustes
+
+Ajustes ocupa a área central e conserva a página anterior ao sair pela engrenagem ou por Escape. A engrenagem fica selecionada; os painéis seguem o comportamento das demais páginas do trilho. O conteúdo usa no máximo 960 px, com busca fixa no topo, navegação vertical de grupos do catálogo à esquerda e rodapé de ações sempre acessível. Seções próprias ficam após um separador, sem repetir linhas do catálogo.
+
+Cada linha tem rótulo e ajuda curta à esquerda, controle alinhado à direita e, abaixo, avisos de validação ou reinício. Um ponto em `accent` e o rótulo acessível de alteração acompanham o botão Restaurar padrão. Busca destaca as ocorrências com `accent_soft`, sem perder o contraste do texto. A prévia de Aparência mostra controles, lista e terminal; fica ao lado quando há espaço e acima em larguras menores. Não há seletor de escopo enquanto ajustes por projeto não forem implementados (#212).
+
 ### Cartão
 
 Fundo `surface`, contorno `border`, raio 10, elevação 1, folga de 16 px no confortável (8 no compacto, duas vezes o espaço entre itens). Título opcional em peso 600.

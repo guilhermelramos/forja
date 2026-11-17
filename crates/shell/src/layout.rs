@@ -280,6 +280,7 @@ impl ForjaApp {
                 ui.vertical_centered(|ui| {
                     let logo = self.logo(ui);
                     if logo.clicked() {
+                        self.settings_open = false;
                         self.rail_page = None;
                     }
                     logo.on_hover_text(bench_tip.clone());
@@ -304,6 +305,7 @@ impl ForjaApp {
                             )
                             .clicked()
                         {
+                            self.settings_open = false;
                             if selected {
                                 self.rail_page = None;
                             } else {
@@ -319,11 +321,11 @@ impl ForjaApp {
                                 None,
                                 forja_ui_kit::SETTINGS,
                                 &settings_tip,
-                                false,
+                                self.settings_open,
                             )
                             .clicked()
                         {
-                            self.settings_open = true;
+                            self.settings_open = !self.settings_open;
                             self.settings_query.clear();
                         }
                     });
@@ -493,6 +495,10 @@ impl ForjaApp {
             .fill(self.paint(self.tokens.color.bg))
             .inner_margin(Margin::symmetric(12, 8));
         let response = egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
+            if self.settings_open {
+                self.settings_page_ui(ui);
+                return;
+            }
             if let Some(page) = self.rail_page.clone() {
                 if self.rail_views.iter().any(|view| view.id == page) {
                     if button(
