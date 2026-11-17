@@ -9,7 +9,7 @@
     { "m": "ui.open_tab", "target": "Diferenças" },
     { "m": "ui.open_tab", "target": "Mudanças" },
     { "m": "ui.wait", "ms": 1000 },
-    { "m": "ui.click", "target": "↺" },
+    { "m": "ui.click", "target": "Descartar" },
     { "m": "ui.key", "keys": "Escape" },
     { "m": "ui.snapshot" }
   ],

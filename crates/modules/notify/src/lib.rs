@@ -446,6 +446,61 @@ mod tests {
     }
 
     #[test]
+    fn notification_icon_action_fits_inside_the_status_bar() {
+        let dir = temp_dir();
+        let mut runtime = runtime(&dir);
+        let ctx = forja_ui_kit::egui::Context::default();
+        forja_ui_kit::apply(&ctx, &forja_ui_kit::Tokens::brasa_dark());
+        ctx.enable_accesskit();
+        let mut view = CenterView {
+            state: Shared::new(),
+        };
+        let output = ctx.run(
+            forja_ui_kit::egui::RawInput {
+                screen_rect: Some(forja_ui_kit::egui::Rect::from_min_size(
+                    Default::default(),
+                    forja_ui_kit::egui::vec2(1280.0, 800.0),
+                )),
+                ..Default::default()
+            },
+            |ctx| {
+                forja_ui_kit::egui::TopBottomPanel::bottom("status")
+                    .exact_height(32.0)
+                    .frame(
+                        forja_ui_kit::egui::Frame::NONE
+                            .inner_margin(forja_ui_kit::egui::Margin::symmetric(10, 2)),
+                    )
+                    .show(ctx, |ui| {
+                        ui.horizontal_centered(|ui| {
+                            ui.with_layout(
+                                forja_ui_kit::egui::Layout::right_to_left(
+                                    forja_ui_kit::egui::Align::Center,
+                                ),
+                                |ui| {
+                                    view.ui(ui, &mut runtime.ctx("notify"));
+                                },
+                            );
+                        });
+                    });
+            },
+        );
+        let update = output.platform_output.accesskit_update.unwrap();
+        let bounds = update
+            .nodes
+            .iter()
+            .find_map(|(_, node)| {
+                (node.label() == Some("0 avisos")).then(|| node.bounds().unwrap())
+            })
+            .unwrap();
+        assert!(
+            bounds.y1 <= 800.0,
+            "notification action leaves the viewport: {bounds:?}"
+        );
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
     fn contract_show_and_event() {
         let dir = temp_dir();
         let mut runtime = runtime(&dir);

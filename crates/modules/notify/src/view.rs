@@ -147,14 +147,26 @@ impl forja_kernel::ui_contract::View for CenterView {
         let count = unread.to_string();
         let label = cx.t_args("notify.center.count", &[("count", &count)]);
         let color = if unread == 0 { muted(ui) } else { accent(ui) };
-        let response = ui
-            .horizontal(|ui| {
-                let (rect, _) = ui.allocate_exact_size(egui::vec2(16.0, 16.0), Sense::hover());
-                forja_ui_kit::paint_icon(ui.painter(), forja_ui_kit::Icon::Bell, rect, color);
-                ui.label(egui::RichText::new(&label).color(color));
-            })
-            .response
-            .interact(Sense::click());
+        // Status rows have less height than a normal 32px control after padding.
+        // Measure the caption instead of letting a horizontal UI reserve a full row.
+        let font = egui::FontId::proportional(tokens(ui).metrics().body);
+        let galley = ui.painter().layout_no_wrap(label.clone(), font, color);
+        let size = egui::vec2(galley.size().x + 24.0, galley.size().y.max(16.0));
+        let (rect, response) = ui.allocate_exact_size(size, Sense::click());
+        forja_ui_kit::paint_icon(
+            ui.painter(),
+            forja_ui_kit::Icon::Bell,
+            egui::Rect::from_center_size(
+                rect.left_center() + egui::vec2(8.0, 0.0),
+                egui::vec2(16.0, 16.0),
+            ),
+            color,
+        );
+        ui.painter().galley(
+            rect.left_top() + egui::vec2(24.0, (rect.height() - galley.size().y) * 0.5),
+            galley,
+            color,
+        );
         response.widget_info(|| {
             egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), &label)
         });
