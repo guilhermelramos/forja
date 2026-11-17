@@ -36,6 +36,8 @@ struct Options {
     out: PathBuf,
     locales: Vec<String>,
     themes: Vec<String>,
+    /// Capture the demo state next to the empty one (default on).
+    demo: bool,
 }
 
 impl Options {
@@ -45,6 +47,7 @@ impl Options {
             out: PathBuf::from("atlas-out"),
             locales: vec!["pt-BR".into(), "en".into()],
             themes: vec!["dark".into(), "light".into()],
+            demo: true,
         };
         let mut iter = args.iter();
         while let Some(arg) = iter.next() {
@@ -58,6 +61,7 @@ impl Options {
                 "--out" => options.out = PathBuf::from(value()?),
                 "--locales" => options.locales = split(&value()?),
                 "--themes" => options.themes = split(&value()?),
+                "--no-demo" => options.demo = false,
                 other => return Err(format!("unknown atlas option `{other}`")),
             }
         }
@@ -130,8 +134,15 @@ fn targets(catalog: &Value) -> Vec<Target> {
     targets
 }
 
-fn state_id(locale: &str, theme: &str, target: &Target) -> String {
-    format!("{locale}.{theme}.{}.{}", target.kind, target.id)
+fn state_id(locale: &str, theme: &str, target: &Target, demo: bool) -> String {
+    // The empty state keeps its historic id; the demonstration one is prefixed
+    // with `demo` so both live side by side in `captures/`.
+    let kind = if demo {
+        format!("demo.{}", target.kind)
+    } else {
+        target.kind.to_owned()
+    };
+    format!("{locale}.{theme}.{kind}.{}", target.id)
         .chars()
         .map(|c| if c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_') { c } else { '_' })
         .collect()
@@ -155,52 +166,59 @@ fn capture(options: &Options) -> Result<(), String> {
         let catalog = dump_catalog(&exe, locale, &scratch)?;
         let targets = targets(&catalog);
         for theme in &options.themes {
+            let modes: &[bool] = if options.demo { &[false, true] } else { &[false] };
             for target in &targets {
-                let id = state_id(locale, theme, target);
-                let png = captures.join(format!("{id}.png"));
-                let tree = captures.join(format!("{id}.json"));
-                let data = scratch.join(&id);
-                let mut command = Command::new(&exe);
-                command
-                    .args(["--screenshot"])
-                    .arg(&png)
-                    .arg("--ui-tree")
-                    .arg(&tree)
-                    .args(["--locale", locale, "--theme", theme])
-                    .args(&target.args)
-                    .env("FORJA_DATA_DIR", data.join("data"))
-                    .env("FORJA_CONTENT_DIR", data.join("user"))
-                    .stdout(Stdio::null())
-                    .stderr(Stdio::null());
-                let ok = run_with_timeout(&mut command, Duration::from_secs(90))?;
-                if !ok || !png.exists() || !tree.exists() {
-                    eprintln!("atlas: FAILED {id}");
-                    failures.push(id);
-                    continue;
+                for &demo in modes {
+                    let id = state_id(locale, theme, target, demo);
+                    let png = captures.join(format!("{id}.png"));
+                    let tree = captures.join(format!("{id}.json"));
+                    let data = scratch.join(&id);
+                    let mut command = Command::new(&exe);
+                    command
+                        .args(["--screenshot"])
+                        .arg(&png)
+                        .arg("--ui-tree")
+                        .arg(&tree)
+                        .args(["--locale", locale, "--theme", theme])
+                        .args(&target.args)
+                        .env("FORJA_DATA_DIR", data.join("data"))
+                        .env("FORJA_CONTENT_DIR", data.join("user"))
+                        .stdout(Stdio::null())
+                        .stderr(Stdio::null());
+                    if demo {
+                        command.arg("--demo");
+                    }
+                    let ok = run_with_timeout(&mut command, Duration::from_secs(90))?;
+                    if !ok || !png.exists() || !tree.exists() {
+                        eprintln!("atlas: FAILED {id}");
+                        failures.push(id);
+                        continue;
+                    }
+                    let tree_json: Value = serde_json::from_str(
+                        &std::fs::read_to_string(&tree).map_err(|error| error.to_string())?,
+                    )
+                    .map_err(|error| format!("{}: {error}", tree.display()))?;
+                    let names = named_widgets(&tree_json);
+                    let sha = short_sha(&std::fs::read(&png).map_err(|error| error.to_string())?);
+                    let same_as = first_by_sha.get(&sha).cloned();
+                    first_by_sha.entry(sha.clone()).or_insert_with(|| id.clone());
+                    eprintln!("atlas: {id} ({} named widgets)", names.len());
+                    states.push(json!({
+                        "state": id,
+                        "locale": locale,
+                        "theme": theme,
+                        "kind": target.kind,
+                        "demo": demo,
+                        "target": target.id,
+                        "args": target.args,
+                        "png": format!("captures/{id}.png"),
+                        "tree": format!("captures/{id}.json"),
+                        "capture_sha": sha,
+                        "same_as": same_as,
+                        "nodes": tree_json["nodes"].as_array().map_or(0, Vec::len),
+                        "named_widgets": names,
+                    }));
                 }
-                let tree_json: Value = serde_json::from_str(
-                    &std::fs::read_to_string(&tree).map_err(|error| error.to_string())?,
-                )
-                .map_err(|error| format!("{}: {error}", tree.display()))?;
-                let names = named_widgets(&tree_json);
-                let sha = short_sha(&std::fs::read(&png).map_err(|error| error.to_string())?);
-                let same_as = first_by_sha.get(&sha).cloned();
-                first_by_sha.entry(sha.clone()).or_insert_with(|| id.clone());
-                eprintln!("atlas: {id} ({} named widgets)", names.len());
-                states.push(json!({
-                    "state": id,
-                    "locale": locale,
-                    "theme": theme,
-                    "kind": target.kind,
-                    "target": target.id,
-                    "args": target.args,
-                    "png": format!("captures/{id}.png"),
-                    "tree": format!("captures/{id}.json"),
-                    "capture_sha": sha,
-                    "same_as": same_as,
-                    "nodes": tree_json["nodes"].as_array().map_or(0, Vec::len),
-                    "named_widgets": names,
-                }));
             }
         }
     }
@@ -426,9 +444,11 @@ Crie uma"), flatten("Nenhuma bancada ativa.<br>Crie  uma"));
         assert!(kinds.contains(&"right-tab:git.changes".to_owned()));
         assert!(kinds.contains(&"modal:voice.overlay".to_owned()));
         assert_eq!(kinds.iter().filter(|kind| kind.starts_with("settings:")).count(), 1);
+        let home = &targets(&catalog)[0];
+        assert_eq!(state_id("pt-BR", "dark", home, false), "pt-BR.dark.home.default");
         assert_eq!(
-            state_id("pt-BR", "dark", &targets(&catalog)[0]),
-            "pt-BR.dark.home.default"
+            state_id("pt-BR", "dark", home, true),
+            "pt-BR.dark.demo.home.default"
         );
     }
 }

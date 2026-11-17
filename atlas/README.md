@@ -5,7 +5,7 @@ O atlas é a documentação visual da Forja: cada tela, em cada idioma e tema, c
 As páginas geradas ficam no branch **`atlas`**: `README.md` com o progresso, `pages/`, `captures/` e `PROBLEMAS.md`.
 
 ## Como funciona
-1. `cargo xtask atlas capture --exe <forja-app.exe> --out <dir>` lista as telas do app (`forja-app --dump-catalog`). Depois abre cada uma com `--screenshot` e `--ui-tree`, e grava `captures/` e `manifest.json`. Telas com pixels idênticos são marcadas com `same_as` e documentadas uma vez.
+1. `cargo xtask atlas capture --exe <forja-app.exe> --out <dir>` lista as telas do app (`forja-app --dump-catalog`). Depois abre cada uma com `--screenshot` e `--ui-tree`, duas vezes: vazia e com os dados de demonstração (`--demo`), gravando `captures/` e `manifest.json`. A captura de demonstração leva `demo` no nome (`pt-BR.dark.demo.rail.board.page`); a vazia mantém o nome antigo. `--no-demo` desliga a segunda passada. Telas com pixels idênticos são marcadas com `same_as` e documentadas uma vez.
 2. `cargo xtask atlas status --out <dir>` compara o manifesto com `pages/` e grava `todo.json`. Ali ficam as telas sem página e as páginas desatualizadas: a captura mudou ou algum elemento com nome não é citado.
 3. O workflow `.github/workflows/atlas.yml` roda na nuvem, num runner Windows do GitHub Actions. Para cada item do `todo.json`, ele chama o agente (OpenCode, modelo gratuito) com `atlas/agent/INSTRUCTIONS.md`, a captura e o `atlas brief`. Em seguida valida a resposta com `atlas accept`, regenera o índice (`atlas index`) e faz push no branch `atlas`.
 4. O loop termina quando `todo.json` diz `complete: true`. Depois disso, cada mudança nas telas deixa páginas desatualizadas, e o agente as refaz.

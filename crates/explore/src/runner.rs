@@ -114,6 +114,7 @@ pub fn run(config: &ExploreConfig) -> Result<ExploreSummary, String> {
             config.out_dir.clone(),
             pick_dir,
             None,
+            false,
         )?)
     } else {
         None

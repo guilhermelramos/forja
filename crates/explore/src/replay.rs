@@ -23,6 +23,9 @@ pub struct RegressionFile {
     /// Test-only helper discovery override passed to the app process.
     #[serde(default)]
     pub test_helpers: Option<String>,
+    /// Starts the app with `--demo`, the fixed sample data.
+    #[serde(default)]
+    pub demo: bool,
     pub steps: Vec<Map<String, Value>>,
     pub expect: Vec<Expectation>,
 }
@@ -197,6 +200,7 @@ fn run_file(
             temp_root.clone(),
             pick_dir,
             spec.test_helpers.clone(),
+            spec.demo,
         )?;
         let mut snapshots = Vec::with_capacity(spec.steps.len());
 
