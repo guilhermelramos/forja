@@ -7,7 +7,7 @@
 param(
     [Parameter(Mandatory)] [string]$App,
     [Parameter(Mandatory)] [ValidateSet('before', 'after')] [string]$Stage,
-    [string]$Out = 'docs/reports/196-icons'
+    [string]$Out = 'target/reports/196-icons'
 )
 $ErrorActionPreference = 'Stop'
 $App = (Resolve-Path $App).Path
