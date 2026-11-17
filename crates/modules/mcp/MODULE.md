@@ -6,7 +6,14 @@ Configuração do servidor MCP da Forja. A ponte stdio vive em `crates/mcp`
 ## O que registra
 
 - Configurações do grupo `mcp`: `mcp.server.enabled`,
-  `mcp.server.expose`, `mcp.server.auto_approve` e `mcp.server.timeout_s`.
+  `mcp.server.expose`, `mcp.server.auto_approve`, `mcp.server.timeout_s`,
+  `mcp.log.requests` e `mcp.tools.auto_approve`.
+- `mcp.log.requests` (desligado por padrão) grava uma linha por requisição que
+  o servidor MCP recebe, no log do app: método, `ok`/`error` e duração em ms.
+  Argumentos nunca entram na linha.
+- `mcp.tools.auto_approve` (lista vazia por padrão) soma-se a
+  `mcp.server.auto_approve` no fluxo de aprovação por chamada; um método que o
+  código nunca expõe não é aprovado nem se estiver na lista.
 - Comandos/RPC `mcp.tools` (read) e `mcp.setup` (read).
 - Comandos/RPC `mcp.authorize` (write) e `mcp.approval` (read) para a
   aprovação por chamada.

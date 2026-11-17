@@ -7,11 +7,11 @@
 | Métrica | Valor |
 |---|---|
 | Configurações no catálogo | 313 |
-| Configurações registradas no app | 279 (278 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 278 (277 do catálogo) |
+| Configurações registradas no app | 281 (280 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 280 (279 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
-| Configurações adiadas | 33 |
+| Configurações adiadas | 31 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
 | Atalhos no catálogo | 110 |
@@ -49,8 +49,6 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 - `muster.workspace.isolation`: Aguardando contrato de criação e prontidão de bancada isolada.
 - `mcp.client.enabled`: Cliente MCP ainda não implementado.
 - `mcp.startup.timeout_s`: Cliente MCP ainda não implementado.
-- `mcp.tools.auto_approve`: Cliente MCP ainda não implementado.
-- `mcp.log.requests`: Aguardando observação de requisições na ponte MCP e serviço de log.
 - `browser.privacy.third_party_cookies`: Aguardando a API de perfil do WebView2 para bloquear cookies de terceiros.
 - `remote.sync.mode`: Aguardando contrato de sincronização de arquivos com bancada remota; o módulo ainda não sincroniza arquivos.
 - `app.cli.enabled`: Aguardando ciclo de vida cancelável do servidor RPC local.
@@ -287,8 +285,8 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `counter.notifications.checks_failed` | `counter` | `counter` | sim | ok | sim |
 | `mcp.client.enabled` | `mcp` | `-` | adiada | - | adiada |
 | `mcp.startup.timeout_s` | `mcp` | `-` | adiada | - | adiada |
-| `mcp.tools.auto_approve` | `mcp` | `-` | adiada | - | adiada |
-| `mcp.log.requests` | `mcp` | `-` | adiada | - | adiada |
+| `mcp.tools.auto_approve` | `mcp` | `mcp` | sim | ok | sim |
+| `mcp.log.requests` | `mcp` | `mcp` | sim | ok | sim |
 | `mcp.server.enabled` | `mcp` | `mcp` | sim | ok | sim |
 | `mcp.server.expose` | `mcp` | `mcp` | sim | ok | sim |
 | `mcp.server.auto_approve` | `mcp` | `mcp` | sim | ok | sim |
