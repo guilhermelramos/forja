@@ -69,7 +69,12 @@ impl ForjaApp {
             search.request_focus();
         }
         ui.add_space(10.0);
-        let height = (ui.available_height() - 58.0).max(160.0);
+        let footer_height = if self.settings_page.transfer.notice.is_some() {
+            84.0
+        } else {
+            58.0
+        };
+        let height = (ui.available_height() - footer_height).max(160.0);
         let nav_width = (width * 0.22).clamp(130.0, 190.0);
         let content_width = (width - nav_width - 20.0).max(150.0);
         let query = self.settings_query.trim().to_owned();
@@ -131,27 +136,23 @@ impl ForjaApp {
                 divider.y_range(),
                 egui::Stroke::new(1.0_f32, self.paint(self.tokens.color.border)),
             );
-            ui.allocate_ui_with_layout(
-                egui::vec2(content_width, height),
-                egui::Layout::top_down(egui::Align::Min),
-                |ui| {
-                    ui.set_width(content_width);
-                    let selected = self.settings_page.selected.clone();
-                    let mut scroll = egui::ScrollArea::both()
-                        .id_salt(("forja.settings.rows", &selected, &query))
-                        .max_height(height)
-                        .auto_shrink([false, false]);
-                    if search.changed() {
-                        scroll = scroll.vertical_scroll_offset(0.0);
-                    }
-                    scroll.show(ui, |ui| {
-                        ui.set_width(content_width - 4.0);
-                        self.settings_group_contents(ui, &query);
-                        reveal_focused_control(ui);
-                        apply_page_scroll(ui);
-                    });
-                },
-            );
+            forja_ui_kit::settings_viewport(ui, content_width, height, |ui| {
+                ui.set_width(content_width);
+                let selected = self.settings_page.selected.clone();
+                let mut scroll = egui::ScrollArea::both()
+                    .id_salt(("forja.settings.rows", &selected, &query))
+                    .max_height(height)
+                    .auto_shrink([false, false]);
+                if search.changed() {
+                    scroll = scroll.vertical_scroll_offset(0.0);
+                }
+                scroll.show(ui, |ui| {
+                    ui.set_width(content_width - 4.0);
+                    self.settings_group_contents(ui, &query);
+                    reveal_focused_control(ui);
+                    apply_page_scroll(ui);
+                });
+            });
         });
         ui.add_space(8.0);
         ui.separator();
@@ -321,8 +322,17 @@ impl ForjaApp {
                     ButtonKind::Secondary,
                     &self.text("shell.settings.preview-secondary"),
                 );
-                ui.label(self.text("shell.settings.preview-list"));
             });
+            let sample = self.text("shell.settings.preview-list");
+            let mut selected = Some(0);
+            forja_ui_kit::list(
+                ui,
+                &[forja_ui_kit::ListItem {
+                    label: &sample,
+                    detail: None,
+                }],
+                &mut selected,
+            );
             egui::Frame::new()
                 .fill(self.paint(self.tokens.color.bg))
                 .inner_margin(8.0_f32)

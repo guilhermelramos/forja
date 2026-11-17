@@ -425,7 +425,7 @@ impl HelperSettings {
                 .filter(|profile| state.is_installed(&profile.id)).map(|profile| profile.id.clone()).collect::<BTreeSet<_>>()),
             Err(_) => return,
         };
-        for profile in profiles.iter().filter(|profile| profile.hooks.supported) {
+        for profile in profiles.iter().filter(|profile| profile.hooks.supported && installed.contains(&profile.id)) {
             let mut args = Args::new();
             args.insert("profile_id", json!(profile.id));
             let _ = cx.run_command("helper.hooks.status", args);
@@ -510,11 +510,11 @@ impl HelperSettings {
             });
             if profile.hooks.supported {
                 let state = hook_results.get(&hooks::consent_key(profile));
-                let state_label = match state {
+                let state_label = if !is_installed { cx.t("helper.settings.cli-missing") } else { match state {
                     Some(Ok(status)) => hook_state_label(cx, status.state),
                     Some(Err(message)) => message.clone(),
                     None => cx.t("helper.settings.status.loading"),
-                };
+                } };
                 if let Some(path) = hooks::config_path(profile) {
                     ui.horizontal(|ui| {
                         ui.label(cx.t("helper.settings.hook-target"));
@@ -527,7 +527,7 @@ impl HelperSettings {
                     let mut consent_now = consent;
                     if ui
                         .add_enabled(
-                            profile.trusted && !hook_busy,
+                            is_installed && profile.trusted && !hook_busy,
                             egui::Checkbox::new(&mut consent_now, cx.t("helper.settings.consent")),
                         )
                         .changed()
@@ -535,13 +535,13 @@ impl HelperSettings {
                         hook_action = Some(HookAction::Consent(profile.id.clone(), consent_now));
                     }
                     if ui
-                        .add_enabled(consent && !hook_busy, egui::Button::new(cx.t("helper.settings.install")))
+                        .add_enabled(is_installed && consent && !hook_busy, egui::Button::new(cx.t("helper.settings.install")))
                         .clicked()
                     {
                         hook_action = Some(HookAction::Install(profile.id.clone()));
                     }
                     if ui
-                        .add_enabled(consent && !hook_busy, egui::Button::new(cx.t("helper.settings.remove")))
+                        .add_enabled(is_installed && consent && !hook_busy, egui::Button::new(cx.t("helper.settings.remove")))
                         .clicked()
                     {
                         hook_action = Some(HookAction::Remove(profile.id.clone()));

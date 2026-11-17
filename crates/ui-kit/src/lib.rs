@@ -48,7 +48,7 @@ pub use components::{
     wrapped_label, ButtonKind, Column, HelperMissingGuide, ListItem, MenuItem, PanelIconTab, Stage,
     TabFitPlan, TabItem, TabStripOutcome, ToastKind, TreeNode,
 };
-pub use components::{highlighted_text, setting_row, settings_navigation, SettingRow};
+pub use components::{highlighted_text, setting_row, settings_navigation, settings_viewport, SettingRow};
 pub use eframe::egui;
 pub use fonts::{install_fonts, FontError};
 pub use icon::{

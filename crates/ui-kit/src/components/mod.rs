@@ -23,7 +23,7 @@ pub use modal::{
     modal, modal_explicit_close, modal_preview, window_header, window_header_with_focus,
 };
 pub use page::{empty_state, page_heading, theme_sample};
-pub use settings::{highlighted_text, setting_row, settings_navigation, SettingRow};
+pub use settings::{highlighted_text, setting_row, settings_navigation, settings_viewport, SettingRow};
 pub use status::{
     error_banner, error_notice, helper_missing_guide, progress_bar, stage_badge, toast,
     truncated_label, wrapped_label, HelperMissingGuide, Stage, ToastKind,

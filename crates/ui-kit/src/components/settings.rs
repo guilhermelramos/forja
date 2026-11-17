@@ -64,8 +64,12 @@ pub fn setting_row<R>(
                     }
                     if row.modified {
                         ui.horizontal_wrapped(|ui| {
-                            let marker = ui.label(RichText::new(row.modified_label).small());
-                            let centre = marker.rect.left_center() - egui::vec2(5.0, 0.0);
+                            let (marker, _) = ui.allocate_exact_size(
+                                egui::vec2(8.0, tokens.metrics().caption),
+                                egui::Sense::hover(),
+                            );
+                            ui.label(RichText::new(row.modified_label).small());
+                            let centre = marker.center();
                             ui.painter().circle_filled(
                                 centre,
                                 2.5,
@@ -89,6 +93,33 @@ pub fn setting_row<R>(
         ui.separator();
     });
     (result.expect("control rendered"), restore)
+}
+
+/// Constrains a settings scroll region's accessibility subtree to its viewport.
+/// The content still owns its scroll offset and keyboard navigation.
+pub fn settings_viewport<R>(
+    ui: &mut Ui,
+    width: f32,
+    height: f32,
+    add: impl FnOnce(&mut Ui) -> R,
+) -> R {
+    let rect = egui::Rect::from_min_size(ui.cursor().min, egui::vec2(width, height))
+        .intersect(ui.clip_rect());
+    let response =
+        ui.allocate_ui_with_layout(egui::vec2(width, height), Layout::top_down(Align::Min), add);
+    // Public egui AccessKit node API: https://docs.rs/egui/0.33.3/src/egui/context.rs.html#3503
+    // The scope's children inherit this parent, so offscreen form controls are not exposed.
+    ui.ctx()
+        .accesskit_node_builder(response.response.id, |node| {
+            node.set_role(egui::accesskit::Role::Pane);
+            node.set_bounds(egui::accesskit::Rect::new(
+                f64::from(rect.left()),
+                f64::from(rect.top()),
+                f64::from(rect.right()),
+                f64::from(rect.bottom()),
+            ));
+        });
+    response.inner
 }
 
 /// Section navigation with an accessible selected state and a quiet accent rail.
@@ -216,6 +247,43 @@ fn highlight_spans(text: &str, query: &str) -> Vec<(usize, usize)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn settings_viewport_exposes_only_its_visible_bounds() {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        let output = ctx.run(
+            egui::RawInput {
+                screen_rect: Some(egui::Rect::from_min_size(
+                    egui::Pos2::ZERO,
+                    egui::vec2(400.0, 300.0),
+                )),
+                ..Default::default()
+            },
+            |ctx| {
+                egui::CentralPanel::default().show(ctx, |ui| {
+                    settings_viewport(ui, 340.0, 100.0, |ui| {
+                        egui::ScrollArea::vertical()
+                            .max_height(100.0)
+                            .show(ui, |ui| {
+                                for i in 0..30 {
+                                    let _ = ui.button(i.to_string());
+                                }
+                            });
+                    });
+                });
+            },
+        );
+        let tree = output
+            .platform_output
+            .accesskit_update
+            .expect("accessibility tree");
+        assert!(tree
+            .nodes
+            .iter()
+            .any(|(_, node)| node.role() == egui::accesskit::Role::Pane
+                && node.bounds().is_some_and(|rect| rect.y1 - rect.y0 <= 100.0)));
+    }
+
     #[test]
     fn highlighting_preserves_unicode_boundaries_and_all_matches() {
         assert_eq!(
