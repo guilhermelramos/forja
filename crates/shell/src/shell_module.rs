@@ -26,6 +26,7 @@ impl Module for ShellModule {
         open_rail(registrar);
         focus_bench(registrar);
         open_logs(registrar);
+        toggle_diagnostics(registrar);
     }
 }
 
@@ -101,6 +102,27 @@ fn focus_bench(registrar: &mut Registrar<'_>) {
         actions::push(Action::ShowBenchTab(view_id.clone()));
         Ok(json!({ "opening": true, "view_id": view_id }))
     });
+}
+
+/// Anvil command that flips `app.diagnostics.overlay`, the same key the panel
+/// reads, so the panel survives a restart and shows up in Ajustes.
+fn toggle_diagnostics(registrar: &mut Registrar<'_>) {
+    registrar.command(
+        "shell.diagnostics.toggle",
+        "shell.command.diagnostics-toggle",
+        |cx, _args| {
+            let visible = !cx
+                .setting("app.diagnostics.overlay")
+                .and_then(forja_kernel::settings::SettingValue::as_bool)
+                .unwrap_or(false);
+            cx.set_setting(
+                "app.diagnostics.overlay",
+                forja_kernel::settings::SettingValue::Bool(visible),
+            )?;
+            cx.request_repaint();
+            Ok(json!({ "visible": visible }))
+        },
+    );
 }
 
 fn open_rail(registrar: &mut Registrar<'_>) {
@@ -222,6 +244,14 @@ const CHROME_KEYS: &[&str] = &[
     "shell.command.bench-focus",
     "shell.command.tab-open",
     "shell.command.logs-open",
+    "shell.command.diagnostics-toggle",
+    "shell.diagnostics.title",
+    "shell.diagnostics.fps",
+    "shell.diagnostics.frame-time",
+    "shell.diagnostics.cause",
+    "shell.diagnostics.frames",
+    "shell.diagnostics.memory",
+    "shell.diagnostics.threads",
     "shell.crash.title",
     "shell.crash.body",
     "shell.view-error.title",
@@ -242,6 +272,12 @@ const CHROME_KEYS: &[&str] = &[
     "setting-app-log-keep-help",
     "setting-app-log-include_terminal_output-label",
     "setting-app-log-include_terminal_output-help",
+    "setting-app-performance-max_fps-label",
+    "setting-app-performance-max_fps-help",
+    "setting-app-performance-unfocused_fps-label",
+    "setting-app-performance-unfocused_fps-help",
+    "setting-app-diagnostics-overlay-label",
+    "setting-app-diagnostics-overlay-help",
 ];
 
 #[cfg(test)]
@@ -369,6 +405,53 @@ mod tests {
             .expect("log folder command");
         let expected = forja_kernel::logging::logs_dir(&dir).to_string_lossy().into_owned();
         assert_eq!(result["path"].as_str(), Some(expected.as_str()));
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn diagnostics_command_flips_the_overlay_setting() {
+        let dir = std::env::temp_dir().join(format!(
+            "forja-shell-diagnostics-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(ShellModule),
+                Box::new(crate::hosts::Host {
+                    id: "app",
+                    name_key: "app.name",
+                }),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("shell module registers");
+        contract::assert_ok(runtime.registry(), runtime.i18n());
+        let off = runtime
+            .run_command("shell.diagnostics.toggle", forja_kernel::Args::new())
+            .expect("toggle command");
+        let on = runtime
+            .run_command("shell.diagnostics.toggle", forja_kernel::Args::new())
+            .expect("toggle command");
+        assert_eq!(off["visible"].as_bool(), Some(true));
+        assert_eq!(on["visible"].as_bool(), Some(false));
+        assert_eq!(
+            runtime
+                .settings()
+                .get("app.diagnostics.overlay")
+                .and_then(forja_kernel::SettingValue::as_bool),
+            Some(false)
+        );
         drop(runtime);
         let _ = std::fs::remove_dir_all(dir);
     }
