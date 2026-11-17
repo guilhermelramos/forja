@@ -35,6 +35,16 @@ cargo build -p forja-app -p forja-mcp
 ./playtest/run.ps1 -Mission playtest/missions/caos.md -WindowSize 1280x800
 ```
 
+## Dados de demonstração (`--demo`)
+`forja-app --demo` abre com dados fictícios fixos, numa pasta de dados temporária própria: 2 projetos com repositórios git criados na hora, 6 bancadas espalhadas pelas etapas do Quadro, um mutirão com 5 tarefas e dependências, 30 dias de uso, 10 pedidos locais e dois ajudantes só como estado gravado (um trabalhando, um esperando você). Nada é escrito nos dados reais, nenhum ajudante é acionado e `FORJA_TEST_HELPERS` vira `none`.
+
+```powershell
+target\debug\forja-app.exe --demo --test-driver     # com o roteiro automático (drive.ps1, regressões)
+target\debug\forja-app.exe --demo --screenshot out.png   # captura de tela
+```
+
+Os repositórios de exemplo ficam em `%TEMP%\forja-demo-repos` e são reaproveitados entre execuções; a pasta de dados vai para `%TEMP%\forja-screenshot-<pid>` quando `FORJA_DATA_DIR` não é definida. O atlas usa a mesma opção para fotografar cada tela cheia: `pt-BR.dark.demo.<tela>` é a captura com dados, e `pt-BR.dark.<tela>` continua sendo a tela vazia. Nas regressões gravadas, o campo `"demo": true` liga o modo.
+
 A janela de teste em segundo plano usa 1920x1080 por padrão. `FORJA_TEST_WINDOW_SIZE=1280x800` (ou `-WindowSize` no `run.ps1`) muda o tamanho sem trazer a janela para a frente.
 
 ## Configuração

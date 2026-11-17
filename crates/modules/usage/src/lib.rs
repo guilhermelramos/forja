@@ -2,6 +2,7 @@
 //! das transcrições do Claude, Codex e OpenCode.
 
 mod budget;
+pub mod demo;
 mod model;
 mod parse;
 mod pricing;

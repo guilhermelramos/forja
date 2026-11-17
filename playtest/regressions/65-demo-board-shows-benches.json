@@ -1,0 +1,28 @@
+{
+  "title": "Modo de demonstração abre o Quadro com as bancadas de exemplo (#208)",
+  "issue": 208,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "demo": true,
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Quadro" },
+    { "m": "ui.wait", "ms": 400 }
+  ],
+  "expect": [
+    {
+      "step": 2,
+      "present_contains": [
+        "6 bancadas",
+        "Relatorio",
+        "Graficos",
+        "Anexo",
+        "Pagina final",
+        "Rascunho",
+        "Forjando",
+        "Revisão",
+        "Oficina"
+      ]
+    }
+  ]
+}

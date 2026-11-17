@@ -4,6 +4,7 @@
 //! os comandos/RPC `project.*`. As bancadas de cada projeto vêm do comando
 //! `bench.list`; este módulo não conhece o crate `benches`.
 
+pub mod demo;
 mod model;
 mod state;
 mod view;
@@ -18,6 +19,7 @@ use forja_kernel::{
     Args, CommandField, CommandFieldKind, Module, ModuleManifest, Registrar, Slot,
 };
 use serde_json::{json, Map, Value};
+pub use model::project_id;
 use state::{CloneForm, Dialog, ProjectForm, Shared};
 
 #[forja_kernel::module]

@@ -6,6 +6,7 @@
 mod commands;
 mod cost;
 mod delivery;
+pub mod demo;
 mod model;
 mod plan;
 mod preamble;

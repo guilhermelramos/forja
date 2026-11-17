@@ -20,6 +20,21 @@ pub struct Roots {
 impl Roots {
     pub fn from_accounts(accounts: &[(String, String)]) -> Self {
         let home = user_home();
+        // `--demo` reads only the sample folder the shell points at, so the
+        // person's own sessions never show up in the demonstration.
+        if std::env::var_os("FORJA_DEMO").is_some() {
+            return Self {
+                claude: std::env::var_os("CLAUDE_CONFIG_DIR")
+                    .map(PathBuf::from)
+                    .into_iter()
+                    .collect(),
+                codex: std::env::var_os("CODEX_HOME")
+                    .map(PathBuf::from)
+                    .into_iter()
+                    .collect(),
+                opencode: Vec::new(),
+            };
+        }
         let mut claude = BTreeSet::new();
         claude.insert(
             std::env::var_os("CLAUDE_CONFIG_DIR")

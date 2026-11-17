@@ -5,6 +5,7 @@
 //! terminal, o launch falha com uma mensagem clara e o resto continua de pé.
 
 mod commands;
+pub mod demo;
 mod detect;
 mod hooks;
 mod launch;
