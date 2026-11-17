@@ -774,11 +774,23 @@ mod tests {
         runtime
             .set_setting("mcp.log.requests", SettingValue::Bool(true))
             .unwrap();
+        // The writer is global and the first `initialize` wins the folder, so
+        // read the file it is really appending to instead of assuming ours.
+        let log = forja_kernel::logging::current_log_path()
+            .unwrap_or_else(|| forja_kernel::logging::logs_dir(dir.0.clone()).join("forja.log"));
+        let before = std::fs::read_to_string(&log).unwrap_or_default().lines().count();
         runtime.call_method("mcp.tools", Map::new()).expect("tools");
-        let log = forja_kernel::logging::logs_dir(dir.0.clone()).join("forja.log");
+        forja_kernel::logging::flush();
         let mut text = String::new();
         for _ in 0..50 {
-            text = std::fs::read_to_string(&log).unwrap_or_default();
+            forja_kernel::logging::flush();
+            text = std::fs::read_to_string(&log)
+                .unwrap_or_default()
+                .lines()
+                .skip(before)
+                .collect::<Vec<_>>()
+                .join("
+");
             if text.contains("mcp mcp.tools ok") {
                 break;
             }

@@ -245,6 +245,15 @@ pub fn flush() {
     }
 }
 
+/// Path of the log file the running writer is appending to, when it is up.
+/// Tests read it instead of assuming where `initialize` sent the lines: the
+/// writer is global and the first initialization wins the destination.
+pub fn current_log_path() -> Option<PathBuf> {
+    let logger = LOGGER.get()?;
+    let state = logger.state.lock().ok()?;
+    Some(logs_dir(&state.data_dir).join("forja.log"))
+}
+
 /// Returns the Forja log folder for a data directory.
 pub fn logs_dir(data_dir: impl AsRef<Path>) -> PathBuf {
     data_dir.as_ref().join("logs")
