@@ -5,7 +5,7 @@ shell-top-anvil = Bigorna
 shell-top-settings = Ajustes
 shell-top-right-panel = Painel direito
 shell-top-theme = Tema Brasa
-shell-top-no-project = Nenhum projeto
+shell-top-no-project = Início
 shell-window-minimize = Minimizar
 shell-window-maximize = Maximizar
 shell-window-close = Fechar janela
@@ -376,3 +376,5 @@ shell-view-error-message = { $view }: { $message }
 shell-view-error-retry = Tentar de novo
 shell-view-error-unknown = A visualização do módulo falhou.
 shell-view-error-debug-panic = Falha de teste solicitada para esta visualização.
+
+shell-rail-back-to-home = Voltar ao início

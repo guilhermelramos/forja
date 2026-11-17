@@ -4,23 +4,27 @@
   "locale": "pt-BR",
   "steps": [
     { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Abrir pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 300 },
     { "m": "ui.click", "target": "Editor", "button": "middle" },
     { "m": "ui.click", "target": "Abrir aba de ferramenta" },
     { "m": "ui.click", "target": "Editor" }
   ],
   "expect": [
     {
-      "step": 1,
+      "step": 5,
       "present": ["Terminal", "Ajudante (chat)", "Diferenças"],
       "absent": ["Editor"],
       "no_geometry_issues": true
     },
     {
-      "step": 2,
+      "step": 6,
       "present": ["Editor", "Navegador"]
     },
     {
-      "step": 3,
+      "step": 7,
       "present": ["Editor", "Abra um arquivo no explorador ou pressione Ctrl+P."],
       "no_geometry_issues": true
     }

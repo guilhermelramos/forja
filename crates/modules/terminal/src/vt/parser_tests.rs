@@ -214,3 +214,90 @@
         surface.feed(format!("\x1b]1337;File=inline=1:{png}\x07").as_bytes());
         assert!(surface.images.is_empty());
     }
+
+#[test]
+fn agent_sgr_strike_overline_and_colon_underline() {
+    let mut surface = tiny();
+    surface.feed(b"\x1b[9;53mX\x1b[29;55mY\x1b[4:3mZ");
+    assert_eq!(surface.lines[0][0].flags & 192, 192);
+    assert_eq!(surface.lines[0][1].flags & 192, 0);
+    assert_ne!(surface.lines[0][2].flags & 8, 0);
+    assert_eq!(surface.lines[0][2].flags & 4, 0, "underline subtype must not enable italic");
+}
+#[test]
+fn synchronized_output_reports_supported_mode() {
+    let mut surface = tiny();
+    surface.feed(b"\x1b[?2026$p");
+    assert_eq!(surface.responses, b"\x1b[?2026;2$y");
+    surface.responses.clear();
+    surface.feed(b"\x1b[?2026h\x1b[?2026$p");
+    assert_eq!(surface.responses, b"\x1b[?2026;1$y");
+}
+
+#[test]
+fn synchronized_frame_is_atomic_and_has_a_fixed_safety_deadline() {
+    use std::time::{Duration, Instant};
+    let mut surface = tiny();
+    surface.feed(b"before\x1b[?2026h\rAFTER");
+    assert!(surface.display().text().starts_with("before"));
+    let start = surface.synchronized_at.unwrap();
+    surface.feed(b"\x1b[?2026h");
+    assert_eq!(surface.synchronized_at, Some(start));
+    surface.publish_if_due(start + Duration::from_millis(149));
+    assert!(surface.display().text().starts_with("before"));
+    surface.publish_if_due(start + Duration::from_millis(150));
+    assert!(surface.display().text().starts_with("AFTERe"));
+    assert!(surface.synchronization_wait(Instant::now()).is_none());
+    surface.feed(b"\x1b[?2026l\x1b[?2026h\rDONE\x1b[?2026l");
+    assert!(surface.display().text().starts_with("DONERe"));
+}
+#[test]
+fn focus_reporting_tracks_pane_and_window_transitions() {
+    let mut surface = tiny();
+    assert_eq!(surface.focus_event(true), None);
+    surface.feed(b"\x1b[?1004h");
+    assert_eq!(surface.focus_event(false), Some(&b"\x1b[O"[..]));
+    assert_eq!(surface.focus_event(false), None);
+    assert_eq!(surface.focus_event(true), Some(&b"\x1b[I"[..]));
+    surface.feed(b"\x1b[?1004l");
+    assert_eq!(surface.focus_event(false), None);
+}
+#[test]
+fn all_cursor_shapes_and_split_intermediates_are_parsed() {
+    let mut surface = tiny();
+    for shape in 0..=6 {
+        surface.feed(format!("\x1b[{shape} ").as_bytes());
+        surface.feed(b"q");
+        assert_eq!(surface.cursor_shape, Some(shape));
+    }
+    surface.feed(b"\x1b[7 q");
+    assert_eq!(surface.cursor_shape, Some(6));
+}
+#[test]
+fn wide_lines_emoji_and_background_erase_survive_agent_redraw() {
+    let mut surface = tiny();
+    surface.feed("abcd中😀".as_bytes());
+    surface.feed(b"\r\x1b[45m\x1b[5G\x1b[K");
+    assert_eq!(row(&surface,0), "abcd");
+    for cell in &surface.lines[0][4..] { assert_eq!(cell.bg_source, 5); }
+    surface.feed(b"\x1b[0m\r\x1b[2K");
+    assert_eq!(row(&surface,0), "");
+}
+#[test]
+fn alternate_screen_resize_in_the_middle_of_a_reply_restores_main_screen() {
+    let mut surface = tiny();
+    surface.feed(b"reply\x1b[?1049hfull-screen\x1b[4;1Hbottom");
+    surface.resize(5,2);
+    assert!(surface.history.is_empty());
+    surface.feed(b"\x1b[?1049l!");
+    assert!(!surface.is_alternate());
+    assert!(surface.text().contains("repl!"));
+    assert_eq!((surface.lines.len(),surface.lines[0].len()),(2,5));
+}
+#[test]
+fn redraw_in_a_scroll_region_keeps_the_header_and_footer() {
+    let mut surface = tiny();
+    surface.feed(b"HEAD\x1b[2;1HA\x1b[3;1HB\x1b[4;1HFOOT\x1b[2;3r\x1b[2;1H\x1b[LX\x1b[3;1H\x1b[M");
+    assert_eq!(row(&surface,0),"HEAD"); assert_eq!(row(&surface,1),"X"); assert_eq!(row(&surface,3),"FOOT");
+    assert!(surface.history.is_empty());
+}

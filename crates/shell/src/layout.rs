@@ -245,7 +245,7 @@ impl ForjaApp {
         if self.setting_bool("appearance.rail.visible", true) {
             self.rail(ctx);
         }
-        if self.show_sidebar {
+        if !self.no_project() && self.show_sidebar {
             self.sidebar(ctx);
         }
     }
@@ -255,7 +255,12 @@ impl ForjaApp {
             .fill(self.paint(self.tokens.color.surface_alt))
             .inner_margin(Margin::symmetric(6, 8));
         let settings_tip = self.text("shell.rail.settings");
-        let bench_tip = self.text("shell.rail.bench");
+        let home = self.no_project();
+        let bench_tip = self.text(if home {
+            "shell.top.no-project"
+        } else {
+            "shell.rail.bench"
+        });
         let pages: Vec<RailPage> = self
             .rail_views
             .iter()
@@ -449,7 +454,7 @@ impl ForjaApp {
     }
 
     pub(crate) fn right_panel(&mut self, ctx: &egui::Context) {
-        if !self.show_right_panel {
+        if self.no_project() || !self.show_right_panel {
             return;
         }
         let frame = egui::Frame::NONE
@@ -479,6 +484,11 @@ impl ForjaApp {
     }
 
     pub(crate) fn central_area(&mut self, ctx: &egui::Context) {
+        let home = self.no_project();
+        if home && self.project_was_open {
+            self.rail_page = None;
+        }
+        self.project_was_open = !home;
         let frame = egui::Frame::NONE
             .fill(self.paint(self.tokens.color.bg))
             .inner_margin(Margin::symmetric(12, 8));
@@ -488,7 +498,11 @@ impl ForjaApp {
                     if button(
                         ui,
                         ButtonKind::Ghost,
-                        &self.text("shell.rail.back-to-bench"),
+                        &self.text(if home {
+                            "shell.rail.back-to-home"
+                        } else {
+                            "shell.rail.back-to-bench"
+                        }),
                     )
                     .clicked()
                     {
@@ -503,6 +517,13 @@ impl ForjaApp {
                     }
                 }
                 self.rail_page = None;
+            }
+            if home {
+                if let Some(view) = self.home_view.as_mut() {
+                    let mut cx = self.runtime.ctx(&view.module);
+                    ui.push_id(&view.id, |ui| view.view.ui(ui, &mut cx));
+                }
+                return;
             }
             let focus_active = std::mem::take(&mut self.focus_content_tab);
             self.bench_tab_strip(ui, focus_active);

@@ -40,3 +40,7 @@ python design/assets/make-icon.py
 ```
 
 Os testes de layout usam um `egui::Context` sem janela. O contraste trava os pisos de `design/ui.md`. O teste dos temas lê `content/themes`.
+
+`action_tile(ui, glyph, label, width, primary)` desenha uma ação grande de início, com ícone, nome acessível e foco de teclado; o chamador fornece textos traduzidos e largura responsiva.
+
+`theme_sample(ui, tokens, title, body)` mostra uma amostra de tema sem alterar o contexto global nem criar uma ação fictícia.

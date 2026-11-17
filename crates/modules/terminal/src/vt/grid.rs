@@ -14,6 +14,8 @@ pub mod attrs {
     pub const UNDERLINE: u8 = 8;
     pub const REVERSE: u8 = 16;
     pub const CONCEAL: u8 = 32;
+    pub const STRIKE: u8 = 64;
+    pub const OVERLINE: u8 = 128;
 }
 
 /// Origem de uma cor: 0–15 ANSI, 16–255 estendida, 256 padrão, 257 RGB.

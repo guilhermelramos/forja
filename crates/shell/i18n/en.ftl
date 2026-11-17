@@ -5,7 +5,7 @@ shell-top-anvil = Anvil
 shell-top-settings = Settings
 shell-top-right-panel = Right panel
 shell-top-theme = Brasa theme
-shell-top-no-project = No project
+shell-top-no-project = Home
 shell-window-minimize = Minimize
 shell-window-maximize = Maximize
 shell-window-close = Close window
@@ -376,3 +376,5 @@ shell-view-error-message = { $view }: { $message }
 shell-view-error-retry = Try again
 shell-view-error-unknown = The module view panicked.
 shell-view-error-debug-panic = Test panic requested for this view.
+
+shell-rail-back-to-home = Back to Home

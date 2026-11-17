@@ -62,6 +62,8 @@ pub struct SearchState {
 pub struct Terminal {
     /// Id estável.
     pub id: TerminalId,
+    pub(crate) focus_id: Option<egui::Id>,
+    pub(crate) drawn_frame: Option<u64>,
     /// Pasta de trabalho.
     pub dir: PathBuf,
     /// Executável do shell.
@@ -136,6 +138,7 @@ impl Terminal {
         let title = custom_title.clone().unwrap_or_else(|| shell_label.clone());
         Self {
             id,
+            focus_id: None, drawn_frame: None,
             dir,
             shell: shell.program,
             args: shell.arguments,
@@ -216,6 +219,7 @@ impl Terminal {
             self.surface.feed(&data);
             self.dirty = true;
         }
+        self.surface.publish_if_due(now);
         for signal in std::mem::take(&mut self.surface.signals) {
             match signal {
                 Signal::Bell => {
@@ -264,6 +268,11 @@ impl Terminal {
             events.push(TerminalEvent::TitleChanged);
         }
         events
+    }
+
+    /// Delivers a pane/window focus transition to the terminal process.
+    pub fn report_focus(&mut self, focused: bool) {
+        if let Some(bytes) = self.surface.focus_event(focused) { self.write(bytes); }
     }
 
     /// Escreve bytes no processo, guardando se ele ainda está abrindo.
@@ -322,6 +331,7 @@ impl Terminal {
         let mut want = |delay: Duration| {
             wake = Some(wake.map_or(delay, |current| current.min(delay)));
         };
+        if let Some(wait) = self.surface.synchronization_wait(now) { want(wait); }
         if self.spawning.is_some() {
             want(SPAWN_TICK);
         }
@@ -381,12 +391,12 @@ impl Terminal {
 
     /// Intervalo de linhas visível.
     pub fn visible_range(&self) -> (usize, usize) {
-        let total = self.surface.total_rows();
+        let total = self.surface.display().total_rows();
         let rows = self.visible_rows.max(1);
         let start = if self.follow {
-            self.surface.history.len()
+            self.surface.display().history.len()
         } else {
-            self.scroll_row.min(self.surface.history.len())
+            self.scroll_row.min(self.surface.display().history.len())
         };
         (start, (start + rows).min(total))
     }

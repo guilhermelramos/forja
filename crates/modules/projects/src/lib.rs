@@ -4,6 +4,7 @@
 //! os comandos/RPC `project.*`. As bancadas de cada projeto vêm do comando
 //! `bench.list`; este módulo não conhece o crate `benches`.
 
+mod home;
 mod model;
 mod state;
 mod view;
@@ -109,6 +110,12 @@ impl Module for ProjectsModule {
             },
         );
 
+        let close_state = self.state.clone();
+        r.command("project.close", "project.command.close", move |cx, _| {
+            close_state.ensure_loaded(cx);
+            close_state.close(cx).map_err(kerr)?;
+            Ok(json!({ "closed": true }))
+        });
         let add_dialog_state = self.state.clone();
         r.command(
             "project.add_dialog",
@@ -359,6 +366,14 @@ impl Module for ProjectsModule {
             r.uses_i18n(key);
         }
 
+        let home_state = self.state.clone();
+        r.view(
+            Slot::BenchTab,
+            "project.home",
+            "project.home.title",
+            -100,
+            move || Box::new(home::HomeView::new(home_state.clone())),
+        );
         let view_state = self.state.clone();
         r.view(
             Slot::Sidebar,
