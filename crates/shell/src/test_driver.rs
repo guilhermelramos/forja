@@ -36,6 +36,8 @@ const SETTLE_FRAMES: u32 = 4;
 const SETTLE_TIME: Duration = Duration::from_millis(250);
 /// Longest nap between settle frames; keeps the app painting while it waits.
 const SETTLE_STEP: Duration = Duration::from_millis(16);
+/// Longest a click waits for a widget it named to show up.
+const AWAIT_MAX: Duration = Duration::from_millis(3000);
 
 /// Names listed per direction before the reply is capped.
 const MAX_CHANGE_NAMES: usize = 12;
@@ -56,16 +58,43 @@ enum Step {
     Pointer {
         kind: PointerKind,
         button: PointerButton,
-        target: String,
+        /// The widget the caller named, with its index; `None` for a click
+        /// given as `x,y` or as an `id`, which keeps its place.
+        target: Option<Named>,
+        /// Where to press when there is no name, or the name is gone.
+        fallback: Pos2,
+    },
+    /// Waits for a named widget that is not on screen yet: a page fills in its
+    /// list from a task and the button arrives a moment later.
+    Await {
+        target: Named,
+        until: Instant,
+        /// The reply to give when the widget never shows up.
+        message: String,
     },
     /// Waits until both the frame count and the instant are reached.
-    Settle { frames: u32, until: Instant },
+    Settle {
+        frames: u32,
+        until: Instant,
+        /// Until when the window keeps painting. An action's settle paints all
+        /// of it, so work that lands meanwhile is drawn before the reply. A
+        /// long `ui.wait` paints only its first window, because it is also how
+        /// an idle app is measured.
+        paint_until: Instant,
+    },
     /// Asks egui for a screenshot and waits for it.
     Screenshot,
     /// Requests closing the main window on the next update frame.
     RequestClose,
     /// Builds the reply from the current tree.
     Reply(Box<Pending>),
+}
+
+/// A widget the caller named, plus which of its matches they meant.
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct Named {
+    name: String,
+    index: usize,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -218,9 +247,14 @@ impl Driver {
         params: &Map<String, Value>,
         ctx: &egui::Context,
     ) -> Result<(Vec<Step>, Value), RpcError> {
-        let settle = |ms: u64| Step::Settle {
-            frames: SETTLE_FRAMES,
-            until: Instant::now() + SETTLE_TIME.max(Duration::from_millis(ms)),
+        let settle = |ms: u64| {
+            let now = Instant::now();
+            let until = now + SETTLE_TIME.max(Duration::from_millis(ms));
+            Step::Settle {
+                frames: SETTLE_FRAMES,
+                until,
+                paint_until: until.min(now + SETTLE_TIME),
+            }
         };
         match method {
             "ui.snapshot" => {
@@ -276,30 +310,42 @@ impl Driver {
                 Ok((vec![settle(0)], Value::Null))
             }
             "ui.click" => {
-                let (pos, note) = self.locate(params, ctx)?;
+                // A name that is not on screen yet is worth waiting for: the
+                // page under it may still be loading its list.
+                let mut steps = Vec::new();
+                let (pos, note) = match self.locate(params, ctx) {
+                    Ok(found) => found,
+                    Err(error) => match awaiting(params) {
+                        Some(target) => {
+                            steps.push(Step::Await {
+                                target,
+                                until: Instant::now() + AWAIT_MAX,
+                                message: error.message,
+                            });
+                            (self.pointer, json!({ "awaiting": params["target"] }))
+                        }
+                        None => return Err(error),
+                    },
+                };
                 let button = match params.get("button").and_then(Value::as_str) {
                     Some("right") => PointerButton::Secondary,
                     Some("middle") => PointerButton::Middle,
                     _ => PointerButton::Primary,
                 };
                 let double = params.get("double").and_then(Value::as_bool) == Some(true);
-                let target = params.get("target").and_then(Value::as_str).unwrap_or_default();
-                let mut steps = vec![Step::Pointer {
-                    kind: PointerKind::Move,
+                // A click by name follows the widget; a click by `x,y` or by
+                // `id` stays where the caller pointed.
+                let named = awaiting(params);
+                let pointer = |kind| Step::Pointer {
+                    kind,
                     button,
-                    target: target.to_owned(),
-                }];
+                    target: named.clone(),
+                    fallback: pos,
+                };
+                steps.push(pointer(PointerKind::Move));
                 for _ in 0..if double { 2 } else { 1 } {
-                    steps.push(Step::Pointer {
-                        kind: PointerKind::Press,
-                        button,
-                        target: target.to_owned(),
-                    });
-                    steps.push(Step::Pointer {
-                        kind: PointerKind::Release,
-                        button,
-                        target: target.to_owned(),
-                    });
+                    steps.push(pointer(PointerKind::Press));
+                    steps.push(pointer(PointerKind::Release));
                 }
                 self.pointer = pos;
                 steps.push(settle(0));
@@ -373,9 +419,12 @@ impl Driver {
                 .find(|element| element["id"] == id)
                 .ok_or_else(|| RpcError::app(format!("no widget with id {id}; call ui.snapshot")))?
         } else if let Some(target) = params.get("target").and_then(Value::as_str) {
-            let matches = find_by_name(&elements, target);
             let index = params.get("index").and_then(Value::as_u64).unwrap_or(0) as usize;
-            let Some(found) = matches.get(index) else {
+            let named = Named {
+                name: target.to_owned(),
+                index,
+            };
+            let Some(found) = resolve_named(&elements, &named) else {
                 let names: Vec<&str> = elements
                     .iter()
                     .filter_map(|element| element["name"].as_str())
@@ -388,7 +437,7 @@ impl Driver {
                     names.join(" | ")
                 )));
             };
-            *found
+            found
         } else {
             return Err(RpcError::invalid_params("give target (widget name), id, or x and y"));
         };
@@ -409,12 +458,18 @@ impl Driver {
                     kind,
                     button,
                     target,
+                    fallback,
                 }) = self.steps.pop_front()
                 else {
                     return;
                 };
-                // Resolve against the tree of the frame that is about to run.
-                let pos = self.pointer_now(ctx, &target);
+                // Resolve against the tree of the frame that is about to run;
+                // a release lands where the press did, as it does for a person.
+                let pos = match kind {
+                    PointerKind::Release => self.pointer,
+                    _ => self.pointer_now(ctx, target.as_ref(), fallback),
+                };
+                self.pointer = pos;
                 let event = match kind {
                     PointerKind::Move => Event::PointerMoved(pos),
                     PointerKind::Press | PointerKind::Release => Event::PointerButton {
@@ -430,15 +485,32 @@ impl Driver {
         }
     }
 
-    /// Centre of the widget named `target` as the last frame drew it, or the
-    /// last pointer position when the name is gone.
-    fn pointer_now(&self, ctx: &egui::Context, target: &str) -> Pos2 {
+    /// Centre of the widget named `target` as the last frame drew it, or
+    /// `fallback` when the click had no name or the name is gone by now.
+    fn pointer_now(&self, ctx: &egui::Context, target: Option<&Named>, fallback: Pos2) -> Pos2 {
+        let Some(target) = target else { return fallback };
         let elements = self.elements(ctx);
-        let found = find_by_name(&elements, target).into_iter().next();
-        match found {
+        match resolve_named(&elements, target) {
             Some(element) => centre_of(element, ctx),
-            None => self.pointer,
+            None => fallback,
         }
+    }
+
+    /// Ends the queue with `message` as the error for the reply it holds.
+    fn fail_pending(&mut self, ctx: &egui::Context, message: &str) {
+        let mut pending = None;
+        while let Some(step) = self.steps.pop_front() {
+            if let Step::Reply(reply) = step {
+                pending = Some(*reply);
+                break;
+            }
+        }
+        self.steps.clear();
+        let Some(pending) = pending else { return };
+        let error = RpcError::app(message);
+        self.write_log(&pending.method, &pending.params, &json!({ "error": error.message }));
+        let _ = pending.reply.send(Some(codec::error_response(pending.id.clone(), &error)));
+        ctx.request_repaint();
     }
 
     /// Advances waits, screenshots and replies; called at the end of each frame.
@@ -448,19 +520,50 @@ impl Driver {
             match self.steps.front_mut() {
                 None => return,
                 Some(Step::Input(_) | Step::Pointer { .. }) => break,
-                Some(Step::Settle { frames, until }) => {
+                Some(Step::Await { .. }) => {
+                    let Some(Step::Await {
+                        target,
+                        until,
+                        message,
+                    }) = self.steps.pop_front()
+                    else {
+                        return;
+                    };
+                    if resolve_named(&self.elements(ctx), &target).is_some() {
+                        // The widget is there now: the pointer steps follow.
+                        continue;
+                    }
+                    let now = Instant::now();
+                    if now < until {
+                        let remaining = until.saturating_duration_since(now);
+                        ctx.request_repaint_after(remaining.min(SETTLE_STEP));
+                        return;
+                    }
+                    self.fail_pending(ctx, &message);
+                    return;
+                }
+                Some(Step::Settle {
+                    frames,
+                    until,
+                    paint_until,
+                }) => {
                     if *frames > 0 {
                         *frames -= 1;
                         break;
                     }
                     let now = Instant::now();
                     if now < *until {
-                        // Keep painting during the window instead of sleeping
-                        // until the deadline: a task that lands meanwhile (the
-                        // local request list, a page that just opened) is
-                        // applied and drawn before the reply is built.
                         let remaining = until.saturating_duration_since(now);
-                        ctx.request_repaint_after(remaining.min(SETTLE_STEP));
+                        // An action's window keeps painting instead of sleeping
+                        // until the deadline: a task that lands meanwhile (the
+                        // local request list, a page that just opened) is drawn
+                        // before the reply is built.
+                        let step = if now < *paint_until {
+                            remaining.min(SETTLE_STEP)
+                        } else {
+                            remaining
+                        };
+                        ctx.request_repaint_after(step);
                         return;
                     }
                     self.steps.pop_front();
@@ -827,7 +930,6 @@ pub fn parse_keys(keys: &str) -> Result<(Key, Modifiers), RpcError> {
     Ok((key, modifiers))
 }
 
-/// Widgets whose name matches: exact, then case-insensitive, then containing.
 /// Centre of a widget rect in screen points, clamped to the content rect.
 fn centre_of(element: &Value, ctx: &egui::Context) -> Pos2 {
     let ppp = ctx.pixels_per_point();
@@ -840,8 +942,30 @@ fn centre_of(element: &Value, ctx: &egui::Context) -> Pos2 {
     )
 }
 
+/// The widget a caller named, picked the same way the snapshot readers pick
+/// it: the matching rule of `find_by_name`, then the index among the matches.
+fn resolve_named<'a>(elements: &'a [Value], target: &Named) -> Option<&'a Value> {
+    find_by_name(elements, &target.name)
+        .into_iter()
+        .nth(target.index)
+}
+
+/// The widget a click asked for by name and index, if it named one.
+fn awaiting(params: &Map<String, Value>) -> Option<Named> {
+    params.get("target").and_then(Value::as_str).map(|name| Named {
+        name: name.to_owned(),
+        index: params.get("index").and_then(Value::as_u64).unwrap_or(0) as usize,
+    })
+}
+
+/// Widgets whose name matches: exact, then case-insensitive, then containing.
 fn find_by_name<'a>(elements: &'a [Value], target: &str) -> Vec<&'a Value> {
     let lower = target.to_lowercase();
+    if lower.is_empty() {
+        // An empty name contains nothing worth pressing; a coordinate click
+        // must not fall back to the topmost widget.
+        return Vec::new();
+    }
     let matches = |tier: u8, name: &str| match tier {
         0 => name == target,
         1 => name.to_lowercase() == lower,
@@ -1075,6 +1199,33 @@ mod tests {
         assert_eq!(find_by_name(&elements, "bancadas")[0]["id"], 3);
         assert_eq!(find_by_name(&elements, "nova")[0]["id"], 2);
         assert!(find_by_name(&elements, "inexistente").is_empty());
+    }
+
+    #[test]
+    fn a_named_click_carries_its_index_and_never_matches_an_empty_name() {
+        let params: Map<String, Value> = serde_json::from_value(json!({ "target": "Quadro", "index": 2 }))
+            .expect("params parse");
+        assert_eq!(
+            awaiting(&params),
+            Some(Named {
+                name: "Quadro".to_owned(),
+                index: 2
+            })
+        );
+        let bare: Map<String, Value> =
+            serde_json::from_value(json!({ "x": 10, "y": 20 })).expect("params parse");
+        assert_eq!(awaiting(&bare), None);
+
+        let elements = vec![
+            json!({ "id": 1, "name": "Forjar", "clickable": true }),
+            json!({ "id": 2, "name": "Forjar", "clickable": true }),
+        ];
+        let second = Named {
+            name: "Forjar".to_owned(),
+            index: 1,
+        };
+        assert_eq!(resolve_named(&elements, &second).map(|found| found["id"].as_u64()), Some(Some(2)));
+        assert!(find_by_name(&elements, "").is_empty());
     }
 
     #[test]
