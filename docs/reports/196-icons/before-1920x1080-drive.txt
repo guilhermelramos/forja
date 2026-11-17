@@ -1,10 +1,10 @@
 >> ui.key {"keys":"Escape"}
    apareceu: 0 trabalhando · 0 esperando | Abra um arquivo no explorador ou pressione Ctrl+P. | Abrir aba de ferramenta | Acervo | Achar arquivo  Ctrl+P | Adicionar pasta | Ajudante (chat) | Ajudantes | Ajustes | Arquivos | Atualizar | Bancadas
-   sumiu: 
+   sumiu:
    novos: #16698724658308212101 Unknown '' @17,8 | #15651725192175810751 Button 'Achar arquivo  Ctrl+P' @214,8 | #17336966465026777540 Button 'Bigorna  Ctrl+K' @461,8 | #9608727923775226082 Button 'Escuro' @2611,8 | #16604086701319730923 Button 'Minimizar' @2692,8 | #5658007984481367096 Button 'Maximizar' @2752,8 | #7528245900600709990 Button 'Fechar janela' @2813,8 | #4509943123261050834 Label 'Oficina · Relatorio' @17,18 | #8399851884972169810 Image '' @18,75 | #13667176677639168651 Button 'Projetos' @96,75
 >> ui.snapshot {}
    apareceu: 18 portas
-   sumiu: 
+   sumiu:
    novos: #5729606795441008544 Label '18 portas' @2781,1584
 #16698724658308212101 Unknown (sem nome) (17,8)-(2864,56) [clicável]
 #15651725192175810751 Button "Achar arquivo  Ctrl+P" (214,8)-(449,56) [clicável]
@@ -69,4 +69,3 @@
 #2818010915774743887 Label "0 trabalhando · 0 esperando" (2244,1584)-(2467,1608) [clicável]
 #12424182155819170280 Label "US$ 0,30 · 2.8k hoje" (2615,1584)-(2769,1608) [clicável]
 #5729606795441008544 Label "18 portas" (2781,1584)-(2853,1608) [clicável]
-

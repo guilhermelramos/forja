@@ -44,7 +44,7 @@ foreach ($size in @('1280x720', '1920x1080')) {
     $appProcess = $null
     try {
         $appProcess = Start-Process $App -ArgumentList '--demo --test-driver --locale pt-BR --theme dark --bench-tab editor.tab --right-tab explorer.panel' -PassThru
-        & "$PSScriptRoot/drive.ps1" -Pipe $pipe -Steps '[{"m":"ui.key","keys":"Escape"},{"m":"ui.snapshot","view":true}]' | Out-File "$stem-drive.txt" -Encoding utf8
+        & "$PSScriptRoot/drive.ps1" -Pipe $pipe -Steps '[{"m":"ui.key","keys":"Escape"},{"m":"ui.snapshot","view":true}]' | ForEach-Object { ([string]$_).TrimEnd() } | Out-File "$stem-drive.txt" -Encoding utf8
         $snapshot = Get-Snapshot $pipe
         $snapshot | ConvertTo-Json -Depth 50 | Out-File "$stem-snapshot.json" -Encoding utf8
         $buttons = @($snapshot.elements | Where-Object role -eq 'Button')

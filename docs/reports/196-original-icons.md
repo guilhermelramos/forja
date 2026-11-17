@@ -13,14 +13,22 @@
 - [x] Validar SVGs, gerador, API, fontes de texto e contratos dos destinos.
 - [x] Validar migração nos módulos, trilho, abas, painéis e barra superior.
 - [x] Capturas antes/depois com `--demo`, 1280×720 e 1920×1080; árvore acessível ao vivo.
-- [ ] Regressões completas em 1920×1080 e 1280×800.
-- [ ] Build/test/clippy/proveniência/catálogo; commits sem push.
+- [x] Regressões completas em 1920×1080 e 1280×800.
+- [x] Build/test/clippy/proveniência/catálogo; commits sem push.
 
 ## Decisões de execução
 
 - A instrução direta de continuar sem refazer prevalece sobre reiniciar implementação/testes já existentes.
 - A instrução de executar sozinho e não parar para revisão prevalece sobre workflows de revisão delegada.
 - A issue ainda descreve uma fonte embutida como mecanismo inicial; a decisão posterior do dono e a tarefa determinam SVG autoral → comandos egui, sem fonte.
+
+## Entregas por contrato
+
+1. **Fonte visual:** `design/ui.md` em `1c9d608` especifica ícones, cinco zonas/medidas de página, hierarquia de botões, escala 12/14/16-600/20-600/28 e barra superior; não antecipa a migração de layouts do item 8.
+2. **Fontes autorais:** 80 SVGs em `design/icons/`, grade 24×24, traço 2, pontas/junções arredondadas; páginas, abas e painéis distintos, ações comuns e oito famílias de arquivos. Autoria e manutenção documentadas no README do conjunto.
+3. **Gerador:** `cargo xtask icons`, sem dependência nova; M/L/H/V/C/Q/A/Z e circle/rect/line/polyline; arcos convertidos em cúbicas; tabela estática comitada e teste de igualdade com os SVGs. O renderer usa linhas, cúbicas e quadráticas egui, com escala e cor dos tokens.
+4. **API e migrações:** `Icon`, `icon`, `icon_button` com rótulo obrigatório e `button_with_icon`; removidas fontes de ícones do Windows e os sinais usados como ícones no Navegador, janela, árvores e ações. Fontes de texto vêm de `%WINDIR%/Fonts`, com fallback e aviso no log do shell.
+5. **Trilho e barra:** Bancada primeiro; desenhos de 20 px e indicador ativo de 3 px; dicas com nome e atalho real quando disponível; busca central e controles da janela com 46×32 px. Contrato de unicidade valida os registros reais de páginas/abas/painéis; regressões 75–77 validam os nomes acessíveis.
 
 ## Evidências
 
@@ -57,6 +65,9 @@ Os botões da janela já possuíam nome na base; a melhoria é preservá-los dur
 - `cargo xtask icons`: passou; sem diferença no gerado comitado.
 - `cargo xtask provenance`: passou também com as capturas adicionadas ao índice; sem termos de proveniência recusados.
 - `cargo xtask catalog`: passou; 281/314 configurações registradas (+1 extra), 280 com efeito, 2 ausências preexistentes; 110/110 atalhos; `design/coverage.md` sem alterações.
+- Regressões completas: **74/74 em 1920×1080 e 74/74 em 1280×800**, repetidas após o ajuste final das dicas, ambas com saída 0 e stderr vazio. Logs `replay-<tamanho>.txt` e `replay-results.json` em `docs/reports/196-icons/`.
+
+Commits de implementação: `eecce88`, `8aeacb7`, `09210ae`, `095da98` (todos Refs #196); o commit final acrescenta os resultados completos e a conclusão deste relatório. As pastas temporárias próprias da prova foram removidas; os artefatos de build foram mantidos conforme orientação do coordenador.
 
 A primeira execução ao vivo das regressões identificou uma altura excessiva no novo sino da barra de status: a composição horizontal reservava 32 px dentro de uma área útil de 28 px. O teste foi reproduzido com os tokens reais (limite inferior 802 > 800), corrigido por medição explícita do rótulo e passou; as capturas finais mostram o botão dentro da janela. Uma tentativa de catálogo após compilar a base anterior no mesmo `target` reutilizou metadados antigos do ui-kit; limpeza **somente desse pacote** e reconstrução do código corrente eliminaram a contaminação, e o catálogo passou.
 

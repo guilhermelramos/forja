@@ -1,10 +1,10 @@
 >> ui.key {"keys":"Escape"}
    apareceu: 0 trabalhando · 0 esperando | Abra um arquivo no explorador ou pressione Ctrl+P. | Abrir aba de ferramenta | Acervo | Achar arquivo  Ctrl+P | Adicionar pasta | Ajudante (chat) | Ajudantes | Ajustes | Arquivos | Atualizar | Bancadas
-   sumiu: 
+   sumiu:
    novos: #16698724658308212101 Unknown '' @17,8 | #15651725192175810751 Button 'Achar arquivo  Ctrl+P' @214,8 | #17336966465026777540 Button 'Bigorna  Ctrl+K' @461,8 | #9608727923775226082 Button 'Escuro' @1651,8 | #16604086701319730923 Button 'Minimizar' @1732,8 | #5658007984481367096 Button 'Maximizar' @1792,8 | #7528245900600709990 Button 'Fechar janela' @1853,8 | #4509943123261050834 Label 'Oficina · Relatorio' @17,18 | #8399851884972169810 Image '' @18,75 | #13667176677639168651 Button 'Projetos' @96,75
 >> ui.snapshot {}
-   apareceu: 
-   sumiu: 
+   apareceu:
+   sumiu:
 #16698724658308212101 Unknown (sem nome) (17,8)-(1904,56) [clicável]
 #15651725192175810751 Button "Achar arquivo  Ctrl+P" (214,8)-(449,56) [clicável]
 #17336966465026777540 Button "Bigorna  Ctrl+K" (461,8)-(639,56) [clicável]
@@ -67,4 +67,3 @@
 #391540877824553776 Label "🔔 0 avisos" (1615,1042)-(1715,1070) [clicável]
 #2818010915774743887 Label "0 trabalhando · 0 esperando" (1356,1044)-(1579,1068) [clicável]
 #12424182155819170280 Label "US$ 0,30 · 2.8k hoje" (1727,1044)-(1881,1068) [clicável]
-
