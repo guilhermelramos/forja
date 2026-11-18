@@ -28,6 +28,17 @@
 //! e formulários (até 960 px) de quadros/tabelas. [`page_marker`] permite testar
 //! as views reais sem acoplar o kernel ao design system.
 //!
+//! # Peças de composição (item 9)
+//!
+//! [`toolbar`] agrupa ações, [`toolbar_separator`] separa grupos e
+//! [`toolbar_more`] reutiliza o menu com nome obrigatório. [`list_row`] reúne
+//! ícone, título, detalhe, [`tag`] e ações no hover/foco. [`section_heading`]
+//! e [`form_row`] organizam formulários; [`setting_row`] mantém o contrato
+//! especializado dos Ajustes. [`text`] usa o corpo Brasa, preservando spans
+//! explícitos; [`Spacing`] nomeia os passos da grade. [`spinner`] respeita foco
+//! e movimento reduzido, [`skeleton`] é estável, [`number_card`] usa Display
+//! e [`splitter`] aceita arrasto e setas, com nome acessível obrigatório.
+//!
 //! # Terminal
 //!
 //! [`TerminalTheme`] lê os arquivos de `content/themes/`.
@@ -36,6 +47,8 @@
 
 mod apply;
 mod color;
+#[cfg(test)]
+mod component_contract_tests;
 mod components;
 mod fonts;
 mod hierarchy;
@@ -62,6 +75,10 @@ pub use components::{
     window_header, window_header_with_focus, wrapped_label, ButtonKind, Column, HelperMissingGuide,
     ListItem, MenuItem, Page, PageIconAction, PageMarker, PageResponse, PageSpec, PageState,
     PageWidth, PanelIconTab, Stage, TabFitPlan, TabItem, TabStripOutcome, ToastKind, TreeNode,
+};
+pub use components::{
+    form_row, list_row, number_card, section_heading, skeleton, spinner, splitter, tag, text,
+    toolbar, toolbar_more, toolbar_separator, FormRow, ListRow, Spacing,
 };
 pub use components::{
     highlighted_text, setting_row, settings_navigation, settings_viewport, SettingRow,
@@ -102,10 +119,5 @@ pub fn request_repaint_after_active(ctx: &egui::Context, delay: std::time::Durat
 /// Desenha o spinner quando a janela está ativa; quando minimizada ou sem foco,
 /// apenas reserva o espaço sem pedir quadros a 60 fps.
 pub fn spinner_if_active(ui: &mut egui::Ui) {
-    if window_active(ui.ctx()) {
-        ui.spinner();
-    } else {
-        let size = ui.spacing().interact_size.y;
-        ui.allocate_exact_size(egui::vec2(size, size), egui::Sense::hover());
-    }
+    spinner(ui);
 }

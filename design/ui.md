@@ -139,6 +139,28 @@ Os rótulos vêm de quem chama. O ui-kit não escreve texto de produto.
 
 Uma única ação de destaque (`accent` cheio) por tela. Ações secundárias usam contorno; ações auxiliares, fantasma. Filtro selecionado usa `accent_soft` com texto `text`, não laranja cheio. Ação destrutiva é neutra com contorno antes de confirmar; botão vermelho cheio somente dentro do diálogo de confirmação.
 
+### Peças de composição (item 9)
+
+| API | Contrato |
+|---|---|
+| `button_with_icon` / `icon_button` | Reutilizam a hierarquia do item 11; ícone 16 px. O botão só de ícone exige nome/dica não vazio no argumento, inclusive quando desabilitado. |
+| `toolbar`, `toolbar_separator`, `toolbar_more` | Ações horizontais, espaço da densidade, separador vertical e menu de excedentes com nome obrigatório. |
+| `list_row` / `ListRow` | Ícone opcional, título, detalhe, etiqueta, seleção `accent_soft`; ações aparecem em hover ou foco dentro da linha e conservam navegação por Tab. |
+| `section_heading`, `form_row` / `FormRow` | Título Section 16/600; rótulo e ajuda à esquerda, controle à direita, erro abaixo. Ajustes conserva `setting_row` para busca, alteração e restauração. |
+| `tag` | Etiqueta genérica de estado, contagem ou atalho: `surface_alt`, Caption 12, altura da densidade. Não substitui `stage_badge`. |
+| `spinner`, `skeleton` | Giratório só com janela ativa e movimento permitido; anel estático nos demais casos. Esqueleto estável em `surface_alt`, sem timer ou cintilação. |
+| `number_card` | Reutiliza `card`; valor Display 28, legenda e variação Caption 12. A variação é textual, não depende só de vermelho/verde. |
+| `splitter` | Divisor vertical arrastável com nome obrigatório, cursor horizontal e anel de foco; setas mudam 1%, painéis limitados a 10–90%. |
+| `text`, `Spacing` | Corpo usa a escala Brasa aplicada e preserva spans explícitos; passos nomeados XS/SM/MD/LG/XL/XXL = 4/8/12/16/24/32 px. |
+
+`cargo xtask ui-lint` audita `crates/modules/**` em Rust, fora de testes,
+comentários e strings. Conta `ui.button`, `ui.label`, construtores
+`Color32::from_rgb*` (inclui RGBA) e `add_space` com argumento numérico literal.
+O teto versionado em `design/ui-lint.toml` só desce nas migrações; CI recusa
+crescimento de cada contador e das exceções separadamente. Uma exceção de
+conteúdo exige `// ui-lint: allow <motivo>` na mesma linha ou na anterior;
+não é permissão para manter cores de interface literais.
+
 ### Campo de texto
 
 Uma linha. Fundo `surface`, contorno `border`, raio 6. A dica usa `text_muted`. No foco, o anel `accent` substitui a confiança no contorno.
