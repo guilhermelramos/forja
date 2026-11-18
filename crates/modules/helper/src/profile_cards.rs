@@ -37,7 +37,7 @@ pub(crate) fn draw_installed_profile(
                 .file_name()
                 .map(|part| part.to_string_lossy().into_owned())
                 .unwrap_or_else(|| bench.to_owned());
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t_args("helper.view.last-bench", &[("bench", &name)]))
                     .weak(),
             );

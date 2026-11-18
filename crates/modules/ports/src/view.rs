@@ -185,17 +185,17 @@ impl PortsView {
                 .show(ui, |ui| {
                     ui.set_width(ui.available_width());
                     ui.horizontal_wrapped(|ui| {
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(format!(":{}", port.port))
                                 .strong()
                                 .color(c32(tokens.color.text)),
                         );
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(format!("{} · {}", port.process, port.pid))
                                 .small()
                                 .color(text_color),
                         );
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(&port.address)
                                 .small()
                                 .monospace()
@@ -204,13 +204,13 @@ impl PortsView {
                         if let Some(bench) = port.bench_label() {
                             forja_ui_kit::text(ui, egui::RichText::new(bench).small().color(spark));
                         } else if port.from_tree {
-                            forja_ui_kit::text(ui, 
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(cx.t("ports.view.group-forja"))
                                     .small()
                                     .color(spark),
                             );
                         } else {
-                            forja_ui_kit::text(ui, 
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(cx.t("ports.view.no-bench"))
                                     .small()
                                     .color(muted),
@@ -424,7 +424,7 @@ impl View for PortsStatus {
         } else {
             c32(tokens.color.text_muted)
         };
-        forja_ui_kit::text(ui, 
+        forja_ui_kit::text(ui,
             egui::RichText::new(cx.t_args(
                 "ports.status.count",
                 &[("count", &snapshot.ports.len().to_string())],

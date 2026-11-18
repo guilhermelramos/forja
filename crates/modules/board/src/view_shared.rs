@@ -442,7 +442,7 @@ pub(crate) fn render_helper_offer(
     frame.show(ui, |ui| {
         if let Some(profile) = &offer.default_profile {
             ui.horizontal_wrapped(|ui| {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t_args(
                         "board.forging-offer.body",
                         &[("bench", &offer.bench_name), ("helper", &profile.name)],
@@ -469,7 +469,7 @@ pub(crate) fn render_helper_offer(
                 }
             });
             if let Some(error) = &offer.error {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(error)
                         .small()
                         .color(c32(tokens.color.danger)),

@@ -253,7 +253,7 @@ impl RequestsView {
         }
         let mut submit = false;
         ui.group(|ui| {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("request-local-title-label"))
                     .small()
                     .strong(),
@@ -264,7 +264,7 @@ impl RequestsView {
                 egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, ui.is_enabled(), &title_hint)
             });
             ui.add_space(forja_ui_kit::Spacing::XS);
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("request-local-body-label"))
                     .small()
                     .strong(),

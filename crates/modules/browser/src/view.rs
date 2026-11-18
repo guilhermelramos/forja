@@ -355,7 +355,7 @@ impl View for BrowserView {
             .get(self.state.with(|state| state.active).unwrap_or(0))
             .and_then(|tab| tab.error.clone())
         {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(error)
                     .small()
                     .color(c32(tokens.color.danger)),
@@ -366,7 +366,7 @@ impl View for BrowserView {
             self.find_bar(ui, cx, muted);
         }
         if let Some(error) = self.state.with(|state| state.error.clone()).flatten() {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(error)
                     .small()
                     .color(c32(tokens.color.danger)),
@@ -551,7 +551,7 @@ impl BrowserView {
                 .active()
                 .map(|tab| zoom_factor(tab.zoom) * self.default_zoom)
                 .unwrap_or(self.default_zoom);
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(format!("{:.0}%", zoom * 100.0))
                     .small()
                     .color(muted),
@@ -595,7 +595,7 @@ impl BrowserView {
                 }
             }
             if tabs.len() > 1 {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!("{} / {}", tabs.len(), crate::state::MAX_TABS))
                         .small()
                         .color(muted),
@@ -630,7 +630,7 @@ impl BrowserView {
             {
                 self.state.set_find(false, None);
             }
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("browser.view.find-hint"))
                     .small()
                     .color(muted),

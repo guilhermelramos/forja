@@ -183,7 +183,7 @@ impl View for HelperPage {
                             None,
                         );
                     } else if has_verdict {
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(cx.t_args(
                                 "helper.view.detect-summary",
                                 &[
@@ -223,7 +223,7 @@ impl View for HelperPage {
                         ui.horizontal(|ui| {
                             forja_ui_kit::text(ui, egui::RichText::new(status).color(run_status_color(run, &forja_ui_kit::applied_tokens(ui.ctx()).color)));
                             forja_ui_kit::text(ui, egui::RichText::new(name).strong());
-                            forja_ui_kit::text(ui, 
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(
                                     std::path::Path::new(&run.bench_path)
                                         .file_name()
@@ -272,7 +272,7 @@ impl View for HelperPage {
                     egui::ScrollArea::vertical()
                         .max_height(460.0)
                         .show(ui, |ui| {
-                            forja_ui_kit::text(ui, 
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(format!(
                                     "{} ({})",
                                     cx.t("helper.view.installed-section"),
@@ -281,12 +281,12 @@ impl View for HelperPage {
                                 .strong(),
                             );
                             if installed.is_empty() {
-                                forja_ui_kit::text(ui, 
+                                forja_ui_kit::text(ui,
                                     egui::RichText::new(cx.t("helper.view.installed-empty")).weak(),
                                 );
                             } else if installed_filtered.is_empty() {
                                 ui.horizontal(|ui| {
-                                    forja_ui_kit::text(ui, 
+                                    forja_ui_kit::text(ui,
                                         egui::RichText::new(cx.t_args(
                                             "helper.view.filter-empty",
                                             &[("query", &raw_query)],
@@ -350,7 +350,7 @@ impl View for HelperPage {
                                     }
                                 }
                                 if expanded && !missing_filtered.is_empty() {
-                                    forja_ui_kit::text(ui, 
+                                    forja_ui_kit::text(ui,
                                         egui::RichText::new(
                                             cx.t("helper.view.not-installed-section"),
                                         )

@@ -100,7 +100,7 @@ impl View for ProjectsView {
             }
         }
         if let Some(status) = self.state.status() {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(status)
                     .small()
                     .color(tokens.color.info.forja_color()),
@@ -167,7 +167,7 @@ impl View for ProjectsView {
                     if project.icon == crate::model::DEFAULT_ICON {
                         forja_ui_kit::icon(ui, forja_ui_kit::Icon::Projects, 16.0);
                     } else {
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(&project.icon)
                                 .size(forja_ui_kit::TextRole::Section.size()),
                         );
@@ -232,7 +232,7 @@ impl View for ProjectsView {
                         _ => {}
                     }
                 });
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(&project.path)
                         .small()
                         .color(tokens.color.text_muted.forja_color()),
@@ -243,7 +243,7 @@ impl View for ProjectsView {
                         Ok(benches) => {
                             self.state.mark_benches_missing(false);
                             if benches.is_empty() {
-                                forja_ui_kit::text(ui, 
+                                forja_ui_kit::text(ui,
                                     egui::RichText::new(cx.t("project.sidebar.no-benches"))
                                         .small()
                                         .color(tokens.color.text_muted.forja_color()),
@@ -272,7 +272,7 @@ impl View for ProjectsView {
                             if !self.state.benches_missing() {
                                 self.state.mark_benches_missing(true);
                             }
-                            forja_ui_kit::text(ui, 
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(cx.t("project.sidebar.benches-missing"))
                                     .small()
                                     .color(tokens.color.text_muted.forja_color()),

@@ -397,7 +397,7 @@ impl MusterView {
         ui.add_space(forja_ui_kit::Spacing::SM);
         ui.horizontal_wrapped(|ui| {
             forja_ui_kit::text(ui, egui::RichText::new(&run.title).heading());
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(run_state_label(cx, run.state))
                     .small()
                     .weak(),
@@ -490,18 +490,18 @@ impl MusterView {
         egui::Frame::group(ui.style()).show(ui, |ui| {
             ui.set_min_width(ui.available_width());
             forja_ui_kit::text(ui, egui::RichText::new(&title).small().strong());
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(format!("{count} · {deps}"))
                     .small()
                     .weak(),
             );
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(format!("{}: {helper}", cx.t("muster.plan-helper")))
                     .small()
                     .weak(),
             );
             ui.horizontal_wrapped(|ui| {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!("{}: ", cx.t("muster.plan-ceiling")))
                         .small()
                         .weak(),
@@ -623,7 +623,7 @@ impl MusterView {
         egui::Frame::group(ui.style()).show(ui, |ui| {
             ui.set_min_width(ui.available_width());
             ui.horizontal_wrapped(|ui| {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(task_state_label(cx, task.state))
                         .small()
                         .color(task_state_color(ui, task.state)),
@@ -631,7 +631,7 @@ impl MusterView {
                 forja_ui_kit::text(ui, egui::RichText::new(&task.title).strong());
             });
             if !dependencies.is_empty() {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t_args(
                         "muster.plan-task-deps",
                         &[("deps", &dependencies.join(", "))],
@@ -642,12 +642,12 @@ impl MusterView {
             }
             if let Some(assignment) = assignment {
                 ui.horizontal_wrapped(|ui| {
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(assignment_state_label(cx, assignment.state))
                             .small()
                             .weak(),
                     );
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(self.helper_label(cx, &assignment.profile_id))
                             .small()
                             .monospace(),
@@ -661,7 +661,7 @@ impl MusterView {
                 forja_ui_kit::text(ui, egui::RichText::new(&task.spec).weak());
             }
             if let Some(summary) = &task.summary {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!(
                         "{} · {}",
                         task.result.as_deref().unwrap_or(""),
@@ -762,7 +762,7 @@ impl MusterView {
                 }
                 for (profile, assignments) in by_helper {
                     ui.add_space(forja_ui_kit::Spacing::XS);
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(if profile.trim().is_empty() {
                             cx.t("muster.profile-auto")
                         } else {
@@ -799,7 +799,7 @@ impl MusterView {
         egui::Frame::group(ui.style()).show(ui, |ui| {
             ui.set_min_width(ui.available_width());
             ui.horizontal_wrapped(|ui| {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(assignment_state_label(cx, assignment.state))
                         .small()
                         .color(assignment_state_color(ui, assignment.state)),
@@ -818,7 +818,7 @@ impl MusterView {
                             Err(error) => self.set_error(cx, &error.to_string()),
                         }
                     }
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(format!("{} {terminal}", cx.t("muster.terminal")))
                             .small()
                             .weak(),
@@ -840,14 +840,14 @@ impl MusterView {
                 }
             });
             if let Some(session) = &assignment.session_id {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!("{} {session}", cx.t("muster.session")))
                         .small()
                         .weak(),
                 );
             }
             if assignment.retries > 0 {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!(
                         "{}: {}",
                         cx.t("muster.retries"),
@@ -896,7 +896,7 @@ impl MusterView {
         let pending = total.is_none() && self.spend.any_pending(&benches);
         forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.cost-title")).strong());
         if let Some(total) = total {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cost_value(cx, total.usd))
                     .size(forja_ui_kit::TextRole::Display.size())
                     .strong(),
@@ -904,40 +904,40 @@ impl MusterView {
             self.budget_bar(ui, cx, run, total.usd);
             forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.cost-auto")).small().weak());
             if total.unpriced_tokens > 0 {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t("muster.cost-unpriced"))
                         .small()
                         .color(applied_tokens(ui.ctx()).color.spark.to_color32()),
                 );
             }
             if total.pending {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t("muster.cost-pending"))
                         .small()
                         .weak(),
                 );
             }
         } else if pending {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("muster.cost-pending"))
                     .small()
                     .weak(),
             );
         } else {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("muster.cost-manual"))
                     .small()
                     .weak(),
             );
             if !self.spend.contract_available() {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t("muster.cost-unavailable"))
                         .small()
                         .weak(),
                 );
             }
             if run.spent_usd > 0.0 {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cost_value(cx, run.spent_usd))
                         .size(forja_ui_kit::TextRole::Display.size())
                         .strong(),
@@ -992,7 +992,7 @@ impl MusterView {
     fn budget_bar(&self, ui: &mut egui::Ui, cx: &Ctx<'_>, run: &MusterRun, spent: f64) {
         if run.budget_usd > 0.0 {
             let ratio = (spent / run.budget_usd).clamp(0.0, 1.0) as f32;
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(format!(
                     "{} / {}",
                     cost_value(cx, spent),
@@ -1003,7 +1003,7 @@ impl MusterView {
             );
             progress_bar(ui, ratio);
         } else {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("muster.budget-none"))
                     .small()
                     .weak(),
@@ -1028,7 +1028,7 @@ impl MusterView {
         let ctx = ui.ctx().clone();
         modal_explicit_close(&ctx, &mut open, &title, |ui| {
             ui.set_min_width(380.0);
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("muster.plan-review-hint"))
                     .small()
                     .weak(),
@@ -1084,7 +1084,7 @@ impl MusterView {
             .filter(|task| task.run == run.id)
             .collect();
         let dep_count: usize = tasks.iter().map(|task| task.deps.len()).sum();
-        forja_ui_kit::text(ui, 
+        forja_ui_kit::text(ui,
             egui::RichText::new(format!(
                 "{} · {}",
                 cx.t_args(
@@ -1109,13 +1109,13 @@ impl MusterView {
             egui::Frame::group(ui.style()).show(ui, |ui| {
                 ui.set_min_width(ui.available_width());
                 ui.horizontal_wrapped(|ui| {
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(format!("{}.", index + 1))
                             .small()
                             .weak(),
                     );
                     forja_ui_kit::text(ui, egui::RichText::new(&task.title).strong());
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(task_state_label(cx, task.state))
                             .small()
                             .color(task_state_color(ui, task.state)),
@@ -1130,7 +1130,7 @@ impl MusterView {
                     )
                 };
                 forja_ui_kit::text(ui, egui::RichText::new(deps).small().weak());
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!(
                         "{}: {}",
                         cx.t("muster.plan-helper"),
@@ -1143,7 +1143,7 @@ impl MusterView {
         }
         ui.separator();
         ui.horizontal_wrapped(|ui| {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(format!("{}:", cx.t("muster.plan-ceiling")))
                     .small()
                     .weak(),
@@ -1153,7 +1153,7 @@ impl MusterView {
         let benches = run_benches(run, &snap.assignments);
         if let Some(total) = self.spend.total(&benches) {
             ui.horizontal_wrapped(|ui| {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!("{}:", cx.t("muster.cost-now")))
                         .small()
                         .weak(),
@@ -1297,7 +1297,7 @@ impl MusterView {
                 if let Some(title) = task_title {
                     forja_ui_kit::text(ui, egui::RichText::new(title).small().weak());
                 }
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(note_kind_label(cx, note.kind))
                         .small()
                         .weak(),

@@ -266,7 +266,7 @@ impl ArchiveView {
                         ui.set_max_width(ui.available_width());
                         ui.horizontal(|ui| {
                             forja_ui_kit::text(ui, egui::RichText::new(&hit.title).strong());
-                            forja_ui_kit::text(ui, 
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(helper_name(state, &hit.profile_id)).weak(),
                             );
                             forja_ui_kit::text(ui, egui::RichText::new(format_date(hit.updated_ms)).weak());

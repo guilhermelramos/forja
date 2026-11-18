@@ -251,7 +251,7 @@ impl SkillView {
                 forja_ui_kit::text(ui, egui::RichText::new(description).weak().small());
             }
             if let Some(error) = &skill.error {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t(error))
                         .color(ui.visuals().error_fg_color)
                         .small(),
@@ -277,7 +277,7 @@ impl SkillView {
         if let Some(description) = &skill.description {
             forja_ui_kit::text(ui, description);
         }
-        forja_ui_kit::text(ui, 
+        forja_ui_kit::text(ui,
             egui::RichText::new(cx.t_args("skill.detail.path", &[("path", skill.path.as_str())]))
                 .weak()
                 .small(),

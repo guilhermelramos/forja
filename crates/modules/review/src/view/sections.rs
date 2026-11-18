@@ -16,7 +16,7 @@ impl ReviewView {
             .inner_margin(egui::Margin::symmetric(10, 8))
             .show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(format!("#{} {}", pr.number, pr.title))
                             .strong()
                             .color(c32(tokens.color.text)),
@@ -42,13 +42,13 @@ impl ReviewView {
                         }
                     });
                 });
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!("{} → {}", pr.source, pr.target))
                         .small()
                         .color(muted),
                 );
                 if !pr.reviewers.is_empty() {
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(format!(
                             "{}: {}",
                             cx.t("review.pr.reviewers"),
@@ -59,7 +59,7 @@ impl ReviewView {
                     );
                 }
                 if !pr.labels.is_empty() {
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(format!(
                             "{}: {}",
                             cx.t("review.pr.labels"),
@@ -84,7 +84,7 @@ impl ReviewView {
         let tokens = forja_ui_kit::applied_tokens(ui.ctx());
         forja_ui_kit::text(ui, egui::RichText::new(cx.t("review.checks.title")).strong());
         if state.checks.is_empty() {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("review.checks.empty"))
                     .small()
                     .color(muted),
@@ -154,7 +154,7 @@ impl ReviewView {
                             .max_height(220.0)
                             .show(ui, |ui| {
                                 if log.is_empty() {
-                                    forja_ui_kit::text(ui, 
+                                    forja_ui_kit::text(ui,
                                         egui::RichText::new(cx.t("review.checks.pending"))
                                             .small()
                                             .color(muted),
@@ -179,7 +179,7 @@ impl ReviewView {
         let tokens = forja_ui_kit::applied_tokens(ui.ctx());
         forja_ui_kit::text(ui, egui::RichText::new(cx.t("review.threads.title")).strong());
         if state.threads.is_empty() {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("review.threads.empty"))
                     .small()
                     .color(muted),
@@ -194,13 +194,13 @@ impl ReviewView {
                 .inner_margin(egui::Margin::symmetric(8, 6))
                 .show(ui, |ui| {
                     ui.horizontal_wrapped(|ui| {
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(format!("{}:{}", thread.path, thread.line))
                                 .small()
                                 .color(muted),
                         );
                         if thread.resolved {
-                            forja_ui_kit::text(ui, 
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(cx.t("review.threads.resolved"))
                                     .small()
                                     .color(c32(tokens.color.ok)),
@@ -224,7 +224,7 @@ impl ReviewView {
                         }
                     });
                     for comment in &thread.comments {
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(format!("{}: {}", comment.author, comment.body))
                                 .small(),
                         );
@@ -307,7 +307,7 @@ impl ReviewView {
                 let _ = cx.run_command("review.merge", args);
             }
         });
-        forja_ui_kit::text(ui, 
+        forja_ui_kit::text(ui,
             egui::RichText::new(cx.t_args("review.pr.state", &[("state", &pr.merge_state)]))
                 .small()
                 .color(muted),
@@ -327,7 +327,7 @@ impl ReviewView {
         let tokens = forja_ui_kit::applied_tokens(ui.ctx());
         ui.add_space(forja_ui_kit::Spacing::SM);
         ui.horizontal(|ui| {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("review.generated.title"))
                     .strong()
                     .color(c32(tokens.color.text)),

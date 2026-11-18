@@ -73,20 +73,20 @@ impl ExtensionPage {
             ui.heading(title);
             forja_ui_kit::text(ui, egui::RichText::new(format!("{} {}", entry.version, state_label)).weak());
             if entry.dev {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t("extension.badge.dev"))
                         .color(ui.visuals().warn_fg_color),
                 );
             }
         });
         ui.collapsing(cx.t("extension.details"), |ui| {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(format!("{} · {}", entry.layer, entry.dir))
                     .monospace()
                     .weak(),
             );
             if !entry.hash.is_empty() {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!(
                         "{}: {}",
                         cx.t("extension.hash"),
@@ -169,7 +169,7 @@ impl ExtensionPage {
         if !entry.errors.is_empty() {
             forja_ui_kit::text(ui, egui::RichText::new(cx.t("extension.errors")).strong());
             for error in entry.errors.iter().rev().take(5) {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(error)
                         .monospace()
                         .color(ui.visuals().error_fg_color),

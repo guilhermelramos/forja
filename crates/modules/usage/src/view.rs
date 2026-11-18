@@ -84,7 +84,7 @@ impl View for UsagePage {
                     "usage.pricing.errors",
                     &[("count", &pricing_errors.len().to_string())],
                 );
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(text)
                         .small()
                         .color(c32(tokens.color.danger)),
@@ -181,7 +181,7 @@ impl UsagePage {
                     if let Some(note) = note {
                         forja_ui_kit::text(ui, egui::RichText::new(note).small().color(muted));
                     }
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(format!(
                             "{} {}",
                             compact_tokens(totals.total_tokens),
@@ -189,7 +189,7 @@ impl UsagePage {
                         ))
                         .font(forja_ui_kit::TextRole::Section.font()),
                     );
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(format!(
                             "{} {} · {} {}",
                             compact_tokens(totals.input_tokens),
@@ -200,7 +200,7 @@ impl UsagePage {
                         .small()
                         .color(muted),
                     );
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(format!(
                             "{} {} · {} {}",
                             compact_tokens(totals.cache_read_tokens),
@@ -249,12 +249,12 @@ impl UsagePage {
                         egui::vec2(rect.width() * ratio.max(0.02), rect.height()),
                     );
                     painter.rect_filled(filled, 3.0, c32(tokens.color.spark));
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(compact_tokens(totals.total_tokens))
                             .small()
                             .color(c32(tokens.color.text_muted)),
                     );
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cost_short(&totals, cx, locale))
                             .small()
                             .color(c32(tokens.color.text_muted)),
@@ -293,7 +293,7 @@ impl UsagePage {
                 ui.horizontal(|ui| {
                     forja_ui_kit::text(ui, forja_ui_kit::TextRole::Caption.rich(name_for(name)));
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(format!(
                                 "{} · {} · {share}%",
                                 cost_short(totals, cx, locale),
@@ -324,7 +324,7 @@ impl UsagePage {
             ui.set_min_width(ui.available_width());
             for session in summary.recent_sessions(12) {
                 ui.horizontal_wrapped(|ui| {
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(if session.title.is_empty() {
                             &session.session_id
                         } else {
@@ -333,7 +333,7 @@ impl UsagePage {
                         .small()
                         .strong(),
                     );
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(format!(
                             "{} · {} · {}",
                             agent_label(cx, &session.agent),
@@ -347,13 +347,13 @@ impl UsagePage {
                         .small()
                         .color(muted),
                     );
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cost_short(&session.totals, cx, locale))
                             .small()
                             .color(muted),
                     );
                     if session.updated_ms > 0 {
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(format_day(&day_key(session.updated_ms), locale))
                                 .small()
                                 .color(muted),
@@ -361,7 +361,7 @@ impl UsagePage {
                     }
                 });
                 if !session.project.is_empty() {
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(&session.project)
                             .small()
                             .color(muted)
@@ -410,7 +410,7 @@ impl View for UsageStatus {
                 ],
             )
         };
-        forja_ui_kit::text(ui, 
+        forja_ui_kit::text(ui,
             egui::RichText::new(text)
                 .small()
                 .color(c32(tokens.color.text_muted)),

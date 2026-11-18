@@ -147,13 +147,13 @@ impl ReviewView {
             let mut changed_base = false;
             if let Some(comparison) = &state.comparison {
                 if !comparison.remote {
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cx.t("review.summary.remote-missing")).color(muted),
                     );
                 }
                 ui.horizontal_wrapped(|ui| {
                     forja_ui_kit::text(ui, cx.t("review.summary.base"));
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(
                             comparison
                                 .base
@@ -163,7 +163,7 @@ impl ReviewView {
                         .strong(),
                     );
                     if let Some(commit) = &comparison.base_commit {
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(commit.chars().take(12).collect::<String>())
                                 .monospace()
                                 .small()
@@ -193,7 +193,7 @@ impl ReviewView {
                     ));
                 }
                 if comparison.base.is_none() {
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cx.t("review.summary.no-base"))
                             .small()
                             .color(muted),
@@ -205,14 +205,14 @@ impl ReviewView {
                     ));
                 }
                 if comparison.ahead == 0 && comparison.base.is_some() {
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cx.t("review.summary.nothing-to-send")).color(muted),
                     );
                 }
                 ui.add_space(forja_ui_kit::Spacing::XS);
                 forja_ui_kit::text(ui, egui::RichText::new(cx.t("review.summary.commits")).strong());
                 if comparison.commits.is_empty() {
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cx.t("review.summary.no-commits"))
                             .small()
                             .color(muted),
@@ -227,10 +227,10 @@ impl ReviewView {
                                 ui.horizontal_wrapped(|ui| {
                                     forja_ui_kit::text(ui, egui::RichText::new(&commit.short).monospace());
                                     forja_ui_kit::text(ui, &commit.title);
-                                    forja_ui_kit::text(ui, 
+                                    forja_ui_kit::text(ui,
                                         egui::RichText::new(&commit.author).small().color(muted),
                                     );
-                                    forja_ui_kit::text(ui, 
+                                    forja_ui_kit::text(ui,
                                         egui::RichText::new(format_commit_date(commit.time, cx))
                                             .small()
                                             .color(muted),
@@ -242,7 +242,7 @@ impl ReviewView {
                 ui.add_space(forja_ui_kit::Spacing::XS);
                 forja_ui_kit::text(ui, egui::RichText::new(cx.t("review.summary.files")).strong());
                 if comparison.files.is_empty() {
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cx.t("review.summary.no-files"))
                             .small()
                             .color(muted),
@@ -263,7 +263,7 @@ impl ReviewView {
                                     .map(|count| count.to_string())
                                     .unwrap_or_else(|| cx.t("review.summary.binary"));
                                 ui.horizontal_wrapped(|ui| {
-                                    forja_ui_kit::text(ui, 
+                                    forja_ui_kit::text(ui,
                                         egui::RichText::new(format!("+{additions} / -{deletions}"))
                                             .monospace()
                                             .small()
@@ -308,7 +308,7 @@ impl ReviewView {
                     }
                 }
             } else if !state.comparison_loading {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t("review.summary.no-base"))
                         .small()
                         .color(muted),
@@ -326,12 +326,12 @@ impl ReviewView {
         ui.horizontal_wrapped(|ui| {
             ui.heading(cx.t("review.tab.title"));
             if let Some(target) = &state.target {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t(target.provider.label_key()))
                         .small()
                         .color(muted),
                 );
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!("{} · {}", target.repo, state.branch))
                         .small()
                         .color(muted),
@@ -367,7 +367,7 @@ impl ReviewView {
             forja_ui_kit::request_repaint_after_active(ui.ctx(), Duration::from_millis(260));
         }
         forja_ui_kit::text(ui, egui::RichText::new(cx.t("review.create.title")).strong());
-        forja_ui_kit::text(ui, 
+        forja_ui_kit::text(ui,
             egui::RichText::new(cx.t("review.create.source-label"))
                 .small()
                 .color(muted),
@@ -377,7 +377,7 @@ impl ReviewView {
             false,
             egui::TextEdit::singleline(&mut source).desired_width(f32::INFINITY),
         );
-        forja_ui_kit::text(ui, 
+        forja_ui_kit::text(ui,
             egui::RichText::new(cx.t("review-pr-title"))
                 .small()
                 .color(muted),
@@ -387,7 +387,7 @@ impl ReviewView {
                 .hint_text(cx.t("review.pr.title"))
                 .desired_width(f32::INFINITY),
         );
-        forja_ui_kit::text(ui, 
+        forja_ui_kit::text(ui,
             egui::RichText::new(cx.t("review.create.body"))
                 .small()
                 .color(muted),

@@ -140,7 +140,7 @@ impl View for DialogsView {
                         if form.creating {
                             ui.horizontal(|ui| {
                                 forja_ui_kit::spinner_if_active(ui);
-                                forja_ui_kit::text(ui, 
+                                forja_ui_kit::text(ui,
                                     egui::RichText::new(cx.t("bench.dialog.create.creating"))
                                         .small(),
                                 );
@@ -330,7 +330,7 @@ impl View for DialogsView {
                             forja_ui_kit::text(ui, egui::RichText::new(&form.teardown).monospace());
                         }
                         if let Some(hash) = &form.setup_hash {
-                            forja_ui_kit::text(ui, 
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(format!(
                                     "{}: {}",
                                     cx.t("bench.dialog.approve.hash"),
@@ -341,7 +341,7 @@ impl View for DialogsView {
                             );
                         }
                         if let Some(hash) = &form.teardown_hash {
-                            forja_ui_kit::text(ui, 
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(format!(
                                     "{}: {}",
                                     cx.t("bench.dialog.approve.hash"),

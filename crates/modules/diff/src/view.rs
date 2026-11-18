@@ -77,14 +77,14 @@ impl View for DiffView {
         let muted = c32(tokens.color.text_muted);
         self.toolbar(ui, cx, muted);
         if let Some(status) = self.state.status() {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(status)
                     .small()
                     .color(c32(tokens.color.danger)),
             );
         }
         if let Some(notice) = self.state.notice() {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(notice)
                     .small()
                     .color(c32(tokens.color.ok)),
@@ -123,7 +123,7 @@ impl DiffView {
     fn toolbar(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, muted: egui::Color32) {
         ui.horizontal_wrapped(|ui| {
             if let Some(comparison) = self.state.comparison() {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!(
                         "{}: {comparison}",
                         cx.t("diff.comparison.heading")
@@ -182,7 +182,7 @@ impl DiffView {
         ui.horizontal_wrapped(|ui| {
             let count = self.state.notes().len();
             if count > 0 {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(
                         cx.t_args("diff.notes.count", &[("count", &count.to_string())]),
                     )
@@ -292,7 +292,7 @@ impl DiffView {
 
     fn detail(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, muted: egui::Color32) {
         let Some(diff) = self.state.with(|state| state.diff.clone()).flatten() else {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("diff.select-file"))
                     .color(muted)
                     .italics(),
@@ -303,7 +303,7 @@ impl DiffView {
             ui.horizontal(|ui| {
                 forja_ui_kit::text(ui, egui::RichText::new(&diff.path).strong());
                 if diff.staged {
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cx.t("diff.staged"))
                             .small()
                             .color(muted),
@@ -362,7 +362,7 @@ impl DiffView {
         let ok = c32(tokens.color.ok);
         match row.kind {
             RowKind::Header => {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(&row.header)
                         .monospace()
                         .small()
@@ -370,7 +370,7 @@ impl DiffView {
                 );
             }
             RowKind::Gap => {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(
                         cx.t_args("diff.collapsed", &[("count", &row.skipped.to_string())]),
                     )
@@ -391,7 +391,7 @@ impl DiffView {
                     forja_ui_kit::text(ui, egui::RichText::new(text).monospace().small().color(muted));
                 }
                 Mode::Combined => {
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(
                             row.new
                                 .as_ref()
@@ -407,7 +407,7 @@ impl DiffView {
             RowKind::Change => {
                 if self.mode == Mode::Unified {
                     if let Some(old) = &row.old {
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(format!("-{:>4}   {}", old.number, old.text))
                                 .monospace()
                                 .small()
@@ -415,7 +415,7 @@ impl DiffView {
                         );
                     }
                     if let Some(new) = &row.new {
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(format!("+{:>4}   {}", new.number, new.text))
                                 .monospace()
                                 .small()
@@ -434,7 +434,7 @@ impl DiffView {
                 for note in notes.iter().filter(|note| note.line == line) {
                     ui.horizontal(|ui| {
                         ui.add_space(forja_ui_kit::Spacing::XL);
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(format!("{}: {}", line, note.text))
                                 .small()
                                 .color(c32(tokens.color.spark)),
@@ -567,7 +567,7 @@ fn image_cell(
         } else {
             forja_ui_kit::text(ui, egui::RichText::new(cx.t("diff.image.missing")).color(muted));
         }
-        forja_ui_kit::text(ui, 
+        forja_ui_kit::text(ui,
             egui::RichText::new(format!("{} x {} · {} B", size.0, size.1, bytes))
                 .small()
                 .color(muted),
@@ -618,7 +618,7 @@ fn combined_line(
 ) {
     ui.horizontal_wrapped(|ui| {
         if let Some(old) = old {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(format!("-{:>4}  {}", old.number, old.text))
                     .monospace()
                     .small()
@@ -629,7 +629,7 @@ fn combined_line(
             forja_ui_kit::text(ui, egui::RichText::new("\u{2192}").small());
         }
         if let Some(new) = new {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(format!("+{:>4}  {}", new.number, new.text))
                     .monospace()
                     .small()

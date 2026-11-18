@@ -114,7 +114,7 @@ impl ChatView {
             };
             forja_ui_kit::text(ui, egui::RichText::new(label).color(color).strong());
             if matches!(session.status, SessionStatus::Working) {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!(
                         "{}s",
                         session.turn_seconds()
@@ -123,7 +123,7 @@ impl ChatView {
                 );
             }
             if session.pending() > 0 {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!(
                         "{}: {}",
                         cx.t("chat.view.queued"),
@@ -188,7 +188,7 @@ impl ChatView {
             });
         });
         ui.horizontal(|ui| {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(short_folder(&session.bench_path))
                     .monospace()
                     .weak(),
@@ -262,7 +262,7 @@ impl ChatView {
                 }
             }
             for path in &session.attachments {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(
                         path.file_name()
                             .map(|name| name.to_string_lossy().into_owned())
@@ -437,7 +437,7 @@ impl ChatView {
                     }
                 });
             } else {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t("chat.view.command-hint")).weak(),
                 );
             }
@@ -768,7 +768,7 @@ fn draw_message_list(
             }
         });
     ui.horizontal(|ui| {
-        forja_ui_kit::text(ui, 
+        forja_ui_kit::text(ui,
             egui::RichText::new(format!(
                 "{} · {}",
                 header.profile_name,
@@ -777,7 +777,7 @@ fn draw_message_list(
             .weak(),
         );
         if header.usage.total_tokens > 0 {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(format!(
                     "↑{} ↓{} Σ{}",
                     header.usage.input_tokens,
@@ -812,7 +812,7 @@ fn draw_message(
         forja_ui_kit::text(ui, egui::RichText::new(name).color(color).strong());
         if message.timestamp_ms > 0 {
             if let Some(time) = chrono::DateTime::from_timestamp_millis(message.timestamp_ms) {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(time.format("%H:%M").to_string()).weak(),
                 );
             }
@@ -868,7 +868,7 @@ fn draw_message(
                 egui::Frame::group(ui.style()).show(ui, |ui| {
                     ui.set_max_width(max_width);
                     ui.horizontal(|ui| {
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(format!("🔧 {name}"))
                                 .strong()
                                 .monospace(),
@@ -941,7 +941,7 @@ fn draw_message(
                                     } else {
                                         ui.visuals().text_color()
                                     };
-                                    forja_ui_kit::text(ui, 
+                                    forja_ui_kit::text(ui,
                                         egui::RichText::new(line).monospace().color(color),
                                     );
                                 }
@@ -977,7 +977,7 @@ fn draw_message(
         }
     }
     if let Some(usage) = message.usage {
-        forja_ui_kit::text(ui, 
+        forja_ui_kit::text(ui,
             egui::RichText::new(format!(
                 "↑{} ↓{} Σ{}",
                 usage.input_tokens, usage.output_tokens, usage.total_tokens

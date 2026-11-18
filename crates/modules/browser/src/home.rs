@@ -86,7 +86,7 @@ impl HomeState {
                 .show(ui, |ui| {
                     ui.horizontal_wrapped(|ui| {
                         ui.heading(cx.t("browser.view.home-title"));
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(cx.t("browser.home.offline-note"))
                                 .small()
                                 .color(muted),
@@ -292,7 +292,7 @@ impl HomeState {
             if scanning {
                 ui.horizontal(|ui| {
                     forja_ui_kit::spinner_if_active(ui);
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cx.t("browser.home.docs-loading"))
                             .small()
                             .color(muted),

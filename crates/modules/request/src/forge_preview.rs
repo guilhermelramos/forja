@@ -177,14 +177,14 @@ impl ForgePreview {
                         forja_ui_kit::text(ui, preview_row(cx, "request.forge.preview.base", &preview.base));
                         forja_ui_kit::text(ui, preview_row(cx, "request.forge.preview.path", &preview.path));
                         if preview.fetch_before {
-                            forja_ui_kit::text(ui, 
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(cx.t("request.forge.preview.fetch")).weak(),
                             );
                         }
                         ui.add_space(6.0);
                         forja_ui_kit::text(ui, egui::RichText::new(cx.t("request.forge.preview.setup")).strong());
                         if preview.setup.is_empty() {
-                            forja_ui_kit::text(ui, 
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(cx.t("request.forge.preview.setup.none"))
                                     .weak(),
                             );
@@ -202,7 +202,7 @@ impl ForgePreview {
                             forja_ui_kit::text(ui, egui::RichText::new(cx.t(setup_status)).weak());
                         }
                         if !preview.setup_warnings.is_empty() {
-                            forja_ui_kit::text(ui, 
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(preview.setup_warnings.join("\n"))
                                     .color(ui.visuals().warn_fg_color),
                             );

@@ -128,7 +128,7 @@ pub(crate) fn render_dialog(
                 .default_width(420.0)
                 .show(ctx, |ui| {
                     forja_ui_kit::register_keyboard_layer(ui, layer);
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cx.t(if creating {
                             "project.field.new-path"
                         } else {
@@ -154,7 +154,7 @@ pub(crate) fn render_dialog(
                         }
                     }
                     ui.add_space(forja_ui_kit::Spacing::XS);
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cx.t("project.field.name"))
                             .small()
                             .color(tokens.color.text_muted.forja_color()),
@@ -162,7 +162,7 @@ pub(crate) fn render_dialog(
                     forja_ui_kit::text_field(ui, &mut form.name, &cx.t("project.field.name-hint"));
                     ui.horizontal(|ui| {
                         ui.vertical(|ui| {
-                            forja_ui_kit::text(ui, 
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(cx.t("project.field.icon"))
                                     .small()
                                     .color(tokens.color.text_muted.forja_color()),
@@ -170,7 +170,7 @@ pub(crate) fn render_dialog(
                             ui.add_sized([52.0, 28.0], egui::TextEdit::singleline(&mut form.icon));
                         });
                         ui.vertical(|ui| {
-                            forja_ui_kit::text(ui, 
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(cx.t("project.field.color"))
                                     .small()
                                     .color(tokens.color.text_muted.forja_color()),
@@ -265,7 +265,7 @@ pub(crate) fn render_dialog(
                 .default_width(440.0)
                 .show(ctx, |ui| {
                     forja_ui_kit::register_keyboard_layer(ui, layer);
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cx.t("project.field.url"))
                             .small()
                             .color(tokens.color.text_muted.forja_color()),
@@ -277,14 +277,14 @@ pub(crate) fn render_dialog(
                         ctx.data_mut(|data| data.insert_temp(focus_key, true));
                     }
                     ui.add_space(forja_ui_kit::Spacing::XS);
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cx.t("project.field.destination"))
                             .small()
                             .color(tokens.color.text_muted.forja_color()),
                     );
                     forja_ui_kit::text_field(ui, &mut clone.form.path, "C:\\dev\\repo");
                     ui.add_space(forja_ui_kit::Spacing::XS);
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cx.t("project.field.name"))
                             .small()
                             .color(tokens.color.text_muted.forja_color()),

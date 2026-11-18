@@ -74,7 +74,7 @@ impl View for ViewerView {
         }
         let Some(document) = self.state.document() else {
             ui.heading(cx.t("viewers.tab.title"));
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("viewers.viewer.empty"))
                     .color(c32(tokens.color.text_muted)),
             );
@@ -82,12 +82,12 @@ impl View for ViewerView {
         };
         ui.horizontal(|ui| {
             ui.heading(cx.t("viewers.tab.title"));
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(&document.title)
                     .strong()
                     .color(c32(tokens.color.text)),
             );
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t(&format!("viewers.descriptor.{}", document.kind)))
                     .small()
                     .color(c32(tokens.color.text_muted)),
@@ -135,7 +135,7 @@ impl View for ViewerView {
             "pdf" => {
                 if let Some(pdf) = &document.pdf {
                     forja_ui_kit::text(ui, cx.t_args("viewers.pdf.pages", &[("pages", &pdf.pages.to_string())]));
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cx.t("viewers.pdf.hint"))
                             .small()
                             .color(c32(tokens.color.text_muted)),
@@ -145,7 +145,7 @@ impl View for ViewerView {
             _ => {}
         }
         if let Some(notice) = self.state.notice() {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(notice)
                     .small()
                     .color(c32(tokens.color.info)),
@@ -214,7 +214,7 @@ impl ViewerView {
                 self.state.add_zoom(0.25);
             }
             if image.frames > 1 {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t_args(
                         "viewers.image.frames",
                         &[("frames", &image.frames.to_string())],
@@ -225,7 +225,7 @@ impl ViewerView {
             }
         });
         let Some(visual) = &self.images else {
-            forja_ui_kit::text(ui, 
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("viewers.image.loading"))
                     .small()
                     .color(c32(tokens.color.text_muted)),
@@ -287,7 +287,7 @@ fn render_markdown(ui: &mut egui::Ui, cx: &mut Ctx<'_>, markdown: &forja_contrac
         if !markdown.toc.is_empty() {
             ui.vertical(|ui| {
                 ui.set_width(180.0);
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t("viewers.markdown.toc"))
                         .small()
                         .color(c32(tokens.color.text_muted)),
@@ -296,7 +296,7 @@ fn render_markdown(ui: &mut egui::Ui, cx: &mut Ctx<'_>, markdown: &forja_contrac
                     let indent = (entry.level.saturating_sub(1) as f32) * 10.0;
                     ui.horizontal(|ui| {
                         ui.add_space(indent);
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(&entry.text)
                                 .small()
                                 .color(c32(tokens.color.text)),
@@ -327,7 +327,7 @@ fn render_blocks(ui: &mut egui::Ui, cx: &mut Ctx<'_>, blocks: &[MarkdownBlock]) 
                     _ => tokens.metrics().body + 1.0,
                 };
                 ui.add_space(6.0);
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(&block.text)
                         .size(size)
                         .strong()
@@ -335,7 +335,7 @@ fn render_blocks(ui: &mut egui::Ui, cx: &mut Ctx<'_>, blocks: &[MarkdownBlock]) 
                 );
             }
             "paragraph" | "quote" => {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(&block.text).color(c32(if block.kind == "quote" {
                         tokens.color.text_muted
                     } else {
@@ -344,7 +344,7 @@ fn render_blocks(ui: &mut egui::Ui, cx: &mut Ctx<'_>, blocks: &[MarkdownBlock]) 
                 );
             }
             "list_item" => {
-                forja_ui_kit::text(ui, 
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!("\u{2022} {}", block.text))
                         .color(c32(tokens.color.text)),
                 );
@@ -356,7 +356,7 @@ fn render_blocks(ui: &mut egui::Ui, cx: &mut Ctx<'_>, blocks: &[MarkdownBlock]) 
                     .inner_margin(egui::Margin::symmetric(8, 6));
                 frame.show(ui, |ui| {
                     if let Some(language) = &block.language {
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(language)
                                 .small()
                                 .color(c32(tokens.color.text_muted)),
@@ -375,7 +375,7 @@ fn render_blocks(ui: &mut egui::Ui, cx: &mut Ctx<'_>, blocks: &[MarkdownBlock]) 
                             args.insert("source".to_owned(), json!(block.text));
                             let _ = cx.run_command("browser.mermaid.render", Args::from_map(args));
                         }
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(cx.t("viewers.markdown.mermaid-hint"))
                                 .small()
                                 .color(c32(tokens.color.text_muted)),
@@ -401,7 +401,7 @@ fn render_blocks(ui: &mut egui::Ui, cx: &mut Ctx<'_>, blocks: &[MarkdownBlock]) 
                         let (bar, _) =
                             ui.allocate_exact_size(egui::vec2(3.0, 16.0), egui::Sense::hover());
                         ui.painter().rect_filled(bar, 2, c32(color));
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(cx.t(&format!("viewers.callout.{kind}")))
                                 .strong()
                                 .color(c32(tokens.color.text)),
@@ -435,7 +435,7 @@ fn render_table(
     let page_index = state.page().min(pages - 1);
     let start = page_index * page_size;
     let end = (start + page_size).min(table.rows.len());
-    forja_ui_kit::text(ui, 
+    forja_ui_kit::text(ui,
         egui::RichText::new(format!(
             "{} {}",
             cx.t("viewers.table.rows"),
@@ -484,7 +484,7 @@ fn render_table(
         }
     });
     if table.truncated {
-        forja_ui_kit::text(ui, 
+        forja_ui_kit::text(ui,
             egui::RichText::new(cx.t("viewers.table.truncated"))
                 .small()
                 .color(c32(tokens.color.spark)),
@@ -494,7 +494,7 @@ fn render_table(
 
 fn render_notebook(ui: &mut egui::Ui, cx: &mut Ctx<'_>, notebook: &forja_contracts::NotebookView) {
     let tokens = forja_ui_kit::applied_tokens(ui.ctx());
-    forja_ui_kit::text(ui, 
+    forja_ui_kit::text(ui,
         egui::RichText::new(format!(
             "{} {}",
             cx.t("viewers.notebook.cells"),
@@ -517,7 +517,7 @@ fn render_notebook(ui: &mut egui::Ui, cx: &mut Ctx<'_>, notebook: &forja_contrac
                     .corner_radius(6)
                     .inner_margin(egui::Margin::symmetric(8, 6));
                 frame.show(ui, |ui| {
-                    forja_ui_kit::text(ui, 
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(format!(
                             "[{}] {}",
                             index + 1,
@@ -532,7 +532,7 @@ fn render_notebook(ui: &mut egui::Ui, cx: &mut Ctx<'_>, notebook: &forja_contrac
                     } else {
                         forja_ui_kit::text(ui, egui::RichText::new(&cell.source).monospace());
                         for output in &cell.outputs {
-                            forja_ui_kit::text(ui, 
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(output)
                                     .monospace()
                                     .small()

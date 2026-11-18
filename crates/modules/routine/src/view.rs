@@ -370,7 +370,7 @@ impl RoutinesView {
                 }
             }
         };
-        forja_ui_kit::text(ui, 
+        forja_ui_kit::text(ui,
             egui::RichText::new(format!("{}: {text}", cx.t("routine-next-runs")))
                 .small()
                 .weak(),
@@ -416,7 +416,7 @@ impl RoutinesView {
                     ));
                     if !run.summary.is_empty() {
                         // Saída de terminal é dado: aparece como texto, sem interpretação.
-                        forja_ui_kit::text(ui, 
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(run.summary.as_str())
                                 .small()
                                 .monospace()
