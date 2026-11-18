@@ -121,6 +121,7 @@ impl Terminal {
         let mut surface = Surface::new();
         surface.set_history_limit(settings.history_limit());
         surface.set_shell_marks(settings.shell_marks);
+        surface.set_inline_images(settings.images_enabled);
         if let Some(text) = restored_text {
             surface.feed(b"\x1b[2m");
             surface.feed(text.replace('\n', "\r\n").as_bytes());
@@ -383,7 +384,7 @@ impl Terminal {
     pub fn apply_settings(&mut self, settings: &TermSettings) {
         self.surface.set_history_limit(settings.history_limit());
         self.surface.set_shell_marks(settings.shell_marks);
-        self.surface.set_inline_images(true);
+        self.surface.set_inline_images(settings.images_enabled);
         if settings.follow_output {
             self.follow = true;
         }
@@ -622,6 +623,39 @@ impl Terminal {
     /// Conteúdo mudou desde a última gravação.
     pub fn take_dirty(&mut self) -> bool {
         std::mem::take(&mut self.dirty)
+    }
+
+    /// Cria um terminal sem processo filho para testes de renderização.
+    #[cfg(test)]
+    pub(crate) fn test_dummy(id: TerminalId) -> Self {
+        Self {
+            id,
+            focus_id: None,
+            drawn_frame: None,
+            dir: PathBuf::from("."),
+            shell: "test".to_owned(),
+            args: String::new(),
+            launch_env: BTreeMap::new(),
+            pty: None,
+            spawning: None,
+            pending_input: Vec::new(),
+            surface: Surface::new(),
+            selection: None,
+            search: SearchState::default(),
+            custom_title: None,
+            last_title: "test".to_owned(),
+            exit_reported: false,
+            error: None,
+            follow: true,
+            scroll_row: 0,
+            visible_rows: 24,
+            bell_until: None,
+            focus_request: false,
+            paste_request: false,
+            preview_alive: true,
+            dirty: false,
+            shell_label: "test".to_owned(),
+        }
     }
 
     /// Encerra a árvore de processos agora (usado nos testes do hub).

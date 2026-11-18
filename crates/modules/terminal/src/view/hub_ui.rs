@@ -1,6 +1,7 @@
 //! Chrome da aba de terminal: abas, divisores e confirmações.
 
 use super::chrome::{c32, draw_pane_header, HeaderControl, TabInfo};
+use super::line_cache::LineCache;
 use super::recipe_picker;
 use super::terminal_ui::draw_terminal;
 use super::{UiText, ViewAction};
@@ -35,9 +36,11 @@ pub fn draw(
     texts: &UiText,
     wsl: &[String],
     textures: &mut HashMap<u32, egui::TextureHandle>,
+    line_cache: &mut LineCache,
     approve_recipe: &mut dyn FnMut(&Recipe) -> Result<(), String>,
     actions: &mut Vec<ViewAction>,
 ) {
+    line_cache.retain_terminals(|id| hub.terminals.contains_key(&id));
     let tokens = applied_tokens(ui.ctx());
     let palette = hub
         .themes
@@ -98,6 +101,7 @@ pub fn draw(
             settings,
             texts,
             textures,
+            line_cache,
             actions,
             &mut controls,
             &mut close_targets,
@@ -207,6 +211,7 @@ fn draw_node(
     settings: &TermSettings,
     texts: &UiText,
     textures: &mut HashMap<u32, egui::TextureHandle>,
+    line_cache: &mut LineCache,
     actions: &mut Vec<ViewAction>,
     controls: &mut Vec<Control>,
     close_targets: &mut Vec<CloseTarget>,
@@ -296,6 +301,7 @@ fn draw_node(
                 settings,
                 texts,
                 textures,
+                line_cache,
                 actions,
                 controls,
                 close_targets,
@@ -319,6 +325,7 @@ fn draw_node(
                 settings,
                 texts,
                 textures,
+                line_cache,
                 actions,
                 controls,
                 close_targets,
@@ -426,6 +433,7 @@ fn draw_node(
                             texts,
                             palette,
                             textures,
+                            line_cache,
                             body,
                             *focused == *pane,
                             actions,

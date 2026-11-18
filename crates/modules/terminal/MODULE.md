@@ -104,13 +104,15 @@ padrões, faixas e opções:
 `terminal.bell.mode`, `terminal.copy.{on_select,trim}`,
 `terminal.paste.{warn_multiline,bracketed}`,
 `terminal.links.{confirm,open_with}`, `terminal.shell.marks`,
-`terminal.close.confirm_running`, `terminal.gpu.mode`,
+`terminal.close.confirm_running`, `terminal.images.enabled`,
 `terminal.osc52.enabled`.
 
 Efeitos reais: histórico e rolagem, acompanhamento da saída, cursor, fonte,
 paleta e opacidade, campainha visual/sonora, cópia e colagem, confirmação de
 links, marcas OSC 133, confirmação ao fechar processo, imagens embutidas
-(`gpu.mode = off` não desenha as imagens) e OSC 52.
+(`images.enabled = false` não decodifica nem desenha as imagens; lê `terminal.gpu.mode`
+antigo como compatibilidade), cache de desenho por linha (`src/view/line_cache.rs`)
+e OSC 52.
 
 ### Atalhos
 

@@ -1684,19 +1684,18 @@ label_key = "setting-terminal-close-confirm_running-label"
 help_key = "setting-terminal-close-confirm_running-help"
 
 [[setting]]
-key = "terminal.gpu.mode"
+key = "terminal.images.enabled"
 module = "terminal"
 group = "terminal"
-type = "choice"
-default = "auto"
-options = ["auto", "on", "off"]
-label_pt = "Renderização por GPU"
-label_en = "GPU rendering"
-help_pt = "Usa a GPU para desenhar o terminal."
-help_en = "Uses the GPU to draw the terminal."
-why = "Auto liga quando o driver é confiável e desliga em caso de artefato."
-label_key = "setting-terminal-gpu-mode-label"
-help_key = "setting-terminal-gpu-mode-help"
+type = "toggle"
+default = true
+label_pt = "Imagens no terminal"
+label_en = "Terminal images"
+help_pt = "Desenha imagens embutidas enviadas pelos programas no terminal."
+help_en = "Draws inline images sent by terminal programs."
+why = "Desligar evita decodificar e desenhar imagens embutidas quando você só quer texto."
+label_key = "setting-terminal-images-enabled-label"
+help_key = "setting-terminal-images-enabled-help"
 
 [[setting]]
 key = "terminal.osc52.enabled"

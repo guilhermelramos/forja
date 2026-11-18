@@ -1,8 +1,10 @@
 //! Views do módulo: a aba de terminal e a lista de receitas da Bigorna.
 
 mod chrome;
+mod fonts;
 mod hub_ui;
 mod input;
+mod line_cache;
 mod recipe_picker;
 mod render;
 mod terminal_ui;
@@ -209,6 +211,7 @@ pub struct TerminalView {
     core: Shared,
     booted: bool,
     textures: HashMap<u32, egui::TextureHandle>,
+    line_cache: line_cache::LineCache,
     content_revision: Option<u64>,
     content_checked: Option<Instant>,
     project_profile_requested_for: Option<PathBuf>,
@@ -221,6 +224,7 @@ impl TerminalView {
             core,
             booted: false,
             textures: HashMap::new(),
+            line_cache: line_cache::LineCache::default(),
             content_revision: None,
             content_checked: None,
             project_profile_requested_for: None,
@@ -356,6 +360,25 @@ impl TerminalView {
         let path = store.to_path_buf();
         let core = Arc::clone(&self.core);
         let _ = settings;
+        let settings_path = cx.settings().path().to_path_buf();
+        cx.spawn(
+            move || {
+                std::fs::read_to_string(&settings_path)
+                    .ok()
+                    .and_then(|text| crate::settings::legacy_images_enabled_from_toml(&text))
+            },
+            move |cx, legacy| {
+                if let Some(enabled) = legacy {
+                    if cx.settings().generation() == 0 {
+                        let _ = cx.set_setting(
+                            "terminal.images.enabled",
+                            forja_kernel::SettingValue::Bool(enabled),
+                        );
+                        cx.request_repaint();
+                    }
+                }
+            },
+        );
         cx.spawn(
             move || {
                 std::fs::read(&path)
@@ -428,6 +451,7 @@ impl View for TerminalView {
                 &texts,
                 &wsl,
                 &mut self.textures,
+                &mut self.line_cache,
                 &mut approve_recipe,
                 &mut actions,
             );

@@ -3,6 +3,7 @@
 use super::chrome::c32;
 use super::hub_ui::Control;
 use super::input::{key_bytes, paste_bytes, wheel_bytes};
+use super::line_cache::LineCache;
 use super::render;
 use super::{UiText, ViewAction};
 use crate::core::PendingPaste;
@@ -27,6 +28,7 @@ pub(super) fn draw_terminal(
     texts: &UiText,
     palette: &Palette,
     textures: &mut HashMap<u32, egui::TextureHandle>,
+    line_cache: &mut LineCache,
     body: Rect,
     focused_pane: bool,
     actions: &mut Vec<ViewAction>,
@@ -65,6 +67,7 @@ pub(super) fn draw_terminal(
         settings,
         palette,
         textures,
+        line_cache.for_terminal(terminal.id),
         body,
         focused_pane && keyboard_focus && ui.input(|input| input.focused),
     );

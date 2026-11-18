@@ -160,7 +160,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `terminal.links.open_with` | `terminal` | `terminal` | sim | ok | sim |
 | `terminal.shell.marks` | `terminal` | `terminal` | sim | ok | sim |
 | `terminal.close.confirm_running` | `terminal` | `terminal` | sim | ok | sim |
-| `terminal.gpu.mode` | `terminal` | `terminal` | sim | ok | sim |
+| `terminal.images.enabled` | `terminal` | `terminal` | sim | ok | sim |
 | `terminal.osc52.enabled` | `terminal` | `terminal` | sim | ok | sim |
 | `terminal.recipes.press_enter` | `terminal` | `terminal` | sim | ok | sim |
 | `terminal.recipes.confirm` | `terminal` | `terminal` | sim | ok | sim |
