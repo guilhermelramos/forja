@@ -24,10 +24,18 @@ A coluna **Padrão** traz o valor decidido por nós e, logo depois do travessão
 
 1. **Padrão do módulo**, embutido no crate e validado contra `design/settings.toml`.
 2. **Global do usuário**, em `%APPDATA%\Forja\settings.toml`, com chaves planas (`"terminal.scroll.history_lines" = 20000`).
-3. **Projeto**, em `.forja\ajustes.toml`, somente para chaves da lista segura (nada de caminho de cofre, proxy ou pasta de estado).
+3. **Projeto**, em `.forja\ajustes.toml`, somente para chaves da lista segura (`scope = "project"` em `design/settings.toml`; nada de caminho de cofre, proxy, aprovação MCP, permissões ou pasta de estado).
 4. **Sessão**, aplicada pela linha de comando ou pelo RPC e nunca gravada.
 
-O projeto vence o global para o que é do projeto; a sessão vence tudo e some ao fechar. Configuração global nunca é escrita pelo projeto. `FORJA_DATA_DIR` troca a pasta de estado em execuções isoladas e não é uma configuração de produto.
+O projeto vence o global para o que é do projeto (`projeto > usuário > padrão`); a sessão vence tudo e some ao fechar. Configuração global nunca é escrita pelo projeto. `FORJA_DATA_DIR` troca a pasta de estado em execuções isoladas e não é uma configuração de produto.
+
+No catálogo de máquina (`design/settings.toml`), toda entrada traz `scope = "user"` ou `scope = "project"`. Apenas as chaves marcadas com `scope = "project"` podem ser lidas ou gravadas em `<projeto>\.forja\ajustes.toml`:
+- **Bancadas e git:** `bench.worktree.name_template`, `bench.worktree.branch_prefix`, `bench.worktree.base_branch`, `bench.layout.tabs`, `bench.stage.creation_default`, `git.commit.sign_off`.
+- **Terminal e receitas:** `terminal.shell.start_dir`, `terminal.cursor.style`, `terminal.font.family`, `terminal.font.size`, `terminal.theme.name`, `terminal.theme.follow_app`, `terminal.color.opacity`, `terminal.recipes.show_scope`, `terminal.recipes.shell`.
+- **Editor e formatação:** `editor.indent.auto_detect`, `editor.indent.size`, `editor.indent.tabs`, `editor.wrap.mode`, `editor.wrap.column`, `editor.save.format`, `editor.save.trim_trailing`, `editor.save.final_newline`, `editor.files.encoding`, `editor.files.eol`.
+- **Ajudantes e pedidos do projeto:** `helper.default.profile`, `request.default.source`, `request.local.prefix`, `counter.github.label_filter`, `counter.linear.team`, `counter.jira.project`.
+
+Chaves fora dessa lista encontradas em `.forja\ajustes.toml` são ignoradas com aviso no log e nunca aplicadas; tentativas de gravar uma chave `scope = "user"` no escopo do projeto são recusadas com erro tipado no kernel.
 
 ### 1.3 Validação
 - Chave desconhecida: o app avisa em **Ajustes → Avançado**, mantém a linha e nunca apaga o arquivo sozinho.

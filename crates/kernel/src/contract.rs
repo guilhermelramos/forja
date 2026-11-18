@@ -60,6 +60,12 @@ pub fn check(registry: &Registry, i18n: &I18n) -> Vec<Violation> {
                 format!("duplicate setting `{}`", setting.key),
             ));
         }
+        if let Err(reason) = setting.validate() {
+            violations.push(violation(
+                "settings",
+                format!("`{}` is invalid: {reason}", setting.key),
+            ));
+        }
         if let Err(reason) = setting.validate_value(&setting.default) {
             violations.push(violation(
                 "settings",

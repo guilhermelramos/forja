@@ -16,6 +16,10 @@ pub enum KernelError {
     Command { id: String, message: String },
     #[error("invalid setting: {0}")]
     Settings(String),
+    #[error("setting `{0}` cannot be overridden by a project")]
+    UnsafeProjectSetting(String),
+    #[error("no active project is loaded for project settings")]
+    NoActiveProject,
     #[error("invalid key binding: {0}")]
     Keymap(String),
     #[error("i/o error: {0}")]
@@ -35,6 +39,14 @@ impl KernelError {
 
     pub fn registration(message: impl Into<String>) -> Self {
         Self::Registration(message.into())
+    }
+
+    pub fn is_unsafe_project_setting(&self) -> bool {
+        matches!(self, Self::UnsafeProjectSetting(_))
+    }
+
+    pub fn is_no_active_project(&self) -> bool {
+        matches!(self, Self::NoActiveProject)
     }
 }
 

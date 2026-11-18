@@ -7,6 +7,7 @@
 | Métrica | Valor |
 |---|---|
 | Configurações no catálogo | 313 |
+| Configurações sobreponíveis por projeto (`scope = "project"`) | 31 |
 | Configurações registradas no app | 281 (280 do catálogo + 1 extras) |
 | Configurações com efeito real no código | 280 (279 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |

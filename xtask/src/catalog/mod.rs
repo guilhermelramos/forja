@@ -26,6 +26,21 @@ pub fn run() -> Result<(), String> {
     let usage = scan::find_used_settings(&root, &keys)?;
 
     let coverage = compare::evaluate(settings_cat, keymap_cat, runtime, &usage);
+    let invalid_scopes = coverage.invalid_scopes();
+    if !invalid_scopes.is_empty() {
+        return Err(format!(
+            "invalid setting scopes in design/settings.toml: {}",
+            invalid_scopes
+                .iter()
+                .map(|item| format!(
+                    "{} ({})",
+                    item.key,
+                    item.scope_error.as_deref().unwrap_or("invalid")
+                ))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ));
+    }
     let invalid_deferred = coverage.invalid_deferred();
     if !invalid_deferred.is_empty() {
         return Err(format!("deferred settings must have a reason and must not be registered: {}",

@@ -7,6 +7,11 @@ use std::fmt::Write as _;
 pub fn render(report: &CoverageReport) -> String {
     let mut out = String::new();
     let total_cat_settings = report.settings.len();
+    let project_cat_settings = report
+        .settings
+        .iter()
+        .filter(|s| s.scope.as_deref() == Some("project"))
+        .count();
     let reg_cat_settings = report.settings.iter().filter(|s| s.registered).count();
     let deferred_settings = report.settings.iter().filter(|s| s.deferred.is_some()).count();
     let missing_settings = report.settings.iter().filter(|s| !s.registered && s.deferred.is_none()).count();
@@ -40,6 +45,11 @@ pub fn render(report: &CoverageReport) -> String {
     writeln!(out, "| Métrica | Valor |").unwrap();
     writeln!(out, "|---|---|").unwrap();
     writeln!(out, "| Configurações no catálogo | {total_cat_settings} |").unwrap();
+    writeln!(
+        out,
+        "| Configurações sobreponíveis por projeto (`scope = \"project\"`) | {project_cat_settings} |"
+    )
+    .unwrap();
     writeln!(
         out,
         "| Configurações registradas no app | {} ({reg_cat_settings} do catálogo + {} extras) |",
