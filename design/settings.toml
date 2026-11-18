@@ -4905,7 +4905,6 @@ help_key = "setting-app-tray-enabled-help"
 
 [[setting]]
 key = "app.cli.enabled"
-deferred = "Aguardando ciclo de vida cancelável do servidor RPC local."
 module = "app"
 group = "advanced"
 scope = "user"
@@ -4921,7 +4920,6 @@ help_key = "setting-app-cli-enabled-help"
 
 [[setting]]
 key = "app.storage.data_dir"
-deferred = "Aguardando configuração de bootstrap do diretório de dados no kernel."
 module = "app"
 group = "advanced"
 scope = "user"
@@ -4939,7 +4937,6 @@ restart = true
 
 [[setting]]
 key = "app.storage.content_dir"
-deferred = "Aguardando configuração de bootstrap do diretório de conteúdo no kernel."
 module = "app"
 group = "advanced"
 scope = "user"
@@ -4957,7 +4954,6 @@ restart = true
 
 [[setting]]
 key = "app.storage.cleanup_days"
-deferred = "Aguardando contrato de retenção e limpeza dos caches de módulos."
 module = "app"
 group = "advanced"
 scope = "user"
@@ -5154,7 +5150,7 @@ restart = true
 
 [[setting]]
 key = "app.dev.mode"
-deferred = "Aguardando ferramentas internas e painel de diagnóstico."
+deferred = "O painel de diagnóstico (`app.diagnostics.overlay`) já tem chave própria; aguardando ferramentas internas dedicadas."
 module = "app"
 group = "advanced"
 scope = "user"

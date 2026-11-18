@@ -10,9 +10,10 @@ use std::fs::File;
 use std::io::{self, Read, Write};
 use std::os::windows::io::FromRawHandle;
 use std::ptr::null;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::mpsc::{RecvTimeoutError, Sender};
 use std::sync::Arc;
+use std::thread::JoinHandle;
 use std::time::Duration;
 use windows_sys::Win32::Foundation::{
     CloseHandle, GetLastError, ERROR_PIPE_CONNECTED, HANDLE, INVALID_HANDLE_VALUE,
@@ -41,14 +42,76 @@ pub struct RpcCall {
     pub reply: Sender<Option<String>>,
 }
 
+/// Handle to a running named-pipe RPC server that can be shut down cleanly.
+pub struct PipeServer {
+    name: String,
+    stop: Arc<AtomicBool>,
+    thread: Option<JoinHandle<()>>,
+}
+
+impl PipeServer {
+    /// Signals the listener to stop, wakes any blocked `ConnectNamedPipe`, and
+    /// waits for the accept thread to close its listening handles so the pipe
+    /// name can be opened again later.
+    pub fn shutdown(&mut self) {
+        let Some(thread) = self.thread.take() else {
+            return;
+        };
+        self.stop.store(true, Ordering::SeqCst);
+        for _ in 0..25 {
+            if thread.is_finished() {
+                break;
+            }
+            match std::fs::OpenOptions::new()
+                .read(true)
+                .write(true)
+                .open(&self.name)
+            {
+                Ok(handle) => {
+                    drop(handle);
+                    std::thread::yield_now();
+                }
+                Err(error) if error.kind() == io::ErrorKind::NotFound => break,
+                Err(_) => std::thread::sleep(Duration::from_millis(5)),
+            }
+        }
+        let _ = thread.join();
+    }
+}
+
+impl Drop for PipeServer {
+    fn drop(&mut self) {
+        self.shutdown();
+    }
+}
+
 /// Creates the first pipe instance (failing if another Forja already owns the
-/// name) and starts the accept thread.
+/// name) and starts the accept thread. The returned [`PipeServer`] shuts the
+/// listener down cleanly on [`PipeServer::shutdown`] or drop.
+pub fn spawn_server(name: &str, calls: Sender<RpcCall>, wake: Wake) -> io::Result<PipeServer> {
+    let first = create_instance(name, true)? as usize;
+    let thread_name = name.to_owned();
+    let stop = Arc::new(AtomicBool::new(false));
+    let thread_stop = Arc::clone(&stop);
+    let thread = std::thread::Builder::new()
+        .name("forja-rpc".into())
+        .spawn(move || accept_loop(&thread_name, first, &calls, &wake, &thread_stop))?;
+    Ok(PipeServer {
+        name: name.to_owned(),
+        stop,
+        thread: Some(thread),
+    })
+}
+
+/// Creates the first pipe instance (failing if another Forja already owns the
+/// name) and starts a detached accept thread for the process lifetime.
 pub fn spawn(name: &str, calls: Sender<RpcCall>, wake: Wake) -> io::Result<()> {
     let first = create_instance(name, true)? as usize;
     let name = name.to_owned();
+    let stop = Arc::new(AtomicBool::new(false));
     std::thread::Builder::new()
         .name("forja-rpc".into())
-        .spawn(move || accept_loop(&name, first, &calls, &wake))
+        .spawn(move || accept_loop(&name, first, &calls, &wake, &stop))
         .map(|_| ())
 }
 
@@ -94,18 +157,49 @@ fn release_connection(active: &AtomicUsize) {
     active.fetch_sub(1, Ordering::SeqCst);
 }
 
-fn accept_loop(name: &str, mut current: usize, calls: &Sender<RpcCall>, wake: &Wake) {
+fn accept_loop(
+    name: &str,
+    mut current: usize,
+    calls: &Sender<RpcCall>,
+    wake: &Wake,
+    stop: &AtomicBool,
+) {
     loop {
         let handle = current as HANDLE;
+        if stop.load(Ordering::SeqCst) {
+            // SAFETY: `handle` is owned by this thread and not connected yet.
+            unsafe { CloseHandle(handle) };
+            break;
+        }
         // SAFETY: `handle` is a pipe instance owned by this thread.
         let connected = unsafe { ConnectNamedPipe(handle, std::ptr::null_mut()) } != 0
             || unsafe { GetLastError() } == ERROR_PIPE_CONNECTED;
+        if stop.load(Ordering::SeqCst) {
+            // SAFETY: shutdown was requested; release the listening handle without
+            // spawning another instance.
+            unsafe {
+                if connected {
+                    DisconnectNamedPipe(handle);
+                }
+                CloseHandle(handle);
+            }
+            break;
+        }
         // Create the next instance before serving this one so clients never
         // see a moment where the pipe does not exist.
         let next = loop {
+            if stop.load(Ordering::SeqCst) {
+                unsafe {
+                    if connected {
+                        DisconnectNamedPipe(handle);
+                    }
+                    CloseHandle(handle);
+                }
+                return;
+            }
             match create_instance(name, false) {
                 Ok(handle) => break handle,
-                Err(_) => std::thread::sleep(Duration::from_millis(200)),
+                Err(_) => std::thread::sleep(Duration::from_millis(50)),
             }
         };
         if connected && acquire_connection(&ACTIVE_CONNECTIONS, MAX_CONNECTIONS) {
@@ -284,5 +378,45 @@ mod tests {
         let big = vec![b'x'; MAX_LINE_BYTES + 1];
         let mut big: &[u8] = &big;
         assert!(read_line(&mut big).is_err());
+    }
+
+    #[test]
+    fn pipe_server_shuts_down_cleanly_and_can_restart_on_same_name() {
+        let name = unique_pipe();
+        let (tx1, rx1) = mpsc::channel::<RpcCall>();
+        let mut server = spawn_server(&name, tx1, Arc::new(|| {})).expect("first start");
+
+        let handler = std::thread::spawn(move || {
+            while let Ok(call) = rx1.recv() {
+                let _ = call.reply.send(Some(
+                    codec::ok_response(&serde_json::json!(1), serde_json::json!("ok")),
+                ));
+            }
+        });
+
+        let reply = client_call(&name, r#"{"jsonrpc":"2.0","id":1,"method":"ping"}"#).unwrap();
+        assert!(reply.contains("\"ok\""));
+
+        // Shut down cleanly: pipe closes without hanging, and new clients fail.
+        server.shutdown();
+        drop(server);
+        let _ = handler.join();
+        assert!(client_call(&name, r#"{"jsonrpc":"2.0","id":2,"method":"ping"}"#).is_err());
+
+        // Restarting on the exact same pipe name succeeds immediately.
+        let (tx2, rx2) = mpsc::channel::<RpcCall>();
+        let server2 = spawn_server(&name, tx2, Arc::new(|| {})).expect("restart succeeds");
+        let handler2 = std::thread::spawn(move || {
+            while let Ok(call) = rx2.recv() {
+                let _ = call.reply.send(Some(
+                    codec::ok_response(&serde_json::json!(3), serde_json::json!("restarted")),
+                ));
+            }
+        });
+
+        let reply = client_call(&name, r#"{"jsonrpc":"2.0","id":3,"method":"ping"}"#).unwrap();
+        assert!(reply.contains("\"restarted\""));
+        drop(server2);
+        let _ = handler2.join();
     }
 }

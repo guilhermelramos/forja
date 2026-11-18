@@ -47,9 +47,12 @@ atributo do `linkme` (por isso o crate do módulo depende de `linkme`).
   `Fn(&mut Ctx, params) -> Result<Value, RpcError>`;
 - i18n: bundles `en.ftl` e `pt-BR.ftl` embutidos;
 - `uses_i18n(key)` para chaves usadas só em runtime (contrato).
+- `cache_dir(relative_path)`: declara uma subpasta relativa sob `<data>/cache/` sujeita à limpeza automática por idade configurada em `app.storage.cleanup_days` (padrão `30` dias; `0` desliga). Caminhos absolutos ou com `..` são rejeitados na finalização do registro.
 
 ## Serviços do `Ctx`
 
+- `bootstrap` (`bootstrap.toml`): antes de inicializar módulos, `bootstrap::resolve()` lê `%APPDATA%\Forja\bootstrap.toml` (quando existe) para aplicar trocas pendentes de `app.storage.data_dir` e `app.storage.content_dir`. As variáveis `FORJA_DATA_DIR` e `FORJA_CONTENT_DIR` têm precedência absoluta; diretórios inválidos ou sem permissão de escrita caem para o padrão com aviso no log. Alterar uma dessas chaves via `set_setting` valida a escrita, grava `bootstrap.toml`, marca `Ctx::storage_restart_pending()` / `Runtime::storage_restart_pending()` e só passa a valer no próximo início; `bootstrap::copy_dir_contents` copia os arquivos existentes apenas mediante confirmação explícita.
+- `cache_dir()` / limpeza de cache (`CacheCleanupReport`): `Ctx::cache_dir()` devolve `<data>/cache/<módulo>` e, uma vez por início, o `Runtime` agenda em tarefa de fundo (`Tasks`) a remoção de arquivos vencidos apenas nas subpastas declaradas em `Registrar::cache_dir`.
 - `tasks.spawn(work, done)`: trabalho em thread, callback de volta na thread da
   interface via `Runtime::poll_tasks`;
 - `store()`: JSON por módulo em `<data>/modules/<id>.json`, gravação atômica e
