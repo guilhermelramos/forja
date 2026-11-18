@@ -4,11 +4,11 @@
 [ceiling]
 button = 9
 label = 159
-color = 66
+color = 5
 space = 50
 
 [allowed]
 button = 0
 label = 0
-color = 0
+color = 26
 space = 0

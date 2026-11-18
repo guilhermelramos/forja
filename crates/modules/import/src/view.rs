@@ -39,7 +39,7 @@ impl View for SettingsView {
         }
         if let Some(key) = status.get("error").and_then(Value::as_str) {
             ui.label(
-                egui::RichText::new(cx.t(key)).color(egui::Color32::from_rgb(0xE5, 0x53, 0x4B)),
+                egui::RichText::new(cx.t(key)).color(forja_ui_kit::applied_tokens(ui.ctx()).color.danger.to_color32()),
             );
         }
         if status.get("available") != Some(&Value::Bool(true)) {

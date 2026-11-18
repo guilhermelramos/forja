@@ -393,17 +393,17 @@ pub(crate) fn parse_color(value: &str) -> Option<egui::Color32> {
     let r = u8::from_str_radix(&value[1..3], 16).ok()?;
     let g = u8::from_str_radix(&value[3..5], 16).ok()?;
     let b = u8::from_str_radix(&value[5..7], 16).ok()?;
+    // ui-lint: allow project color chosen by the user, not interface chrome
     Some(egui::Color32::from_rgb(r, g, b))
 }
 
-/// `forja_ui_kit::Color` keeps its egui conversion crate-private; modules get
-/// the same value through the public channels.
+/// Project color adapter delegates to the public Brasa color conversion.
 pub(crate) trait ColorExt {
     fn forja_color(self) -> egui::Color32;
 }
 
 impl ColorExt for forja_ui_kit::Color {
     fn forja_color(self) -> egui::Color32 {
-        egui::Color32::from_rgba_unmultiplied(self.r, self.g, self.b, self.a)
+        self.to_color32()
     }
 }

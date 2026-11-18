@@ -102,14 +102,14 @@ impl ChatView {
             let (label, color) = if !is_installed && matches!(session.status, SessionStatus::Idle) {
                 (
                     cx.t("chat.view.not-installed"),
-                    egui::Color32::from_rgb(0xFF, 0xC1, 0x4D),
+                    forja_ui_kit::applied_tokens(ui.ctx()).color.spark.to_color32(),
                 )
             } else {
                 match session.status {
-                    SessionStatus::Idle => (cx.t("chat.view.idle"), egui::Color32::from_rgb(0x6C, 0xC4, 0x8A)),
-                    SessionStatus::Working => (cx.t("chat.view.working"), egui::Color32::from_rgb(0x6F, 0xA8, 0xDC)),
-                    SessionStatus::Cancelled => (cx.t("chat.view.cancelled"), egui::Color32::from_rgb(0xFF, 0xC1, 0x4D)),
-                    SessionStatus::Error => (cx.t("chat.view.error"), egui::Color32::from_rgb(0xE5, 0x53, 0x4B)),
+                    SessionStatus::Idle => (cx.t("chat.view.idle"), forja_ui_kit::applied_tokens(ui.ctx()).color.ok.to_color32()),
+                    SessionStatus::Working => (cx.t("chat.view.working"), forja_ui_kit::applied_tokens(ui.ctx()).color.info.to_color32()),
+                    SessionStatus::Cancelled => (cx.t("chat.view.cancelled"), forja_ui_kit::applied_tokens(ui.ctx()).color.spark.to_color32()),
+                    SessionStatus::Error => (cx.t("chat.view.error"), forja_ui_kit::applied_tokens(ui.ctx()).color.danger.to_color32()),
                 }
             };
             forja_ui_kit::text(ui, egui::RichText::new(label).color(color).strong());
@@ -800,12 +800,12 @@ fn draw_message(
     diff_mode: DiffMode,
 ) {
     let (name, color) = match message.role {
-        ChatRole::User => (cx.t("chat.view.you"), egui::Color32::from_rgb(0xFF, 0xC1, 0x4D)),
+        ChatRole::User => (cx.t("chat.view.you"), forja_ui_kit::applied_tokens(ui.ctx()).color.spark.to_color32()),
         ChatRole::Assistant => (
             cx.t("chat.view.assistant"),
-            egui::Color32::from_rgb(0x6F, 0xA8, 0xDC),
+            forja_ui_kit::applied_tokens(ui.ctx()).color.info.to_color32(),
         ),
-        ChatRole::Tool => (cx.t("chat.view.tool"), egui::Color32::from_rgb(0xA6, 0x9C, 0x93)),
+        ChatRole::Tool => (cx.t("chat.view.tool"), forja_ui_kit::applied_tokens(ui.ctx()).color.text_muted.to_color32()),
         ChatRole::System => (cx.t("chat.view.system"), egui::Color32::GRAY),
     };
     ui.horizontal(|ui| {
@@ -861,9 +861,9 @@ fn draw_message(
                     ToolStatus::Error => cx.t("chat.view.failed"),
                 };
                 let status_color = match status {
-                    ToolStatus::Running => egui::Color32::from_rgb(0x6F, 0xA8, 0xDC),
-                    ToolStatus::Ok => egui::Color32::from_rgb(0x6C, 0xC4, 0x8A),
-                    ToolStatus::Error => egui::Color32::from_rgb(0xE5, 0x53, 0x4B),
+                    ToolStatus::Running => forja_ui_kit::applied_tokens(ui.ctx()).color.info.to_color32(),
+                    ToolStatus::Ok => forja_ui_kit::applied_tokens(ui.ctx()).color.ok.to_color32(),
+                    ToolStatus::Error => forja_ui_kit::applied_tokens(ui.ctx()).color.danger.to_color32(),
                 };
                 egui::Frame::group(ui.style()).show(ui, |ui| {
                     ui.set_max_width(max_width);
@@ -935,9 +935,9 @@ fn draw_message(
                             .show(ui, |ui| {
                                 for line in diff.lines() {
                                     let color = if line.starts_with('+') {
-                                        egui::Color32::from_rgb(0x6C, 0xC4, 0x8A)
+                                        forja_ui_kit::applied_tokens(ui.ctx()).color.ok.to_color32()
                                     } else if line.starts_with('-') {
-                                        egui::Color32::from_rgb(0xE5, 0x53, 0x4B)
+                                        forja_ui_kit::applied_tokens(ui.ctx()).color.danger.to_color32()
                                     } else {
                                         ui.visuals().text_color()
                                     };

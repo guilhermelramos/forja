@@ -695,5 +695,5 @@ fn setting_usize(cx: &Ctx<'_>, key: &str, fallback: usize) -> usize {
 }
 
 fn c32(color: forja_ui_kit::Color) -> egui::Color32 {
-    egui::Color32::from_rgba_unmultiplied(color.r, color.g, color.b, color.a)
+    color.to_color32()
 }

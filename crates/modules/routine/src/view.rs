@@ -301,7 +301,7 @@ impl RoutinesView {
     /// Rodapé fixo do diálogo: o erro de validação não esconde Salvar/Cancelar.
     fn editor_footer(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, draft: &Draft) -> bool {
         if let Some(error) = &self.draft_error {
-            ui.colored_label(egui::Color32::from_rgb(0xE5, 0x53, 0x4B), cx.t(error));
+            ui.colored_label(forja_ui_kit::applied_tokens(ui.ctx()).color.danger.to_color32(), cx.t(error));
         }
         ui.add_space(forja_ui_kit::Spacing::XS);
         ui.separator();

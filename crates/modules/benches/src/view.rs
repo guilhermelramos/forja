@@ -343,5 +343,5 @@ fn run(cx: &mut Ctx<'_>, id: &str, map: Map<String, Value>) -> forja_kernel::Res
 }
 
 pub(crate) fn c32(color: forja_ui_kit::Color) -> egui::Color32 {
-    egui::Color32::from_rgba_unmultiplied(color.r, color.g, color.b, color.a)
+    color.to_color32()
 }

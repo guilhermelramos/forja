@@ -566,7 +566,7 @@ fn draw_overflow_menu(
 }
 
 pub(super) fn c32(color: Color) -> Color32 {
-    Color32::from_rgba_unmultiplied(color.r, color.g, color.b, color.a)
+    color.to_color32()
 }
 
 #[cfg(test)]

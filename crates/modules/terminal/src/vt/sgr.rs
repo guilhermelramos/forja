@@ -55,7 +55,7 @@ pub(super) fn apply_sgr(surface: &mut Surface, values: &[usize]) {
                 surface.fg = Color32::TRANSPARENT;
             }
             38 | 48 if values.get(index + 1) == Some(&2) && values.len() > index + 4 => {
-                let color = Color32::from_rgb(
+                let color = Color32::from_rgb( // ui-lint: allow terminal SGR true-color bytes supplied by the child process
                     values[index + 2].min(255) as u8,
                     values[index + 3].min(255) as u8,
                     values[index + 4].min(255) as u8,

@@ -384,7 +384,7 @@ pub(crate) fn dot_color(tokens: &forja_ui_kit::Tokens, dot: &str) -> egui::Color
 }
 
 pub(crate) fn c32(color: forja_ui_kit::Color) -> egui::Color32 {
-    egui::Color32::from_rgba_unmultiplied(color.r, color.g, color.b, color.a)
+    color.to_color32()
 }
 
 /// Display switches of a board card, read from the `board.cards.*` settings.

@@ -217,9 +217,9 @@ impl RequestsView {
         }
         if let Some(notice) = &frame.notice {
             let color = match notice.kind {
-                NoticeKind::Ok => egui::Color32::from_rgb(0x6C, 0xC4, 0x8A),
-                NoticeKind::Warn => egui::Color32::from_rgb(0xFF, 0xC1, 0x4D),
-                NoticeKind::Error => egui::Color32::from_rgb(0xE5, 0x53, 0x4B),
+                NoticeKind::Ok => forja_ui_kit::applied_tokens(ui.ctx()).color.ok.to_color32(),
+                NoticeKind::Warn => forja_ui_kit::applied_tokens(ui.ctx()).color.spark.to_color32(),
+                NoticeKind::Error => forja_ui_kit::applied_tokens(ui.ctx()).color.danger.to_color32(),
                 NoticeKind::Info => ui.visuals().weak_text_color(),
             };
             ui.colored_label(color, cx.t(&notice.key));

@@ -164,7 +164,7 @@ impl RemoteView {
         text_field(ui, &mut self.user, &cx.t("remote-field-user"));
         text_field(ui, &mut self.port, &cx.t("remote-field-port"));
         if let Some(error) = &self.error {
-            ui.colored_label(egui::Color32::from_rgb(0xE5, 0x53, 0x4B), error.as_str());
+            ui.colored_label(forja_ui_kit::applied_tokens(ui.ctx()).color.danger.to_color32(), error.as_str());
         }
         if button(ui, ButtonKind::Primary, &cx.t("remote-action-save")).clicked() {
             let port = self.port.trim().parse::<u16>().unwrap_or(DEFAULT_SSH_PORT);
@@ -271,7 +271,7 @@ impl View for RemoteView {
         }
         ui.heading(cx.t("remote-name"));
         if let Some(notice) = &snap.notice {
-            ui.colored_label(egui::Color32::from_rgb(0xFF, 0xC1, 0x4D), cx.t(notice));
+            ui.colored_label(forja_ui_kit::applied_tokens(ui.ctx()).color.spark.to_color32(), cx.t(notice));
         }
         if !snap.loaded {
             ui.label(cx.t("remote-loading"));
