@@ -12,7 +12,9 @@ use crate::i18n::{BundleSource, I18n, Locale, TimeFormat, WeekStart};
 use crate::keymap::{BindingSource, Keymap, KeymapLayer};
 use crate::logging::{self, LogConfig};
 use crate::registry::{build_registry, Registry};
-use crate::settings::{SettingSpec, SettingValue, Settings, SettingsWriter};
+use crate::settings::{
+    SettingSource, SettingSpec, SettingValue, Settings, SettingsChanged, SettingsWriter,
+};
 use crate::store::{LoadResult, Store};
 use crate::tasks::{TaskId, Tasks, Wake};
 use forja_protocol::{codec, Method, MethodCatalog, ResultSchema, RpcError};
@@ -161,6 +163,7 @@ impl Runtime {
         }
 
         let mut events = EventBus::new();
+        events.register_signature("settings.changed", TypeId::of::<SettingsChanged>());
         for signature in registry.event_signatures() {
             events.register_signature(&signature.name, signature.type_id);
         }
@@ -374,6 +377,7 @@ impl Runtime {
     }
 
     pub fn set_setting(&mut self, key: &str, value: SettingValue) -> Result<()> {
+        let before = self.settings.generation();
         self.settings
             .set_memory(key, value, self.registry.settings())?;
         self.apply_i18n_setting(key);
@@ -384,7 +388,71 @@ impl Runtime {
             );
         }
         self.settings_writer.submit(self.settings.snapshot());
+        if self.settings.generation() != before {
+            self.notify_settings_changed();
+        }
         Ok(())
+    }
+
+    /// Directory of the currently active project, when one is loaded.
+    pub fn active_project(&self) -> Option<&Path> {
+        self.settings.active_project()
+    }
+
+    /// Switches the active project (or clears it when `None`), reloads its
+    /// `<project>\.forja\ajustes.toml` and notifies setting subscribers.
+    pub fn set_active_project(&mut self, project_dir: Option<&Path>) {
+        let before = self.settings.generation();
+        let warnings = self
+            .settings
+            .load_project(project_dir, self.registry.settings());
+        self.warnings.extend(warnings);
+        if self.settings.generation() != before {
+            self.notify_settings_changed();
+        }
+    }
+
+    /// Reloads `<project>\.forja\ajustes.toml` for `project_dir` and notifies subscribers.
+    pub fn reload_project_settings(&mut self, project_dir: Option<&Path>) {
+        self.set_active_project(project_dir);
+    }
+
+    /// Validates that `key` is project-safe (`scope = "project"`), updates the
+    /// active project's override in memory, queues an atomic write to
+    /// `<project>\.forja\ajustes.toml` and notifies subscribers.
+    pub fn set_project_setting(&mut self, key: &str, value: SettingValue) -> Result<()> {
+        let before = self.settings.generation();
+        self.settings
+            .set_project_memory(key, value, self.registry.settings())?;
+        let snapshot = self.settings.project_snapshot()?;
+        self.settings_writer.submit(snapshot);
+        if self.settings.generation() != before {
+            self.notify_settings_changed();
+        }
+        Ok(())
+    }
+
+    /// Removes a project override for `key` so it falls back to `user > default`,
+    /// queues an atomic write to `<project>\.forja\ajustes.toml` and notifies subscribers.
+    pub fn unset_project_setting(&mut self, key: &str) -> Result<()> {
+        let before = self.settings.generation();
+        self.settings
+            .unset_project_memory(key, self.registry.settings())?;
+        let snapshot = self.settings.project_snapshot()?;
+        self.settings_writer.submit(snapshot);
+        if self.settings.generation() != before {
+            self.notify_settings_changed();
+        }
+        Ok(())
+    }
+
+    fn notify_settings_changed(&mut self) {
+        let event = SettingsChanged {
+            generation: self.settings.generation(),
+            project_dir: self.settings.active_project().map(Path::to_path_buf),
+        };
+        let _ = self.emit(&event);
+        (self.wake)();
     }
 
     /// Keeps the locale preferences in sync when the settings UI writes them.
@@ -422,7 +490,7 @@ impl Runtime {
     /// Waits for queued setting writes. Tests use it before reading the file;
     /// the shell never needs to.
     pub fn flush_settings(&self) {
-        self.settings_writer.flush(self.settings.snapshot());
+        self.settings_writer.flush();
     }
 
     pub fn ctx(&mut self, module_id: &str) -> Ctx<'_> {
@@ -621,8 +689,29 @@ impl<'a> Ctx<'a> {
         &self.runtime.settings
     }
 
+    /// Changes whenever a setting value or active project changed; cheap to compare.
+    pub fn settings_generation(&self) -> u64 {
+        self.runtime.settings_generation()
+    }
+
+    /// Effective setting value (`project > user > default`).
     pub fn setting(&self, key: &str) -> Option<&SettingValue> {
         self.runtime.settings.get(key)
+    }
+
+    /// User-level setting value (`user > default`), ignoring project overrides.
+    pub fn user_setting(&self, key: &str) -> Option<&SettingValue> {
+        self.runtime.settings.user_get(key)
+    }
+
+    /// Project override for `key`, or `None` when not overridden by the active project.
+    pub fn project_setting(&self, key: &str) -> Option<&SettingValue> {
+        self.runtime.settings.project_get(key)
+    }
+
+    /// Layer (`Default`, `User` or `Project`) that supplied the effective value for `key`.
+    pub fn setting_source(&self, key: &str) -> Option<SettingSource> {
+        self.runtime.settings.source_of(key)
     }
 
     pub fn setting_spec(&self, key: &str) -> Option<&SettingSpec> {
@@ -635,6 +724,26 @@ impl<'a> Ctx<'a> {
 
     pub fn set_setting(&mut self, key: &str, value: SettingValue) -> Result<()> {
         self.runtime.set_setting(key, value)
+    }
+
+    pub fn active_project(&self) -> Option<&Path> {
+        self.runtime.active_project()
+    }
+
+    pub fn set_active_project(&mut self, project_dir: Option<&Path>) {
+        self.runtime.set_active_project(project_dir);
+    }
+
+    pub fn reload_project_settings(&mut self, project_dir: Option<&Path>) {
+        self.runtime.reload_project_settings(project_dir);
+    }
+
+    pub fn set_project_setting(&mut self, key: &str, value: SettingValue) -> Result<()> {
+        self.runtime.set_project_setting(key, value)
+    }
+
+    pub fn unset_project_setting(&mut self, key: &str) -> Result<()> {
+        self.runtime.unset_project_setting(key)
     }
 
     pub fn keymap(&self) -> &Keymap {
@@ -1133,5 +1242,138 @@ mod tests {
             .expect("switch back to pt_BR");
         assert!(runtime.take_locale_setting_changed());
         assert_eq!(runtime.i18n().locale(), Locale::PtBr);
+    }
+
+    #[test]
+    fn runtime_project_settings_precedence_async_write_and_change_notifications() {
+        use crate::settings::{project_settings_path, SettingScope};
+        use std::sync::atomic::AtomicU64;
+
+        let seen_generations = Arc::new(AtomicU64::new(0));
+        let seen_clone = Arc::clone(&seen_generations);
+
+        struct ProjSettingsModule {
+            seen: Arc<AtomicU64>,
+        }
+
+        impl Module for ProjSettingsModule {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("projtest", "projtest.name", "0.1.0")
+            }
+
+            fn register(&mut self, registrar: &mut Registrar<'_>) {
+                registrar.i18n("projtest-name = ProjTest\n", "projtest-name = ProjTest\n");
+                registrar.setting(
+                    SettingSpec::new(
+                        "projtest.format.indent",
+                        SettingKind::Integer {
+                            min: Some(1),
+                            max: Some(8),
+                        },
+                        SettingValue::Integer(4),
+                        "projtest.name",
+                        "projtest.name",
+                    )
+                    .scope(SettingScope::Project),
+                );
+                registrar.setting(SettingSpec::new(
+                    "projtest.security.token",
+                    SettingKind::Text { max_len: None },
+                    SettingValue::Text("none".into()),
+                    "projtest.name",
+                    "projtest.name",
+                ));
+                let seen = Arc::clone(&self.seen);
+                registrar.subscribe(move |_cx, event: &SettingsChanged| {
+                    seen.store(event.generation, Ordering::SeqCst);
+                });
+            }
+        }
+
+        let dir = temp_dir("project-settings");
+        let proj_a = dir.join("proj-a");
+        let proj_b = dir.join("proj-b");
+        std::fs::create_dir_all(proj_b.join(".forja")).unwrap();
+        std::fs::write(
+            project_settings_path(&proj_b),
+            "projtest.format.indent = 2\nprojtest.security.token = \"stolen\"\n",
+        )
+        .unwrap();
+
+        let mut runtime = Runtime::new(
+            vec![Box::new(ProjSettingsModule { seen: seen_clone })],
+            RuntimeOptions {
+                data_dir: Some(dir.join("data")),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".into()),
+                wake: None,
+            },
+        )
+        .expect("runtime builds");
+
+        // Writing project setting without an active project fails with NoActiveProject.
+        let err = runtime
+            .set_project_setting("projtest.format.indent", SettingValue::Integer(6))
+            .expect_err("no project active");
+        assert!(err.is_no_active_project());
+
+        // User sets 6 (user > default 4).
+        runtime
+            .set_setting("projtest.format.indent", SettingValue::Integer(6))
+            .unwrap();
+        assert_eq!(
+            runtime.settings().get("projtest.format.indent"),
+            Some(&SettingValue::Integer(6))
+        );
+        assert_eq!(
+            seen_generations.load(Ordering::SeqCst),
+            runtime.settings_generation()
+        );
+
+        // Activate project A and write project override 8 asynchronously.
+        runtime.set_active_project(Some(&proj_a));
+        assert_eq!(runtime.active_project(), Some(proj_a.as_path()));
+        let err = runtime
+            .set_project_setting(
+                "projtest.security.token",
+                SettingValue::Text("secret".into()),
+            )
+            .expect_err("user-only setting refused");
+        assert!(err.is_unsafe_project_setting());
+
+        runtime
+            .set_project_setting("projtest.format.indent", SettingValue::Integer(8))
+            .unwrap();
+        runtime.flush_settings();
+        assert!(project_settings_path(&proj_a).is_file());
+        assert_eq!(
+            runtime.settings().get("projtest.format.indent"),
+            Some(&SettingValue::Integer(8))
+        );
+        assert_eq!(
+            seen_generations.load(Ordering::SeqCst),
+            runtime.settings_generation()
+        );
+
+        // Switch to project B: loads indent = 2, ignores unsafe security.token with warning.
+        let gen_before_b = runtime.settings_generation();
+        runtime.set_active_project(Some(&proj_b));
+        assert!(runtime.settings_generation() > gen_before_b);
+        assert_eq!(
+            seen_generations.load(Ordering::SeqCst),
+            runtime.settings_generation()
+        );
+        assert_eq!(
+            runtime.settings().get("projtest.format.indent"),
+            Some(&SettingValue::Integer(2))
+        );
+        assert_eq!(
+            runtime.settings().get("projtest.security.token"),
+            Some(&SettingValue::Text("none".into()))
+        );
+        assert!(runtime
+            .warnings()
+            .iter()
+            .any(|w| w.contains("projtest.security.token")));
     }
 }

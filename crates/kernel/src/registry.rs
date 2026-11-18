@@ -497,6 +497,10 @@ impl Registry {
             }
         }
         for subscription in &mut self.subscriptions {
+            if subscription.type_id == TypeId::of::<crate::settings::SettingsChanged>() {
+                subscription.name = "settings.changed".to_owned();
+                continue;
+            }
             match self
                 .event_signatures
                 .iter()

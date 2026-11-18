@@ -51,7 +51,11 @@ pub use manifest::ModuleManifest;
 pub use module::{discovered_modules, module, Module, ModuleFactory, MODULE_FACTORIES};
 pub use registry::{build_registry, Registrar, Registry};
 pub use runtime::{Ctx, Runtime, RuntimeOptions, StoreHandle};
-pub use settings::{SettingKind, SettingSpec, SettingValue};
+pub use settings::{
+    is_forbidden_project_key, is_project_safe_key, project_settings_path, SettingKind,
+    SettingScope, SettingSource, SettingSpec, SettingValue, SettingsChanged, PROJECT_SAFE_KEYS,
+    PROJECT_SETTINGS_FILE,
+};
 pub use store::{LoadResult, Store};
 pub use tasks::{TaskId, Tasks};
 pub use ui::{AnvilHit, Slot, ViewContribution};

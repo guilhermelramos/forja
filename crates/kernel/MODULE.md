@@ -32,13 +32,16 @@ atributo do `linkme` (por isso o crate do módulo depende de `linkme`).
   guarda um payload JSON.
   O registry guarda `Box<dyn Any>`; com a feature `egui`, `Registrar::view` aceita
   `Box<dyn ui_contract::View>`;
-- settings: `SettingSpec { key, kind, default, label_key, help_key }`, com
-  `Bool`, `Integer`, `Number`, `Text`, `Choice`, `Path`, `List` e `Color`,
-  faixas e opções;
+- settings: `SettingSpec { key, kind, default, label_key, help_key, order, scope }`,
+  com `Bool`, `Integer`, `Number`, `Text`, `Choice`, `Path`, `List` e `Color`,
+  faixas, opções e escopo (`SettingScope::User` ou `SettingScope::Project`,
+  preenchido automaticamente a partir de `PROJECT_SAFE_KEYS` de `design/settings.toml`
+  ou ajustado com `.scope(...)`);
 - atalhos: `keymap.toml` embutido com `include_str!` ou `KeyBinding` direto;
 - eventos: `event::<T>("modulo.evento")` para eventos do próprio módulo e
   `contract_event::<T>(forja_contracts::names::...)` para eventos de contrato
-  (publicador e assinante declaram; a ordem não importa);
+  (publicador e assinante declaram; a ordem não importa); qualquer módulo também
+  pode assinar `SettingsChanged` (`"settings.changed"`) com `r.subscribe(...)`;
 - RPC: `Method` (nome, `description_key`, schema de parâmetros e resultado,
   `effect`, `network`, `idempotent`, `exposed_mcp`) + handler
   `Fn(&mut Ctx, params) -> Result<Value, RpcError>`;
@@ -51,8 +54,22 @@ atributo do `linkme` (por isso o crate do módulo depende de `linkme`).
   interface via `Runtime::poll_tasks`;
 - `store()`: JSON por módulo em `<data>/modules/<id>.json`, gravação atômica e
   quarentena de arquivo corrompido;
-- `settings()` / `set_setting()`: leitura, validação contra o schema e
-  persistência em `<data>/settings.toml` numa thread de escrita dedicada;
+- `settings()` / `setting(key)` / `set_setting()`: leitura efetiva com
+  precedência `projeto > usuário > padrão`, validação contra o schema e
+  persistência global em `<data>/settings.toml` numa thread de escrita dedicada;
+- ajustes por projeto (`<projeto>\.forja\ajustes.toml`):
+  - `set_active_project(project_dir)` / `reload_project_settings(project_dir)` /
+    `active_project()`: troca o projeto ativo, recarrega `.forja\ajustes.toml`,
+    ignora chaves fora da lista segura (`PROJECT_SAFE_KEYS`) ou arquivos/valores
+    inválidos com aviso no log (caindo para o valor do usuário), incrementa
+    `settings_generation()` e emite `SettingsChanged`;
+  - `set_project_setting(key, value)` / `unset_project_setting(key)`: grava ou
+    remove uma sobreposição do projeto ativo de forma assíncrona e atômica
+    (`write_atomic_bytes` na thread `SettingsWriter`), recusando chaves fora da
+    lista segura com `KernelError::UnsafeProjectSetting(key)` (e
+    `KernelError::NoActiveProject` quando não há projeto ativo);
+  - `user_setting(key)`, `project_setting(key)` e `setting_source(key)`
+    (`SettingSource::{Default, User, Project}`) inspecionam cada camada;
 - `keymap()`: padrões dos módulos < pacotes em `~/.forja/keymaps/*.toml` <
   `~/.forja/keymap.toml` < `<data>/keymap-platform.toml`, com detecção de
   conflito por escopo e gramática `Ctrl+Shift+K`;
