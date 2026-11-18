@@ -13,6 +13,8 @@
 //! touches `%APPDATA%` or `~/.forja`.
 
 pub mod args;
+pub mod bootstrap;
+pub mod cache;
 pub mod commands;
 pub mod contract;
 pub mod error;
@@ -37,6 +39,8 @@ pub mod ui;
 pub mod ui_contract;
 
 pub use args::{Args, CommandId};
+pub use bootstrap::{BootstrapConfig, CopyReport, ResolvedBootstrap, BOOTSTRAP_FILE};
+pub use cache::CacheCleanupReport;
 pub use commands::{
     Availability, AvailabilityContext, CommandField, CommandFieldKind, CommandSpec,
 };
@@ -49,7 +53,7 @@ pub use keymap::{
 };
 pub use manifest::ModuleManifest;
 pub use module::{discovered_modules, module, Module, ModuleFactory, MODULE_FACTORIES};
-pub use registry::{build_registry, Registrar, Registry};
+pub use registry::{build_registry, CacheDirSpec, Registrar, Registry};
 pub use runtime::{Ctx, Runtime, RuntimeOptions, StoreHandle};
 pub use settings::{
     is_forbidden_project_key, is_project_safe_key, project_settings_path, SettingKind,

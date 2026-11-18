@@ -278,6 +278,16 @@ const CHROME_KEYS: &[&str] = &[
     "setting-app-performance-unfocused_fps-help",
     "setting-app-diagnostics-overlay-label",
     "setting-app-diagnostics-overlay-help",
+    "shell.storage.restart-required",
+    "shell.storage.choose",
+    "shell.storage.apply",
+    "shell.storage.copy-title",
+    "shell.storage.copy-body",
+    "shell.storage.copy-confirm",
+    "shell.storage.copy-empty",
+    "shell.storage.copy-cancel",
+    "shell.storage.copy-done",
+    "shell.storage.copy-failed",
 ];
 
 #[cfg(test)]

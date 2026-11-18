@@ -440,6 +440,12 @@ Privacidade reúne histórico local, segredos, cookies, proxy e rede. A Forja n�
 Avançado cobre Bigorna, atalhos, armazenamento, atualizações, logs e desempenho. São ajustes de operação: mudam pouco, mas precisam ser claros quando mudam.
 O nível do log, a rotação por tamanho, a retenção de arquivos e a inclusão opcional da saída do terminal já são aplicados pelo serviço local. A saída do terminal continua desligada por padrão porque pode conter segredos.
 
+Sobre armazenamento, RPC local e modo de desenvolvimento:
+- `app.storage.data_dir` e `app.storage.content_dir`: lidos antes dos módulos a partir de `%APPDATA%\Forja\bootstrap.toml`; as variáveis `FORJA_DATA_DIR` e `FORJA_CONTENT_DIR` mantêm precedência (para testes e execuções isoladas). Caminhos inválidos ou sem permissão de escrita voltam ao padrão com aviso no log. A troca em Ajustes passa a valer no próximo início, exibe aviso de reinício e oferece copiar os dados atuais ou começar vazio (nunca move sozinho; no modo de teste não abre diálogo nativo).
+- `app.storage.cleanup_days`: remove em tarefa de fundo, uma vez por início, arquivos mais antigos que N dias apenas das subpastas de cache declaradas pelos módulos (`Registrar::cache_dir`); `0` desliga e dados do usuário nunca são tocados.
+- `app.cli.enabled`: abre e encerra o pipe RPC local de forma limpa e cancelável sem travar a interface. O modo `--test-driver` usa esse mesmo pipe para dirigir o app e, por isso, mantém o servidor RPC sempre ligado enquanto durar a execução de teste.
+- `app.dev.mode`: permanece adiada porque o painel de diagnóstico (`app.diagnostics.overlay`) já é independente e ainda não existem ferramentas internas dedicadas para justificar a chave.
+
 | Chave | Tipo | Padrão (por quê) | Faixa / opções | Rótulo pt-BR · en | Ajuda | Dono |
 |---|---|---|---|---|---|---|
 | `anvil.history.limit` | número | `100` — 100 comandos recentes cobrem o dia sem virar um diário. | 10–1000 | Histórico da Bigorna · Anvil history | Quantos comandos ficam no histórico da Bigorna. | `anvil` |

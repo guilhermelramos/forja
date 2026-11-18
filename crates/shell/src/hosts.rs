@@ -328,6 +328,46 @@ fn register_app(registrar: &mut Registrar<'_>) {
         "setting-app-tray-enabled-help",
         10,
     ));
+    registrar.setting(flag(
+        "app.cli.enabled",
+        true,
+        "setting-app-cli-enabled-label",
+        "setting-app-cli-enabled-help",
+        11,
+    ));
+    registrar.setting(
+        SettingSpec::new(
+            "app.storage.data_dir",
+            SettingKind::Path,
+            SettingValue::Text("%APPDATA%\\Forja".to_owned()),
+            "setting-app-storage-data_dir-label",
+            "setting-app-storage-data_dir-help",
+        )
+        .order(12),
+    );
+    registrar.setting(
+        SettingSpec::new(
+            "app.storage.content_dir",
+            SettingKind::Path,
+            SettingValue::Text("~/.forja".to_owned()),
+            "setting-app-storage-content_dir-label",
+            "setting-app-storage-content_dir-help",
+        )
+        .order(14),
+    );
+    registrar.setting(
+        SettingSpec::new(
+            "app.storage.cleanup_days",
+            SettingKind::Integer {
+                min: Some(0),
+                max: Some(365),
+            },
+            SettingValue::Integer(30),
+            "setting-app-storage-cleanup_days-label",
+            "setting-app-storage-cleanup_days-help",
+        )
+        .order(16),
+    );
     registrar.setting(choice(
         "app.log.level",
         &["error", "warn", "info", "debug", "trace"],

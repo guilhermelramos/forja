@@ -8,11 +8,11 @@
 |---|---|
 | Configurações no catálogo | 313 |
 | Configurações sobreponíveis por projeto (`scope = "project"`) | 31 |
-| Configurações registradas no app | 281 (280 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 280 (279 do catálogo) |
+| Configurações registradas no app | 285 (284 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 284 (283 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
-| Configurações adiadas | 31 |
+| Configurações adiadas | 27 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
 | Atalhos no catálogo | 110 |
@@ -52,11 +52,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 - `mcp.startup.timeout_s`: Cliente MCP ainda não implementado.
 - `browser.privacy.third_party_cookies`: Aguardando a API de perfil do WebView2 para bloquear cookies de terceiros.
 - `remote.sync.mode`: Aguardando contrato de sincronização de arquivos com bancada remota; o módulo ainda não sincroniza arquivos.
-- `app.cli.enabled`: Aguardando ciclo de vida cancelável do servidor RPC local.
-- `app.storage.data_dir`: Aguardando configuração de bootstrap do diretório de dados no kernel.
-- `app.storage.content_dir`: Aguardando configuração de bootstrap do diretório de conteúdo no kernel.
-- `app.storage.cleanup_days`: Aguardando contrato de retenção e limpeza dos caches de módulos.
-- `app.dev.mode`: Aguardando ferramentas internas e painel de diagnóstico.
+- `app.dev.mode`: O painel de diagnóstico (`app.diagnostics.overlay`) já tem chave própria; aguardando ferramentas internas dedicadas.
 
 ## Configurações (`design/settings.toml`)
 
@@ -356,10 +352,10 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `app.startup.open_last` | `app` | `app` | sim | ok | sim |
 | `app.close.confirm` | `app` | `app` | sim | ok | sim |
 | `app.tray.enabled` | `app` | `app` | sim | ok | sim |
-| `app.cli.enabled` | `app` | `-` | adiada | - | adiada |
-| `app.storage.data_dir` | `app` | `-` | adiada | - | adiada |
-| `app.storage.content_dir` | `app` | `-` | adiada | - | adiada |
-| `app.storage.cleanup_days` | `app` | `-` | adiada | - | adiada |
+| `app.cli.enabled` | `app` | `app` | sim | ok | sim |
+| `app.storage.data_dir` | `app` | `app` | sim | ok | sim |
+| `app.storage.content_dir` | `app` | `app` | sim | ok | sim |
+| `app.storage.cleanup_days` | `app` | `app` | sim | ok | sim |
 | `update.channel.name` | `update` | `update` | sim | ok | sim |
 | `update.check.frequency` | `update` | `update` | sim | ok | sim |
 | `update.download.auto` | `update` | `update` | sim | ok | sim |

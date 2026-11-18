@@ -5,6 +5,21 @@ use eframe::egui::{self, Color32, RichText, Sense, TextEdit};
 use forja_kernel::settings::{SettingKind, SettingSpec, SettingValue};
 use forja_ui_kit::text_field;
 use std::collections::BTreeMap;
+use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
+
+pub(crate) enum PendingStorageChange {
+    Prompt {
+        key: String,
+        previous: String,
+        source_dir: PathBuf,
+        target_dir: PathBuf,
+    },
+    Copying {
+        target: String,
+        result: Arc<Mutex<Option<Result<usize, String>>>>,
+    },
+}
 
 impl ForjaApp {
     pub(crate) fn settings_window(&mut self, ctx: &egui::Context) {
@@ -225,6 +240,23 @@ impl ForjaApp {
                                 self.setting_row(ui, spec, values.get(&spec.key));
                             }
                             if show_logs_button {
+                                if let Some(notice) = self.storage_notice.as_deref().or_else(|| {
+                                    self.runtime
+                                        .storage_restart_pending()
+                                        .then_some("")
+                                }) {
+                                    let message = if notice.is_empty() {
+                                        self.text("shell.storage.restart-required")
+                                    } else {
+                                        notice.to_owned()
+                                    };
+                                    ui.add_space(6.0);
+                                    ui.label(
+                                        RichText::new(message)
+                                            .small()
+                                            .color(ui.visuals().warn_fg_color),
+                                    );
+                                }
                                 ui.add_space(8.0);
                                 if forja_ui_kit::button(
                                     ui,
@@ -317,6 +349,14 @@ impl ForjaApp {
                             let muted = self.paint(self.tokens.color.text_muted);
                             ui.label(RichText::new(hint).small().color(muted));
                         }
+                    }
+                    SettingKind::Path
+                        if matches!(
+                            spec.key.as_str(),
+                            "app.storage.data_dir" | "app.storage.content_dir"
+                        ) =>
+                    {
+                        self.storage_path_setting(ui, spec, current);
                     }
                     SettingKind::Text { .. } | SettingKind::Path | SettingKind::Color => {
                         changed = self.text_setting(ui, spec, current);
@@ -430,6 +470,266 @@ impl ForjaApp {
             min.map(format_number_limit),
             max.map(format_number_limit),
         )
+    }
+
+    fn storage_path_setting(
+        &mut self,
+        ui: &mut egui::Ui,
+        spec: &SettingSpec,
+        current: Option<&SettingValue>,
+    ) {
+        let original = current
+            .and_then(SettingValue::as_str)
+            .unwrap_or("")
+            .to_owned();
+        let mut value = self
+            .setting_drafts
+            .get(&spec.key)
+            .cloned()
+            .unwrap_or_else(|| original.clone());
+        let response = ui.add(TextEdit::singleline(&mut value).desired_width(180.0));
+        if response.changed() {
+            self.setting_drafts.insert(spec.key.clone(), value.clone());
+        }
+        let enter_pressed =
+            response.lost_focus() && ui.input(|input| input.key_pressed(egui::Key::Enter));
+        let choose_label = self.text("shell.storage.choose");
+        let apply_label = self.text("shell.storage.apply");
+        let mut submit = enter_pressed;
+        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &choose_label).clicked() {
+            let picked = match forja_kernel::test_pick::folder() {
+                Some(choice) => choice,
+                None if !cfg!(test) && self.driver.is_none() && self.screenshot.is_none() => {
+                    rfd::FileDialog::new().pick_folder()
+                }
+                None => None,
+            };
+            if let Some(folder) = picked {
+                value = folder.display().to_string();
+                self.setting_drafts.insert(spec.key.clone(), value.clone());
+                submit = true;
+            }
+        }
+        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, &apply_label).clicked() {
+            submit = true;
+        }
+        if submit {
+            self.apply_storage_setting(&spec.key, &value);
+        }
+    }
+
+    pub(crate) fn apply_storage_setting(&mut self, key: &str, raw_value: &str) -> bool {
+        let trimmed = raw_value.trim();
+        let previous = self
+            .runtime
+            .settings()
+            .get(key)
+            .and_then(SettingValue::as_str)
+            .unwrap_or("")
+            .to_owned();
+        let source_dir = if key == "app.storage.data_dir" {
+            self.runtime.data_dir().to_path_buf()
+        } else {
+            self.runtime.user_dir().to_path_buf()
+        };
+        match self
+            .runtime
+            .set_setting(key, SettingValue::Text(trimmed.to_owned()))
+        {
+            Ok(()) => {
+                self.clear_status();
+                self.setting_drafts
+                    .insert(key.to_owned(), trimmed.to_owned());
+                let target_dir = if trimmed.is_empty() {
+                    if key == "app.storage.data_dir" {
+                        forja_kernel::paths::base_default_data_dir()
+                    } else {
+                        forja_kernel::paths::base_default_user_dir()
+                    }
+                } else {
+                    forja_kernel::bootstrap::expand_path(trimmed)
+                        .unwrap_or_else(|| PathBuf::from(trimmed))
+                };
+                if !forja_kernel::bootstrap::same_path(&source_dir, &target_dir) {
+                    self.storage_notice = Some(self.text("shell.storage.restart-required"));
+                    self.pending_storage_change = Some(PendingStorageChange::Prompt {
+                        key: key.to_owned(),
+                        previous,
+                        source_dir,
+                        target_dir,
+                    });
+                }
+                true
+            }
+            Err(error) => {
+                let raw = error.to_string();
+                let summary = humanize_setting_error_for(
+                    self.runtime.i18n(),
+                    self.runtime.registry(),
+                    key,
+                    &raw,
+                );
+                self.status = Some(forja_kernel::HumanError::with_detail(summary, raw));
+                self.status_details_open = false;
+                false
+            }
+        }
+    }
+
+    pub(crate) fn storage_copy_modal(&mut self, ctx: &egui::Context) {
+        let copying_done = match &self.pending_storage_change {
+            Some(PendingStorageChange::Copying { target, result }) => {
+                let outcome = result
+                    .lock()
+                    .ok()
+                    .and_then(|mut slot| slot.take());
+                outcome.map(|res| (target.clone(), res))
+            }
+            _ => None,
+        };
+        if let Some((target, outcome)) = copying_done {
+            self.pending_storage_change = None;
+            match outcome {
+                Ok(files) => {
+                    let files_str = files.to_string();
+                    self.storage_notice = Some(
+                        self.runtime
+                            .i18n()
+                            .t_args("shell.storage.copy-done", &[("files", &files_str)]),
+                    );
+                    self.clear_status();
+                }
+                Err(detail) => {
+                    let summary = self.runtime.i18n().t_args(
+                        "shell.storage.copy-failed",
+                        &[("target", &target), ("detail", &detail)],
+                    );
+                    self.status = Some(forja_kernel::HumanError::with_detail(summary, detail));
+                    self.status_details_open = false;
+                }
+            }
+            return;
+        }
+
+        let Some(PendingStorageChange::Prompt {
+            key,
+            previous,
+            source_dir,
+            target_dir,
+        }) = self.pending_storage_change.as_ref()
+        else {
+            return;
+        };
+        let key = key.clone();
+        let previous = previous.clone();
+        let source_dir = source_dir.clone();
+        let target_dir = target_dir.clone();
+        let target_display = target_dir.display().to_string();
+        let source_display = source_dir.display().to_string();
+
+        let title = self.text("shell.storage.copy-title");
+        let body = self.runtime.i18n().t_args(
+            "shell.storage.copy-body",
+            &[("target", &target_display), ("source", &source_display)],
+        );
+        let confirm_label = self.text("shell.storage.copy-confirm");
+        let empty_label = self.text("shell.storage.copy-empty");
+        let cancel_label = self.text("shell.storage.copy-cancel");
+
+        enum Choice {
+            None,
+            Copy,
+            Empty,
+            Cancel,
+        }
+
+        let mut open = true;
+        let mut choice = Choice::None;
+        forja_ui_kit::modal_explicit_close(ctx, &mut open, &title, |ui| {
+            ui.set_min_width(400.0);
+            ui.set_max_width(480.0);
+            let font = ui
+                .style()
+                .text_styles
+                .get(&egui::TextStyle::Body)
+                .cloned()
+                .unwrap_or_else(|| egui::FontId::proportional(14.0));
+            let color = ui.visuals().text_color();
+            forja_ui_kit::wrapped_label(ui, &body, font, color);
+            ui.add_space(12.0);
+            ui.horizontal(|ui| {
+                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, &confirm_label)
+                    .clicked()
+                {
+                    choice = Choice::Copy;
+                }
+                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &empty_label)
+                    .clicked()
+                {
+                    choice = Choice::Empty;
+                }
+                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &cancel_label)
+                    .clicked()
+                {
+                    choice = Choice::Cancel;
+                }
+            });
+        });
+
+        if !open && matches!(choice, Choice::None) {
+            choice = Choice::Cancel;
+        }
+        match choice {
+            Choice::None => {}
+            Choice::Copy => {
+                let result: Arc<Mutex<Option<Result<usize, String>>>> = Arc::new(Mutex::new(None));
+                let result_bg = Arc::clone(&result);
+                let target_log = target_display.clone();
+                self.runtime.tasks().spawn(
+                    "shell",
+                    move || {
+                        forja_kernel::bootstrap::copy_dir_contents(&source_dir, &target_dir)
+                            .map(|report| report.files_copied)
+                            .map_err(|error| error.to_string())
+                    },
+                    move |_cx, outcome| {
+                        match &outcome {
+                            Ok(files) => forja_kernel::logging::log(
+                                forja_kernel::logging::LogLevel::Info,
+                                format!(
+                                    "forja: copied {files} file(s) to new storage folder `{target_log}`"
+                                ),
+                            ),
+                            Err(detail) => forja_kernel::logging::log(
+                                forja_kernel::logging::LogLevel::Warn,
+                                format!(
+                                    "forja: failed copying data to `{target_log}`: {detail}"
+                                ),
+                            ),
+                        }
+                        if let Ok(mut slot) = result_bg.lock() {
+                            *slot = Some(outcome);
+                        }
+                    },
+                );
+                self.pending_storage_change = Some(PendingStorageChange::Copying {
+                    target: target_display,
+                    result,
+                });
+            }
+            Choice::Empty => {
+                self.pending_storage_change = None;
+                self.storage_notice = Some(self.text("shell.storage.restart-required"));
+            }
+            Choice::Cancel => {
+                let _ = self
+                    .runtime
+                    .set_setting(&key, SettingValue::Text(previous.clone()));
+                self.setting_drafts.insert(key, previous);
+                self.storage_notice = None;
+                self.pending_storage_change = None;
+            }
+        }
     }
 
     fn apply_setting(&mut self, key: &str, value: SettingValue) {
@@ -761,5 +1061,52 @@ mod tests {
             "{color_err_en}"
         );
         assert!(!color_err_en.contains("appearance.colors.accent"), "{color_err_en}");
+    }
+
+    #[test]
+    fn storage_restart_notice_and_validation_use_shell_i18n() {
+        let dir = TempGuard(
+            std::env::temp_dir().join(format!("forja-shell-storage-{}", std::process::id())),
+        );
+        let data_dir = dir.0.join("data");
+        let user_dir = dir.0.join("user");
+        let target_dir = dir.0.join("next_data");
+        std::fs::create_dir_all(&data_dir).expect("data_dir");
+        std::fs::create_dir_all(&user_dir).expect("user_dir");
+        std::fs::create_dir_all(&target_dir).expect("target_dir");
+        let blocked_file = dir.0.join("not-a-dir");
+        std::fs::write(&blocked_file, b"x").expect("file");
+
+        let mut runtime =
+            crate::app::build_runtime(Some("pt-BR".into()), Some(data_dir), Some(user_dir), true)
+                .expect("runtime");
+        runtime.set_bootstrap_path(dir.0.join("bootstrap.toml"));
+
+        assert!(!runtime.storage_restart_pending());
+        assert!(runtime
+            .set_setting(
+                "app.storage.data_dir",
+                SettingValue::Text(blocked_file.display().to_string()),
+            )
+            .is_err());
+        assert!(!runtime.storage_restart_pending());
+
+        runtime
+            .set_setting(
+                "app.storage.data_dir",
+                SettingValue::Text(target_dir.display().to_string()),
+            )
+            .expect("valid target dir");
+        assert!(runtime.storage_restart_pending());
+
+        assert_ne!(
+            runtime.i18n().t("shell.storage.restart-required"),
+            "shell.storage.restart-required"
+        );
+        let body = runtime.i18n().t_args(
+            "shell.storage.copy-body",
+            &[("target", "C:/next"), ("source", "C:/old")],
+        );
+        assert!(body.contains("C:/next") && body.contains("C:/old"), "{body}");
     }
 }
