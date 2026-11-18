@@ -924,7 +924,7 @@ impl eframe::App for ForjaApp {
         {
             panic!("test-driver requested a panic in the main loop");
         }
-        self.runtime.poll_tasks();
+        let tasks_applied = self.runtime.poll_tasks();
         self.handle_shortcuts(ctx);
         self.drain_actions(ctx);
         self.show_demos();
@@ -943,7 +943,7 @@ impl eframe::App for ForjaApp {
         self.diagnostics_overlay(ctx);
         self.capture(ctx);
         if let Some(driver) = self.driver.as_mut() {
-            driver.tick(ctx);
+            driver.tick(ctx, self.runtime.tasks(), tasks_applied);
         }
         self.pacer.end(budget);
     }
