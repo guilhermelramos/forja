@@ -25,9 +25,9 @@ use crate::ui_tree::LatestTree;
 use base64::Engine as _;
 use eframe::egui::{self, accesskit, Event, Key, Modifiers, PointerButton, Pos2, Vec2};
 use forja_kernel::forja_protocol::codec::{self, RpcError};
-use forja_kernel::{TaskId, Tasks};
+use forja_kernel::Tasks;
 use serde_json::{json, Map, Value};
-use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::io::Write as _;
 use std::sync::mpsc::Sender;
 use std::time::{Duration, Instant};
@@ -138,9 +138,6 @@ pub struct Driver {
     /// Frames drawn since the app started; reported as `frames` in every reply.
     frames: u64,
     close_requested: bool,
-    /// Long-lived tasks (such as folder watchers) that already exceeded a settle
-    /// deadline so subsequent actions do not repeatedly wait 3 s for them.
-    ignored_tasks: HashSet<TaskId>,
 }
 
 impl Driver {
@@ -165,7 +162,6 @@ impl Driver {
             debug_main_panic: false,
             frames: 0,
             close_requested: false,
-            ignored_tasks: HashSet::new(),
         }
     }
 
@@ -561,6 +557,11 @@ impl Driver {
                     let now = Instant::now();
                     if now < until {
                         let remaining = until.saturating_duration_since(now);
+                        self.steps.push_front(Step::Await {
+                            target,
+                            until,
+                            message,
+                        });
                         ctx.request_repaint_after(remaining.min(SETTLE_STEP));
                         return;
                     }
@@ -580,11 +581,8 @@ impl Driver {
                     let now = Instant::now();
                     let min_until = start + *min_wait;
                     let max_until = start + *max_wait;
-                    let inflight = tasks.inflight_ids();
-                    self.ignored_tasks.retain(|id| inflight.contains(id));
-                    let active_inflight =
-                        inflight.iter().any(|id| !self.ignored_tasks.contains(id));
-                    let tasks_busy = active_inflight || tasks.pending() > 0 || tasks_applied > 0;
+                    let tasks_busy =
+                        tasks.inflight() > 0 || tasks.pending() > 0 || tasks_applied > 0;
                     if *frames > 0 {
                         *frames -= 1;
                         if tasks_busy {
@@ -630,10 +628,6 @@ impl Driver {
                             };
                             ctx.request_repaint_after(step);
                             return;
-                        }
-                    } else {
-                        for id in inflight {
-                            self.ignored_tasks.insert(id);
                         }
                     }
                     self.steps.pop_front();
@@ -1579,16 +1573,96 @@ mod tests {
             .expect("json response");
         assert!(reply.contains("Carregando"), "unexpected reply: {reply}");
 
-        // Subsequent action must not stall for the same already-timed-out task.
-        let rx2 = push_settle_reply(&mut driver, Duration::from_millis(0), Duration::from_secs(3));
-        driver.tick(&ctx, &tasks, 0);
-        driver.tick(&ctx, &tasks, 0);
-        driver.tick(&ctx, &tasks, 0);
-        assert!(
-            rx2.try_recv().is_ok(),
-            "subsequent settle must not stall on an already-timed-out task"
+        let _ = release_tx.send(());
+    }
+
+    #[test]
+    fn settle_does_not_wait_on_running_service_tasks() {
+        let ctx = test_egui_ctx();
+        let tasks = Tasks::with_workers(2);
+        let mut driver = Driver::new();
+        set_tree_button(&driver.tree, "Pronto");
+
+        let (entered_tx, entered_rx) = std::sync::mpsc::channel();
+        let (release_tx, release_rx) = std::sync::mpsc::channel();
+        tasks.spawn_service(
+            "explorer",
+            move || {
+                let _ = entered_tx.send(());
+                let _ = release_rx.recv();
+            },
+            |_cx, ()| {},
         );
+        entered_rx
+            .recv_timeout(Duration::from_secs(5))
+            .expect("service task entered");
+
+        let rx = push_settle_reply(&mut driver, Duration::from_millis(0), Duration::from_secs(3));
+        driver.tick(&ctx, &tasks, 0);
+        driver.tick(&ctx, &tasks, 0);
+        driver.tick(&ctx, &tasks, 0);
+        let reply = rx
+            .try_recv()
+            .expect("service task must not block settle")
+            .expect("json response");
+        assert!(reply.contains("Pronto"), "unexpected reply: {reply}");
 
         let _ = release_tx.send(());
+    }
+
+    #[test]
+    fn await_keeps_waiting_across_missed_frames_until_target_appears() {
+        let ctx = test_egui_ctx();
+        let tasks = Tasks::with_workers(1);
+        let mut driver = Driver::new();
+        set_tree_button(&driver.tree, "Quadro");
+
+        let (reply_tx, reply_rx) = std::sync::mpsc::channel();
+        driver.steps.push_back(Step::Await {
+            target: Named {
+                name: "Nova bancada".to_owned(),
+                index: 0,
+            },
+            until: Instant::now() + Duration::from_secs(2),
+            message: "missing".to_owned(),
+        });
+        driver.steps.push_back(Step::Pointer {
+            kind: PointerKind::Move,
+            button: PointerButton::Primary,
+            target: Some(Named {
+                name: "Nova bancada".to_owned(),
+                index: 0,
+            }),
+            fallback: Pos2::new(26.0, 112.0),
+        });
+        driver.steps.push_back(Step::Reply(Box::new(Pending {
+            id: serde_json::json!(1),
+            method: "ui.click".to_owned(),
+            params: Map::new(),
+            note: Value::Null,
+            reply: reply_tx,
+        })));
+
+        // Target is absent for multiple frames: Await must remain queued and
+        // block the Pointer step from firing with the stale fallback position.
+        driver.tick(&ctx, &tasks, 0);
+        driver.tick(&ctx, &tasks, 0);
+        assert!(matches!(driver.steps.front(), Some(Step::Await { .. })));
+
+        // Once the widget appears, tick advances past Await to Pointer, and
+        // feed resolves the new widget instead of the fallback coordinates.
+        set_tree_button(&driver.tree, "Nova bancada");
+        driver.tick(&ctx, &tasks, 0);
+        assert!(matches!(driver.steps.front(), Some(Step::Pointer { .. })));
+
+        let mut raw = egui::RawInput::default();
+        driver.feed(&ctx, &mut raw);
+        assert!(raw.events.iter().any(|event| matches!(
+            event,
+            Event::PointerMoved(pos) if *pos == Pos2::new(100.0, 36.0)
+        )));
+
+        driver.tick(&ctx, &tasks, 0);
+        assert!(reply_rx.try_recv().is_ok());
     }
 }

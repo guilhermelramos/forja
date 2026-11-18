@@ -574,7 +574,8 @@ impl ForjaApp {
                     .filter(|id| !id.is_empty())
                     .map(str::to_owned);
                 if bench_id.is_some() && self.current_bench_id != bench_id {
-                    self.switch_bench_layout(bench_id, false);
+                    let keep_page = self.rail_page.is_some();
+                    self.switch_bench_layout(bench_id, keep_page);
                 }
                 let bench_name = value
                     .get("name")

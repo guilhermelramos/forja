@@ -62,7 +62,7 @@ struct Inner {
     next: AtomicU64,
     queue: Mutex<VecDeque<Completion>>,
     wake: Mutex<Wake>,
-    inflight: Mutex<Vec<TaskId>>,
+    inflight: Mutex<usize>,
     done_signal: Condvar,
     jobs: Mutex<mpsc::Sender<Job>>,
 }
@@ -74,16 +74,14 @@ fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
 }
 
 impl Inner {
-    fn acquire(&self, id: TaskId) {
-        lock(&self.inflight).push(id);
+    fn acquire(&self) {
+        *lock(&self.inflight) += 1;
     }
 
-    fn release(&self, id: TaskId) {
-        let mut active = lock(&self.inflight);
-        if let Some(pos) = active.iter().position(|item| *item == id) {
-            active.swap_remove(pos);
-        }
-        if active.is_empty() {
+    fn release(&self) {
+        let mut count = lock(&self.inflight);
+        *count = count.saturating_sub(1);
+        if *count == 0 {
             self.done_signal.notify_all();
         }
     }
@@ -95,13 +93,12 @@ impl Inner {
 }
 
 struct InflightGuard {
-    id: TaskId,
     inner: Arc<Inner>,
 }
 
 impl Drop for InflightGuard {
     fn drop(&mut self) {
-        self.inner.release(self.id);
+        self.inner.release();
     }
 }
 
@@ -158,7 +155,7 @@ impl Tasks {
                 next: AtomicU64::new(1),
                 queue: Mutex::new(VecDeque::new()),
                 wake: Mutex::new(Arc::new(|| {})),
-                inflight: Mutex::new(Vec::new()),
+                inflight: Mutex::new(0),
                 done_signal: Condvar::new(),
                 jobs: Mutex::new(sender),
             }),
@@ -179,16 +176,43 @@ impl Tasks {
         W: FnOnce() -> T + Send + 'static,
         D: for<'a, 'b> FnOnce(&'b mut Ctx<'a>, T) + Send + 'static,
     {
+        self.spawn_inner(module_id, work, done, true)
+    }
+
+    /// Queues a long-lived background service task (such as a file watcher)
+    /// that stays alive by design and is excluded from [`Tasks::inflight`].
+    pub fn spawn_service<T, W, D>(&self, module_id: &str, work: W, done: D) -> TaskId
+    where
+        T: Send + 'static,
+        W: FnOnce() -> T + Send + 'static,
+        D: for<'a, 'b> FnOnce(&'b mut Ctx<'a>, T) + Send + 'static,
+    {
+        self.spawn_inner(module_id, work, done, false)
+    }
+
+    fn spawn_inner<T, W, D>(
+        &self,
+        module_id: &str,
+        work: W,
+        done: D,
+        track_inflight: bool,
+    ) -> TaskId
+    where
+        T: Send + 'static,
+        W: FnOnce() -> T + Send + 'static,
+        D: for<'a, 'b> FnOnce(&'b mut Ctx<'a>, T) + Send + 'static,
+    {
         let id = TaskId(self.inner.next.fetch_add(1, Ordering::SeqCst));
         let module_id = module_id.to_owned();
         let inner = Arc::clone(&self.inner);
-        inner.acquire(id);
+        if track_inflight {
+            inner.acquire();
+        }
         let task_inner = Arc::clone(&inner);
         let job: Job = Box::new(move || {
-            let _guard = InflightGuard {
-                id,
+            let _guard = track_inflight.then(|| InflightGuard {
                 inner: Arc::clone(&task_inner),
-            };
+            });
             let Some(result) = run_guarded(id, work) else {
                 return;
             };
@@ -205,7 +229,9 @@ impl Tasks {
             }
         };
         if !queued {
-            inner.release(id);
+            if track_inflight {
+                inner.release();
+            }
             logging::log(
                 LogLevel::Error,
                 format!("forja: task {id} was dropped: the task queue is closed"),
@@ -216,16 +242,16 @@ impl Tasks {
 
     pub(crate) fn wait_inflight(&self, timeout: Duration) {
         let deadline = Instant::now() + timeout;
-        let mut active = lock(&self.inner.inflight);
-        while !active.is_empty() {
+        let mut count = lock(&self.inner.inflight);
+        while *count > 0 {
             let remaining = deadline.saturating_duration_since(Instant::now());
             if remaining.is_zero() {
                 break;
             }
-            let Ok((next, result)) = self.inner.done_signal.wait_timeout(active, remaining) else {
+            let Ok((next, result)) = self.inner.done_signal.wait_timeout(count, remaining) else {
                 break;
             };
-            active = next;
+            count = next;
             if result.timed_out() {
                 break;
             }
@@ -240,14 +266,9 @@ impl Tasks {
         lock(&self.inner.queue).len()
     }
 
-    /// Number of tasks currently queued on or running in the worker pool.
+    /// Number of non-service tasks currently queued on or running in the worker pool.
     pub fn inflight(&self) -> usize {
-        lock(&self.inner.inflight).len()
-    }
-
-    /// Identifiers of tasks currently queued on or running in the worker pool.
-    pub fn inflight_ids(&self) -> Vec<TaskId> {
-        lock(&self.inner.inflight).clone()
+        *lock(&self.inner.inflight)
     }
 }
 
@@ -378,7 +399,7 @@ mod tests {
 
         let (entered_tx, entered_rx) = mpsc::channel();
         let (release_tx, release_rx) = mpsc::channel();
-        let id = tasks.spawn(
+        let _id = tasks.spawn(
             "testing",
             move || {
                 let _ = entered_tx.send(());
@@ -389,7 +410,6 @@ mod tests {
         );
         entered_rx.recv_timeout(Duration::from_secs(5)).expect("worker entered");
         assert_eq!(tasks.inflight(), 1);
-        assert_eq!(tasks.inflight_ids(), vec![id]);
 
         release_tx.send(()).expect("release worker");
         let deadline = Instant::now() + Duration::from_secs(5);
@@ -397,11 +417,32 @@ mod tests {
             std::thread::sleep(Duration::from_millis(2));
         }
         assert_eq!(tasks.inflight(), 0);
-        assert!(tasks.inflight_ids().is_empty());
         assert_eq!(tasks.pending(), 1);
 
         let done = tasks.take_completed();
         assert_eq!(done.len(), 1);
         assert_eq!(tasks.pending(), 0);
+    }
+
+    #[test]
+    fn service_tasks_are_excluded_from_inflight_count() {
+        let tasks = Tasks::with_workers(2);
+        let (entered_tx, entered_rx) = mpsc::channel();
+        let (release_tx, release_rx) = mpsc::channel();
+        tasks.spawn_service(
+            "testing",
+            move || {
+                let _ = entered_tx.send(());
+                let _ = release_rx.recv();
+                7
+            },
+            |_cx, _value| {},
+        );
+        entered_rx.recv_timeout(Duration::from_secs(5)).expect("service worker entered");
+        assert_eq!(tasks.inflight(), 0);
+
+        release_tx.send(()).expect("release service worker");
+        let done = collect(&tasks, 1);
+        assert_eq!(done.len(), 1);
     }
 }

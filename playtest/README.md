@@ -11,6 +11,7 @@ Agentes de IA gratuitos usam a Forja **ao vivo, como uma pessoa**: olham a tela,
    - Cada ação responde depois que a interface assentou, só com o que **apareceu**, **sumiu**, **mudou** ou é novo.
    - Tudo é registrado em `FORJA_TEST_LOG` (JSONL).
    - Seletores nativos de pasta e arquivo respondem sozinhos (`FORJA_TEST_PICK_DIR`, `FORJA_TEST_PICK_FILE`; veja `crates/kernel/src/test_pick.rs`).
+   - Em modo de teste (`--test-driver`, `--screenshot`, `cargo test`), o módulo Uso nunca lê `~/.claude`, `~/.codex` nem o OpenCode real da máquina: lê apenas `<FORJA_DATA_DIR>/usage` (vazio por padrão) ou `FORJA_TEST_USAGE_DIR`, exceto no `--demo`, que lê os exemplos de demonstração.
 2. **`forja-mcp --player --findings <arquivo>`** expõe ao agente só as ferramentas de usuário: `ui_look`, `ui_click`, `ui_type`, `ui_key`, `ui_scroll` e `ui_wait`. `ui_look` é compacto (agrupa repetidos, corta nomes longos e omite retângulos de elementos não acionáveis). A ferramenta `report_finding` grava um achado com passos, esperado e ocorrido; nos vereditos ela também grava a lista estruturada `expectations`. `--max-steps <n>` limita as ações de uma sessão.
 3. **`playtest/run.ps1`**:
    - cria a pasta de dados isolada;
