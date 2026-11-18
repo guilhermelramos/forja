@@ -103,7 +103,10 @@ mod tests {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
         assert_eq!(
             generate(root).unwrap(),
-            std::fs::read_to_string(root.join("crates/ui-kit/src/icons_gen.rs")).unwrap(),
+            // A Windows checkout with core.autocrlf turns LF into CRLF; compare the text only.
+            std::fs::read_to_string(root.join("crates/ui-kit/src/icons_gen.rs"))
+                .unwrap()
+                .replace("\r\n", "\n"),
             "run cargo xtask icons"
         );
     }

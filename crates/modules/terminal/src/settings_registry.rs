@@ -202,14 +202,9 @@ pub(super) fn register_settings(r: &mut Registrar<'_>) {
         SettingValue::Bool(true),
     );
     add(
-        "terminal.gpu.mode",
-        SettingKind::Choice {
-            options: ["auto", "on", "off"]
-                .into_iter()
-                .map(str::to_owned)
-                .collect(),
-        },
-        SettingValue::Text("auto".to_owned()),
+        "terminal.images.enabled",
+        SettingKind::Bool,
+        SettingValue::Bool(true),
     );
     add(
         "terminal.osc52.enabled",

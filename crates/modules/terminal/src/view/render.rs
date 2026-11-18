@@ -1,18 +1,22 @@
 //! Renderização da grade no egui.
 //!
-//! Uma linha vira um `LayoutJob` com trechos de mesmo formato. Glifos largos
-//! são desenhados por cima em duas colunas, e imagens embutidas viram texturas
-//! quando a configuração de GPU permite.
+//! Cada linha vira um `LayoutJob` moldado em `Galley` com cache por linha
+//! (`line_cache`). Glifos largos são desenhados por cima em duas colunas, e
+//! imagens embutidas viram texturas quando `terminal.images.enabled` permite.
 
+use super::fonts::{ensure_wide_fonts, fonts_epoch, terminal_font};
+use super::line_cache::{
+    CacheConfig, CachedLineParts, CachedOverline, CachedWideGlyph, TerminalLineCache,
+};
 use crate::settings::TermSettings;
 use crate::terminal::Terminal;
 use crate::theme::Palette;
 use crate::vt::{attrs, Glyph, Row};
 use forja_kernel::ui_contract::egui::{
-    self, Color32, FontData, FontFamily, FontId, Pos2, Rect, TextFormat,
+    self, Color32, FontId, Pos2, Rect, TextFormat,
 };
 use std::collections::HashMap;
-use std::sync::{Arc, OnceLock};
+use std::sync::Arc;
 
 /// Margem interna da grade.
 const PAD_X: f32 = 8.0;
@@ -66,6 +70,7 @@ pub fn draw_grid(
     settings: &TermSettings,
     palette: &Palette,
     textures: &mut HashMap<u32, egui::TextureHandle>,
+    cache: &mut TerminalLineCache,
     body: Rect,
     focused: bool,
 ) -> GridResponse {
@@ -104,9 +109,18 @@ pub fn draw_grid(
         );
     }
 
-    if settings.gpu_mode != "off" {
+    if settings.images_enabled {
         ensure_textures(ui.ctx(), terminal, textures);
     }
+
+    cache.prepare(CacheConfig::from_metrics(
+        &metrics,
+        rows,
+        font_id.clone(),
+        ui.ctx().pixels_per_point(),
+        palette,
+        fonts_epoch(ui.ctx()),
+    ));
 
     let (start, end) = terminal.visible_range();
     let history_start = terminal.surface.display().history_start;
@@ -115,29 +129,24 @@ pub fn draw_grid(
         let Some(line) = terminal.surface.display().line_at(absolute.saturating_sub(history_start)) else {
             continue;
         };
-        if line.iter().any(|cell| cell.width == 2) {
+        let y = metrics.origin.y + offset as f32 * line_height;
+        let origin = egui::pos2(metrics.origin.x, y);
+        let cached = cache.get_or_build(line, || {
+            build_cached_line(ui, line, cols, palette, &font_id, line_height)
+        });
+        if cached.has_wide {
             wide_present = true;
         }
-        let y = metrics.origin.y + offset as f32 * line_height;
-        let job = line_job(
-            line,
-            cols,
-            palette,
-            font_id.clone(),
-            line_height,
-        );
-        let galley = ui.fonts_mut(|fonts| fonts.layout_job(job));
-        let origin = egui::pos2(metrics.origin.x, y);
-        painter.galley(origin, galley.clone(), Color32::WHITE);
-        paint_wide_glyphs(ui, line, &galley.job, origin, &metrics, palette);
-        for (col, cell) in line.iter().take(cols).enumerate() {
-            if cell.flags & attrs::OVERLINE != 0 {
-                let (fg, _) = colors(*cell, palette);
-                let left = origin + egui::vec2(col as f32 * char_width, 1.0);
-                painter.line_segment([left, left + egui::vec2(char_width, 0.0)], egui::Stroke::new(1.0_f32, fg));
-            }
+        painter.galley(origin, Arc::clone(&cached.galley), Color32::WHITE);
+        paint_cached_wide_glyphs(ui, &cached.wide_glyphs, origin, &metrics);
+        for overline in &cached.overlines {
+            let left = origin + egui::vec2(overline.col as f32 * char_width, 1.0);
+            painter.line_segment(
+                [left, left + egui::vec2(char_width, 0.0)],
+                egui::Stroke::new(1.0_f32, overline.color),
+            );
         }
-        if settings.gpu_mode != "off" {
+        if settings.images_enabled {
             paint_images(
                 ui,
                 terminal,
@@ -229,16 +238,45 @@ fn colors(cell: Glyph, palette: &Palette) -> (Color32, Color32) {
     (fg, bg)
 }
 
-fn paint_wide_glyphs(
+fn build_cached_line(
     ui: &egui::Ui,
     line: &Row,
-    job: &egui::text::LayoutJob,
-    origin: Pos2,
-    metrics: &GridMetrics,
+    cols: usize,
     palette: &Palette,
-) {
+    font_id: &FontId,
+    line_height: f32,
+) -> CachedLineParts {
+    let job = line_job(line, cols, palette, font_id.clone(), line_height);
+    let galley = ui.fonts_mut(|fonts| fonts.layout_job(job));
+    let wide_glyphs = build_wide_glyphs(ui, line, cols, &galley.job, palette);
+    let mut overlines = Vec::new();
+    let mut has_wide = false;
+    for (col, cell) in line.iter().take(cols).enumerate() {
+        if cell.width == 2 {
+            has_wide = true;
+        }
+        if cell.flags & attrs::OVERLINE != 0 {
+            let (fg, _) = colors(*cell, palette);
+            overlines.push(CachedOverline { col, color: fg });
+        }
+    }
+    CachedLineParts {
+        galley,
+        wide_glyphs,
+        overlines,
+        has_wide,
+    }
+}
+
+fn build_wide_glyphs(
+    ui: &egui::Ui,
+    line: &Row,
+    cols: usize,
+    job: &egui::text::LayoutJob,
+    palette: &Palette,
+) -> Vec<CachedWideGlyph> {
+    let mut wide_glyphs = Vec::new();
     let mut offset = 0;
-    let cols = job.text.chars().count();
     for (col, cell) in line.iter().take(cols).enumerate() {
         if cell.width == 2 && col + 1 < cols {
             if let Some(section) = job.sections.iter().find(|section| section.byte_range.contains(&offset)) {
@@ -255,17 +293,35 @@ fn paint_wide_glyphs(
                 };
                 glyph.append(&text, 0.0, format);
                 let galley = ui.fonts_mut(|fonts| fonts.layout_job(glyph));
-                let rect = Rect::from_min_size(
-                    origin + egui::vec2(col as f32 * metrics.char_width, 0.0),
-                    egui::vec2(metrics.char_width * 2.0, metrics.line_height),
-                );
-                let painter = ui.painter().with_clip_rect(rect.intersect(ui.clip_rect()));
-                let position = rect.min
-                    + egui::vec2(((rect.width() - galley.size().x) / 2.0).max(0.0), 0.0);
-                painter.galley(position, galley, Color32::WHITE);
+                wide_glyphs.push(CachedWideGlyph { col, galley });
             }
         }
-        offset += if cell.width != 1 { 1 } else { cell.ch.len_utf8() };
+        offset += if cell.width != 1 {
+            1
+        } else if cell.emoji {
+            cell.ch.len_utf8() + '\u{fe0f}'.len_utf8()
+        } else {
+            cell.ch.len_utf8()
+        };
+    }
+    wide_glyphs
+}
+
+fn paint_cached_wide_glyphs(
+    ui: &egui::Ui,
+    wide_glyphs: &[CachedWideGlyph],
+    origin: Pos2,
+    metrics: &GridMetrics,
+) {
+    for wide in wide_glyphs {
+        let rect = Rect::from_min_size(
+            origin + egui::vec2(wide.col as f32 * metrics.char_width, 0.0),
+            egui::vec2(metrics.char_width * 2.0, metrics.line_height),
+        );
+        let painter = ui.painter().with_clip_rect(rect.intersect(ui.clip_rect()));
+        let position = rect.min
+            + egui::vec2(((rect.width() - wide.galley.size().x) / 2.0).max(0.0), 0.0);
+        painter.galley(position, Arc::clone(&wide.galley), Color32::WHITE);
     }
 }
 
@@ -457,98 +513,6 @@ fn ensure_textures(
         );
         textures.insert(image.id, texture);
     }
-}
-
-/// Instala uma família monoespaçada pedida, uma vez por sessão.
-pub fn terminal_font(ctx: &egui::Context, family: &str, size: f32) -> FontId {
-    let (key, files) = match family {
-        "cascadia_code" => (
-            "forja-terminal-cascadia-code",
-            &["CascadiaCode.ttf", "CascadiaCode-VariableFont_wght.ttf"][..],
-        ),
-        "cascadia_mono" => ("forja-terminal-cascadia-mono", &["CascadiaMono.ttf"][..]),
-        "consolas" => ("forja-terminal-consolas", &["consola.ttf"][..]),
-        _ => return FontId::monospace(size),
-    };
-    let flag = egui::Id::new(("forja-terminal-font", key));
-    if !ctx.data(|data| data.get_temp::<bool>(flag).unwrap_or(false)) {
-        ctx.data_mut(|data| data.insert_temp(flag, true));
-        if let Some(bytes) = read_windows_font(files) {
-            let mut definitions = ctx.fonts_mut(|fonts| fonts.definitions().clone());
-            definitions
-                .font_data
-                .insert(key.to_owned(), Arc::new(FontData::from_owned(bytes)));
-            definitions.families.insert(
-                FontFamily::Name(key.into()),
-                vec![key.to_owned()],
-            );
-            ctx.set_fonts(definitions);
-            ctx.request_repaint();
-        }
-    }
-    if ctx.fonts_mut(|fonts| fonts.definitions().families.contains_key(&FontFamily::Name(key.into()))) {
-        FontId::new(size, FontFamily::Name(key.into()))
-    } else {
-        FontId::monospace(size)
-    }
-}
-
-fn read_windows_font(files: &[&str]) -> Option<Vec<u8>> {
-    let root = std::env::var_os("WINDIR")
-        .map(std::path::PathBuf::from)
-        .unwrap_or_else(|| std::path::PathBuf::from("C:\\Windows"))
-        .join("Fonts");
-    for file in files {
-        if let Ok(bytes) = std::fs::read(root.join(file)) {
-            if !bytes.is_empty() {
-                return Some(bytes);
-            }
-        }
-    }
-    None
-}
-
-/// Instala fallback para CJK e emoji, uma vez por contexto.
-pub fn ensure_wide_fonts(ctx: &egui::Context) {
-    static FONTS: OnceLock<Vec<(&'static str, Arc<FontData>)>> = OnceLock::new();
-    let flag = egui::Id::new("forja-terminal-wide-fonts");
-    if ctx.data(|data| data.get_temp::<bool>(flag).unwrap_or(false)) {
-        return;
-    }
-    ctx.data_mut(|data| data.insert_temp(flag, true));
-    let fonts = FONTS.get_or_init(|| {
-        let root = std::env::var_os("WINDIR")
-            .map(std::path::PathBuf::from)
-            .unwrap_or_else(|| std::path::PathBuf::from("C:\\Windows"))
-            .join("Fonts");
-        [
-            ("forja-terminal-cjk", "msyh.ttc"),
-            ("forja-terminal-japanese", "msgothic.ttc"),
-            ("forja-terminal-korean", "malgun.ttf"),
-            ("forja-terminal-emoji", "seguiemj.ttf"),
-        ]
-        .into_iter()
-        .filter_map(|(name, file)| {
-            std::fs::read(root.join(file))
-                .ok()
-                .map(|bytes| (name, Arc::new(FontData::from_owned(bytes))))
-        })
-        .collect()
-    });
-    if fonts.is_empty() {
-        return;
-    }
-    let mut definitions = ctx.fonts_mut(|fonts| fonts.definitions().clone());
-    for (name, data) in fonts {
-        definitions.font_data.insert((*name).to_owned(), Arc::clone(data));
-        definitions
-            .families
-            .entry(FontFamily::Monospace)
-            .or_default()
-            .push((*name).to_owned());
-    }
-    ctx.set_fonts(definitions);
-    ctx.request_repaint();
 }
 
 fn cursor_blink(shape: Option<u8>, focused: bool, time: f64) -> (bool, Option<std::time::Duration>) {
