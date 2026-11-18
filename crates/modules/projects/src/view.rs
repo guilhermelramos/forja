@@ -61,48 +61,28 @@ impl View for ProjectsView {
         let projects = self.state.projects();
         let mut dialog = self.state.dialog();
 
-        // A aba "Projetos" da barra lateral já diz o nome da lista: sem cabeçalho repetido.
-        ui.horizontal_wrapped(|ui| {
-            if forja_ui_kit::button(
-                ui,
-                forja_ui_kit::ButtonKind::Primary,
-                &cx.t("project.sidebar.add"),
-            )
-            .clicked()
-            {
-                dialog = Dialog::Add(ProjectForm::default());
-            }
-            if forja_ui_kit::button(
-                ui,
-                forja_ui_kit::ButtonKind::Secondary,
-                &cx.t("project.sidebar.create"),
-            )
-            .on_hover_text(cx.t("project.sidebar.create-hint"))
-            .clicked()
-            {
-                dialog = Dialog::Create(ProjectForm::default());
-            }
-            if forja_ui_kit::button(
-                ui,
-                forja_ui_kit::ButtonKind::Secondary,
-                &cx.t("project.sidebar.clone"),
-            )
-            .clicked()
-            {
-                dialog = Dialog::Clone(CloneForm::default());
-            }
-        });
-        if self.state.active_id().is_some()
-            && forja_ui_kit::button(
-                ui,
-                forja_ui_kit::ButtonKind::Ghost,
-                &cx.t("project.command.close"),
-            )
-            .clicked()
-        {
-            if let Err(error) = self.state.close(cx) {
-                self.state.set_error(Some(error));
-            }
+        let add_labels = [
+            cx.t("project.sidebar.add"),
+            cx.t("project.sidebar.create"),
+            cx.t("project.sidebar.clone"),
+        ];
+        let add_items: Vec<_> = add_labels
+            .iter()
+            .map(|label| forja_ui_kit::MenuItem {
+                label,
+                danger: false,
+            })
+            .collect();
+        match forja_ui_kit::icon_menu(
+            ui,
+            forja_ui_kit::Icon::Add,
+            &cx.t("project.sidebar.add-menu"),
+            &add_items,
+        ) {
+            Some(0) => dialog = Dialog::Add(ProjectForm::default()),
+            Some(1) => dialog = Dialog::Create(ProjectForm::default()),
+            Some(2) => dialog = Dialog::Clone(CloneForm::default()),
+            _ => {}
         }
         ui.add_space(4.0);
 
@@ -141,6 +121,7 @@ impl View for ProjectsView {
         let mut edit_request = None;
         let mut project_switch = None;
         let mut bench_activation = None;
+        let mut close_request = false;
         for project in &projects {
             let expanded = self.state.is_expanded(&project.id);
             let active = active_id.as_deref() == Some(project.id.as_str());
@@ -186,9 +167,19 @@ impl View for ProjectsView {
                     if project.icon == crate::model::DEFAULT_ICON {
                         forja_ui_kit::icon(ui, forja_ui_kit::Icon::Projects, 16.0);
                     } else {
-                        ui.label(egui::RichText::new(&project.icon).size(16.0));
+                        ui.label(
+                            egui::RichText::new(&project.icon)
+                                .size(forja_ui_kit::TextRole::Section.size()),
+                        );
                     }
-                    let name = ui.add(
+                    let name = ui.add_sized(
+                        egui::vec2(
+                            (ui.available_width()
+                                - tokens.metrics().control
+                                - tokens.metrics().gap)
+                                .max(40.0),
+                            tokens.metrics().control,
+                        ),
                         egui::Label::new(
                             egui::RichText::new(&project.name)
                                 .strong()
@@ -211,28 +202,35 @@ impl View for ProjectsView {
                         }
                         project_switch = Some(project.id.clone());
                     }
+                    let action_labels = [
+                        cx.t("project.sidebar.edit"),
+                        cx.t("project.sidebar.remove"),
+                        cx.t("project.command.close"),
+                    ];
+                    let items: Vec<_> = action_labels
+                        .iter()
+                        .take(if active { 3 } else { 2 })
+                        .map(|label| forja_ui_kit::MenuItem {
+                            label,
+                            danger: false,
+                        })
+                        .collect();
+                    let mut chosen = None;
                     name.context_menu(|ui| {
-                        if forja_ui_kit::button(
-                            ui,
-                            forja_ui_kit::ButtonKind::Ghost,
-                            &cx.t("project.sidebar.edit"),
-                        )
-                        .clicked()
-                        {
-                            edit_request = Some(project.clone());
-                            ui.close();
-                        }
-                        if forja_ui_kit::button(
-                            ui,
-                            forja_ui_kit::ButtonKind::Ghost,
-                            &cx.t("project.sidebar.remove"),
-                        )
-                        .clicked()
-                        {
-                            remove_request = Some((project.id.clone(), project.name.clone()));
-                            ui.close();
-                        }
+                        chosen = forja_ui_kit::menu_panel(ui, &items);
                     });
+                    let actions = cx.t_args("project.sidebar.actions", &[("name", &project.name)]);
+                    chosen =
+                        forja_ui_kit::icon_menu(ui, forja_ui_kit::Icon::More, &actions, &items)
+                            .or(chosen);
+                    match chosen {
+                        Some(0) => edit_request = Some(project.clone()),
+                        Some(1) => {
+                            remove_request = Some((project.id.clone(), project.name.clone()))
+                        }
+                        Some(2) => close_request = true,
+                        _ => {}
+                    }
                 });
                 ui.label(
                     egui::RichText::new(&project.path)
@@ -286,6 +284,11 @@ impl View for ProjectsView {
             ui.add_space(4.0);
         }
 
+        if close_request {
+            if let Err(error) = self.state.close(cx) {
+                self.state.set_error(Some(error));
+            }
+        }
         if let Some((project_id, name)) = remove_request {
             dialog = Dialog::Remove { project_id, name };
         }

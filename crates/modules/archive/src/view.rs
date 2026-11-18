@@ -379,7 +379,7 @@ impl ArchiveView {
                 ui.horizontal(|ui| {
                     if forja_ui_kit::button(
                         ui,
-                        forja_ui_kit::ButtonKind::Danger,
+                        forja_ui_kit::ButtonKind::DangerConfirm,
                         &cx.t("archive.view.delete-confirm"),
                     )
                     .clicked()

@@ -177,7 +177,7 @@ impl UsagePage {
                 forja_ui_kit::card(ui, Some(label), |ui| {
                     ui.set_min_width(ui.available_width());
                     let (cost, note) = cost_lines(totals, cx, locale);
-                    ui.label(egui::RichText::new(cost).size(24.0).strong());
+                    ui.label(forja_ui_kit::TextRole::Display.rich(cost));
                     if let Some(note) = note {
                         ui.label(egui::RichText::new(note).small().color(muted));
                     }
@@ -187,8 +187,7 @@ impl UsagePage {
                             compact_tokens(totals.total_tokens),
                             cx.t("usage.tokens")
                         ))
-                        .size(16.0)
-                        .monospace(),
+                        .font(forja_ui_kit::TextRole::Section.font()),
                     );
                     ui.label(
                         egui::RichText::new(format!(
@@ -234,11 +233,7 @@ impl UsagePage {
             ui.set_min_width(ui.available_width());
             for (day, totals) in series {
                 ui.horizontal(|ui| {
-                    ui.label(
-                        egui::RichText::new(format_day(&day, locale))
-                            .small()
-                            .monospace(),
-                    );
+                    ui.label(forja_ui_kit::TextRole::Caption.rich(format_day(&day, locale)));
                     let ratio = if max == 0 {
                         0.0
                     } else {
@@ -296,7 +291,7 @@ impl UsagePage {
                     (totals.total_tokens as f64 / total as f64 * 100.0).round() as u32
                 };
                 ui.horizontal(|ui| {
-                    ui.label(egui::RichText::new(name_for(name)).monospace().small());
+                    ui.label(forja_ui_kit::TextRole::Caption.rich(name_for(name)));
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         ui.label(
                             egui::RichText::new(format!(

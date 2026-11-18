@@ -62,7 +62,7 @@ pub(crate) fn render_dialog(
                     ui.horizontal(|ui| {
                         if forja_ui_kit::button(
                             ui,
-                            forja_ui_kit::ButtonKind::Danger,
+                            forja_ui_kit::ButtonKind::DangerConfirm,
                             &cx.t("project.action.remove"),
                         )
                         .clicked()
@@ -270,11 +270,8 @@ pub(crate) fn render_dialog(
                             .small()
                             .color(tokens.color.text_muted.forja_color()),
                     );
-                    let url = forja_ui_kit::text_field(
-                        ui,
-                        &mut clone.url,
-                        "https://host/owner/repo.git",
-                    );
+                    let url =
+                        forja_ui_kit::text_field(ui, &mut clone.url, "https://host/owner/repo.git");
                     if focus_url {
                         url.request_focus();
                         ctx.data_mut(|data| data.insert_temp(focus_key, true));

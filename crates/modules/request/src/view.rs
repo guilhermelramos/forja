@@ -150,22 +150,36 @@ impl RequestsView {
     }
 
     fn filters(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, frame: &Frame) {
-        if text_field(ui, &mut self.query_draft, &cx.t("request-search-hint")).changed() {
-            self.set_query(&self.query_draft.clone());
-        }
-        let labels: Vec<String> = Filter::ALL.iter().map(|f| cx.t(f.label_key())).collect();
-        let refs: Vec<&str> = labels.iter().map(String::as_str).collect();
-        let mut selected = Filter::ALL
-            .iter()
-            .position(|filter| *filter == frame.filter)
-            .unwrap_or(4);
-        if segmented(ui, &mut selected, &refs).changed() {
-            if let Some(filter) = Filter::ALL.get(selected).copied() {
-                self.set_filter(filter);
-                let _ = commands::refresh(cx, &self.shared);
-            }
-        }
-        self.source_row(ui, cx, frame);
+        let width = ui.available_width();
+        ui.horizontal(|ui| {
+            ui.scope(|ui| {
+                ui.set_width((width * 0.25).clamp(100.0, 240.0));
+                if text_field(ui, &mut self.query_draft, &cx.t("request-search-hint")).changed() {
+                    self.set_query(&self.query_draft.clone());
+                }
+            });
+            ui.scope(|ui| {
+                ui.set_width(
+                    (width - (width * 0.25).clamp(100.0, 240.0) - 130.0 - 16.0).max(160.0),
+                );
+                let labels: Vec<String> = Filter::ALL.iter().map(|f| cx.t(f.label_key())).collect();
+                let refs: Vec<&str> = labels.iter().map(String::as_str).collect();
+                let mut selected = Filter::ALL
+                    .iter()
+                    .position(|filter| *filter == frame.filter)
+                    .unwrap_or(4);
+                if segmented(ui, &mut selected, &refs).changed() {
+                    if let Some(filter) = Filter::ALL.get(selected).copied() {
+                        self.set_filter(filter);
+                        let _ = commands::refresh(cx, &self.shared);
+                    }
+                }
+            });
+            ui.scope(|ui| {
+                ui.set_width(130.0);
+                self.source_row(ui, cx, frame);
+            });
+        });
     }
 
     /// Balcão mostrado: local, cada balcão instalado e todos.
@@ -189,7 +203,7 @@ impl RequestsView {
             .iter()
             .position(|option| *option == frame.source)
             .unwrap_or(options.len() - 1);
-        if segmented(ui, &mut selected, &refs).changed() {
+        if forja_ui_kit::select(ui, &mut selected, &refs).changed() {
             if let Some(source) = options.get(selected).cloned() {
                 commands::set_source(&self.shared, source);
                 let _ = commands::refresh(cx, &self.shared);
@@ -244,14 +258,22 @@ impl RequestsView {
                     .small()
                     .strong(),
             );
-            let title = text_field(ui, &mut self.local_title, &cx.t("request-local-title-hint"));
+            let title_hint = cx.t("request-local-title-hint");
+            let title = text_field(ui, &mut self.local_title, &title_hint);
+            title.widget_info(|| {
+                egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, ui.is_enabled(), &title_hint)
+            });
             ui.add_space(4.0);
             ui.label(
                 egui::RichText::new(cx.t("request-local-body-label"))
                     .small()
                     .strong(),
             );
-            let body = text_field(ui, &mut self.local_body, &cx.t("request-local-body-hint"));
+            let body_hint = cx.t("request-local-body-hint");
+            let body = text_field(ui, &mut self.local_body, &body_hint);
+            body.widget_info(|| {
+                egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, ui.is_enabled(), &body_hint)
+            });
             let enter_pressed = ui.input(|input| input.key_pressed(egui::Key::Enter));
             let title_active = title.has_focus() || title.lost_focus();
             let body_active = body.has_focus() || body.lost_focus();

@@ -94,3 +94,5 @@ project-home-shortcut-bench = Nova bancada
 project-home-more-install = Mais comandos de instalação
 project-tree-collapse = Recolher projeto
 project-tree-expand = Expandir projeto
+project-sidebar-add-menu = Adicionar projeto
+project-sidebar-actions = Ações de { $name }

@@ -16,11 +16,9 @@ use forja_contracts::{BenchActivated, ProjectActivated, ProjectAdded, ProjectRef
 use forja_kernel::forja_protocol::{
     Method, MethodEffect, ParamKind, ParamSchema, ResultSchema, RpcError,
 };
-use forja_kernel::{
-    Args, CommandField, CommandFieldKind, Module, ModuleManifest, Registrar, Slot,
-};
-use serde_json::{json, Map, Value};
+use forja_kernel::{Args, CommandField, CommandFieldKind, Module, ModuleManifest, Registrar, Slot};
 pub use model::project_id;
+use serde_json::{json, Map, Value};
 use state::{CloneForm, Dialog, ProjectForm, Shared};
 
 #[forja_kernel::module]
@@ -58,10 +56,14 @@ impl Module for ProjectsModule {
         });
 
         let current_state = self.state.clone();
-        r.command("project.current", "project.command.current", move |cx, _| {
-            current_state.ensure_loaded(cx);
-            Ok(serde_json::to_value(current_state.active())?)
-        });
+        r.command(
+            "project.current",
+            "project.command.current",
+            move |cx, _| {
+                current_state.ensure_loaded(cx);
+                Ok(serde_json::to_value(current_state.active())?)
+            },
+        );
 
         let switch_state = self.state.clone();
         r.command_asking(
@@ -338,6 +340,8 @@ impl Module for ProjectsModule {
             "project.sidebar.clone",
             "project.sidebar.remove",
             "project.sidebar.edit",
+            "project.sidebar.add-menu",
+            "project.sidebar.actions",
             "project.sidebar.no-benches",
             "project.sidebar.benches-missing",
             "project.dialog.add.title",

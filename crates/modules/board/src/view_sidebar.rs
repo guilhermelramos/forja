@@ -164,7 +164,7 @@ fn render_sidebar_row(
         egui::pos2(x, rect.top() + 2.0),
         egui::Align2::LEFT_TOP,
         &card.bench.name,
-        egui::FontId::proportional(12.5),
+        forja_ui_kit::TextRole::Body.font(),
         c32(tokens.color.text),
     );
     if let Some(branch) = &card.bench.branch {
@@ -172,7 +172,7 @@ fn render_sidebar_row(
             egui::pos2(x, rect.top() + 17.0),
             egui::Align2::LEFT_TOP,
             branch,
-            egui::FontId::proportional(10.5),
+            forja_ui_kit::TextRole::Caption.font(),
             c32(tokens.color.text_muted),
         );
     }
@@ -190,7 +190,7 @@ fn render_sidebar_row(
             egui::pos2(mark_x, rect.center().y),
             egui::Align2::CENTER_CENTER,
             "z",
-            egui::FontId::proportional(11.0),
+            forja_ui_kit::TextRole::Caption.font(),
             c32(tokens.color.info),
         );
     }

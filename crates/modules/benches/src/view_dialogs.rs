@@ -245,11 +245,7 @@ impl View for DialogsView {
                         &mut form.delete_branch,
                         &cx.t("bench.dialog.store.delete-branch"),
                     );
-                    forja_ui_kit::toggle(
-                        ui,
-                        &mut form.force,
-                        &cx.t("bench.dialog.store.force"),
-                    );
+                    forja_ui_kit::toggle(ui, &mut form.force, &cx.t("bench.dialog.store.force"));
                     if let Some(error) = &form.error {
                         let human = crate::create::humanize_error(cx, error);
                         forja_ui_kit::error_banner(
@@ -263,7 +259,7 @@ impl View for DialogsView {
                     ui.horizontal(|ui| {
                         if forja_ui_kit::button(
                             ui,
-                            forja_ui_kit::ButtonKind::Danger,
+                            forja_ui_kit::ButtonKind::DangerConfirm,
                             &cx.t("bench.dialog.store.submit"),
                         )
                         .clicked()

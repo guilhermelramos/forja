@@ -11,7 +11,7 @@ use crate::panes::tree::{PaneId, SplitDir, TerminalId};
 use crate::settings::TermSettings;
 use crate::terminal::Terminal;
 use crate::theme::Palette;
-use forja_kernel::ui_contract::egui::{self, FontId, Rect, RichText};
+use forja_kernel::ui_contract::egui::{self, Rect, RichText};
 use forja_ui_kit::applied_tokens;
 use std::collections::HashMap;
 
@@ -199,7 +199,7 @@ pub(super) fn draw_terminal(
             body.right_bottom() - egui::vec2(8.0, 6.0),
             egui::Align2::RIGHT_BOTTOM,
             &texts.click_to_type,
-            FontId::proportional(11.0),
+            forja_ui_kit::TextRole::Caption.font(),
             c32(applied_tokens(ui.ctx()).color.text_muted),
         );
     }

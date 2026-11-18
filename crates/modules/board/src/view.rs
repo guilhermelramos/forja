@@ -63,7 +63,7 @@ impl View for BoardRail {
                 response.rect.right_top(),
                 egui::Align2::RIGHT_TOP,
                 unread.to_string(),
-                egui::FontId::proportional(10.0),
+                forja_ui_kit::TextRole::Caption.font(),
                 c32(tokens.color.spark),
             );
         }

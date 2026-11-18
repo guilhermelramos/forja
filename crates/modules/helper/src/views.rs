@@ -514,14 +514,11 @@ impl HelperSettings {
                     changes.push((profile.id.clone(), next));
                 }
             });
-            ui.label(
-                egui::RichText::new(format!(
-                    "{}: {}",
-                    cx.t("helper.settings.command"),
-                    profile.start.command
-                ))
-                .monospace(),
-            );
+            ui.label(egui::RichText::new(format!(
+                "{}: {}",
+                cx.t("helper.settings.command"),
+                profile.start.command
+            )));
             ui.horizontal(|ui| {
                 ui.label(cx.t("helper.settings.extra-args"));
                 if ui

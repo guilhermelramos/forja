@@ -225,6 +225,10 @@ fn render_column(
     dragging: Option<&str>,
     stages: &[StageColumn],
 ) {
+    let bounds = egui::Rect::from_min_size(ui.cursor().min, ui.available_size());
+    ui.set_min_height(bounds.height());
+    ui.painter()
+        .rect_filled(bounds, 6, c32(tokens.color.surface_alt));
     let header_fill = if stage.parent == "forging" {
         c32(tokens.color.accent_soft)
     } else {
@@ -300,13 +304,19 @@ fn render_card(
         .stroke(egui::Stroke::new(1.0_f32, c32(tokens.color.border)))
         .corner_radius(8)
         .inner_margin(egui::Margin::symmetric(8, 6));
+    let mut body_top = 0.0;
     let inner = frame.show(ui, |ui| {
         ui.set_width(154.0);
         ui.horizontal(|ui| {
             if card.pinned {
                 forja_ui_kit::icon(ui, forja_ui_kit::Icon::Pin, 16.0);
             }
-            let title = ui.add(
+            let title = ui.add_sized(
+                egui::vec2(
+                    (ui.available_width() - tokens.metrics().control - tokens.metrics().gap)
+                        .max(32.0),
+                    tokens.metrics().control,
+                ),
                 egui::Label::new(
                     egui::RichText::new(&card.bench.name)
                         .strong()
@@ -324,15 +334,20 @@ fn render_card(
                     state.request_refresh();
                 }
             }
-            ui.add(
-                egui::Label::new(
-                    egui::RichText::new(stage_label)
-                        .small()
-                        .color(c32(tokens.color.text_muted)),
-                )
-                .truncate(),
-            );
+            let actions = cx.t_args("board.card.actions", &[("name", &card.bench.name)]);
+            let more = forja_ui_kit::icon_button(ui, forja_ui_kit::Icon::More, &actions);
+            egui::Popup::from_response(&more)
+                .kind(egui::PopupKind::Menu)
+                .layout(egui::Layout::top_down(egui::Align::Min))
+                .open_memory(more.clicked().then_some(egui::SetOpenCommand::Toggle))
+                .show(|ui| render_card_actions(ui, cx, state, card, stages));
         });
+        body_top = ui.cursor().min.y;
+        ui.label(
+            forja_ui_kit::TextRole::Caption
+                .rich(stage_label)
+                .color(c32(tokens.color.text_muted)),
+        );
         if !options.compact {
             ui.horizontal(|ui| {
                 let (dot, _) = ui.allocate_exact_size(egui::vec2(8.0, 8.0), egui::Sense::hover());
@@ -423,12 +438,14 @@ fn render_card(
             egui::pos2(rect.right() - 44.0, rect.top() + 4.0),
             egui::Align2::LEFT_TOP,
             "z",
-            egui::FontId::proportional(11.0),
+            forja_ui_kit::TextRole::Caption.font(),
             c32(tokens.color.info),
         );
     }
+    // The card body is draggable/clickable; never overlay the title's actions.
+    let body_rect = egui::Rect::from_min_max(egui::pos2(rect.left(), body_top), rect.max);
     let response = ui.interact(
-        rect,
+        body_rect,
         ui.id().with(("board.card", card.bench.bench_id.as_str())),
         egui::Sense::click_and_drag(),
     );
@@ -459,83 +476,84 @@ fn render_card(
     if response.drag_started() {
         state.set_dragging(Some(card.bench.bench_id.clone()));
     }
-    response.context_menu(|ui| {
-        if forja_ui_kit::button(
-            ui,
-            forja_ui_kit::ButtonKind::Ghost,
-            &cx.t("board.action.open"),
-        )
-        .clicked()
-        {
-            let mut args = Map::new();
-            args.insert("bench_id".to_owned(), json!(card.bench.bench_id));
-            if let Err(error) = cx.run_command("bench.activate", Args::from_map(args)) {
-                state.set_error(Some(error.to_string()));
-            } else {
-                state.request_refresh();
-            }
-            ui.close();
-        }
-        if forja_ui_kit::button(
-            ui,
-            forja_ui_kit::ButtonKind::Ghost,
-            &cx.t("board.action.pin"),
-        )
-        .clicked()
-        {
-            let mut args = Map::new();
-            args.insert("bench_id".to_owned(), json!(card.bench.bench_id));
-            let _ = cx.run_command("bench.pin", Args::from_map(args));
+    response.context_menu(|ui| render_card_actions(ui, cx, state, card, stages));
+}
+
+fn render_card_actions(
+    ui: &mut egui::Ui,
+    cx: &mut Ctx<'_>,
+    state: &Shared,
+    card: &BenchCard,
+    stages: &[StageColumn],
+) {
+    if forja_ui_kit::button(
+        ui,
+        forja_ui_kit::ButtonKind::Ghost,
+        &cx.t("board.action.open"),
+    )
+    .clicked()
+    {
+        let mut args = Map::new();
+        args.insert("bench_id".to_owned(), json!(card.bench.bench_id));
+        if let Err(error) = cx.run_command("bench.activate", Args::from_map(args)) {
+            state.set_error(Some(error.to_string()));
+        } else {
             state.request_refresh();
-            ui.close();
         }
-        if forja_ui_kit::button(
+        ui.close();
+    }
+    if forja_ui_kit::button(
+        ui,
+        forja_ui_kit::ButtonKind::Ghost,
+        &cx.t("board.action.pin"),
+    )
+    .clicked()
+    {
+        let mut args = Map::new();
+        args.insert("bench_id".to_owned(), json!(card.bench.bench_id));
+        let _ = cx.run_command("bench.pin", Args::from_map(args));
+        state.request_refresh();
+        ui.close();
+    }
+    if forja_ui_kit::button(
+        ui,
+        forja_ui_kit::ButtonKind::Ghost,
+        &cx.t(if card.sleeping {
+            "board.action.wake"
+        } else {
+            "board.action.sleep"
+        }),
+    )
+    .clicked()
+    {
+        let mut args = Map::new();
+        args.insert("bench_id".to_owned(), json!(card.bench.bench_id));
+        let _ = cx.run_command(
+            if card.sleeping {
+                "bench.wake"
+            } else {
+                "bench.sleep"
+            },
+            Args::from_map(args),
+        );
+        state.request_refresh();
+        ui.close();
+    }
+    if !card.archived
+        && forja_ui_kit::button(
             ui,
             forja_ui_kit::ButtonKind::Ghost,
-            &cx.t(if card.sleeping {
-                "board.action.wake"
-            } else {
-                "board.action.sleep"
-            }),
+            &cx.t("board.action.store"),
         )
         .clicked()
-        {
-            let mut args = Map::new();
-            args.insert("bench_id".to_owned(), json!(card.bench.bench_id));
-            let _ = cx.run_command(
-                if card.sleeping {
-                    "bench.wake"
-                } else {
-                    "bench.sleep"
-                },
-                Args::from_map(args),
-            );
-            state.request_refresh();
-            ui.close();
-        }
-        if !card.archived
-            && forja_ui_kit::button(
-                ui,
-                forja_ui_kit::ButtonKind::Ghost,
-                &cx.t("board.action.store"),
-            )
-            .clicked()
-        {
-            let mut args = Map::new();
-            args.insert("bench_id".to_owned(), json!(card.bench.bench_id));
-            let _ = cx.run_command("bench.store_dialog", Args::from_map(args));
-            ui.close();
-        }
-        ui.separator();
-        stage_menu(ui, cx, state, card, stages);
-    });
-    // The context menu stays, but a visible control is what makes the stage
-    // discoverable for a first-time user (and reachable with the keyboard).
-    ui.horizontal(|ui| {
-        ui.menu_button(cx.t("board.action.move"), |ui| {
-            stage_menu(ui, cx, state, card, stages);
-        });
-    });
+    {
+        let mut args = Map::new();
+        args.insert("bench_id".to_owned(), json!(card.bench.bench_id));
+        let _ = cx.run_command("bench.store_dialog", Args::from_map(args));
+        ui.close();
+    }
+    ui.separator();
+    stage_menu(ui, cx, state, card, stages);
 }
 
 fn card_project(cx: &mut Ctx<'_>, state: &Shared, project_id: &str) -> Option<String> {

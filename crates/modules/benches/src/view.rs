@@ -89,7 +89,7 @@ impl View for DetailView {
                         forja_ui_kit::truncated_label(
                             ui,
                             &bench.name,
-                            egui::FontId::proportional(17.0),
+                            forja_ui_kit::TextRole::Section.font(),
                             c32(tokens.color.text),
                         );
                     });
@@ -275,7 +275,7 @@ fn stage_info(cx: &mut Ctx<'_>, state: &Shared, bench: &BenchRecord) -> (String,
 }
 
 fn stage_badge(ui: &mut egui::Ui, label: &str, dot: &str, tokens: &forja_ui_kit::Tokens) {
-    let font = egui::FontId::proportional(12.0);
+    let font = forja_ui_kit::TextRole::Caption.font();
     let galley = ui
         .painter()
         .layout_no_wrap(label.to_owned(), font, c32(tokens.color.text));

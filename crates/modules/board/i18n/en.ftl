@@ -63,3 +63,4 @@ board-page-state-refresh = Refresh
 board-page-state-empty = No items yet.
 board-page-state-loading = Loading…
 board-page-state-error = Could not load.
+board-card-actions = Card actions for { $name }

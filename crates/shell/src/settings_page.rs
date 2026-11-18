@@ -379,7 +379,7 @@ impl ForjaApp {
                     ui.label(self.text("shell.settings.restore-confirm"));
                     restore = forja_ui_kit::button(
                         ui,
-                        ButtonKind::Danger,
+                        ButtonKind::DangerConfirm,
                         &self.text("shell.settings.confirm-restore"),
                     )
                     .clicked();

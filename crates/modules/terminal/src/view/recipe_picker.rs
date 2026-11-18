@@ -349,7 +349,7 @@ fn draw_row(
         egui::pos2(left, rect.top() + 4.0),
         Align2::LEFT_TOP,
         recipe.title(&texts.locale),
-        FontId::proportional(13.0),
+        forja_ui_kit::TextRole::Body.font(),
         c32(tokens.color.text),
     );
     let command_rect = Rect::from_min_max(
@@ -360,14 +360,14 @@ fn draw_row(
         egui::pos2(left, rect.top() + 24.0),
         Align2::LEFT_TOP,
         &recipe.command,
-        FontId::monospace(11.0),
+        FontId::monospace(forja_ui_kit::TextRole::Caption.size()),
         c32(tokens.color.text_muted),
     );
     ui.painter().text(
         egui::pos2(rect.right() - 10.0, rect.center().y),
         Align2::RIGHT_CENTER,
         scope,
-        FontId::proportional(11.0),
+        forja_ui_kit::TextRole::Caption.font(),
         c32(tokens.color.text_muted),
     );
     if response.hovered() {

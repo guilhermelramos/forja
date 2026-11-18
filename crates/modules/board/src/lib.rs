@@ -103,6 +103,7 @@ impl Module for BoardModule {
             "board.action.refresh",
             "board.action.create",
             "board.action.move",
+            "board.card.actions",
             "board.action.move-to",
             "board.action.move-back",
             "board.action.open",

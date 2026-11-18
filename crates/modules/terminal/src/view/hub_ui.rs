@@ -519,7 +519,7 @@ fn draw_close_modal(hub: &mut Hub, ctx: &egui::Context, tokens: &Tokens, texts: 
             );
             ui.add_space(8.0);
             ui.horizontal(|ui| {
-                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Danger, &texts.confirm_close_accept).clicked() {
+                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::DangerConfirm, &texts.confirm_close_accept).clicked() {
                     accept = true;
                 }
                 if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &texts.cancel).clicked() {

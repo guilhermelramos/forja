@@ -898,7 +898,7 @@ impl MusterView {
         if let Some(total) = total {
             ui.label(
                 egui::RichText::new(cost_value(cx, total.usd))
-                    .size(22.0)
+                    .size(forja_ui_kit::TextRole::Display.size())
                     .strong(),
             );
             self.budget_bar(ui, cx, run, total.usd);
@@ -939,7 +939,7 @@ impl MusterView {
             if run.spent_usd > 0.0 {
                 ui.label(
                     egui::RichText::new(cost_value(cx, run.spent_usd))
-                        .size(22.0)
+                        .size(forja_ui_kit::TextRole::Display.size())
                         .strong(),
                 );
                 self.budget_bar(ui, cx, run, run.spent_usd);

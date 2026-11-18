@@ -387,7 +387,7 @@ impl ExtensionPanels {
                     .unwrap_or("normal");
                 let mut text = egui::RichText::new(value);
                 text = match style {
-                    "title" => text.strong().size(18.0),
+                    "title" => text.font(forja_ui_kit::TextRole::Section.font()),
                     "secondary" => text.weak(),
                     "warning" => text.color(ui.visuals().warn_fg_color),
                     "error" => text.color(ui.visuals().error_fg_color),

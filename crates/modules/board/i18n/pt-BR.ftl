@@ -63,3 +63,4 @@ board-page-state-refresh = Atualizar
 board-page-state-empty = Ainda não há itens.
 board-page-state-loading = Carregando…
 board-page-state-error = Não foi possível carregar.
+board-card-actions = Ações do cartão { $name }

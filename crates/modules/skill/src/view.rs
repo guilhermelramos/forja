@@ -361,8 +361,12 @@ impl SkillView {
                 .show(ctx, |ui| {
                     ui.label(cx.t_args("skill.conflict.body", &[("path", existing.as_str())]));
                     ui.horizontal(|ui| {
-                        replace = button(ui, ButtonKind::Danger, &cx.t("skill.conflict.replace"))
-                            .clicked();
+                        replace = button(
+                            ui,
+                            ButtonKind::DangerConfirm,
+                            &cx.t("skill.conflict.replace"),
+                        )
+                        .clicked();
                         cancel =
                             button(ui, ButtonKind::Ghost, &cx.t("skill.dialog.cancel")).clicked();
                     });

@@ -94,3 +94,5 @@ project-home-shortcut-bench = New bench
 project-home-more-install = More install commands
 project-tree-collapse = Collapse project
 project-tree-expand = Expand project
+project-sidebar-add-menu = Add project
+project-sidebar-actions = Actions for { $name }

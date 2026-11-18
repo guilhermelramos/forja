@@ -30,7 +30,7 @@ pub(super) fn tab_chip(ui: &mut egui::Ui, chip: &TabChip<'_>) -> (egui::Response
         texts,
         max_width: _,
     } = *chip;
-    let font = FontId::proportional(12.5);
+    let font = forja_ui_kit::TextRole::Body.font();
     let text_color = if selected {
         c32(tokens.color.text)
     } else {
@@ -260,7 +260,7 @@ struct ControlWidths {
 }
 
 fn tab_chip_width(ui: &egui::Ui, title: &str) -> f32 {
-    let font = FontId::proportional(12.5);
+    let font = forja_ui_kit::TextRole::Body.font();
     let galley = ui
         .painter()
         .layout_no_wrap(title.to_owned(), font, Color32::WHITE);

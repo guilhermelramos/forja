@@ -147,3 +147,4 @@ git-error-no-remote = This repository has no remote configured. Add a remote bef
 git-error-nothing-to-abort = There is no merge or rebase in progress to abort.
 git-changes-stage = Stage file
 git-changes-unstage = Unstage file
+git-changes-more = More Git actions
