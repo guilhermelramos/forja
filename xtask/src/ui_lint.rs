@@ -56,6 +56,12 @@ fn lex(source: &str) -> Vec<Token> {
             while i < bytes.len() && bytes[i] != b'\n' {
                 i += 1;
             }
+            if let Some(reason) = source[start..i].strip_prefix("// ui-lint: allow") {
+                tokens.push(Token {
+                    text: format!("<allow>{reason}"),
+                    line: token_line,
+                });
+            }
         } else if bytes[i..].starts_with(b"/*") {
             i += 2;
             let mut depth = 1;
@@ -155,7 +161,18 @@ fn lex(source: &str) -> Vec<Token> {
 
 fn count_source(source: &str) -> Result<(Counts, Counts), String> {
     let tokens = lex(source);
-    let lines: Vec<_> = source.lines().collect();
+    let annotations: std::collections::BTreeMap<_, _> = tokens
+        .iter()
+        .filter_map(|t| {
+            t.text
+                .strip_prefix("<allow>")
+                .map(|reason| (t.line, reason.to_owned()))
+        })
+        .collect();
+    let tokens: Vec<_> = tokens
+        .into_iter()
+        .filter(|t| !t.text.starts_with("<allow>"))
+        .collect();
     let (mut actual, mut allowed) = (Counts::default(), Counts::default());
     let mut i = 0;
     while i < tokens.len() {
@@ -211,8 +228,8 @@ fn count_source(source: &str) -> Result<(Counts, Counts), String> {
             let annotation = [Some(line), line.checked_sub(1)]
                 .into_iter()
                 .flatten()
-                .find_map(|n| lines.get(n).and_then(|s| s.split_once("// ui-lint: allow")));
-            if let Some((_, reason)) = annotation {
+                .find_map(|n| annotations.get(&n));
+            if let Some(reason) = annotation {
                 if reason.trim().is_empty() {
                     return Err(format!(
                         "line {}: ui-lint exemption requires a reason",
@@ -334,6 +351,14 @@ mod tests {
             }
         );
     }
+    #[test]
+    fn an_exemption_inside_a_string_is_not_a_comment() {
+        let (actual, allowed) =
+            count_source("ui.label(\"// ui-lint: allow not a comment\");").unwrap();
+        assert_eq!(actual.label, 1);
+        assert_eq!(allowed.label, 0);
+    }
+
     #[test]
     fn ceiling_fails_on_each_increase() {
         for i in 0..4 {
