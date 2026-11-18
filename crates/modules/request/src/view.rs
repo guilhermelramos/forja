@@ -213,7 +213,7 @@ impl RequestsView {
 
     fn notices(&self, ui: &mut egui::Ui, cx: &Ctx<'_>, frame: &Frame) {
         if !frame.project_known && !forja_counter_kit::fixtures_enabled() {
-            ui.label(egui::RichText::new(cx.t("request-no-project")).weak());
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t("request-no-project")).weak());
         }
         if let Some(notice) = &frame.notice {
             let color = match notice.kind {
@@ -248,12 +248,12 @@ impl RequestsView {
             return;
         }
         if !frame.local_loaded {
-            ui.label(cx.t("request-local-loading"));
+            forja_ui_kit::text(ui, cx.t("request-local-loading"));
             return;
         }
         let mut submit = false;
         ui.group(|ui| {
-            ui.label(
+            forja_ui_kit::text(ui, 
                 egui::RichText::new(cx.t("request-local-title-label"))
                     .small()
                     .strong(),
@@ -263,8 +263,8 @@ impl RequestsView {
             title.widget_info(|| {
                 egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, ui.is_enabled(), &title_hint)
             });
-            ui.add_space(4.0);
-            ui.label(
+            ui.add_space(forja_ui_kit::Spacing::XS);
+            forja_ui_kit::text(ui, 
                 egui::RichText::new(cx.t("request-local-body-label"))
                     .small()
                     .strong(),
@@ -328,8 +328,8 @@ impl RequestsView {
                     if ui.selectable_label(selected, title).clicked() {
                         let _ = commands::open(cx, &self.shared, &item.counter, &item.key);
                     }
-                    ui.label(egui::RichText::new(row_meta(cx, item)).small().weak());
-                    ui.add_space(4.0);
+                    forja_ui_kit::text(ui, egui::RichText::new(row_meta(cx, item)).small().weak());
+                    ui.add_space(forja_ui_kit::Spacing::XS);
                 }
             });
     }
@@ -392,12 +392,12 @@ impl RequestsView {
                         );
                     }
                 }
-                ui.add_space(8.0);
+                ui.add_space(forja_ui_kit::Spacing::SM);
                 self.actions(ui, cx, &item, frame.project_known);
-                ui.add_space(8.0);
-                ui.label(egui::RichText::new(cx.t("request-detail-comments")).strong());
+                ui.add_space(forja_ui_kit::Spacing::SM);
+                forja_ui_kit::text(ui, egui::RichText::new(cx.t("request-detail-comments")).strong());
                 if item.comments.is_empty() {
-                    ui.label(egui::RichText::new(cx.t("request-detail-no-comments")).weak());
+                    forja_ui_kit::text(ui, egui::RichText::new(cx.t("request-detail-no-comments")).weak());
                 }
                 for comment in &item.comments {
                     let who = if comment.author.is_empty() {
@@ -412,7 +412,7 @@ impl RequestsView {
                         muted_color,
                     );
                     wrapped_label(ui, comment.body.as_str(), body_font.clone(), text_color);
-                    ui.add_space(4.0);
+                    ui.add_space(forja_ui_kit::Spacing::XS);
                 }
                 ui.add(
                     egui::TextEdit::multiline(&mut self.comment_draft)

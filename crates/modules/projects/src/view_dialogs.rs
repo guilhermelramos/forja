@@ -57,8 +57,8 @@ pub(crate) fn render_dialog(
                 .default_width(360.0)
                 .show(ctx, |ui| {
                     forja_ui_kit::register_keyboard_layer(ui, layer);
-                    ui.label(cx.t_args("project.dialog.remove.body", &[("name", name)]));
-                    ui.add_space(8.0);
+                    forja_ui_kit::text(ui, cx.t_args("project.dialog.remove.body", &[("name", name)]));
+                    ui.add_space(forja_ui_kit::Spacing::SM);
                     ui.horizontal(|ui| {
                         if forja_ui_kit::button(
                             ui,
@@ -128,7 +128,7 @@ pub(crate) fn render_dialog(
                 .default_width(420.0)
                 .show(ctx, |ui| {
                     forja_ui_kit::register_keyboard_layer(ui, layer);
-                    ui.label(
+                    forja_ui_kit::text(ui, 
                         egui::RichText::new(cx.t(if creating {
                             "project.field.new-path"
                         } else {
@@ -153,8 +153,8 @@ pub(crate) fn render_dialog(
                             form.path = path.to_string_lossy().into_owned();
                         }
                     }
-                    ui.add_space(4.0);
-                    ui.label(
+                    ui.add_space(forja_ui_kit::Spacing::XS);
+                    forja_ui_kit::text(ui, 
                         egui::RichText::new(cx.t("project.field.name"))
                             .small()
                             .color(tokens.color.text_muted.forja_color()),
@@ -162,7 +162,7 @@ pub(crate) fn render_dialog(
                     forja_ui_kit::text_field(ui, &mut form.name, &cx.t("project.field.name-hint"));
                     ui.horizontal(|ui| {
                         ui.vertical(|ui| {
-                            ui.label(
+                            forja_ui_kit::text(ui, 
                                 egui::RichText::new(cx.t("project.field.icon"))
                                     .small()
                                     .color(tokens.color.text_muted.forja_color()),
@@ -170,7 +170,7 @@ pub(crate) fn render_dialog(
                             ui.add_sized([52.0, 28.0], egui::TextEdit::singleline(&mut form.icon));
                         });
                         ui.vertical(|ui| {
-                            ui.label(
+                            forja_ui_kit::text(ui, 
                                 egui::RichText::new(cx.t("project.field.color"))
                                     .small()
                                     .color(tokens.color.text_muted.forja_color()),
@@ -193,11 +193,11 @@ pub(crate) fn render_dialog(
                     if form.busy {
                         ui.horizontal(|ui| {
                             forja_ui_kit::spinner_if_active(ui);
-                            ui.label(egui::RichText::new(cx.t("project.status.creating")).small());
+                            forja_ui_kit::text(ui, egui::RichText::new(cx.t("project.status.creating")).small());
                         });
                     }
                     render_dialog_error(ui, cx, &mut form.error);
-                    ui.add_space(8.0);
+                    ui.add_space(forja_ui_kit::Spacing::SM);
                     ui.horizontal(|ui| {
                         let submit_label = if creating {
                             cx.t("project.action.create")
@@ -265,7 +265,7 @@ pub(crate) fn render_dialog(
                 .default_width(440.0)
                 .show(ctx, |ui| {
                     forja_ui_kit::register_keyboard_layer(ui, layer);
-                    ui.label(
+                    forja_ui_kit::text(ui, 
                         egui::RichText::new(cx.t("project.field.url"))
                             .small()
                             .color(tokens.color.text_muted.forja_color()),
@@ -276,15 +276,15 @@ pub(crate) fn render_dialog(
                         url.request_focus();
                         ctx.data_mut(|data| data.insert_temp(focus_key, true));
                     }
-                    ui.add_space(4.0);
-                    ui.label(
+                    ui.add_space(forja_ui_kit::Spacing::XS);
+                    forja_ui_kit::text(ui, 
                         egui::RichText::new(cx.t("project.field.destination"))
                             .small()
                             .color(tokens.color.text_muted.forja_color()),
                     );
                     forja_ui_kit::text_field(ui, &mut clone.form.path, "C:\\dev\\repo");
-                    ui.add_space(4.0);
-                    ui.label(
+                    ui.add_space(forja_ui_kit::Spacing::XS);
+                    forja_ui_kit::text(ui, 
                         egui::RichText::new(cx.t("project.field.name"))
                             .small()
                             .color(tokens.color.text_muted.forja_color()),
@@ -297,11 +297,11 @@ pub(crate) fn render_dialog(
                     if clone.form.busy {
                         ui.horizontal(|ui| {
                             forja_ui_kit::spinner_if_active(ui);
-                            ui.label(egui::RichText::new(cx.t("project.status.cloning")).small());
+                            forja_ui_kit::text(ui, egui::RichText::new(cx.t("project.status.cloning")).small());
                         });
                     }
                     render_dialog_error(ui, cx, &mut clone.form.error);
-                    ui.add_space(8.0);
+                    ui.add_space(forja_ui_kit::Spacing::SM);
                     ui.horizontal(|ui| {
                         if !clone.form.busy
                             && forja_ui_kit::button(
@@ -360,7 +360,7 @@ pub(crate) fn render_dialog(
                         ui.painter().rect_filled(swatch, 4, color);
                     });
                     render_dialog_error(ui, cx, &mut form.error);
-                    ui.add_space(8.0);
+                    ui.add_space(forja_ui_kit::Spacing::SM);
                     ui.horizontal(|ui| {
                         if forja_ui_kit::button(
                             ui,

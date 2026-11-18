@@ -185,7 +185,7 @@ impl ArchiveView {
                 ui.set_max_width(180.0);
                 forja_ui_kit::text_field(ui, &mut self.query, &cx.t("archive.view.search-hint"));
             });
-            ui.label(cx.t("archive.view.project"));
+            forja_ui_kit::text(ui, cx.t("archive.view.project"));
             ui.scope(|ui| {
                 ui.set_max_width(100.0);
                 forja_ui_kit::text_field(
@@ -265,18 +265,18 @@ impl ArchiveView {
                     egui::Frame::group(ui.style()).show(ui, |ui| {
                         ui.set_max_width(ui.available_width());
                         ui.horizontal(|ui| {
-                            ui.label(egui::RichText::new(&hit.title).strong());
-                            ui.label(
+                            forja_ui_kit::text(ui, egui::RichText::new(&hit.title).strong());
+                            forja_ui_kit::text(ui, 
                                 egui::RichText::new(helper_name(state, &hit.profile_id)).weak(),
                             );
-                            ui.label(egui::RichText::new(format_date(hit.updated_ms)).weak());
+                            forja_ui_kit::text(ui, egui::RichText::new(format_date(hit.updated_ms)).weak());
                         });
                         if !hit.snippet.is_empty() {
-                            ui.label(egui::RichText::new(&hit.snippet).italics());
+                            forja_ui_kit::text(ui, egui::RichText::new(&hit.snippet).italics());
                         }
                         ui.horizontal(|ui| {
-                            ui.label(egui::RichText::new(&hit.project).monospace().weak());
-                            ui.add_space(12.0);
+                            forja_ui_kit::text(ui, egui::RichText::new(&hit.project).monospace().weak());
+                            ui.add_space(forja_ui_kit::Spacing::MD);
                             if forja_ui_kit::button(
                                 ui,
                                 forja_ui_kit::ButtonKind::Secondary,
@@ -374,8 +374,8 @@ impl ArchiveView {
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
             .show(ui.ctx(), |ui| {
-                ui.label(cx.t("archive.view.delete-body"));
-                ui.label(egui::RichText::new(path.display().to_string()).monospace());
+                forja_ui_kit::text(ui, cx.t("archive.view.delete-body"));
+                forja_ui_kit::text(ui, egui::RichText::new(path.display().to_string()).monospace());
                 ui.horizontal(|ui| {
                     if forja_ui_kit::button(
                         ui,
@@ -503,7 +503,7 @@ impl View for ArchiveView {
                 );
             }
             if let Some(notice) = &self.notice {
-                ui.label(egui::RichText::new(notice).weak());
+                forja_ui_kit::text(ui, egui::RichText::new(notice).weak());
             }
             for raw in [self.action_error.as_ref(), error.as_ref()]
                 .into_iter()

@@ -143,7 +143,7 @@ impl RoutinesView {
                     line.push_str("  ·  ");
                     line.push_str(&cx.t("routine-disabled"));
                 }
-                ui.label(egui::RichText::new(line).small().weak());
+                forja_ui_kit::text(ui, egui::RichText::new(line).small().weak());
             });
             ui.horizontal(|ui| {
                 if button(ui, ButtonKind::Ghost, &cx.t("routine-edit")).clicked() {
@@ -160,13 +160,13 @@ impl RoutinesView {
                     }
                 }
             });
-            ui.add_space(4.0);
+            ui.add_space(forja_ui_kit::Spacing::XS);
         }
     }
 
     fn editor_body(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, draft: &mut Draft) {
         ui.separator();
-        ui.label(egui::RichText::new(cx.t("routine-editor-title")).strong());
+        forja_ui_kit::text(ui, egui::RichText::new(cx.t("routine-editor-title")).strong());
         routine_field(ui, &mut draft.name, &cx.t("routine-field-name"));
         forja_ui_kit::toggle(ui, &mut draft.enabled, &cx.t("routine-field-enabled"));
 
@@ -303,7 +303,7 @@ impl RoutinesView {
         if let Some(error) = &self.draft_error {
             ui.colored_label(egui::Color32::from_rgb(0xE5, 0x53, 0x4B), cx.t(error));
         }
-        ui.add_space(4.0);
+        ui.add_space(forja_ui_kit::Spacing::XS);
         ui.separator();
         let mut keep = true;
         ui.horizontal(|ui| {
@@ -370,7 +370,7 @@ impl RoutinesView {
                 }
             }
         };
-        ui.label(
+        forja_ui_kit::text(ui, 
             egui::RichText::new(format!("{}: {text}", cx.t("routine-next-runs")))
                 .small()
                 .weak(),
@@ -379,7 +379,7 @@ impl RoutinesView {
 
     fn history(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snapshot) {
         ui.separator();
-        ui.label(egui::RichText::new(cx.t("routine-history")).strong());
+        forja_ui_kit::text(ui, egui::RichText::new(cx.t("routine-history")).strong());
         let utc = state::schedule_in_utc(cx);
         let runs: Vec<&Run> = snap
             .runs
@@ -410,20 +410,20 @@ impl RoutinesView {
                     let reason = reason_text(cx, &run.status)
                         .map(|text| format!(" · {text}"))
                         .unwrap_or_default();
-                    ui.label(format!(
+                    forja_ui_kit::text(ui, format!(
                         "{when}  {}  ·  {trigger}  ·  {status}{reason}",
                         run.routine_name
                     ));
                     if !run.summary.is_empty() {
                         // Saída de terminal é dado: aparece como texto, sem interpretação.
-                        ui.label(
+                        forja_ui_kit::text(ui, 
                             egui::RichText::new(run.summary.as_str())
                                 .small()
                                 .monospace()
                                 .weak(),
                         );
                     }
-                    ui.add_space(4.0);
+                    ui.add_space(forja_ui_kit::Spacing::XS);
                 }
             });
     }
@@ -526,7 +526,7 @@ impl View for TickView {
         })
         .unwrap_or(0);
         if busy > 0 {
-            ui.label(cx.t_args("routine-tick-running", &[("count", &busy.to_string())]));
+            forja_ui_kit::text(ui, cx.t_args("routine-tick-running", &[("count", &busy.to_string())]));
         }
     }
 }

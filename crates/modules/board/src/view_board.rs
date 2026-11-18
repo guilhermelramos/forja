@@ -89,7 +89,7 @@ pub(crate) fn render_board(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) 
                 .inner_margin(egui::Margin::symmetric(8, 6));
             frame.show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    ui.label(
+                    forja_ui_kit::text(ui, 
                         egui::RichText::new(cx.t_args(
                             "board.drag.backward",
                             &[("name", &pending.bench_name), ("stage", &pending.to_label)],
@@ -146,7 +146,7 @@ pub(crate) fn render_board(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) 
                 &cx.t("board.page-state.empty"),
                 Some(&cx.t("board.empty")),
             );
-            ui.add_space(8.0);
+            ui.add_space(forja_ui_kit::Spacing::SM);
         }
         let mut column_rects: Vec<(String, egui::Rect)> = Vec::new();
         let options = CardOptions::from_ctx(cx);
@@ -243,13 +243,13 @@ fn render_column(
             let (dot, _) = ui.allocate_exact_size(egui::vec2(10.0, 10.0), egui::Sense::hover());
             ui.painter()
                 .circle_filled(dot.center(), 4.0, dot_color(tokens, &stage.dot));
-            ui.label(
+            forja_ui_kit::text(ui, 
                 egui::RichText::new(&stage.label)
                     .strong()
                     .color(c32(tokens.color.text)),
             );
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(
+                forja_ui_kit::text(ui, 
                     egui::RichText::new(cards.len().to_string())
                         .small()
                         .color(c32(tokens.color.text_muted)),
@@ -257,7 +257,7 @@ fn render_column(
             });
         });
     });
-    ui.add_space(4.0);
+    ui.add_space(forja_ui_kit::Spacing::XS);
     egui::ScrollArea::vertical()
         .id_salt(("board.column", &stage.id))
         .auto_shrink([false, false])
@@ -276,7 +276,7 @@ fn render_column(
                     dragging == Some(card.bench.bench_id.as_str()),
                     stages,
                 );
-                ui.add_space(4.0);
+                ui.add_space(forja_ui_kit::Spacing::XS);
             }
         });
 }
@@ -343,7 +343,7 @@ fn render_card(
                 .show(|ui| render_card_actions(ui, cx, state, card, stages));
         });
         body_top = ui.cursor().min.y;
-        ui.label(
+        forja_ui_kit::text(ui, 
             forja_ui_kit::TextRole::Caption
                 .rich(stage_label)
                 .color(c32(tokens.color.text_muted)),
@@ -386,14 +386,14 @@ fn render_card(
                 ui.horizontal(|ui| {
                     if let Some(status) = &helper {
                         let text = cx.t(helper_status_key(status));
-                        ui.label(
+                        forja_ui_kit::text(ui, 
                             egui::RichText::new(text)
                                 .small()
                                 .color(c32(tokens.color.text_muted)),
                         );
                     }
                     if let Some(key) = &request {
-                        ui.label(
+                        forja_ui_kit::text(ui, 
                             egui::RichText::new(key)
                                 .small()
                                 .color(c32(tokens.color.text_muted)),

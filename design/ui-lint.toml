@@ -2,10 +2,10 @@
 # RGB includes RGBA constructors; tests, comments and strings do not count.
 # Exemptions are audited independently and must not grow silently.
 [ceiling]
-button = 25
-label = 360
+button = 9
+label = 159
 color = 66
-space = 95
+space = 50
 
 [allowed]
 button = 0

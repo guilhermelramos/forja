@@ -84,7 +84,7 @@ impl View for ProjectsView {
             Some(2) => dialog = Dialog::Clone(CloneForm::default()),
             _ => {}
         }
-        ui.add_space(4.0);
+        ui.add_space(forja_ui_kit::Spacing::XS);
 
         if let Some(error) = self.state.error() {
             let human = humanize_error_detail(cx, &error);
@@ -100,7 +100,7 @@ impl View for ProjectsView {
             }
         }
         if let Some(status) = self.state.status() {
-            ui.label(
+            forja_ui_kit::text(ui, 
                 egui::RichText::new(status)
                     .small()
                     .color(tokens.color.info.forja_color()),
@@ -167,7 +167,7 @@ impl View for ProjectsView {
                     if project.icon == crate::model::DEFAULT_ICON {
                         forja_ui_kit::icon(ui, forja_ui_kit::Icon::Projects, 16.0);
                     } else {
-                        ui.label(
+                        forja_ui_kit::text(ui, 
                             egui::RichText::new(&project.icon)
                                 .size(forja_ui_kit::TextRole::Section.size()),
                         );
@@ -232,7 +232,7 @@ impl View for ProjectsView {
                         _ => {}
                     }
                 });
-                ui.label(
+                forja_ui_kit::text(ui, 
                     egui::RichText::new(&project.path)
                         .small()
                         .color(tokens.color.text_muted.forja_color()),
@@ -243,7 +243,7 @@ impl View for ProjectsView {
                         Ok(benches) => {
                             self.state.mark_benches_missing(false);
                             if benches.is_empty() {
-                                ui.label(
+                                forja_ui_kit::text(ui, 
                                     egui::RichText::new(cx.t("project.sidebar.no-benches"))
                                         .small()
                                         .color(tokens.color.text_muted.forja_color()),
@@ -272,7 +272,7 @@ impl View for ProjectsView {
                             if !self.state.benches_missing() {
                                 self.state.mark_benches_missing(true);
                             }
-                            ui.label(
+                            forja_ui_kit::text(ui, 
                                 egui::RichText::new(cx.t("project.sidebar.benches-missing"))
                                     .small()
                                     .color(tokens.color.text_muted.forja_color()),
@@ -281,7 +281,7 @@ impl View for ProjectsView {
                     }
                 }
             });
-            ui.add_space(4.0);
+            ui.add_space(forja_ui_kit::Spacing::XS);
         }
 
         if close_request {

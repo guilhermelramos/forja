@@ -91,7 +91,7 @@ pub(crate) fn render_sidebar(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared
     ui.separator();
 
     if let Some(error) = &error {
-        ui.label(
+        forja_ui_kit::text(ui, 
             egui::RichText::new(error)
                 .small()
                 .color(c32(tokens.color.danger)),
@@ -106,8 +106,8 @@ pub(crate) fn render_sidebar(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared
     let groups = grouped(&visible, &prefs, &stages, &names);
     for (group, cards) in groups {
         if !group.is_empty() {
-            ui.add_space(4.0);
-            ui.label(
+            ui.add_space(forja_ui_kit::Spacing::XS);
+            forja_ui_kit::text(ui, 
                 egui::RichText::new(group)
                     .small()
                     .color(c32(tokens.color.text_muted)),

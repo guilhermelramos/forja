@@ -41,14 +41,14 @@ pub(crate) fn new_entry_window(
         .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
         .show(ctx, |ui| {
             forja_ui_kit::register_keyboard_layer(ui, layer);
-            ui.label(label);
+            forja_ui_kit::text(ui, label);
             let edit = forja_ui_kit::text_field(ui, name, "");
             if focus_name {
                 edit.request_focus();
                 ctx.data_mut(|data| data.insert_temp(focus_key, true));
             }
             if !templates.is_empty() {
-                ui.label(template_label);
+                forja_ui_kit::text(ui, template_label);
                 let mut options = vec![none.as_str()];
                 options.extend(templates.iter().map(|(_, name)| name.as_str()));
                 let mut index = template
@@ -111,7 +111,7 @@ pub(crate) fn name_window(
         .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
         .show(ctx, |ui| {
             forja_ui_kit::register_keyboard_layer(ui, layer);
-            ui.label(label);
+            forja_ui_kit::text(ui, label);
             let edit = forja_ui_kit::text_field(ui, name, "");
             if focus_name {
                 edit.request_focus();
@@ -163,7 +163,7 @@ pub(crate) fn confirm_trash_window(
         .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
         .show(ctx, |ui| {
             forja_ui_kit::register_keyboard_layer(ui, layer);
-            ui.label(body);
+            forja_ui_kit::text(ui, body);
             ui.horizontal(|ui| {
                 if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, &yes).clicked() {
                     answer = Some(true);

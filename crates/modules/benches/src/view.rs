@@ -65,14 +65,14 @@ impl View for DetailView {
                 ui.set_max_width(max_w);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if bench.sleeping {
-                        ui.label(
+                        forja_ui_kit::text(ui, 
                             egui::RichText::new(cx.t("bench.detail.sleeping"))
                                 .small()
                                 .color(c32(tokens.color.info)),
                         );
                     }
                     if bench.archived {
-                        ui.label(
+                        forja_ui_kit::text(ui, 
                             egui::RichText::new(cx.t("bench.detail.archived"))
                                 .small()
                                 .color(c32(tokens.color.text_muted)),
@@ -117,8 +117,8 @@ impl View for DetailView {
             }
         });
 
-        ui.add_space(8.0);
-        ui.label(
+        ui.add_space(forja_ui_kit::Spacing::SM);
+        forja_ui_kit::text(ui, 
             egui::RichText::new(cx.t("bench.detail.actions"))
                 .small()
                 .color(c32(tokens.color.text_muted)),
@@ -235,7 +235,7 @@ impl DetailView {
                     &cx.t("kernel.error.details"),
                 );
             } else {
-                ui.label(
+                forja_ui_kit::text(ui, 
                     egui::RichText::new(
                         cx.t_args("bench.detail.notice", &[("message", &human.summary)]),
                     )
@@ -331,7 +331,7 @@ fn detail_row(ui: &mut egui::Ui, tokens: &forja_ui_kit::Tokens, label: &str, val
 
 pub(crate) fn field_label(ui: &mut egui::Ui, label: &str) {
     let tokens = forja_ui_kit::applied_tokens(ui.ctx());
-    ui.label(
+    forja_ui_kit::text(ui, 
         egui::RichText::new(label)
             .small()
             .color(c32(tokens.color.text_muted)),

@@ -325,7 +325,7 @@ pub(crate) fn stage_menu(
             "board.action.move-to"
         };
         let label = cx.t_args(key, &[("stage", &stage.label)]);
-        if ui.button(label).clicked() {
+        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &label).clicked() {
             chosen = Some(stage.id.clone());
             ui.close();
         }
@@ -442,7 +442,7 @@ pub(crate) fn render_helper_offer(
     frame.show(ui, |ui| {
         if let Some(profile) = &offer.default_profile {
             ui.horizontal_wrapped(|ui| {
-                ui.label(
+                forja_ui_kit::text(ui, 
                     egui::RichText::new(cx.t_args(
                         "board.forging-offer.body",
                         &[("bench", &offer.bench_name), ("helper", &profile.name)],
@@ -469,7 +469,7 @@ pub(crate) fn render_helper_offer(
                 }
             });
             if let Some(error) = &offer.error {
-                ui.label(
+                forja_ui_kit::text(ui, 
                     egui::RichText::new(error)
                         .small()
                         .color(c32(tokens.color.danger)),
@@ -504,7 +504,7 @@ pub(crate) fn render_helper_offer(
             if open_clicked {
                 open_helpers_tab(cx, state);
             }
-            ui.add_space(4.0);
+            ui.add_space(forja_ui_kit::Spacing::XS);
             if forja_ui_kit::button(
                 ui,
                 forja_ui_kit::ButtonKind::Ghost,

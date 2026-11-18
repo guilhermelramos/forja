@@ -86,7 +86,7 @@ impl HomeState {
                 .show(ui, |ui| {
                     ui.horizontal_wrapped(|ui| {
                         ui.heading(cx.t("browser.view.home-title"));
-                        ui.label(
+                        forja_ui_kit::text(ui, 
                             egui::RichText::new(cx.t("browser.home.offline-note"))
                                 .small()
                                 .color(muted),
@@ -199,7 +199,7 @@ impl HomeState {
                     }
                 }
             });
-            ui.add_space(4.0);
+            ui.add_space(forja_ui_kit::Spacing::XS);
             forja_ui_kit::text_field(
                 ui,
                 &mut self.port_filter,
@@ -243,7 +243,7 @@ impl HomeState {
                 if row_button(ui, &primary, bench, &format!("{url} ({bench})")).clicked() {
                     navigate_to(cx, shared, &url);
                 }
-                ui.add_space(4.0);
+                ui.add_space(forja_ui_kit::Spacing::XS);
             }
         });
     }
@@ -292,7 +292,7 @@ impl HomeState {
             if scanning {
                 ui.horizontal(|ui| {
                     forja_ui_kit::spinner_if_active(ui);
-                    ui.label(
+                    forja_ui_kit::text(ui, 
                         egui::RichText::new(cx.t("browser.home.docs-loading"))
                             .small()
                             .color(muted),
@@ -314,7 +314,7 @@ impl HomeState {
                 {
                     shared.set_notice(Some(cx.t("browser.home.docs-open-failed")));
                 }
-                ui.add_space(4.0);
+                ui.add_space(forja_ui_kit::Spacing::XS);
             }
         });
     }
@@ -354,7 +354,7 @@ impl HomeState {
                 if row_button(ui, &primary, detail, &shortcut.url).clicked() {
                     navigate_to(cx, shared, &shortcut.url);
                 }
-                ui.add_space(4.0);
+                ui.add_space(forja_ui_kit::Spacing::XS);
             }
         });
     }

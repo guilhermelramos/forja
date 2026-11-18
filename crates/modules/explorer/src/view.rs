@@ -84,7 +84,7 @@ impl View for ExplorerView {
             Some(root) => {
                 self.toolbar(ui, cx, &root, &frame, &mut requests);
                 if let Some(name) = &frame.bench_name {
-                    ui.label(egui::RichText::new(name).strong());
+                    forja_ui_kit::text(ui, egui::RichText::new(name).strong());
                 }
                 ui.add(
                     egui::Label::new(
@@ -120,7 +120,7 @@ fn render_notice(ui: &mut egui::Ui, cx: &Ctx<'_>, shared: &Shared, notice: Optio
         return;
     };
     ui.horizontal_wrapped(|ui| {
-        ui.label(egui::RichText::new(notice).weak());
+        forja_ui_kit::text(ui, egui::RichText::new(notice).weak());
         if forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE, &cx.t("explorer.notice.dismiss"))
             .on_hover_text(cx.t("explorer.notice.dismiss"))
             .clicked()
@@ -221,7 +221,7 @@ impl ExplorerView {
         let Some(children) = children else {
             ui.horizontal(|ui| {
                 ui.add_space(depth as f32 * INDENT);
-                ui.label(egui::RichText::new(cx.t("explorer.panel.loading")).weak());
+                forja_ui_kit::text(ui, egui::RichText::new(cx.t("explorer.panel.loading")).weak());
             });
             requests.push(Request::Load(dir.to_path_buf()));
             return;
@@ -307,11 +307,11 @@ impl ExplorerView {
                 }
             }
             response.context_menu(|ui| {
-                if !entry.is_dir && ui.button(cx.t("explorer.menu.open")).clicked() {
+                if !entry.is_dir && forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t("explorer.menu.open")).clicked() {
                     requests.push(Request::Open(entry.path.clone()));
                     ui.close();
                 }
-                if ui.button(cx.t("explorer.command.new_file")).clicked() {
+                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t("explorer.command.new_file")).clicked() {
                     requests.push(Request::NewEntry {
                         dir: if entry.is_dir {
                             entry.path.clone()
@@ -322,7 +322,7 @@ impl ExplorerView {
                     });
                     ui.close();
                 }
-                if ui.button(cx.t("explorer.command.new_folder")).clicked() {
+                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t("explorer.command.new_folder")).clicked() {
                     requests.push(Request::NewEntry {
                         dir: if entry.is_dir {
                             entry.path.clone()
@@ -334,15 +334,15 @@ impl ExplorerView {
                     ui.close();
                 }
                 ui.separator();
-                if ui.button(cx.t("explorer.command.rename")).clicked() {
+                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t("explorer.command.rename")).clicked() {
                     requests.push(Request::Command("explorer.rename", entry.path.clone()));
                     ui.close();
                 }
-                if ui.button(cx.t("explorer.command.duplicate")).clicked() {
+                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t("explorer.command.duplicate")).clicked() {
                     requests.push(Request::Command("explorer.duplicate", entry.path.clone()));
                     ui.close();
                 }
-                if ui.button(cx.t("explorer.command.trash")).clicked() {
+                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t("explorer.command.trash")).clicked() {
                     requests.push(Request::Trash(entry.path.clone()));
                     ui.close();
                 }
@@ -367,11 +367,11 @@ impl ExplorerView {
                     });
                     ui.close();
                 }
-                if ui.button(cx.t("explorer.command.reveal")).clicked() {
+                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t("explorer.command.reveal")).clicked() {
                     requests.push(Request::Command("explorer.reveal", entry.path.clone()));
                     ui.close();
                 }
-                if ui.button(cx.t("explorer.command.open_terminal")).clicked() {
+                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t("explorer.command.open_terminal")).clicked() {
                     let dir = if entry.is_dir {
                         entry.path.clone()
                     } else {

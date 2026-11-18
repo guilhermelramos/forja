@@ -74,10 +74,10 @@ impl View for DialogsView {
                         forja_ui_kit::register_keyboard_layer(ui, layer);
                         ui.set_min_width(440.0);
                         if projects.is_empty() {
-                            ui.label(egui::RichText::new(cx.t("bench.notice.no-projects")).color(
+                            forja_ui_kit::text(ui, egui::RichText::new(cx.t("bench.notice.no-projects")).color(
                                 c32(forja_ui_kit::applied_tokens(ui.ctx()).color.text_muted),
                             ));
-                            ui.add_space(8.0);
+                            ui.add_space(forja_ui_kit::Spacing::SM);
                             ui.horizontal(|ui| {
                                 if forja_ui_kit::button(
                                     ui,
@@ -100,7 +100,7 @@ impl View for DialogsView {
                             });
                             return;
                         }
-                        ui.label(egui::RichText::new(cx.t("bench.dialog.create.project")).small());
+                        forja_ui_kit::text(ui, egui::RichText::new(cx.t("bench.dialog.create.project")).small());
                         let names: Vec<&str> = projects
                             .iter()
                             .map(|project| project.name.as_str())
@@ -111,7 +111,7 @@ impl View for DialogsView {
                             .unwrap_or(0);
                         forja_ui_kit::select(ui, &mut selected, &names);
                         form.project_id = projects[selected].id.clone();
-                        ui.add_space(4.0);
+                        ui.add_space(forja_ui_kit::Spacing::XS);
                         field_label(ui, &cx.t("bench.dialog.create.name"));
                         let name_field = forja_ui_kit::text_field(
                             ui,
@@ -122,14 +122,14 @@ impl View for DialogsView {
                             name_field.request_focus();
                             focused_now = true;
                         }
-                        ui.add_space(4.0);
+                        ui.add_space(forja_ui_kit::Spacing::XS);
                         field_label(ui, &cx.t("bench.dialog.create.base"));
                         forja_ui_kit::text_field(
                             ui,
                             &mut form.base,
                             &cx.t("bench.dialog.create.base-hint"),
                         );
-                        ui.add_space(4.0);
+                        ui.add_space(forja_ui_kit::Spacing::XS);
                         let mut fetch = form.fetch.unwrap_or_else(|| {
                             cx.setting("bench.worktree.fetch_before")
                                 .and_then(forja_kernel::SettingValue::as_bool)
@@ -140,7 +140,7 @@ impl View for DialogsView {
                         if form.creating {
                             ui.horizontal(|ui| {
                                 forja_ui_kit::spinner_if_active(ui);
-                                ui.label(
+                                forja_ui_kit::text(ui, 
                                     egui::RichText::new(cx.t("bench.dialog.create.creating"))
                                         .small(),
                                 );
@@ -155,7 +155,7 @@ impl View for DialogsView {
                                 &cx.t("kernel.error.details"),
                             );
                         }
-                        ui.add_space(8.0);
+                        ui.add_space(forja_ui_kit::Spacing::SM);
                         ui.horizontal(|ui| {
                             if !form.creating
                                 && forja_ui_kit::button(
@@ -232,7 +232,7 @@ impl View for DialogsView {
                 let mut open = true;
                 forja_ui_kit::modal_explicit_close(ui.ctx(), &mut open, &title, |ui| {
                     ui.set_min_width(420.0);
-                    ui.label(cx.t_args(
+                    forja_ui_kit::text(ui, cx.t_args(
                         "bench.dialog.store.body",
                         &[
                             ("name", form.name.as_str()),
@@ -255,7 +255,7 @@ impl View for DialogsView {
                             &cx.t("kernel.error.details"),
                         );
                     }
-                    ui.add_space(8.0);
+                    ui.add_space(forja_ui_kit::Spacing::SM);
                     ui.horizontal(|ui| {
                         if forja_ui_kit::button(
                             ui,
@@ -319,18 +319,18 @@ impl View for DialogsView {
                         ui.set_min_width(480.0);
                         field_label(ui, &cx.t("bench.dialog.approve.setup"));
                         if form.setup.is_empty() {
-                            ui.label(cx.t("bench.dialog.approve.none"));
+                            forja_ui_kit::text(ui, cx.t("bench.dialog.approve.none"));
                         } else {
-                            ui.label(egui::RichText::new(&form.setup).monospace());
+                            forja_ui_kit::text(ui, egui::RichText::new(&form.setup).monospace());
                         }
                         field_label(ui, &cx.t("bench.dialog.approve.teardown"));
                         if form.teardown.is_empty() {
-                            ui.label(cx.t("bench.dialog.approve.none"));
+                            forja_ui_kit::text(ui, cx.t("bench.dialog.approve.none"));
                         } else {
-                            ui.label(egui::RichText::new(&form.teardown).monospace());
+                            forja_ui_kit::text(ui, egui::RichText::new(&form.teardown).monospace());
                         }
                         if let Some(hash) = &form.setup_hash {
-                            ui.label(
+                            forja_ui_kit::text(ui, 
                                 egui::RichText::new(format!(
                                     "{}: {}",
                                     cx.t("bench.dialog.approve.hash"),
@@ -341,7 +341,7 @@ impl View for DialogsView {
                             );
                         }
                         if let Some(hash) = &form.teardown_hash {
-                            ui.label(
+                            forja_ui_kit::text(ui, 
                                 egui::RichText::new(format!(
                                     "{}: {}",
                                     cx.t("bench.dialog.approve.hash"),
@@ -360,7 +360,7 @@ impl View for DialogsView {
                                 &cx.t("kernel.error.details"),
                             );
                         }
-                        ui.add_space(8.0);
+                        ui.add_space(forja_ui_kit::Spacing::SM);
                         ui.horizontal(|ui| {
                             if forja_ui_kit::button(
                                 ui,

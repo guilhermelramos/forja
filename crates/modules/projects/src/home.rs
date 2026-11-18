@@ -43,14 +43,14 @@ impl HomeView {
             .collect();
         forja_ui_kit::card(ui, Some(&cx.t("project.home.helpers")), |ui| {
             if installed.is_empty() {
-                ui.label(cx.t("project.home.helpers-none"));
+                forja_ui_kit::text(ui, cx.t("project.home.helpers-none"));
             } else {
                 for item in installed {
-                    ui.label(item["name"].as_str().unwrap_or_default());
+                    forja_ui_kit::text(ui, item["name"].as_str().unwrap_or_default());
                 }
             }
             if self.helpers["detecting"] == true {
-                ui.label(cx.t("project.home.detecting"));
+                forja_ui_kit::text(ui, cx.t("project.home.detecting"));
                 ui.ctx().request_repaint_after(Duration::from_millis(500));
             }
             let missing: Vec<_> = profiles
@@ -77,7 +77,7 @@ impl HomeView {
     fn install_row(&mut self, ui: &mut egui::Ui, cx: &Ctx<'_>, item: &Value) {
         let command = item["install_hint"].as_str().unwrap_or_default();
         let id = item["id"].as_str().unwrap_or_default();
-        ui.label(egui::RichText::new(item["name"].as_str().unwrap_or_default()).strong());
+        forja_ui_kit::text(ui, egui::RichText::new(item["name"].as_str().unwrap_or_default()).strong());
         ui.horizontal(|ui| {
             let width = (ui.available_width() - 90.0).max(80.0);
             ui.add_sized(
@@ -101,7 +101,7 @@ impl HomeView {
         forja_ui_kit::card(ui, Some(&cx.t("project.home.recent")), |ui| {
             let recent = self.state.recent();
             if recent.is_empty() {
-                ui.label(cx.t("project.home.recent-empty"));
+                forja_ui_kit::text(ui, cx.t("project.home.recent-empty"));
             }
             egui::ScrollArea::vertical()
                 .id_salt("home.recent")
@@ -198,7 +198,7 @@ impl View for HomeView {
                             .set_dialog(Dialog::Create(ProjectForm::default()));
                     }
                 });
-                ui.add_space(12.0);
+                ui.add_space(forja_ui_kit::Spacing::MD);
                 ui.horizontal_wrapped(|ui| {
                     for (command, key) in [
                         ("anvil.open", "project.home.shortcut-anvil"),
@@ -215,8 +215,8 @@ impl View for HomeView {
                             })
                             .map(|item| item.binding.chord.to_string())
                             .unwrap_or_default();
-                        ui.label(format!("{}  {}", chord, cx.t(key)));
-                        ui.add_space(12.0);
+                        forja_ui_kit::text(ui, format!("{}  {}", chord, cx.t(key)));
+                        ui.add_space(forja_ui_kit::Spacing::MD);
                     }
                 });
                 ui.add_space(20.0);

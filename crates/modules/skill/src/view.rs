@@ -111,7 +111,7 @@ impl SkillView {
 
         ui.horizontal_wrapped(|ui| {
             segmented(ui, &mut self.install_scope, &scope_refs);
-            ui.label(cx.t("skill.target.label"));
+            forja_ui_kit::text(ui, cx.t("skill.target.label"));
             if !owner_names.is_empty() {
                 let mut index = self.install_owner.min(owners.len().saturating_sub(1));
                 select(ui, &mut index, &owner_names);
@@ -119,7 +119,7 @@ impl SkillView {
             }
         });
         if snap.project.is_none() {
-            ui.label(egui::RichText::new(cx.t("skill.hint.no-project")).weak());
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t("skill.hint.no-project")).weak());
         }
     }
 
@@ -168,7 +168,7 @@ impl SkillView {
                     Some(&text),
                 );
             } else {
-                ui.label(text);
+                forja_ui_kit::text(ui, text);
             }
         }
     }
@@ -225,7 +225,7 @@ impl SkillView {
                                 if rows.is_empty() {
                                     continue;
                                 }
-                                ui.label(egui::RichText::new(scope_label(cx, scope)).strong());
+                                forja_ui_kit::text(ui, egui::RichText::new(scope_label(cx, scope)).strong());
                                 for skill in rows {
                                     self.row(ui, cx, snap, skill);
                                 }
@@ -248,10 +248,10 @@ impl SkillView {
                 actions::read_body(cx, &self.shared, PathBuf::from(&skill.path));
             }
             if let Some(description) = &skill.description {
-                ui.label(egui::RichText::new(description).weak().small());
+                forja_ui_kit::text(ui, egui::RichText::new(description).weak().small());
             }
             if let Some(error) = &skill.error {
-                ui.label(
+                forja_ui_kit::text(ui, 
                     egui::RichText::new(cx.t(error))
                         .color(ui.visuals().error_fg_color)
                         .small(),
@@ -275,15 +275,15 @@ impl SkillView {
         };
         ui.heading(skill.name.clone().unwrap_or_else(|| skill.folder.clone()));
         if let Some(description) = &skill.description {
-            ui.label(description);
+            forja_ui_kit::text(ui, description);
         }
-        ui.label(
+        forja_ui_kit::text(ui, 
             egui::RichText::new(cx.t_args("skill.detail.path", &[("path", skill.path.as_str())]))
                 .weak()
                 .small(),
         );
         if let Some(error) = &skill.error {
-            ui.label(egui::RichText::new(cx.t(error)).color(ui.visuals().error_fg_color));
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t(error)).color(ui.visuals().error_fg_color));
         }
         match &snap.body {
             Some((body_path, text)) if body_path == &path => {
@@ -291,7 +291,7 @@ impl SkillView {
                     .id_salt("skill-body")
                     .max_height(220.0)
                     .show(ui, |ui| {
-                        ui.label(egui::RichText::new(text).monospace());
+                        forja_ui_kit::text(ui, egui::RichText::new(text).monospace());
                     });
             }
             _ => {
@@ -313,7 +313,7 @@ impl SkillView {
         let scope_labels = [cx.t("skill.scope.user"), cx.t("skill.scope.project")];
         let scope_refs: Vec<&str> = scope_labels.iter().map(String::as_str).collect();
         ui.horizontal_wrapped(|ui| {
-            ui.label(cx.t("skill.copy.label"));
+            forja_ui_kit::text(ui, cx.t("skill.copy.label"));
             if !owner_names.is_empty() {
                 let mut index = self.copy_owner.min(owners.len() - 1);
                 select(ui, &mut index, &owner_names);
@@ -359,7 +359,7 @@ impl SkillView {
                 .resizable(false)
                 .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
                 .show(ctx, |ui| {
-                    ui.label(cx.t_args("skill.conflict.body", &[("path", existing.as_str())]));
+                    forja_ui_kit::text(ui, cx.t_args("skill.conflict.body", &[("path", existing.as_str())]));
                     ui.horizontal(|ui| {
                         replace = button(
                             ui,
@@ -397,9 +397,9 @@ impl SkillView {
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
             .show(ctx, |ui| {
-                ui.label(body);
+                forja_ui_kit::text(ui, body);
                 if let Some(outside) = &outside {
-                    ui.label(egui::RichText::new(outside).color(ui.visuals().warn_fg_color));
+                    forja_ui_kit::text(ui, egui::RichText::new(outside).color(ui.visuals().warn_fg_color));
                 }
                 ui.horizontal(|ui| {
                     confirm = button(ui, ButtonKind::Primary, &cx.t("skill.confirm.ok")).clicked();
