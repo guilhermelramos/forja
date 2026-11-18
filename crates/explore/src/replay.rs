@@ -60,6 +60,11 @@ pub struct Expectation {
     #[serde(default)]
     pub present_elements: Vec<ElementExpectation>,
     #[serde(default)]
+    pub max_primary_buttons: Option<usize>,
+    /// Named controls must share a vertical center (within two physical pixels).
+    #[serde(default)]
+    pub same_row: Option<StringOrList>,
+    #[serde(default)]
     pub step: Option<usize>,
     #[serde(default)]
     pub appeared: Option<StringOrList>,
@@ -479,6 +484,37 @@ pub fn evaluate_expectations(
                 ));
             }
         }
+        if let Some(limit) = exp.max_primary_buttons {
+            let count = snap
+                .elements
+                .iter()
+                .filter(|element| {
+                    element.role == "Button" && element.state.iter().any(|state| state == "primary")
+                })
+                .count();
+            if count > limit {
+                return Err(format!("expectation {exp_idx} (step {target_idx}): {count} primary buttons exceed {limit}"));
+            }
+        }
+        if let Some(names) = &exp.same_row {
+            let mut center: Option<f64> = None;
+            for name in names.as_slice() {
+                let element = snap
+                    .elements
+                    .iter()
+                    .find(|element| element.name == name)
+                    .ok_or_else(|| {
+                        format!("expectation {exp_idx}: row control `{name}` is missing")
+                    })?;
+                let y = (element.rect[1] + element.rect[3]) / 2.0;
+                if center.is_some_and(|previous| (previous - y).abs() > 2.0) {
+                    return Err(format!(
+                        "expectation {exp_idx}: `{name}` is not on the same filter row"
+                    ));
+                }
+                center = Some(y);
+            }
+        }
         for expected in &exp.present_elements {
             if !snap
                 .elements
@@ -592,6 +628,31 @@ mod tests {
             frames: 0,
             closed: false,
         }
+    }
+
+    #[test]
+    fn filter_row_contract_rejects_a_second_row_and_missing_controls() {
+        let expected: Vec<Expectation> =
+            serde_json::from_str(r#"[{"same_row":["All","Local"]}]"#).unwrap();
+        let mut snapshot = snap_with(&["All", "Local"], 0, &[]);
+        snapshot.elements[1].rect = [100.0, 50.0, 180.0, 80.0];
+        assert!(evaluate_expectations(&expected, &[snapshot.clone()]).is_err());
+        snapshot.elements[1].rect = [100.0, 10.0, 180.0, 40.0];
+        assert!(evaluate_expectations(&expected, &[snapshot]).is_ok());
+        assert!(evaluate_expectations(&expected, &[snap_with(&["All"], 0, &[])]).is_err());
+    }
+
+    #[test]
+    fn primary_limit_counts_the_actual_resolved_button_style() {
+        let expected: Vec<Expectation> =
+            serde_json::from_str(r#"[{"max_primary_buttons":1}]"#).unwrap();
+        let mut snapshot = snap_with(&["Create", "Save"], 0, &[]);
+        for element in &mut snapshot.elements {
+            element.state.push("primary".into());
+        }
+        assert!(evaluate_expectations(&expected, &[snapshot.clone()]).is_err());
+        snapshot.elements[1].state.clear();
+        assert!(evaluate_expectations(&expected, &[snapshot]).is_ok());
     }
 
     #[test]

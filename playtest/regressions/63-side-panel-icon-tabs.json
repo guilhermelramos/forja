@@ -23,7 +23,7 @@
     },
     {
       "step": 6,
-      "present": ["Commitar", "Preparar tudo"],
+      "present": ["Commitar", "Sincronizar", "Mais ações Git"],
       "no_geometry_issues": true
     },
     {

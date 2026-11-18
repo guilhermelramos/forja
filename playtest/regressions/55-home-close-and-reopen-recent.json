@@ -23,6 +23,10 @@
     },
     {
       "m": "ui.click",
+      "target": "Ações de sample"
+    },
+    {
+      "m": "ui.click",
       "target": "Fechar projeto"
     },
     {
@@ -43,7 +47,7 @@
   ],
   "expect": [
     {
-      "step": 6,
+      "step": 7,
       "present_contains": [
         "Projetos recentes",
         "sample",
@@ -55,19 +59,19 @@
       ]
     },
     {
-      "step": 8,
+      "step": 9,
       "present_contains": [
-        "Fechar projeto"
+        "Ações de sample"
       ],
       "absent": [
         "Projetos recentes"
       ]
     },
     {
-      "step": 9,
+      "step": 10,
       "present_contains": [
         "Terminal",
-        "Fechar projeto"
+        "Ações de sample"
       ],
       "absent": [
         "Projetos recentes"

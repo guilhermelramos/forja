@@ -117,14 +117,14 @@
         "Restaurar padrão"
       ],
       "absent": [
-        "Adicionar pasta"
+        "Adicionar projeto"
       ],
       "no_geometry_issues": true
     },
     {
       "step": 20,
       "present": [
-        "Adicionar pasta"
+        "Adicionar projeto"
       ],
       "absent": [
         "Restaurar padrão"

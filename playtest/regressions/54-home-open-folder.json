@@ -27,7 +27,7 @@
       "present_contains": [
         "pwsh",
         "Arquivos",
-        "Fechar projeto"
+        "Ações de sample"
       ],
       "absent": [
         "Projetos recentes",

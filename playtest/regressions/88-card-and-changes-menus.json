@@ -1,0 +1,38 @@
+{
+  "title": "Quadro guarda Mover etapa no menu do cartão (#200)",
+  "issue": 200,
+  "locale": "pt-BR",
+  "demo": true,
+  "steps": [
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.click",
+      "target": "Quadro"
+    },
+    {
+      "m": "ui.click",
+      "target": "Ações do cartão Relatorio"
+    }
+  ],
+  "expect": [
+    {
+      "step": 1,
+      "absent": [
+        "Mover etapa"
+      ],
+      "present": [
+        "Ações do cartão Relatorio"
+      ]
+    },
+    {
+      "step": 2,
+      "present": [
+        "Voltar para Forjando"
+      ],
+      "no_geometry_issues": true
+    }
+  ]
+}

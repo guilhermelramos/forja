@@ -9,7 +9,7 @@
     { "m": "ui.click", "target": "Escolher…" },
     { "m": "ui.click", "target": "Adicionar" },
     { "m": "ui.click", "target": "Quadro" },
-    { "m": "ui.click", "target": "Mover etapa" },
+    { "m": "ui.click", "target": "Ações do cartão sample" },
     { "m": "ui.click", "target": "Mover para Forjando" },
     { "m": "ui.key", "keys": "Escape" }
   ],
