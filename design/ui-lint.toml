@@ -3,9 +3,9 @@
 # Exemptions are audited independently and must not grow silently.
 [ceiling]
 button = 25
-label = 589
-color = 75
-space = 111
+label = 360
+color = 66
+space = 95
 
 [allowed]
 button = 0

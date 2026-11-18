@@ -20,7 +20,7 @@ impl View for HelperStatusView {
                 ("waiting", &waiting.to_string()),
             ],
         );
-        ui.label(egui::RichText::new(label).small());
+        forja_ui_kit::text(ui, egui::RichText::new(label).small());
     }
 }
 

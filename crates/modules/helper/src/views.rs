@@ -146,7 +146,7 @@ impl View for HelperPage {
         page.filters(|ui| {
             ui.horizontal(|ui| {
                 let search_label = cx.t("helper.view.search-hint");
-                ui.label(egui::RichText::new(cx.t("helper.view.profiles")).strong());
+                forja_ui_kit::text(ui, egui::RichText::new(cx.t("helper.view.profiles")).strong());
                 ui.add(
                     egui::TextEdit::singleline(&mut self.search)
                         .hint_text(search_label.clone())
@@ -183,7 +183,7 @@ impl View for HelperPage {
                             None,
                         );
                     } else if has_verdict {
-                        ui.label(
+                        forja_ui_kit::text(ui, 
                             egui::RichText::new(cx.t_args(
                                 "helper.view.detect-summary",
                                 &[
@@ -221,9 +221,9 @@ impl View for HelperPage {
                         let name = profile_name(&profiles, &run.profile_id);
                         let status = run_status_label(cx, run);
                         ui.horizontal(|ui| {
-                            ui.label(egui::RichText::new(status).color(run_status_color(run)));
-                            ui.label(egui::RichText::new(name).strong());
-                            ui.label(
+                            forja_ui_kit::text(ui, egui::RichText::new(status).color(run_status_color(run, &forja_ui_kit::applied_tokens(ui.ctx()).color)));
+                            forja_ui_kit::text(ui, egui::RichText::new(name).strong());
+                            forja_ui_kit::text(ui, 
                                 egui::RichText::new(
                                     std::path::Path::new(&run.bench_path)
                                         .file_name()
@@ -232,7 +232,7 @@ impl View for HelperPage {
                                 )
                                 .weak(),
                             );
-                            ui.label(egui::RichText::new(format_duration(&run.started_at)).weak());
+                            forja_ui_kit::text(ui, egui::RichText::new(format_duration(&run.started_at)).weak());
                             if forja_ui_kit::button(
                                 ui,
                                 forja_ui_kit::ButtonKind::Ghost,
@@ -272,7 +272,7 @@ impl View for HelperPage {
                     egui::ScrollArea::vertical()
                         .max_height(460.0)
                         .show(ui, |ui| {
-                            ui.label(
+                            forja_ui_kit::text(ui, 
                                 egui::RichText::new(format!(
                                     "{} ({})",
                                     cx.t("helper.view.installed-section"),
@@ -281,12 +281,12 @@ impl View for HelperPage {
                                 .strong(),
                             );
                             if installed.is_empty() {
-                                ui.label(
+                                forja_ui_kit::text(ui, 
                                     egui::RichText::new(cx.t("helper.view.installed-empty")).weak(),
                                 );
                             } else if installed_filtered.is_empty() {
                                 ui.horizontal(|ui| {
-                                    ui.label(
+                                    forja_ui_kit::text(ui, 
                                         egui::RichText::new(cx.t_args(
                                             "helper.view.filter-empty",
                                             &[("query", &raw_query)],
@@ -326,7 +326,7 @@ impl View for HelperPage {
                                 }
                             }
                             if !missing.is_empty() {
-                                ui.add_space(8.0);
+                                ui.add_space(forja_ui_kit::Spacing::SM);
                                 let expanded = self.show_missing
                                     || (!query.is_empty() && !missing_filtered.is_empty());
                                 let toggle_key = if expanded {
@@ -350,7 +350,7 @@ impl View for HelperPage {
                                     }
                                 }
                                 if expanded && !missing_filtered.is_empty() {
-                                    ui.label(
+                                    forja_ui_kit::text(ui, 
                                         egui::RichText::new(
                                             cx.t("helper.view.not-installed-section"),
                                         )
@@ -496,8 +496,8 @@ impl HelperSettings {
                 .unwrap_or(false);
             ui.separator();
             ui.horizontal(|ui| {
-                ui.label(egui::RichText::new(&profile.name).strong());
-                ui.label(cx.t(if is_installed {
+                forja_ui_kit::text(ui, egui::RichText::new(&profile.name).strong());
+                forja_ui_kit::text(ui, cx.t(if is_installed {
                     "helper.settings.cli-installed"
                 } else {
                     "helper.settings.cli-missing"
@@ -514,13 +514,13 @@ impl HelperSettings {
                     changes.push((profile.id.clone(), next));
                 }
             });
-            ui.label(egui::RichText::new(format!(
+            forja_ui_kit::text(ui, egui::RichText::new(format!(
                 "{}: {}",
                 cx.t("helper.settings.command"),
                 profile.start.command
             )));
             ui.horizontal(|ui| {
-                ui.label(cx.t("helper.settings.extra-args"));
+                forja_ui_kit::text(ui, cx.t("helper.settings.extra-args"));
                 if ui
                     .add(egui::TextEdit::singleline(&mut extra).desired_width(260.0))
                     .lost_focus()
@@ -531,7 +531,7 @@ impl HelperSettings {
                 }
             });
             ui.horizontal(|ui| {
-                ui.label(cx.t("helper.settings.environment"));
+                forja_ui_kit::text(ui, cx.t("helper.settings.environment"));
                 if ui
                     .add(egui::TextEdit::singleline(&mut environment).desired_width(320.0))
                     .lost_focus()
@@ -554,13 +554,13 @@ impl HelperSettings {
                 };
                 if let Some(path) = hooks::config_path(profile) {
                     ui.horizontal(|ui| {
-                        ui.label(cx.t("helper.settings.hook-target"));
-                        ui.label(egui::RichText::new(path.display().to_string()).monospace());
+                        forja_ui_kit::text(ui, cx.t("helper.settings.hook-target"));
+                        forja_ui_kit::text(ui, egui::RichText::new(path.display().to_string()).monospace());
                     });
                 }
                 ui.horizontal(|ui| {
-                    ui.label(cx.t("helper.settings.hooks"));
-                    ui.label(egui::RichText::new(state_label).weak());
+                    forja_ui_kit::text(ui, cx.t("helper.settings.hooks"));
+                    forja_ui_kit::text(ui, egui::RichText::new(state_label).weak());
                     let mut consent_now = consent;
                     if ui
                         .add_enabled(
