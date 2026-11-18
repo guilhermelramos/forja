@@ -169,7 +169,7 @@ pub fn page(ui: &mut Ui, spec: PageSpec<'_>) -> Page {
         title_ui.add(
             egui::Label::new(
                 RichText::new(subtitle)
-                    .size(12.0)
+                    .size(crate::TextRole::Caption.size())
                     .color(tokens.color.text_muted.to_color32()),
             )
             .selectable(false)

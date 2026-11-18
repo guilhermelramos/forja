@@ -14,23 +14,27 @@ pub enum ButtonKind {
     Secondary,
     /// Sem preenchimento até o hover.
     Ghost,
-    /// Preenchimento `danger`, texto `on_danger`.
+    /// Ação destrutiva neutra com contorno, antes de confirmar.
     Danger,
+    /// Vermelho cheio, somente no diálogo de confirmação.
+    DangerConfirm,
 }
 
 /// Desenha um botão. O rótulo vem de quem chama (o app usa i18n).
 pub fn button(ui: &mut Ui, kind: ButtonKind, label: &str) -> Response {
     let tokens = paint::tokens(ui);
     let metrics = tokens.metrics();
-    let (fill, text, stroke) = colors(kind, &tokens);
     let font = body_font(&metrics);
-    let text_size = paint::text_size(ui, label, font.clone(), text);
+    let text_size = paint::text_size(ui, label, font.clone(), tokens.color.text.to_color32());
     let width = (text_size.x + metrics.pad_x * 2.0).max(metrics.control);
     let (rect, response) = click_zone(ui, egui::vec2(width, metrics.control));
+    let kind = crate::hierarchy::resolve(ui, &response, kind);
+    let (fill, text, stroke) = colors(kind, &tokens);
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label)
     });
 
+    crate::hierarchy::mark(ui, &response, kind);
     let fill = if kind == ButtonKind::Ghost {
         if response.hovered() || response.is_pointer_button_down_on() {
             tokens.color.surface_alt.to_color32()
@@ -70,9 +74,9 @@ fn colors(kind: ButtonKind, tokens: &Tokens) -> (Color32, Color32, Stroke) {
             color.on_accent.to_color32(),
             Stroke::NONE,
         ),
-        ButtonKind::Secondary => (color.surface.to_color32(), text, border),
+        ButtonKind::Secondary | ButtonKind::Danger => (color.surface.to_color32(), text, border),
         ButtonKind::Ghost => (Color32::TRANSPARENT, text, Stroke::NONE),
-        ButtonKind::Danger => (
+        ButtonKind::DangerConfirm => (
             color.danger.to_color32(),
             color.on_danger.to_color32(),
             Stroke::NONE,
@@ -95,11 +99,16 @@ pub fn action_tile(
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label)
     });
-    let kind = if primary {
-        ButtonKind::Primary
-    } else {
-        ButtonKind::Secondary
-    };
+    let kind = crate::hierarchy::resolve(
+        ui,
+        &response,
+        if primary {
+            ButtonKind::Primary
+        } else {
+            ButtonKind::Secondary
+        },
+    );
+    crate::hierarchy::mark(ui, &response, kind);
     let (fill, text, stroke) = colors(kind, &tokens);
     let painter = painter_for(ui);
     painter.rect(

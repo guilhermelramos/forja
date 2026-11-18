@@ -113,10 +113,14 @@ pub fn button_with_icon(ui: &mut Ui, icon: Icon, text: &str, kind: crate::Button
     );
     response
         .widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), text));
+    let kind = crate::hierarchy::resolve(ui, &response, kind);
+    crate::hierarchy::mark(ui, &response, kind);
     let (fill, fg, outline) = match kind {
         crate::ButtonKind::Primary => (tokens.color.accent, tokens.color.on_accent, false),
-        crate::ButtonKind::Danger => (tokens.color.danger, tokens.color.on_danger, false),
-        crate::ButtonKind::Secondary => (tokens.color.surface, tokens.color.text, true),
+        crate::ButtonKind::DangerConfirm => (tokens.color.danger, tokens.color.on_danger, false),
+        crate::ButtonKind::Secondary | crate::ButtonKind::Danger => {
+            (tokens.color.surface, tokens.color.text, true)
+        }
         crate::ButtonKind::Ghost => (tokens.color.surface, tokens.color.text, false),
     };
     if kind != crate::ButtonKind::Ghost || response.hovered() {

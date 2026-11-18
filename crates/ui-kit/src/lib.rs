@@ -38,6 +38,9 @@ mod apply;
 mod color;
 mod components;
 mod fonts;
+mod hierarchy;
+#[cfg(test)]
+mod hierarchy_tests;
 mod icon;
 #[rustfmt::skip]
 mod icons_gen;
@@ -45,6 +48,8 @@ mod keyboard_layer;
 mod paint;
 mod terminal;
 mod tokens;
+mod typography;
+pub use typography::{TextRole, Typography};
 
 pub use apply::{applied_tokens, apply};
 pub use color::{contrast_ratio, luminance, Color};
