@@ -611,7 +611,7 @@ fn switch_root(cx: &Ctx<'_>, shared: &Shared, root: Option<PathBuf>, name: Optio
 
 /// Waits for the next change burst and applies it, then waits again.
 fn pump(cx: &Ctx<'_>, receiver: Receiver<PathBuf>, shared: Shared, generation: u64) {
-    cx.spawn(
+    cx.spawn_service(
         move || watch::wait_batch(receiver),
         move |cx, batch: Batch| {
             let current = {

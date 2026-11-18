@@ -607,7 +607,8 @@ impl ForjaApp {
                     .filter(|id| !id.is_empty())
                     .map(str::to_owned);
                 if bench_id.is_some() && self.current_bench_id != bench_id {
-                    self.switch_bench_layout(bench_id, false);
+                    let keep_page = self.rail_page.is_some();
+                    self.switch_bench_layout(bench_id, keep_page);
                 }
                 let bench_name = value
                     .get("name")
@@ -957,7 +958,7 @@ impl eframe::App for ForjaApp {
         {
             panic!("test-driver requested a panic in the main loop");
         }
-        self.runtime.poll_tasks();
+        let tasks_applied = self.runtime.poll_tasks();
         self.handle_shortcuts(ctx);
         self.drain_actions(ctx);
         self.show_demos();
@@ -977,7 +978,7 @@ impl eframe::App for ForjaApp {
         self.diagnostics_overlay(ctx);
         self.capture(ctx);
         if let Some(driver) = self.driver.as_mut() {
-            driver.tick(ctx);
+            driver.tick(ctx, self.runtime.tasks(), tasks_applied);
         }
         self.pacer.end(budget);
     }

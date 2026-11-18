@@ -792,6 +792,18 @@ impl<'a> Ctx<'a> {
         self.runtime.tasks.spawn(&module_id, work, done)
     }
 
+    /// Spawns a long-lived background service task that is excluded from
+    /// [`Tasks::inflight`] counts while still returning its result via `done`.
+    pub fn spawn_service<T, W, D>(&self, work: W, done: D) -> TaskId
+    where
+        T: Send + 'static,
+        W: FnOnce() -> T + Send + 'static,
+        D: for<'c, 'd> FnOnce(&'d mut Ctx<'c>, T) + Send + 'static,
+    {
+        let module_id = self.module_id.clone();
+        self.runtime.tasks.spawn_service(&module_id, work, done)
+    }
+
     pub fn store(&self) -> StoreHandle<'_> {
         StoreHandle {
             store: &self.runtime.store,
