@@ -85,6 +85,44 @@ fn new_pieces_share_theme_and_semantic_text_roles() {
 }
 
 #[test]
+fn list_actions_stay_visible_when_the_pointer_is_over_the_action() {
+    let ctx = egui::Context::default();
+    apply(&ctx, &Tokens::brasa_dark());
+    let mut action_rect = egui::Rect::NOTHING;
+    let mut output = None;
+    for frame in 0..3 {
+        let mut input = egui::RawInput::default();
+        if frame > 0 {
+            input
+                .events
+                .push(egui::Event::PointerMoved(action_rect.center()));
+        }
+        output = Some(ctx.run(input, |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                list_row(
+                    ui,
+                    ListRow {
+                        icon: None,
+                        title: "Entry",
+                        detail: None,
+                        tag: None,
+                        selected: false,
+                    },
+                    |ui| {
+                        action_rect = icon_button(ui, Icon::Close, "Remove").rect;
+                    },
+                );
+            });
+        }));
+    }
+    assert!(output
+        .unwrap()
+        .shapes
+        .iter()
+        .any(|s| matches!(&s.shape, egui::Shape::Circle(c) if c.fill.a() > 0)));
+}
+
+#[test]
 fn splitter_clamps_even_without_interaction_and_disabled_rows_do_not_click() {
     draw(Tokens::brasa_dark(), |ui| {
         let mut ratio = 2.0;

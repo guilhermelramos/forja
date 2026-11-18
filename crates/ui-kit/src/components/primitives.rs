@@ -71,7 +71,8 @@ pub fn list_row(ui: &mut Ui, row: ListRow<'_>, actions: impl FnOnce(&mut Ui)) ->
         )
     });
     let painter = paint::painter_for(ui);
-    if row.selected || response.hovered() {
+    let hovered = ui.rect_contains_pointer(rect);
+    if row.selected || hovered {
         painter.rect_filled(
             rect,
             m.radius_control,
@@ -87,7 +88,7 @@ pub fn list_row(ui: &mut Ui, row: ListRow<'_>, actions: impl FnOnce(&mut Ui)) ->
         .memory(|m| m.focused())
         .and_then(|id| ui.ctx().read_response(id))
         .is_some_and(|r| rect.contains_rect(r.rect));
-    let show_actions = response.hovered() || response.has_focus() || focus_inside;
+    let show_actions = hovered || response.has_focus() || focus_inside;
     ui.scope_builder(
         egui::UiBuilder::new()
             .max_rect(rect.shrink2(egui::vec2(m.pad_x, 0.0)))

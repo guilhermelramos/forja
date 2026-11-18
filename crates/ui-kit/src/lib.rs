@@ -116,8 +116,8 @@ pub fn request_repaint_after_active(ctx: &egui::Context, delay: std::time::Durat
     }
 }
 
-/// Desenha o spinner quando a janela está ativa; quando minimizada ou sem foco,
-/// apenas reserva o espaço sem pedir quadros a 60 fps.
+/// Compatibility entry point for [`spinner`]: active windows may animate;
+/// inactive windows or reduced motion use a static ring without frame timers.
 pub fn spinner_if_active(ui: &mut egui::Ui) {
     spinner(ui);
 }
