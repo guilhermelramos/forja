@@ -17,6 +17,17 @@ pub struct LayoutEntry {
     pub hash: String,
 }
 
+/// Chave da última versão válida de um arquivo, por projeto, camada e caminho.
+pub type ValidKey = (Option<PathBuf>, Layer, PathBuf);
+
+/// Memória de versões válidas, inclusive das camadas encobertas.
+#[derive(Clone, Debug, Default)]
+pub struct CatalogCache {
+    pub project: Option<PathBuf>,
+    pub entries: BTreeMap<String, LayoutEntry>,
+    pub valid: BTreeMap<ValidKey, LayoutEntry>,
+}
+
 /// Resultado publicado de uma leitura em `Tasks`.
 #[derive(Clone, Debug, Default)]
 pub struct Catalog {
@@ -26,6 +37,8 @@ pub struct Catalog {
     pub diagnostics: Vec<Diagnostic>,
     pub default_id: Option<String>,
     pub revision: u64,
+    /// Todas as versões válidas lidas, mesmo as que não são efetivas.
+    pub valid: BTreeMap<ValidKey, LayoutEntry>,
 }
 
 /// Dados copiados para o worker: nada de `Ctx` cruza a chamada de `Tasks`.
@@ -92,9 +105,10 @@ pub fn read_limited(path: &Path, limit: u64) -> Result<String, String> {
 
 /// Lê todas as camadas. Falha de um arquivo conserva a última versão válida
 /// daquele mesmo caminho.
-pub fn read_catalog(sources: &LayoutSources, previous: &BTreeMap<String, LayoutEntry>) -> Catalog {
+pub fn read_catalog(sources: &LayoutSources, previous: &CatalogCache) -> Catalog {
     let mut entries = BTreeMap::new();
     let mut diagnostics = Vec::new();
+    let mut valid = previous.valid.clone();
     for (layer, root) in sources.roots() {
         let mut seen_in_layer = BTreeSet::new();
         for path in model::files_in(&root, super::LAYOUT_DIR, "toml") {
@@ -103,12 +117,13 @@ pub fn read_catalog(sources: &LayoutSources, previous: &BTreeMap<String, LayoutE
                 .and_then(|value| value.to_str())
                 .unwrap_or_default()
                 .to_owned();
+            let key = (sources.project.clone(), layer, path.clone());
             let text = match read_limited(&path, forja_kernel::layout_spec::MAX_INPUT_BYTES as u64)
             {
                 Ok(text) => text,
                 Err(error) => {
                     diagnostics.push(Diagnostic::new(&path, layer, error));
-                    keep_previous(&mut entries, previous, &path);
+                    keep_previous(&mut entries, &mut valid, &key);
                     continue;
                 }
             };
@@ -116,7 +131,7 @@ pub fn read_catalog(sources: &LayoutSources, previous: &BTreeMap<String, LayoutE
                 Ok(spec) => spec,
                 Err(error) => {
                     diagnostics.push(Diagnostic::new(&path, layer, error.to_string()));
-                    keep_previous(&mut entries, previous, &path);
+                    keep_previous(&mut entries, &mut valid, &key);
                     continue;
                 }
             };
@@ -126,12 +141,12 @@ pub fn read_catalog(sources: &LayoutSources, previous: &BTreeMap<String, LayoutE
                     layer,
                     format!("file `{stem}.toml` declares id `{}`", spec.id),
                 ));
-                keep_previous(&mut entries, previous, &path);
+                keep_previous(&mut entries, &mut valid, &key);
                 continue;
             }
             if let Err(error) = spec.validate() {
                 diagnostics.push(Diagnostic::new(&path, layer, error.to_string()));
-                keep_previous(&mut entries, previous, &path);
+                keep_previous(&mut entries, &mut valid, &key);
                 continue;
             }
             if !seen_in_layer.insert(spec.id.clone()) {
@@ -142,16 +157,15 @@ pub fn read_catalog(sources: &LayoutSources, previous: &BTreeMap<String, LayoutE
                 ));
                 continue;
             }
-            entries.insert(
-                spec.id.clone(),
-                LayoutEntry {
-                    spec,
-                    text: text.clone(),
-                    layer,
-                    source: path.clone(),
-                    hash: crate::model::sha256_hex(&text),
-                },
-            );
+            let entry = LayoutEntry {
+                spec,
+                text: text.clone(),
+                layer,
+                source: path.clone(),
+                hash: crate::model::sha256_hex(&text),
+            };
+            valid.insert(key, entry.clone());
+            entries.insert(entry.spec.id.clone(), entry);
         }
     }
     Catalog {
@@ -161,6 +175,7 @@ pub fn read_catalog(sources: &LayoutSources, previous: &BTreeMap<String, LayoutE
         diagnostics,
         default_id: read_default_id(sources.project.as_deref()),
         revision: 0,
+        valid,
     }
 }
 
@@ -178,10 +193,10 @@ fn read_default_id(project: Option<&Path>) -> Option<String> {
 
 fn keep_previous(
     entries: &mut BTreeMap<String, LayoutEntry>,
-    previous: &BTreeMap<String, LayoutEntry>,
-    path: &Path,
+    valid: &mut BTreeMap<ValidKey, LayoutEntry>,
+    key: &ValidKey,
 ) {
-    if let Some(entry) = previous.values().find(|entry| entry.source == path) {
-        entries.insert(entry.spec.id.clone(), entry.clone());
+    if let Some(entry) = valid.get(key).cloned() {
+        entries.insert(entry.spec.id.clone(), entry);
     }
 }

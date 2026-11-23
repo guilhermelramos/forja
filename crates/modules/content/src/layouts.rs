@@ -8,12 +8,13 @@ mod catalog;
 mod watch;
 mod write;
 
-pub use catalog::{read_catalog, Catalog, LayoutEntry, LayoutSources};
+pub use catalog::{read_catalog, Catalog, CatalogCache, LayoutEntry, LayoutSources};
 pub use watch::{watch_roots, Watch, DEBOUNCE};
 pub use write::{layout_path, remove_layout, write_layout};
 
 use forja_kernel::{Args, Ctx, KernelError, Registrar};
 use serde_json::{json, Value};
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Instant;
@@ -37,6 +38,7 @@ pub fn current_project_root(cx: &mut Ctx<'_>) -> Option<PathBuf> {
 #[derive(Default)]
 pub struct LayoutState {
     pub catalog: Catalog,
+    pub cache: CatalogCache,
     pub generation: u64,
     pub project: Option<PathBuf>,
     pub queued: Option<u64>,
@@ -96,12 +98,25 @@ impl LayoutStore {
             return;
         };
         if state.project != project {
-            state.project = project;
+            state.project = project.clone();
             state.generation = state.generation.wrapping_add(1);
             state.ready = false;
             state.queued = None;
             state.dirty_at = None;
             state.seen_generation = 0;
+            // Publica imediatamente o snapshot da nova raiz: nunca devolve o
+            // catálogo da bancada/projeto anterior enquanto a leitura corre.
+            let cached = state.cache.project == project;
+            state.catalog = Catalog {
+                generation: state.generation,
+                project: project,
+                entries: if cached {
+                    state.cache.entries.clone()
+                } else {
+                    BTreeMap::new()
+                },
+                ..Catalog::default()
+            };
         }
         drop(state);
         if !self.with(|state| state.ready).unwrap_or(false) {
@@ -144,7 +159,7 @@ impl LayoutStore {
                     state.project.clone(),
                     state.generation,
                 ),
-                state.catalog.entries.clone(),
+                state.cache.clone(),
             )
         };
         let store = Arc::clone(self);
@@ -167,6 +182,11 @@ impl LayoutStore {
             return false;
         }
         catalog.revision = state.catalog.revision.wrapping_add(1);
+        state.cache = CatalogCache {
+            project: catalog.project.clone(),
+            entries: catalog.entries.clone(),
+            valid: catalog.valid.clone(),
+        };
         state.catalog = catalog;
         state.ready = true;
         true

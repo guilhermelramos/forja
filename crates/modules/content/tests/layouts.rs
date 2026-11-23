@@ -1,7 +1,8 @@
 //! Testes do catálogo de arranjos: camadas, escrita, debounce e geração.
 
 use forja_module_content::layouts::{
-    read_catalog, remove_layout, write_layout, Catalog, LayoutSources, LayoutStore, DEBOUNCE,
+    read_catalog, remove_layout, write_layout, Catalog, CatalogCache, LayoutSources, LayoutStore,
+    DEBOUNCE,
 };
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -71,7 +72,11 @@ fn an_invalid_file_keeps_the_last_valid_version() {
     assert!(first.entries.contains_key("own"));
 
     std::fs::write(&path, "schema_version = 99\nid = \"own\"\n").unwrap();
-    let second = read_catalog(&sources, &first.entries);
+    let second = read_catalog(&sources, &CatalogCache {
+        project: first.project.clone(),
+        entries: first.entries.clone(),
+        valid: first.valid.clone(),
+    });
     assert_eq!(second.entries["own"].spec, first.entries["own"].spec);
     assert!(!second.diagnostics.is_empty());
     assert!(second.diagnostics[0].message.contains("version"));
@@ -81,9 +86,78 @@ fn an_invalid_file_keeps_the_last_valid_version() {
         layout_text("wrong-id"),
     )
     .unwrap();
-    let third = read_catalog(&sources, &second.entries);
+    let third = read_catalog(&sources, &CatalogCache {
+        project: second.project.clone(),
+        entries: second.entries.clone(),
+        valid: second.valid.clone(),
+    });
     assert!(!third.entries.contains_key("bad"));
     assert!(third.diagnostics.iter().any(|item| item.message.contains("declares id")));
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
+fn valid_versions_are_kept_per_file_layer_and_project() {
+    let root = temp_dir("cache-layers");
+    let project_a = root.join("project-a");
+    let sources_a = LayoutSources {
+        builtin: None,
+        user: root.join("user"),
+        project: Some(project_a.clone()),
+        generation: 1,
+    };
+    let user_path = write_file(&root, "user", "own", &layout_text("own"));
+    std::fs::create_dir_all(project_a.join(".forja").join("layouts")).unwrap();
+    let project_path = project_a.join(".forja").join("layouts").join("own.toml");
+    std::fs::write(&project_path, layout_text("own")).unwrap();
+
+    let first = read_catalog(&sources_a, &Default::default());
+    assert_eq!(first.entries["own"].layer.label(), "project");
+    let cache = CatalogCache {
+        project: first.project.clone(),
+        entries: first.entries.clone(),
+        valid: first.valid.clone(),
+    };
+
+    std::fs::write(&project_path, "schema_version = 99\nid = \"own\"\n").unwrap();
+    let second = read_catalog(&sources_a, &cache);
+    assert_eq!(second.entries["own"].layer.label(), "project");
+    assert!(!second.diagnostics.is_empty());
+    assert!(second
+        .valid
+        .keys()
+        .any(|key| key.1.label() == "user" && key.2 == user_path));
+    let cache = CatalogCache {
+        project: second.project.clone(),
+        entries: second.entries.clone(),
+        valid: second.valid.clone(),
+    };
+
+    std::fs::remove_file(&project_path).unwrap();
+    std::fs::write(&user_path, "schema_version = 99\nid = \"own\"\n").unwrap();
+    let third = read_catalog(&sources_a, &cache);
+    assert_eq!(third.entries["own"].layer.label(), "user", "hidden layer was retained");
+    let cache = CatalogCache {
+        project: third.project.clone(),
+        entries: third.entries.clone(),
+        valid: third.valid.clone(),
+    };
+
+    let project_b = root.join("project-b");
+    std::fs::create_dir_all(project_b.join(".forja").join("layouts")).unwrap();
+    std::fs::write(
+        project_b.join(".forja").join("layouts").join("own.toml"),
+        "schema_version = 99\nid = \"own\"\n",
+    )
+    .unwrap();
+    let sources_b = LayoutSources {
+        builtin: None,
+        user: root.join("user"),
+        project: Some(project_b),
+        generation: 2,
+    };
+    let other = read_catalog(&sources_b, &cache);
+    assert!(!other.entries.contains_key("own"), "project B cannot borrow project A cache");
     let _ = std::fs::remove_dir_all(root);
 }
 
@@ -128,6 +202,7 @@ fn a_stale_generation_or_project_is_never_applied() {
         diagnostics: Vec::new(),
         default_id: None,
         revision: 0,
+        valid: Default::default(),
     };
     assert!(store.apply(catalog.clone()));
     catalog.generation = 1;

@@ -444,16 +444,38 @@ mod tests {
             "schema_version = 1\nid = \"own\"\nname = { pt-BR = \"Own\", en = \"Own\" }\n[root]\nkind = \"leaf\"\nid = \"only\"\n",
         )
         .unwrap();
+        let other_project = dir.join("project-b");
+        let other_layouts = other_project.join(".forja").join("layouts");
+        std::fs::create_dir_all(&other_layouts).unwrap();
+        std::fs::write(
+            other_layouts.join("other.toml"),
+            "schema_version = 1\nid = \"other\"\nname = { pt-BR = \"Other\", en = \"Other\" }\n[root]\nkind = \"leaf\"\nid = \"only\"\n",
+        )
+        .unwrap();
 
-        struct ProjectStub(PathBuf);
+        struct ProjectStub {
+            roots: Vec<PathBuf>,
+            current: Arc<AtomicUsize>,
+        }
         impl Module for ProjectStub {
             fn manifest(&self) -> ModuleManifest {
                 ModuleManifest::new("project", "project.name", "0.1.0")
             }
             fn register(&mut self, r: &mut Registrar<'_>) {
-                let root = self.0.display().to_string();
+                let roots = self
+                    .roots
+                    .iter()
+                    .map(|path| path.display().to_string())
+                    .collect::<Vec<_>>();
+                let current = Arc::clone(&self.current);
                 r.command("project.current", "project.name", move |_, _| {
-                    Ok(serde_json::json!({ "id": "p", "name": "P", "path": root }))
+                    let index = current.load(Ordering::SeqCst) % roots.len();
+                    Ok(serde_json::json!({ "id": "p", "name": "P", "path": roots[index] }))
+                });
+                let current = Arc::clone(&self.current);
+                r.command("project.switch", "project.name", move |_, _| {
+                    current.fetch_add(1, Ordering::SeqCst);
+                    Ok(serde_json::json!({ "ok": true }))
                 });
             }
         }
@@ -479,13 +501,17 @@ mod tests {
                 });
             }
         }
+        let project_current = Arc::new(AtomicUsize::new(0));
         let current = Arc::new(AtomicUsize::new(0));
         let mut runtime = Runtime::new(
             vec![
                 Box::new(ContentModule {
                     core: Arc::new(ContentCore::new()),
                 }),
-                Box::new(ProjectStub(project.clone())),
+                Box::new(ProjectStub {
+                    roots: vec![project.clone(), other_project.clone()],
+                    current: Arc::clone(&project_current),
+                }),
                 Box::new(BenchStub {
                     worktrees: vec![dir.join("bench-a"), dir.join("bench-b")],
                     current: Arc::clone(&current),
@@ -519,6 +545,26 @@ mod tests {
         let second = listed_layouts(&mut runtime);
         assert_eq!(second["layouts"], first["layouts"], "benches share one project catalog");
         assert_eq!(second["layouts"].as_array().unwrap().len(), first["layouts"].as_array().unwrap().len());
+
+        runtime
+            .run_command("project.switch", Args::new())
+            .expect("switch project");
+        let switched = listed_layouts(&mut runtime);
+        assert!(
+            !switched["layouts"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|item| item["id"] == "own"),
+            "the previous project snapshot must not be published"
+        );
+        pump(&mut runtime);
+        let switched = listed_layouts(&mut runtime);
+        assert!(switched["layouts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["id"] == "other" && item["layer"] == "project"));
         let _ = std::fs::remove_dir_all(dir);
     }
 }
