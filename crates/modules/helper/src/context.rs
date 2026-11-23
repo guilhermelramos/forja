@@ -480,4 +480,29 @@ files = ["../secret.txt", "CUSTOM.md"]
         assert_eq!(none_prompt, "Only me");
         assert!(compose_initial_prompt("none", Some(&bench), Some(&req), None, None).is_none());
     }
+
+    #[test]
+    fn request_context_accepts_current_and_legacy_request_refs() {
+        let current: RequestRef = serde_json::from_str(
+            r##"{"counter":"github","key":"#7","title":"Fix [spec](https://docs.example.test/spec)","url":null,"description":"Body with [spec](https://docs.example.test/spec)","links":["https://docs.example.test/spec"]}"##,
+        )
+        .unwrap();
+        let legacy: RequestRef = serde_json::from_str(
+            r##"{"counter":"github","key":"#8","title":"Old request","url":"https://github.com/o/r/issues/8"}"##,
+        )
+        .unwrap();
+
+        let full = compose_initial_prompt("request", None, Some(&current), None, Some("Go"))
+            .expect("current request context");
+        assert!(full.contains("Fix [spec](https://docs.example.test/spec)"));
+        assert!(full.contains("Body with [spec](https://docs.example.test/spec)"));
+        assert!(full.contains("https://docs.example.test/spec"));
+        assert!(full.ends_with("Go"));
+
+        let old = compose_initial_prompt("request", None, Some(&legacy), None, None)
+            .expect("legacy request context");
+        assert!(old.contains("Old request"));
+        assert!(old.contains("https://github.com/o/r/issues/8"));
+        assert!(!old.contains("Description:"));
+    }
 }
