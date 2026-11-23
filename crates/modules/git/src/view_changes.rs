@@ -300,57 +300,53 @@ fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &m
         }
         let more =
             forja_ui_kit::icon_button(ui, forja_ui_kit::Icon::More, &cx.t("git.changes.more"));
-        egui::Popup::from_response(&more)
-            .kind(egui::PopupKind::Menu)
-            .layout(egui::Layout::top_down(egui::Align::Min))
-            .open_memory(more.clicked().then_some(egui::SetOpenCommand::Toggle))
-            .show(|ui| {
-                for (key, command) in [
-                    ("git.changes.refresh", "git.refresh"),
-                    ("git.changes.fetch", "git.fetch"),
-                    ("git.changes.pull", "git.pull"),
-                    ("git.changes.publish", "git.publish"),
-                    ("git.changes.push", "git.push"),
-                    ("git.changes.abort", "git.abort"),
-                    ("git.changes.rebase", "git.rebase"),
-                    ("git.changes.generate", "generate"),
-                    ("git.changes.commit-all", "commit-all"),
-                    ("git.changes.stage-all", "git.stage_all"),
-                    ("git.changes.unstage-all", "git.unstage_all"),
-                ] {
-                    if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t(key))
-                        .clicked()
-                    {
-                        let mut args = Map::from_iter([("path".to_owned(), json!(path))]);
-                        if command == "generate" {
-                            if let Err(error) = generate_message(cx, &path, state) {
-                                state.set_error(Some(error));
-                            }
-                        } else {
-                            if command == "git.push" {
-                                args.insert("force_with_lease".to_owned(), json!(*force));
-                            }
-                            if command == "commit-all" {
-                                args.insert("message".to_owned(), json!(message));
-                                args.insert("all".to_owned(), json!(true));
-                                args.insert("clear_message".to_owned(), json!(true));
-                            }
-                            let _ = run(
-                                cx,
-                                if command == "commit-all" {
-                                    "git.commit"
-                                } else {
-                                    command
-                                },
-                                args,
-                            );
+        forja_ui_kit::popup_menu_contents(&more, |ui| {
+            for (key, command) in [
+                ("git.changes.refresh", "git.refresh"),
+                ("git.changes.fetch", "git.fetch"),
+                ("git.changes.pull", "git.pull"),
+                ("git.changes.publish", "git.publish"),
+                ("git.changes.push", "git.push"),
+                ("git.changes.abort", "git.abort"),
+                ("git.changes.rebase", "git.rebase"),
+                ("git.changes.generate", "generate"),
+                ("git.changes.commit-all", "commit-all"),
+                ("git.changes.stage-all", "git.stage_all"),
+                ("git.changes.unstage-all", "git.unstage_all"),
+            ] {
+                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t(key))
+                    .clicked()
+                {
+                    let mut args = Map::from_iter([("path".to_owned(), json!(path))]);
+                    if command == "generate" {
+                        if let Err(error) = generate_message(cx, &path, state) {
+                            state.set_error(Some(error));
                         }
-                        ui.close();
+                    } else {
+                        if command == "git.push" {
+                            args.insert("force_with_lease".to_owned(), json!(*force));
+                        }
+                        if command == "commit-all" {
+                            args.insert("message".to_owned(), json!(message));
+                            args.insert("all".to_owned(), json!(true));
+                            args.insert("clear_message".to_owned(), json!(true));
+                        }
+                        let _ = run(
+                            cx,
+                            if command == "commit-all" {
+                                "git.commit"
+                            } else {
+                                command
+                            },
+                            args,
+                        );
                     }
+                    ui.close();
                 }
-                ui.separator();
-                ui.checkbox(force, cx.t("git.changes.force-with-lease"));
-            });
+            }
+            ui.separator();
+            forja_ui_kit::toggle(ui, force, &cx.t("git.changes.force-with-lease"));
+        });
     });
     ui.separator();
 
