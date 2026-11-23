@@ -7,11 +7,11 @@
 | Métrica | Valor |
 |---|---|
 | Configurações no catálogo | 314 |
-| Configurações registradas no app | 281 (280 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 280 (279 do catálogo) |
+| Configurações registradas no app | 283 (282 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 282 (281 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
-| Configurações adiadas | 32 |
+| Configurações adiadas | 30 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
 | Atalhos no catálogo | 110 |
@@ -30,8 +30,6 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 - `appearance.ui.code_font`: Aguardando API de seleção de fontes de código no ui-kit.
 - `appearance.ui.code_size`: Aguardando métricas tipográficas configuráveis no ui-kit.
 - `appearance.ui.ligatures`: Aguardando suporte de composição tipográfica a ligaduras no renderizador.
-- `appearance.motion.duration_ms`: Aguardando duração de animação configurável nos tokens do ui-kit.
-- `appearance.tooltips.enabled`: Aguardando controle compartilhado de dicas nos componentes da interface.
 - `helper.launch.initial_context`: Aguardando contrato de contexto do pedido e preparação assíncrona do lançamento.
 - `helper.launch.include_rules`: Aguardando leitura assíncrona de regras no contrato de lançamento do ajudante.
 - `helper.launch.ready_timeout_s`: Aguardando sinal de prontidão verificável do terminal e dos perfis de ajudante.
@@ -73,7 +71,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `appearance.ui.code_size` | `appearance` | `-` | adiada | - | adiada |
 | `appearance.ui.ligatures` | `appearance` | `-` | adiada | - | adiada |
 | `appearance.motion.reduce` | `appearance` | `appearance` | sim | ok | sim |
-| `appearance.motion.duration_ms` | `appearance` | `-` | adiada | - | adiada |
+| `appearance.motion.duration_ms` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.colors.accent` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.sidebar.visible` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.sidebar.width` | `appearance` | `appearance` | sim | ok | sim |
@@ -82,7 +80,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `appearance.window.remember_geometry` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.window.start_maximized` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.tabs.middle_click` | `appearance` | `appearance` | sim | ok | sim |
-| `appearance.tooltips.enabled` | `appearance` | `-` | adiada | - | adiada |
+| `appearance.tooltips.enabled` | `appearance` | `appearance` | sim | ok | sim |
 | `i18n.language.mode` | `i18n` | `i18n` | sim | ok | sim |
 | `i18n.language.fallback` | `i18n` | `i18n` | sim | ok | sim |
 | `i18n.time.format` | `i18n` | `i18n` | sim | ok | sim |

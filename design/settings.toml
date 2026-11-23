@@ -396,18 +396,17 @@ help_key = "setting-appearance-motion-reduce-help"
 
 [[setting]]
 key = "appearance.motion.duration_ms"
-deferred = "Aguardando duração de animação configurável nos tokens do ui-kit."
 module = "appearance"
 group = "appearance"
 type = "number"
-default = 120
+default = 150
 min = 0
-max = 400
+max = 250
 label_pt = "Duração da animação (ms)"
 label_en = "Animation duration (ms)"
 help_pt = "Duração das transições curtas."
 help_en = "Duration of short transitions."
-why = "120 ms é perceptível sem atrasar a resposta da interface."
+why = "Base de 150 ms: rápida 90 ms, lenta 240 ms, com teto de 250 ms."
 label_key = "setting-appearance-motion-duration_ms-label"
 help_key = "setting-appearance-motion-duration_ms-help"
 
@@ -528,7 +527,6 @@ help_key = "setting-appearance-tabs-middle_click-help"
 
 [[setting]]
 key = "appearance.tooltips.enabled"
-deferred = "Aguardando controle compartilhado de dicas nos componentes da interface."
 module = "appearance"
 group = "appearance"
 type = "toggle"

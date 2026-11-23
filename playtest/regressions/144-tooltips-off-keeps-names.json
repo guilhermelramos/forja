@@ -1,0 +1,35 @@
+{
+  "title": "Desligar dicas mantém os nomes acessíveis dos controles (#204)",
+  "issue": 204,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Ajustes" },
+    { "m": "ui.click", "target": "Buscar ajustes" },
+    { "m": "ui.type", "text": "appearance.tooltips.enabled" },
+    { "m": "ui.snapshot" },
+    { "m": "ui.click", "target": "Dicas" },
+    { "m": "ui.snapshot" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 4,
+      "present": ["Dicas"],
+      "no_geometry_issues": true
+    },
+    {
+      "step": 6,
+      "present": ["Dicas"],
+      "no_unnamed_buttons": true,
+      "no_geometry_issues": true
+    },
+    {
+      "step": 8,
+      "absent": ["Buscar ajustes"],
+      "window_count": 0,
+      "no_unnamed_buttons": true
+    }
+  ]
+}
