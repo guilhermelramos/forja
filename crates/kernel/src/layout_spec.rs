@@ -314,7 +314,7 @@ fn validate_node(node: &LayoutNodeSpec, path: &str, depth: usize) -> Result<(), 
             }
             if !ratio.is_finite() || *ratio <= 0.0 || *ratio >= 1.0 {
                 return Err(LayoutError::new(
-                    &format!("{path}.ratio"),
+                    format!("{path}.ratio"),
                     "ratio must be finite and strictly between 0 and 1",
                 ));
             }
@@ -330,7 +330,7 @@ fn validate_node(node: &LayoutNodeSpec, path: &str, depth: usize) -> Result<(), 
             };
             if out_of_range {
                 return Err(LayoutError::new(
-                    &format!("{path}.active"),
+                    format!("{path}.active"),
                     "active tab index is out of range",
                 ));
             }

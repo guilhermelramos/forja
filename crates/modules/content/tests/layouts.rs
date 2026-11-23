@@ -76,8 +76,11 @@ fn an_invalid_file_keeps_the_last_valid_version() {
     assert!(!second.diagnostics.is_empty());
     assert!(second.diagnostics[0].message.contains("version"));
 
-    std::fs::write(&root.join("user").join("layouts").join("bad.toml"),
-        &layout_text("wrong-id")).unwrap();
+    std::fs::write(
+        root.join("user").join("layouts").join("bad.toml"),
+        layout_text("wrong-id"),
+    )
+    .unwrap();
     let third = read_catalog(&sources, &second.entries);
     assert!(!third.entries.contains_key("bad"));
     assert!(third.diagnostics.iter().any(|item| item.message.contains("declares id")));
@@ -93,7 +96,7 @@ fn writing_creates_the_folder_is_atomic_and_respects_the_expected_hash() {
     let hash = write_layout(&root, "own", &text, None).unwrap();
     assert!(folder.is_dir());
     assert_eq!(std::fs::read_to_string(folder.join("own.toml")).unwrap(), text);
-    assert_eq!(write_layout(&root, "own", "bad", Some(&hash)).is_err(), true);
+    assert!(write_layout(&root, "own", "bad", Some(&hash)).is_err());
     assert_eq!(std::fs::read_to_string(folder.join("own.toml")).unwrap(), text);
     assert!(write_layout(&root, "own", &text, None).is_ok());
     assert!(remove_layout(&root, "own", Some("stale")).is_err());
