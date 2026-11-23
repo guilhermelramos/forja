@@ -199,7 +199,7 @@ fn register_appearance(registrar: &mut Registrar<'_>) {
             Ok(json!({ "mode": mode }))
         });
     }
-    let specs = [
+    let mut specs = vec![
         choice(
             "appearance.theme.mode",
             &["system", "dark", "light"],
@@ -249,13 +249,9 @@ fn register_appearance(registrar: &mut Registrar<'_>) {
             "setting-appearance-motion-reduce-help",
             60,
         ),
-        flag(
-            "appearance.tabs.middle_click",
-            true,
-            "setting-appearance-tabs-middle_click-label",
-            "setting-appearance-tabs-middle_click-help",
-            65,
-        ),
+    ];
+    specs.extend(crate::hosts_motion::specs());
+    specs.extend([
         flag(
             "appearance.sidebar.visible",
             true,
@@ -286,7 +282,7 @@ fn register_appearance(registrar: &mut Registrar<'_>) {
             "setting-appearance-status_bar-visible-help",
             100,
         ),
-    ];
+    ]);
     for spec in specs {
         registrar.setting(spec);
     }
@@ -500,7 +496,7 @@ fn register_keymap(registrar: &mut Registrar<'_>) {
     ));
 }
 
-fn flag(key: &str, default: bool, label: &str, help: &str, order: i32) -> SettingSpec {
+pub(crate) fn flag(key: &str, default: bool, label: &str, help: &str, order: i32) -> SettingSpec {
     SettingSpec::new(
         key,
         SettingKind::Bool,
@@ -511,7 +507,7 @@ fn flag(key: &str, default: bool, label: &str, help: &str, order: i32) -> Settin
     .order(order)
 }
 
-fn number(
+pub(crate) fn number(
     key: &str,
     default: f64,
     min: f64,
@@ -587,4 +583,5 @@ mod tests {
         drop(runtime);
         let _ = std::fs::remove_dir_all(dir);
     }
+
 }

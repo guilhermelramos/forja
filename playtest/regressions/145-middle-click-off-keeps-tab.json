@@ -1,0 +1,33 @@
+{
+  "title": "Desligar o botão do meio impede o fechamento da aba (#204)",
+  "issue": 204,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Ajustes" },
+    { "m": "ui.click", "target": "Buscar ajustes" },
+    { "m": "ui.type", "text": "appearance.tabs.middle_click" },
+    { "m": "ui.snapshot" },
+    { "m": "ui.click", "target": "Fechar aba com botão do meio" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Abrir pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 350 },
+    { "m": "ui.click", "target": "Editor", "button": "middle" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 4,
+      "present": ["Fechar aba com botão do meio"],
+      "no_geometry_issues": true
+    },
+    {
+      "step": 13,
+      "present": ["Editor", "Terminal"],
+      "no_geometry_issues": true
+    }
+  ]
+}

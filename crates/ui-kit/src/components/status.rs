@@ -63,7 +63,7 @@ pub fn truncated_label(ui: &mut Ui, text: &str, font: egui::FontId, color: Color
     let truncated = galley.elided;
     let response = ui.add(egui::Label::new(galley));
     if truncated {
-        response.on_hover_text(text)
+        crate::tooltip(response, text)
     } else {
         response
     }
@@ -103,6 +103,27 @@ pub fn toast(ui: &mut Ui, kind: ToastKind, text: &str) -> Response {
             });
         })
         .response
+}
+
+/// Toast with a presence envelope: fades in and out and slides from the
+/// anchored edge. Only visuals move, so hit areas and accessibility are stable.
+pub fn toast_transition(
+    ui: &mut Ui,
+    kind: ToastKind,
+    text: &str,
+    presence: f32,
+    slide_x: f32,
+) -> Response {
+    ui.set_opacity(presence.clamp(0.0, 1.0));
+    if slide_x.abs() > 0.01 {
+        ui.with_visual_transform(
+            egui::emath::TSTransform::from_translation(egui::vec2(slide_x, 0.0)),
+            |ui| toast(ui, kind, text),
+        )
+        .inner
+    } else {
+        toast(ui, kind, text)
+    }
 }
 
 /// Exibe uma mensagem de erro humana com detalhe técnico recolhível opcional.
@@ -228,7 +249,7 @@ pub fn progress_bar(ui: &mut Ui, value: f32) -> Response {
         CornerRadius::same(radius),
         tokens.color.surface_alt.to_color32(),
     );
-    let fraction = value.clamp(0.0, 1.0);
+    let fraction = crate::motion_value(ui.ctx(), response.id.with("progress"), value.clamp(0.0, 1.0), crate::Motion::Slow);
     if fraction > 0.0 {
         let fill =
             egui::Rect::from_min_size(rect.min, egui::vec2(rect.width() * fraction, rect.height()));

@@ -1,0 +1,20 @@
+{
+  "title": "Com a interface parada, o movimento não deixa quadros pendurados (#202)",
+  "issue": 202,
+  "locale": "pt-BR",
+  "demo": true,
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.wait", "ms": 1000 },
+    { "m": "ui.snapshot" },
+    { "m": "ui.wait", "ms": 3000 }
+  ],
+  "expect": [
+    {
+      "step": 3,
+      "from_step": 2,
+      "max_frames_delta": 40,
+      "no_geometry_issues": true
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "title": "Ajustes entra e sai sem janela nem dano de geometria (#202)",
+  "issue": 202,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Ajustes" },
+    { "m": "ui.snapshot" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 2,
+      "present": ["Buscar ajustes"],
+      "window_count": 0,
+      "no_geometry_issues": true
+    },
+    {
+      "step": 4,
+      "absent": ["Buscar ajustes"],
+      "window_count": 0,
+      "no_geometry_issues": true
+    }
+  ]
+}

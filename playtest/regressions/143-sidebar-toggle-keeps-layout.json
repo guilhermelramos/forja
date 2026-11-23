@@ -1,0 +1,27 @@
+{
+  "title": "Ctrl+B recolhe e expande a lateral sem quebrar o layout (#202)",
+  "issue": 202,
+  "locale": "pt-BR",
+  "demo": true,
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.key", "keys": "Ctrl+B" },
+    { "m": "ui.snapshot" },
+    { "m": "ui.key", "keys": "Ctrl+B" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 2,
+      "window_count": 0,
+      "no_geometry_issues": true,
+      "max_primary_buttons": 1
+    },
+    {
+      "step": 4,
+      "window_count": 0,
+      "no_geometry_issues": true,
+      "max_primary_buttons": 1
+    }
+  ]
+}

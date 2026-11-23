@@ -1,0 +1,26 @@
+{
+  "title": "A duração base das animações aparece nos Ajustes com o novo padrão (#204)",
+  "issue": 204,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Ajustes" },
+    { "m": "ui.click", "target": "Buscar ajustes" },
+    { "m": "ui.type", "text": "appearance.motion.duration_ms" },
+    { "m": "ui.snapshot" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 4,
+      "present": ["Duração da animação (ms)"],
+      "no_geometry_issues": true
+    },
+    {
+      "step": 6,
+      "absent": ["Buscar ajustes"],
+      "window_count": 0
+    }
+  ]
+}

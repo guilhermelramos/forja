@@ -58,6 +58,7 @@ mod icon;
 #[rustfmt::skip]
 mod icons_gen;
 mod keyboard_layer;
+mod motion;
 mod paint;
 mod terminal;
 mod tokens;
@@ -71,7 +72,8 @@ pub use components::{
     helper_missing_guide, icon_menu, list, measure_tab_width, menu_panel, modal,
     modal_explicit_close, modal_preview, page, page_heading, page_marker, page_state,
     panel_icon_tabs, plan_tab_fit, popup_menu, popup_menu_contents, progress_bar, segmented, select,
-    stage_badge, tab_strip, tabs, text_field, theme_sample, toast, toggle, tree, truncated_label, virtual_table,
+    stage_badge, tab_strip, tabs, text_field, theme_sample, toast, toast_transition, toggle, tree,
+    truncated_label, virtual_table,
     window_header, window_header_with_focus, wrapped_label, ButtonKind, Column, HelperMissingGuide,
     ListItem, MenuItem, Page, PageIconAction, PageMarker, PageResponse, PageSpec, PageState,
     PageWidth, PanelIconTab, Stage, TabFitPlan, TabItem, TabStripOutcome, ToastKind, TreeNode,
@@ -96,6 +98,10 @@ pub use keyboard_layer::{
 };
 pub use terminal::{AnsiPalette, TerminalTheme};
 pub use tokens::{Density, Metrics, Mode, Palette, ThemeError, Tokens, GRID};
+pub use motion::{
+    activity_phase, attention_dot, ease_out, entry_motion, motion_bool, motion_value,
+    overlay_motion, presence, scale_layer, selection_mark, tooltip, tooltips_enabled, Motion,
+};
 
 /// Verdadeiro enquanto a janela principal está visível e em foco.
 ///

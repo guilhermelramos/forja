@@ -97,7 +97,7 @@ pub fn icon_button(ui: &mut Ui, icon: Icon, label: &str) -> Response {
         tokens.color.text.to_color32(),
     );
     crate::paint::paint_focus(ui, &response, rect, 6.0, tokens.color.accent.to_color32());
-    response.on_hover_text(label)
+    crate::tooltip(response, label)
 }
 /// Text action with a leading icon, preserving the normal button hierarchy.
 pub fn button_with_icon(ui: &mut Ui, icon: Icon, text: &str, kind: crate::ButtonKind) -> Response {

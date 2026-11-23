@@ -160,6 +160,9 @@ impl ForjaApp {
                 tokens = themed;
             }
         }
+        tokens.motion_duration_ms = self.setting_number("appearance.motion.duration_ms", 150.0).clamp(0.0, 250.0) as f32;
+        tokens.tooltips_enabled = self.setting_bool("appearance.tooltips.enabled", true);
+        tokens.deterministic = cfg!(test) || self.driver.is_some() || self.screenshot.is_some();
         self.tokens = tokens;
         let accent = self.setting_text("appearance.colors.accent", "#F2762E");
         apply_accent(&mut self.tokens, &accent);

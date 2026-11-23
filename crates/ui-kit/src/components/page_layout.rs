@@ -332,7 +332,14 @@ pub fn page_state(ui: &mut Ui, state: PageState, message: &str, detail: Option<&
         ui.set_max_width(ui.available_width());
         ui.horizontal(|ui| {
             if state == PageState::Loading {
-                crate::spinner_if_active(ui);
+                ui.vertical(|ui| {
+                    let width = ui.available_width().min(280.0);
+                    let placeholder = crate::skeleton(ui, egui::vec2(width, 16.0));
+                    placeholder.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, message));
+                    crate::skeleton(ui, egui::vec2(width * 0.8, 12.0));
+                    crate::skeleton(ui, egui::vec2(width * 0.6, 12.0));
+                });
+                return;
             } else {
                 crate::icon(
                     ui,

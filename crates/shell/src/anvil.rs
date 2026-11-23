@@ -160,12 +160,16 @@ impl ForjaApp {
                 open_label,
             )
         });
+        let entry = forja_ui_kit::entry_motion(ctx, layer.with("entry"), forja_ui_kit::Motion::Base);
+        let veil_layer = egui::LayerId::new(egui::Order::Middle, layer.with("veil"));
+        ctx.layer_painter(veil_layer).rect_filled(ctx.content_rect(), 0.0, egui::Color32::from_black_alpha((90.0 * entry) as u8));
         let modal = egui::Window::new(title)
             .collapsible(false)
             .resizable(false)
             .default_width(620.0)
             .anchor(Align2::CENTER_TOP, egui::vec2(0.0, 72.0))
             .show(ctx, |ui| {
+                ui.set_opacity(entry);
                 forja_ui_kit::register_keyboard_layer(ui, layer);
                 let hint = self.text(if self.anvil_muster_title {
                     "shell.anvil.muster-title"
@@ -399,6 +403,14 @@ impl ForjaApp {
                         .size(tokens.metrics().caption),
                 );
             });
+        if let Some(modal) = &modal {
+            forja_ui_kit::scale_layer(
+                ctx,
+                modal.response.layer_id,
+                modal.response.rect.center(),
+                egui::lerp(0.98..=1.0, entry),
+            );
+        }
         if let Some(notice) = self.anvil_helper_notice.as_mut() {
             notice.copied = notice_copied;
         }
@@ -1220,7 +1232,7 @@ fn anvil_row(ui: &mut egui::Ui, tokens: &Tokens, hit: &Hit, selected: bool) -> e
         );
     }
     if title_elided {
-        response.on_hover_text(&hit.title)
+        forja_ui_kit::tooltip(response, &hit.title)
     } else {
         response
     }

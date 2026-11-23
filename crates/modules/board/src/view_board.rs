@@ -263,6 +263,14 @@ fn render_column(
         .auto_shrink([false, false])
         .max_height(ui.available_height())
         .show(ui, |ui| {
+            let destination = dragging.is_some()
+                && !cards.iter().any(|card| Some(card.bench.bench_id.as_str()) == dragging)
+                && ui.rect_contains_pointer(bounds);
+            let gap = forja_ui_kit::motion_bool(ui.ctx(), ui.id().with(("board.drop", &stage.id)), destination, forja_ui_kit::Motion::Base);
+            if gap > 0.0 {
+                let (space, _) = ui.allocate_exact_size(egui::vec2(ui.available_width(), 72.0 * gap), egui::Sense::hover());
+                ui.painter().rect_filled(space, 8.0, c32(tokens.color.accent_soft).gamma_multiply(gap));
+            }
             for card in cards {
                 render_card(
                     ui,
@@ -299,8 +307,10 @@ fn render_card(
     } else {
         c32(tokens.color.surface)
     };
+    let lift = forja_ui_kit::motion_bool(ui.ctx(), ui.id().with(("board.lift", &card.bench.bench_id)), dragging, forja_ui_kit::Motion::Base);
     let frame = egui::Frame::new()
         .fill(fill)
+        .shadow(egui::Shadow { offset: [0, (4.0 * lift) as i8], blur: (16.0 * lift) as u8, spread: 0, color: egui::Color32::from_black_alpha((80.0 * lift) as u8) })
         .stroke(egui::Stroke::new(1.0_f32, c32(tokens.color.border)))
         .corner_radius(8)
         .inner_margin(egui::Margin::symmetric(8, 6));
