@@ -289,16 +289,12 @@ fn draw_tab_chip(
     }
 
     if active {
-        painter.hline(
-            rect.x_range(),
-            rect.bottom(),
-            Stroke::new(2.0, tokens.color.accent.to_color32()),
-        );
+        crate::selection_mark(ui, ui.id().with("tab.mark"), Rect::from_min_max(egui::pos2(rect.left(), rect.bottom() - 2.0), rect.right_bottom()), false);
     }
     paint::paint_focus(ui, &body_resp, rect, 4.0, tokens.color.accent.to_color32());
 
     let tip = item.tooltip.unwrap_or(item.label);
-    let body_with_tip = body_resp.on_hover_text(tip.to_owned());
+    let body_with_tip = crate::tooltip(body_resp, tip.to_owned());
     let close_clicked = close_resp.as_ref().is_some_and(Response::clicked);
     let middle_clicked =
         body_with_tip.middle_clicked() || close_resp.as_ref().is_some_and(Response::middle_clicked);
@@ -349,7 +345,7 @@ fn draw_overflow_button(
         metrics.radius_control,
         tokens.color.accent.to_color32(),
     );
-    response.on_hover_text(label.to_owned())
+    crate::tooltip(response, label.to_owned())
 }
 
 fn draw_add_button(
@@ -395,7 +391,7 @@ fn draw_add_button(
         metrics.radius_control,
         tokens.color.accent.to_color32(),
     );
-    response.on_hover_text(label.to_owned())
+    crate::tooltip(response, label.to_owned())
 }
 
 /// Desenha fileira de ícones nos painéis laterais (cabe 4 ícones confortavelmente em 180 px).
@@ -517,5 +513,5 @@ fn draw_panel_icon_button(
         metrics.radius_control,
         tokens.color.accent.to_color32(),
     );
-    response.on_hover_text(item.tooltip.to_owned());
+    crate::tooltip(response, item.tooltip.to_owned());
 }

@@ -29,8 +29,9 @@ Cada item tem uma issue com o rótulo `plano` (o número do item aparece no tít
 | 18 | C | Acessibilidade: nomes nos controles | M | #207 |
 | 19 | C | Atlas com dados de demonstração (`--demo`) | M | #208 |
 | 20 | D | Atualizador (sem assinatura por enquanto) | M | #209 |
-| 21 | D | Painéis lado a lado e arrastar arquivo para o prompt | G | #210 |
+| 21 | D | Arrastar arquivo para o prompt | G | #210 |
 | 22 | D | Celular e outros sistemas — fora do escopo por enquanto | G | #211 |
+| 23 | D | [Layout modular em árvore](layout.md), com arranjos e múltiplas instâncias. Absorve os painéis lado a lado do item 21 (#210). | G | #214 |
 
 Faixa A: usar no dia a dia. Faixa B: aparência profissional. Faixa C: opções e desempenho. Faixa D: crescimento.
 Esforço: P = até 2 dias, M = até 1 semana, G = mais de 1 semana.
@@ -52,7 +53,8 @@ Esforço: P = até 2 dias, M = até 1 semana, G = mais de 1 semana.
 5. **Opções e hardware** — itens 15, 16, 17, 18.
    Pronta quando: as ordens 1 a 5 das opções adiadas estão ligadas; o painel de diagnóstico existe; dá para
    trocar de renderizador em Ajustes; todo botão de ícone tem nome e dica.
-6. **Crescer** — itens 21 e 20, nessa ordem.
+6. **Crescer** — itens 23, 21 e 20, nessa ordem.
+   O item 23 entrega os painéis lado a lado na segunda fatia. O item 21 trata do gesto de arquivo para o prompt.
 
 ## Decisões
 

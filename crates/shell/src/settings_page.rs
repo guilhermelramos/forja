@@ -19,6 +19,27 @@ const SEPARATE: &[&str] = &["accounts", "trust", "mcp", "voice", "import"];
 
 impl ForjaApp {
     pub(crate) fn settings_page_ui(&mut self, ui: &mut egui::Ui) {
+        let entry = forja_ui_kit::entry_motion(
+            ui.ctx(),
+            egui::Id::new("forja.settings.entry"),
+            forja_ui_kit::Motion::Base,
+        );
+        let scale = egui::lerp(0.98..=1.0, entry);
+        if scale < 1.0 {
+            let center = ui.available_rect_before_wrap().center();
+            ui.with_visual_transform(
+                egui::emath::TSTransform {
+                    scaling: scale,
+                    translation: center.to_vec2() * (1.0 - scale),
+                },
+                |ui| self.settings_page_content(ui),
+            );
+        } else {
+            self.settings_page_content(ui);
+        }
+    }
+
+    fn settings_page_content(&mut self, ui: &mut egui::Ui) {
         self.poll_settings_transfer();
         if !self.settings_page.was_open {
             self.settings_page.focus_pending = 2;

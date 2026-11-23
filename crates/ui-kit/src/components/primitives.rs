@@ -72,7 +72,9 @@ pub fn list_row(ui: &mut Ui, row: ListRow<'_>, actions: impl FnOnce(&mut Ui)) ->
     });
     let painter = paint::painter_for(ui);
     let hovered = ui.rect_contains_pointer(rect);
-    if row.selected || hovered {
+    let hover = crate::motion_bool(ui.ctx(), response.id.with("row.hover"), hovered, crate::Motion::Fast);
+    let press = crate::motion_bool(ui.ctx(), response.id.with("row.press"), response.is_pointer_button_down_on(), crate::Motion::Fast);
+    if row.selected || hover > 0.0 || press > 0.0 {
         painter.rect_filled(
             rect,
             m.radius_control,
@@ -81,7 +83,7 @@ pub fn list_row(ui: &mut Ui, row: ListRow<'_>, actions: impl FnOnce(&mut Ui)) ->
             } else {
                 tokens.color.surface_alt
             }
-            .to_color32(),
+            .to_color32().gamma_multiply(if row.selected { 1.0 } else { (hover + press * 0.14).min(1.0) }),
         );
     }
     let focus_inside = ui
@@ -189,7 +191,7 @@ pub fn tag(ui: &mut Ui, label: &str) -> Response {
 /// otherwise a static token-colored ring, with the same reserved bounds.
 pub fn spinner(ui: &mut Ui) -> Response {
     let tokens = paint::tokens(ui);
-    if crate::window_active(ui.ctx()) && !tokens.reduce_motion {
+    if crate::activity_phase(ui.ctx()).is_some() {
         ui.add(egui::Spinner::new().color(tokens.color.text_muted.to_color32()))
     } else {
         let size = tokens.metrics().control;
@@ -203,14 +205,15 @@ pub fn spinner(ui: &mut Ui) -> Response {
     }
 }
 
-/// Stable loading placeholder; no shimmer, timer or layout changes.
+/// Loading placeholder; shimmer requests frames only while mounted and active.
 pub fn skeleton(ui: &mut Ui, size: egui::Vec2) -> Response {
     let tokens = paint::tokens(ui);
     let (rect, response) = ui.allocate_exact_size(size.max(egui::Vec2::ZERO), Sense::hover());
+    let alpha = crate::activity_phase(ui.ctx()).map_or(1.0, |phase| 0.8 + phase.sin() * 0.2);
     paint::painter_for(ui).rect_filled(
         rect,
         tokens.metrics().radius_control,
-        tokens.color.surface_alt.to_color32(),
+        tokens.color.surface_alt.to_color32().gamma_multiply(alpha),
     );
     response
 }

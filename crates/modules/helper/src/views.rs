@@ -221,6 +221,11 @@ impl View for HelperPage {
                         let name = profile_name(&profiles, &run.profile_id);
                         let status = run_status_label(cx, run);
                         ui.horizontal(|ui| {
+                            match run.status {
+                                HelperStatus::Working => { forja_ui_kit::spinner(ui); }
+                                HelperStatus::NeedsYou => { forja_ui_kit::attention_dot(ui, run_status_color(run, &forja_ui_kit::applied_tokens(ui.ctx()).color)); }
+                                _ => {}
+                            }
                             forja_ui_kit::text(ui, egui::RichText::new(status).color(run_status_color(run, &forja_ui_kit::applied_tokens(ui.ctx()).color)));
                             forja_ui_kit::text(ui, egui::RichText::new(name).strong());
                             forja_ui_kit::text(ui,

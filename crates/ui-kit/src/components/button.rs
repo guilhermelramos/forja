@@ -36,11 +36,7 @@ pub fn button(ui: &mut Ui, kind: ButtonKind, label: &str) -> Response {
 
     crate::hierarchy::mark(ui, &response, kind);
     let fill = if kind == ButtonKind::Ghost {
-        if response.hovered() || response.is_pointer_button_down_on() {
-            tokens.color.surface_alt.to_color32()
-        } else {
-            Color32::TRANSPARENT
-        }
+        tokens.color.surface_alt.to_color32().gamma_multiply(crate::motion_bool(ui.ctx(), response.id.with("ghost"), response.hovered() || response.is_pointer_button_down_on(), crate::Motion::Fast))
     } else {
         hover_fill(fill, &response, &tokens)
     };

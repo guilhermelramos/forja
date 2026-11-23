@@ -40,13 +40,16 @@ fn modal_impl(
         Color32::from_black_alpha(90)
     };
     let layer = Id::new(("forja_modal.keyboard", title));
+    let t = crate::entry_motion(ctx, layer.with("entry"), crate::Motion::Base);
     let response = Modal::new(Id::new(("forja_modal", title)))
-        .backdrop_color(backdrop)
+        .backdrop_color(backdrop.gamma_multiply(t))
         .frame(dialog_frame(&tokens, &metrics))
         .show(ctx, |ui| {
             crate::keyboard_layer::register_keyboard_layer(ui, layer);
+            ui.set_opacity(t);
             dialog_body(ui, &tokens, &metrics, title, add_body)
         });
+    crate::scale_layer(ctx, response.response.layer_id, response.response.rect.center(), egui::lerp(0.98..=1.0, t));
     let close = if close_on_backdrop {
         response.should_close()
     } else {
@@ -118,8 +121,7 @@ pub fn window_header_with_focus(
                 .color(tokens.color.text.to_color32()),
         );
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            let response = crate::icon::icon_button(ui, crate::icon::CLOSE, close_label)
-                .on_hover_text(close_label);
+            let response = crate::icon::icon_button(ui, crate::icon::CLOSE, close_label);
             response.widget_info(|| {
                 egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), close_label)
             });

@@ -8,11 +8,11 @@
 |---|---|
 | Configurações no catálogo | 314 |
 | Configurações sobreponíveis por projeto (`scope = "project"`) | 31 |
-| Configurações registradas no app | 291 (290 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 290 (289 do catálogo) |
+| Configurações registradas no app | 293 (292 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 292 (291 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
-| Configurações adiadas | 22 |
+| Configurações adiadas | 20 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
 | Atalhos no catálogo | 110 |
@@ -31,8 +31,6 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 - `appearance.ui.code_font`: Aguardando API de seleção de fontes de código no ui-kit.
 - `appearance.ui.code_size`: Aguardando métricas tipográficas configuráveis no ui-kit.
 - `appearance.ui.ligatures`: Aguardando suporte de composição tipográfica a ligaduras no renderizador.
-- `appearance.motion.duration_ms`: Aguardando duração de animação configurável nos tokens do ui-kit.
-- `appearance.tooltips.enabled`: Aguardando controle compartilhado de dicas nos componentes da interface.
 - `voice.input.model_path`: Aguardando o motor local de transcrição (whisper.cpp) ser aprovado como dependência.
 - `voice.output.engine`: Aguardando a síntese de voz (SAPI ou Piper) ser aprovada como dependência.
 - `voice.output.model_path`: Aguardando a síntese de voz local (Piper) ser aprovada como dependência.
@@ -64,7 +62,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `appearance.ui.code_size` | `appearance` | `-` | adiada | - | adiada |
 | `appearance.ui.ligatures` | `appearance` | `-` | adiada | - | adiada |
 | `appearance.motion.reduce` | `appearance` | `appearance` | sim | ok | sim |
-| `appearance.motion.duration_ms` | `appearance` | `-` | adiada | - | adiada |
+| `appearance.motion.duration_ms` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.colors.accent` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.sidebar.visible` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.sidebar.width` | `appearance` | `appearance` | sim | ok | sim |
@@ -73,7 +71,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `appearance.window.remember_geometry` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.window.start_maximized` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.tabs.middle_click` | `appearance` | `appearance` | sim | ok | sim |
-| `appearance.tooltips.enabled` | `appearance` | `-` | adiada | - | adiada |
+| `appearance.tooltips.enabled` | `appearance` | `appearance` | sim | ok | sim |
 | `i18n.language.mode` | `i18n` | `i18n` | sim | ok | sim |
 | `i18n.language.fallback` | `i18n` | `i18n` | sim | ok | sim |
 | `i18n.time.format` | `i18n` | `i18n` | sim | ok | sim |

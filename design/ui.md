@@ -107,7 +107,17 @@ O hover de uma linha de menu troca o fundo para `surface_alt`. O texto da linha 
 
 ### 1.7 Movimento
 
-Transições de 120 ms. Com `reduce_motion`, a duração vai a 0.
+Três durações: rápida 90 ms (hover e pressão), base 150 ms (seleção, painéis e
+diálogos) e lenta 240 ms (toast e valores das barras). A curva é de saída suave
+(`ease_out`) e nenhuma transição passa de 250 ms. `appearance.motion.duration_ms`
+é a base configurável, com o mesmo teto. Com `reduce_motion`, com o test-driver,
+com `--screenshot` e em `cargo test`, as durações vão a 0: a interface fica
+estática e as capturas não dependem de tempo.
+
+Só `animate_bool_with_time`, `animate_value_with_time` e auxiliares que usam o
+relógio do egui pedem quadros, e apenas durante a transição. Animações contínuas
+(esqueleto, giratório e ponto do ajudante) pedem quadros somente enquanto o
+estado existe; a janela sem foco nunca agenda quadros por causa delas.
 
 ## 2. Densidade
 

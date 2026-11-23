@@ -407,20 +407,32 @@ fn advance_folder_step(cx: &mut Ctx<'_>, state: &Shared, index: usize) {
 
 fn helpers(ui: &mut egui::Ui, cx: &mut Ctx<'_>, _state: &Shared) {
     ui.label(cx.t("onboarding.helpers.lead"));
-    let text = if cx.registry().command("helper.list").is_some() {
-        match cx.run_command("helper.list", Args::new()) {
-            Ok(value) => format_helpers(cx, &value),
-            Err(_) => cx.t("onboarding.helpers.unavailable"),
-        }
+    let detection = if cx.registry().command("helper.list").is_some() {
+        Some(cx.run_command("helper.list", Args::new()))
     } else if cx.registry().command("helper.detect").is_some() {
-        match cx.run_command("helper.detect", Args::new()) {
-            Ok(value) => format_helpers(cx, &value),
-            Err(_) => cx.t("onboarding.helpers.unavailable"),
-        }
+        Some(cx.run_command("helper.detect", Args::new()))
     } else {
-        cx.t("onboarding.helpers.none")
+        None
     };
-    ui.label(text);
+    let detecting = detection.as_ref().is_some_and(|result| {
+        result
+            .as_ref()
+            .is_ok_and(|value| matches!(summarize_helpers(value), HelperSummary::Detecting))
+    });
+    let text = match detection {
+        Some(Ok(value)) => format_helpers(cx, &value),
+        Some(Err(_)) => cx.t("onboarding.helpers.unavailable"),
+        None => cx.t("onboarding.helpers.none"),
+    };
+    if detecting {
+        let width = ui.available_width().min(220.0);
+        let placeholder = forja_ui_kit::skeleton(ui, egui::vec2(width, 16.0));
+        let label = cx.t("onboarding.helpers.detecting");
+        placeholder
+            .widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, label.clone()));
+    } else {
+        ui.label(text);
+    }
     let profiles = cx
         .run_command("helper.list", Args::new())
         .unwrap_or(Value::Null);

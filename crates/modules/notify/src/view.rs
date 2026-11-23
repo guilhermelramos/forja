@@ -4,7 +4,7 @@ use crate::rules::visible_toast_indexes;
 use forja_contracts::NotifyLevel;
 use forja_kernel::ui_contract::egui::{self, Align2, Color32, Sense};
 use forja_kernel::{Args, Ctx, SettingValue};
-use forja_ui_kit::{button, card, toast, ButtonKind, ToastKind};
+use forja_ui_kit::{button, card, ButtonKind, ToastKind};
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
@@ -206,24 +206,30 @@ fn draw_toasts(ctx: &egui::Context, cx: &mut Ctx<'_>, state: &Shared) {
     let position = text(cx, "notifications.toast.position", "bottom_right");
     let (align, offset) = anchor(position);
     let dismiss = cx.t("notify.toast.dismiss");
-    let items: Vec<(u64, NotifyLevel, String)> = indexes
+    let items: Vec<(u64, NotifyLevel, String, f32)> = indexes
         .into_iter()
         .map(|index| {
             let notice = &notices[index];
-            (notice.id, notice.level, brief(&notice.title, &notice.body))
+            (
+                notice.id,
+                notice.level,
+                brief(&notice.title, &notice.body),
+                ages[index],
+            )
         })
         .collect();
-    if let Some(id) = draw_toast_area(ctx, &items, align, offset, &dismiss) {
+    if let Some(id) = draw_toast_area(ctx, &items, align, offset, &dismiss, duration) {
         state.dismiss(id);
     }
 }
 
 fn draw_toast_area(
     ctx: &egui::Context,
-    items: &[(u64, NotifyLevel, String)],
+    items: &[(u64, NotifyLevel, String, f32)],
     align: Align2,
     offset: egui::Vec2,
     dismiss: &str,
+    duration: f32,
 ) -> Option<u64> {
     let screen = ctx.content_rect();
     let bounds = screen.shrink(8.0);
@@ -252,7 +258,17 @@ fn draw_toast_area(
                 .id_salt("forja.notify.toasts.scroll")
                 .max_height(max_height)
                 .show(ui, |ui| {
-                    for (id, level, message) in items {
+                    for (id, level, message, age) in items {
+                        // The last 240 ms of a toast's lifetime are its exit fade;
+                        // entry starts at zero through the presence envelope.
+                        let present = *age + 0.24 < duration;
+                        let envelope = forja_ui_kit::presence(
+                            ctx,
+                            egui::Id::new(("forja.toast", id)),
+                            present,
+                        );
+                        let slide = (1.0 - envelope) * 16.0
+                            * if align.x() == egui::Align::RIGHT { 1.0 } else { -1.0 };
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::TOP), |ui| {
                             if button(ui, ButtonKind::Ghost, dismiss).clicked() {
                                 dismissed = Some(*id);
@@ -260,7 +276,13 @@ fn draw_toast_area(
                             ui.with_layout(egui::Layout::top_down(egui::Align::LEFT), |ui| {
                                 let w = ui.available_width().max(1.0);
                                 ui.set_max_width(w);
-                                toast(ui, kind(*level), message);
+                                forja_ui_kit::toast_transition(
+                                    ui,
+                                    kind(*level),
+                                    message,
+                                    envelope,
+                                    slide,
+                                );
                             });
                         });
                         ui.add_space(8.0);
@@ -272,7 +294,7 @@ fn draw_toast_area(
 
 fn estimate_toast_stack_height(
     ctx: &egui::Context,
-    items: &[(u64, NotifyLevel, String)],
+    items: &[(u64, NotifyLevel, String, f32)],
     area_width: f32,
     dismiss: &str,
 ) -> f32 {
@@ -292,7 +314,7 @@ fn estimate_toast_stack_height(
     let text_max = (area_width - dismiss_w - metrics.pad_x * 2.0 - 20.0).max(60.0);
     items
         .iter()
-        .map(|(_, _, message)| {
+        .map(|(_, _, message, _)| {
             let text_h = ctx.fonts_mut(|fonts| {
                 let mut job = egui::text::LayoutJob::single_section(
                     message.clone(),
@@ -502,10 +524,11 @@ mod keyboard_tests {
                 1_u64,
                 NotifyLevel::Error,
                 "Não foi possível criar a bancada: D:\\a\\forja\\forja\\a-very-long-unbreakable-path-0123456789-abcdefghijklmnopqrstuvwxyz".to_owned(),
+                0.0,
             )];
             let (align, offset) = anchor("bottom_right");
             let out = ctx.run(input, |ctx| {
-                let _ = draw_toast_area(ctx, &items, align, offset, "Fechar");
+                let _ = draw_toast_area(ctx, &items, align, offset, "Fechar", 5.0);
             });
             let area_id = egui::Id::new("forja.notify.toasts");
             let rect = out

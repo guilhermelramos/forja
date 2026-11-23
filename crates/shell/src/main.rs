@@ -15,6 +15,7 @@ mod crash;
 mod demo;
 mod diagnostics;
 mod hosts;
+mod hosts_motion;
 mod icon;
 #[cfg(test)]
 mod icon_contract_tests;
