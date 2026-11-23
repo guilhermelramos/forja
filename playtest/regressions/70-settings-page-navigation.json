@@ -66,9 +66,6 @@
         "Extensões",
         "Privacidade",
         "Avançado",
-        "Contas",
-        "Confiança",
-        "Servidor MCP",
         "Abrir settings.toml"
       ],
       "no_geometry_issues": true
@@ -91,6 +88,7 @@
       "step": 10,
       "present": [
         "Importar",
+        "Contas",
         "Confiança",
         "Servidor MCP",
         "Voz"
