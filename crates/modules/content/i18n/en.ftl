@@ -54,3 +54,5 @@ content-settings-details = Technical details
 content-error-header-missing = Add a configuration header between +++ at the start of the file.
 content-error-header-unclosed = Close the configuration header with +++.
 content-error-invalid-file = Could not read this content. Check the file configuration.
+content-error-layout-default-missing = The project has no valid default layout in ajustes.toml.
+content-error-layout-default-unknown = The default layout is not available in any content layer.

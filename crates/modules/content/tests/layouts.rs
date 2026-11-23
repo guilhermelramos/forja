@@ -61,7 +61,10 @@ fn three_layers_override_by_id_and_keep_their_origin() {
     assert_eq!(catalog.entries["only-builtin"].layer.label(), "builtin");
     assert_eq!(catalog.entries["only-user"].layer.label(), "user");
     assert_eq!(catalog.entries["only-project"].layer.label(), "project");
-    assert!(catalog.diagnostics.is_empty());
+    assert_eq!(catalog.diagnostics.len(), 1);
+    assert!(catalog.diagnostics[0]
+        .message
+        .contains("appearance.layout.default"));
     let _ = std::fs::remove_dir_all(root);
 }
 

@@ -208,6 +208,10 @@ impl View for ContentSettingsView {
                         "content.error.header-missing"
                     } else if diagnostic.message.contains("closing `+++`") {
                         "content.error.header-unclosed"
+                    } else if diagnostic.message.contains("appearance.layout.default") {
+                        "content.error.layout-default-missing"
+                    } else if diagnostic.message.contains("default layout") {
+                        "content.error.layout-default-unknown"
                     } else {
                         "content.error.invalid-file"
                     }));

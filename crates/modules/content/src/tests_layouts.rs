@@ -447,3 +447,69 @@ use super::tests::{runtime, temp_dir};
             .any(|item| item["id"] == "third"), "disabled watcher must not reload");
         let _ = std::fs::remove_dir_all(dir);
     }
+
+    #[test]
+    fn missing_default_layout_is_diagnosed() {
+        let dir = temp_dir("default-diagnostic");
+        let project = dir.join("project");
+        std::fs::create_dir_all(project.join(".forja")).unwrap();
+        struct ProjectStub(PathBuf);
+        impl Module for ProjectStub {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("project", "project.name", "0.1.0")
+            }
+            fn register(&mut self, r: &mut Registrar<'_>) {
+                let root = self.0.display().to_string();
+                r.command("project.current", "project.name", move |_, _| {
+                    Ok(serde_json::json!({ "id": "p", "name": "P", "path": root }))
+                });
+            }
+        }
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(ContentModule {
+                    core: Arc::new(ContentCore::new()),
+                }),
+                Box::new(ProjectStub(project.clone())),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.join("data")),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("runtime");
+        let _ = listed_layouts(&mut runtime);
+        pump(&mut runtime);
+        let listed = listed_layouts(&mut runtime);
+        assert!(listed["diagnostics"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["message"]
+                .as_str()
+                .unwrap()
+                .contains("appearance.layout.default")));
+
+        std::fs::write(
+            project.join(".forja").join("ajustes.toml"),
+            "[appearance.layout]\ndefault = \"foco\"\n",
+        )
+        .unwrap();
+        runtime
+            .run_command("content.layouts.reload", Args::new())
+            .expect("reload");
+        pump(&mut runtime);
+        let listed = listed_layouts(&mut runtime);
+        assert_eq!(listed["default_id"], "foco");
+        assert!(!listed["diagnostics"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["message"]
+                .as_str()
+                .unwrap()
+                .contains("appearance.layout.default")));
+        let _ = std::fs::remove_dir_all(dir);
+    }

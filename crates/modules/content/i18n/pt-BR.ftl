@@ -54,3 +54,5 @@ content-settings-details = Detalhes técnicos
 content-error-header-missing = Falta o cabeçalho de configuração entre +++ no início do arquivo.
 content-error-header-unclosed = Feche o cabeçalho de configuração com +++.
 content-error-invalid-file = Não foi possível ler este conteúdo. Confira a configuração do arquivo.
+content-error-layout-default-missing = O projeto não tem um arranjo padrão válido em ajustes.toml.
+content-error-layout-default-unknown = O arranjo padrão não está disponível em nenhuma camada de conteúdo.

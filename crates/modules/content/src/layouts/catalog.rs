@@ -190,12 +190,31 @@ pub fn read_catalog(sources: &LayoutSources, previous: &CatalogCache) -> Catalog
             entries.insert(entry.spec.id.clone(), entry);
         }
     }
+    let default_id = read_default_id(sources.project.as_deref());
+    if let Some(project) = &sources.project {
+        let settings = project_settings_path(project);
+        if let Some(id) = &default_id {
+            if !entries.contains_key(id) {
+                diagnostics.push(Diagnostic::new(
+                    &settings,
+                    Layer::Project,
+                    format!("default layout `{id}` is not available"),
+                ));
+            }
+        } else {
+            diagnostics.push(Diagnostic::new(
+                &settings,
+                Layer::Project,
+                "appearance.layout.default is missing or invalid",
+            ));
+        }
+    }
     Catalog {
         generation: sources.generation,
         project: sources.project.clone(),
         entries,
         diagnostics,
-        default_id: read_default_id(sources.project.as_deref()),
+        default_id,
         revision: 0,
         views: sources.views.clone(),
         valid,
