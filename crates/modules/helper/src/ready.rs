@@ -38,18 +38,43 @@ impl ReadyMatcher {
         Self { patterns }
     }
 
-    /// Verdadeiro quando `title` ou `output` mostra um sinal verificável de prontidão.
+    /// Verdadeiro apenas quando `title` ou `output` traz um sinal que o perfil
+    /// declarou. Um banner de carregamento ou pedido de permissão não conta.
     pub fn matches(&self, title: &str, output: &str) -> bool {
-        if !self.patterns.is_empty() {
-            let title_lower = title.to_ascii_lowercase();
-            let output_lower = output.to_ascii_lowercase();
-            return self.patterns.iter().any(|pattern| {
-                let needle = pattern.to_ascii_lowercase();
-                output_lower.contains(&needle) || title_lower.contains(&needle)
-            });
+        if self.patterns.is_empty() {
+            return false;
         }
-        crate::status::infer_status(title, output).is_some() || !output.trim().is_empty()
+        let title_lower = title.to_ascii_lowercase();
+        let output_lower = output.to_ascii_lowercase();
+        self.patterns.iter().any(|pattern| {
+            let needle = pattern.to_ascii_lowercase();
+            output_lower.contains(&needle) || title_lower.contains(&needle)
+        })
     }
+
+    /// Hook específico que sinaliza prontidão; qualquer evento de status não serve.
+    pub fn accepts_hook(event: Option<&str>) -> bool {
+        event
+            .map(|value| {
+                let lower = value.to_ascii_lowercase();
+                lower.contains("ready") || lower == "sessionstart"
+            })
+            .unwrap_or(false)
+    }
+}
+
+/// Entrega pendente após um curto prazo quando o perfil não declara sinal de prontidão.
+pub(crate) fn schedule_fallback_send(
+    cx: &mut Ctx<'_>,
+    core: &Shared,
+    terminal_id: String,
+    delay: Duration,
+) {
+    let owned = core.clone();
+    cx.spawn(
+        move || std::thread::sleep(delay),
+        move |cx, ()| flush_deferred_sends(cx, &owned, &terminal_id),
+    );
 }
 
 /// Prazo configurado em `helper.launch.ready_timeout_s` (5..=120s, padrão 30s).
@@ -394,7 +419,10 @@ mod tests {
 
         let fallback = ReadyMatcher::from_patterns(Vec::new());
         assert!(!fallback.matches("", "   "));
-        assert!(fallback.matches("", "Claude ready"));
+        assert!(!fallback.matches("", "Loading model..."));
+        assert!(!fallback.matches("", "Claude ready"));
+        assert!(!ReadyMatcher::accepts_hook(Some("status")));
+        assert!(ReadyMatcher::accepts_hook(Some("ready")));
     }
 
     #[test]

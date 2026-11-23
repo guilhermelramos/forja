@@ -3,7 +3,7 @@
 use crate::launch::{self, LaunchRequest, ProfileOverride};
 use crate::profile::{Layer, Profile};
 use std::ffi::c_void;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::os::windows::io::FromRawHandle;
 use std::path::{Path, PathBuf};
 use std::ptr;
@@ -40,7 +40,7 @@ fn fake_cmd_profile_receives_prompt_through_conpty() {
     let script = dir.0.join("fake-agent.cmd");
     std::fs::write(
         &script,
-        "@echo off\r\necho PROMPT_RECEIVED=%*\r\nexit /b 0\r\n",
+        "@echo off\r\nset /p LINE=\r\necho PROMPT_RECEIVED=%LINE%\r\nexit /b 0\r\n",
     )
     .unwrap();
     let profile_text = format!(
@@ -75,13 +75,82 @@ args = []
         &ProfileOverride::default(),
     )
     .unwrap();
-    assert!(plan.args_text().contains("hello from forja"));
-    let output = run_in_conpty(&plan.program, &plan.args_text(), &dir.0);
+    assert!(!plan.args_text().contains("hello from forja"));
+    assert_eq!(plan.delayed_prompt.as_deref(), Some("hello from forja"));
+    let output = run_in_conpty(
+        &plan.program,
+        &plan.args_text(),
+        &dir.0,
+        plan.delayed_prompt.as_deref(),
+    );
     assert!(output.contains("hello from forja"), "{output}");
     assert!(output.contains("PROMPT_RECEIVED"), "{output}");
 }
 
-fn run_in_conpty(program: &str, arguments: &str, cwd: &Path) -> String {
+#[test]
+fn cmd_shim_never_receives_request_text_in_argv() {
+    let dir = TempGuard(std::env::temp_dir().join(format!(
+        "forja-helper-argv-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    )));
+    std::fs::create_dir_all(&dir.0).unwrap();
+    let script = dir.0.join("fake-agent.cmd");
+    let log = dir.0.join("args.txt");
+    let pwned = dir.0.join("pwned.txt");
+    std::fs::write(
+        &script,
+        format!(
+            "@echo off\r\n> \"{}\" echo %*\r\necho PROMPT_RECEIVED\r\nexit /b 0\r\n",
+            log.display()
+        ),
+    )
+    .unwrap();
+    let profile_text = format!(
+        r#"
+id = "fake-cmd-argv"
+name = "Fake CMD"
+maker = "Test"
+site = "https://example.test"
+[detect]
+executables = ["cmd.exe"]
+[start]
+command = "cmd.exe"
+args = ["/d", "/c", "{}"]
+[prompt]
+mode = "argument"
+[permissions.ask]
+args = []
+"#,
+        script.display().to_string().replace('\\', "\\\\")
+    );
+    let mut profile =
+        Profile::parse(&profile_text, PathBuf::from("fake-cmd.toml"), Layer::User).unwrap();
+    profile.trusted = true;
+    let plan = launch::build(
+        &profile,
+        &LaunchRequest {
+            prompt: Some(format!("& echo PWNED > \"{}\"", pwned.display())),
+            ..LaunchRequest::default()
+        },
+        "ask",
+        dir.0.clone(),
+        &ProfileOverride::default(),
+    )
+    .unwrap();
+    assert!(!plan.args_text().contains("PWNED"));
+
+    let output = run_in_conpty(&plan.program, &plan.args_text(), &dir.0, None);
+    assert!(output.contains("PROMPT_RECEIVED"), "{output}");
+    assert!(!pwned.exists(), "request text executed through cmd.exe");
+    let logged = std::fs::read_to_string(&log).unwrap_or_default();
+    assert!(!logged.contains("PWNED"), "logged args: {logged}");
+}
+
+fn run_in_conpty(program: &str, arguments: &str, cwd: &Path, input: Option<&str>) -> String {
     unsafe {
         let (mut input_read, mut input_write, mut output_read, mut output_write) = (
             ptr::null_mut(),
@@ -144,10 +213,14 @@ fn run_in_conpty(program: &str, arguments: &str, cwd: &Path) -> String {
         DeleteProcThreadAttributeList(attributes);
         CloseHandle(input_read);
         CloseHandle(output_write);
-        let _input = std::fs::File::from_raw_handle(input_write);
+        let mut input_file = std::fs::File::from_raw_handle(input_write);
         assert_ne!(created, 0);
         ResumeThread(process.hThread);
         CloseHandle(process.hThread);
+        if let Some(text) = input {
+            let _ = input_file.write_all(format!("{text}\r\n").as_bytes());
+            let _ = input_file.flush();
+        }
 
         let mut reader = std::fs::File::from_raw_handle(output_read);
         let (sender, receiver) = mpsc::channel();

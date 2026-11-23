@@ -660,6 +660,7 @@ events = ["Stop"]
 
     struct StubChat {
         calls: Arc<std::sync::Mutex<Vec<(String, serde_json::Value)>>>,
+        bench: Arc<std::sync::Mutex<Option<String>>>,
     }
 
     impl Module for StubChat {
@@ -669,7 +670,11 @@ events = ["Stop"]
 
         fn register(&mut self, r: &mut Registrar<'_>) {
             let open_calls = Arc::clone(&self.calls);
+            let open_bench = Arc::clone(&self.bench);
             r.command("chat.open", "chat.command.open", move |_, args| {
+                *open_bench.lock().unwrap() = args
+                    .str("bench_path")
+                    .map(str::to_owned);
                 open_calls
                     .lock()
                     .unwrap()
@@ -683,6 +688,13 @@ events = ["Stop"]
                     .unwrap()
                     .push(("chat.send".to_owned(), args.into_json()));
                 Ok(json!({ "queued": false, "pending": 0 }))
+            });
+            let status_bench = Arc::clone(&self.bench);
+            r.command("chat.status", "chat.command.status", move |_, _| {
+                Ok(json!({
+                    "session_id": serde_json::Value::Null,
+                    "bench_path": status_bench.lock().unwrap().clone().unwrap_or_default(),
+                }))
             });
         }
     }
@@ -699,6 +711,7 @@ events = ["Stop"]
                 }),
                 Box::new(StubChat {
                     calls: Arc::clone(&calls),
+                    bench: Arc::new(std::sync::Mutex::new(None)),
                 }),
             ],
             RuntimeOptions {
@@ -723,6 +736,13 @@ events = ["Stop"]
             )
             .expect("chat launch");
         assert_eq!(value["mode"], "chat");
+        for _ in 0..60 {
+            runtime.poll_tasks();
+            if calls.lock().unwrap().len() >= 2 {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
         let calls = calls.lock().unwrap();
         assert_eq!(calls[0].0, "chat.open");
         assert_eq!(calls[0].1["profile_id"], "claude-code");

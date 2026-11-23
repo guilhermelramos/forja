@@ -2,6 +2,7 @@
 
 use crate::context;
 use crate::detect;
+use crate::launch_context;
 use crate::hooks;
 use crate::launch::{self, LaunchPlan, LaunchRequest};
 use crate::profile::{self, Profile};
@@ -464,8 +465,12 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
         .from_request
         .clone()
         .or_else(|| bench_ctx.as_ref().and_then(|ctx| ctx.request_ref.clone()));
+    let candidates = if include_rules {
+        profile.rule_files()
+    } else {
+        Vec::new()
+    };
     let cached_rules = context::resolve_rules_for_launch(cx, core, &bench, &profile);
-    let rules_deferred = include_rules && cached_rules.is_none();
     let effective_prompt = context::compose_initial_prompt(
         &context_mode,
         bench_ctx.as_ref(),
@@ -474,7 +479,8 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
         request.prompt.as_deref(),
     );
     let mut launch_req = request.clone();
-    launch_req.prompt = effective_prompt.clone();
+    // Nada de contexto entra no argv: shims .cmd/.bat interpretam `&` e `>`.
+    launch_req.prompt = None;
 
     let chat_mode = cx
         .setting("helper.launch.mode")
@@ -501,14 +507,6 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
         let opened = cx
             .run_command("chat.open", open)
             .map_err(|error| error.to_string())?;
-        if let Some(prompt) = effective_prompt.as_deref().map(str::trim) {
-            if !prompt.is_empty() {
-                let mut send = Args::new();
-                send.insert("prompt", json!(prompt));
-                cx.run_command("chat.send", send)
-                    .map_err(|error| error.to_string())?;
-            }
-        }
         let session_id = opened
             .get("session_id")
             .and_then(Value::as_str)
@@ -518,28 +516,23 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
             core,
             &bench.display().to_string(),
             &profile.id,
-            session_id,
+            session_id.clone(),
         );
-        if rules_deferred {
-            let candidates = profile.rule_files();
-            let cache_key = context::cache_key(&bench, &candidates);
-            let bench_bg = bench.clone();
-            let owned = Arc::clone(core);
-            cx.spawn(
-                move || context::read_rules_files(&bench_bg, &candidates),
-                move |cx, rules| {
-                    let rules_text = context::format_rules_block(&rules);
-                    let _ = owned.with_state(|state| {
-                        state.launch.rules_cache.insert(cache_key, rules);
-                    });
-                    if let Some(text) = rules_text {
-                        let mut send = Args::new();
-                        send.insert("prompt", json!(text));
-                        let _ = cx.run_command("chat.send", send);
-                    }
-                },
-            );
-        }
+        launch_context::deliver_context(
+            cx,
+            core,
+            launch_context::ContextDelivery {
+                bench: bench.clone(),
+                candidates,
+                context_mode,
+                request_ref,
+                bench_ctx,
+                explicit_prompt: request.prompt.clone(),
+                chat_opened: true,
+                chat_session: session_id,
+                terminal_id: None,
+            },
+        );
         return Ok(json!({
             "terminal_id": Value::Null,
             "profile_id": profile.id,
@@ -621,40 +614,23 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
         profile.name.clone(),
         matcher,
         ready_timeout,
-        plan.delayed_prompt.clone(),
+        None,
     );
-    if rules_deferred {
-        let candidates = profile.rule_files();
-        let cache_key = context::cache_key(&bench, &candidates);
-        let bench_bg = bench.clone();
-        let owned = Arc::clone(core);
-        let tid = terminal_id.clone();
-        cx.spawn(
-            move || context::read_rules_files(&bench_bg, &candidates),
-            move |cx, rules| {
-                let rules_text = context::format_rules_block(&rules);
-                let is_ready = owned
-                    .with_state(|state| {
-                        state.launch.rules_cache.insert(cache_key, rules);
-                        if let Some(text) = &rules_text {
-                            state
-                                .launch.deferred_sends
-                                .entry(tid.clone())
-                                .or_default()
-                                .insert(0, text.clone());
-                        }
-                        state
-                            .launch.ready_states
-                            .get(&tid)
-                            .is_some_and(|entry| entry.ready)
-                    })
-                    .unwrap_or(false);
-                if is_ready && rules_text.is_some() {
-                    ready::flush_deferred_sends(cx, &owned, &tid);
-                }
-            },
-        );
-    }
+    launch_context::deliver_context(
+        cx,
+        core,
+        launch_context::ContextDelivery {
+            bench: bench.clone(),
+            candidates,
+            context_mode,
+            request_ref,
+            bench_ctx,
+            explicit_prompt: request.prompt.clone(),
+            chat_opened: false,
+            chat_session: None,
+            terminal_id: Some(terminal_id.clone()),
+        },
+    );
     Ok(json!({
         "terminal_id": terminal_id,
         "profile_id": profile.id,
@@ -700,12 +676,14 @@ fn hook_event(cx: &mut Ctx<'_>, core: &Shared, payload: Value) {
         .ok()
         .flatten();
     if let Some(terminal_id) = target {
-        let _ = core.with_state(|state| {
-            let entry = state.launch.ready_states.entry(terminal_id.clone()).or_default();
-            entry.ready = true;
-            entry.timed_out = false;
-        });
-        ready::flush_deferred_sends(cx, core, &terminal_id);
+        if ReadyMatcher::accepts_hook(event.as_deref()) {
+            let _ = core.with_state(|state| {
+                let entry = state.launch.ready_states.entry(terminal_id.clone()).or_default();
+                entry.ready = true;
+                entry.timed_out = false;
+            });
+            ready::flush_deferred_sends(cx, core, &terminal_id);
+        }
         status::update_run_by_id(cx, core, &terminal_id, status, event);
     }
 }
