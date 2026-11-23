@@ -22,6 +22,7 @@ pub(super) fn draw(
     texts: &UiText,
     settings: &TermSettings,
     run_recipe: &mut Option<Recipe>,
+    toolbar_bottom: f32,
 ) {
     if !hub.recipe_picker.open {
         return;
@@ -45,11 +46,14 @@ pub(super) fn draw(
         return;
     }
     let mut chosen = None;
+    let mut bounds = ui.ctx().content_rect();
+    bounds.min.y = (toolbar_bottom + forja_ui_kit::Spacing::SM).min(bounds.bottom());
     let window = egui::Window::new(texts.recipes.clone())
         .id(egui::Id::new("forja-terminal-recipe-picker"))
         .collapsible(false)
         .resizable(false)
         .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
+        .constrain_to(bounds)
         .show(ui.ctx(), |ui| {
             forja_ui_kit::register_keyboard_layer(ui, layer);
             ui.set_min_width(620.0);

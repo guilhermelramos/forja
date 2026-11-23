@@ -85,14 +85,14 @@ pub fn draw(
     let mut new_tab_shell = None;
     let mut open_picker = false;
     let mut run_recipe = None;
+    let pane_area = ui.available_rect_before_wrap();
     if let Some(node) = &mut root {
-        let rect = ui.available_rect_before_wrap();
         draw_node(
             node,
             &mut hub.terminals,
             &mut focused,
             ui,
-            rect,
+            pane_area,
             &tokens,
             &palette,
             settings,
@@ -155,7 +155,8 @@ pub fn draw(
     if hub.pending_recipe.is_some() {
         draw_recipe_modal(hub, ui.ctx(), &tokens, texts, settings);
     }
-    recipe_picker::draw(hub, ui, texts, settings, &mut run_recipe);
+    let toolbar_bottom = pane_area.top() + tokens.metrics().control;
+    recipe_picker::draw(hub, ui, texts, settings, &mut run_recipe, toolbar_bottom);
     if let Some(recipe) = run_recipe {
         match approve_recipe(&recipe) {
             Ok(()) if settings.recipe_confirm => hub.pending_recipe = Some(recipe),
