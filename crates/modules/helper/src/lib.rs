@@ -333,6 +333,21 @@ fn register_settings(r: &mut Registrar<'_>) {
         SettingValue::Bool(true),
     );
     add(
+        "helper.launch.initial_context",
+        SettingKind::Choice {
+            options: ["request", "bench", "none"]
+                .into_iter()
+                .map(str::to_owned)
+                .collect(),
+        },
+        SettingValue::Text("request".to_owned()),
+    );
+    add(
+        "helper.launch.include_rules",
+        SettingKind::Bool,
+        SettingValue::Bool(true),
+    );
+    add(
         "helper.launch.mode",
         SettingKind::Choice {
             options: ["tui", "chat"]

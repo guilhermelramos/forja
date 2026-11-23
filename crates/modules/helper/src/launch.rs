@@ -19,6 +19,10 @@ pub struct LaunchRequest {
     pub model: Option<String>,
     /// Esforço opcional.
     pub effort: Option<String>,
+    /// Referência do pedido associada à bancada (`from_request`).
+    pub from_request: Option<forja_contracts::RequestRef>,
+    /// Sobrescrita opcional para `helper.launch.initial_context`.
+    pub initial_context: Option<String>,
 }
 
 /// Ajustes do usuário para um perfil.

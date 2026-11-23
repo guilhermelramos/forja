@@ -141,11 +141,53 @@ impl RequestItem {
 
     /// Referência que o comando `bench.create` recebe em `from_request`.
     pub fn request_ref(&self) -> RequestRef {
+        let description = self
+            .body
+            .as_deref()
+            .map(str::trim)
+            .filter(|body| !body.is_empty())
+            .map(str::to_owned);
+        let mut links = Vec::new();
+        if let Some(url) = self
+            .url
+            .as_deref()
+            .map(str::trim)
+            .filter(|url| !url.is_empty())
+        {
+            push_unique_link(&mut links, url);
+        }
+        if let Some(body) = self.body.as_deref() {
+            extract_urls(body, &mut links);
+        }
+        for comment in &self.comments {
+            extract_urls(&comment.body, &mut links);
+        }
         RequestRef {
             counter: self.counter.clone(),
             key: self.key.clone(),
             title: self.title.clone(),
             url: self.url.clone(),
+            description,
+            links,
+        }
+    }
+}
+
+fn push_unique_link(links: &mut Vec<String>, candidate: &str) {
+    if !links.iter().any(|existing| existing == candidate) {
+        links.push(candidate.to_owned());
+    }
+}
+
+fn extract_urls(text: &str, links: &mut Vec<String>) {
+    for token in text.split_whitespace() {
+        let trimmed = token.trim_start_matches(['(', '[', '<', '"', '\'']);
+        if !(trimmed.starts_with("https://") || trimmed.starts_with("http://")) {
+            continue;
+        }
+        let cleaned = trimmed.trim_end_matches([')', ']', '>', ',', '.', ';', '"', '\'']);
+        if cleaned.len() > "http://".len() {
+            push_unique_link(links, cleaned);
         }
     }
 }
@@ -158,6 +200,10 @@ pub struct RequestRef {
     pub title: String,
     #[serde(default)]
     pub url: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub links: Vec<String>,
 }
 
 /// Motivo de falha de um balcão. A tela traduz cada variante por i18n; nenhuma mensagem
@@ -425,8 +471,20 @@ mod tests {
     fn request_ref_copies_the_identity_fields() {
         let mut item = RequestItem::new("linear", "ENG-42", "Cache");
         item.url = Some("https://linear.app/x/issue/ENG-42".into());
+        item.body = Some("Fix cache invalidation. See https://docs.example.test/cache and (https://linear.app/x/issue/ENG-42).".into());
         let reference = item.request_ref();
         assert_eq!(reference.key, "ENG-42");
         assert_eq!(reference.url, item.url);
+        assert_eq!(
+            reference.description.as_deref(),
+            Some("Fix cache invalidation. See https://docs.example.test/cache and (https://linear.app/x/issue/ENG-42).")
+        );
+        assert_eq!(
+            reference.links,
+            vec![
+                "https://linear.app/x/issue/ENG-42".to_owned(),
+                "https://docs.example.test/cache".to_owned(),
+            ]
+        );
     }
 }

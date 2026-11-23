@@ -118,6 +118,7 @@ fn finish_refresh(
                         request_command: None,
                         open_tabs: Vec::new(),
                         request_key: None,
+                        request_ref: None,
                     });
                 }
                 let listed: Vec<&git::WorktreeEntry> = entries.iter().collect();

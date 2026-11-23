@@ -378,6 +378,11 @@ fn launch_request(args: &Args) -> LaunchRequest {
         permission: args.str("permission").map(str::to_owned),
         model: args.str("model").map(str::to_owned),
         effort: args.str("effort").map(str::to_owned),
+        from_request: args
+            .get("from_request")
+            .cloned()
+            .and_then(|value| serde_json::from_value::<RequestRef>(value).ok()),
+        initial_context: args.str("initial_context").map(str::to_owned),
     }
 }
 
@@ -429,6 +434,39 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
             .clone()
             .unwrap_or_else(|| format!("helper profile `{}` is not trusted", profile.id)));
     }
+    let include_rules = cx
+        .setting("helper.launch.include_rules")
+        .and_then(|value| value.as_bool())
+        .unwrap_or(true);
+    let context_mode = request
+        .initial_context
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(str::to_owned)
+        .unwrap_or_else(|| {
+            cx.setting("helper.launch.initial_context")
+                .and_then(|value| value.as_str())
+                .unwrap_or("request")
+                .to_owned()
+        });
+    let bench_ctx = context::fetch_bench_context(cx, &bench);
+    let request_ref = request
+        .from_request
+        .clone()
+        .or_else(|| bench_ctx.as_ref().and_then(|ctx| ctx.request_ref.clone()));
+    let cached_rules = context::resolve_rules_for_launch(cx, core, &bench, &profile);
+    let rules_deferred = include_rules && cached_rules.is_none();
+    let effective_prompt = context::compose_initial_prompt(
+        &context_mode,
+        bench_ctx.as_ref(),
+        request_ref.as_ref(),
+        cached_rules.as_deref(),
+        request.prompt.as_deref(),
+    );
+    let mut launch_req = request.clone();
+    launch_req.prompt = effective_prompt.clone();
+
     let chat_mode = cx
         .setting("helper.launch.mode")
         .and_then(|value| value.as_str())
@@ -454,7 +492,7 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
         let opened = cx
             .run_command("chat.open", open)
             .map_err(|error| error.to_string())?;
-        if let Some(prompt) = request.prompt.as_deref().map(str::trim) {
+        if let Some(prompt) = effective_prompt.as_deref().map(str::trim) {
             if !prompt.is_empty() {
                 let mut send = Args::new();
                 send.insert("prompt", json!(prompt));
@@ -512,7 +550,7 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
         bench_path: bench.display().to_string(),
         started_at: chrono::Utc::now().to_rfc3339(),
         hook_token,
-        status: if request.prompt.is_some() {
+        status: if effective_prompt.is_some() {
             HelperStatus::Working
         } else {
             HelperStatus::Idle

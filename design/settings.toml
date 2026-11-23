@@ -2525,7 +2525,6 @@ help_key = "setting-helper-launch-auto_start-help"
 
 [[setting]]
 key = "helper.launch.initial_context"
-deferred = "Aguardando contrato de contexto do pedido e preparação assíncrona do lançamento."
 module = "helper"
 group = "helpers"
 scope = "user"

@@ -1,5 +1,6 @@
 bench-name = Bancadas
 bench-command-current = Bancada atual
+bench-command-request = Contexto do pedido da bancada
 bench-command-list = Listar bancadas
 bench-command-list_cards = Listar cartões de bancada
 bench-command-activate = Ativar bancada
