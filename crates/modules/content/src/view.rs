@@ -180,6 +180,7 @@ impl View for ContentSettingsView {
         {
             let project = state::current_project(cx);
             state::load(&self.core, cx, project);
+            self.core.layouts.request_reload(cx);
         }
         if diagnostics.is_empty() {
             ui.label(egui::RichText::new(cx.t("content.settings.no-diagnostics")).weak());
