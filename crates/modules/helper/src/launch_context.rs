@@ -35,6 +35,8 @@ pub struct State {
     pub write_inflight: bool,
     /// Snapshot mais recente aguardando a vez de gravar.
     pub pending_write: Option<crate::store::HelperFile>,
+    /// Bancadas já avaliadas na restauração do app.
+    pub restored_evaluated: BTreeSet<String>,
 }
 
 /// Identidade e texto necessários para entregar o contexto inicial pelo destino certo.
@@ -125,6 +127,7 @@ fn send(cx: &mut Ctx<'_>, core: &Shared, delivery: &ContextDelivery, text: Optio
 }
 
 const I18N_KEYS: &[&str] = &[
+    "helper.command.resume-evaluate",
     "helper.ready.timeout-title",
     "helper.ready.timeout-body",
     "helper.resume.ask-title",

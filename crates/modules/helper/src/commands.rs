@@ -359,7 +359,7 @@ pub(crate) fn ensure_current(cx: &mut Ctx<'_>, core: &Shared) -> Result<(), Stri
     ensure(cx, core, bench)
 }
 
-fn trust_allows(cx: &mut Ctx<'_>, profile: &Profile) -> bool {
+pub(crate) fn trust_allows(cx: &mut Ctx<'_>, profile: &Profile) -> bool {
     let mut args = Args::new();
     args.insert("kind", json!("helper_profile"));
     args.insert(
@@ -832,7 +832,7 @@ fn focus_bench_in_shell(cx: &mut Ctx<'_>, bench_path: &str) {
     let _ = cx.run_command("shell.bench.focus", focus);
 }
 
-fn start_detection(cx: &mut Ctx<'_>, core: &Shared) {
+pub(crate) fn start_detection(cx: &mut Ctx<'_>, core: &Shared) {
     let profiles = match core.with_state(|state| {
         if state.detecting {
             return None;

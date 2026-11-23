@@ -1,16 +1,17 @@
 //! Política de retomada de sessões ao reabrir uma bancada (`helper.sessions.resume_policy`).
 
-use crate::commands::{ensure, ensure_probed, inject_account_env, save_file};
+use crate::commands::{ensure, inject_account_env, save_file};
 use crate::context;
 use crate::hooks;
 use crate::launch::{self, ProfileOverride};
-use crate::profile::Profile;
+use crate::profile::{Layer, Profile};
 use crate::status::Run;
-use crate::store::BenchSession;
+use crate::store::{BenchSession, HelperFile};
 use crate::Shared;
 use forja_contracts::{BenchRef, HelperStatus, HelperStatusChanged};
 use forja_kernel::logging::{self, LogLevel};
-use forja_kernel::{Args, Ctx, KernelError, Registrar};
+use forja_kernel::store::LoadResult;
+use forja_kernel::{Args, Ctx, KernelError, Registrar, Store};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
@@ -64,6 +65,30 @@ pub(crate) fn register(r: &mut Registrar<'_>, core: &Shared) {
                 .with_state(|state| state.launch.pending_resumes.remove(&key).is_some())
                 .map_err(KernelError::Message)?;
             Ok(json!({ "dismissed": removed }))
+        },
+    );
+
+    let restore_core = Arc::clone(core);
+    r.command(
+        "helper.resume.evaluate",
+        "helper.command.resume-evaluate",
+        move |cx, args| {
+            let path = target_bench_path(cx, args.str("bench_path"));
+            let bench = BenchRef {
+                project_id: args.str("project_id").unwrap_or("").to_owned(),
+                bench_id: args.str("bench_id").unwrap_or("").to_owned(),
+                name: args.str("name").unwrap_or("").to_owned(),
+                path: path.clone(),
+                branch: args.str("branch").map(str::to_owned),
+            };
+            let key = context::path_key(std::path::Path::new(&path));
+            let first = restore_core
+                .with_state(|state| state.launch.restored_evaluated.insert(key))
+                .unwrap_or(false);
+            if first {
+                on_bench_activated(cx, &restore_core, &bench);
+            }
+            Ok(json!({ "evaluated": first }))
         },
     );
 
@@ -130,12 +155,52 @@ pub(crate) fn record_bench_session(
     }
 }
 
-/// Avalia `helper.sessions.resume_policy` ao reabrir/ativar uma bancada com sessão anterior.
+/// Prepara perfis, estado e sondagem em tarefa do kernel e só depois aplica a política.
 pub(crate) fn on_bench_activated(cx: &mut Ctx<'_>, core: &Shared, bench: &BenchRef) {
+    let store = Store::new(cx.data_dir());
+    let owned = Arc::clone(core);
     let bench_dir = PathBuf::from(&bench.path);
-    if ensure(cx, core, Some(bench_dir)).is_err() {
-        return;
-    }
+    let work_dir = bench_dir.clone();
+    let target = bench.clone();
+    let initial = core
+        .with_state(|state| (state.file.clone(), state.launch.file_loaded))
+        .unwrap_or((HelperFile::default(), false));
+    cx.spawn(
+        move || {
+            let file = if initial.1 {
+                initial.0.clone()
+            } else {
+                match store.load::<HelperFile>("helper") {
+                    LoadResult::Loaded(file) => file,
+                    _ => HelperFile::default(),
+                }
+            };
+            let profiles = crate::profile::load_all(Some(&work_dir), |_| false);
+            (file, profiles)
+        },
+        move |cx, (file, mut profiles)| {
+            for profile in &mut profiles {
+                if profile.layer == Some(Layer::Project) && !crate::commands::trust_allows(cx, profile) {
+                    profile.trusted = false;
+                    profile.risk_reason = Some("project profile needs trust approval".to_owned());
+                }
+            }
+            let applied = owned.with_state(|state| {
+                state.file = file;
+                state.profiles = profiles;
+                state.loaded_for = Some(bench_dir);
+                state.launch.file_loaded = true;
+            });
+            if applied.is_ok() {
+                // A sondagem de executáveis também roda em tarefa do kernel.
+                crate::commands::start_detection(cx, &owned);
+                apply_policy(cx, &owned, &target);
+            }
+        },
+    );
+}
+
+fn apply_policy(cx: &mut Ctx<'_>, core: &Shared, bench: &BenchRef) {
     let key = context::path_key(Path::new(&bench.path));
     let policy = ResumePolicy::from_setting(
         cx.setting("helper.sessions.resume_policy")
@@ -162,7 +227,6 @@ pub(crate) fn on_bench_activated(cx: &mut Ctx<'_>, core: &Shared, bench: &BenchR
     let Some(previous) = find_previous_session(cx, core, &bench.path) else {
         return;
     };
-    ensure_probed(core);
     let profile_info = core
         .with_state(|state| {
             let profile = state
@@ -305,7 +369,6 @@ fn notify_bench(cx: &mut Ctx<'_>, level: &str, title: &str, body: &str, bench_pa
 fn resume_command(cx: &mut Ctx<'_>, core: &Shared, args: &Args) -> Result<Value, String> {
     let bench_path = target_bench_path(cx, args.str("bench_path"));
     ensure(cx, core, Some(PathBuf::from(&bench_path)))?;
-    ensure_probed(core);
 
     let key = context::path_key(Path::new(&bench_path));
     let pending = core

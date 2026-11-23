@@ -138,6 +138,7 @@ setting-helper-sessions-resume_policy-option-never = Never
 helper-command-resume = Resume previous helper session
 helper-command-resume-dismiss = Dismiss resume prompt
 helper-command-resume-pending = Pending resume session
+helper-command-resume-evaluate = Evaluate resume policy for a restored bench
 helper-ready-timeout-title = Helper startup timed out
 helper-ready-timeout-body = Helper { $name } did not become ready after { $seconds }s; process kept running.
 helper-resume-ask-title = Resume previous session?

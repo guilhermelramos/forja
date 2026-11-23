@@ -138,6 +138,7 @@ setting-helper-sessions-resume_policy-option-never = Nunca
 helper-command-resume = Retomar sessão anterior do ajudante
 helper-command-resume-dismiss = Dispensar pedido de retomada
 helper-command-resume-pending = Consultar retomada pendente
+helper-command-resume-evaluate = Avaliar política de retomada na bancada restaurada
 helper-ready-timeout-title = Ajudante demorou a responder
 helper-ready-timeout-body = O ajudante { $name } não sinalizou prontidão em { $seconds }s; o processo continuou aberto.
 helper-resume-ask-title = Retomar sessão anterior?

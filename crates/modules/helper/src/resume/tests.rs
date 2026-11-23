@@ -85,6 +85,13 @@
         }
     }
 
+    fn settle(runtime: &mut Runtime) {
+        for _ in 0..40 {
+            runtime.poll_tasks();
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+    }
+
     type StubLog = Arc<Mutex<Vec<Value>>>;
 
     fn setup_runtime(dir: &Path) -> (Runtime, Arc<Core>, StubLog, StubLog) {
@@ -121,6 +128,13 @@
                     ..detect::Detection::default()
                 },
             );
+            state.detection.insert(
+                "crush".into(),
+                detect::Detection {
+                    executable: Some(dir.join("crush.exe")),
+                    ..detect::Detection::default()
+                },
+            );
         })
         .unwrap();
         (runtime, core, opens, notifies)
@@ -150,6 +164,7 @@
             .set_setting("helper.sessions.resume_policy", SettingValue::Text("never".into()))
             .unwrap();
         runtime.emit(&BenchActivated(bench_ref.clone()));
+        settle(&mut runtime);
         assert!(opens.lock().unwrap().is_empty());
         assert!(notifies.lock().unwrap().is_empty());
 
@@ -158,6 +173,7 @@
             .set_setting("helper.sessions.resume_policy", SettingValue::Text("ask".into()))
             .unwrap();
         runtime.emit(&BenchActivated(bench_ref.clone()));
+        settle(&mut runtime);
         assert!(opens.lock().unwrap().is_empty());
         assert_eq!(notifies.lock().unwrap().len(), 1);
         assert!(core
@@ -171,6 +187,7 @@
             .set_setting("helper.sessions.resume_policy", SettingValue::Text("auto".into()))
             .unwrap();
         runtime.emit(&BenchActivated(bench_ref));
+        settle(&mut runtime);
         let opened = opens.lock().unwrap();
         assert_eq!(opened.len(), 1);
         assert!(opened[0]["args"].as_str().unwrap().contains("--resume sess-9"));
@@ -189,23 +206,17 @@
             branch: Some("main".into()),
         };
 
-        // Simulate a profile that declares no [resume] flags in state only.
-        core.with_state(|state| {
-            if let Some(profile) = state.profiles.iter_mut().find(|p| p.id == "claude-code") {
-                profile.resume = Default::default();
-            }
-        })
-        .unwrap();
-
+        // `crush` é um perfil embutido que não declara [resume].
         let mut rec = Args::new();
         rec.insert("bench_path", json!(bench_ref.path));
-        rec.insert("profile_id", json!("claude-code"));
+        rec.insert("profile_id", json!("crush"));
         rec.insert("session_id", json!("sess-u"));
         runtime.run_command("test.record_session", rec).unwrap();
         runtime
             .set_setting("helper.sessions.resume_policy", SettingValue::Text("auto".into()))
             .unwrap();
         runtime.emit(&BenchActivated(bench_ref));
+        settle(&mut runtime);
 
         assert!(opens.lock().unwrap().is_empty());
         let notices = notifies.lock().unwrap();
@@ -256,11 +267,46 @@
             .set_setting("helper.sessions.resume_policy", SettingValue::Text("auto".into()))
             .unwrap();
         runtime.emit(&BenchActivated(bench_ref));
+        settle(&mut runtime);
         let opened = opens.lock().unwrap();
         assert_eq!(opened.len(), 1);
         let args = opened[0]["args"].as_str().unwrap();
         assert!(args.contains("--resume archived-1"), "{args}");
         assert!(!args.contains("--continue"), "{args}");
+    }
+
+    #[test]
+    fn restored_bench_policy_is_evaluated_once() {
+        let dir = temp_dir("restore-once");
+        let (mut runtime, core, _, notifies) = setup_runtime(&dir.0);
+        let bench_dir = dir.0.join("bench");
+        let mut rec = Args::new();
+        rec.insert("bench_path", json!(bench_dir.display().to_string()));
+        rec.insert("profile_id", json!("claude-code"));
+        rec.insert("session_id", json!("sess-restore"));
+        runtime.run_command("test.record_session", rec).unwrap();
+        runtime
+            .set_setting("helper.sessions.resume_policy", SettingValue::Text("ask".into()))
+            .unwrap();
+
+        for expected in [true, false] {
+            let mut args = Args::new();
+            args.insert("bench_id", json!("b-restore"));
+            args.insert("bench_path", json!(bench_dir.display().to_string()));
+            args.insert("name", json!("Restored bench"));
+            let result = runtime
+                .run_command("helper.resume.evaluate", args)
+                .unwrap();
+            assert_eq!(result["evaluated"], expected);
+        }
+        settle(&mut runtime);
+        assert_eq!(notifies.lock().unwrap().len(), 1);
+        assert!(core
+            .with_state(|s| s
+                .launch
+                .pending_resumes
+                .contains_key(&context::path_key(&bench_dir)))
+            .unwrap());
     }
 
     #[test]
