@@ -2572,7 +2572,6 @@ help_key = "setting-helper-launch-mode-help"
 
 [[setting]]
 key = "helper.launch.ready_timeout_s"
-deferred = "Aguardando sinal de prontidão verificável do terminal e dos perfis de ajudante."
 module = "helper"
 group = "helpers"
 scope = "user"

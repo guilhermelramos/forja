@@ -358,6 +358,14 @@ fn register_settings(r: &mut Registrar<'_>) {
         SettingValue::Text("tui".to_owned()),
     );
     add(
+        "helper.launch.ready_timeout_s",
+        SettingKind::Integer {
+            min: Some(5),
+            max: Some(120),
+        },
+        SettingValue::Integer(30),
+    );
+    add(
         "helper.monitor.idle_minutes",
         SettingKind::Integer {
             min: Some(1),
@@ -436,6 +444,15 @@ fn register_events(r: &mut Registrar<'_>, core: &Shared) {
     let finished_core = Arc::clone(core);
     r.subscribe(move |cx, event: &TerminalCommandFinished| {
         let _ = commands::ensure_current(cx, &finished_core);
+        let _ = finished_core.with_state(|state| {
+            let entry = state
+                .ready_states
+                .entry(event.terminal.terminal_id.clone())
+                .or_default();
+            entry.ready = true;
+            entry.timed_out = false;
+        });
+        ready::flush_deferred_sends(cx, &finished_core, &event.terminal.terminal_id);
         status::update_run(
             cx,
             &finished_core,

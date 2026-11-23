@@ -1,19 +1,21 @@
 //! Comandos do módulo helper.
 
+use crate::context;
 use crate::detect;
 use crate::hooks;
 use crate::launch::{self, LaunchPlan, LaunchRequest};
 use crate::profile::{self, Profile};
+use crate::ready::{self, ReadyMatcher};
+use crate::resume;
 use crate::status::{self, Run};
 use crate::store::HelperFile;
 use crate::{HelperState, Shared};
-use forja_contracts::{HelperStatus, HelperStatusChanged};
+use forja_contracts::{HelperStatus, HelperStatusChanged, RequestRef};
 use forja_kernel::store::write_atomic_bytes;
 use forja_kernel::{Args, Ctx, KernelError, Registrar};
 use serde_json::{json, Value};
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::Duration;
 
 pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
     let list_core = Arc::clone(core);
@@ -119,6 +121,11 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
                                 .is_none_or(|id| run.terminal_id == *id)
                     })
                     .map(|run| {
+                        let readiness = state
+                            .ready_states
+                            .get(&run.terminal_id)
+                            .copied()
+                            .unwrap_or_default();
                         json!({
                             "terminal_id": run.terminal_id,
                             "profile_id": run.profile_id,
@@ -127,6 +134,8 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
                             "status": run.status,
                             "failed": status::is_failed(run),
                             "last_event": run.last_event,
+                            "ready": readiness.ready,
+                            "ready_timed_out": readiness.timed_out,
                         })
                     })
                     .collect::<Vec<_>>()
@@ -631,6 +640,12 @@ fn hook_event(cx: &mut Ctx<'_>, core: &Shared, payload: Value) {
         .ok()
         .flatten();
     if let Some(terminal_id) = target {
+        let _ = core.with_state(|state| {
+            let entry = state.ready_states.entry(terminal_id.clone()).or_default();
+            entry.ready = true;
+            entry.timed_out = false;
+        });
+        ready::flush_deferred_sends(cx, core, &terminal_id);
         status::update_run_by_id(cx, core, &terminal_id, status, event);
     }
 }
