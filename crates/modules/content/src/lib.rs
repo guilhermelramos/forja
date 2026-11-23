@@ -430,4 +430,95 @@ mod tests {
             .any(|item| item["id"] == "oficina" && item["layer"] == "builtin"));
         let _ = std::fs::remove_dir_all(dir);
     }
+
+    #[test]
+    fn two_benches_of_one_project_share_the_project_catalog() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        let dir = temp_dir("project-root");
+        let project = dir.join("project");
+        let layouts = project.join(".forja").join("layouts");
+        std::fs::create_dir_all(&layouts).unwrap();
+        std::fs::write(
+            layouts.join("own.toml"),
+            "schema_version = 1\nid = \"own\"\nname = { pt-BR = \"Own\", en = \"Own\" }\n[root]\nkind = \"leaf\"\nid = \"only\"\n",
+        )
+        .unwrap();
+
+        struct ProjectStub(PathBuf);
+        impl Module for ProjectStub {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("project", "project.name", "0.1.0")
+            }
+            fn register(&mut self, r: &mut Registrar<'_>) {
+                let root = self.0.display().to_string();
+                r.command("project.current", "project.name", move |_, _| {
+                    Ok(serde_json::json!({ "id": "p", "name": "P", "path": root }))
+                });
+            }
+        }
+        struct BenchStub {
+            worktrees: Vec<PathBuf>,
+            current: Arc<AtomicUsize>,
+        }
+        impl Module for BenchStub {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("bench", "bench.name", "0.1.0")
+            }
+            fn register(&mut self, r: &mut Registrar<'_>) {
+                let worktrees = self.worktrees.clone();
+                let current = Arc::clone(&self.current);
+                r.command("bench.current", "bench.command.current", move |_, _| {
+                    let index = current.load(Ordering::SeqCst) % worktrees.len();
+                    Ok(serde_json::json!({ "path": worktrees[index].display().to_string() }))
+                });
+                let current = Arc::clone(&self.current);
+                r.command("bench.switch", "bench.switch", move |_, _| {
+                    current.fetch_add(1, Ordering::SeqCst);
+                    Ok(serde_json::json!({ "ok": true }))
+                });
+            }
+        }
+        let current = Arc::new(AtomicUsize::new(0));
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(ContentModule {
+                    core: Arc::new(ContentCore::new()),
+                }),
+                Box::new(ProjectStub(project.clone())),
+                Box::new(BenchStub {
+                    worktrees: vec![dir.join("bench-a"), dir.join("bench-b")],
+                    current: Arc::clone(&current),
+                }),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.join("data")),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("runtime");
+        let _ = listed_layouts(&mut runtime);
+        pump(&mut runtime);
+        let first = listed_layouts(&mut runtime);
+        let source = first["layouts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|item| item["id"] == "own")
+            .expect("project layout")
+            ["source"]
+            .clone();
+        assert_eq!(source, serde_json::json!(layouts.join("own.toml").display().to_string()));
+
+        runtime
+            .run_command("bench.switch", Args::new())
+            .expect("switch bench");
+        pump(&mut runtime);
+        let second = listed_layouts(&mut runtime);
+        assert_eq!(second["layouts"], first["layouts"], "benches share one project catalog");
+        assert_eq!(second["layouts"].as_array().unwrap().len(), first["layouts"].as_array().unwrap().len());
+        let _ = std::fs::remove_dir_all(dir);
+    }
 }

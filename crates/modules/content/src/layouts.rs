@@ -12,13 +12,27 @@ pub use catalog::{read_catalog, Catalog, LayoutEntry, LayoutSources};
 pub use watch::{watch_roots, Watch, DEBOUNCE};
 pub use write::{layout_path, remove_layout, write_layout};
 
-use forja_kernel::{Ctx, KernelError, Registrar};
-use serde_json::json;
+use forja_kernel::{Args, Ctx, KernelError, Registrar};
+use serde_json::{json, Value};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Instant;
 
 pub(crate) const LAYOUT_DIR: &str = "layouts";
+
+/// Raiz registrada do projeto ativo. `bench.current.path` aponta para o
+/// checkout da bancada, que pode ser outro worktree do mesmo projeto.
+pub fn current_project_root(cx: &mut Ctx<'_>) -> Option<PathBuf> {
+    cx.run_command("project.current", Args::new())
+        .ok()
+        .and_then(|value| {
+            value
+                .get("path")
+                .and_then(Value::as_str)
+                .filter(|path| !path.is_empty())
+                .map(PathBuf::from)
+        })
+}
 
 #[derive(Default)]
 pub struct LayoutState {
@@ -186,7 +200,7 @@ impl LayoutStore {
 pub fn register(r: &mut Registrar<'_>, store: &Arc<LayoutStore>) {
     let list = Arc::clone(store);
     r.command("content.layouts.list", "content.command.layouts-list.title", move |cx, _| {
-        let project = crate::state::current_project(cx);
+        let project = current_project_root(cx);
         let watch = watch_enabled(cx);
         list.ensure(cx, project, watch);
         let snapshot = list
@@ -218,7 +232,7 @@ pub fn register(r: &mut Registrar<'_>, store: &Arc<LayoutStore>) {
     });
     let reload = Arc::clone(store);
     r.command("content.layouts.reload", "content.command.layouts-reload.title", move |cx, _| {
-        let project = crate::state::current_project(cx);
+        let project = current_project_root(cx);
         let watch = watch_enabled(cx);
         reload.ensure(cx, project, watch);
         Ok(json!({ "generation": reload.request_reload(cx) }))
@@ -242,7 +256,7 @@ fn queue_write(
     let id = args.required_str("id")?.to_owned();
     let root = match args.str("layer").unwrap_or("user") {
         "user" => cx.user_dir().to_path_buf(),
-        "project" => crate::state::current_project(cx)
+        "project" => current_project_root(cx)
             .map(|project| project.join(".forja"))
             .ok_or_else(|| KernelError::message("no project is active"))?,
         other => return Err(KernelError::message(format!("unknown layout layer `{other}`"))),
@@ -275,7 +289,7 @@ fn queue_write(
             };
             let _ = store.with(|state| state.last_write = Some(message));
             if ok {
-                let project = crate::state::current_project(cx);
+                let project = current_project_root(cx);
                 store.ensure(cx, project, watch_enabled(cx));
                 store.request_reload(cx);
             }

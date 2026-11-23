@@ -96,7 +96,8 @@ pub fn ensure(core: &ContentCore, cx: &mut Ctx<'_>, force: bool) {
         .setting("content.reload.watch")
         .and_then(|value| value.as_bool())
         .unwrap_or(true);
-    core.layouts.ensure(cx, project, watch);
+    let layout_project = crate::layouts::current_project_root(cx);
+    core.layouts.ensure(cx, layout_project, watch);
 }
 
 /// Lê todas as camadas para `project`.
@@ -362,6 +363,8 @@ pub fn tick(core: &ContentCore, cx: &mut Ctx<'_>) {
         .setting("content.reload.watch")
         .and_then(|value| value.as_bool())
         .unwrap_or(true);
+    let layout_project = crate::layouts::current_project_root(cx);
+    core.layouts.ensure(cx, layout_project, watch);
     core.layouts.tick(cx, watch, Instant::now());
 }
 
