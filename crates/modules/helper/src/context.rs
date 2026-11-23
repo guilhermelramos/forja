@@ -236,7 +236,7 @@ pub(crate) fn fetch_bench_context(cx: &mut Ctx<'_>, bench_path: &Path) -> Option
                     path: value
                         .get("bench_path")
                         .and_then(Value::as_str)
-                        .unwrap_or_else(|| "")
+                        .unwrap_or("")
                         .to_owned(),
                     request_key: value
                         .get("request_key")

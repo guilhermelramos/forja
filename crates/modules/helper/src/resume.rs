@@ -224,9 +224,7 @@ fn find_previous_session(cx: &mut Ctx<'_>, core: &Shared, bench_path: &str) -> O
     {
         return Some(session);
     }
-    if cx.registry().command("archive.list").is_none() {
-        return None;
-    }
+    cx.registry().command("archive.list")?;
     let listed = cx.run_command("archive.list", Args::new()).ok()?;
     let sessions = listed.get("sessions")?.as_array()?;
     let mut best: Option<(u64, BenchSession)> = None;

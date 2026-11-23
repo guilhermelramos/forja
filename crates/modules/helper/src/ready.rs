@@ -88,6 +88,7 @@ pub(crate) fn flush_deferred_sends(cx: &mut Ctx<'_>, core: &Shared, terminal_id:
 }
 
 /// Inicia a espera assíncrona de prontidão sem bloquear a UI nem matar o processo ao vencer.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn start_watch(
     cx: &mut Ctx<'_>,
     core: &Shared,
