@@ -3,31 +3,76 @@
   "issue": 153,
   "locale": "pt-BR",
   "steps": [
-    { "m": "ui.key", "keys": "Escape" },
-    { "m": "ui.click", "target": "Adicionar pasta" },
-    { "m": "ui.click", "target": "Escolher…" },
-    { "m": "ui.click", "target": "Adicionar" },
-    { "m": "ui.wait", "ms": 300 },
-    { "m": "ui.click", "target": "Nova pasta" },
-    { "m": "ui.click", "target": "Clonar" },
-    { "m": "ui.key", "keys": "Escape" },
-    { "m": "ui.key", "keys": "Escape" }
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.click",
+      "target": "Abrir pasta"
+    },
+    {
+      "m": "ui.click",
+      "target": "Escolher…"
+    },
+    {
+      "m": "ui.click",
+      "target": "Adicionar"
+    },
+    {
+      "m": "ui.wait",
+      "ms": 300
+    },
+    {
+      "m": "ui.click",
+      "target": "Nova pasta"
+    },
+    {
+      "m": "ui.click",
+      "target": "Adicionar projeto"
+    },
+    {
+      "m": "ui.click",
+      "target": "Clonar"
+    },
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    }
   ],
   "expect": [
     {
-      "step": 6,
+      "step": 7,
       "window_count": 2,
-      "present": ["Clonar repositório", "Nova pasta"]
+      "present": [
+        "Clonar repositório",
+        "Nova pasta"
+      ]
     },
     {
-      "step": 7,
+      "step": 8,
       "window_count": 1,
-      "present": ["Nova pasta", "Nome"],
-      "absent": ["Clonar repositório", "URL do repositório"]
+      "present": [
+        "Nova pasta",
+        "Nome"
+      ],
+      "absent": [
+        "Clonar repositório",
+        "URL do repositório"
+      ]
     },
     {
       "window_count": 0,
-      "absent": ["Clonar repositório", "Nome", "OK", "Cancelar"]
+      "absent": [
+        "Clonar repositório",
+        "Nome",
+        "OK",
+        "Cancelar"
+      ]
     }
   ]
 }

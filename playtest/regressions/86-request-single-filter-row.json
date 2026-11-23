@@ -1,0 +1,36 @@
+{
+  "title": "Pedidos mantém filtros e balcão seletor em uma única fileira (#200)",
+  "issue": 200,
+  "locale": "pt-BR",
+  "demo": true,
+  "steps": [
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.click",
+      "target": "Pedidos"
+    }
+  ],
+  "expect": [
+    {
+      "present_elements": [
+        {
+          "name": "Local",
+          "role": "ComboBox"
+        }
+      ],
+      "same_row": [
+        "Meus",
+        "Para revisar",
+        "Abertos",
+        "Recentes",
+        "Todos",
+        "Local"
+      ],
+      "max_primary_buttons": 1,
+      "no_geometry_issues": true
+    }
+  ]
+}

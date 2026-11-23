@@ -47,7 +47,7 @@ pub(super) fn draw(
     }
     let mut chosen = None;
     let mut bounds = ui.ctx().content_rect();
-    bounds.min.y = (toolbar_bottom + 8.0).min(bounds.bottom());
+    bounds.min.y = (toolbar_bottom + forja_ui_kit::Spacing::SM).min(bounds.bottom());
     let window = egui::Window::new(texts.recipes.clone())
         .id(egui::Id::new("forja-terminal-recipe-picker"))
         .collapsible(false)
@@ -127,13 +127,15 @@ pub(super) fn draw(
                 }
                 if !others.is_empty() {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        let chevron = if picker.others_open { "▾" } else { "▸" };
-                        let label = format!(
-                            "{chevron} {} ({})",
-                            texts.recipe_picker_others,
-                            others.len()
-                        );
-                        if forja_ui_kit::button(ui, ButtonKind::Ghost, &label).clicked() {
+                        let chevron = if picker.others_open {
+                            forja_ui_kit::Icon::ChevronDown
+                        } else {
+                            forja_ui_kit::Icon::ChevronRight
+                        };
+                        let label = format!("{} ({})", texts.recipe_picker_others, others.len());
+                        if forja_ui_kit::button_with_icon(ui, chevron, &label, ButtonKind::Ghost)
+                            .clicked()
+                        {
                             picker.others_open = !picker.others_open;
                             refocus_search = true;
                             if !picker.others_open {
@@ -351,7 +353,7 @@ fn draw_row(
         egui::pos2(left, rect.top() + 4.0),
         Align2::LEFT_TOP,
         recipe.title(&texts.locale),
-        FontId::proportional(13.0),
+        forja_ui_kit::TextRole::Body.font(),
         c32(tokens.color.text),
     );
     let command_rect = Rect::from_min_max(
@@ -362,14 +364,14 @@ fn draw_row(
         egui::pos2(left, rect.top() + 24.0),
         Align2::LEFT_TOP,
         &recipe.command,
-        FontId::monospace(11.0),
+        FontId::monospace(forja_ui_kit::TextRole::Caption.size()),
         c32(tokens.color.text_muted),
     );
     ui.painter().text(
         egui::pos2(rect.right() - 10.0, rect.center().y),
         Align2::RIGHT_CENTER,
         scope,
-        FontId::proportional(11.0),
+        forja_ui_kit::TextRole::Caption.font(),
         c32(tokens.color.text_muted),
     );
     if response.hovered() {

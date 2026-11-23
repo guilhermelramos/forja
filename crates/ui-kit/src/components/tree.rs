@@ -1,6 +1,6 @@
 //! Árvore e tabela virtualizada.
 
-use eframe::egui::{self, Align2, Color32, CornerRadius, ScrollArea, Sense, Stroke, Ui};
+use eframe::egui::{self, Align2, Color32, CornerRadius, ScrollArea, Sense, Ui};
 
 use crate::paint::{self, body_font, caption_font, paint_text};
 
@@ -58,6 +58,14 @@ fn tree_node(ui: &mut Ui, node: &mut TreeNode, depth: usize) {
             ui.id().with((&node.label, depth, "toggle")),
             Sense::click(),
         );
+        toggle.widget_info(|| {
+            egui::WidgetInfo::selected(
+                egui::WidgetType::Button,
+                ui.is_enabled(),
+                node.open,
+                &node.label,
+            )
+        });
         if toggle.clicked() {
             node.open = !node.open;
         }
@@ -95,21 +103,16 @@ fn tree_node(ui: &mut Ui, node: &mut TreeNode, depth: usize) {
 }
 
 fn disclosure(ui: &Ui, center: egui::Pos2, open: bool, color: Color32) {
-    let points = if open {
-        vec![
-            center + egui::vec2(-4.0, -2.0),
-            center + egui::vec2(4.0, -2.0),
-            center + egui::vec2(0.0, 3.0),
-        ]
-    } else {
-        vec![
-            center + egui::vec2(-2.0, -4.0),
-            center + egui::vec2(-2.0, 4.0),
-            center + egui::vec2(3.0, 0.0),
-        ]
-    };
-    ui.painter()
-        .add(egui::Shape::convex_polygon(points, color, Stroke::NONE));
+    crate::paint_icon(
+        ui.painter(),
+        if open {
+            crate::Icon::ChevronDown
+        } else {
+            crate::Icon::ChevronRight
+        },
+        egui::Rect::from_center_size(center, egui::vec2(16.0, 16.0)),
+        color,
+    );
 }
 
 /// Coluna da tabela.

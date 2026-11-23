@@ -149,6 +149,17 @@ impl Shared {
             .unwrap_or_default()
     }
 
+    pub fn has_history_content(&self) -> bool {
+        self.0
+            .lock()
+            .map(|state| {
+                !state.commits.is_empty()
+                    || !state.blame.is_empty()
+                    || state.selected_commit.is_some()
+            })
+            .unwrap_or(false)
+    }
+
     pub fn set_commits(&self, path: &str, commits: Vec<LogLine>) {
         if let Ok(mut state) = self.0.lock() {
             state.commits = commits;

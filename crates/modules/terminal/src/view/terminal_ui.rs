@@ -3,6 +3,7 @@
 use super::chrome::c32;
 use super::hub_ui::Control;
 use super::input::{key_bytes, paste_bytes, wheel_bytes};
+use super::line_cache::LineCache;
 use super::render;
 use super::{UiText, ViewAction};
 use crate::core::PendingPaste;
@@ -11,7 +12,7 @@ use crate::panes::tree::{PaneId, SplitDir, TerminalId};
 use crate::settings::TermSettings;
 use crate::terminal::Terminal;
 use crate::theme::Palette;
-use forja_kernel::ui_contract::egui::{self, FontId, Rect, RichText};
+use forja_kernel::ui_contract::egui::{self, Rect, RichText};
 use forja_ui_kit::applied_tokens;
 use std::collections::HashMap;
 
@@ -27,6 +28,7 @@ pub(super) fn draw_terminal(
     texts: &UiText,
     palette: &Palette,
     textures: &mut HashMap<u32, egui::TextureHandle>,
+    line_cache: &mut LineCache,
     body: Rect,
     focused_pane: bool,
     actions: &mut Vec<ViewAction>,
@@ -56,6 +58,8 @@ pub(super) fn draw_terminal(
         return;
     };
     let focus_id = ui.id().with(("forja-terminal-body", terminal.id));
+    terminal.focus_id = Some(focus_id);
+    terminal.drawn_frame = focused_pane.then_some(ui.ctx().cumulative_frame_nr());
     let keyboard_focus = ui.memory(|memory| memory.has_focus(focus_id));
     let grid = render::draw_grid(
         ui,
@@ -63,8 +67,9 @@ pub(super) fn draw_terminal(
         settings,
         palette,
         textures,
+        line_cache.for_terminal(terminal.id),
         body,
-        focused_pane && keyboard_focus,
+        focused_pane && keyboard_focus && ui.input(|input| input.focused),
     );
     let response = grid.response;
     let metrics = grid.metrics;
@@ -197,7 +202,7 @@ pub(super) fn draw_terminal(
             body.right_bottom() - egui::vec2(8.0, 6.0),
             egui::Align2::RIGHT_BOTTOM,
             &texts.click_to_type,
-            FontId::proportional(11.0),
+            forja_ui_kit::TextRole::Caption.font(),
             c32(applied_tokens(ui.ctx()).color.text_muted),
         );
     }
@@ -236,7 +241,8 @@ fn draw_search(ui: &mut egui::Ui, terminal: &mut Terminal, texts: &UiText) {
             terminal.search.editing = false;
             terminal.focus_request = true;
         }
-        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &texts.previous).clicked() {
+        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &texts.previous).clicked()
+        {
             terminal.search_step(true);
         }
         if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &texts.next).clicked() {
@@ -249,7 +255,7 @@ fn draw_search(ui: &mut egui::Ui, terminal: &mut Terminal, texts: &UiText) {
             format!("{count} {}", texts.match_plural)
         };
         ui.label(RichText::new(label).weak());
-        let close_btn = forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE);
+        let close_btn = forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE, &texts.close);
         let close_label = texts.close.clone();
         close_btn.widget_info(|| {
             egui::WidgetInfo::labeled(egui::WidgetType::Button, true, close_label.clone())
@@ -310,7 +316,9 @@ fn draw_paste_bar(
     ui.horizontal_wrapped(|ui| {
         ui.label(RichText::new(texts.paste_title.clone()).strong());
         ui.label(RichText::new(texts.paste_body.clone()).weak());
-        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, &texts.paste_accept).clicked() {
+        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, &texts.paste_accept)
+            .clicked()
+        {
             let bytes = paste_bytes(&pending.text, true);
             terminal.write(&bytes);
             *pending_paste = None;
@@ -550,25 +558,21 @@ fn draw_error_banner(
     };
     ui.group(|ui| {
         ui.horizontal_wrapped(|ui| {
-            ui.label(RichText::new(title).strong().color(c32(tokens.color.danger)));
+            ui.label(
+                RichText::new(title)
+                    .strong()
+                    .color(c32(tokens.color.danger)),
+            );
             ui.label(RichText::new(&body).weak());
         });
         ui.horizontal(|ui| {
-            if forja_ui_kit::button(
-                ui,
-                forja_ui_kit::ButtonKind::Secondary,
-                &texts.error_retry,
-            )
-            .clicked()
+            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &texts.error_retry)
+                .clicked()
             {
                 terminal.retry(Some(ui.ctx().clone()));
             }
-            if forja_ui_kit::button(
-                ui,
-                forja_ui_kit::ButtonKind::Ghost,
-                &texts.error_settings,
-            )
-            .clicked()
+            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &texts.error_settings)
+                .clicked()
             {
                 actions.push(ViewAction::OpenSettings);
             }
@@ -578,5 +582,3 @@ fn draw_error_banner(
         });
     });
 }
-
-

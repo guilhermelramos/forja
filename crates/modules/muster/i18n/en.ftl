@@ -183,3 +183,7 @@ muster-note-state-no-helper = Sent · no helper
 muster-note-target-no-helper = no helper
 muster-no-targets = No tasks yet to receive notes.
 muster-error-empty-note = Write a note before sending.
+muster-page-state-refresh = Refresh
+muster-page-state-empty = No items yet.
+muster-page-state-loading = Loading…
+muster-page-state-error = Could not load.

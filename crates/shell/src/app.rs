@@ -8,6 +8,8 @@
 pub(crate) mod close_confirm;
 #[path = "shell_store.rs"]
 pub(crate) mod shell_store;
+#[path = "tab_bar.rs"]
+pub(crate) mod tab_bar;
 
 use crate::actions::{self, AnvilMode};
 use crate::hosts;
@@ -98,6 +100,8 @@ pub struct ForjaApp {
     pub(crate) rail_views: Vec<ViewInstance>,
     pub(crate) sidebar_views: Vec<ViewInstance>,
     pub(crate) bench_views: Vec<ViewInstance>,
+    pub(crate) home_view: Option<ViewInstance>,
+    pub(crate) project_was_open: bool,
     pub(crate) right_views: Vec<ViewInstance>,
     pub(crate) status_views: Vec<ViewInstance>,
     pub(crate) settings_views: Vec<ViewInstance>,
@@ -111,11 +115,13 @@ pub struct ForjaApp {
     pub(crate) rail_icons: BTreeMap<String, egui::TextureHandle>,
     pub(crate) active_tab: usize,
     pub(crate) tabs: TabSet,
+    pub(crate) known_tab_content: BTreeMap<String, bool>,
     /// Remembered sidebar contribution when more than one module fills the slot.
     pub(crate) sidebar_tab: usize,
     /// Remembered right-panel contribution when more than one module fills the slot.
     pub(crate) right_tab: usize,
     pub(crate) settings_open: bool,
+    pub(crate) settings_page: crate::settings_page::State,
     pub(crate) keymap_open: bool,
     /// Módulo cuja seção é a única mostrada nos Ajustes (`--settings`).
     pub(crate) settings_section: Option<String>,
@@ -175,7 +181,7 @@ pub struct ForjaApp {
     rpc: Option<RpcHost>,
     rpc_wake: Option<forja_kernel::tasks::Wake>,
     rpc_want_seen: Option<bool>,
-    pub(crate) pending_storage_change: Option<crate::overlays::PendingStorageChange>,
+    pub(crate) pending_storage_change: Option<crate::settings_storage::PendingStorageChange>,
     pub(crate) storage_notice: Option<String>,
     pub(crate) driver: Option<crate::test_driver::Driver>,
     pub(crate) geometry_writer: crate::window_geometry::GeometryWriter,
@@ -199,7 +205,9 @@ impl ForjaApp {
         screenshot_error: Arc<Mutex<Option<String>>>,
         session: Session,
     ) -> Self {
-        let _ = forja_ui_kit::install_fonts(&creation.egui_ctx);
+        if let Err(error) = forja_ui_kit::install_fonts(&creation.egui_ctx) {
+            forja_kernel::logging::log(forja_kernel::logging::LogLevel::Warn, error.to_string());
+        }
         if let Some(size) = session.test_window_size {
             // Windows clamps a window larger than the monitor at creation time.
             // Re-applying the size here keeps test layouts at the requested
@@ -216,7 +224,11 @@ impl ForjaApp {
         }
         let rail_views = ViewInstance::collect(runtime.registry(), Slot::Rail);
         let sidebar_views = ViewInstance::collect(runtime.registry(), Slot::Sidebar);
-        let bench_views = ViewInstance::collect(runtime.registry(), Slot::BenchTab);
+        let mut bench_views = ViewInstance::collect(runtime.registry(), Slot::BenchTab);
+        let home_view = bench_views
+            .iter()
+            .position(|view| view.id == "project.home")
+            .map(|index| bench_views.remove(index));
         let right_views = ViewInstance::collect(runtime.registry(), Slot::RightPanel);
         let status_views = ViewInstance::collect(runtime.registry(), Slot::StatusBar);
         let settings_views = ViewInstance::collect(runtime.registry(), Slot::SettingsSection);
@@ -255,8 +267,22 @@ impl ForjaApp {
             let sidebar_ids: Vec<&str> =
                 sidebar_views.iter().map(|view| view.id.as_str()).collect();
             let right_ids: Vec<&str> = right_views.iter().map(|view| view.id.as_str()).collect();
-            let mut resolved =
-                base_layout.resolve(&bench_ids, &rail_ids, &sidebar_ids, &right_ids);
+            let initial_open = if base_layout.open_tabs.is_none() {
+                Some(Self::initial_open_views(
+                    &mut runtime,
+                    &bench_views,
+                    current_bench_id.as_deref(),
+                ))
+            } else {
+                None
+            };
+            let mut resolved = base_layout.resolve_with_defaults(
+                &bench_ids,
+                &rail_ids,
+                &sidebar_ids,
+                &right_ids,
+                initial_open.as_deref(),
+            );
             let env_right_tab = std::env::var("FORJA_RIGHT_TAB").ok();
             let cli = shell_store::CliOverrides {
                 open: session.open.as_deref(),
@@ -268,12 +294,19 @@ impl ForjaApp {
             resolved.apply_cli_overrides(&cli, &bench_ids, &rail_ids, &right_ids);
             resolved
         };
+        let known_tab_content = bench_views
+            .iter()
+            .filter(|view| view.view.empty_by_nature())
+            .map(|view| (view.id.clone(), view.view.has_content()))
+            .collect();
         let mut app = Self {
             runtime,
             tokens: Tokens::brasa_dark(),
             rail_views,
             sidebar_views,
             bench_views,
+            home_view,
+            project_was_open: false,
             right_views,
             status_views,
             settings_views,
@@ -285,9 +318,11 @@ impl ForjaApp {
             rail_icons: BTreeMap::new(),
             active_tab: resolved.active_tab,
             tabs: resolved.tabs,
+            known_tab_content,
             sidebar_tab: resolved.sidebar_tab,
             right_tab: resolved.right_tab,
             settings_open: false,
+            settings_page: crate::settings_page::State::default(),
             keymap_open: false,
             settings_section: None,
             modal_capture: session.modal.clone(),
@@ -508,8 +543,13 @@ impl ForjaApp {
         self.active_crumb_checked = None;
         if id == "terminal.toggle"
             && self.rail_page.is_none()
-            && self.bench_views.get(self.active_tab).is_some_and(|view| view.id == "terminal.tab")
-            && self.tabs.is_visible(self.active_tab, self.bench_views.len())
+            && self
+                .bench_views
+                .get(self.active_tab)
+                .is_some_and(|view| view.id == "terminal.tab")
+            && self
+                .tabs
+                .is_visible(self.active_tab, self.bench_views.len())
         {
             actions::push(actions::Action::CloseTab);
             return;
@@ -517,7 +557,10 @@ impl ForjaApp {
         match self.runtime.run_command(id, args) {
             Ok(_) => {
                 self.clear_status();
-                if matches!(id, "terminal.open" | "terminal.search" | "terminal.toggle" | "terminal.focus") {
+                if matches!(
+                    id,
+                    "terminal.open" | "terminal.search" | "terminal.toggle" | "terminal.focus"
+                ) {
                     actions::push(actions::Action::ShowBenchTab("terminal.tab".to_owned()));
                 }
                 if matches!(id, "helper.list" | "helper.status") {
@@ -563,6 +606,14 @@ impl ForjaApp {
         self.status_details_open = false;
     }
 
+    pub(crate) fn no_project(&mut self) -> bool {
+        self.home_view.is_some()
+            && self
+                .runtime
+                .run_command("project.current", Args::new())
+                .is_ok_and(|value| value.is_null())
+    }
+
     pub(crate) fn active_project_crumb(&mut self) -> String {
         let stale = self
             .active_crumb_checked
@@ -577,6 +628,9 @@ impl ForjaApp {
     }
 
     fn resolve_active_crumb(&mut self) -> Option<String> {
+        if self.no_project() {
+            return None;
+        }
         let projects = if self.runtime.registry().command("project.list").is_some() {
             self.runtime
                 .run_command("project.list", Args::new())
@@ -812,9 +866,12 @@ impl ForjaApp {
         // Only the Anvil shortcuts may open above these shell windows. Other
         // modal layers, including dialogs and popups, keep exclusive control.
         let shell_window_active = (self.settings_open
-            && forja_ui_kit::keyboard_layer_active(ctx, egui::Id::new("forja.settings.keyboard")))
+            && ctx.memory(|memory| memory.top_modal_layer().is_none()))
             || (self.keymap_open
-                && forja_ui_kit::keyboard_layer_active(ctx, egui::Id::new("forja.keymap.keyboard")));
+                && forja_ui_kit::keyboard_layer_active(
+                    ctx,
+                    egui::Id::new("forja.keymap.keyboard"),
+                ));
         if self.anvil_open
             || self.close_confirm.is_some()
             || egui::Popup::is_any_open(ctx)
@@ -869,7 +926,11 @@ impl ForjaApp {
                 fired.push(id);
             }
         }
-        let has_create_dialog = self.runtime.registry().command("bench.create_dialog").is_some();
+        let has_create_dialog = self
+            .runtime
+            .registry()
+            .command("bench.create_dialog")
+            .is_some();
         for id in fired {
             let target = shortcut_target(&id, has_create_dialog);
             // A command that needs context asks for it in the Anvil instead of
@@ -964,6 +1025,7 @@ impl eframe::App for ForjaApp {
         self.show_demos();
         self.refresh_look(ctx);
         self.sync_sidebar_setting();
+        self.sync_dynamic_tabs();
         self.top_bar(ctx);
         self.status_bar(ctx);
         self.left_panels(ctx);
@@ -1162,11 +1224,19 @@ mod shortcut_tests {
             physical_key: None,
             pressed: true,
             repeat: false,
-            modifiers: egui::Modifiers { ctrl: true, shift: true, command: true, ..Default::default() },
+            modifiers: egui::Modifiers {
+                ctrl: true,
+                shift: true,
+                command: true,
+                ..Default::default()
+            },
         });
         let _ = ctx.run(raw, |ctx| {
             assert!(!chord_pressed(ctx, &KeyChord::parse("Ctrl+K").unwrap()));
-            assert!(chord_pressed(ctx, &KeyChord::parse("Ctrl+Shift+K").unwrap()));
+            assert!(chord_pressed(
+                ctx,
+                &KeyChord::parse("Ctrl+Shift+K").unwrap()
+            ));
         });
     }
 

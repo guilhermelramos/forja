@@ -102,19 +102,19 @@ impl ChatView {
             let (label, color) = if !is_installed && matches!(session.status, SessionStatus::Idle) {
                 (
                     cx.t("chat.view.not-installed"),
-                    egui::Color32::from_rgb(0xFF, 0xC1, 0x4D),
+                    forja_ui_kit::applied_tokens(ui.ctx()).color.spark.to_color32(),
                 )
             } else {
                 match session.status {
-                    SessionStatus::Idle => (cx.t("chat.view.idle"), egui::Color32::from_rgb(0x6C, 0xC4, 0x8A)),
-                    SessionStatus::Working => (cx.t("chat.view.working"), egui::Color32::from_rgb(0x6F, 0xA8, 0xDC)),
-                    SessionStatus::Cancelled => (cx.t("chat.view.cancelled"), egui::Color32::from_rgb(0xFF, 0xC1, 0x4D)),
-                    SessionStatus::Error => (cx.t("chat.view.error"), egui::Color32::from_rgb(0xE5, 0x53, 0x4B)),
+                    SessionStatus::Idle => (cx.t("chat.view.idle"), forja_ui_kit::applied_tokens(ui.ctx()).color.ok.to_color32()),
+                    SessionStatus::Working => (cx.t("chat.view.working"), forja_ui_kit::applied_tokens(ui.ctx()).color.info.to_color32()),
+                    SessionStatus::Cancelled => (cx.t("chat.view.cancelled"), forja_ui_kit::applied_tokens(ui.ctx()).color.spark.to_color32()),
+                    SessionStatus::Error => (cx.t("chat.view.error"), forja_ui_kit::applied_tokens(ui.ctx()).color.danger.to_color32()),
                 }
             };
-            ui.label(egui::RichText::new(label).color(color).strong());
+            forja_ui_kit::text(ui, egui::RichText::new(label).color(color).strong());
             if matches!(session.status, SessionStatus::Working) {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!(
                         "{}s",
                         session.turn_seconds()
@@ -123,7 +123,7 @@ impl ChatView {
                 );
             }
             if session.pending() > 0 {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!(
                         "{}: {}",
                         cx.t("chat.view.queued"),
@@ -133,7 +133,7 @@ impl ChatView {
                 );
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.button(cx.t("chat.view.terminal")).clicked() {
+                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &cx.t("chat.view.terminal")).clicked() {
                     let mut args = Args::new();
                     args.insert("profile_id", json!(session.profile.id.clone()));
                     args.insert(
@@ -188,7 +188,7 @@ impl ChatView {
             });
         });
         ui.horizontal(|ui| {
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(short_folder(&session.bench_path))
                     .monospace()
                     .weak(),
@@ -228,7 +228,7 @@ impl ChatView {
             forja_ui_kit::error_banner(ui, &human.summary, human.detail.as_deref(), &details_label);
         }
         if let Some(notice) = &session.notice {
-            ui.label(egui::RichText::new(notice).weak());
+            forja_ui_kit::text(ui, egui::RichText::new(notice).weak());
         }
         let enter_sends = cx
             .setting("chat.input.enter_sends")
@@ -237,7 +237,7 @@ impl ChatView {
         let mut send = false;
         let mut cancel = false;
         ui.horizontal(|ui| {
-            if ui.button(cx.t("chat.view.attach")).clicked() {
+            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &cx.t("chat.view.attach")).clicked() {
                 let picked = forja_kernel::test_pick::file()
                     .unwrap_or_else(|| rfd::FileDialog::new().pick_file());
                 if let Some(path) = picked {
@@ -262,7 +262,7 @@ impl ChatView {
                 }
             }
             for path in &session.attachments {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(
                         path.file_name()
                             .map(|name| name.to_string_lossy().into_owned())
@@ -273,10 +273,10 @@ impl ChatView {
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if matches!(session.status, SessionStatus::Working) {
-                    if ui.button(cx.t("chat.view.cancel")).clicked() {
+                    if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &cx.t("chat.view.cancel")).clicked() {
                         cancel = true;
                     }
-                } else if ui.button(cx.t("chat.view.send")).clicked() {
+                } else if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, &cx.t("chat.view.send")).clicked() {
                     send = true;
                 }
             });
@@ -401,9 +401,9 @@ impl ChatView {
                 .cloned()
                 .collect();
             ui.horizontal_wrapped(|ui| {
-                ui.label(egui::RichText::new(cx.t("chat.view.files")).weak());
+                forja_ui_kit::text(ui, egui::RichText::new(cx.t("chat.view.files")).weak());
                 if session.files.is_empty() {
-                    ui.label(egui::RichText::new(cx.t("chat.view.loading-files")).weak());
+                    forja_ui_kit::text(ui, egui::RichText::new(cx.t("chat.view.loading-files")).weak());
                 }
                 for (index, file) in matches.iter().enumerate() {
                     let selected = index == self.selected_mention.min(matches.len().saturating_sub(1));
@@ -426,7 +426,7 @@ impl ChatView {
                 .collect();
             if !matches.is_empty() {
                 ui.horizontal_wrapped(|ui| {
-                    ui.label(egui::RichText::new(cx.t("chat.view.commands")).weak());
+                    forja_ui_kit::text(ui, egui::RichText::new(cx.t("chat.view.commands")).weak());
                     for command in matches {
                         if ui
                             .button(format!("/{command}"))
@@ -437,7 +437,7 @@ impl ChatView {
                     }
                 });
             } else {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t("chat.view.command-hint")).weak(),
                 );
             }
@@ -611,7 +611,7 @@ impl View for ChatView {
                 return;
             };
             let Some(session) = &state.active else {
-                ui.label(cx.t("chat.view.no-session"));
+                forja_ui_kit::text(ui, cx.t("chat.view.no-session"));
                 return;
             };
             (
@@ -654,7 +654,7 @@ impl View for ChatView {
         egui::TopBottomPanel::top("forja-chat-header")
             .resizable(false)
             .show_inside(ui, |ui| {
-                ui.label(egui::RichText::new(cx.t("chat.view.title")).weak());
+                forja_ui_kit::text(ui, egui::RichText::new(cx.t("chat.view.title")).weak());
                 if let Ok(mut state) = core.state.lock() {
                     if let Some(session) = &mut state.active {
                         switch_profile = self.draw_header(
@@ -768,7 +768,7 @@ fn draw_message_list(
             }
         });
     ui.horizontal(|ui| {
-        ui.label(
+        forja_ui_kit::text(ui,
             egui::RichText::new(format!(
                 "{} · {}",
                 header.profile_name,
@@ -777,7 +777,7 @@ fn draw_message_list(
             .weak(),
         );
         if header.usage.total_tokens > 0 {
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(format!(
                     "↑{} ↓{} Σ{}",
                     header.usage.input_tokens,
@@ -800,19 +800,19 @@ fn draw_message(
     diff_mode: DiffMode,
 ) {
     let (name, color) = match message.role {
-        ChatRole::User => (cx.t("chat.view.you"), egui::Color32::from_rgb(0xFF, 0xC1, 0x4D)),
+        ChatRole::User => (cx.t("chat.view.you"), forja_ui_kit::applied_tokens(ui.ctx()).color.spark.to_color32()),
         ChatRole::Assistant => (
             cx.t("chat.view.assistant"),
-            egui::Color32::from_rgb(0x6F, 0xA8, 0xDC),
+            forja_ui_kit::applied_tokens(ui.ctx()).color.info.to_color32(),
         ),
-        ChatRole::Tool => (cx.t("chat.view.tool"), egui::Color32::from_rgb(0xA6, 0x9C, 0x93)),
+        ChatRole::Tool => (cx.t("chat.view.tool"), forja_ui_kit::applied_tokens(ui.ctx()).color.text_muted.to_color32()),
         ChatRole::System => (cx.t("chat.view.system"), egui::Color32::GRAY),
     };
     ui.horizontal(|ui| {
-        ui.label(egui::RichText::new(name).color(color).strong());
+        forja_ui_kit::text(ui, egui::RichText::new(name).color(color).strong());
         if message.timestamp_ms > 0 {
             if let Some(time) = chrono::DateTime::from_timestamp_millis(message.timestamp_ms) {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(time.format("%H:%M").to_string()).weak(),
                 );
             }
@@ -826,17 +826,17 @@ fn draw_message(
                         .fill(ui.visuals().faint_bg_color)
                         .show(ui, |ui| {
                             ui.set_max_width(max_width);
-                            ui.label(text);
+                            forja_ui_kit::text(ui, text);
                         });
                 } else {
                     ui.scope(|ui| {
                         ui.set_max_width(max_width);
-                        ui.label(text);
+                        forja_ui_kit::text(ui, text);
                     });
                 }
             }
             ChatBlock::Code { lang, code } => {
-                ui.label(egui::RichText::new(lang).weak().monospace());
+                forja_ui_kit::text(ui, egui::RichText::new(lang).weak().monospace());
                 egui::Frame::group(ui.style())
                     .fill(ui.visuals().extreme_bg_color)
                     .show(ui, |ui| {
@@ -861,19 +861,19 @@ fn draw_message(
                     ToolStatus::Error => cx.t("chat.view.failed"),
                 };
                 let status_color = match status {
-                    ToolStatus::Running => egui::Color32::from_rgb(0x6F, 0xA8, 0xDC),
-                    ToolStatus::Ok => egui::Color32::from_rgb(0x6C, 0xC4, 0x8A),
-                    ToolStatus::Error => egui::Color32::from_rgb(0xE5, 0x53, 0x4B),
+                    ToolStatus::Running => forja_ui_kit::applied_tokens(ui.ctx()).color.info.to_color32(),
+                    ToolStatus::Ok => forja_ui_kit::applied_tokens(ui.ctx()).color.ok.to_color32(),
+                    ToolStatus::Error => forja_ui_kit::applied_tokens(ui.ctx()).color.danger.to_color32(),
                 };
                 egui::Frame::group(ui.style()).show(ui, |ui| {
                     ui.set_max_width(max_width);
                     ui.horizontal(|ui| {
-                        ui.label(
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(format!("🔧 {name}"))
                                 .strong()
                                 .monospace(),
                         );
-                        ui.label(egui::RichText::new(status_text).color(status_color));
+                        forja_ui_kit::text(ui, egui::RichText::new(status_text).color(status_color));
                     });
                     if !input.trim().is_empty() {
                         if collapse_output {
@@ -928,20 +928,20 @@ fn draw_message(
                             Some(key) => format!("✎ {path} · {}", cx.t(key)),
                             None => format!("✎ {path}"),
                         };
-                        ui.label(egui::RichText::new(title).strong());
+                        forja_ui_kit::text(ui, egui::RichText::new(title).strong());
                         egui::CollapsingHeader::new(cx.t("chat.view.diff"))
                             .id_salt(format!("diff-{path}"))
                             .default_open(diff_mode.starts_open())
                             .show(ui, |ui| {
                                 for line in diff.lines() {
                                     let color = if line.starts_with('+') {
-                                        egui::Color32::from_rgb(0x6C, 0xC4, 0x8A)
+                                        forja_ui_kit::applied_tokens(ui.ctx()).color.ok.to_color32()
                                     } else if line.starts_with('-') {
-                                        egui::Color32::from_rgb(0xE5, 0x53, 0x4B)
+                                        forja_ui_kit::applied_tokens(ui.ctx()).color.danger.to_color32()
                                     } else {
                                         ui.visuals().text_color()
                                     };
-                                    ui.label(
+                                    forja_ui_kit::text(ui,
                                         egui::RichText::new(line).monospace().color(color),
                                     );
                                 }
@@ -951,14 +951,14 @@ fn draw_message(
             ChatBlock::Todo { items } => {
                 egui::Frame::group(ui.style()).show(ui, |ui| {
                     ui.set_max_width(max_width);
-                    ui.label(egui::RichText::new(cx.t("chat.view.todos")).strong());
+                    forja_ui_kit::text(ui, egui::RichText::new(cx.t("chat.view.todos")).strong());
                     for item in items {
                         let marker = match item.status.as_str() {
                             "completed" => "✔",
                             "in_progress" => "◐",
                             _ => "○",
                         };
-                        ui.label(format!("{marker} {}", item.text));
+                        forja_ui_kit::text(ui, format!("{marker} {}", item.text));
                     }
                 });
             }
@@ -977,7 +977,7 @@ fn draw_message(
         }
     }
     if let Some(usage) = message.usage {
-        ui.label(
+        forja_ui_kit::text(ui,
             egui::RichText::new(format!(
                 "↑{} ↓{} Σ{}",
                 usage.input_tokens, usage.output_tokens, usage.total_tokens

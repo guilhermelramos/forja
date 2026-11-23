@@ -73,6 +73,8 @@ pub fn to_json(update: &accesskit::TreeUpdate, pixels_per_point: f32) -> Value {
                 "id": id.0,
                 "parent": parents.get(id).map(|parent| parent.0),
                 "role": format!("{:?}", node.role()),
+                "button_kind": node.author_id(),
+                "primary": node.author_id() == Some("forja.button.primary"),
                 "name": node.label().or_else(|| node.value()),
                 "label": node.label(),
                 "value": node.value(),

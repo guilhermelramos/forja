@@ -389,6 +389,16 @@ fn csi(surface: &mut Surface, final_char: char) {
         }
         return;
     }
+    if final_char == 'q' && surface.escape.ends_with(' ') {
+        if let Ok(shape @ 0..=6) = surface.escape.trim().parse::<u8>() { surface.cursor_shape = Some(shape); }
+        return;
+    }
+    if final_char == 'p' && surface.escape.starts_with('?') && surface.escape.ends_with('$') {
+        let mode = surface.escape[1..surface.escape.len()-1].parse::<usize>().unwrap_or(0);
+        let state = match mode { 2026 => if surface.synchronized_output { 1 } else { 2 }, 1004 => if surface.focus_reporting { 1 } else { 2 }, _ => 0 };
+        surface.responses.extend_from_slice(format!("\x1b[?{mode};{state}$y").as_bytes());
+        return;
+    }
     if surface.escape.starts_with('=') || surface.escape.chars().any(|ch| (' '..='/').contains(&ch)) {
         return;
     }
@@ -509,7 +519,14 @@ fn csi(surface: &mut Surface, final_char: char) {
                 }
             }
         }
-        'm' => apply_sgr(surface, &values),
+        'm' => {
+            // Underline subparameters are not separate SGR attributes.
+            let sgr: Vec<usize> = surface.escape.split(';').flat_map(|part| {
+                if let Some(style) = part.strip_prefix("4:") { vec![if style == "0" { 24 } else { 4 }] }
+                else { part.split(':').filter(|value| !value.is_empty() || !surface.escape.contains(':')).map(|value| value.parse().unwrap_or(0)).collect() }
+            }).collect();
+            apply_sgr(surface, &sgr);
+        },
         'n' if first == 6 => surface.responses.extend_from_slice(
             format!("\x1b[{};{}R", surface.row + 1, surface.col + 1).as_bytes(),
         ),

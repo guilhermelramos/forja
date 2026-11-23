@@ -84,3 +84,4 @@ browser-home-docs-open-failed = Não foi possível abrir o documento no Visualiz
 browser-home-recent-title = Atalhos recentes
 browser-home-recent-empty = Páginas visitadas recentemente no navegador aparecem aqui.
 browser-home-offline-note = Página inicial offline — sem requisições à rede externa.
+browser-view-close-find = Fechar busca

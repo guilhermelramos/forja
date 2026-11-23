@@ -34,6 +34,8 @@ fn default_color() -> String {
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ProjectsFile {
+    #[serde(default)]
+    pub recent: Vec<Project>,
     #[serde(default = "schema_version")]
     pub schema_version: u32,
     #[serde(default)]

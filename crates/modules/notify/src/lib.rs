@@ -20,7 +20,11 @@ use std::time::Instant;
 use view::{notices_json, CenterView, Notice, Shared, ToastView};
 
 #[forja_kernel::module]
-static NOTIFY: fn() -> Box<dyn Module> = || Box::new(NotifyModule { state: Shared::new() });
+static NOTIFY: fn() -> Box<dyn Module> = || {
+    Box::new(NotifyModule {
+        state: Shared::new(),
+    })
+};
 
 pub struct NotifyModule {
     state: Shared,
@@ -32,7 +36,10 @@ impl Module for NotifyModule {
     }
 
     fn register(&mut self, r: &mut Registrar<'_>) {
-        r.i18n(include_str!("../i18n/en.ftl"), include_str!("../i18n/pt-BR.ftl"));
+        r.i18n(
+            include_str!("../i18n/en.ftl"),
+            include_str!("../i18n/pt-BR.ftl"),
+        );
         r.keymap(include_str!("../keymap.toml"));
         register_settings(r);
 
@@ -42,9 +49,11 @@ impl Module for NotifyModule {
         });
 
         let recent_state = self.state.clone();
-        r.command("notify.recent", "notify.command.recent", move |_cx, _args| {
-            Ok(notices_json(&recent_state))
-        });
+        r.command(
+            "notify.recent",
+            "notify.command.recent",
+            move |_cx, _args| Ok(notices_json(&recent_state)),
+        );
 
         let rpc_state = self.state.clone();
         r.rpc(
@@ -54,15 +63,17 @@ impl Module for NotifyModule {
                 .param(ParamSchema::optional("body", ParamKind::String))
                 .param(ParamSchema::optional("level", ParamKind::String))
                 .param(ParamSchema::optional("bench_path", ParamKind::String))
-                .result(ResultSchema::new("notify.method.show.result").schema(json!({
-                    "type": "object",
-                    "properties": {
-                        "toast": { "type": "boolean" },
-                        "os": { "type": "boolean" },
-                        "sound": { "type": "boolean" }
-                    },
-                    "required": ["toast", "os", "sound"]
-                }))),
+                .result(
+                    ResultSchema::new("notify.method.show.result").schema(json!({
+                        "type": "object",
+                        "properties": {
+                            "toast": { "type": "boolean" },
+                            "os": { "type": "boolean" },
+                            "sound": { "type": "boolean" }
+                        },
+                        "required": ["toast", "os", "sound"]
+                    })),
+                ),
             move |cx, params| {
                 let args = Args::from_map(params);
                 show_args(cx, &rpc_state, &args)
@@ -93,16 +104,28 @@ impl Module for NotifyModule {
         }
 
         let toasts = self.state.clone();
-        r.view(Slot::Modal, "notify.toasts", "notify.toasts.title", 10, move || {
-            Box::new(ToastView { state: toasts.clone() }) as Box<dyn View>
-        });
+        r.view(
+            Slot::Modal,
+            "notify.toasts",
+            "notify.toasts.title",
+            10,
+            move || {
+                Box::new(ToastView {
+                    state: toasts.clone(),
+                }) as Box<dyn View>
+            },
+        );
         let center = self.state.clone();
         r.view(
             Slot::StatusBar,
             "notify.center",
             "notify.center.title",
             50,
-            move || Box::new(CenterView { state: center.clone() }) as Box<dyn View>,
+            move || {
+                Box::new(CenterView {
+                    state: center.clone(),
+                }) as Box<dyn View>
+            },
         );
     }
 }
@@ -186,7 +209,14 @@ fn register_settings(r: &mut Registrar<'_>) {
 }
 
 fn toggle(key: &str, default: bool, label: &str, help: &str, order: i32) -> SettingSpec {
-    SettingSpec::new(key, SettingKind::Bool, SettingValue::Bool(default), label, help).order(order)
+    SettingSpec::new(
+        key,
+        SettingKind::Bool,
+        SettingValue::Bool(default),
+        label,
+        help,
+    )
+    .order(order)
 }
 
 fn text_setting(key: &str, default: &str, label: &str, help: &str, order: i32) -> SettingSpec {
@@ -320,7 +350,9 @@ fn policy_from(cx: &forja_kernel::Ctx<'_>, focused: bool) -> Policy {
 }
 
 fn flag(cx: &forja_kernel::Ctx<'_>, key: &str, default: bool) -> bool {
-    cx.setting(key).and_then(SettingValue::as_bool).unwrap_or(default)
+    cx.setting(key)
+        .and_then(SettingValue::as_bool)
+        .unwrap_or(default)
 }
 
 fn text_setting_value<'a>(cx: &'a forja_kernel::Ctx<'_>, key: &str, default: &'a str) -> &'a str {
@@ -376,7 +408,9 @@ mod tests {
         Runtime::new(
             vec![
                 Box::new(NotificationsAnchor),
-                Box::new(NotifyModule { state: Shared::new() }),
+                Box::new(NotifyModule {
+                    state: Shared::new(),
+                }),
             ],
             RuntimeOptions {
                 data_dir: Some(dir.to_path_buf()),
@@ -386,6 +420,84 @@ mod tests {
             },
         )
         .expect("notify registers")
+    }
+
+    #[test]
+    fn notification_icon_action_has_a_translated_accessible_name() {
+        let dir = temp_dir();
+        let mut runtime = runtime(&dir);
+        let ctx = forja_ui_kit::egui::Context::default();
+        ctx.enable_accesskit();
+        let mut view = CenterView {
+            state: Shared::new(),
+        };
+        let output = ctx.run(Default::default(), |ctx| {
+            forja_ui_kit::egui::CentralPanel::default().show(ctx, |ui| {
+                view.ui(ui, &mut runtime.ctx("notify"));
+            });
+        });
+        let update = output.platform_output.accesskit_update.unwrap();
+        assert!(update
+            .nodes
+            .iter()
+            .any(|(_, node)| node.label() == Some("0 avisos")));
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn notification_icon_action_fits_inside_the_status_bar() {
+        let dir = temp_dir();
+        let mut runtime = runtime(&dir);
+        let ctx = forja_ui_kit::egui::Context::default();
+        forja_ui_kit::apply(&ctx, &forja_ui_kit::Tokens::brasa_dark());
+        ctx.enable_accesskit();
+        let mut view = CenterView {
+            state: Shared::new(),
+        };
+        let output = ctx.run(
+            forja_ui_kit::egui::RawInput {
+                screen_rect: Some(forja_ui_kit::egui::Rect::from_min_size(
+                    Default::default(),
+                    forja_ui_kit::egui::vec2(1280.0, 800.0),
+                )),
+                ..Default::default()
+            },
+            |ctx| {
+                forja_ui_kit::egui::TopBottomPanel::bottom("status")
+                    .exact_height(32.0)
+                    .frame(
+                        forja_ui_kit::egui::Frame::NONE
+                            .inner_margin(forja_ui_kit::egui::Margin::symmetric(10, 2)),
+                    )
+                    .show(ctx, |ui| {
+                        ui.horizontal_centered(|ui| {
+                            ui.with_layout(
+                                forja_ui_kit::egui::Layout::right_to_left(
+                                    forja_ui_kit::egui::Align::Center,
+                                ),
+                                |ui| {
+                                    view.ui(ui, &mut runtime.ctx("notify"));
+                                },
+                            );
+                        });
+                    });
+            },
+        );
+        let update = output.platform_output.accesskit_update.unwrap();
+        let bounds = update
+            .nodes
+            .iter()
+            .find_map(|(_, node)| {
+                (node.label() == Some("0 avisos")).then(|| node.bounds().unwrap())
+            })
+            .unwrap();
+        assert!(
+            bounds.y1 <= 800.0,
+            "notification action leaves the viewport: {bounds:?}"
+        );
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]

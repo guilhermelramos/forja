@@ -5,7 +5,7 @@ use eframe::egui::{
     Ui,
 };
 
-use super::button::{ButtonKind, button};
+use super::button::{button, ButtonKind};
 use crate::apply::{elevation_shadow, pad_i8, radius_u8};
 use crate::paint::{self, body_font, paint_text};
 
@@ -27,50 +27,80 @@ pub fn context_menu(ui: &mut Ui, label: &str, items: &[MenuItem<'_>]) -> Option<
     open_menu(&response, items)
 }
 
+/// Abre um menu contextual ancorado em qualquer [`Response`] clicável.
+pub fn popup_menu(response: &Response, items: &[MenuItem<'_>]) -> Option<usize> {
+    open_menu(response, items)
+}
+
 /// Ícone que abre o mesmo menu. O tooltip é o nome da ação.
-pub fn icon_menu(ui: &mut Ui, glyph: &str, tooltip: &str, items: &[MenuItem<'_>]) -> Option<usize> {
-    let response = crate::icon::icon_button(ui, glyph).on_hover_text(tooltip.to_owned());
+pub fn icon_menu(
+    ui: &mut Ui,
+    glyph: crate::Icon,
+    tooltip: &str,
+    items: &[MenuItem<'_>],
+) -> Option<usize> {
+    let response = crate::icon::icon_button(ui, glyph, tooltip);
     response.widget_info(|| {
         egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), tooltip)
     });
     open_menu(&response, items)
 }
 
-fn open_menu(response: &Response, items: &[MenuItem<'_>]) -> Option<usize> {
-    let mut chosen = None;
+/// Opens an anchored, scrollable menu for content such as a mix of commands and toggles.
+pub fn popup_menu_contents(response: &Response, content: impl FnOnce(&mut Ui)) {
+    menu_popup(response)
+        .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
+        .show(|ui| {
+            egui::ScrollArea::vertical()
+                .max_height(menu_scroll_height(response))
+                .show(ui, content);
+        });
+}
+
+fn menu_scroll_height(response: &Response) -> f32 {
     let screen = response.ctx.content_rect();
-    let max_width = (screen.width() - 24.0).clamp(160.0, 420.0);
     let below = (screen.bottom() - response.rect.bottom() - 12.0).max(0.0);
     let above = (response.rect.top() - screen.top() - 12.0).max(0.0);
-    let available_height = below
-        .max(above)
-        .clamp(MENU_MIN_HEIGHT, (screen.height() - 24.0).max(MENU_MIN_HEIGHT));
-    let max_height = menu_height_limit(screen.height()).min(available_height);
-    let tokens = crate::applied_tokens(&response.ctx);
-    let row_height = tokens.metrics().row;
-    let spacing_y = 2.0_f32;
-    let content_height = items.len() as f32 * (row_height + spacing_y) + 8.0;
+    let available_height = below.max(above).clamp(
+        MENU_MIN_HEIGHT,
+        (screen.height() - 24.0).max(MENU_MIN_HEIGHT),
+    );
+    menu_height_limit(screen.height()).min(available_height)
+}
+
+fn menu_popup(response: &Response) -> Popup<'_> {
     Popup::from_response(response)
         .kind(PopupKind::Menu)
         .layout(egui::Layout::top_down(egui::Align::Min))
         .gap(4.0)
         .open_memory(response.clicked().then_some(egui::SetOpenCommand::Toggle))
-        .show(|ui| {
-            let width = menu_width(ui, items, max_width);
-            ui.set_width(width);
-            ui.spacing_mut().item_spacing.y = spacing_y;
-            if content_height <= max_height {
-                chosen = menu_list(ui, items, width);
-            } else {
-                egui::ScrollArea::vertical()
-                    .id_salt("forja-ui-kit.context-menu")
-                    .max_height(max_height)
-                    .auto_shrink([false, false])
-                    .show(ui, |ui| {
-                        chosen = menu_list(ui, items, width);
-                    });
-            }
-        });
+}
+
+fn open_menu(response: &Response, items: &[MenuItem<'_>]) -> Option<usize> {
+    let mut chosen = None;
+    let screen = response.ctx.content_rect();
+    let max_width = (screen.width() - 24.0).clamp(160.0, 420.0);
+    let max_height = menu_scroll_height(response);
+    let tokens = crate::applied_tokens(&response.ctx);
+    let row_height = tokens.metrics().row;
+    let spacing_y = 2.0_f32;
+    let content_height = items.len() as f32 * (row_height + spacing_y) + 8.0;
+    menu_popup(response).show(|ui| {
+        let width = menu_width(ui, items, max_width);
+        ui.set_width(width);
+        ui.spacing_mut().item_spacing.y = spacing_y;
+        if content_height <= max_height {
+            chosen = menu_list(ui, items, width);
+        } else {
+            egui::ScrollArea::vertical()
+                .id_salt("forja-ui-kit.context-menu")
+                .max_height(max_height)
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    chosen = menu_list(ui, items, width);
+                });
+        }
+    });
     chosen
 }
 
@@ -148,7 +178,9 @@ fn menu_row(ui: &mut Ui, item: &MenuItem<'_>, width: f32) -> Response {
     );
     ui.painter().rect_filled(bar, CornerRadius::same(2), mark);
     let text_rect = rect.shrink2(egui::vec2(12.0, 0.0));
-    let text_painter = ui.painter().with_clip_rect(text_rect.intersect(ui.clip_rect()));
+    let text_painter = ui
+        .painter()
+        .with_clip_rect(text_rect.intersect(ui.clip_rect()));
     paint_text(
         &text_painter,
         text_rect,

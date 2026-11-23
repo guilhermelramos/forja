@@ -2,9 +2,7 @@
 //! can depend on it without knowing about the app binary.
 
 use crate::actions::{self, Action};
-use forja_kernel::forja_protocol::{
-    Method, MethodEffect, ParamKind, ParamSchema, ResultSchema,
-};
+use forja_kernel::forja_protocol::{Method, MethodEffect, ParamKind, ParamSchema, ResultSchema};
 use forja_kernel::{Module, ModuleManifest, Registrar};
 use serde_json::json;
 
@@ -31,35 +29,31 @@ impl Module for ShellModule {
 }
 
 fn open_logs(registrar: &mut Registrar<'_>) {
-    registrar.command(
-        "shell.logs.open",
-        "shell.command.logs-open",
-        |cx, _args| {
-            let path = forja_kernel::logging::logs_dir(cx.data_dir());
-            let displayed = path.display().to_string();
-            #[cfg(not(test))]
-            {
-                let task_path = path.clone();
-                let error_path = displayed.clone();
-                cx.spawn(
-                    move || {
-                        std::fs::create_dir_all(&task_path)
-                            .and_then(|()| open_folder(&task_path))
-                            .map_err(|error| error.to_string())
-                    },
-                    move |_cx, result| {
-                        if let Err(error) = result {
-                            forja_kernel::logging::log(
-                                forja_kernel::logging::LogLevel::Error,
-                                format!("could not open log folder `{error_path}`: {error}"),
-                            );
-                        }
-                    },
-                );
-            }
-            Ok(json!({ "path": displayed }))
-        },
-    );
+    registrar.command("shell.logs.open", "shell.command.logs-open", |cx, _args| {
+        let path = forja_kernel::logging::logs_dir(cx.data_dir());
+        let displayed = path.display().to_string();
+        #[cfg(not(test))]
+        {
+            let task_path = path.clone();
+            let error_path = displayed.clone();
+            cx.spawn(
+                move || {
+                    std::fs::create_dir_all(&task_path)
+                        .and_then(|()| open_folder(&task_path))
+                        .map_err(|error| error.to_string())
+                },
+                move |_cx, result| {
+                    if let Err(error) = result {
+                        forja_kernel::logging::log(
+                            forja_kernel::logging::LogLevel::Error,
+                            format!("could not open log folder `{error_path}`: {error}"),
+                        );
+                    }
+                },
+            );
+        }
+        Ok(json!({ "path": displayed }))
+    });
 }
 
 #[cfg(all(windows, not(test)))]
@@ -135,21 +129,21 @@ fn open_rail(registrar: &mut Registrar<'_>) {
         Method::new("shell.rail.open", "shell.method.rail-open.description")
             .effect(MethodEffect::Write)
             .param(ParamSchema::required("view_id", ParamKind::String))
-            .result(ResultSchema::new("shell.method.rail-open.result").schema(json!({
-                "type": "object",
-                "properties": {
-                    "opening": { "type": "boolean" },
-                    "view_id": { "type": "string" }
-                },
-                "required": ["opening", "view_id"]
-            }))),
+            .result(
+                ResultSchema::new("shell.method.rail-open.result").schema(json!({
+                    "type": "object",
+                    "properties": {
+                        "opening": { "type": "boolean" },
+                        "view_id": { "type": "string" }
+                    },
+                    "required": ["opening", "view_id"]
+                })),
+            ),
         |_, params| {
             let view_id = params
                 .get("view_id")
                 .and_then(serde_json::Value::as_str)
-                .ok_or_else(|| {
-                    forja_kernel::forja_protocol::RpcError::app("missing view_id")
-                })?
+                .ok_or_else(|| forja_kernel::forja_protocol::RpcError::app("missing view_id"))?
                 .to_owned();
             actions::push(Action::OpenRail(view_id.clone()));
             Ok(json!({ "opening": true, "view_id": view_id }))
@@ -176,8 +170,10 @@ const CHROME_KEYS: &[&str] = &[
     "shell.rail.dot",
     "shell.rail.settings",
     "shell.rail.bench",
-    "shell.rail.back-to-bench",
     "shell.tabs.more",
+    "shell.tabs.overflow",
+    "shell.tabs.add",
+    "shell.tabs.close",
     "shell.sidebar.title",
     "shell.sidebar.empty",
     "shell.bench.empty-title",
@@ -406,14 +402,13 @@ mod tests {
             },
         )
         .expect("shell module registers");
-        assert!(runtime
-            .registry()
-            .command("shell.logs.open")
-            .is_some());
+        assert!(runtime.registry().command("shell.logs.open").is_some());
         let result = runtime
             .run_command("shell.logs.open", forja_kernel::Args::new())
             .expect("log folder command");
-        let expected = forja_kernel::logging::logs_dir(&dir).to_string_lossy().into_owned();
+        let expected = forja_kernel::logging::logs_dir(&dir)
+            .to_string_lossy()
+            .into_owned();
         assert_eq!(result["path"].as_str(), Some(expected.as_str()));
         drop(runtime);
         let _ = std::fs::remove_dir_all(dir);
@@ -510,9 +505,12 @@ mod tests {
             message: "command `helper.launch` failed: No installed helpers found on PATH."
                 .to_owned(),
         };
-        let helper_en = forja_kernel::human_error::humanize_kernel_error(runtime.i18n(), &helper_err);
+        let helper_en =
+            forja_kernel::human_error::humanize_kernel_error(runtime.i18n(), &helper_err);
         assert!(
-            helper_en.summary.contains("No installed helper was found on PATH"),
+            helper_en
+                .summary
+                .contains("No installed helper was found on PATH"),
             "{}",
             helper_en.summary
         );

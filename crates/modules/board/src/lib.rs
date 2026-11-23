@@ -73,7 +73,9 @@ impl Module for BoardModule {
         let project_added_state = self.state.clone();
         r.subscribe::<ProjectAdded, _>(move |_cx, _event| project_added_state.request_refresh());
         let project_removed_state = self.state.clone();
-        r.subscribe::<ProjectRemoved, _>(move |_cx, _event| project_removed_state.request_refresh());
+        r.subscribe::<ProjectRemoved, _>(move |_cx, _event| {
+            project_removed_state.request_refresh()
+        });
 
         let refresh_state = self.state.clone();
         r.command("board.refresh", "board.command.refresh", move |_, _| {
@@ -101,6 +103,7 @@ impl Module for BoardModule {
             "board.action.refresh",
             "board.action.create",
             "board.action.move",
+            "board.card.actions",
             "board.action.move-to",
             "board.action.move-back",
             "board.action.open",
@@ -142,7 +145,7 @@ impl Module for BoardModule {
             20,
             move || Box::new(view::BoardRail::new(rail_state.clone())),
         );
-        r.view_glyph("board.page", forja_ui_kit::BOARD);
+        r.view_glyph("board.page", forja_ui_kit::BOARD.id());
         let sidebar_state = self.state.clone();
         r.view(
             Slot::Sidebar,

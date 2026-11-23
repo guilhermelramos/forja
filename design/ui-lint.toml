@@ -1,0 +1,14 @@
+# Item 9, Refs #198. Baseline measured on e1-redesenho: 25 / 589 / 75 / 111.
+# RGB includes RGBA constructors; tests, comments and strings do not count.
+# Exemptions are audited independently and must not grow silently.
+[ceiling]
+button = 9
+label = 159
+color = 5
+space = 50
+
+[allowed]
+button = 0
+label = 0
+color = 26
+space = 0

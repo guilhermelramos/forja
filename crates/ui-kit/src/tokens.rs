@@ -32,14 +32,14 @@ pub enum Mode {
     Light,
 }
 
-/// Ritmo dos controles. A grade de 4 px não muda; mudam altura, folga e corpo.
+/// Ritmo dos controles. Muda altura/folga, nunca a escala de texto.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Density {
     /// Padrão: controle de 32 px, corpo de 14 px.
     #[default]
     Comfortable,
-    /// Controle de 24 px, corpo de 13 px.
+    /// Controle de 24 px; a escala de texto continua a mesma.
     Compact,
 }
 
@@ -89,8 +89,12 @@ pub struct Metrics {
     pub gap: f32,
     /// Corpo.
     pub body: f32,
-    /// Título, peso 600.
+    /// Título de página, peso 600.
     pub title: f32,
+    /// Título de seção, peso 600.
+    pub section: f32,
+    /// Número de destaque.
+    pub display: f32,
     /// Legenda e badge.
     pub caption: f32,
     /// Código.
@@ -189,17 +193,29 @@ impl Tokens {
 
     /// Carvão: tinta fria sobre a base do preset escuro (`design/ui.md` §4).
     pub fn carvao() -> Self {
-        Self::dark_from("Carvão", Color::rgb(0x10, 0x14, 0x16), Color::rgb(0xE4, 0xE8, 0xEA))
+        Self::dark_from(
+            "Carvão",
+            Color::rgb(0x10, 0x14, 0x16),
+            Color::rgb(0xE4, 0xE8, 0xEA),
+        )
     }
 
     /// Cinza Quente: pedra aquecida, fundo quente e texto claro.
     pub fn cinza_quente() -> Self {
-        Self::dark_from("Cinza Quente", Color::rgb(0x2C, 0x28, 0x25), Color::rgb(0xF7, 0xF1, 0xEB))
+        Self::dark_from(
+            "Cinza Quente",
+            Color::rgb(0x2C, 0x28, 0x25),
+            Color::rgb(0xF7, 0xF1, 0xEB),
+        )
     }
 
     /// Aço: fundo azulado, texto frio.
     pub fn aco() -> Self {
-        Self::dark_from("Aço", Color::rgb(0x15, 0x20, 0x28), Color::rgb(0xE7, 0xF0, 0xF4))
+        Self::dark_from(
+            "Aço",
+            Color::rgb(0x15, 0x20, 0x28),
+            Color::rgb(0xE7, 0xF0, 0xF4),
+        )
     }
 
     /// Derives a dark theme from its background and text colours. Surfaces lift from
@@ -241,10 +257,12 @@ impl Tokens {
                 pad_x: 12.0,
                 pad_y: 8.0,
                 gap: 8.0,
-                body: 14.0,
-                title: 18.0,
-                caption: 12.0,
-                code: 13.0,
+                body: crate::Typography::BRASA.body,
+                title: crate::Typography::BRASA.page,
+                section: crate::Typography::BRASA.section,
+                display: crate::Typography::BRASA.display,
+                caption: crate::Typography::BRASA.caption,
+                code: crate::Typography::BRASA.body,
                 radius_control: 6.0,
                 radius_card: 10.0,
                 row: 32.0,
@@ -259,10 +277,12 @@ impl Tokens {
                 pad_x: 8.0,
                 pad_y: 4.0,
                 gap: 4.0,
-                body: 13.0,
-                title: 16.0,
-                caption: 11.0,
-                code: 12.0,
+                body: crate::Typography::BRASA.body,
+                title: crate::Typography::BRASA.page,
+                section: crate::Typography::BRASA.section,
+                display: crate::Typography::BRASA.display,
+                caption: crate::Typography::BRASA.caption,
+                code: crate::Typography::BRASA.body,
                 radius_control: 6.0,
                 radius_card: 10.0,
                 row: 24.0,
@@ -376,7 +396,9 @@ pub const GRID: f32 = 4.0;
 /// Linear blend of two colours: `t = 0` gives `from`, `t = 1` gives `to`.
 fn mix(from: Color, to: Color, t: f32) -> Color {
     let channel = |a: u8, b: u8| -> u8 {
-        (f32::from(a) + (f32::from(b) - f32::from(a)) * t).round().clamp(0.0, 255.0) as u8
+        (f32::from(a) + (f32::from(b) - f32::from(a)) * t)
+            .round()
+            .clamp(0.0, 255.0) as u8
     };
     Color::rgb(
         channel(from.r, to.r),

@@ -231,7 +231,7 @@ fn register_events(r: &mut Registrar<'_>, core: &Shared) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use forja_kernel::ui_contract::View;
+    use forja_kernel::ui_contract::{egui, View};
     use forja_kernel::{contract, Args, Runtime, RuntimeOptions};
     use serde_json::{json, Map};
     use std::path::{Path, PathBuf};
@@ -531,5 +531,45 @@ mod tests {
         }
         assert!(saw_exit, "expected Exited(Some(1)) on spawn failure");
         assert!(error_text.is_some());
+    }
+
+    #[test]
+    fn legacy_gpu_mode_migrates_to_images_enabled_without_clobbering_new_key() {
+        let guard = temp_guard("legacy-gpu-mode");
+        let dir = &guard.0;
+        std::fs::write(dir.join("settings.toml"), "terminal.gpu.mode = \"off\"\n").unwrap();
+        let core = Arc::new(Core::new());
+        let mut runtime = Runtime::new(
+            vec![Box::new(TerminalModule {
+                core: Arc::clone(&core),
+            })],
+            RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .unwrap();
+        let mut view = TerminalView::new(Arc::clone(&core));
+        let ctx = egui::Context::default();
+        let _ = ctx.run(egui::RawInput::default(), |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                view.ui(ui, &mut runtime.ctx("terminal"));
+            });
+        });
+        let deadline = Instant::now() + Duration::from_secs(3);
+        while Instant::now() < deadline {
+            runtime.poll_tasks();
+            if !TermSettings::from_ctx(&runtime.ctx("terminal")).images_enabled {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        assert!(!TermSettings::from_ctx(&runtime.ctx("terminal")).images_enabled);
+        assert_eq!(
+            runtime.settings().get("terminal.images.enabled"),
+            Some(&forja_kernel::SettingValue::Bool(false))
+        );
     }
 }

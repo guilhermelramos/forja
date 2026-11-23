@@ -268,30 +268,48 @@ impl MusterView {
         self.spend.sync(cx, &benches, force);
     }
 
-    fn header(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snapshot) {
-        ui.horizontal(|ui| {
-            ui.heading(cx.t("muster.page.title"));
-            ui.label(
-                egui::RichText::new(cx.t("muster.page.subtitle"))
-                    .small()
-                    .weak(),
-            );
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if button(ui, ButtonKind::Primary, &cx.t("muster.new-run")).clicked() {
-                    self.new_run = !self.new_run;
-                }
-            });
-        });
+    fn header(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) -> forja_ui_kit::Page {
+        let title = cx.t("muster.page.title");
+        let subtitle = cx.t("muster.page.subtitle");
+        let create = cx.t("muster.new-run");
+        let refresh = cx.t("muster.page-state.refresh");
+        let page = forja_ui_kit::page(
+            ui,
+            forja_ui_kit::PageSpec::new("muster.page", &title)
+                .wide()
+                .subtitle(&subtitle)
+                .primary(&create)
+                .refresh(&refresh),
+        );
+        if page.response.primary_clicked {
+            self.new_run = !self.new_run;
+        }
+        if page.response.refresh_clicked {
+            self.last_helper_sync = None;
+            self.spend_run = None;
+            self.sync_helpers(cx);
+        }
+        page
+    }
+
+    fn notices(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snapshot) {
         if let Some(notice) = &snap.notice {
-            ui.label(egui::RichText::new(cx.t(notice)).weak());
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Error,
+                &cx.t("muster.page-state.error"),
+                Some(&cx.t(notice)),
+            );
         }
         if let Some(notice) = self.notice.clone() {
             ui.horizontal_wrapped(|ui| {
-                ui.label(
-                    egui::RichText::new(notice)
-                        .color(applied_tokens(ui.ctx()).color.danger.to_color32()),
+                forja_ui_kit::page_state(
+                    ui,
+                    forja_ui_kit::PageState::Error,
+                    &cx.t("muster.page-state.error"),
+                    Some(&notice),
                 );
-                if icon_button(ui, CLOSE)
+                if icon_button(ui, CLOSE, &cx.t("muster.notice.dismiss"))
                     .on_hover_text(cx.t("muster.notice.dismiss"))
                     .clicked()
                 {
@@ -300,7 +318,12 @@ impl MusterView {
             });
         }
         if !snap.loaded {
-            ui.label(egui::RichText::new(cx.t("muster.page-loading")).weak());
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Loading,
+                &cx.t("muster.page-state.loading"),
+                None,
+            );
         }
     }
 
@@ -309,9 +332,9 @@ impl MusterView {
             return;
         }
         egui::Frame::group(ui.style()).show(ui, |ui| {
-            ui.label(egui::RichText::new(cx.t("muster.run-title")).strong());
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.run-title")).strong());
             text_field(ui, &mut self.run_title, &cx.t("muster.run-title"));
-            ui.label(egui::RichText::new(cx.t("muster.run-objective")).strong());
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.run-objective")).strong());
             ui.add(
                 egui::TextEdit::multiline(&mut self.run_objective)
                     .desired_rows(2)
@@ -350,10 +373,12 @@ impl MusterView {
 
     fn run_list(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, snap: &Snapshot) {
         if snap.runs.is_empty() {
-            ui.add_space(40.0);
-            ui.vertical_centered(|ui| {
-                ui.label(egui::RichText::new(cx.t("muster.empty")).weak());
-            });
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Empty,
+                &cx.t("muster.page-state.empty"),
+                Some(&cx.t("muster.empty")),
+            );
             return;
         }
         ui.add_space(6.0);
@@ -369,10 +394,10 @@ impl MusterView {
     }
 
     fn run_heading(&mut self, ui: &mut egui::Ui, cx: &Ctx<'_>, run: &MusterRun) {
-        ui.add_space(8.0);
+        ui.add_space(forja_ui_kit::Spacing::SM);
         ui.horizontal_wrapped(|ui| {
-            ui.label(egui::RichText::new(&run.title).heading());
-            ui.label(
+            forja_ui_kit::text(ui, egui::RichText::new(&run.title).heading());
+            forja_ui_kit::text(ui,
                 egui::RichText::new(run_state_label(cx, run.state))
                     .small()
                     .weak(),
@@ -405,14 +430,14 @@ impl MusterView {
             .show(ui, |ui| {
                 ui.set_min_width(ui.available_width());
                 ui.horizontal_wrapped(|ui| {
-                    ui.label(egui::RichText::new(cx.t("muster.page-plan")).strong());
+                    forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.page-plan")).strong());
                     let (label, color) = plan_state(ui, cx, run);
-                    ui.label(egui::RichText::new(label).small().color(color));
+                    forja_ui_kit::text(ui, egui::RichText::new(label).small().color(color));
                 });
                 self.plan_summary(ui, cx, snap, run);
                 ui.add_space(6.0);
                 ui.horizontal_wrapped(|ui| {
-                    ui.label(egui::RichText::new(cx.t("muster.tasks")).strong());
+                    forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.tasks")).strong());
                     if button(ui, ButtonKind::Secondary, &cx.t("muster.new-task")).clicked() {
                         self.new_task = !self.new_task;
                     }
@@ -426,7 +451,7 @@ impl MusterView {
                     .filter(|task| task.run == run.id)
                     .collect();
                 if tasks.is_empty() {
-                    ui.label(egui::RichText::new(cx.t("muster.no-tasks")).weak());
+                    forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.no-tasks")).weak());
                 }
                 let shared = shared_benches(run, &snap.assignments);
                 for task in tasks {
@@ -464,24 +489,24 @@ impl MusterView {
         let title = cx.t("muster.plan-summary");
         egui::Frame::group(ui.style()).show(ui, |ui| {
             ui.set_min_width(ui.available_width());
-            ui.label(egui::RichText::new(&title).small().strong());
-            ui.label(
+            forja_ui_kit::text(ui, egui::RichText::new(&title).small().strong());
+            forja_ui_kit::text(ui,
                 egui::RichText::new(format!("{count} · {deps}"))
                     .small()
                     .weak(),
             );
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(format!("{}: {helper}", cx.t("muster.plan-helper")))
                     .small()
                     .weak(),
             );
             ui.horizontal_wrapped(|ui| {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!("{}: ", cx.t("muster.plan-ceiling")))
                         .small()
                         .weak(),
                 );
-                ui.label(egui::RichText::new(ceiling).small());
+                forja_ui_kit::text(ui, egui::RichText::new(ceiling).small());
                 if !run.plan_approved {
                     if button(ui, ButtonKind::Primary, &cx.t("muster.plan-approve")).clicked() {
                         self.plan_gate.open();
@@ -494,8 +519,8 @@ impl MusterView {
     }
 
     fn task_pickers(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
-        ui.add_space(4.0);
-        ui.label(egui::RichText::new(cx.t("muster.profile")).small().weak());
+        ui.add_space(forja_ui_kit::Spacing::XS);
+        forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.profile")).small().weak());
         let auto_label = cx.t("muster.profile-auto");
         let not_installed = cx.t("muster.profile-not-installed");
         let selected_label = if self.profile.trim().is_empty() {
@@ -537,8 +562,8 @@ impl MusterView {
                     }
                 }
             });
-        ui.add_space(4.0);
-        ui.label(egui::RichText::new(cx.t("muster.bench")).small().weak());
+        ui.add_space(forja_ui_kit::Spacing::XS);
+        forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.bench")).small().weak());
         ui.add(
             egui::TextEdit::singleline(&mut self.bench)
                 .hint_text("C:/forja/pedido-123")
@@ -554,7 +579,7 @@ impl MusterView {
     fn new_task_form(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, run: &str) {
         egui::Frame::group(ui.style()).show(ui, |ui| {
             text_field(ui, &mut self.task_title, &cx.t("muster.task-title"));
-            ui.label(egui::RichText::new(cx.t("muster.task-spec")).strong());
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.task-spec")).strong());
             ui.add(
                 egui::TextEdit::multiline(&mut self.task_spec)
                     .desired_rows(2)
@@ -598,15 +623,15 @@ impl MusterView {
         egui::Frame::group(ui.style()).show(ui, |ui| {
             ui.set_min_width(ui.available_width());
             ui.horizontal_wrapped(|ui| {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(task_state_label(cx, task.state))
                         .small()
                         .color(task_state_color(ui, task.state)),
                 );
-                ui.label(egui::RichText::new(&task.title).strong());
+                forja_ui_kit::text(ui, egui::RichText::new(&task.title).strong());
             });
             if !dependencies.is_empty() {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t_args(
                         "muster.plan-task-deps",
                         &[("deps", &dependencies.join(", "))],
@@ -617,26 +642,26 @@ impl MusterView {
             }
             if let Some(assignment) = assignment {
                 ui.horizontal_wrapped(|ui| {
-                    ui.label(
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(assignment_state_label(cx, assignment.state))
                             .small()
                             .weak(),
                     );
-                    ui.label(
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(self.helper_label(cx, &assignment.profile_id))
                             .small()
                             .monospace(),
                     );
                 });
                 if let Some(cost) = self.assignment_cost(cx, assignment, shared) {
-                    ui.label(egui::RichText::new(cost).small().weak());
+                    forja_ui_kit::text(ui, egui::RichText::new(cost).small().weak());
                 }
             }
             if !task.spec.is_empty() {
-                ui.label(egui::RichText::new(&task.spec).weak());
+                forja_ui_kit::text(ui, egui::RichText::new(&task.spec).weak());
             }
             if let Some(summary) = &task.summary {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!(
                         "{} · {}",
                         task.result.as_deref().unwrap_or(""),
@@ -708,7 +733,7 @@ impl MusterView {
             .max_height(max_height)
             .show(ui, |ui| {
                 ui.set_min_width(ui.available_width());
-                ui.label(egui::RichText::new(cx.t("muster.assignments")).strong());
+                forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.assignments")).strong());
                 let active: Vec<&Assignment> = snap
                     .assignments
                     .iter()
@@ -724,7 +749,7 @@ impl MusterView {
                     })
                     .collect();
                 if active.is_empty() {
-                    ui.label(egui::RichText::new(cx.t("muster.no-assignments")).weak());
+                    forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.no-assignments")).weak());
                     return;
                 }
                 let shared = shared_benches(run, &snap.assignments);
@@ -736,8 +761,8 @@ impl MusterView {
                         .push(assignment);
                 }
                 for (profile, assignments) in by_helper {
-                    ui.add_space(4.0);
-                    ui.label(
+                    ui.add_space(forja_ui_kit::Spacing::XS);
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(if profile.trim().is_empty() {
                             cx.t("muster.profile-auto")
                         } else {
@@ -774,15 +799,15 @@ impl MusterView {
         egui::Frame::group(ui.style()).show(ui, |ui| {
             ui.set_min_width(ui.available_width());
             ui.horizontal_wrapped(|ui| {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(assignment_state_label(cx, assignment.state))
                         .small()
                         .color(assignment_state_color(ui, assignment.state)),
                 );
-                ui.label(egui::RichText::new(task_title).strong());
+                forja_ui_kit::text(ui, egui::RichText::new(task_title).strong());
             });
             ui.horizontal_wrapped(|ui| {
-                ui.label(egui::RichText::new(bench_label).small().weak())
+                forja_ui_kit::text(ui, egui::RichText::new(bench_label).small().weak())
                     .on_hover_text(&assignment.bench_path);
                 if let Some(terminal) = &assignment.terminal_id {
                     if button(ui, ButtonKind::Ghost, &cx.t("muster.focus")).clicked() {
@@ -793,7 +818,7 @@ impl MusterView {
                             Err(error) => self.set_error(cx, &error.to_string()),
                         }
                     }
-                    ui.label(
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(format!("{} {terminal}", cx.t("muster.terminal")))
                             .small()
                             .weak(),
@@ -815,14 +840,14 @@ impl MusterView {
                 }
             });
             if let Some(session) = &assignment.session_id {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!("{} {session}", cx.t("muster.session")))
                         .small()
                         .weak(),
                 );
             }
             if assignment.retries > 0 {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!(
                         "{}: {}",
                         cx.t("muster.retries"),
@@ -833,7 +858,7 @@ impl MusterView {
                 );
             }
             if let Some(cost) = self.assignment_cost(cx, assignment, shared) {
-                ui.label(egui::RichText::new(cost).small());
+                forja_ui_kit::text(ui, egui::RichText::new(cost).small());
             }
         });
     }
@@ -869,57 +894,57 @@ impl MusterView {
         let benches = run_benches(run, &snap.assignments);
         let total = self.spend.total(&benches);
         let pending = total.is_none() && self.spend.any_pending(&benches);
-        ui.label(egui::RichText::new(cx.t("muster.cost-title")).strong());
+        forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.cost-title")).strong());
         if let Some(total) = total {
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cost_value(cx, total.usd))
-                    .size(22.0)
+                    .size(forja_ui_kit::TextRole::Display.size())
                     .strong(),
             );
             self.budget_bar(ui, cx, run, total.usd);
-            ui.label(egui::RichText::new(cx.t("muster.cost-auto")).small().weak());
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.cost-auto")).small().weak());
             if total.unpriced_tokens > 0 {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t("muster.cost-unpriced"))
                         .small()
                         .color(applied_tokens(ui.ctx()).color.spark.to_color32()),
                 );
             }
             if total.pending {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t("muster.cost-pending"))
                         .small()
                         .weak(),
                 );
             }
         } else if pending {
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("muster.cost-pending"))
                     .small()
                     .weak(),
             );
         } else {
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("muster.cost-manual"))
                     .small()
                     .weak(),
             );
             if !self.spend.contract_available() {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t("muster.cost-unavailable"))
                         .small()
                         .weak(),
                 );
             }
             if run.spent_usd > 0.0 {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cost_value(cx, run.spent_usd))
-                        .size(22.0)
+                        .size(forja_ui_kit::TextRole::Display.size())
                         .strong(),
                 );
                 self.budget_bar(ui, cx, run, run.spent_usd);
             }
-            ui.label(egui::RichText::new(cx.t("muster.spend")).small().weak());
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.spend")).small().weak());
             ui.horizontal_wrapped(|ui| {
                 ui.add(
                     egui::TextEdit::singleline(&mut self.spend_input)
@@ -943,7 +968,7 @@ impl MusterView {
             });
         }
         ui.add_space(6.0);
-        ui.label(egui::RichText::new(cx.t("muster.budget")).small().weak());
+        forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.budget")).small().weak());
         ui.horizontal_wrapped(|ui| {
             ui.add(
                 egui::TextEdit::singleline(&mut self.budget_input)
@@ -967,7 +992,7 @@ impl MusterView {
     fn budget_bar(&self, ui: &mut egui::Ui, cx: &Ctx<'_>, run: &MusterRun, spent: f64) {
         if run.budget_usd > 0.0 {
             let ratio = (spent / run.budget_usd).clamp(0.0, 1.0) as f32;
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(format!(
                     "{} / {}",
                     cost_value(cx, spent),
@@ -978,7 +1003,7 @@ impl MusterView {
             );
             progress_bar(ui, ratio);
         } else {
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("muster.budget-none"))
                     .small()
                     .weak(),
@@ -1003,14 +1028,14 @@ impl MusterView {
         let ctx = ui.ctx().clone();
         modal_explicit_close(&ctx, &mut open, &title, |ui| {
             ui.set_min_width(380.0);
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("muster.plan-review-hint"))
                     .small()
                     .weak(),
             );
             ui.add_space(6.0);
             self.plan_details(ui, cx, snap, run);
-            ui.add_space(8.0);
+            ui.add_space(forja_ui_kit::Spacing::SM);
             ui.horizontal_wrapped(|ui| {
                 if !run.plan_approved
                     && button(ui, ButtonKind::Primary, &cx.t("muster.plan-confirm")).clicked()
@@ -1042,7 +1067,7 @@ impl MusterView {
     }
 
     fn plan_details(&self, ui: &mut egui::Ui, cx: &Ctx<'_>, snap: &Snapshot, run: &MusterRun) {
-        ui.label(egui::RichText::new(&run.title).strong());
+        forja_ui_kit::text(ui, egui::RichText::new(&run.title).strong());
         if !run.objective.is_empty() {
             let tokens = applied_tokens(ui.ctx());
             let metrics = tokens.metrics();
@@ -1059,7 +1084,7 @@ impl MusterView {
             .filter(|task| task.run == run.id)
             .collect();
         let dep_count: usize = tasks.iter().map(|task| task.deps.len()).sum();
-        ui.label(
+        forja_ui_kit::text(ui,
             egui::RichText::new(format!(
                 "{} · {}",
                 cx.t_args(
@@ -1076,7 +1101,7 @@ impl MusterView {
         );
         ui.separator();
         if tasks.is_empty() {
-            ui.label(egui::RichText::new(cx.t("muster.plan-empty")).weak());
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.plan-empty")).weak());
         }
         for (index, task) in tasks.iter().enumerate() {
             let dependencies = plan::dependency_titles(task, &snap.tasks);
@@ -1084,13 +1109,13 @@ impl MusterView {
             egui::Frame::group(ui.style()).show(ui, |ui| {
                 ui.set_min_width(ui.available_width());
                 ui.horizontal_wrapped(|ui| {
-                    ui.label(
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(format!("{}.", index + 1))
                             .small()
                             .weak(),
                     );
-                    ui.label(egui::RichText::new(&task.title).strong());
-                    ui.label(
+                    forja_ui_kit::text(ui, egui::RichText::new(&task.title).strong());
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(task_state_label(cx, task.state))
                             .small()
                             .color(task_state_color(ui, task.state)),
@@ -1104,8 +1129,8 @@ impl MusterView {
                         &[("deps", &dependencies.join(", "))],
                     )
                 };
-                ui.label(egui::RichText::new(deps).small().weak());
-                ui.label(
+                forja_ui_kit::text(ui, egui::RichText::new(deps).small().weak());
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!(
                         "{}: {}",
                         cx.t("muster.plan-helper"),
@@ -1118,28 +1143,28 @@ impl MusterView {
         }
         ui.separator();
         ui.horizontal_wrapped(|ui| {
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(format!("{}:", cx.t("muster.plan-ceiling")))
                     .small()
                     .weak(),
             );
-            ui.label(egui::RichText::new(budget_label(cx, run.budget_usd)).small());
+            forja_ui_kit::text(ui, egui::RichText::new(budget_label(cx, run.budget_usd)).small());
         });
         let benches = run_benches(run, &snap.assignments);
         if let Some(total) = self.spend.total(&benches) {
             ui.horizontal_wrapped(|ui| {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!("{}:", cx.t("muster.cost-now")))
                         .small()
                         .weak(),
                 );
-                ui.label(egui::RichText::new(cost_value(cx, total.usd)).small());
+                forja_ui_kit::text(ui, egui::RichText::new(cost_value(cx, total.usd)).small());
             });
         }
     }
 
     fn inbox(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, run: &str) {
-        ui.label(egui::RichText::new(cx.t("muster.inbox")).strong());
+        forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.inbox")).strong());
         let (notes, task_titles, assignments, tasks) = state::with(&self.shared, |state| {
             let titles: BTreeMap<String, String> = state
                 .store
@@ -1184,7 +1209,7 @@ impl MusterView {
         .unwrap_or_default();
 
         if notes.is_empty() {
-            ui.label(egui::RichText::new(cx.t("muster.no-notes")).weak());
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.no-notes")).weak());
         } else {
             egui::ScrollArea::vertical()
                 .id_salt(("muster-inbox", run))
@@ -1196,10 +1221,10 @@ impl MusterView {
                 });
         }
         ui.separator();
-        ui.label(egui::RichText::new(cx.t("muster.note")).strong());
+        forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.note")).strong());
         let targets = self.note_targets(cx, &task_titles, &assignments, &tasks);
         if targets.is_empty() {
-            ui.label(egui::RichText::new(cx.t("muster.no-targets")).weak());
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.no-targets")).weak());
             return;
         }
         let selected_target = self
@@ -1232,14 +1257,9 @@ impl MusterView {
                     .desired_width((ui.available_width() - 96.0).max(90.0)),
             );
             input.widget_info(|| {
-                egui::WidgetInfo::labeled(
-                    egui::WidgetType::TextEdit,
-                    ui.is_enabled(),
-                    hint.clone(),
-                )
+                egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, ui.is_enabled(), hint.clone())
             });
-            let enter =
-                input.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
+            let enter = input.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
             if button(ui, ButtonKind::Primary, &cx.t("muster.send")).clicked() || enter {
                 self.submit_note(cx, selected_target.as_ref());
             }
@@ -1271,15 +1291,17 @@ impl MusterView {
             ui.set_min_width(ui.available_width());
             ui.horizontal_wrapped(|ui| {
                 if incoming && !note.read {
-                    ui.label(
-                        egui::RichText::new("●").color(tokens.color.spark.to_color32()),
-                    );
+                    forja_ui_kit::icon(ui, forja_ui_kit::Icon::Info, 16.0);
                 }
-                ui.label(egui::RichText::new(sender).strong());
+                forja_ui_kit::text(ui, egui::RichText::new(sender).strong());
                 if let Some(title) = task_title {
-                    ui.label(egui::RichText::new(title).small().weak());
+                    forja_ui_kit::text(ui, egui::RichText::new(title).small().weak());
                 }
-                ui.label(egui::RichText::new(note_kind_label(cx, note.kind)).small().weak());
+                forja_ui_kit::text(ui,
+                    egui::RichText::new(note_kind_label(cx, note.kind))
+                        .small()
+                        .weak(),
+                );
                 if let Some(state) = delivery_state {
                     let (text, color) = match state {
                         NoteDeliveryState::Delivered => (
@@ -1295,10 +1317,10 @@ impl MusterView {
                             tokens.color.danger.to_color32(),
                         ),
                     };
-                    ui.label(egui::RichText::new(text).small().color(color));
+                    forja_ui_kit::text(ui, egui::RichText::new(text).small().color(color));
                 }
             });
-            ui.label(&note.body);
+            forja_ui_kit::text(ui, &note.body);
             if incoming && button(ui, ButtonKind::Ghost, &cx.t("muster.reply")).clicked() {
                 self.reply_to = Some(note.id.clone());
             }
@@ -1356,11 +1378,7 @@ impl MusterView {
                 targets.push(NoteTarget {
                     id: task.id.clone(),
                     is_assignment: false,
-                    label: format!(
-                        "{} ({})",
-                        task.title,
-                        cx.t("muster.note-target-no-helper")
-                    ),
+                    label: format!("{} ({})", task.title, cx.t("muster.note-target-no-helper")),
                 });
             }
         }
@@ -1436,31 +1454,39 @@ impl View for MusterView {
         }
         let snap = snapshot(&self.shared);
         let column_height = (ui.available_height() - 200.0).clamp(240.0, 560.0);
-        egui::ScrollArea::vertical()
-            .id_salt("muster.page.scroll")
-            .auto_shrink([false, false])
-            .show(ui, |ui| {
-                ui.set_max_width(ui.available_width().max(1.0));
-                self.header(ui, cx, &snap);
-                self.new_run_form(ui, cx);
-                self.run_list(ui, cx, &snap);
-                let selected = snap
-                    .runs
-                    .iter()
-                    .find(|run| self.selected.as_deref() == Some(run.id.as_str()));
-                if let Some(run) = selected {
-                    self.run_heading(ui, cx, run);
-                    self.sync_helpers(cx);
-                    self.sync_spend(cx, &snap, run);
-                    ui.add_space(4.0);
-                    ui.columns(3, |columns| {
-                        self.plan_column(&mut columns[0], cx, &snap, run, column_height);
-                        self.assignment_column(&mut columns[1], cx, &snap, run, column_height);
-                        self.inbox_column(&mut columns[2], cx, &snap, run, column_height);
-                    });
-                    self.plan_review(ui, cx, &snap, run);
-                }
-            });
+        let mut page = self.header(ui, cx);
+        if !snap.runs.is_empty() {
+            page.filters(|ui| self.run_list(ui, cx, &snap));
+        }
+        page.body(|ui| {
+            egui::ScrollArea::vertical()
+                .id_salt("muster.page.scroll")
+                .auto_shrink([false, false])
+                .show(ui, |ui| {
+                    ui.set_max_width(ui.available_width().max(1.0));
+                    self.notices(ui, cx, &snap);
+                    self.new_run_form(ui, cx);
+                    if snap.runs.is_empty() {
+                        self.run_list(ui, cx, &snap);
+                    }
+                    let selected = snap
+                        .runs
+                        .iter()
+                        .find(|run| self.selected.as_deref() == Some(run.id.as_str()));
+                    if let Some(run) = selected {
+                        self.run_heading(ui, cx, run);
+                        self.sync_helpers(cx);
+                        self.sync_spend(cx, &snap, run);
+                        ui.add_space(4.0);
+                        ui.columns(3, |columns| {
+                            self.plan_column(&mut columns[0], cx, &snap, run, column_height);
+                            self.assignment_column(&mut columns[1], cx, &snap, run, column_height);
+                            self.inbox_column(&mut columns[2], cx, &snap, run, column_height);
+                        });
+                        self.plan_review(ui, cx, &snap, run);
+                    }
+                });
+        });
     }
 }
 

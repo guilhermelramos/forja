@@ -1,17 +1,43 @@
 {
-  "title": "Os Ajustes rolam até o fim",
+  "title": "Ajustes navega por grupos e alcança as seções finais por rolagem",
   "issue": 6,
   "locale": "pt-BR",
   "steps": [
-    { "m": "ui.key", "keys": "Escape" },
-    { "m": "ui.click", "target": "Ajustes" },
-    { "m": "ui.scroll", "x": 1000, "y": 450, "dy": -6000 },
-    { "m": "ui.scroll", "x": 1000, "y": 450, "dy": -6000 },
-    { "m": "ui.scroll", "x": 1000, "y": 450, "dy": -6000 },
-    { "m": "ui.scroll", "x": 1000, "y": 450, "dy": -6000 },
-    { "m": "ui.scroll", "x": 1000, "y": 450, "dy": -6000 }
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.click",
+      "target": "Ajustes"
+    },
+    {
+      "m": "ui.click",
+      "target": "Pedidos e balcões"
+    },
+    {
+      "m": "ui.scroll",
+      "x": 1000,
+      "y": 450,
+      "dy": -6000
+    },
+    {
+      "m": "ui.wait",
+      "ms": 250
+    }
   ],
   "expect": [
-    { "window_count": 1, "present": ["Linear", "Jira", "GitLab"], "absent": ["Limite do histórico"] }
+    {
+      "window_count": 0,
+      "present": [
+        "Linear",
+        "Jira",
+        "GitLab"
+      ],
+      "absent": [
+        "Limite do histórico"
+      ],
+      "no_geometry_issues": true
+    }
   ]
 }

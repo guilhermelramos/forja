@@ -6,13 +6,13 @@
 
 | Métrica | Valor |
 |---|---|
-| Configurações no catálogo | 313 |
+| Configurações no catálogo | 314 |
 | Configurações sobreponíveis por projeto (`scope = "project"`) | 31 |
-| Configurações registradas no app | 289 (288 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 288 (287 do catálogo) |
+| Configurações registradas no app | 291 (290 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 290 (289 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
-| Configurações adiadas | 23 |
+| Configurações adiadas | 22 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
 | Atalhos no catálogo | 110 |
@@ -32,7 +32,6 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 - `appearance.ui.code_size`: Aguardando métricas tipográficas configuráveis no ui-kit.
 - `appearance.ui.ligatures`: Aguardando suporte de composição tipográfica a ligaduras no renderizador.
 - `appearance.motion.duration_ms`: Aguardando duração de animação configurável nos tokens do ui-kit.
-- `appearance.tabs.middle_click`: Aguardando contrato de fechamento das abas do shell.
 - `appearance.tooltips.enabled`: Aguardando controle compartilhado de dicas nos componentes da interface.
 - `voice.input.model_path`: Aguardando o motor local de transcrição (whisper.cpp) ser aprovado como dependência.
 - `voice.output.engine`: Aguardando a síntese de voz (SAPI ou Piper) ser aprovada como dependência.
@@ -73,7 +72,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `appearance.status_bar.visible` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.window.remember_geometry` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.window.start_maximized` | `appearance` | `appearance` | sim | ok | sim |
-| `appearance.tabs.middle_click` | `appearance` | `-` | adiada | - | adiada |
+| `appearance.tabs.middle_click` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.tooltips.enabled` | `appearance` | `-` | adiada | - | adiada |
 | `i18n.language.mode` | `i18n` | `i18n` | sim | ok | sim |
 | `i18n.language.fallback` | `i18n` | `i18n` | sim | ok | sim |
@@ -97,6 +96,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `bench.worktree.fetch_before` | `bench` | `bench` | sim | ok | sim |
 | `bench.worktree.auto_prune_days` | `bench` | `bench` | sim | ok | sim |
 | `bench.layout.tabs` | `bench` | `bench` | sim | ok | sim |
+| `bench.layout.tool_tabs` | `bench` | `bench` | sim | ok | sim |
 | `bench.layout.restore` | `bench` | `bench` | sim | ok | sim |
 | `bench.setup.policy` | `bench` | `bench` | sim | ok | sim |
 | `bench.setup.timeout_s` | `bench` | `bench` | sim | ok | sim |
@@ -151,7 +151,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `terminal.links.open_with` | `terminal` | `terminal` | sim | ok | sim |
 | `terminal.shell.marks` | `terminal` | `terminal` | sim | ok | sim |
 | `terminal.close.confirm_running` | `terminal` | `terminal` | sim | ok | sim |
-| `terminal.gpu.mode` | `terminal` | `terminal` | sim | ok | sim |
+| `terminal.images.enabled` | `terminal` | `terminal` | sim | ok | sim |
 | `terminal.osc52.enabled` | `terminal` | `terminal` | sim | ok | sim |
 | `terminal.recipes.press_enter` | `terminal` | `terminal` | sim | ok | sim |
 | `terminal.recipes.confirm` | `terminal` | `terminal` | sim | ok | sim |

@@ -151,9 +151,9 @@ impl View for SettingsView {
                         cx.t("trust.settings.rejected")
                     })
                     .color(if entry.approved {
-                        egui::Color32::from_rgb(0x6C, 0xC4, 0x8A)
+                        forja_ui_kit::applied_tokens(ui.ctx()).color.ok.to_color32()
                     } else {
-                        egui::Color32::from_rgb(0xE5, 0x53, 0x4B)
+                        forja_ui_kit::applied_tokens(ui.ctx()).color.danger.to_color32()
                     }),
                 );
                 ui.label(kind_label(cx, entry.kind));

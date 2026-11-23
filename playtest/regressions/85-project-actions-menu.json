@@ -1,0 +1,57 @@
+{
+  "title": "Lateral agrupa as três ações no + e fecha projeto somente no menu (#200)",
+  "issue": 200,
+  "locale": "pt-BR",
+  "demo": true,
+  "steps": [
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.click",
+      "target": "Adicionar projeto"
+    },
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.click",
+      "target": "Ações de Oficina"
+    }
+  ],
+  "expect": [
+    {
+      "step": 0,
+      "present": [
+        "Adicionar projeto"
+      ],
+      "absent": [
+        "Adicionar pasta",
+        "Novo projeto",
+        "Clonar",
+        "Fechar projeto"
+      ],
+      "max_primary_buttons": 1
+    },
+    {
+      "step": 1,
+      "present": [
+        "Adicionar pasta",
+        "Novo projeto",
+        "Clonar"
+      ],
+      "no_geometry_issues": true
+    },
+    {
+      "step": 3,
+      "present": [
+        "Editar projeto",
+        "Remover da lista",
+        "Fechar projeto"
+      ],
+      "no_geometry_issues": true
+    }
+  ]
+}

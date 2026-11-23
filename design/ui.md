@@ -68,14 +68,17 @@ A grade é de **4 px**.
 
 ### 1.4 Tipografia
 
-Segoe UI Variable, com Segoe UI por baixo. Código e terminal usam Cascadia Code. As duas são lidas de `C:\Windows\Fonts` na hora, sem redistribuir. Título usa Segoe UI Semibold (peso 600).
+Segoe UI Variable, com Segoe UI por baixo; títulos em Segoe UI Semibold. Fontes de texto vêm de `%WINDIR%\Fonts`, sem redistribuição; ausência gera log e fallback legível. Ícones não usam fonte.
 
-| Papel | Confortável | Compacta | Peso |
-|---|---|---|---|
-| Legenda, badge | 12 | 11 | 400 |
-| Corpo, botão, campo | 14 | 13 | 400 |
-| Código | 13 | 12 | 400 |
-| Título | 18 | 16 | 600 |
+| Papel | px | Peso |
+|---|---|---|
+| Legenda, badge, ajuda | 12 | 400 |
+| Corpo, botão, campo | 14 | 400 |
+| Título de seção | 16 | 600 |
+| Título de página | 20 | 600 |
+| Número de destaque | 28 | 400 |
+
+A densidade muda espaçamento, não cria outra escala tipográfica. Monoespaçada (Cascadia Code, com fallback) somente em código, comandos e caminhos; nunca em rótulos ou contadores.
 
 ### 1.5 Sombra e elevação
 
@@ -134,7 +137,29 @@ Os rótulos vêm de quem chama. O ui-kit não escreve texto de produto.
 | Fantasma | transparente | `text` | não |
 | Perigo | `danger` | `on_danger` | não |
 
-Uma ação principal por grupo. Perigo é o que apaga ou descarta.
+Uma única ação de destaque (`accent` cheio) por tela. Ações secundárias usam contorno; ações auxiliares, fantasma. Filtro selecionado usa `accent_soft` com texto `text`, não laranja cheio. Ação destrutiva é neutra com contorno antes de confirmar; botão vermelho cheio somente dentro do diálogo de confirmação.
+
+### Peças de composição (item 9)
+
+| API | Contrato |
+|---|---|
+| `button_with_icon` / `icon_button` | Reutilizam a hierarquia do item 11; ícone 16 px. O botão só de ícone exige nome/dica não vazio no argumento, inclusive quando desabilitado. |
+| `toolbar`, `toolbar_separator`, `toolbar_more` | Ações horizontais, espaço da densidade, separador vertical e menu de excedentes com nome obrigatório. |
+| `list_row` / `ListRow` | Ícone opcional, título, detalhe, etiqueta, seleção `accent_soft`; ações aparecem em hover ou foco dentro da linha e conservam navegação por Tab. |
+| `section_heading`, `form_row` / `FormRow` | Título Section 16/600; rótulo e ajuda à esquerda, controle à direita, erro abaixo. Ajustes conserva `setting_row` para busca, alteração e restauração. |
+| `tag` | Etiqueta genérica de estado, contagem ou atalho: `surface_alt`, Caption 12, altura da densidade. Não substitui `stage_badge`. |
+| `spinner`, `skeleton` | Giratório só com janela ativa e movimento permitido; anel estático nos demais casos. Esqueleto estável em `surface_alt`, sem timer ou cintilação. |
+| `number_card` | Reutiliza `card`; valor Display 28, legenda e variação Caption 12. A variação é textual, não depende só de vermelho/verde. |
+| `splitter` | Divisor vertical arrastável com nome obrigatório, cursor horizontal e anel de foco; setas mudam 1%, painéis limitados a 10–90%. |
+| `text`, `Spacing` | Corpo usa a escala Brasa aplicada e preserva spans explícitos; passos nomeados XS/SM/MD/LG/XL/XXL = 4/8/12/16/24/32 px. |
+
+`cargo xtask ui-lint` audita `crates/modules/**` em Rust, fora de testes,
+comentários e strings. Conta `ui.button`, `ui.label`, construtores
+`Color32::from_rgb*` (inclui RGBA) e `add_space` com argumento numérico literal.
+O teto versionado em `design/ui-lint.toml` só desce nas migrações; CI recusa
+crescimento de cada contador e das exceções separadamente. Uma exceção de
+conteúdo exige `// ui-lint: allow <motivo>` na mesma linha ou na anterior;
+não é permissão para manter cores de interface literais.
 
 ### Campo de texto
 
@@ -150,11 +175,33 @@ Trilho de pílula mais rótulo. Ligado: trilho `accent`, botão `on_accent`. Des
 
 ### Segmentado
 
-Um trilho `surface_alt` com segmentos iguais. O ativo preenche `accent` com texto `on_accent`. Os outros usam `text`.
+Um trilho `surface_alt` com segmentos iguais. Para filtros, o ativo usa `accent_soft` e texto `text`; os demais usam `text`, sem competir com a ação principal.
 
 ### Abas
 
 Texto `text_muted` em repouso, `text` na ativa e no hover. A ativa ganha um sublinhado de 2 px em `accent`. No tema claro o laranja não serve de texto pequeno (3.51:1 sobre `bg`), por isso a aba ativa não pinta o rótulo de `accent`.
+
+### Molde de página (itens 8–11)
+
+| Zona | Medida e contrato |
+|---|---|
+| Cabeçalho | título 20/600, subtítulo opcional 12; altura mínima 56 px; à direita uma ação principal e ações de ícone 16 px; atualizar sempre na mesma posição |
+| Filtros | altura mínima 40 px; busca, segmentos e seletores nesta ordem; folga de 8 px |
+| Corpo | formulários/leitura até 960 px; folga externa 16 px; listas e quadros podem ocupar o espaço disponível |
+| Estados | vazio, carregando e erro dentro do corpo, com o mesmo componente e ação de recuperação; recuo 24 px, não janela sobreposta |
+| Rodapé | opcional, altura mínima 32 px; contagem à esquerda e paginação à direita |
+
+Entre zonas, 16 px; na densidade compacta, 8 px. Bancada é o primeiro destino explícito do trilho; o molde não depende do logotipo para voltar. Estas medidas orientam as próximas migrações de página, sem alterar seus layouts no item 7.
+
+### Barra superior
+
+Caminho clicável de projeto/bancada/branch à esquerda; busca única central com nome “Buscar ou executar… Ctrl+K”; ações da janela à direita, com ícones de 16 px e áreas de clique de 46×32 px. A busca abre a Bigorna; os comandos e atalhos existentes continuam disponíveis.
+
+### Página de Ajustes
+
+Ajustes ocupa a área central e conserva a página anterior ao sair pela engrenagem ou por Escape. A engrenagem fica selecionada; os painéis seguem o comportamento das demais páginas do trilho. O conteúdo usa no máximo 960 px, com busca fixa no topo, navegação vertical de grupos do catálogo à esquerda e rodapé de ações sempre acessível. Seções próprias ficam após um separador, sem repetir linhas do catálogo.
+
+Cada linha tem rótulo e ajuda curta à esquerda, controle alinhado à direita e, abaixo, avisos de validação ou reinício. Um ponto em `accent` e o rótulo acessível de alteração acompanham o botão Restaurar padrão. Busca destaca as ocorrências com `accent_soft`, sem perder o contraste do texto. A prévia de Aparência mostra controles, lista e terminal; fica ao lado quando há espaço e acima em larguras menores. Não há seletor de escopo enquanto ajustes por projeto não forem implementados (#212).
 
 ### Cartão
 
@@ -255,3 +302,16 @@ Enquanto as tintas próprias não forem desenhadas, `ui-kit` deriva essas três 
 Marca: bigorna de lado, geométrica, com uma centelha em losango acima. O ícone do app põe a bigorna em branco-quente (`#FFF6EE`) sobre um quadrado de raio 7 (numa grade de 32) com gradiente `#F2762E` → `#8C2E12`. A centelha é `#FFC14D`.
 
 `design/assets/make-icon.py` grava `logo.svg`, `logo-16.png`, `logo-32.png`, `logo-48.png`, `logo-256.png` e `logo.ico`.
+
+### 6.1 Ícones de interface — Traço de oficina
+
+Conjunto autoral, sem fonte e sem derivação de conjuntos externos. Fontes em `design/icons/<nome>.svg`: grade 24×24, margem ótica de 3 px, traço único de 2 px, pontas e junções arredondadas, sem preenchimento. Formas compactas, aberturas mínimas de 3 px e diagonais curtas a 45°; poucos traços, sem textura ou detalhe que desapareça em 16 px. Cantos de caixas têm raio de 2 px quando não houver corte diagonal. Um estilo para todo o conjunto.
+
+| Uso | Tamanho |
+|---|---|
+| Botões, menus, tipos de arquivo | 16 px |
+| Trilho e destinos de navegação | 20 px (mínimo 18 px) |
+
+Trilho: dica com nome e atalho disponível; destino ativo tem barra de 3 px na borda esquerda. Cada página, aba e painel interno possui ícone próprio, sem repetir o mesmo desenho entre destinos; ações comuns podem reutilizar seu ícone para manter o gesto reconhecível.
+
+`cargo xtask icons` converte o subconjunto SVG M/L/H/V/C/Q/A/Z, circle/rect/line/polyline em comandos estáticos de linha e Bézier em `crates/ui-kit/src/icons_gen.rs`. O gerado é comitado e verificado contra as fontes. Desenho egui escala os traços e usa a cor dos tokens. API: `icon(ui, Icon, size)`, `icon_button(ui, Icon, label)` (nome acessível e dica obrigatórios) e `button_with_icon(ui, Icon, text, kind)`. Não há glifos de sistema, letras ou sinais de texto usados como substituto de ícone.

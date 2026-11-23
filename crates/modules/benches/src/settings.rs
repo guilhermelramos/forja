@@ -105,6 +105,19 @@ pub(crate) fn settings(r: &mut Registrar<'_>) {
         80,
     );
     add(
+        "bench.layout.tool_tabs",
+        SettingKind::List {
+            item: "id de aba".to_owned(),
+        },
+        SettingValue::List(vec![
+            "terminal".to_owned(),
+            "chat".to_owned(),
+            "diff".to_owned(),
+            "editor".to_owned(),
+        ]),
+        85,
+    );
+    add(
         "bench.layout.restore",
         SettingKind::Bool,
         SettingValue::Bool(true),

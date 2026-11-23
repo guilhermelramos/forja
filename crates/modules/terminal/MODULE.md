@@ -104,13 +104,15 @@ padrões, faixas e opções:
 `terminal.bell.mode`, `terminal.copy.{on_select,trim}`,
 `terminal.paste.{warn_multiline,bracketed}`,
 `terminal.links.{confirm,open_with}`, `terminal.shell.marks`,
-`terminal.close.confirm_running`, `terminal.gpu.mode`,
+`terminal.close.confirm_running`, `terminal.images.enabled`,
 `terminal.osc52.enabled`.
 
 Efeitos reais: histórico e rolagem, acompanhamento da saída, cursor, fonte,
 paleta e opacidade, campainha visual/sonora, cópia e colagem, confirmação de
 links, marcas OSC 133, confirmação ao fechar processo, imagens embutidas
-(`gpu.mode = off` não desenha as imagens) e OSC 52.
+(`images.enabled = false` não decodifica nem desenha as imagens; lê `terminal.gpu.mode`
+antigo como compatibilidade), cache de desenho por linha (`src/view/line_cache.rs`)
+e OSC 52.
 
 ### Atalhos
 
@@ -207,3 +209,9 @@ A confirmação de fechamento considera `helper.close.confirm_running` para term
   `terminal.recipes.show_scope` e `terminal.recipes.shell` (antes `recipe.*`): Enter após
   colar, confirmação antes de rodar (`hub_ui.rs`), escopo do seletor e shell que roda a
   receita numa aba nova (`core/hub.rs`).
+
+## Protocolos de redesenho
+
+O modo 2026 publica uma tela completa ao desligar, com limite fixo de 150 ms e resposta DECRQM; consultas e sinais continuam sendo processados durante a acumulação. O modo 1004 reporta transições de foco do painel e da janela por um callback ao terminar o quadro, inclusive ao esconder a aba. DECSCUSR aceita 0–6; só formas explicitamente piscantes e focadas agendam a próxima troca. SGR 9/29 e 53/55 desenham tachado e sobrelinha; 4:3 usa sublinhado simples, sem ligar itálico.
+
+Testes: `cargo test -p forja-module-terminal`; roteiro com ferramentas reais para o dono: `playtest/terminal-manual.md`.

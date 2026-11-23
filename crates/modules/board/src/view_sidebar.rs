@@ -17,15 +17,19 @@ pub(crate) fn render_sidebar(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared
     // A aba "Bancadas" da barra lateral já diz o nome da lista: só as ações ficam aqui.
     ui.horizontal(|ui| {
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, "+")
+            if forja_ui_kit::icon_button(ui, forja_ui_kit::Icon::Add, &cx.t("board.action.create"))
                 .on_hover_text(cx.t("board.action.create"))
                 .clicked()
             {
                 create_dialog(cx, state.active_project().as_deref());
             }
-            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, "\u{27f3}")
-                .on_hover_text(cx.t("board.action.refresh"))
-                .clicked()
+            if forja_ui_kit::icon_button(
+                ui,
+                forja_ui_kit::Icon::Refresh,
+                &cx.t("board.action.refresh"),
+            )
+            .on_hover_text(cx.t("board.action.refresh"))
+            .clicked()
             {
                 state.request_refresh();
             }
@@ -87,7 +91,7 @@ pub(crate) fn render_sidebar(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared
     ui.separator();
 
     if let Some(error) = &error {
-        ui.label(
+        forja_ui_kit::text(ui,
             egui::RichText::new(error)
                 .small()
                 .color(c32(tokens.color.danger)),
@@ -102,8 +106,8 @@ pub(crate) fn render_sidebar(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared
     let groups = grouped(&visible, &prefs, &stages, &names);
     for (group, cards) in groups {
         if !group.is_empty() {
-            ui.add_space(4.0);
-            ui.label(
+            ui.add_space(forja_ui_kit::Spacing::XS);
+            forja_ui_kit::text(ui,
                 egui::RichText::new(group)
                     .small()
                     .color(c32(tokens.color.text_muted)),
@@ -131,11 +135,10 @@ fn render_sidebar_row(
     }
     let mut x = rect.left() + 6.0;
     if card.pinned {
-        painter.text(
-            egui::pos2(x, rect.top() + 4.0),
-            egui::Align2::LEFT_TOP,
-            "\u{2605}",
-            egui::FontId::proportional(11.0),
+        forja_ui_kit::paint_icon(
+            painter,
+            forja_ui_kit::Icon::Pin,
+            egui::Rect::from_min_size(egui::pos2(x, rect.top() + 4.0), egui::vec2(12.0, 12.0)),
             c32(tokens.color.spark),
         );
     }
@@ -161,7 +164,7 @@ fn render_sidebar_row(
         egui::pos2(x, rect.top() + 2.0),
         egui::Align2::LEFT_TOP,
         &card.bench.name,
-        egui::FontId::proportional(12.5),
+        forja_ui_kit::TextRole::Body.font(),
         c32(tokens.color.text),
     );
     if let Some(branch) = &card.bench.branch {
@@ -169,7 +172,7 @@ fn render_sidebar_row(
             egui::pos2(x, rect.top() + 17.0),
             egui::Align2::LEFT_TOP,
             branch,
-            egui::FontId::proportional(10.5),
+            forja_ui_kit::TextRole::Caption.font(),
             c32(tokens.color.text_muted),
         );
     }
@@ -187,7 +190,7 @@ fn render_sidebar_row(
             egui::pos2(mark_x, rect.center().y),
             egui::Align2::CENTER_CENTER,
             "z",
-            egui::FontId::proportional(11.0),
+            forja_ui_kit::TextRole::Caption.font(),
             c32(tokens.color.info),
         );
     }

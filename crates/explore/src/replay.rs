@@ -47,9 +47,23 @@ impl StringOrList {
     }
 }
 
+/// Exact accessible identity, including semantic role rather than text alone.
+#[derive(Debug, Clone, Deserialize)]
+pub struct ElementExpectation {
+    pub name: String,
+    pub role: String,
+}
+
 /// Assertion checked against a specific step (or the final step when `step` is omitted).
 #[derive(Debug, Clone, Deserialize)]
 pub struct Expectation {
+    #[serde(default)]
+    pub present_elements: Vec<ElementExpectation>,
+    #[serde(default)]
+    pub max_primary_buttons: Option<usize>,
+    /// Named controls must share a vertical center (within two physical pixels).
+    #[serde(default)]
+    pub same_row: Option<StringOrList>,
     #[serde(default)]
     pub step: Option<usize>,
     #[serde(default)]
@@ -73,6 +87,8 @@ pub struct Expectation {
     #[serde(default)]
     pub no_geometry_issues: Option<bool>,
     #[serde(default)]
+    pub no_unnamed_buttons: Option<bool>,
+    #[serde(default)]
     pub from_step: Option<usize>,
     #[serde(default)]
     pub max_frames_delta: Option<u64>,
@@ -81,15 +97,14 @@ pub struct Expectation {
 }
 
 /// Runs every `*.json` regression file in `dir` against a fresh clean app instance.
-pub fn run_directory(
-    dir: &Path,
-    app_exe: &Path,
-    default_locale: &str,
-) -> Result<(), String> {
+pub fn run_directory(dir: &Path, app_exe: &Path, default_locale: &str) -> Result<(), String> {
     let mut files = collect_json_files(dir)?;
     files.sort();
     if files.is_empty() {
-        return Err(format!("no *.json regression files found in {}", dir.display()));
+        return Err(format!(
+            "no *.json regression files found in {}",
+            dir.display()
+        ));
     }
 
     let mut failures = Vec::new();
@@ -124,8 +139,8 @@ pub fn run_directory(
 }
 
 fn collect_json_files(dir: &Path) -> Result<Vec<PathBuf>, String> {
-    let entries = std::fs::read_dir(dir)
-        .map_err(|e| format!("could not read {}: {e}", dir.display()))?;
+    let entries =
+        std::fs::read_dir(dir).map_err(|e| format!("could not read {}: {e}", dir.display()))?;
     let mut files = Vec::new();
     for entry in entries.flatten() {
         let path = entry.path();
@@ -214,9 +229,12 @@ fn run_file(
                     .spawn_and_wait()
                     .map_err(|err| format!("step {step_idx} (app.restart) failed: {err}"))?;
                 let reply = call_ui(session.pipe(), "ui.snapshot", json!({}), CALL_TIMEOUT)
-                    .map_err(|err| format!("step {step_idx} (app.restart snapshot) failed: {err}"))?;
-                Snapshot::from_rpc_result(&reply)
-                    .map_err(|err| format!("step {step_idx} (app.restart) invalid snapshot: {err}"))?
+                    .map_err(|err| {
+                        format!("step {step_idx} (app.restart snapshot) failed: {err}")
+                    })?;
+                Snapshot::from_rpc_result(&reply).map_err(|err| {
+                    format!("step {step_idx} (app.restart) invalid snapshot: {err}")
+                })?
             } else if method == "ui.open_tab" {
                 let target = step
                     .get("target")
@@ -238,15 +256,17 @@ fn run_file(
                 let reply = call_ui(session.pipe(), method, Value::Object(params), CALL_TIMEOUT)
                     .map_err(|err| format!("step {step_idx} ({method}) failed: {err}"))?;
                 if method.starts_with("ui.") {
-                    Snapshot::from_rpc_result(&reply)
-                        .map_err(|err| format!("step {step_idx} ({method}) invalid snapshot: {err}"))?
+                    Snapshot::from_rpc_result(&reply).map_err(|err| {
+                        format!("step {step_idx} ({method}) invalid snapshot: {err}")
+                    })?
                 } else {
                     let snap_reply =
                         call_ui(session.pipe(), "ui.snapshot", json!({}), CALL_TIMEOUT).map_err(
                             |err| format!("step {step_idx} ({method} snapshot) failed: {err}"),
                         )?;
-                    Snapshot::from_rpc_result(&snap_reply)
-                        .map_err(|err| format!("step {step_idx} ({method}) invalid snapshot: {err}"))?
+                    Snapshot::from_rpc_result(&snap_reply).map_err(|err| {
+                        format!("step {step_idx} ({method}) invalid snapshot: {err}")
+                    })?
                 }
             };
             snapshots.push(snap);
@@ -261,10 +281,32 @@ fn run_file(
     result
 }
 
-const MORE_TABS_LABELS: &[&str] = &["Mais abas", "More tabs"];
+const OVERFLOW_PREFIXES: &[&str] = &["mais abas", "more tabs"];
+const ADD_TOOL_LABELS: &[&str] = &["Abrir aba de ferramenta", "Open tool tab"];
 
-/// Opens a slot tab directly when visible on the tab bar, or through any
-/// `"Mais abas"` / `"More tabs"` overflow menu when the window is too narrow.
+fn is_overflow_button(name: &str) -> bool {
+    let trimmed = name.trim();
+    let lower = trimmed.to_lowercase();
+    if OVERFLOW_PREFIXES
+        .iter()
+        .any(|prefix| lower.starts_with(prefix))
+    {
+        return true;
+    }
+    trimmed
+        .strip_prefix('+')
+        .is_some_and(|rest| !rest.is_empty() && rest.chars().all(|ch| ch.is_ascii_digit()))
+}
+
+fn is_add_tool_button(name: &str) -> bool {
+    let trimmed = name.trim();
+    ADD_TOOL_LABELS
+        .iter()
+        .any(|label| label.eq_ignore_ascii_case(trimmed))
+}
+
+/// Opens a slot tab directly when visible on the tab bar, through any
+/// overflow menu (`"Mais abas (+N)"` / `"+N"`), or through the `"+"` tool-tab menu.
 fn open_tab(pipe: &str, target: &str) -> Result<Snapshot, String> {
     open_tab_with(target, |method, params| {
         call_ui(pipe, method, params, CALL_TIMEOUT).map_err(|err| err.to_string())
@@ -277,21 +319,36 @@ where
 {
     let snap_val = call("ui.snapshot", json!({}))?;
     let initial = Snapshot::from_rpc_result(&snap_val)?;
-    if let Some(el) = find_clickable_tab(&initial.elements, target, None) {
+    // Rail navigation can share a title with a tool tab (Bancada/Bench).
+    // A slot-tab request must not activate a rail item instead of its tool.
+    let rail_right = initial
+        .elements
+        .iter()
+        .find(|el| el.role == "Button" && ["Ajustes", "Settings"].contains(&el.name.as_str()))
+        .map(|el| el.rect[2]);
+    if let Some(el) = find_clickable_tab(&initial.elements, target, None)
+        .filter(|el| rail_right.is_none_or(|right| el.rect[0] > right))
+    {
         let reply = call("ui.click", json!({ "id": el.id }))?;
         return Snapshot::from_rpc_result(&reply);
     }
 
     let initial_ids: BTreeSet<u64> = initial.elements.iter().map(|el| el.id).collect();
-    let more_ids: Vec<u64> = initial
+    let overflow_ids: Vec<u64> = initial
         .elements
         .iter()
-        .filter(|el| el.clickable && MORE_TABS_LABELS.contains(&el.name.trim()))
+        .filter(|el| el.clickable && is_overflow_button(&el.name))
+        .map(|el| el.id)
+        .collect();
+    let add_ids: Vec<u64> = initial
+        .elements
+        .iter()
+        .filter(|el| el.clickable && is_add_tool_button(&el.name))
         .map(|el| el.id)
         .collect();
 
-    for more_id in more_ids {
-        let menu_val = call("ui.click", json!({ "id": more_id }))?;
+    for menu_id in overflow_ids.into_iter().chain(add_ids) {
+        let menu_val = call("ui.click", json!({ "id": menu_id }))?;
         let menu_snap = Snapshot::from_rpc_result(&menu_val)?;
         if let Some(item) = find_clickable_tab(&menu_snap.elements, target, Some(&initial_ids))
             .or_else(|| find_clickable_tab(&menu_snap.elements, target, None))
@@ -303,7 +360,7 @@ where
     }
 
     Err(format!(
-        "tab \"{target}\" not found directly or inside any \"Mais abas\"/\"More tabs\" menu"
+        "tab \"{target}\" not found directly, in overflow menu, or in \"+\" tool menu"
     ))
 }
 
@@ -427,6 +484,61 @@ pub fn evaluate_expectations(
                 ));
             }
         }
+        if let Some(limit) = exp.max_primary_buttons {
+            let count = snap
+                .elements
+                .iter()
+                .filter(|element| {
+                    element.role == "Button" && element.state.iter().any(|state| state == "primary")
+                })
+                .count();
+            if count > limit {
+                return Err(format!("expectation {exp_idx} (step {target_idx}): {count} primary buttons exceed {limit}"));
+            }
+        }
+        if let Some(names) = &exp.same_row {
+            let mut center: Option<f64> = None;
+            for name in names.as_slice() {
+                let element = snap
+                    .elements
+                    .iter()
+                    .find(|element| element.name == name)
+                    .ok_or_else(|| {
+                        format!("expectation {exp_idx}: row control `{name}` is missing")
+                    })?;
+                let y = (element.rect[1] + element.rect[3]) / 2.0;
+                if center.is_some_and(|previous| (previous - y).abs() > 2.0) {
+                    return Err(format!(
+                        "expectation {exp_idx}: `{name}` is not on the same filter row"
+                    ));
+                }
+                center = Some(y);
+            }
+        }
+        for expected in &exp.present_elements {
+            if !snap
+                .elements
+                .iter()
+                .any(|element| element.name == expected.name && element.role == expected.role)
+            {
+                return Err(format!(
+                    "expectation {exp_idx} (step {target_idx}): missing {} named {:?}",
+                    expected.role, expected.name
+                ));
+            }
+        }
+        if exp.no_unnamed_buttons == Some(true) {
+            if let Some(element) = snap
+                .elements
+                .iter()
+                .find(|element| element.role == "Button" && element.name.trim().is_empty())
+            {
+                return Err(format!(
+                    "expectation {exp_idx} (step {target_idx}): button {} has no accessible name",
+                    element.id
+                ));
+            }
+        }
         if exp.no_geometry_issues == Some(true) {
             let issues = crate::invariants::geometry_issues(snap);
             if !issues.is_empty() {
@@ -503,7 +615,10 @@ mod tests {
             });
         }
         Snapshot {
-            window: WindowSize { width: 1920.0, height: 1080.0 },
+            window: WindowSize {
+                width: 1920.0,
+                height: 1080.0,
+            },
             changes: Changes {
                 appeared: appeared.iter().map(|s| (*s).to_owned()).collect(),
                 disappeared: vec![],
@@ -513,6 +628,54 @@ mod tests {
             frames: 0,
             closed: false,
         }
+    }
+
+    #[test]
+    fn filter_row_contract_rejects_a_second_row_and_missing_controls() {
+        let expected: Vec<Expectation> =
+            serde_json::from_str(r#"[{"same_row":["All","Local"]}]"#).unwrap();
+        let mut snapshot = snap_with(&["All", "Local"], 0, &[]);
+        snapshot.elements[1].rect = [100.0, 50.0, 180.0, 80.0];
+        assert!(evaluate_expectations(&expected, &[snapshot.clone()]).is_err());
+        snapshot.elements[1].rect = [100.0, 10.0, 180.0, 40.0];
+        assert!(evaluate_expectations(&expected, &[snapshot]).is_ok());
+        assert!(evaluate_expectations(&expected, &[snap_with(&["All"], 0, &[])]).is_err());
+    }
+
+    #[test]
+    fn primary_limit_counts_the_actual_resolved_button_style() {
+        let expected: Vec<Expectation> =
+            serde_json::from_str(r#"[{"max_primary_buttons":1}]"#).unwrap();
+        let mut snapshot = snap_with(&["Create", "Save"], 0, &[]);
+        for element in &mut snapshot.elements {
+            element.state.push("primary".into());
+        }
+        assert!(evaluate_expectations(&expected, &[snapshot.clone()]).is_err());
+        snapshot.elements[1].state.clear();
+        assert!(evaluate_expectations(&expected, &[snapshot]).is_ok());
+    }
+
+    #[test]
+    fn element_expectations_require_both_name_and_role() {
+        let expected: Vec<Expectation> = serde_json::from_str(
+            r#"[{"present_elements":[{"name":"Shared state","role":"Label"}]}]"#,
+        )
+        .unwrap();
+        let mut snap = snap_with(&["Shared state"], 0, &[]);
+        assert!(
+            evaluate_expectations(&expected, &[snap.clone()]).is_err(),
+            "a Button must not satisfy a Label contract"
+        );
+        snap.elements[0].role = "Label".into();
+        assert!(evaluate_expectations(&expected, &[snap]).is_ok());
+    }
+
+    #[test]
+    fn rejects_icon_controls_without_accessible_names() {
+        let expectations: Vec<Expectation> =
+            serde_json::from_str(r#"[{"no_unnamed_buttons":true}]"#).unwrap();
+        assert!(evaluate_expectations(&expectations, &[snap_with(&["Refresh"], 0, &[])]).is_ok());
+        assert!(evaluate_expectations(&expectations, &[snap_with(&[""], 0, &[])]).is_err());
     }
 
     #[test]
@@ -694,6 +857,37 @@ mod tests {
     }
 
     #[test]
+    fn open_tab_opens_tool_tab_via_plus_button_and_counts_overflow() {
+        let mut log = Vec::new();
+        let result = open_tab_with("Navegador", |method, params| {
+            log.push((method.to_owned(), params.clone()));
+            match method {
+                "ui.snapshot" => Ok(rpc_snapshot(vec![
+                    tab_el(10, "Mais abas (+2)", true),
+                    tab_el(11, "Abrir aba de ferramenta", true),
+                ])),
+                "ui.click" => match params["id"].as_u64() {
+                    Some(10) => Ok(rpc_snapshot(vec![tab_el(20, "Editor", true)])),
+                    Some(11) => Ok(rpc_snapshot(vec![
+                        tab_el(30, "Navegador", true),
+                        tab_el(31, "Bancada", true),
+                    ])),
+                    Some(30) => Ok(rpc_snapshot(vec![tab_el(30, "Navegador", true)])),
+                    other => panic!("unexpected click {other:?}"),
+                },
+                "ui.key" => Ok(rpc_snapshot(vec![
+                    tab_el(10, "Mais abas (+2)", true),
+                    tab_el(11, "Abrir aba de ferramenta", true),
+                ])),
+                other => panic!("unexpected {other}"),
+            }
+        })
+        .unwrap();
+
+        assert_eq!(result.elements[0].name, "Navegador");
+    }
+
+    #[test]
     fn evaluates_max_frames_delta_expectation() {
         let mut before = snap_with(&["Terminal"], 0, &[]);
         before.frames = 10;
@@ -702,8 +896,7 @@ mod tests {
         let mut busy_after = snap_with(&["Terminal"], 0, &[]);
         busy_after.frames = 310;
 
-        let exps: Vec<Expectation> =
-            serde_json::from_str(r#"[{"max_frames_delta": 30}]"#).unwrap();
+        let exps: Vec<Expectation> = serde_json::from_str(r#"[{"max_frames_delta": 30}]"#).unwrap();
         assert!(evaluate_expectations(&exps, &[before.clone(), ok_after]).is_ok());
         assert!(evaluate_expectations(&exps, &[before.clone(), busy_after.clone()]).is_err());
 
@@ -726,7 +919,9 @@ mod tests {
             serde_json::from_str(r#"[{"step": 0, "closed": false}]"#).unwrap();
         let did_close: Vec<Expectation> =
             serde_json::from_str(r#"[{"step": 1, "closed": true}]"#).unwrap();
-        assert!(evaluate_expectations(&stay_open, &[open_snap.clone(), closed_snap.clone()]).is_ok());
+        assert!(
+            evaluate_expectations(&stay_open, &[open_snap.clone(), closed_snap.clone()]).is_ok()
+        );
         assert!(evaluate_expectations(&did_close, &[open_snap, closed_snap]).is_ok());
     }
 }

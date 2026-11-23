@@ -183,8 +183,8 @@ impl ForjaApp {
                         .spacing([12.0, 2.0])
                         .show(ui, |ui| {
                             for (label, value) in &rows {
-                                ui.label(label);
-                                ui.label(egui::RichText::new(value).strong());
+                                forja_ui_kit::text(ui, label);
+                                forja_ui_kit::text(ui, egui::RichText::new(value).strong());
                                 ui.end_row();
                             }
                         });

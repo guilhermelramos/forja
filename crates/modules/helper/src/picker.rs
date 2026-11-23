@@ -48,7 +48,7 @@ impl View for ProfilePicker {
             .default_width(360.0)
             .show(ui.ctx(), |ui| {
                 if profiles.is_empty() {
-                    ui.label(cx.t("helper.profile-picker.empty"));
+                    forja_ui_kit::text(ui, cx.t("helper.profile-picker.empty"));
                 }
                 for profile in &profiles {
                     if ui.button(&profile.name).clicked() {

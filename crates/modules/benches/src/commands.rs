@@ -100,6 +100,14 @@ pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
     });
 
     let s = shared.clone();
+    r.command("bench.tool_tabs", "bench.command.tool_tabs", move |cx, args| {
+        s.ensure_loaded(cx);
+        service::ensure_main(cx, &s).map_err(kernel_error)?;
+        let tabs = service::initial_tool_tabs(cx, &s, args.str("bench_id"));
+        Ok(json!({ "tool_tabs": tabs }))
+    });
+
+    let s = shared.clone();
     r.command("bench.list", "bench.command.list", move |cx, args| {
         let project_id = args.str("project_id");
         let include_archived = args.bool("include_archived").unwrap_or(false);

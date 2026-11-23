@@ -9,7 +9,7 @@
     },
     {
       "m": "ui.click",
-      "target": "Adicionar pasta"
+      "target": "Abrir pasta"
     },
     {
       "m": "ui.click",

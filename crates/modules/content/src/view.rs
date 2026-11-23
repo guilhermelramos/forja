@@ -70,9 +70,15 @@ impl View for ContentAnvilView {
                 continue;
             }
             let blocked = blocked_ids.contains(&command.id);
-            let category = cx.t(if blocked { "content.anvil.approval" } else { match command.run.as_str() {
-                "helper" => "content.anvil.helper", "terminal" => "content.anvil.terminal", _ => "content.anvil.command",
-            }});
+            let category = cx.t(if blocked {
+                "content.anvil.approval"
+            } else {
+                match command.run.as_str() {
+                    "helper" => "content.anvil.helper",
+                    "terminal" => "content.anvil.terminal",
+                    _ => "content.anvil.command",
+                }
+            });
             let detail = match command.shortcut.as_deref() {
                 Some(shortcut) => format!("{category} · {shortcut}"),
                 None => category,
@@ -80,10 +86,13 @@ impl View for ContentAnvilView {
             hits.push(AnvilHit {
                 title,
                 detail,
-                icon_glyph: Some("⌘".to_owned()),
+                icon_glyph: Some(forja_ui_kit::Icon::Configure.id().to_owned()),
                 score: 30,
                 command: "content.run".to_owned(),
-                args: json!({ "id": command.id }).as_object().cloned().unwrap_or_default(),
+                args: json!({ "id": command.id })
+                    .as_object()
+                    .cloned()
+                    .unwrap_or_default(),
             });
         }
         hits
@@ -130,24 +139,32 @@ impl View for ContentSettingsView {
                 )
             })
             .unwrap_or((0, Vec::new(), 0, 0, 0, 0));
-        forja_ui_kit::page_heading(
-            ui,
-            &cx.t("content.settings.title"),
-            None,
-            |_| {},
-        );
+        forja_ui_kit::page_heading(ui, &cx.t("content.settings.title"), None, |_| {});
         ui.label(
             egui::RichText::new(format!(
                 "{} · {} · {} · {}",
-                cx.t_args("content.settings.commands", &[("count", &commands.to_string())]),
+                cx.t_args(
+                    "content.settings.commands",
+                    &[("count", &commands.to_string())]
+                ),
                 cx.t_args("content.settings.themes", &[("count", &themes.to_string())]),
-                cx.t_args("content.settings.templates", &[("count", &templates.to_string())]),
-                cx.t_args("content.settings.recipes", &[("count", &recipes.to_string())]),
+                cx.t_args(
+                    "content.settings.templates",
+                    &[("count", &templates.to_string())]
+                ),
+                cx.t_args(
+                    "content.settings.recipes",
+                    &[("count", &recipes.to_string())]
+                ),
             ))
             .weak(),
         );
-        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &cx.t("content.settings.reload"))
-            .clicked()
+        if forja_ui_kit::button(
+            ui,
+            forja_ui_kit::ButtonKind::Secondary,
+            &cx.t("content.settings.reload"),
+        )
+        .clicked()
         {
             let project = state::current_project(cx);
             state::load(&self.core, cx, project);
@@ -158,35 +175,65 @@ impl View for ContentSettingsView {
         }
         ui.add_space(6.0);
         ui.label(egui::RichText::new(cx.t("content.settings.diagnostics")).strong());
-        egui::ScrollArea::vertical().max_height(220.0).show(ui, |ui| {
-            for diagnostic in diagnostics {
-                ui.label(
-                    egui::RichText::new(format!(
-                        "{} · {}",
-                        cx.t(&format!("content.layer.{}", diagnostic.layer)),
-                        diagnostic_path(&diagnostic.path, state::current_project(cx).as_deref(), cx.user_dir())
-                    ))
-                    .weak(),
-                );
-                ui.label(cx.t(if diagnostic.message.contains("missing `+++`") {
-                    "content.error.header-missing"
-                } else if diagnostic.message.contains("closing `+++`") {
-                    "content.error.header-unclosed"
-                } else { "content.error.invalid-file" }));
-                ui.collapsing(cx.t("content.settings.details"), |ui| { ui.label(&diagnostic.message); });
-            }
-        });
+        egui::ScrollArea::vertical()
+            .max_height(220.0)
+            .show(ui, |ui| {
+                for diagnostic in diagnostics {
+                    ui.label(
+                        egui::RichText::new(format!(
+                            "{} · {}",
+                            cx.t(&format!("content.layer.{}", diagnostic.layer)),
+                            diagnostic_path(
+                                &diagnostic.path,
+                                state::current_project(cx).as_deref(),
+                                cx.user_dir()
+                            )
+                        ))
+                        .weak(),
+                    );
+                    ui.label(cx.t(if diagnostic.message.contains("missing `+++`") {
+                        "content.error.header-missing"
+                    } else if diagnostic.message.contains("closing `+++`") {
+                        "content.error.header-unclosed"
+                    } else {
+                        "content.error.invalid-file"
+                    }));
+                    ui.collapsing(cx.t("content.settings.details"), |ui| {
+                        ui.label(&diagnostic.message);
+                    });
+                }
+            });
     }
 }
 
-fn diagnostic_path(path: &str, project: Option<&std::path::Path>, user: &std::path::Path) -> String {
-    let normalized = std::path::PathBuf::from(path).components().fold(std::path::PathBuf::new(), |mut out, part| {
-        match part { std::path::Component::ParentDir => { out.pop(); }, std::path::Component::CurDir => {}, part => out.push(part.as_os_str()) }; out
-    });
+fn diagnostic_path(
+    path: &str,
+    project: Option<&std::path::Path>,
+    user: &std::path::Path,
+) -> String {
+    let normalized = std::path::PathBuf::from(path).components().fold(
+        std::path::PathBuf::new(),
+        |mut out, part| {
+            match part {
+                std::path::Component::ParentDir => {
+                    out.pop();
+                }
+                std::path::Component::CurDir => {}
+                part => out.push(part.as_os_str()),
+            };
+            out
+        },
+    );
     for root in project.into_iter().chain(std::iter::once(user)) {
-        if let Ok(relative) = normalized.strip_prefix(root) { return relative.display().to_string(); }
+        if let Ok(relative) = normalized.strip_prefix(root) {
+            return relative.display().to_string();
+        }
     }
-    normalized.file_name().unwrap_or_default().to_string_lossy().into_owned()
+    normalized
+        .file_name()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .into_owned()
 }
 
 #[cfg(test)]
@@ -195,7 +242,17 @@ mod presentation_tests {
     #[test]
     fn diagnostics_use_project_relative_paths_without_parent_segments() {
         let root = std::path::Path::new("C:/sample");
-        assert_eq!(diagnostic_path("C:/sample/.forja/commands/../commands/bad.md", Some(root), root), ".forja\\commands\\bad.md");
-        assert_eq!(diagnostic_path("C:/elsewhere/../../../bad.md", Some(root), root), "bad.md");
+        assert_eq!(
+            diagnostic_path(
+                "C:/sample/.forja/commands/../commands/bad.md",
+                Some(root),
+                root
+            ),
+            ".forja\\commands\\bad.md"
+        );
+        assert_eq!(
+            diagnostic_path("C:/elsewhere/../../../bad.md", Some(root), root),
+            "bad.md"
+        );
     }
 }

@@ -3,7 +3,7 @@
 use eframe::egui::{self, Align2, Color32, Frame, Margin, Stroke, Ui};
 
 use crate::apply::{elevation_shadow, pad_i8, radius_u8};
-use crate::paint::{self, body_font, caption_font, paint_text, title_font};
+use crate::paint::{self, body_font, caption_font, paint_text};
 
 /// Uma linha de lista.
 pub struct ListItem<'a> {
@@ -31,7 +31,7 @@ pub fn card<R>(
             if let Some(title) = title {
                 ui.label(
                     egui::RichText::new(title)
-                        .font(title_font(&metrics))
+                        .font(crate::TextRole::Section.font())
                         .color(tokens.color.text.to_color32()),
                 );
                 ui.add_space(metrics.gap);

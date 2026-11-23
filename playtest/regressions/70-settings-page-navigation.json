@@ -1,0 +1,99 @@
+{
+  "title": "Ajustes é página central com navegação e engrenagem selecionada (#199, #164)",
+  "issue": 199,
+  "locale": "pt-BR",
+  "steps": [
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.click",
+      "target": "Ajustes"
+    },
+    {
+      "m": "ui.snapshot"
+    },
+    {
+      "m": "ui.click",
+      "target": "Terminal"
+    },
+    {
+      "m": "ui.click",
+      "target": "Editor"
+    },
+    {
+      "m": "ui.click",
+      "target": "Avançado"
+    },
+    {
+      "m": "ui.click",
+      "target": "Buscar ajustes"
+    },
+    {
+      "m": "ui.type",
+      "text": "app.performance.worker_threads"
+    },
+    {
+      "m": "ui.snapshot"
+    },
+    {
+      "m": "ui.scroll",
+      "target": "Aparência",
+      "dy": -600
+    },
+    {
+      "m": "ui.wait",
+      "ms": 250
+    }
+  ],
+  "expect": [
+    {
+      "step": 2,
+      "window_count": 0,
+      "present": [
+        "Buscar ajustes",
+        "Aparência",
+        "Bancadas",
+        "Terminal",
+        "Editor",
+        "Ajudantes",
+        "Mutirão",
+        "Rotinas",
+        "Pedidos e balcões",
+        "Integrações",
+        "Remoto (SSH/WSL)",
+        "Extensões",
+        "Privacidade",
+        "Avançado",
+        "Abrir settings.toml"
+      ],
+      "no_geometry_issues": true
+    },
+    {
+      "step": 3,
+      "present": [
+        "Shell padrão"
+      ],
+      "no_geometry_issues": true
+    },
+    {
+      "step": 8,
+      "present_contains": [
+        "Exige reiniciar"
+      ],
+      "no_geometry_issues": true
+    },
+    {
+      "step": 10,
+      "present": [
+        "Importar",
+        "Contas",
+        "Confiança",
+        "Servidor MCP",
+        "Voz"
+      ],
+      "no_geometry_issues": true
+    }
+  ]
+}

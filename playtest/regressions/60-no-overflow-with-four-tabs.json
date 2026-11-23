@@ -1,0 +1,43 @@
+{
+  "title": "No overflow button with 4 initial tabs and overflow swaps active tab (#193)",
+  "issue": 193,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Abrir pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 250 },
+    { "m": "ui.open_tab", "target": "Navegador" },
+    { "m": "ui.open_tab", "target": "Bancada" },
+    { "m": "ui.open_tab", "target": "Revisão" },
+    { "m": "ui.open_tab", "target": "Histórico" },
+    { "m": "ui.open_tab", "target": "Painéis de extensões" },
+    { "m": "ui.open_tab", "target": "Visualizador" }
+  ],
+  "expect": [
+    {
+      "step": 4,
+      "present": [
+        "Terminal",
+        "Ajudante (chat)",
+        "Diferenças",
+        "Editor",
+        "Abrir aba de ferramenta",
+        "Projetos",
+        "Bancadas",
+        "Arquivos",
+        "Mudanças",
+        "Busca",
+        "Portas"
+      ],
+      "absent_contains": ["Mais abas", "More tabs"],
+      "no_geometry_issues": true
+    },
+    {
+      "step": 10,
+      "present": ["Visualizador", "Abrir aba de ferramenta"],
+      "no_geometry_issues": true
+    }
+  ]
+}

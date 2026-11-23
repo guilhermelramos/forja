@@ -142,33 +142,33 @@ fn palette_from(theme: &TerminalTheme) -> Palette {
 }
 
 fn to_color32(color: Color) -> Color32 {
-    Color32::from_rgba_unmultiplied(color.r, color.g, color.b, color.a)
+    color.to_color32()
 }
 
 fn fallback_dark() -> Palette {
     Palette {
-        background: Color32::from_rgb(0x12, 0x10, 0x10),
-        foreground: Color32::from_rgb(0xED, 0xE7, 0xE1),
-        cursor: Color32::from_rgb(0xFF, 0xC1, 0x4D),
-        selection: Color32::from_rgb(0x6A, 0x46, 0x34),
-        selection_foreground: Color32::from_rgb(0xED, 0xE7, 0xE1),
+        background: Color32::from_rgb(0x12, 0x10, 0x10), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+        foreground: Color32::from_rgb(0xED, 0xE7, 0xE1), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+        cursor: Color32::from_rgb(0xFF, 0xC1, 0x4D), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+        selection: Color32::from_rgb(0x6A, 0x46, 0x34), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+        selection_foreground: Color32::from_rgb(0xED, 0xE7, 0xE1), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
         ansi: [
-            Color32::from_rgb(0x8A, 0x7A, 0x70),
-            Color32::from_rgb(0xE5, 0x53, 0x4B),
-            Color32::from_rgb(0x6C, 0xC4, 0x8A),
-            Color32::from_rgb(0xFF, 0xC1, 0x4D),
-            Color32::from_rgb(0x6F, 0xA8, 0xDC),
-            Color32::from_rgb(0xE7, 0xA0, 0xC0),
-            Color32::from_rgb(0x7D, 0xCF, 0xC8),
-            Color32::from_rgb(0xED, 0xE7, 0xE1),
-            Color32::from_rgb(0xA8, 0x98, 0x8C),
-            Color32::from_rgb(0xFF, 0xA4, 0x9E),
-            Color32::from_rgb(0xA4, 0xE4, 0xC2),
-            Color32::from_rgb(0xFF, 0xD5, 0x8A),
-            Color32::from_rgb(0xA9, 0xD0, 0xEE),
-            Color32::from_rgb(0xF2, 0xC0, 0xD6),
-            Color32::from_rgb(0xB4, 0xE8, 0xE2),
-            Color32::from_rgb(0xFF, 0xF8, 0xF3),
+            Color32::from_rgb(0x8A, 0x7A, 0x70), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+            Color32::from_rgb(0xE5, 0x53, 0x4B), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+            Color32::from_rgb(0x6C, 0xC4, 0x8A), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+            Color32::from_rgb(0xFF, 0xC1, 0x4D), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+            Color32::from_rgb(0x6F, 0xA8, 0xDC), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+            Color32::from_rgb(0xE7, 0xA0, 0xC0), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+            Color32::from_rgb(0x7D, 0xCF, 0xC8), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+            Color32::from_rgb(0xED, 0xE7, 0xE1), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+            Color32::from_rgb(0xA8, 0x98, 0x8C), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+            Color32::from_rgb(0xFF, 0xA4, 0x9E), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+            Color32::from_rgb(0xA4, 0xE4, 0xC2), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+            Color32::from_rgb(0xFF, 0xD5, 0x8A), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+            Color32::from_rgb(0xA9, 0xD0, 0xEE), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+            Color32::from_rgb(0xF2, 0xC0, 0xD6), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+            Color32::from_rgb(0xB4, 0xE8, 0xE2), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
+            Color32::from_rgb(0xFF, 0xF8, 0xF3), // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
         ],
     }
 }
@@ -199,7 +199,7 @@ impl Palette {
     /// Aplica `terminal.color.opacity` ao fundo.
     pub fn with_opacity(mut self, opacity: f64) -> Self {
         let alpha = (opacity.clamp(0.6, 1.0) * 255.0).round() as u8;
-        self.background = Color32::from_rgba_unmultiplied(
+        self.background = Color32::from_rgba_unmultiplied( // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
             self.background.r(),
             self.background.g(),
             self.background.b(),
@@ -225,7 +225,7 @@ fn ansi_256(palette: &Palette, index: usize) -> Color32 {
                 _ => 255,
             }
         };
-        Color32::from_rgb(
+        Color32::from_rgb( // ui-lint: allow terminal content palette and ANSI color resolution, not interface chrome
             level(value / 36),
             level(value / 6 % 6),
             level(value % 6),

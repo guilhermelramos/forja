@@ -10,8 +10,16 @@ use std::sync::Arc;
 struct RailPage {
     id: String,
     title: String,
-    glyph: Option<String>,
+    glyph: forja_ui_kit::Icon,
     png: Option<Arc<[u8]>>,
+}
+
+fn rail_tooltip(title: &str, shortcut: &str) -> String {
+    if shortcut.is_empty() {
+        title.to_owned()
+    } else {
+        format!("{title}\n{shortcut}")
+    }
 }
 
 fn panel_max_width(available: f32, reserved: f32) -> f32 {
@@ -20,118 +28,161 @@ fn panel_max_width(available: f32, reserved: f32) -> f32 {
 
 impl ForjaApp {
     pub(crate) fn top_bar(&mut self, ctx: &egui::Context) {
-        let height = self.tokens.metrics().control + 8.0;
         let frame = egui::Frame::NONE
             .fill(self.paint(self.tokens.color.surface))
             .inner_margin(Margin::symmetric(10, 4))
             .stroke(Stroke::new(1.0_f32, self.paint(self.tokens.color.border)));
-        let find_label = format!(
-            "{}  {}",
-            self.text("shell.top.find"),
-            self.chord_for("find.file")
-        );
-        let anvil_label = format!(
-            "{}  {}",
-            self.text("shell.top.anvil"),
+        let crumb = self.active_project_crumb();
+        let search_label = format!(
+            "{} {}",
+            self.text("shell.top.search"),
             self.chord_for("anvil.open")
         );
-        let crumb = self.active_project_crumb();
-        let has_top = !self.top_views.is_empty();
         let response = egui::TopBottomPanel::top("forja.top")
-            .exact_height(height)
+            .exact_height(40.0)
             .frame(frame)
             .show(ctx, |ui| {
-                // The whole empty bar moves the window (Forja draws its own title
-                // bar). Registered first, so buttons and fields on top still win.
-                let bar = ui.interact(
-                    ui.max_rect(),
+                let bounds = ui.max_rect();
+                let drag = ui.interact(
+                    bounds,
                     egui::Id::new("forja.top.drag"),
                     Sense::click_and_drag(),
                 );
-                if bar.drag_started_by(egui::PointerButton::Primary) {
-                    ui.ctx().send_viewport_cmd(ViewportCommand::StartDrag);
+                if drag.drag_started_by(egui::PointerButton::Primary) {
+                    ctx.send_viewport_cmd(ViewportCommand::StartDrag);
                 }
-                if bar.double_clicked() {
-                    let maximized = ui
-                        .ctx()
-                        .input(|input| input.viewport().maximized.unwrap_or(false));
-                    ui.ctx().send_viewport_cmd(ViewportCommand::Maximized(!maximized));
-                }
-                ui.horizontal_centered(|ui| {
-                    let title = ui.add(
-                        egui::Label::new(
-                            RichText::new(crumb)
-                                .strong()
-                                .color(self.paint(self.tokens.color.text)),
-                        )
-                        .sense(Sense::click_and_drag()),
-                    );
-                    if title.drag_started_by(egui::PointerButton::Primary) {
-                        ui.ctx().send_viewport_cmd(ViewportCommand::StartDrag);
-                    }
-                    ui.separator();
-                    if has_top {
-                        for view in self.top_views.iter_mut() {
-                            let module = view.module.clone();
-                            let mut cx = self.runtime.ctx(&module);
+                let left_width = (bounds.width() * 0.24).clamp(100.0, 280.0);
+                let controls_width = 184.0;
+                let search_width =
+                    (bounds.width() - left_width - controls_width - 40.0).clamp(180.0, 420.0);
+                let search_x =
+                    (bounds.center().x - search_width * 0.5).max(bounds.left() + left_width + 12.0);
+                let search_rect = egui::Rect::from_min_size(
+                    egui::pos2(search_x, bounds.top()),
+                    egui::vec2(search_width, 32.0),
+                );
+                ui.scope_builder(
+                    egui::UiBuilder::new().max_rect(egui::Rect::from_min_size(
+                        bounds.min,
+                        egui::vec2(left_width, 32.0),
+                    )),
+                    |ui| {
+                        let title = ui.add(
+                            egui::Label::new(RichText::new(&crumb).strong())
+                                .truncate()
+                                .sense(Sense::click_and_drag()),
+                        );
+                        if title.drag_started_by(egui::PointerButton::Primary) {
+                            ctx.send_viewport_cmd(ViewportCommand::StartDrag);
+                        }
+                        if title.clicked() {
+                            self.open_anvil(AnvilMode::Files);
+                        }
+                        for view in self
+                            .top_views
+                            .iter_mut()
+                            .filter(|view| view.module != "find")
+                        {
+                            let mut cx = self.runtime.ctx(&view.module);
                             ui.push_id(&view.id, |ui| view.view.ui(ui, &mut cx));
                         }
-                    } else if button(ui, ButtonKind::Ghost, &find_label).clicked() {
-                        self.open_anvil(AnvilMode::Files);
-                    }
-                    if button(ui, ButtonKind::Secondary, &anvil_label).clicked() {
-                        self.open_anvil(AnvilMode::All);
-                    }
-                    ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        if window_button(ui, &self.text("shell.window.close-glyph"), &self.text("shell.window.close"))
-                        .on_hover_text(self.text("shell.window.close"))
-                        .clicked()
-                        {
-                            ui.ctx().send_viewport_cmd(ViewportCommand::Close);
-                        }
-                        if window_button(ui, &self.text("shell.window.maximize-glyph"), &self.text("shell.window.maximize"))
-                        .on_hover_text(self.text("shell.window.maximize"))
-                        .clicked()
-                        {
-                            let maximized = ui
-                                .ctx()
-                                .input(|input| input.viewport().maximized.unwrap_or(false));
-                            ui.ctx()
-                                .send_viewport_cmd(ViewportCommand::Maximized(!maximized));
-                        }
-                        if window_button(ui, &self.text("shell.window.minimize-glyph"), &self.text("shell.window.minimize"))
-                        .on_hover_text(self.text("shell.window.minimize"))
-                        .clicked()
-                        {
-                            ui.ctx().send_viewport_cmd(ViewportCommand::Minimized(true));
-                        }
-                        ui.separator();
-                        let system = self.text("shell.theme.system");
-                        let dark = self.text("shell.theme.dark");
-                        let light = self.text("shell.theme.light");
-                        let theme_tip = self.text(self.theme_label_key());
-                        let modes = [
-                            forja_ui_kit::MenuItem {
-                                label: system.as_str(),
-                                danger: false,
-                            },
-                            forja_ui_kit::MenuItem {
-                                label: dark.as_str(),
-                                danger: false,
-                            },
-                            forja_ui_kit::MenuItem {
-                                label: light.as_str(),
-                                danger: false,
-                            },
-                        ];
-                        if let Some(index) =
-                            forja_ui_kit::icon_menu(ui, forja_ui_kit::THEME, &theme_tip, &modes)
-                        {
-                            let mode = ["system", "dark", "light"][index];
-                            self.set_theme_mode(mode);
-                        }
-                    });
+                    },
+                );
+                let search = ui.interact(
+                    search_rect,
+                    egui::Id::new("forja.top.search"),
+                    Sense::click(),
+                );
+                search.widget_info(|| {
+                    egui::WidgetInfo::labeled(
+                        egui::WidgetType::Button,
+                        ui.is_enabled(),
+                        &search_label,
+                    )
                 });
+                ui.painter().rect(
+                    search_rect,
+                    6.0,
+                    self.paint(self.tokens.color.surface_alt),
+                    Stroke::new(1.0_f32, self.paint(self.tokens.color.border)),
+                    egui::StrokeKind::Inside,
+                );
+                forja_ui_kit::paint_icon(
+                    ui.painter(),
+                    forja_ui_kit::Icon::Search,
+                    egui::Rect::from_center_size(
+                        search_rect.left_center() + egui::vec2(16.0, 0.0),
+                        egui::vec2(16.0, 16.0),
+                    ),
+                    self.paint(self.tokens.color.text_muted),
+                );
+                ui.painter().text(
+                    search_rect.left_center() + egui::vec2(32.0, 0.0),
+                    egui::Align2::LEFT_CENTER,
+                    &search_label,
+                    egui::FontId::proportional(self.tokens.metrics().body),
+                    self.paint(self.tokens.color.text),
+                );
+                if search.clicked() {
+                    self.open_anvil(AnvilMode::All);
+                }
+                ui.scope_builder(
+                    egui::UiBuilder::new()
+                        .max_rect(egui::Rect::from_min_max(
+                            egui::pos2(bounds.right() - controls_width, bounds.top()),
+                            bounds.max,
+                        ))
+                        .layout(Layout::right_to_left(Align::Center)),
+                    |ui| {
+                        ui.spacing_mut().item_spacing.x = 0.0;
+                        if window_button(
+                            ui,
+                            forja_ui_kit::Icon::Close,
+                            &self.text("shell.window.close"),
+                        )
+                        .clicked()
+                        {
+                            ctx.send_viewport_cmd(ViewportCommand::Close);
+                        }
+                        let maximized =
+                            ctx.input(|input| input.viewport().maximized.unwrap_or(false));
+                        let (icon, key) = if maximized {
+                            (forja_ui_kit::Icon::Restore, "shell.window.restore")
+                        } else {
+                            (forja_ui_kit::Icon::Maximize, "shell.window.maximize")
+                        };
+                        if window_button(ui, icon, &self.text(key)).clicked() {
+                            ctx.send_viewport_cmd(ViewportCommand::Maximized(!maximized));
+                        }
+                        if window_button(
+                            ui,
+                            forja_ui_kit::Icon::Minimize,
+                            &self.text("shell.window.minimize"),
+                        )
+                        .clicked()
+                        {
+                            ctx.send_viewport_cmd(ViewportCommand::Minimized(true));
+                        }
+                        let labels = [
+                            self.text("shell.theme.system"),
+                            self.text("shell.theme.dark"),
+                            self.text("shell.theme.light"),
+                        ];
+                        let modes: Vec<_> = labels
+                            .iter()
+                            .map(|label| forja_ui_kit::MenuItem {
+                                label,
+                                danger: false,
+                            })
+                            .collect();
+                        let tip = self.text(self.theme_label_key());
+                        if let Some(index) =
+                            forja_ui_kit::icon_menu(ui, forja_ui_kit::Icon::Theme, &tip, &modes)
+                        {
+                            self.set_theme_mode(["system", "dark", "light"][index]);
+                        }
+                    },
+                );
             });
         self.slot_rects.insert("top".into(), response.response.rect);
     }
@@ -164,17 +215,13 @@ impl ForjaApp {
                             .on_hover_text(&status.summary);
                         });
                         let details_title = self.text("shell.status.details-title");
-                        if forja_ui_kit::button(
-                            ui,
-                            forja_ui_kit::ButtonKind::Ghost,
-                            &details_title,
-                        )
-                        .clicked()
+                        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &details_title)
+                            .clicked()
                         {
                             self.status_details_open = !self.status_details_open;
                         }
                         let dismiss = self.text("shell.status.dismiss");
-                        let button = forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE)
+                        let button = forja_ui_kit::icon_button(ui, forja_ui_kit::CLOSE, &dismiss)
                             .on_hover_text(&dismiss);
                         button.widget_info(|| {
                             egui::WidgetInfo::labeled(
@@ -205,21 +252,27 @@ impl ForjaApp {
                 let copy_label = self.text("shell.status.copy");
                 forja_ui_kit::modal(ctx, &mut open, &title, |ui| {
                     ui.set_max_width(480.0);
-                    ui.add(egui::Label::new(status.summary.clone()).selectable(true).wrap());
+                    ui.add(
+                        egui::Label::new(status.summary.clone())
+                            .selectable(true)
+                            .wrap(),
+                    );
                     if let Some(detail) = &status.detail {
                         ui.add_space(self.tokens.metrics().gap);
-                        egui::ScrollArea::vertical().max_height(180.0).show(ui, |ui| {
-                            ui.add(
-                                egui::Label::new(
-                                    egui::RichText::new(detail)
-                                        .small()
-                                        .monospace()
-                                        .color(self.paint(self.tokens.color.text_muted)),
-                                )
-                                .selectable(true)
-                                .wrap(),
-                            );
-                        });
+                        egui::ScrollArea::vertical()
+                            .max_height(180.0)
+                            .show(ui, |ui| {
+                                ui.add(
+                                    egui::Label::new(
+                                        egui::RichText::new(detail)
+                                            .small()
+                                            .monospace()
+                                            .color(self.paint(self.tokens.color.text_muted)),
+                                    )
+                                    .selectable(true)
+                                    .wrap(),
+                                );
+                            });
                     }
                     ui.add_space(self.tokens.metrics().gap);
                     if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &copy_label)
@@ -245,7 +298,7 @@ impl ForjaApp {
         if self.setting_bool("appearance.rail.visible", true) {
             self.rail(ctx);
         }
-        if self.show_sidebar {
+        if !self.no_project() && self.show_sidebar {
             self.sidebar(ctx);
         }
     }
@@ -254,15 +307,27 @@ impl ForjaApp {
         let frame = egui::Frame::NONE
             .fill(self.paint(self.tokens.color.surface_alt))
             .inner_margin(Margin::symmetric(6, 8));
-        let settings_tip = self.text("shell.rail.settings");
+        let settings_tip = rail_tooltip(
+            &self.text("shell.rail.settings"),
+            &self.chord_for("settings.open"),
+        );
+        // Ctrl+1 selects the first tool tab, not the Bancada destination.
+        // Do not advertise a shortcut that navigates somewhere else.
         let bench_tip = self.text("shell.rail.bench");
         let pages: Vec<RailPage> = self
             .rail_views
             .iter()
             .map(|view| RailPage {
                 id: view.id.clone(),
-                title: self.text(&view.title_key),
-                glyph: view.icon_glyph.clone(),
+                title: rail_tooltip(
+                    &self.text(&view.title_key),
+                    &if view.id == "muster.page" {
+                        self.chord_for("muster.open")
+                    } else {
+                        String::new()
+                    },
+                ),
+                glyph: super::app::tab_bar::view_icon(view),
                 png: view.icon_png.clone(),
             })
             .collect();
@@ -275,30 +340,40 @@ impl ForjaApp {
                 ui.vertical_centered(|ui| {
                     let logo = self.logo(ui);
                     if logo.clicked() {
+                        self.settings_open = false;
                         self.rail_page = None;
                     }
                     logo.on_hover_text(bench_tip.clone());
                     ui.add_space(8.0);
+                    if self
+                        .rail_button(
+                            ui,
+                            "shell.bench",
+                            None,
+                            forja_ui_kit::Icon::Workbench,
+                            &bench_tip,
+                            self.rail_page.is_none() && !self.settings_open,
+                        )
+                        .clicked()
+                    {
+                        self.rail_page = None;
+                        self.settings_open = false;
+                    }
                     for page in &pages {
                         let selected = self.rail_page.as_deref() == Some(page.id.as_str());
-                        let mark = page.glyph.clone().unwrap_or_else(|| {
-                            page.title
-                                .chars()
-                                .next()
-                                .map(|ch| ch.to_string())
-                                .unwrap_or_default()
-                        });
+                        let mark = page.glyph;
                         if self
                             .rail_button(
                                 ui,
                                 &page.id,
                                 page.png.as_deref(),
-                                &mark,
+                                mark,
                                 &page.title,
                                 selected,
                             )
                             .clicked()
                         {
+                            self.settings_open = false;
                             if selected {
                                 self.rail_page = None;
                             } else {
@@ -314,11 +389,11 @@ impl ForjaApp {
                                 None,
                                 forja_ui_kit::SETTINGS,
                                 &settings_tip,
-                                false,
+                                self.settings_open,
                             )
                             .clicked()
                         {
-                            self.settings_open = true;
+                            self.settings_open = !self.settings_open;
                             self.settings_query.clear();
                         }
                     });
@@ -345,7 +420,7 @@ impl ForjaApp {
             ui.add(
                 egui::Image::from_texture(texture)
                     .fit_to_exact_size(egui::vec2(28.0, 28.0))
-                    .sense(Sense::click_and_drag()),
+                    .sense(Sense::hover()),
             )
         } else {
             ui.add(
@@ -364,13 +439,18 @@ impl ForjaApp {
         ui: &mut egui::Ui,
         id: &str,
         png: Option<&[u8]>,
-        glyph: &str,
+        glyph: forja_ui_kit::Icon,
         tip: &str,
         selected: bool,
     ) -> egui::Response {
         let (rect, response) = ui.allocate_exact_size(egui::vec2(36.0, 36.0), Sense::click());
         response.widget_info(|| {
-            egui::WidgetInfo::selected(egui::WidgetType::Button, ui.is_enabled(), selected, tip)
+            egui::WidgetInfo::selected(
+                egui::WidgetType::Button,
+                ui.is_enabled(),
+                selected,
+                tip.lines().next().unwrap_or(tip),
+            )
         });
         let fill = if selected {
             self.paint(self.tokens.color.accent_soft)
@@ -380,6 +460,13 @@ impl ForjaApp {
             egui::Color32::TRANSPARENT
         };
         ui.painter().rect_filled(rect, 8.0, fill);
+        if selected {
+            ui.painter().rect_filled(
+                egui::Rect::from_min_size(rect.min, egui::vec2(3.0, rect.height())),
+                1.0,
+                self.paint(self.tokens.color.accent),
+            );
+        }
         if let Some(texture) = png.and_then(|bytes| self.rail_texture(ui, id, bytes)) {
             let image_rect = egui::Rect::from_center_size(rect.center(), egui::vec2(18.0, 18.0));
             ui.painter().image(
@@ -389,11 +476,10 @@ impl ForjaApp {
                 egui::Color32::WHITE,
             );
         } else {
-            ui.painter().text(
-                rect.center(),
-                egui::Align2::CENTER_CENTER,
+            forja_ui_kit::paint_icon(
+                ui.painter(),
                 glyph,
-                forja_ui_kit::icon_font(16.0),
+                egui::Rect::from_center_size(rect.center(), egui::vec2(20.0, 20.0)),
                 self.paint(self.tokens.color.text),
             );
         }
@@ -423,11 +509,7 @@ impl ForjaApp {
         let frame = egui::Frame::NONE
             .fill(self.paint(self.tokens.color.surface))
             .inner_margin(Margin::symmetric(12, 8));
-        let titles: Vec<String> = self
-            .sidebar_views
-            .iter()
-            .map(|view| self.text(&view.title_key))
-            .collect();
+        let has_views = !self.sidebar_views.is_empty();
         let sidebar = egui::SidePanel::left("forja.sidebar")
             .default_width(width)
             .width_range(180.0..=max_width)
@@ -435,7 +517,7 @@ impl ForjaApp {
             .show_separator_line(true)
             .frame(frame)
             .show(ctx, |ui| {
-                if titles.is_empty() {
+                if !has_views {
                     ui.heading(self.text("shell.sidebar.title"));
                     ui.add_space(4.0);
                     ui.label(
@@ -444,19 +526,7 @@ impl ForjaApp {
                     );
                     return;
                 }
-                if titles.len() == 1 {
-                    ui.heading(self.text("shell.sidebar.title"));
-                    ui.add_space(4.0);
-                }
-                let index = Self::slot_tabs(
-                    ui,
-                    &titles,
-                    self.sidebar_tab,
-                    "forja.sidebar.tabs",
-                    &self.text("shell.tabs.more"),
-                    &self.tokens.metrics(),
-                    false,
-                );
+                let index = self.panel_icon_strip(ui, true);
                 self.sidebar_tab = index;
                 self.paint_view(ui, true, index);
             });
@@ -465,17 +535,13 @@ impl ForjaApp {
     }
 
     pub(crate) fn right_panel(&mut self, ctx: &egui::Context) {
-        if !self.show_right_panel {
+        if self.no_project() || !self.show_right_panel {
             return;
         }
         let frame = egui::Frame::NONE
             .fill(self.paint(self.tokens.color.surface))
             .inner_margin(Margin::symmetric(12, 8));
-        let titles: Vec<String> = self
-            .right_views
-            .iter()
-            .map(|view| self.text(&view.title_key))
-            .collect();
+        let has_views = !self.right_views.is_empty();
         let max_width = panel_max_width(ctx.available_rect().width(), 480.0);
         let panel = egui::SidePanel::right("forja.right")
             .default_width(300.0)
@@ -484,22 +550,14 @@ impl ForjaApp {
             .show_separator_line(true)
             .frame(frame)
             .show(ctx, |ui| {
-                if titles.is_empty() {
+                if !has_views {
                     ui.label(
                         RichText::new(self.text("shell.slot.empty"))
                             .color(self.paint(self.tokens.color.text_muted)),
                     );
                     return;
                 }
-                let index = Self::slot_tabs(
-                    ui,
-                    &titles,
-                    self.right_tab,
-                    "forja.right.tabs",
-                    &self.text("shell.tabs.more"),
-                    &self.tokens.metrics(),
-                    false,
-                );
+                let index = self.panel_icon_strip(ui, false);
                 self.right_tab = index;
                 self.paint_view(ui, false, index);
             });
@@ -507,27 +565,25 @@ impl ForjaApp {
     }
 
     pub(crate) fn central_area(&mut self, ctx: &egui::Context) {
+        let home = self.no_project();
+        if home && self.project_was_open {
+            self.rail_page = None;
+        }
+        self.project_was_open = !home;
         let frame = egui::Frame::NONE
             .fill(self.paint(self.tokens.color.bg))
-            .inner_margin(Margin::symmetric(12, 8));
-        let visible = self.tabs.visible(self.bench_views.len());
-        let titles: Vec<String> = visible
-            .iter()
-            .map(|index| self.text(&self.bench_views[*index].title_key))
-            .collect();
+            .inner_margin(if self.rail_page.is_some() && !self.settings_open {
+                Margin::ZERO
+            } else {
+                Margin::symmetric(12, 8)
+            });
         let response = egui::CentralPanel::default().frame(frame).show(ctx, |ui| {
+            if self.settings_open {
+                self.settings_page_ui(ui);
+                return;
+            }
             if let Some(page) = self.rail_page.clone() {
                 if self.rail_views.iter().any(|view| view.id == page) {
-                    if button(
-                        ui,
-                        ButtonKind::Ghost,
-                        &self.text("shell.rail.back-to-bench"),
-                    )
-                    .clicked()
-                    {
-                        self.rail_page = None;
-                        return;
-                    }
                     if let Some(view) = self.rail_views.iter_mut().find(|view| view.id == page) {
                         let module = view.module.clone();
                         let mut cx = self.runtime.ctx(&module);
@@ -537,9 +593,20 @@ impl ForjaApp {
                 }
                 self.rail_page = None;
             }
-            if titles.is_empty() {
+            if home {
+                if let Some(view) = self.home_view.as_mut() {
+                    let mut cx = self.runtime.ctx(&view.module);
+                    ui.push_id(&view.id, |ui| view.view.ui(ui, &mut cx));
+                }
+                return;
+            }
+            let focus_active = std::mem::take(&mut self.focus_content_tab);
+            self.bench_tab_strip(ui, focus_active);
+            ui.add_space(8.0);
+            let visible = self.tabs.visible(self.bench_views.len());
+            if visible.is_empty() {
                 ui.vertical_centered(|ui| {
-                    ui.add_space(96.0);
+                    ui.add_space(88.0);
                     ui.heading(self.text("shell.bench.empty-title"));
                     ui.add_space(6.0);
                     ui.label(
@@ -549,23 +616,11 @@ impl ForjaApp {
                 });
                 return;
             }
-            let mut selected = visible
-                .iter()
-                .position(|index| *index == self.active_tab)
-                .unwrap_or(0);
-            let focus_active = std::mem::take(&mut self.focus_content_tab);
-            selected = Self::slot_tabs(
-                ui,
-                &titles,
-                selected,
-                "forja.bench.tabs",
-                &self.text("shell.tabs.more"),
-                &self.tokens.metrics(),
-                focus_active,
-            );
-            let active = visible.get(selected).copied().unwrap_or(visible[0]);
+            let active = self
+                .tabs
+                .clamp(self.active_tab, self.bench_views.len())
+                .unwrap_or(visible[0]);
             self.active_tab = active;
-            ui.add_space(8.0);
             if let Some(view) = self.bench_views.get_mut(active) {
                 let module = view.module.clone();
                 let mut cx = self.runtime.ctx(&module);
@@ -574,87 +629,6 @@ impl ForjaApp {
         });
         self.slot_rects
             .insert("bench".into(), response.response.rect);
-    }
-
-    /// Tab strip when a slot has more than one contribution. Returns the kept index.
-    fn slot_tabs(
-        ui: &mut egui::Ui,
-        titles: &[String],
-        mut selected: usize,
-        id: &str,
-        more: &str,
-        metrics: &forja_ui_kit::Metrics,
-        focus_active: bool,
-    ) -> usize {
-        if titles.len() < 2 {
-            if let Some(title) = titles.first() {
-                let response = forja_ui_kit::tabs(ui, &mut selected, &[title.as_str()]);
-                if focus_active {
-                    ui.ctx()
-                        .memory_mut(|memory| memory.request_focus(response.id.with(("tab", 0))));
-                }
-            }
-            return 0;
-        }
-        if selected >= titles.len() {
-            selected = 0;
-        }
-        ui.push_id(id, |ui| {
-            ui.horizontal(|ui| {
-                ui.menu_button(more, |ui| {
-                    for (index, title) in titles.iter().enumerate() {
-                        if ui.selectable_label(selected == index, title).clicked() {
-                            selected = index;
-                            ui.close();
-                        }
-                    }
-                });
-                let mut remaining = ui.available_width();
-                let mut shown = Vec::new();
-                for index in
-                    std::iter::once(selected).chain((0..titles.len()).filter(|i| *i != selected))
-                {
-                    let width = ui.fonts_mut(|fonts| {
-                        fonts
-                            .layout_no_wrap(
-                                titles[index].clone(),
-                                egui::FontId::proportional(metrics.body),
-                                egui::Color32::WHITE,
-                            )
-                            .size()
-                            .x
-                    });
-                    let width = (width + metrics.pad_x * 2.0).max(metrics.control);
-                    if width <= remaining {
-                        remaining -= width;
-                        shown.push(index);
-                    }
-                }
-                shown.sort_unstable();
-                if !shown.contains(&selected) {
-                    ui.add(egui::Label::new(&titles[selected]).truncate())
-                        .on_hover_text(&titles[selected]);
-                } else {
-                    let refs: Vec<&str> =
-                        shown.iter().map(|index| titles[*index].as_str()).collect();
-                    let mut chosen = shown
-                        .iter()
-                        .position(|index| *index == selected)
-                        .unwrap_or(usize::MAX);
-                    let response = forja_ui_kit::tabs(ui, &mut chosen, &refs);
-                    if focus_active && chosen < shown.len() {
-                        ui.ctx().memory_mut(|memory| {
-                            memory.request_focus(response.id.with(("tab", chosen)))
-                        });
-                    }
-                    if let Some(index) = shown.get(chosen) {
-                        selected = *index;
-                    }
-                }
-            })
-        });
-        ui.add_space(8.0);
-        selected
     }
 
     fn paint_view(&mut self, ui: &mut egui::Ui, sidebar: bool, index: usize) {
@@ -713,9 +687,7 @@ impl ForjaApp {
                     message = single_line(&message);
                     forja_kernel::logging::log(
                         forja_kernel::logging::LogLevel::Error,
-                        format!(
-                            "view panic in module `{module}`, view `{view_id}`: {message}"
-                        ),
+                        format!("view panic in module `{module}`, view `{view_id}`: {message}"),
                     );
                     view.failure = Some(message);
                 }
@@ -764,15 +736,49 @@ fn single_line(text: &str) -> String {
     }
 }
 
-fn window_button(ui: &mut egui::Ui, glyph: &str, label: &str) -> egui::Response {
-    let response = button(ui, ButtonKind::Ghost, glyph);
-    response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label));
-    response
+fn window_button(ui: &mut egui::Ui, glyph: forja_ui_kit::Icon, label: &str) -> egui::Response {
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(46.0, 32.0), Sense::click());
+    if response.hovered() {
+        ui.painter().rect_filled(
+            rect,
+            4.0,
+            forja_ui_kit::applied_tokens(ui.ctx())
+                .color
+                .surface_alt
+                .to_color32(),
+        );
+    }
+    forja_ui_kit::paint_icon(
+        ui.painter(),
+        glyph,
+        egui::Rect::from_center_size(rect.center(), egui::vec2(16.0, 16.0)),
+        forja_ui_kit::applied_tokens(ui.ctx())
+            .color
+            .text
+            .to_color32(),
+    );
+    response.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), label)
+    });
+    response.on_hover_text(label)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{panel_max_width, single_line};
+    use super::{panel_max_width, rail_tooltip, single_line};
+
+    #[test]
+    fn rail_tooltips_keep_the_accessible_name_separate_from_the_shortcut() {
+        assert_eq!(
+            rail_tooltip("Mutirão", "Ctrl+Shift+M"),
+            "Mutirão\nCtrl+Shift+M"
+        );
+        assert_eq!(
+            rail_tooltip("Ajustes", "Ctrl+Comma").lines().next(),
+            Some("Ajustes")
+        );
+        assert_eq!(rail_tooltip("Bancada", ""), "Bancada");
+    }
 
     #[test]
     fn side_panels_leave_room_for_the_center() {
@@ -785,7 +791,10 @@ mod tests {
 
     #[test]
     fn panic_summary_is_kept_on_one_line_and_capped() {
-        assert_eq!(single_line("first line\n second line"), "first line second line");
+        assert_eq!(
+            single_line("first line\n second line"),
+            "first line second line"
+        );
         let message = single_line(&"x".repeat(200));
         assert_eq!(message.chars().count(), 181);
         assert!(message.ends_with('…'));

@@ -50,3 +50,7 @@ archive-view-cancel = Cancelar
 archive-view-deleted = Sessão movida para a lixeira.
 archive-view-opened = Aberto
 archive-error-invalid-query = O texto da busca tem sintaxe inválida. Tente palavras mais simples.
+archive-page-state-refresh = Atualizar
+archive-page-state-empty = Ainda não há itens.
+archive-page-state-loading = Carregando…
+archive-page-state-error = Não foi possível carregar.

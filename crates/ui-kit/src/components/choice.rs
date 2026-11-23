@@ -16,7 +16,9 @@ pub fn segmented(ui: &mut Ui, selected: &mut usize, labels: &[&str]) -> Response
         .iter()
         .map(|label| paint::text_size(ui, label, font.clone(), tokens.color.text.to_color32()).x)
         .fold(0.0_f32, f32::max);
-    let segment = (widest + metrics.pad_x * 2.0).max(metrics.control * 2.0);
+    let segment = (widest + metrics.pad_x * 2.0)
+        .max(metrics.control * 2.0)
+        .min((ui.available_width() / labels.len() as f32).max(metrics.control));
     let (rect, mut response) = ui.allocate_exact_size(
         egui::vec2(segment * labels.len() as f32, metrics.control),
         egui::Sense::hover(),
@@ -39,14 +41,19 @@ pub fn segmented(ui: &mut Ui, selected: &mut usize, labels: &[&str]) -> Response
         }
         let is_active = index == *selected;
         piece_response.widget_info(|| {
-            egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, ui.is_enabled(), is_active, *label)
+            egui::WidgetInfo::selected(
+                egui::WidgetType::SelectableLabel,
+                ui.is_enabled(),
+                is_active,
+                *label,
+            )
         });
         let active = index == *selected;
         if active {
             painter.rect_filled(
                 piece.shrink(2.0),
                 CornerRadius::same(crate::apply::radius_u8(metrics.radius_control)),
-                tokens.color.accent.to_color32(),
+                tokens.color.accent_soft.to_color32(),
             );
         } else if piece_response.hovered() {
             painter.rect_filled(
@@ -55,13 +62,9 @@ pub fn segmented(ui: &mut Ui, selected: &mut usize, labels: &[&str]) -> Response
                 hover_surface(&tokens),
             );
         }
-        let text = if active {
-            tokens.color.on_accent.to_color32()
-        } else {
-            tokens.color.text.to_color32()
-        };
+        let text = tokens.color.text.to_color32();
         paint_text(
-            &painter,
+            &painter.with_clip_rect(piece.shrink2(egui::vec2(2.0, 0.0))),
             piece,
             Align2::CENTER_CENTER,
             label,
@@ -127,7 +130,12 @@ pub fn tabs(ui: &mut Ui, selected: &mut usize, labels: &[&str]) -> Response {
         }
         let active = index == *selected;
         piece_response.widget_info(|| {
-            egui::WidgetInfo::selected(egui::WidgetType::SelectableLabel, ui.is_enabled(), active, *label)
+            egui::WidgetInfo::selected(
+                egui::WidgetType::SelectableLabel,
+                ui.is_enabled(),
+                active,
+                *label,
+            )
         });
         let text = if active || piece_response.hovered() {
             tokens.color.text.to_color32()

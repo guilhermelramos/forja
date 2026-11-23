@@ -1,0 +1,24 @@
+{
+  "title": "Setas percorrem os chips de categoria da Bigorna (#127)",
+  "issue": 127,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Buscar ou executar… Ctrl+K" },
+    { "m": "ui.key", "keys": "Tab" },
+    { "m": "ui.key", "keys": "ArrowRight" },
+    { "m": "ui.key", "keys": "ArrowRight" },
+    { "m": "ui.key", "keys": "ArrowRight" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    { "step": 2, "focused": "Tudo", "present": "Comandos" },
+    { "step": 3, "focused": "Comandos" },
+    { "step": 4, "focused": "Bancadas" },
+    { "step": 5, "focused": "Arquivos" },
+    {
+      "step": 6,
+      "present": ["Tudo", "Comandos", "Bancadas", "Arquivos", "Ajustes"]
+    }
+  ]
+}

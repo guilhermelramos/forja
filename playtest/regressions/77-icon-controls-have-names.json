@@ -1,0 +1,51 @@
+{
+  "title": "Controles vetoriais têm nomes; Navegador não usa letras como ícones (#196)",
+  "issue": 196,
+  "locale": "pt-BR",
+  "steps": [
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.click",
+      "target": "Abrir pasta"
+    },
+    {
+      "m": "ui.click",
+      "target": "Escolher…"
+    },
+    {
+      "m": "ui.click",
+      "target": "Adicionar"
+    },
+    {
+      "m": "ui.open_tab",
+      "target": "Navegador"
+    },
+    {
+      "m": "ui.snapshot"
+    }
+  ],
+  "expect": [
+    {
+      "no_unnamed_buttons": true,
+      "present": [
+        "Voltar",
+        "Avançar",
+        "Recarregar",
+        "Fechar aba"
+      ],
+      "absent": [
+        "R",
+        "x",
+        "<",
+        ">",
+        "–",
+        "□",
+        "×"
+      ],
+      "no_geometry_issues": true
+    }
+  ]
+}

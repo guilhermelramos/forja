@@ -109,3 +109,7 @@ setting-request-local-prefix-label = Prefixo de pedido local
 setting-request-local-prefix-help = Prefixo dos pedidos criados localmente.
 setting-request-local-counter_start-label = Primeiro pedido local
 setting-request-local-counter_start-help = Número inicial dos pedidos locais.
+request-page-state-refresh = Atualizar
+request-page-state-empty = Ainda não há itens.
+request-page-state-loading = Carregando…
+request-page-state-error = Não foi possível carregar.

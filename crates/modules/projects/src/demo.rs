@@ -27,6 +27,7 @@ pub fn demo_seed(store: &Store, projects: &[(String, String)]) -> Result<(), Str
     let file = ProjectsFile {
         schema_version: SCHEMA_VERSION,
         active_id: records.first().map(|project| project.id.clone()),
+        recent: records.clone(),
         projects: records,
     };
     store

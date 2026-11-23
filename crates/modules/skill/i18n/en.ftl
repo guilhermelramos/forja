@@ -67,3 +67,7 @@ skill-error-consent = Writing outside Forja needs your confirmation.
 skill-error-unknown-skill = This skill is not in the list. Refresh and try again.
 skill-error-same-root = The skill is already in that folder.
 skill-error-fixtures = Writes are off while the screenshot data is shown.
+skill-page-state-refresh = Refresh
+skill-page-state-empty = No items yet.
+skill-page-state-loading = Loading…
+skill-page-state-error = Could not load.

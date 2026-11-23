@@ -11,6 +11,7 @@
     { "m": "ui.type", "text": "-beta" },
     { "m": "ui.click", "target": "Criar" },
     { "m": "ui.wait", "ms": 700 },
+    { "m": "ui.click", "target": "Adicionar projeto" },
     { "m": "ui.click", "target": "Adicionar pasta" },
     { "m": "ui.click", "target": "Escolher…" },
     { "m": "ui.click", "target": "Adicionar" },
@@ -19,7 +20,7 @@
     { "m": "ui.wait", "ms": 300 },
     { "m": "ui.click", "target": "sample-beta" },
     { "m": "ui.wait", "ms": 300 },
-    { "m": "ui.click", "target": "Bigorna" },
+    { "m": "ui.click", "target": "Buscar ou executar… Ctrl+K" },
     { "m": "ui.type", "text": "Trocar de projeto" },
     { "m": "ui.key", "keys": "Return" },
     { "m": "ui.type", "text": "sample" },
@@ -29,18 +30,18 @@
   ],
   "expect": [
     {
-      "step": 11,
+      "step": 12,
       "window_count": 0,
       "present": ["sample", "sample-beta", "README.md", "docs", "src"],
       "absent": ["Nenhum projeto"]
     },
     {
-      "step": 13,
+      "step": 14,
       "present": ["1 bancadas", "README.md"],
       "absent_contains": ["2 bancadas"]
     },
     {
-      "step": 15,
+      "step": 16,
       "present": ["1 bancadas"],
       "absent": ["README.md", "docs", "src"]
     },

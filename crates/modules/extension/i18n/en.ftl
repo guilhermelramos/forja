@@ -84,3 +84,7 @@ extension-setting-dev-label = Reload on edit
 extension-setting-dev-help = Development folders reload without asking again when capabilities do not change.
 
 extension-details = Details
+extension-page-state-refresh = Refresh
+extension-page-state-empty = No items yet.
+extension-page-state-loading = Loading…
+extension-page-state-error = Could not load.

@@ -29,6 +29,32 @@ fn runtime(dir: &std::path::Path) -> Runtime {
 }
 
 #[test]
+fn tree_icon_actions_have_translated_names_in_both_locales() {
+    let source = forja_kernel::i18n::BundleSource {
+        module: "projects".into(),
+        en: include_str!("../i18n/en.ftl").into(),
+        pt_br: include_str!("../i18n/pt-BR.ftl").into(),
+    };
+    for (locale, expand, collapse) in [
+        (
+            forja_kernel::Locale::En,
+            "Expand project",
+            "Collapse project",
+        ),
+        (
+            forja_kernel::Locale::PtBr,
+            "Expandir projeto",
+            "Recolher projeto",
+        ),
+    ] {
+        let (i18n, warnings) = forja_kernel::I18n::build(std::slice::from_ref(&source), locale);
+        assert!(warnings.is_empty());
+        assert_eq!(i18n.t("project.tree.expand"), expand);
+        assert_eq!(i18n.t("project.tree.collapse"), collapse);
+    }
+}
+
+#[test]
 fn contract_and_project_lifecycle() {
     let root = temp_dir("lifecycle");
     std::fs::create_dir_all(&root).unwrap();
@@ -142,12 +168,18 @@ fn create_initializes_a_git_repository() {
         )
         .unwrap();
     let (sender, receiver) = std::sync::mpsc::channel();
-    runtime.set_wake(std::sync::Arc::new(move || { let _ = sender.send(()); }));
+    runtime.set_wake(std::sync::Arc::new(move || {
+        let _ = sender.send(());
+    }));
     loop {
         runtime.poll_tasks();
         let listed = runtime.call_method("project.list", Map::new()).unwrap();
-        if listed["projects"].as_array().unwrap().len() == 1 { break; }
-        receiver.recv_timeout(std::time::Duration::from_secs(60)).expect("project creation did not signal completion");
+        if listed["projects"].as_array().unwrap().len() == 1 {
+            break;
+        }
+        receiver
+            .recv_timeout(std::time::Duration::from_secs(60))
+            .expect("project creation did not signal completion");
     }
     assert!(target.join(".git").exists(), "git init ran");
     let listed = runtime.call_method("project.list", Map::new()).unwrap();
@@ -171,7 +203,11 @@ fn raw_project_errors_are_humanized_in_pt_br() {
     );
     assert_eq!(missing.summary, "Pasta inexistente.");
     assert!(
-        missing.detail.as_deref().unwrap_or_default().contains("os error 3"),
+        missing
+            .detail
+            .as_deref()
+            .unwrap_or_default()
+            .contains("os error 3"),
         "{missing:?}"
     );
     let invalid_create = view::humanize_error_detail(
@@ -209,10 +245,16 @@ fn active_project_switches_persists_and_falls_back_on_remove() {
         assert_eq!(switch_cmd.fields[0].arg, "project_id");
 
         let alfa_ref = runtime
-            .call_method("project.add", Map::from_iter([("path".to_owned(), json!(alfa))]))
+            .call_method(
+                "project.add",
+                Map::from_iter([("path".to_owned(), json!(alfa))]),
+            )
             .unwrap();
         let beta_ref = runtime
-            .call_method("project.add", Map::from_iter([("path".to_owned(), json!(beta))]))
+            .call_method(
+                "project.add",
+                Map::from_iter([("path".to_owned(), json!(beta))]),
+            )
             .unwrap();
         let current = runtime.call_method("project.current", Map::new()).unwrap();
         assert_eq!(current["id"], beta_ref["id"]);
@@ -286,6 +328,39 @@ fn create_folder_rejects_non_empty_dir_and_finish_dialog_keeps_form_on_error() {
 
     shared.finish_dialog(None);
     assert!(matches!(shared.dialog(), state::Dialog::None));
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
+fn closing_last_project_keeps_a_recent_entry_and_reopening_activates_it() {
+    let root = temp_dir("home-close");
+    let folder = root.join("example");
+    std::fs::create_dir_all(&folder).unwrap();
+    let mut runtime = runtime(&root);
+    let args = || Args::from_map(Map::from_iter([("path".to_owned(), json!(folder))]));
+    let first = runtime.run_command("project.add", args()).unwrap();
+    runtime
+        .run_command(
+            "project.update",
+            Args::from_map(Map::from_iter([
+                ("project_id".to_owned(), first["id"].clone()),
+                ("name".to_owned(), json!("Renamed example")),
+            ])),
+        )
+        .unwrap();
+    runtime.run_command("project.close", Args::new()).unwrap();
+    assert!(runtime
+        .run_command("project.current", Args::new())
+        .unwrap()
+        .is_null());
+    let file: model::ProjectsFile =
+        serde_json::from_slice(&std::fs::read(root.join("modules/project.json")).unwrap()).unwrap();
+    assert!(file.projects.is_empty());
+    assert_eq!(file.recent[0].id, first["id"]);
+    assert_eq!(file.recent[0].name, "Renamed example");
+    let reopened = runtime.run_command("project.add", args()).unwrap();
+    assert_eq!(first["id"], reopened["id"]);
+    assert!(folder.exists());
     let _ = std::fs::remove_dir_all(root);
 }
 

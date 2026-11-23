@@ -89,6 +89,13 @@ fn render(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
         clear_focus(ui.ctx());
     }
     ui.set_min_width(420.0);
+    ui.label(cx.t_args(
+        "onboarding.step-count",
+        &[
+            ("current", &(index + 1).to_string()),
+            ("total", &sequence.len().to_string()),
+        ],
+    ));
     ui.label(cx.t(step_key(step)));
     ui.add_space(8.0);
     ui.push_id(step_key(step), |ui| match step {
@@ -218,7 +225,23 @@ fn theme(ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         "light" => 2,
         _ => 0,
     };
-    select(ui, &mut index, &refs);
+    ui.horizontal(|ui| {
+        ui.vertical(|ui| {
+            ui.set_width(170.0);
+            select(ui, &mut index, &refs);
+        });
+        let tokens = match index {
+            1 => forja_ui_kit::Tokens::brasa_dark(),
+            2 => forja_ui_kit::Tokens::brasa_light(),
+            _ => forja_ui_kit::applied_tokens(ui.ctx()),
+        };
+        forja_ui_kit::theme_sample(
+            ui,
+            &tokens,
+            &cx.t("onboarding.theme.preview"),
+            &cx.t("onboarding.theme.sample"),
+        );
+    });
     let value = ["system", "dark", "light"][index];
     if value != current {
         let _ = cx.set_setting(
@@ -398,6 +421,32 @@ fn helpers(ui: &mut egui::Ui, cx: &mut Ctx<'_>, _state: &Shared) {
         cx.t("onboarding.helpers.none")
     };
     ui.label(text);
+    let profiles = cx
+        .run_command("helper.list", Args::new())
+        .unwrap_or(Value::Null);
+    let current = setting_str(cx, "helper.default.profile", "auto");
+    let items = profiles
+        .get("profiles")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
+    let mut ids = vec!["auto".to_owned()];
+    let mut labels = vec![cx.t("onboarding.helpers.auto")];
+    for item in &items {
+        if let (Some(id), Some(name)) = (item["id"].as_str(), item["name"].as_str()) {
+            ids.push(id.to_owned());
+            labels.push(name.to_owned());
+        }
+    }
+    let mut index = ids.iter().position(|id| id == &current).unwrap_or(0);
+    ui.label(cx.t("onboarding.helpers.default"));
+    let refs: Vec<_> = labels.iter().map(String::as_str).collect();
+    if select(ui, &mut index, &refs).changed() {
+        let _ = cx.set_setting(
+            "helper.default.profile",
+            SettingValue::Text(ids[index].clone()),
+        );
+    }
 }
 
 /// `true` quando o módulo `import` existe e tem itens do Harbor a decidir.
@@ -419,7 +468,7 @@ fn import(ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         .unwrap_or(Value::Null);
     ui.label(cx.t("onboarding.import.lead"));
     if let Some(key) = status.get("error").and_then(Value::as_str) {
-        ui.label(egui::RichText::new(cx.t(key)).color(egui::Color32::from_rgb(0xE5, 0x53, 0x4B)));
+        ui.label(egui::RichText::new(cx.t(key)).color(forja_ui_kit::applied_tokens(ui.ctx()).color.danger.to_color32()));
     }
     let items: Vec<(String, String)> = status
         .get("items")

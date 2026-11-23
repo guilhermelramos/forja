@@ -177,6 +177,7 @@ fn used_keys() -> Vec<&'static str> {
         "git.changes.pull",
         "git.changes.push",
         "git.changes.sync",
+        "git.changes.more",
         "git.changes.publish",
         "git.changes.rebase",
         "git.changes.abort",

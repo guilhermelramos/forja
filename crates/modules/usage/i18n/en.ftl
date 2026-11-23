@@ -49,3 +49,7 @@ setting-usage-budget-monthly_usd-label = Monthly spend limit (US$)
 setting-usage-budget-monthly_usd-help = Notifies at 80% and 100% of the month's estimated cost; 0 turns it off.
 setting-usage-display-status_bar-label = Show usage in status bar
 setting-usage-display-status_bar-help = Shows accumulated usage in the status bar.
+usage-page-state-refresh = Refresh
+usage-page-state-empty = No items yet.
+usage-page-state-loading = Loading…
+usage-page-state-error = Could not load.

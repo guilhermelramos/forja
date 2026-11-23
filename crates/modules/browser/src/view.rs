@@ -348,14 +348,14 @@ impl View for BrowserView {
         self.toolbar(ui, cx, muted);
         let tabs = self.state.tabs();
         if tabs.is_empty() {
-            ui.label(egui::RichText::new(cx.t("browser.view.empty")).color(muted));
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t("browser.view.empty")).color(muted));
             return;
         }
         if let Some(error) = tabs
             .get(self.state.with(|state| state.active).unwrap_or(0))
             .and_then(|tab| tab.error.clone())
         {
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(error)
                     .small()
                     .color(c32(tokens.color.danger)),
@@ -366,7 +366,7 @@ impl View for BrowserView {
             self.find_bar(ui, cx, muted);
         }
         if let Some(error) = self.state.with(|state| state.error.clone()).flatten() {
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(error)
                     .small()
                     .color(c32(tokens.color.danger)),
@@ -463,7 +463,7 @@ impl View for BrowserView {
         }
         self.history_window(ui, cx, muted);
         if let Some(notice) = self.state.with(|state| state.notice.clone()).flatten() {
-            ui.label(egui::RichText::new(notice).small().color(muted));
+            forja_ui_kit::text(ui, egui::RichText::new(notice).small().color(muted));
         }
     }
 }
@@ -473,13 +473,31 @@ impl BrowserView {
         ui.horizontal_wrapped(|ui| {
             let active = self.state.active();
             if let Some(tab) = &active {
-                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, "<").clicked() {
+                if forja_ui_kit::icon_button(
+                    ui,
+                    forja_ui_kit::Icon::Back,
+                    &cx.t("browser.view.back"),
+                )
+                .clicked()
+                {
                     self.state.request(Pending::Back);
                 }
-                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, ">").clicked() {
+                if forja_ui_kit::icon_button(
+                    ui,
+                    forja_ui_kit::Icon::Forward,
+                    &cx.t("browser.view.forward"),
+                )
+                .clicked()
+                {
                     self.state.request(Pending::Forward);
                 }
-                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, "R").clicked() {
+                if forja_ui_kit::icon_button(
+                    ui,
+                    forja_ui_kit::Icon::Refresh,
+                    &cx.t("browser.view.reload"),
+                )
+                .clicked()
+                {
                     if tab.kind == Kind::Url && crate::home::is_home_url(&tab.url) {
                         self.home.force_refresh(cx);
                     } else {
@@ -533,7 +551,7 @@ impl BrowserView {
                 .active()
                 .map(|tab| zoom_factor(tab.zoom) * self.default_zoom)
                 .unwrap_or(self.default_zoom);
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(format!("{:.0}%", zoom * 100.0))
                     .small()
                     .color(muted),
@@ -565,16 +583,19 @@ impl BrowserView {
                 if ui.selectable_label(index == active, label).clicked() {
                     self.state.set_active(index);
                 }
-                if ui
-                    .small_button("x")
-                    .on_hover_text(cx.t("browser.view.close-tab"))
-                    .clicked()
+                if forja_ui_kit::icon_button(
+                    ui,
+                    forja_ui_kit::Icon::Close,
+                    &cx.t("browser.view.close-tab"),
+                )
+                .on_hover_text(cx.t("browser.view.close-tab"))
+                .clicked()
                 {
                     self.state.close(index);
                 }
             }
             if tabs.len() > 1 {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(format!("{} / {}", tabs.len(), crate::state::MAX_TABS))
                         .small()
                         .color(muted),
@@ -600,10 +621,16 @@ impl BrowserView {
                     backwards: false,
                 });
             }
-            if ui.small_button("x").clicked() {
+            if forja_ui_kit::icon_button(
+                ui,
+                forja_ui_kit::Icon::Close,
+                &cx.t("browser.view.close-find"),
+            )
+            .clicked()
+            {
                 self.state.set_find(false, None);
             }
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("browser.view.find-hint"))
                     .small()
                     .color(muted),
@@ -628,7 +655,7 @@ impl BrowserView {
                     open = false;
                 }
                 if history.is_empty() {
-                    ui.label(egui::RichText::new(cx.t("browser.history.empty")).color(muted));
+                    forja_ui_kit::text(ui, egui::RichText::new(cx.t("browser.history.empty")).color(muted));
                 }
                 egui::ScrollArea::vertical()
                     .max_height(360.0)
@@ -645,7 +672,7 @@ impl BrowserView {
                             }
                         }
                     });
-                if ui.button(cx.t("browser.history.clear")).clicked() {
+                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &cx.t("browser.history.clear")).clicked() {
                     self.state.clear_history();
                     self.save_history(cx);
                 }
