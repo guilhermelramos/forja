@@ -16,7 +16,8 @@ use crate::settings::{
     SettingSource, SettingSpec, SettingValue, Settings, SettingsChanged, SettingsWriter,
 };
 use crate::store::{LoadResult, Store};
-use crate::tasks::{TaskId, Tasks, Wake};
+use crate::tasks::{TaskId, Tasks, Wake, WakeAfter};
+use std::time::Duration;
 use forja_protocol::{codec, Method, MethodCatalog, ResultSchema, RpcError};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -49,6 +50,7 @@ pub struct Runtime {
     tasks: Tasks,
     events: EventBus,
     wake: Wake,
+    wake_after: WakeAfter,
     warnings: Vec<String>,
     open_modals: BTreeMap<String, Value>,
     anvil_query: String,
@@ -261,6 +263,7 @@ impl Runtime {
             tasks,
             events,
             wake,
+            wake_after: Arc::new(|_| {}),
             warnings,
             open_modals: BTreeMap::new(),
             anvil_query: String::new(),
@@ -386,6 +389,11 @@ impl Runtime {
     pub fn set_wake(&mut self, wake: Wake) {
         self.tasks.set_wake(Arc::clone(&wake));
         self.wake = wake;
+    }
+
+    /// Sets the callback used by `Ctx::request_repaint_after`.
+    pub fn set_wake_after(&mut self, wake: WakeAfter) {
+        self.wake_after = wake;
     }
 
     pub fn set_locale(&mut self, locale: Locale) {
@@ -677,6 +685,18 @@ impl Runtime {
         count
     }
 
+    /// Runs registered service ticks on the UI thread, once per frame.
+    pub fn poll_ticks(&mut self) {
+        let ticks = self.registry.ticks().to_vec();
+        for (module_id, handler) in ticks {
+            let mut cx = Ctx {
+                runtime: self,
+                module_id,
+            };
+            handler(&mut cx);
+        }
+    }
+
     pub fn emit<T: 'static>(&mut self, event: &T) -> bool {
         let type_id = TypeId::of::<T>();
         let registered = self.events.has_signature(type_id);
@@ -840,6 +860,11 @@ impl<'a> Ctx<'a> {
     /// generation without holding `Ctx` or touching the UI thread.
     pub fn waker(&self) -> crate::tasks::Wake {
         Arc::clone(&self.runtime.wake)
+    }
+
+    /// Asks for exactly one frame after `delay`, for module debounce deadlines.
+    pub fn request_repaint_after(&self, delay: Duration) {
+        (self.runtime.wake_after)(delay);
     }
 
     pub fn settings(&self) -> &Settings {
@@ -1719,5 +1744,35 @@ mod tests {
             .err()
             .expect("escaping cache_dir must fail");
         assert!(err.to_string().contains("invalid"));
+    }
+
+    #[test]
+    fn service_ticks_run_once_per_poll_and_can_request_one_delayed_frame() {
+        use std::sync::Mutex;
+        struct TickModule(Arc<AtomicBool>);
+        impl Module for TickModule {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("ticker", "ticker.name", "0.1.0")
+            }
+            fn register(&mut self, registrar: &mut Registrar<'_>) {
+                let calls = Arc::clone(&self.0);
+                registrar.tick(move |cx| {
+                    calls.store(true, Ordering::SeqCst);
+                    cx.request_repaint_after(Duration::from_millis(300));
+                });
+            }
+        }
+        let calls = Arc::new(AtomicBool::new(false));
+        let delays = Arc::new(Mutex::new(Vec::new()));
+        let recorded = Arc::clone(&delays);
+        let mut runtime = Runtime::new(
+            vec![Box::new(TickModule(Arc::clone(&calls)))],
+            RuntimeOptions::default(),
+        )
+        .expect("runtime");
+        runtime.set_wake_after(Arc::new(move |delay| recorded.lock().unwrap().push(delay)));
+        runtime.poll_ticks();
+        assert!(calls.load(Ordering::SeqCst));
+        assert_eq!(delays.lock().unwrap().as_slice(), [Duration::from_millis(300)]);
     }
 }

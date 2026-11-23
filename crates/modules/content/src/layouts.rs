@@ -45,6 +45,7 @@ pub struct LayoutState {
     pub ready: bool,
     pub seen_generation: u64,
     pub dirty_at: Option<Instant>,
+    pub deadline_scheduled: bool,
     pub watch_requested: Vec<PathBuf>,
     pub watch: Option<Watch>,
     /// Último resultado de gravação/remoção, para o seletor mostrar falhas.
@@ -192,28 +193,64 @@ impl LayoutStore {
         true
     }
 
-    /// Drena eventos do observador, respeita o debounce e agenda a leitura.
-    pub fn tick(self: &Arc<Self>, cx: &Ctx<'_>, watch: bool, now: Instant) {
-        let must_read = self.with(|state: &mut LayoutState| {
-            if let Some(watch) = &state.watch {
-                let seen = watch.generation.load(std::sync::atomic::Ordering::SeqCst);
-                if seen > state.seen_generation {
-                    state.seen_generation = seen;
-                    state.dirty_at = Some(now);
-                }
-            }
-            if watch::due(state, now) {
-                state.dirty_at = None;
-                return true;
-            }
-            false
+    /// Sinal do disco: invalida leituras em voo e inicia a janela de debounce.
+    pub fn signal(&self, now: Instant) {
+        let _ = self.with(|state: &mut LayoutState| {
+            state.dirty_at = Some(now);
+            state.generation = state.generation.wrapping_add(1);
+            state.ready = false;
+            state.queued = None;
         });
-        if must_read.unwrap_or(false) {
+    }
+
+    /// Drena eventos do observador, respeita o debounce e agenda a leitura.
+    /// O único prazo de egui é pedido no sinal; quadros subsequentes não
+    /// voltam a acordar a UI continuamente.
+    pub fn tick(self: &Arc<Self>, cx: &Ctx<'_>, watch: bool, now: Instant) {
+        let signaled = self
+            .with(|state: &mut LayoutState| {
+                if let Some(watch) = &state.watch {
+                    let seen = watch.generation.load(std::sync::atomic::Ordering::SeqCst);
+                    if seen > state.seen_generation {
+                        state.seen_generation = seen;
+                        return true;
+                    }
+                }
+                false
+            })
+            .unwrap_or(false);
+        if signaled {
+            self.signal(now);
+            if watch {
+                cx.request_repaint_after(DEBOUNCE);
+                let _ = self.with(|state: &mut LayoutState| state.deadline_scheduled = true);
+            }
+        }
+        let must_read = self
+            .with(|state: &mut LayoutState| {
+                let due = watch::due(state, now);
+                if due {
+                    state.dirty_at = None;
+                    state.deadline_scheduled = false;
+                }
+                due
+            })
+            .unwrap_or(false);
+        if must_read {
             self.next_generation();
             self.queue(cx);
         }
         watch::ensure_watcher(self, cx, watch);
     }
+}
+
+/// Tick de serviço registrado no kernel: chamado uma vez por quadro pelo shell.
+pub fn tick(store: &Arc<LayoutStore>, cx: &mut Ctx<'_>) {
+    let watch = cx
+        .setting("content.reload.watch")
+        .and_then(|value| value.as_bool())
+        .unwrap_or(true);
+    store.tick(cx, watch, Instant::now());
 }
 
 /// Registra os comandos internos usados pelo catálogo e pelo seletor.

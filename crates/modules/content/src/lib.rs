@@ -54,6 +54,8 @@ impl Module for ContentModule {
         ));
         commands::register(r, &self.core);
         layouts::register(r, &self.core.layouts);
+        let tick_core = Arc::clone(&self.core);
+        r.tick(move |cx| layouts::tick(&tick_core.layouts, cx));
         for key in [
             "content.settings.title",
             "content.settings.reload",

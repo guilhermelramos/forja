@@ -19,6 +19,9 @@ use std::time::{Duration, Instant};
 
 pub type Wake = Arc<dyn Fn() + Send + Sync>;
 
+/// Waker for one delayed frame, used by module debounce deadlines.
+pub type WakeAfter = Arc<dyn Fn(Duration) + Send + Sync>;
+
 /// Lowest worker count used when the setting says "automatic" (0).
 pub const MIN_AUTO_WORKERS: usize = 2;
 /// Highest worker count used when the setting says "automatic" (0).

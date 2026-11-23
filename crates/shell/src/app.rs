@@ -416,6 +416,9 @@ impl ForjaApp {
                 }
             });
             app.runtime.set_wake(Arc::clone(&task_wake));
+            let delayed_context = context.clone();
+            app.runtime
+                .set_wake_after(Arc::new(move |delay| delayed_context.request_repaint_after(delay)));
             let rpc_wake: forja_kernel::tasks::Wake =
                 Arc::new(move || context.request_repaint());
             app.rpc_wake = Some(rpc_wake);
@@ -1020,6 +1023,7 @@ impl eframe::App for ForjaApp {
             panic!("test-driver requested a panic in the main loop");
         }
         let tasks_applied = self.runtime.poll_tasks();
+        self.runtime.poll_ticks();
         self.handle_shortcuts(ctx);
         self.drain_actions(ctx);
         self.show_demos();

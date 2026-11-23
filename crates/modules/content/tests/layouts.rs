@@ -217,6 +217,27 @@ fn a_stale_generation_or_project_is_never_applied() {
 }
 
 #[test]
+fn a_disk_signal_invalidates_an_inflight_catalog() {
+    let store = LayoutStore::new();
+    let catalog = Catalog {
+        generation: 0,
+        project: None,
+        entries: Default::default(),
+        diagnostics: Vec::new(),
+        default_id: None,
+        revision: 0,
+        valid: Default::default(),
+    };
+    assert!(store.apply(catalog.clone()));
+    store.signal(Instant::now());
+    assert!(!store.apply(catalog), "a read from before the event must be discarded");
+    let _ = store.with(|state| {
+        assert_eq!(state.generation, 1);
+        assert!(!state.ready);
+    });
+}
+
+#[test]
 fn watch_roots_include_the_parents_of_the_layouts_folder() {
     let root = temp_dir("watch");
     std::fs::create_dir_all(root.join("user").join("layouts")).unwrap();
