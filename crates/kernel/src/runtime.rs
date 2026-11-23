@@ -836,6 +836,12 @@ impl<'a> Ctx<'a> {
         (self.runtime.wake)();
     }
 
+    /// Clone of the kernel waker, so a file-watch callback can signal a new
+    /// generation without holding `Ctx` or touching the UI thread.
+    pub fn waker(&self) -> crate::tasks::Wake {
+        Arc::clone(&self.runtime.wake)
+    }
+
     pub fn settings(&self) -> &Settings {
         &self.runtime.settings
     }

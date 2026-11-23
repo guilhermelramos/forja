@@ -5,6 +5,7 @@
 //! executa e `notify` recarrega depois de 300 ms sem mudanças.
 
 mod commands;
+pub mod layouts;
 mod model;
 mod state;
 mod view;
@@ -52,6 +53,7 @@ impl Module for ContentModule {
             "content.setting.trust-review.help",
         ));
         commands::register(r, &self.core);
+        layouts::register(r, &self.core.layouts);
         for key in [
             "content.settings.title",
             "content.settings.reload",
@@ -61,6 +63,7 @@ impl Module for ContentModule {
             "content.settings.themes",
             "content.settings.templates",
             "content.settings.recipes",
+            "content.settings.layouts",
         ] {
             r.uses_i18n(key);
         }
@@ -88,9 +91,10 @@ mod tests {
     use super::*;
     use crate::view::ContentAnvilView;
     use forja_kernel::ui_contract::View;
-    use forja_kernel::{contract, Module, Registrar, Runtime, RuntimeOptions};
+    use forja_kernel::{contract, Args, Module, Registrar, Runtime, RuntimeOptions};
     use serde_json::Map;
     use std::path::PathBuf;
+    use std::time::{Duration, Instant};
 
     struct BenchModule {
         path: PathBuf,
@@ -336,6 +340,94 @@ mod tests {
             .unwrap()
             .iter()
             .any(|theme| theme["id"] == "own" && theme["kind"] == "terminal"));
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    fn pump(runtime: &mut Runtime) {
+        let deadline = Instant::now() + Duration::from_secs(10);
+        loop {
+            runtime.poll_tasks();
+            if runtime.tasks().pending() == 0 && runtime.tasks().inflight() == 0 {
+                return;
+            }
+            assert!(Instant::now() < deadline, "tasks did not finish");
+            std::thread::sleep(Duration::from_millis(2));
+        }
+    }
+
+    fn listed_layouts(runtime: &mut Runtime) -> serde_json::Value {
+        runtime
+            .run_command("content.layouts.list", Args::new())
+            .expect("layouts list")
+    }
+
+    #[test]
+    fn layouts_are_loaded_written_and_removed_through_tasks() {
+        let dir = temp_dir("layout-tasks");
+        let mut runtime = runtime(&dir);
+        let _ = listed_layouts(&mut runtime); // agenda a primeira leitura em Tasks
+        pump(&mut runtime);
+        let listed = listed_layouts(&mut runtime);
+        for id in ["oficina", "foco", "revisao", "mutirao"] {
+            assert!(
+                listed["layouts"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|item| item["id"] == id && item["layer"] == "builtin"),
+                "{listed}"
+            );
+        }
+
+        let path = dir.join("user").join("layouts").join("oficina.toml");
+        let text = std::fs::read_to_string(
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../../content/layouts/oficina.toml"),
+        )
+        .unwrap();
+        let mut args = Args::new();
+        args.insert("id", serde_json::json!("oficina"));
+        args.insert("layer", serde_json::json!("user"));
+        args.insert("text", serde_json::json!(text));
+        runtime
+            .run_command("content.layouts.save", args)
+            .expect("save layout");
+        pump(&mut runtime);
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), text);
+        let listed = listed_layouts(&mut runtime);
+        assert!(listed["layouts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["id"] == "oficina" && item["layer"] == "user"));
+
+        std::fs::write(&path, "schema_version = 1\nid = \"oficina\"\nunknown = 1\n").unwrap();
+        runtime
+            .run_command("content.layouts.reload", Args::new())
+            .expect("reload layouts");
+        pump(&mut runtime);
+        let listed = listed_layouts(&mut runtime);
+        assert!(listed["layouts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["id"] == "oficina"));
+        assert!(!listed["diagnostics"].as_array().unwrap().is_empty());
+
+        let mut args = Args::new();
+        args.insert("id", serde_json::json!("oficina"));
+        args.insert("layer", serde_json::json!("user"));
+        runtime
+            .run_command("content.layouts.remove", args)
+            .expect("remove layout");
+        pump(&mut runtime);
+        assert!(!path.exists());
+        let listed = listed_layouts(&mut runtime);
+        assert!(listed["layouts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["id"] == "oficina" && item["layer"] == "builtin"));
         let _ = std::fs::remove_dir_all(dir);
     }
 }

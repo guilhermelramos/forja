@@ -126,7 +126,7 @@ impl ContentSettingsView {
 impl View for ContentSettingsView {
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         state::ensure(&self.core, cx, false);
-        let (_revision, diagnostics, commands, themes, templates, recipes) = self
+        let (_revision, mut diagnostics, commands, themes, templates, recipes) = self
             .core
             .with(|state| {
                 (
@@ -139,10 +139,18 @@ impl View for ContentSettingsView {
                 )
             })
             .unwrap_or((0, Vec::new(), 0, 0, 0, 0));
+        let layout_count = self
+            .core
+            .layouts
+            .with(|state| {
+                diagnostics.extend(state.catalog.diagnostics.iter().cloned());
+                state.catalog.entries.len()
+            })
+            .unwrap_or(0);
         forja_ui_kit::page_heading(ui, &cx.t("content.settings.title"), None, |_| {});
         ui.label(
             egui::RichText::new(format!(
-                "{} · {} · {} · {}",
+                "{} · {} · {} · {} · {}",
                 cx.t_args(
                     "content.settings.commands",
                     &[("count", &commands.to_string())]
@@ -155,6 +163,10 @@ impl View for ContentSettingsView {
                 cx.t_args(
                     "content.settings.recipes",
                     &[("count", &recipes.to_string())]
+                ),
+                cx.t_args(
+                    "content.settings.layouts",
+                    &[("count", &layout_count.to_string())]
                 ),
             ))
             .weak(),

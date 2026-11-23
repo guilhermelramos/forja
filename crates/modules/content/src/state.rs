@@ -1,5 +1,6 @@
 //! Estado em memória, descoberta das camadas e recarga com `notify`.
 
+use crate::layouts::LayoutStore;
 use crate::model::{
     self, ContentCommand, ContentRecipe, ContentTemplate, ContentTheme, Diagnostic, Layer,
 };
@@ -40,12 +41,15 @@ pub struct ContentState {
 /// Estado compartilhado do módulo.
 pub struct ContentCore {
     pub state: Mutex<ContentState>,
+    /// Catálogo de arranjos, com leitura e escrita em `Tasks`.
+    pub layouts: std::sync::Arc<LayoutStore>,
 }
 
 impl ContentCore {
     pub fn new() -> Self {
         Self {
             state: Mutex::new(ContentState::default()),
+            layouts: std::sync::Arc::new(LayoutStore::new()),
         }
     }
 
@@ -84,10 +88,15 @@ pub fn ensure(core: &ContentCore, cx: &mut Ctx<'_>, force: bool) {
         force || !state.loaded || changed
     };
     if reload {
-        load(core, cx, project);
+        load(core, cx, project.clone());
     }
     ensure_watcher(core, cx);
     tick(core, cx);
+    let watch = cx
+        .setting("content.reload.watch")
+        .and_then(|value| value.as_bool())
+        .unwrap_or(true);
+    core.layouts.ensure(cx, project, watch);
 }
 
 /// Lê todas as camadas para `project`.
@@ -349,6 +358,11 @@ pub fn tick(core: &ContentCore, cx: &mut Ctx<'_>) {
         load(core, cx, project);
         cx.request_repaint();
     }
+    let watch = cx
+        .setting("content.reload.watch")
+        .and_then(|value| value.as_bool())
+        .unwrap_or(true);
+    core.layouts.tick(cx, watch, Instant::now());
 }
 
 
