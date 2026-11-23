@@ -1,0 +1,48 @@
+# Arranjo padrão da oficina. As razões são as decididas em design/layout.md.
+schema_version = 1
+id = "oficina"
+name = { pt-BR = "Oficina", en = "Workshop" }
+
+[chrome]
+rail_visible = true
+rail_hidden = []
+status_bar_visible = true
+
+[root]
+kind = "split"
+dir = "columns"
+ratio = 0.24
+
+[root.first]
+kind = "leaf"
+id = "project"
+collapsible = true
+tabs = ["project.sidebar", "board.page"]
+active = 0
+
+[root.second]
+kind = "split"
+dir = "columns"
+ratio = 0.68
+
+[root.second.first]
+kind = "split"
+dir = "rows"
+ratio = 0.66
+
+[root.second.first.first]
+kind = "leaf"
+id = "code"
+tabs = ["editor.tab", "diff.tab"]
+active = 0
+
+[root.second.first.second]
+kind = "leaf"
+id = "terminal"
+tabs = ["terminal.tab"]
+
+[root.second.second]
+kind = "leaf"
+id = "tools"
+collapsible = true
+tabs = ["chat.tab", "git.changes", "explorer.panel"]

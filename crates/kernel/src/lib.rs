@@ -22,6 +22,7 @@ pub mod events;
 pub mod human_error;
 pub mod i18n;
 pub mod keymap;
+pub mod layout_spec;
 pub mod logging;
 pub mod manifest;
 pub mod module;
@@ -50,6 +51,10 @@ pub use human_error::HumanError;
 pub use i18n::{BundleSource, I18n, Locale};
 pub use keymap::{
     BindingSource, KeyBinding, KeyChord, KeyConflict, Keymap, KeymapLayer, Scope,
+};
+pub use layout_spec::{
+    LayoutChrome, LayoutError, LayoutNodeSpec, LayoutSpecV1, LocalizedName, SplitDir, TabSpec,
+    ViewRef,
 };
 pub use manifest::ModuleManifest;
 pub use module::{discovered_modules, module, Module, ModuleFactory, MODULE_FACTORIES};
