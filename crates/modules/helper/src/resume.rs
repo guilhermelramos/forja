@@ -235,12 +235,11 @@ fn apply_policy(cx: &mut Ctx<'_>, core: &Shared, bench: &BenchRef) {
                 .find(|profile| profile.id == previous.profile_id)
                 .cloned()?;
             let overrides = state.overrides(&profile.id);
-            let installed = state.is_installed(&profile.id);
-            Some((profile, overrides, installed))
+            Some((profile, overrides))
         })
         .ok()
         .flatten();
-    let Some((profile, overrides, installed)) = profile_info else {
+    let Some((profile, overrides)) = profile_info else {
         return;
     };
     let supported = profile.supports_resume(previous.session_id.as_deref());
@@ -271,7 +270,9 @@ fn apply_policy(cx: &mut Ctx<'_>, core: &Shared, bench: &BenchRef) {
                 warn_unsupported_resume(cx, core, &profile, &bench.path);
                 return;
             }
-            if overrides.disabled || !profile.trusted || !installed {
+            // A sondagem é assíncrona; não deixe um cache ainda não preenchido
+            // impedir a retomada da sessão exata desta bancada.
+            if overrides.disabled || !profile.trusted {
                 return;
             }
             let _ = execute_resume(

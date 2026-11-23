@@ -86,9 +86,11 @@
     }
 
     fn settle(runtime: &mut Runtime) {
-        for _ in 0..40 {
+        // A carga da suíte completa pode atrasar as tarefas do kernel; espere
+        // o suficiente para a ativação assíncrona terminar.
+        for _ in 0..200 {
             runtime.poll_tasks();
-            std::thread::sleep(std::time::Duration::from_millis(10));
+            std::thread::sleep(std::time::Duration::from_millis(20));
         }
     }
 
