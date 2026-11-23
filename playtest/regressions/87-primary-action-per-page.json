@@ -47,6 +47,18 @@
     {
       "m": "ui.click",
       "target": "Bancada"
+    },
+    {
+      "m": "ui.click",
+      "target": "Ajustes"
+    },
+    {
+      "m": "ui.click",
+      "target": "Buscar ajustes"
+    },
+    {
+      "m": "ui.type",
+      "text": "app.storage."
     }
   ],
   "expect": [
@@ -104,6 +116,15 @@
       "step": 10,
       "max_primary_buttons": 1,
       "no_geometry_issues": true
+    },
+    {
+      "step": 11,
+      "max_primary_buttons": 1
+    },
+    {
+      "step": 13,
+      "present": ["Pasta de estado", "Pasta de conteúdo", "Aplicar"],
+      "max_primary_buttons": 0
     }
   ]
 }

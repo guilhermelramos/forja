@@ -434,13 +434,14 @@ pub fn ensure_refresh(cx: &mut Ctx<'_>, shared: &Shared) {
         return;
     };
     let accounts = account_roots(cx);
+    let data_dir = cx.data_dir().to_path_buf();
     let user_dir = cx.user_dir().to_path_buf();
     let project = current_project(cx);
     let shared = shared.clone();
     cx.spawn(
         move || {
             let mut cache = cache.unwrap_or_default();
-            let roots = Roots::from_accounts(&accounts);
+            let roots = Roots::for_run(&accounts, &data_dir);
             let (pricing, pricing_errors) = Pricing::load(&user_dir, project.as_deref());
             let stats = cache.scan(&roots);
             let summary = cache.summary_at(now_ms(), &pricing);

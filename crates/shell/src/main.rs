@@ -28,6 +28,7 @@ mod screenshot;
 mod settings_catalog;
 mod settings_controls;
 mod settings_page;
+mod settings_storage;
 mod settings_transfer;
 mod shell_module;
 mod system;

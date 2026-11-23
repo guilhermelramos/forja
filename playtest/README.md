@@ -6,10 +6,12 @@ Agentes de IA gratuitos usam a Forja **ao vivo, como uma pessoa**: olham a tela,
 1. **`forja-app --test-driver`**: só com essa opção, o app responde aos métodos `ui.*` pelo pipe local.
    - `ui.snapshot` devolve os elementos visíveis a partir da árvore de acessibilidade: nome, papel, estado e retângulo de cada um. `region` limita a uma parte (`cima`, `baixo`, `esquerda`, `direita`, `centro` ou o nome de uma janela) e `filter` a nomes/papéis que contenham o texto.
    - `ui.click`, `ui.type`, `ui.key` e `ui.scroll` viram **eventos reais de mouse e teclado** dentro do egui, um passo por quadro.
+   - Um `ui.click` com `target` procura o widget **no quadro em que aperta** (a mesma regra de `ui.snapshot`: nome exato, depois sem diferenciar maiúsculas, depois contendo, e `index` entre os encontrados) e espera até 3 s se o nome ainda não estiver na tela, porque uma página carrega a lista numa tarefa. Um clique por `x,y` ou por `id` fica onde foi pedido.
    - `ui.debug_panic` provoca uma falha de teste em `where: "view"` com `view_id` ou no laço principal com `where: "main"`; só existe com `--test-driver`.
    - Cada ação responde depois que a interface assentou, só com o que **apareceu**, **sumiu**, **mudou** ou é novo.
    - Tudo é registrado em `FORJA_TEST_LOG` (JSONL).
    - Seletores nativos de pasta e arquivo respondem sozinhos (`FORJA_TEST_PICK_DIR`, `FORJA_TEST_PICK_FILE`; veja `crates/kernel/src/test_pick.rs`).
+   - Em modo de teste (`--test-driver`, `--screenshot`, `cargo test`), o módulo Uso nunca lê `~/.claude`, `~/.codex` nem o OpenCode real da máquina: lê apenas `<FORJA_DATA_DIR>/usage` (vazio por padrão) ou `FORJA_TEST_USAGE_DIR`, exceto no `--demo`, que lê os exemplos de demonstração.
 2. **`forja-mcp --player --findings <arquivo>`** expõe ao agente só as ferramentas de usuário: `ui_look`, `ui_click`, `ui_type`, `ui_key`, `ui_scroll` e `ui_wait`. `ui_look` é compacto (agrupa repetidos, corta nomes longos e omite retângulos de elementos não acionáveis). A ferramenta `report_finding` grava um achado com passos, esperado e ocorrido; nos vereditos ela também grava a lista estruturada `expectations`. `--max-steps <n>` limita as ações de uma sessão.
 3. **`playtest/run.ps1`**:
    - cria a pasta de dados isolada;

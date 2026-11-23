@@ -7,11 +7,12 @@
 | Métrica | Valor |
 |---|---|
 | Configurações no catálogo | 314 |
-| Configurações registradas no app | 283 (282 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 282 (281 do catálogo) |
+| Configurações sobreponíveis por projeto (`scope = "project"`) | 31 |
+| Configurações registradas no app | 289 (288 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 288 (287 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
-| Configurações adiadas | 30 |
+| Configurações adiadas | 24 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
 | Atalhos no catálogo | 110 |
@@ -46,15 +47,9 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 - `muster.workspace.isolation`: Aguardando contrato de criação e prontidão de bancada isolada.
 - `mcp.client.enabled`: Cliente MCP ainda não implementado.
 - `mcp.startup.timeout_s`: Cliente MCP ainda não implementado.
-- `mcp.tools.auto_approve`: Cliente MCP ainda não implementado.
-- `mcp.log.requests`: Aguardando observação de requisições na ponte MCP e serviço de log.
 - `browser.privacy.third_party_cookies`: Aguardando a API de perfil do WebView2 para bloquear cookies de terceiros.
 - `remote.sync.mode`: Aguardando contrato de sincronização de arquivos com bancada remota; o módulo ainda não sincroniza arquivos.
-- `app.cli.enabled`: Aguardando ciclo de vida cancelável do servidor RPC local.
-- `app.storage.data_dir`: Aguardando configuração de bootstrap do diretório de dados no kernel.
-- `app.storage.content_dir`: Aguardando configuração de bootstrap do diretório de conteúdo no kernel.
-- `app.storage.cleanup_days`: Aguardando contrato de retenção e limpeza dos caches de módulos.
-- `app.dev.mode`: Aguardando ferramentas internas e painel de diagnóstico.
+- `app.dev.mode`: O painel de diagnóstico (`app.diagnostics.overlay`) já tem chave própria; aguardando ferramentas internas dedicadas.
 
 ## Configurações (`design/settings.toml`)
 
@@ -285,8 +280,8 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `counter.notifications.checks_failed` | `counter` | `counter` | sim | ok | sim |
 | `mcp.client.enabled` | `mcp` | `-` | adiada | - | adiada |
 | `mcp.startup.timeout_s` | `mcp` | `-` | adiada | - | adiada |
-| `mcp.tools.auto_approve` | `mcp` | `-` | adiada | - | adiada |
-| `mcp.log.requests` | `mcp` | `-` | adiada | - | adiada |
+| `mcp.tools.auto_approve` | `mcp` | `mcp` | sim | ok | sim |
+| `mcp.log.requests` | `mcp` | `mcp` | sim | ok | sim |
 | `mcp.server.enabled` | `mcp` | `mcp` | sim | ok | sim |
 | `mcp.server.expose` | `mcp` | `mcp` | sim | ok | sim |
 | `mcp.server.auto_approve` | `mcp` | `mcp` | sim | ok | sim |
@@ -355,10 +350,10 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `app.startup.open_last` | `app` | `app` | sim | ok | sim |
 | `app.close.confirm` | `app` | `app` | sim | ok | sim |
 | `app.tray.enabled` | `app` | `app` | sim | ok | sim |
-| `app.cli.enabled` | `app` | `-` | adiada | - | adiada |
-| `app.storage.data_dir` | `app` | `-` | adiada | - | adiada |
-| `app.storage.content_dir` | `app` | `-` | adiada | - | adiada |
-| `app.storage.cleanup_days` | `app` | `-` | adiada | - | adiada |
+| `app.cli.enabled` | `app` | `app` | sim | ok | sim |
+| `app.storage.data_dir` | `app` | `app` | sim | ok | sim |
+| `app.storage.content_dir` | `app` | `app` | sim | ok | sim |
+| `app.storage.cleanup_days` | `app` | `app` | sim | ok | sim |
 | `update.channel.name` | `update` | `update` | sim | ok | sim |
 | `update.check.frequency` | `update` | `update` | sim | ok | sim |
 | `update.download.auto` | `update` | `update` | sim | ok | sim |

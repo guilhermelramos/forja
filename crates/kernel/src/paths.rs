@@ -6,9 +6,16 @@
 use std::path::{Path, PathBuf};
 
 pub fn default_data_dir() -> PathBuf {
-    if let Some(path) = env_path("FORJA_DATA_DIR") {
-        return path;
-    }
+    crate::bootstrap::resolve().data_dir
+}
+
+pub fn default_user_dir() -> PathBuf {
+    crate::bootstrap::resolve().user_dir
+}
+
+/// Built-in default data directory (`%APPDATA%\Forja`), ignoring `FORJA_DATA_DIR`
+/// and `bootstrap.toml`.
+pub fn base_default_data_dir() -> PathBuf {
     if let Some(appdata) = env_path("APPDATA") {
         return appdata.join("Forja");
     }
@@ -18,10 +25,9 @@ pub fn default_data_dir() -> PathBuf {
         .join("data")
 }
 
-pub fn default_user_dir() -> PathBuf {
-    if let Some(path) = env_path("FORJA_CONTENT_DIR") {
-        return path;
-    }
+/// Built-in default content directory (`~/.forja`), ignoring `FORJA_CONTENT_DIR`
+/// and `bootstrap.toml`.
+pub fn base_default_user_dir() -> PathBuf {
     home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
         .join(".forja")

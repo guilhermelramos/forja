@@ -25,6 +25,7 @@ pub struct CatalogSetting {
     pub options_from: Option<String>,
     pub item: Option<String>,
     pub deferred: Option<String>,
+    pub scope: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -105,6 +106,8 @@ pub struct SettingComparison {
     pub module_mismatch: Option<String>,
     pub has_effect: bool,
     pub deferred: Option<String>,
+    pub scope: Option<String>,
+    pub scope_error: Option<String>,
 }
 
 #[derive(Debug)]
@@ -135,6 +138,12 @@ impl CoverageReport {
         self.settings.iter().filter(|item| {
             item.deferred.as_ref().is_some_and(|reason| item.registered || reason.trim().is_empty())
         }).collect()
+    }
+    pub fn invalid_scopes(&self) -> Vec<&SettingComparison> {
+        self.settings
+            .iter()
+            .filter(|item| item.scope_error.is_some())
+            .collect()
     }
     pub fn type_or_default_mismatches(&self) -> Vec<&SettingComparison> {
         self.settings
@@ -168,6 +177,8 @@ pub fn evaluate(
     for entry in settings_cat.setting {
         let effect_files = usage.get(&entry.key).cloned().unwrap_or_default();
         let has_effect = !effect_files.is_empty();
+        let scope_error = check_scope(&entry);
+        let scope = entry.scope.clone();
         if let Some(spec) = run_settings.remove(&entry.key) {
             let type_mismatch = check_type(&entry, &spec.kind);
             let default_mismatch = if type_mismatch.is_none() {
@@ -195,6 +206,8 @@ pub fn evaluate(
                 module_mismatch,
                 has_effect,
                 deferred: entry.deferred,
+                scope,
+                scope_error,
             });
         } else {
             settings.push(SettingComparison {
@@ -208,6 +221,8 @@ pub fn evaluate(
                 module_mismatch: None,
                 has_effect: false,
                 deferred: entry.deferred,
+                scope,
+                scope_error,
             });
         }
     }
@@ -258,6 +273,81 @@ pub fn evaluate(
         runtime_settings_total,
         runtime_keybinds_total,
     }
+}
+
+fn check_scope(entry: &CatalogSetting) -> Option<String> {
+    let Some(scope) = entry.scope.as_deref() else {
+        return Some("campo `scope` ausente (esperado \"user\" ou \"project\")".to_owned());
+    };
+    match scope {
+        "user" => None,
+        "project" => {
+            if is_forbidden_project_key(&entry.key) {
+                Some(format!(
+                    "chave `{}` não pode ter `scope = \"project\"` (segurança, rede ou global)",
+                    entry.key
+                ))
+            } else {
+                None
+            }
+        }
+        other => Some(format!(
+            "`scope` inválido `{other}` (esperado \"user\" ou \"project\")"
+        )),
+    }
+}
+
+pub fn is_forbidden_project_key(key: &str) -> bool {
+    const FORBIDDEN_PREFIXES: &[&str] = &[
+        "mcp.",
+        "network.",
+        "privacy.",
+        "update.",
+        "app.",
+        "appearance.window.",
+        "extension.",
+        "remote.",
+        "accounts.",
+        "usage.",
+        "voice.",
+        "notifications.",
+        "i18n.",
+        "keymap.",
+        "anvil.",
+        "ports.",
+        "browser.",
+        "content.trust.",
+    ];
+    const FORBIDDEN_KEYS: &[&str] = &[
+        "helper.default.permissions",
+        "helper.hooks.enabled",
+        "helper.hooks.timeout_s",
+        "bench.worktree.location",
+        "bench.worktree.path",
+        "bench.worktree.auto_prune_days",
+        "bench.setup.policy",
+        "bench.teardown.policy",
+        "terminal.shell.default",
+        "terminal.shell.path",
+        "terminal.shell.env",
+        "terminal.osc52.enabled",
+        "terminal.paste.warn_multiline",
+        "terminal.paste.bracketed",
+        "terminal.links.confirm",
+        "terminal.recipes.confirm",
+        "terminal.recipes.press_enter",
+        "git.commit.sign",
+        "git.commit.gpg_key",
+        "git.sync.auto_pull",
+        "git.protected.branches",
+        "explorer.tree.follow_symlinks",
+        "counter.github.host",
+        "counter.gitlab.host",
+    ];
+    FORBIDDEN_PREFIXES
+        .iter()
+        .any(|prefix| key.starts_with(prefix))
+        || FORBIDDEN_KEYS.contains(&key)
 }
 
 fn check_type(entry: &CatalogSetting, kind: &RuntimeKind) -> Option<String> {
@@ -516,6 +606,7 @@ mod tests {
             options_from: None,
             item: None,
             deferred: None,
+            scope: Some("user".to_owned()),
         };
         let ok_kind = RuntimeKind::Integer {
             min: Some(1),
@@ -533,6 +624,7 @@ mod tests {
             [[setting]]
             key = "demo.future"
             module = "demo"
+            scope = "user"
             type = "toggle"
             default = true
             deferred = "Awaiting runtime"
@@ -553,5 +645,101 @@ mod tests {
         assert!(!text.contains("Settings ausentes: `demo`"));
         let report = evaluate(settings(), keymap(), runtime(true), &BTreeMap::new());
         assert_eq!(report.invalid_deferred().len(), 1);
+    }
+
+    #[test]
+    fn scope_validation_rejects_missing_unknown_or_unsafe_project_keys() {
+        let parsed: SettingsCatalog = toml::from_str(
+            r#"
+            [[setting]]
+            key = "terminal.font.size"
+            module = "terminal"
+            scope = "project"
+            type = "number"
+            default = 13
+
+            [[setting]]
+            key = "appearance.theme.mode"
+            module = "appearance"
+            scope = "user"
+            type = "choice"
+            default = "system"
+            options = ["system", "dark", "light"]
+
+            [[setting]]
+            key = "mcp.tools.auto_approve"
+            module = "mcp"
+            scope = "project"
+            type = "list"
+            default = []
+
+            [[setting]]
+            key = "editor.indent.size"
+            module = "editor"
+            scope = "global"
+            type = "number"
+            default = 4
+
+            [[setting]]
+            key = "editor.indent.tabs"
+            module = "editor"
+            type = "choice"
+            default = "spaces"
+            options = ["spaces", "tabs"]
+        "#,
+        )
+        .unwrap();
+        let report = evaluate(
+            parsed,
+            KeymapCatalog {
+                binding: Vec::new(),
+            },
+            RuntimeCatalog {
+                settings: Vec::new(),
+                keybinds: Vec::new(),
+            },
+            &BTreeMap::new(),
+        );
+        let bad: Vec<&str> = report
+            .invalid_scopes()
+            .into_iter()
+            .map(|item| item.key.as_str())
+            .collect();
+        assert_eq!(
+            bad,
+            vec![
+                "mcp.tools.auto_approve",
+                "editor.indent.size",
+                "editor.indent.tabs"
+            ]
+        );
+    }
+
+    #[test]
+    fn design_settings_catalog_has_valid_scopes_for_all_entries() {
+        let text = include_str!("../../../design/settings.toml");
+        let parsed: SettingsCatalog = toml::from_str(text).expect("design/settings.toml parses");
+        let report = evaluate(
+            parsed,
+            KeymapCatalog {
+                binding: Vec::new(),
+            },
+            RuntimeCatalog {
+                settings: Vec::new(),
+                keybinds: Vec::new(),
+            },
+            &BTreeMap::new(),
+        );
+        assert!(
+            report.invalid_scopes().is_empty(),
+            "invalid scopes: {:?}",
+            report.invalid_scopes()
+        );
+        let project_count = report
+            .settings
+            .iter()
+            .filter(|s| s.scope.as_deref() == Some("project"))
+            .count();
+        assert!(project_count > 0);
     }
 }

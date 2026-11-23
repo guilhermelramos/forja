@@ -37,6 +37,11 @@
     {
       "m": "ui.click",
       "target": "Mais ações Git"
+    },
+    {
+      "m": "ui.scroll",
+      "target": "Puxar",
+      "dy": -440
     }
   ],
   "expect": [
@@ -60,7 +65,13 @@
       "step": 8,
       "present": [
         "Puxar",
-        "Publicar",
+        "Publicar"
+      ],
+      "no_geometry_issues": true
+    },
+    {
+      "step": 9,
+      "present": [
         "Abortar",
         "Rebasear",
         "Preparar tudo"

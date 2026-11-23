@@ -718,6 +718,7 @@ impl ForjaApp {
                     ui.push_id(&view.id, |ui| view.view.ui(ui, &mut cx));
                 });
         }
+        self.storage_copy_modal(ctx);
         self.close_confirm_modal(ctx);
     }
 }

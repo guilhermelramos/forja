@@ -427,4 +427,51 @@ mod tests {
             "{color_err_en}"
         );
     }
+
+    #[test]
+    fn storage_restart_notice_and_validation_use_shell_i18n() {
+        let dir = TempGuard(
+            std::env::temp_dir().join(format!("forja-shell-storage-{}", std::process::id())),
+        );
+        let data_dir = dir.0.join("data");
+        let user_dir = dir.0.join("user");
+        let target_dir = dir.0.join("next_data");
+        std::fs::create_dir_all(&data_dir).expect("data_dir");
+        std::fs::create_dir_all(&user_dir).expect("user_dir");
+        std::fs::create_dir_all(&target_dir).expect("target_dir");
+        let blocked_file = dir.0.join("not-a-dir");
+        std::fs::write(&blocked_file, b"x").expect("file");
+
+        let mut runtime =
+            crate::app::build_runtime(Some("pt-BR".into()), Some(data_dir), Some(user_dir), true)
+                .expect("runtime");
+        runtime.set_bootstrap_path(dir.0.join("bootstrap.toml"));
+
+        assert!(!runtime.storage_restart_pending());
+        assert!(runtime
+            .set_setting(
+                "app.storage.data_dir",
+                SettingValue::Text(blocked_file.display().to_string()),
+            )
+            .is_err());
+        assert!(!runtime.storage_restart_pending());
+
+        runtime
+            .set_setting(
+                "app.storage.data_dir",
+                SettingValue::Text(target_dir.display().to_string()),
+            )
+            .expect("valid target dir");
+        assert!(runtime.storage_restart_pending());
+
+        assert_ne!(
+            runtime.i18n().t("shell.storage.restart-required"),
+            "shell.storage.restart-required"
+        );
+        let body = runtime.i18n().t_args(
+            "shell.storage.copy-body",
+            &[("target", "C:/next"), ("source", "C:/old")],
+        );
+        assert!(body.contains("C:/next") && body.contains("C:/old"), "{body}");
+    }
 }

@@ -297,15 +297,29 @@ impl ForjaApp {
                 if group.id != "helpers" {
                     self.settings_custom_views(ui, &group.id, false);
                 }
-                if group.id == "advanced"
-                    && forja_ui_kit::button(
+                if group.id == "advanced" {
+                    let notice = self.storage_notice.clone().or_else(|| {
+                        self.runtime
+                            .storage_restart_pending()
+                            .then(|| self.text("shell.storage.restart-required"))
+                    });
+                    if let Some(notice) = notice {
+                        forja_ui_kit::text(
+                            ui,
+                            forja_ui_kit::TextRole::Caption
+                                .rich(&notice)
+                                .color(ui.visuals().warn_fg_color),
+                        );
+                    }
+                    if forja_ui_kit::button(
                         ui,
                         ButtonKind::Ghost,
                         &self.text("shell.command.logs-open"),
                     )
                     .clicked()
-                {
-                    self.run_command("shell.logs.open");
+                    {
+                        self.run_command("shell.logs.open");
+                    }
                 }
             }
         }

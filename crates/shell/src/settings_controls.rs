@@ -10,7 +10,8 @@ impl ForjaApp {
         let value = self
             .runtime
             .settings()
-            .get_or(&spec.key, &spec.default)
+            .user_get(&spec.key)
+            .unwrap_or(&spec.default)
             .clone();
         let label = self.text(&spec.label_key);
         let mut help = self.text(&spec.help_key);
@@ -100,6 +101,15 @@ impl ForjaApp {
                     egui::WidgetInfo::labeled(egui::WidgetType::DragValue, ui.is_enabled(), label)
                 });
                 response.changed().then_some(SettingValue::Number(value))
+            }
+            SettingKind::Path
+                if matches!(
+                    spec.key.as_str(),
+                    "app.storage.data_dir" | "app.storage.content_dir"
+                ) =>
+            {
+                self.storage_path_setting(ui, spec, current, label);
+                None
             }
             SettingKind::Text { .. } | SettingKind::Path | SettingKind::Color => {
                 self.text_setting(ui, spec, current, label)

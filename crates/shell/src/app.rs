@@ -179,6 +179,10 @@ pub struct ForjaApp {
     pub(crate) screenshot: Option<ScreenshotJob>,
     screenshot_error: Arc<Mutex<Option<String>>>,
     rpc: Option<RpcHost>,
+    rpc_wake: Option<forja_kernel::tasks::Wake>,
+    rpc_want_seen: Option<bool>,
+    pub(crate) pending_storage_change: Option<crate::settings_storage::PendingStorageChange>,
+    pub(crate) storage_notice: Option<String>,
     pub(crate) driver: Option<crate::test_driver::Driver>,
     pub(crate) geometry_writer: crate::window_geometry::GeometryWriter,
     pub(crate) geometry_checked: Instant,
@@ -371,6 +375,10 @@ impl ForjaApp {
             screenshot,
             screenshot_error,
             rpc: None,
+            rpc_wake: None,
+            rpc_want_seen: None,
+            pending_storage_change: None,
+            storage_notice: None,
             driver: None,
             geometry_writer: crate::window_geometry::GeometryWriter::default(),
             geometry_checked: Instant::now(),
@@ -408,11 +416,10 @@ impl ForjaApp {
                 }
             });
             app.runtime.set_wake(Arc::clone(&task_wake));
-            let rpc_wake: forja_kernel::tasks::Wake = Arc::new(move || context.request_repaint());
-            match RpcHost::start(rpc_wake) {
-                Ok(host) => app.rpc = Some(host),
-                Err(error) => app.set_status_error(&error.to_string()),
-            }
+            let rpc_wake: forja_kernel::tasks::Wake =
+                Arc::new(move || context.request_repaint());
+            app.rpc_wake = Some(rpc_wake);
+            app.sync_rpc_host();
         }
         if let Some(slot) = app.screenshot.as_ref().and_then(|job| job.slot.as_deref()) {
             match slot {
@@ -481,6 +488,33 @@ impl ForjaApp {
             self.anvil_selection_explicit = false;
             self.anvil_selection_id = None;
             self.anvil_selection_missing = false;
+        }
+    }
+
+    fn sync_rpc_host(&mut self) {
+        let want = crate::rpc::should_run_rpc_server(
+            self.setting_bool("app.cli.enabled", true),
+            self.driver.is_some(),
+            self.screenshot.is_some(),
+        );
+        if want {
+            if self.rpc.is_none() && self.rpc_want_seen != Some(true) {
+                self.rpc_want_seen = Some(true);
+                if let Some(wake) = self.rpc_wake.as_ref() {
+                    match RpcHost::start(Arc::clone(wake)) {
+                        Ok(host) => self.rpc = Some(host),
+                        Err(error) => self.set_status_error(&error.to_string()),
+                    }
+                }
+            }
+        } else {
+            self.rpc_want_seen = Some(false);
+            if self.rpc.take().is_some() {
+                forja_kernel::logging::log(
+                    forja_kernel::logging::LogLevel::Info,
+                    "forja: local CLI/RPC server stopped (app.cli.enabled = false)",
+                );
+            }
         }
     }
 
@@ -627,7 +661,8 @@ impl ForjaApp {
                     .filter(|id| !id.is_empty())
                     .map(str::to_owned);
                 if bench_id.is_some() && self.current_bench_id != bench_id {
-                    self.switch_bench_layout(bench_id, true);
+                    let keep_page = self.rail_page.is_some();
+                    self.switch_bench_layout(bench_id, keep_page);
                 }
                 let bench_name = value
                     .get("name")
@@ -984,7 +1019,7 @@ impl eframe::App for ForjaApp {
         {
             panic!("test-driver requested a panic in the main loop");
         }
-        self.runtime.poll_tasks();
+        let tasks_applied = self.runtime.poll_tasks();
         self.handle_shortcuts(ctx);
         self.drain_actions(ctx);
         self.show_demos();
@@ -997,6 +1032,7 @@ impl eframe::App for ForjaApp {
         self.right_panel(ctx);
         self.central_area(ctx);
         self.settings_window(ctx);
+        self.sync_rpc_host();
         self.keymap_window(ctx);
         self.anvil_window(ctx);
         self.modal_windows(ctx);
@@ -1004,20 +1040,21 @@ impl eframe::App for ForjaApp {
         self.diagnostics_overlay(ctx);
         self.capture(ctx);
         if let Some(driver) = self.driver.as_mut() {
-            driver.tick(ctx);
+            driver.tick(ctx, self.runtime.tasks(), tasks_applied);
         }
         self.pacer.end(budget);
     }
 
-    fn raw_input_hook(&mut self, _ctx: &egui::Context, raw_input: &mut egui::RawInput) {
+    fn raw_input_hook(&mut self, ctx: &egui::Context, raw_input: &mut egui::RawInput) {
         if let Some(driver) = self.driver.as_mut() {
-            driver.feed(raw_input);
+            driver.feed(ctx, raw_input);
         }
     }
 }
 
 impl Drop for ForjaApp {
     fn drop(&mut self) {
+        self.rpc.take();
         tray::remove();
     }
 }

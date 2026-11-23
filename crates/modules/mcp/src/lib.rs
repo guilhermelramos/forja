@@ -71,11 +71,14 @@ impl Module for McpModule {
                 .param(ParamSchema::optional("effect", ParamKind::String))
                 .result(ResultSchema::new("mcp.method.authorize.result")),
             move |cx, params| {
+                let started = std::time::Instant::now();
                 let mut args = Args::from_map(params);
                 if args.str("effect").is_none() {
                     args.insert("effect", json!("write"));
                 }
-                authorize(cx, &authorize_rpc, &args)
+                let outcome = authorize(cx, &authorize_rpc, &args);
+                record(cx, "mcp.authorize", started, outcome.is_ok());
+                outcome
                     .map_err(|error| forja_kernel::forja_protocol::RpcError::app(error.to_string()))
             },
         );
@@ -87,7 +90,10 @@ impl Module for McpModule {
                 .param(ParamSchema::required("request_id", ParamKind::String))
                 .result(ResultSchema::new("mcp.method.approval.result")),
             move |cx, params| {
-                approval(cx, &approval_rpc, &Args::from_map(params))
+                let started = std::time::Instant::now();
+                let outcome = approval(cx, &approval_rpc, &Args::from_map(params));
+                record(cx, "mcp.approval", started, outcome.is_ok());
+                outcome
                     .map_err(|error| forja_kernel::forja_protocol::RpcError::app(error.to_string()))
             },
         );
@@ -103,7 +109,12 @@ impl Module for McpModule {
                     },
                     "required": ["enabled", "tools"]
                 }))),
-            |cx, _| Ok(tools(cx)),
+            |cx, _| {
+                let started = std::time::Instant::now();
+                let result = Ok(tools(cx));
+                record(cx, "mcp.tools", started, true);
+                result
+            },
         );
         r.rpc(
             Method::new("mcp.setup", "mcp.method.setup.description")
@@ -112,11 +123,14 @@ impl Module for McpModule {
                 .param(ParamSchema::optional("profile_id", ParamKind::String).alias("profile"))
                 .result(ResultSchema::new("mcp.method.setup.result")),
             |cx, params| {
+                let started = std::time::Instant::now();
                 let mut args = Args::new();
                 if let Some(profile) = params.get("profile_id").and_then(Value::as_str) {
                     args.insert("profile_id", json!(profile));
                 }
-                Ok(setup(cx, &args))
+                let result = Ok(setup(cx, &args));
+                record(cx, "mcp.setup", started, true);
+                result
             },
         );
 
@@ -175,10 +189,7 @@ fn authorize(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, fo
     let client = args.str("client").unwrap_or("MCP client").to_owned();
     let summary = args.str("summary").unwrap_or_default().to_owned();
     let effect = args.str("effect").unwrap_or("write").to_owned();
-    if list_setting(cx, "mcp.server.auto_approve")
-        .iter()
-        .any(|id| id == &tool)
-    {
+    if auto_approved(cx, &tool) {
         return Ok(json!({ "approved": true, "auto": true }));
     }
     let timeout = timeout_s(cx);
@@ -249,6 +260,22 @@ fn register_settings(r: &mut Registrar<'_>) {
         "setting-mcp-server-auto_approve-help",
     ));
     r.setting(SettingSpec::new(
+        "mcp.log.requests",
+        SettingKind::Bool,
+        SettingValue::Bool(false),
+        "setting-mcp-log-requests-label",
+        "setting-mcp-log-requests-help",
+    ));
+    r.setting(SettingSpec::new(
+        "mcp.tools.auto_approve",
+        SettingKind::List {
+            item: "ferramenta".to_owned(),
+        },
+        SettingValue::List(Vec::new()),
+        "setting-mcp-tools-auto_approve-label",
+        "setting-mcp-tools-auto_approve-help",
+    ));
+    r.setting(SettingSpec::new(
         "mcp.server.timeout_s",
         SettingKind::Integer {
             min: Some(1),
@@ -270,7 +297,11 @@ pub fn tools(cx: &Ctx<'_>) -> Value {
         return json!({ "enabled": false, "tools": [] });
     }
     let expose = list_setting(cx, "mcp.server.expose");
-    let auto_approve = list_setting(cx, "mcp.server.auto_approve");
+    let auto_approve: Vec<String> = ["mcp.server.auto_approve", "mcp.tools.auto_approve"]
+        .iter()
+        .flat_map(|key| list_setting(cx, key))
+        .filter(|id| !never_exposed(id))
+        .collect();
     let mut tools = Vec::new();
     for method in cx.registry().methods() {
         let schema = &method.schema;
@@ -305,6 +336,40 @@ pub fn tools(cx: &Ctx<'_>) -> Value {
         }));
     }
     json!({ "enabled": true, "tools": tools })
+}
+
+/// Whether `tool` runs without asking, from either approval list. A method
+/// the code never exposes is never approved, whatever the list says.
+fn auto_approved(cx: &Ctx<'_>, tool: &str) -> bool {
+    !never_exposed(tool)
+        && ["mcp.server.auto_approve", "mcp.tools.auto_approve"]
+            .iter()
+            .any(|key| list_setting(cx, key).iter().any(|id| id == tool))
+}
+
+/// One line for the app log: which request, how it ended, how long it took.
+/// Arguments never go in: they carry project data.
+fn request_line(request: &str, ok: bool, elapsed: std::time::Duration) -> String {
+    format!(
+        "mcp {request} {} {} ms",
+        if ok { "ok" } else { "error" },
+        elapsed.as_millis()
+    )
+}
+
+/// Logs a request the MCP server received, when `mcp.log.requests` is on.
+fn record(cx: &Ctx<'_>, request: &str, started: std::time::Instant, ok: bool) {
+    let enabled = cx
+        .setting("mcp.log.requests")
+        .and_then(SettingValue::as_bool)
+        .unwrap_or(false);
+    if !enabled {
+        return;
+    }
+    forja_kernel::logging::log(
+        forja_kernel::logging::LogLevel::Info,
+        request_line(request, ok, started.elapsed()),
+    );
 }
 
 fn list_setting(cx: &Ctx<'_>, key: &str) -> Vec<String> {
@@ -641,6 +706,98 @@ mod tests {
             .expect("authorize");
         assert_eq!(request["approved"], true);
         assert!(!runtime.modal_is_open("mcp.approval"));
+        drop(runtime);
+    }
+
+    #[test]
+    fn the_tools_list_approves_only_what_it_names() {
+        let dir = temp_dir();
+        let mut runtime = runtime(&dir);
+        runtime
+            .set_setting(
+                "mcp.server.expose",
+                SettingValue::List(vec!["muster.handoff".to_owned()]),
+            )
+            .unwrap();
+        // Empty by default: the write tool still asks every time.
+        let before = runtime.call_method("mcp.tools", Map::new()).expect("tools");
+        assert!(before["tools"]
+            .as_array()
+            .expect("array")
+            .iter()
+            .all(|tool| tool["auto_approve"] == false));
+        runtime
+            .set_setting(
+                "mcp.tools.auto_approve",
+                SettingValue::List(vec![
+                    "muster.handoff".to_owned(),
+                    "settings.set".to_owned(),
+                ]),
+            )
+            .unwrap();
+        let after = runtime.call_method("mcp.tools", Map::new()).expect("tools");
+        let tools = after["tools"].as_array().expect("array");
+        let handoff = tools
+            .iter()
+            .find(|tool| tool["id"] == "muster.handoff")
+            .expect("handoff is exposed");
+        assert_eq!(handoff["auto_approve"], true);
+        // A method the code never exposes is not approved by being listed.
+        assert!(tools.iter().all(|tool| tool["id"] != "settings.set"));
+        let request = runtime
+            .call_method(
+                "mcp.authorize",
+                Map::from_iter([("tool".to_owned(), json!("muster.handoff"))]),
+            )
+            .expect("authorize");
+        assert_eq!(request["approved"], true);
+        assert_eq!(request["auto"], true);
+        drop(runtime);
+    }
+
+    #[test]
+    fn request_log_lines_carry_no_arguments() {
+        let line = request_line(
+            "mcp.authorize",
+            true,
+            std::time::Duration::from_millis(7),
+        );
+        assert_eq!(line, "mcp mcp.authorize ok 7 ms");
+        assert!(!request_line("mcp.tools", false, std::time::Duration::ZERO).contains("id"));
+    }
+
+    #[test]
+    fn logging_records_the_request_when_the_setting_is_on() {
+        let dir = temp_dir();
+        forja_kernel::logging::initialize(dir.0.clone(), forja_kernel::logging::LogConfig::default());
+        let mut runtime = runtime(&dir);
+        runtime
+            .set_setting("mcp.log.requests", SettingValue::Bool(true))
+            .unwrap();
+        // The writer is global and the first `initialize` wins the folder, so
+        // read the file it is really appending to instead of assuming ours.
+        let log = forja_kernel::logging::current_log_path()
+            .unwrap_or_else(|| forja_kernel::logging::logs_dir(dir.0.clone()).join("forja.log"));
+        let before = std::fs::read_to_string(&log).unwrap_or_default().lines().count();
+        runtime.call_method("mcp.tools", Map::new()).expect("tools");
+        forja_kernel::logging::flush();
+        let mut text = String::new();
+        for _ in 0..50 {
+            forja_kernel::logging::flush();
+            text = std::fs::read_to_string(&log)
+                .unwrap_or_default()
+                .lines()
+                .skip(before)
+                .collect::<Vec<_>>()
+                .join("
+");
+            if text.contains("mcp mcp.tools ok") {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        assert!(text.contains("mcp mcp.tools ok"), "{text}");
+        assert!(!text.contains("mcp.server.expose"), "{text}");
         drop(runtime);
     }
 

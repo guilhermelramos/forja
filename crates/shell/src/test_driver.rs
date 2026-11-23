@@ -25,6 +25,7 @@ use crate::ui_tree::LatestTree;
 use base64::Engine as _;
 use eframe::egui::{self, accesskit, Event, Key, Modifiers, PointerButton, Pos2, Vec2};
 use forja_kernel::forja_protocol::codec::{self, RpcError};
+use forja_kernel::Tasks;
 use serde_json::{json, Map, Value};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::io::Write as _;
@@ -34,6 +35,16 @@ use std::time::{Duration, Instant};
 /// Frames and minimum time an action waits before it reports the new state.
 const SETTLE_FRAMES: u32 = 4;
 const SETTLE_TIME: Duration = Duration::from_millis(250);
+/// Longest a settle waits for background tasks and the widget tree to stabilize.
+const SETTLE_MAX: Duration = Duration::from_millis(3000);
+/// Extra settle grace after an explicit long `ui.wait` finishes its sleep.
+const WAIT_SETTLE_GRACE: Duration = Duration::from_millis(1500);
+/// Longest nap between settle frames; keeps the app painting while it waits.
+const SETTLE_STEP: Duration = Duration::from_millis(16);
+/// Consecutive frames with an identical widget tree required before replying.
+const STABLE_TREE_FRAMES: u32 = 2;
+/// Longest a click waits for a widget it named to show up.
+const AWAIT_MAX: Duration = Duration::from_millis(3000);
 
 /// Names listed per direction before the reply is capped.
 const MAX_CHANGE_NAMES: usize = 12;
@@ -45,14 +56,64 @@ const MAX_SUGGESTED_NAMES: usize = 20;
 enum Step {
     /// Events fed to egui in one frame.
     Input(Vec<Event>),
-    /// Waits until both the frame count and the instant are reached.
-    Settle { frames: u32, until: Instant },
+    /// One pointer event whose position is resolved on the frame it is fed.
+    ///
+    /// A click planned from the tree of an earlier frame can land on empty
+    /// space when the layout moved in between (a project arriving, a panel
+    /// opening). Resolving the widget by name again in the frame that feeds
+    /// the event is what a person does: look, then press where it is now.
+    Pointer {
+        kind: PointerKind,
+        button: PointerButton,
+        /// The widget the caller named, with its index; `None` for a click
+        /// given as `x,y` or as an `id`, which keeps its place.
+        target: Option<Named>,
+        /// Where to press when there is no name, or the name is gone.
+        fallback: Pos2,
+    },
+    /// Waits for a named widget that is not on screen yet: a page fills in its
+    /// list from a task and the button arrives a moment later.
+    Await {
+        target: Named,
+        until: Instant,
+        /// The reply to give when the widget never shows up.
+        message: String,
+    },
+    /// Waits until minimum frames and time have elapsed, background tasks have
+    /// finished and been applied, and the widget tree stays identical for two
+    /// consecutive frames (bounded by `max_wait`).
+    Settle {
+        frames: u32,
+        min_wait: Duration,
+        max_wait: Duration,
+        /// Window from settle start during which the driver keeps painting at
+        /// `SETTLE_STEP`. A long `ui.wait` paints only its first window, because
+        /// an idle app is measured by it.
+        paint_for: Duration,
+        started: Option<Instant>,
+        last_tree: Option<Vec<Value>>,
+        stable_frames: u32,
+    },
     /// Asks egui for a screenshot and waits for it.
     Screenshot,
     /// Requests closing the main window on the next update frame.
     RequestClose,
     /// Builds the reply from the current tree.
     Reply(Box<Pending>),
+}
+
+/// A widget the caller named, plus which of its matches they meant.
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct Named {
+    name: String,
+    index: usize,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PointerKind {
+    Move,
+    Press,
+    Release,
 }
 
 struct Pending {
@@ -202,9 +263,22 @@ impl Driver {
         params: &Map<String, Value>,
         ctx: &egui::Context,
     ) -> Result<(Vec<Step>, Value), RpcError> {
-        let settle = |ms: u64| Step::Settle {
-            frames: SETTLE_FRAMES,
-            until: Instant::now() + SETTLE_TIME.max(Duration::from_millis(ms)),
+        let settle = |ms: u64| {
+            let min_wait = SETTLE_TIME.max(Duration::from_millis(ms));
+            let max_wait = if ms == 0 {
+                SETTLE_MAX
+            } else {
+                SETTLE_MAX.max(min_wait + WAIT_SETTLE_GRACE)
+            };
+            Step::Settle {
+                frames: SETTLE_FRAMES,
+                min_wait,
+                max_wait,
+                paint_for: SETTLE_TIME,
+                started: None,
+                last_tree: None,
+                stable_frames: 0,
+            }
         };
         match method {
             "ui.snapshot" => {
@@ -260,23 +334,42 @@ impl Driver {
                 Ok((vec![settle(0)], Value::Null))
             }
             "ui.click" => {
-                let (pos, note) = self.locate(params, ctx)?;
+                // A name that is not on screen yet is worth waiting for: the
+                // page under it may still be loading its list.
+                let mut steps = Vec::new();
+                let (pos, note) = match self.locate(params, ctx) {
+                    Ok(found) => found,
+                    Err(error) => match awaiting(params) {
+                        Some(target) => {
+                            steps.push(Step::Await {
+                                target,
+                                until: Instant::now() + AWAIT_MAX,
+                                message: error.message,
+                            });
+                            (self.pointer, json!({ "awaiting": params["target"] }))
+                        }
+                        None => return Err(error),
+                    },
+                };
                 let button = match params.get("button").and_then(Value::as_str) {
                     Some("right") => PointerButton::Secondary,
                     Some("middle") => PointerButton::Middle,
                     _ => PointerButton::Primary,
                 };
                 let double = params.get("double").and_then(Value::as_bool) == Some(true);
-                let press = |pressed| Event::PointerButton {
-                    pos,
+                // A click by name follows the widget; a click by `x,y` or by
+                // `id` stays where the caller pointed.
+                let named = awaiting(params);
+                let pointer = |kind| Step::Pointer {
+                    kind,
                     button,
-                    pressed,
-                    modifiers: Modifiers::NONE,
+                    target: named.clone(),
+                    fallback: pos,
                 };
-                let mut steps = vec![Step::Input(vec![Event::PointerMoved(pos)])];
+                steps.push(pointer(PointerKind::Move));
                 for _ in 0..if double { 2 } else { 1 } {
-                    steps.push(Step::Input(vec![press(true)]));
-                    steps.push(Step::Input(vec![press(false)]));
+                    steps.push(pointer(PointerKind::Press));
+                    steps.push(pointer(PointerKind::Release));
                 }
                 self.pointer = pos;
                 steps.push(settle(0));
@@ -357,9 +450,12 @@ impl Driver {
                 .find(|element| element["id"] == id)
                 .ok_or_else(|| RpcError::app(format!("no widget with id {id}; call ui.snapshot")))?
         } else if let Some(target) = params.get("target").and_then(Value::as_str) {
-            let matches = find_by_name(&elements, target);
             let index = params.get("index").and_then(Value::as_u64).unwrap_or(0) as usize;
-            let Some(found) = matches.get(index) else {
+            let named = Named {
+                name: target.to_owned(),
+                index,
+            };
+            let Some(found) = resolve_named(&elements, &named) else {
                 let names: Vec<&str> = elements
                     .iter()
                     .filter_map(|element| element["name"].as_str())
@@ -372,47 +468,180 @@ impl Driver {
                     names.join(" | ")
                 )));
             };
-            *found
+            found
         } else {
             return Err(RpcError::invalid_params(
                 "give target (widget name), id, or x and y",
             ));
         };
-        let rect = chosen["rect"].as_array().cloned().unwrap_or_default();
-        let value = |index: usize| rect.get(index).and_then(Value::as_f64).unwrap_or(0.0) as f32;
-        let screen = ctx.content_rect();
-        let centre = Pos2::new(
-            ((value(0) + value(2)) / 2.0 / ppp).clamp(screen.left() + 1.0, screen.right() - 1.0),
-            ((value(1) + value(3)) / 2.0 / ppp).clamp(screen.top() + 1.0, screen.bottom() - 1.0),
-        );
+        let centre = centre_of(chosen, ctx);
         Ok((centre, json!({ "clicked": chosen })))
     }
 
     /// Feeds the next input step to egui; called from `raw_input_hook`.
-    pub fn feed(&mut self, raw: &mut egui::RawInput) {
-        if let Some(Step::Input(_)) = self.steps.front() {
-            if let Some(Step::Input(events)) = self.steps.pop_front() {
-                raw.events.extend(events);
+    pub fn feed(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
+        match self.steps.front() {
+            Some(Step::Input(_)) => {
+                if let Some(Step::Input(events)) = self.steps.pop_front() {
+                    raw.events.extend(events);
+                }
             }
+            Some(Step::Pointer { .. }) => {
+                let Some(Step::Pointer {
+                    kind,
+                    button,
+                    target,
+                    fallback,
+                }) = self.steps.pop_front()
+                else {
+                    return;
+                };
+                // Resolve against the tree of the frame that is about to run;
+                // a release lands where the press did, as it does for a person.
+                let pos = match kind {
+                    PointerKind::Release => self.pointer,
+                    _ => self.pointer_now(ctx, target.as_ref(), fallback),
+                };
+                self.pointer = pos;
+                let event = match kind {
+                    PointerKind::Move => Event::PointerMoved(pos),
+                    PointerKind::Press | PointerKind::Release => Event::PointerButton {
+                        pos,
+                        button,
+                        pressed: kind == PointerKind::Press,
+                        modifiers: Modifiers::NONE,
+                    },
+                };
+                raw.events.push(event);
+            }
+            _ => {}
         }
     }
 
+    /// Centre of the widget named `target` as the last frame drew it, or
+    /// `fallback` when the click had no name or the name is gone by now.
+    fn pointer_now(&self, ctx: &egui::Context, target: Option<&Named>, fallback: Pos2) -> Pos2 {
+        let Some(target) = target else { return fallback };
+        let elements = self.elements(ctx);
+        match resolve_named(&elements, target) {
+            Some(element) => centre_of(element, ctx),
+            None => fallback,
+        }
+    }
+
+    /// Ends the queue with `message` as the error for the reply it holds.
+    fn fail_pending(&mut self, ctx: &egui::Context, message: &str) {
+        let mut pending = None;
+        while let Some(step) = self.steps.pop_front() {
+            if let Step::Reply(reply) = step {
+                pending = Some(*reply);
+                break;
+            }
+        }
+        self.steps.clear();
+        let Some(pending) = pending else { return };
+        let error = RpcError::app(message);
+        self.write_log(&pending.method, &pending.params, &json!({ "error": error.message }));
+        let _ = pending.reply.send(Some(codec::error_response(pending.id.clone(), &error)));
+        ctx.request_repaint();
+    }
+
     /// Advances waits, screenshots and replies; called at the end of each frame.
-    pub fn tick(&mut self, ctx: &egui::Context) {
+    pub fn tick(&mut self, ctx: &egui::Context, tasks: &Tasks, tasks_applied: usize) {
         self.frames += 1;
+        let tree = std::sync::Arc::clone(&self.tree);
         loop {
             match self.steps.front_mut() {
                 None => return,
-                Some(Step::Input(_)) => break,
-                Some(Step::Settle { frames, until }) => {
-                    if *frames > 0 {
-                        *frames -= 1;
-                        break;
+                Some(Step::Input(_) | Step::Pointer { .. }) => break,
+                Some(Step::Await { .. }) => {
+                    let Some(Step::Await {
+                        target,
+                        until,
+                        message,
+                    }) = self.steps.pop_front()
+                    else {
+                        return;
+                    };
+                    if resolve_named(&self.elements(ctx), &target).is_some() {
+                        // The widget is there now: the pointer steps follow.
+                        continue;
                     }
                     let now = Instant::now();
-                    if now < *until {
-                        ctx.request_repaint_after(until.saturating_duration_since(now));
+                    if now < until {
+                        let remaining = until.saturating_duration_since(now);
+                        self.steps.push_front(Step::Await {
+                            target,
+                            until,
+                            message,
+                        });
+                        ctx.request_repaint_after(remaining.min(SETTLE_STEP));
                         return;
+                    }
+                    self.fail_pending(ctx, &message);
+                    return;
+                }
+                Some(Step::Settle {
+                    frames,
+                    min_wait,
+                    max_wait,
+                    paint_for,
+                    started,
+                    last_tree,
+                    stable_frames,
+                }) => {
+                    let start = *started.get_or_insert_with(Instant::now);
+                    let now = Instant::now();
+                    let min_until = start + *min_wait;
+                    let max_until = start + *max_wait;
+                    let tasks_busy =
+                        tasks.inflight() > 0 || tasks.pending() > 0 || tasks_applied > 0;
+                    if *frames > 0 {
+                        *frames -= 1;
+                        if tasks_busy {
+                            *stable_frames = 0;
+                            *last_tree = None;
+                        }
+                        break;
+                    }
+                    if now < max_until {
+                        let has_tree = tree.lock().ok().is_some_and(|guard| guard.is_some());
+                        if tasks_busy || !has_tree {
+                            *stable_frames = 0;
+                            *last_tree = None;
+                        } else if now >= min_until || now < start + *paint_for {
+                            let current = elements_from(&tree, ctx);
+                            if last_tree.as_ref() == Some(&current) {
+                                *stable_frames += 1;
+                            } else {
+                                *last_tree = Some(current);
+                                *stable_frames = 1;
+                            }
+                        } else {
+                            // Sleeping during a long `ui.wait`: require two fresh
+                            // consecutive frames once the sleep expires.
+                            *stable_frames = 0;
+                            *last_tree = None;
+                        }
+                        let ready = now >= min_until
+                            && !tasks_busy
+                            && *stable_frames >= STABLE_TREE_FRAMES;
+                        if !ready {
+                            let step = if now < min_until {
+                                let remaining = min_until.saturating_duration_since(now);
+                                if now < start + *paint_for || tasks_busy {
+                                    remaining.min(SETTLE_STEP)
+                                } else {
+                                    remaining
+                                }
+                            } else {
+                                max_until
+                                    .saturating_duration_since(now)
+                                    .min(SETTLE_STEP)
+                            };
+                            ctx.request_repaint_after(step);
+                            return;
+                        }
                     }
                     self.steps.pop_front();
                 }
@@ -575,96 +804,7 @@ impl Driver {
     /// Visible widgets worth acting on, in screen pixels, top to bottom.
     /// Widgets with no area or entirely outside the window are left out.
     fn elements(&self, ctx: &egui::Context) -> Vec<Value> {
-        let ppp = ctx.pixels_per_point();
-        let window = ctx.content_rect();
-        let Some(update) = self.tree.lock().ok().and_then(|tree| tree.clone()) else {
-            return Vec::new();
-        };
-        // Widgets scrolled or clipped out of their window are invisible to a person.
-        let mut parents = std::collections::HashMap::new();
-        let mut nodes = std::collections::HashMap::new();
-        for (id, node) in &update.nodes {
-            nodes.insert(*id, node);
-            for child in node.children() {
-                parents.insert(*child, *id);
-            }
-        }
-        let enclosing_window_id = |mut id: accesskit::NodeId| {
-            while let Some(parent) = parents.get(&id) {
-                if let Some(node) = nodes.get(parent) {
-                    if node.role() == accesskit::Role::Window && node.bounds().is_some() {
-                        return Some(parent.0);
-                    }
-                }
-                id = *parent;
-            }
-            None
-        };
-        let mut out: Vec<Value> = update
-            .nodes
-            .iter()
-            .filter(|(_, node)| node.role() != accesskit::Role::TextRun)
-            .filter_map(|(id, node)| {
-                let bounds = node.bounds()?;
-                if !element_visible_in_ancestors(*id, bounds, window, &parents, &nodes) {
-                    return None;
-                }
-                let label = node.label().unwrap_or("").trim();
-                let value = node.value().unwrap_or("").trim();
-                let name = if label.is_empty() { value } else { label }.to_owned();
-                let clickable = node.supports_action(accesskit::Action::Click);
-                let editable = matches!(
-                    node.role(),
-                    accesskit::Role::TextInput | accesskit::Role::MultilineTextInput
-                );
-                if name.is_empty() && !clickable && !editable {
-                    return None;
-                }
-                let scale = f64::from(ppp);
-                let mut state = Vec::new();
-                if node.author_id() == Some("forja.button.primary") {
-                    state.push("primary");
-                }
-                if node.is_disabled() {
-                    state.push("disabled");
-                }
-                if node.toggled() == Some(accesskit::Toggled::True)
-                    || node.is_selected() == Some(true)
-                {
-                    state.push("selected");
-                }
-                if update.focus == *id {
-                    state.push("focused");
-                }
-                let mut element = json!({
-                    "id": id.0,
-                    "role": format!("{:?}", node.role()),
-                    "name": name,
-                    "rect": [
-                        (bounds.x0 * scale).round(), (bounds.y0 * scale).round(),
-                        (bounds.x1 * scale).round(), (bounds.y1 * scale).round()
-                    ],
-                    "clickable": clickable,
-                    "editable": editable,
-                    "state": state,
-                });
-                if let Some(window_id) = enclosing_window_id(*id) {
-                    element["window_id"] = json!(window_id);
-                }
-                // A text field's label may differ from what was typed into it.
-                if !value.is_empty() && value != element["name"].as_str().unwrap_or("") {
-                    element["value"] = Value::String(value.to_owned());
-                }
-                Some(element)
-            })
-            .collect();
-        let key = |value: &Value, index: usize| value["rect"][index].as_f64().unwrap_or(0.0);
-        out.sort_by(|a, b| {
-            (key(a, 1), key(a, 0))
-                .partial_cmp(&(key(b, 1), key(b, 0)))
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
-        out
+        elements_from(&self.tree, ctx)
     }
 
     /// Resolves `region` to a named window or a screen area, in pixels.
@@ -755,6 +895,98 @@ impl Driver {
     }
 }
 
+fn elements_from(tree: &LatestTree, ctx: &egui::Context) -> Vec<Value> {
+    let ppp = ctx.pixels_per_point();
+    let window = ctx.content_rect();
+    let Some(update) = tree.lock().ok().and_then(|guard| guard.clone()) else {
+        return Vec::new();
+    };
+    // Widgets scrolled or clipped out of their window are invisible to a person.
+    let mut parents = std::collections::HashMap::new();
+    let mut nodes = std::collections::HashMap::new();
+    for (id, node) in &update.nodes {
+        nodes.insert(*id, node);
+        for child in node.children() {
+            parents.insert(*child, *id);
+        }
+    }
+    let enclosing_window_id = |mut id: accesskit::NodeId| {
+        while let Some(parent) = parents.get(&id) {
+            if let Some(node) = nodes.get(parent) {
+                if node.role() == accesskit::Role::Window && node.bounds().is_some() {
+                    return Some(parent.0);
+                }
+            }
+            id = *parent;
+        }
+        None
+    };
+    let mut out: Vec<Value> = update
+        .nodes
+        .iter()
+        .filter(|(_, node)| node.role() != accesskit::Role::TextRun)
+        .filter_map(|(id, node)| {
+            let bounds = node.bounds()?;
+            if !element_visible_in_ancestors(*id, bounds, window, &parents, &nodes) {
+                return None;
+            }
+            let label = node.label().unwrap_or("").trim();
+            let value = node.value().unwrap_or("").trim();
+            let name = if label.is_empty() { value } else { label }.to_owned();
+            let clickable = node.supports_action(accesskit::Action::Click);
+            let editable = matches!(
+                node.role(),
+                accesskit::Role::TextInput | accesskit::Role::MultilineTextInput
+            );
+            if name.is_empty() && !clickable && !editable {
+                return None;
+            }
+            let scale = f64::from(ppp);
+            let mut state = Vec::new();
+            if node.author_id() == Some("forja.button.primary") {
+                state.push("primary");
+            }
+            if node.is_disabled() {
+                state.push("disabled");
+            }
+            if node.toggled() == Some(accesskit::Toggled::True) || node.is_selected() == Some(true)
+            {
+                state.push("selected");
+            }
+            if update.focus == *id {
+                state.push("focused");
+            }
+            let mut element = json!({
+                "id": id.0,
+                "role": format!("{:?}", node.role()),
+                "name": name,
+                "rect": [
+                    (bounds.x0 * scale).round(), (bounds.y0 * scale).round(),
+                    (bounds.x1 * scale).round(), (bounds.y1 * scale).round()
+                ],
+                "clickable": clickable,
+                "editable": editable,
+                "state": state,
+            });
+            if let Some(window_id) = enclosing_window_id(*id) {
+                element["window_id"] = json!(window_id);
+            }
+            // A text field's label may differ from what was typed into it.
+            if !value.is_empty() && value != element["name"].as_str().unwrap_or("") {
+                element["value"] = Value::String(value.to_owned());
+            }
+            Some(element)
+        })
+        .collect();
+    let key = |value: &Value, index: usize| value["rect"][index].as_f64().unwrap_or(0.0);
+    out.sort_by(|a, b| {
+        (key(a, 1), key(a, 0))
+            .partial_cmp(&(key(b, 1), key(b, 0)))
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
+    out
+}
+
 fn key_steps(key: Key, modifiers: Modifiers) -> Vec<Step> {
     let event = |pressed| Event::Key {
         key,
@@ -805,9 +1037,42 @@ pub fn parse_keys(keys: &str) -> Result<(Key, Modifiers), RpcError> {
     Ok((key, modifiers))
 }
 
+/// Centre of a widget rect in screen points, clamped to the content rect.
+fn centre_of(element: &Value, ctx: &egui::Context) -> Pos2 {
+    let ppp = ctx.pixels_per_point();
+    let rect = element["rect"].as_array().cloned().unwrap_or_default();
+    let value = |index: usize| rect.get(index).and_then(Value::as_f64).unwrap_or(0.0) as f32;
+    let screen = ctx.content_rect();
+    Pos2::new(
+        ((value(0) + value(2)) / 2.0 / ppp).clamp(screen.left() + 1.0, screen.right() - 1.0),
+        ((value(1) + value(3)) / 2.0 / ppp).clamp(screen.top() + 1.0, screen.bottom() - 1.0),
+    )
+}
+
+/// The widget a caller named, picked the same way the snapshot readers pick
+/// it: the matching rule of `find_by_name`, then the index among the matches.
+fn resolve_named<'a>(elements: &'a [Value], target: &Named) -> Option<&'a Value> {
+    find_by_name(elements, &target.name)
+        .into_iter()
+        .nth(target.index)
+}
+
+/// The widget a click asked for by name and index, if it named one.
+fn awaiting(params: &Map<String, Value>) -> Option<Named> {
+    params.get("target").and_then(Value::as_str).map(|name| Named {
+        name: name.to_owned(),
+        index: params.get("index").and_then(Value::as_u64).unwrap_or(0) as usize,
+    })
+}
+
 /// Widgets whose name matches: exact, then case-insensitive, then containing.
 fn find_by_name<'a>(elements: &'a [Value], target: &str) -> Vec<&'a Value> {
     let lower = target.to_lowercase();
+    if lower.is_empty() {
+        // An empty name contains nothing worth pressing; a coordinate click
+        // must not fall back to the topmost widget.
+        return Vec::new();
+    }
     let matches = |tier: u8, name: &str| match tier {
         0 => name == target,
         1 => name.to_lowercase() == lower,
@@ -1050,6 +1315,33 @@ mod tests {
     }
 
     #[test]
+    fn a_named_click_carries_its_index_and_never_matches_an_empty_name() {
+        let params: Map<String, Value> = serde_json::from_value(json!({ "target": "Quadro", "index": 2 }))
+            .expect("params parse");
+        assert_eq!(
+            awaiting(&params),
+            Some(Named {
+                name: "Quadro".to_owned(),
+                index: 2
+            })
+        );
+        let bare: Map<String, Value> =
+            serde_json::from_value(json!({ "x": 10, "y": 20 })).expect("params parse");
+        assert_eq!(awaiting(&bare), None);
+
+        let elements = vec![
+            json!({ "id": 1, "name": "Forjar", "clickable": true }),
+            json!({ "id": 2, "name": "Forjar", "clickable": true }),
+        ];
+        let second = Named {
+            name: "Forjar".to_owned(),
+            index: 1,
+        };
+        assert_eq!(resolve_named(&elements, &second).map(|found| found["id"].as_u64()), Some(Some(2)));
+        assert!(find_by_name(&elements, "").is_empty());
+    }
+
+    #[test]
     fn changes_ignore_moves_but_track_values_and_states() {
         let element = |id: u64, name: &str, value: Option<&str>, state: &[&str], x: f64| {
             let mut element = json!({
@@ -1131,5 +1423,287 @@ mod tests {
             &parents,
             &nodes,
         ));
+    }
+
+    fn set_tree_button(tree: &LatestTree, label: &str) {
+        let mut root = accesskit::Node::new(accesskit::Role::Window);
+        root.set_bounds(accesskit::Rect::new(0.0, 0.0, 1280.0, 800.0));
+        root.set_children(vec![accesskit::NodeId(2)]);
+        let mut button = accesskit::Node::new(accesskit::Role::Button);
+        button.set_label(label.to_owned());
+        button.set_bounds(accesskit::Rect::new(20.0, 20.0, 180.0, 52.0));
+        button.add_action(accesskit::Action::Click);
+        let update = accesskit::TreeUpdate {
+            nodes: vec![
+                (accesskit::NodeId(1), root),
+                (accesskit::NodeId(2), button),
+            ],
+            tree: Some(accesskit::Tree::new(accesskit::NodeId(1))),
+            focus: accesskit::NodeId(1),
+        };
+        *tree.lock().expect("tree lock") = Some(update);
+    }
+
+    fn test_egui_ctx() -> egui::Context {
+        let ctx = egui::Context::default();
+        let raw = egui::RawInput {
+            screen_rect: Some(egui::Rect::from_min_max(
+                egui::pos2(0.0, 0.0),
+                egui::pos2(1280.0, 800.0),
+            )),
+            ..Default::default()
+        };
+        ctx.begin_pass(raw);
+        let _ = ctx.end_pass();
+        ctx
+    }
+
+    fn push_settle_reply(
+        driver: &mut Driver,
+        min_wait: Duration,
+        max_wait: Duration,
+    ) -> std::sync::mpsc::Receiver<Option<String>> {
+        let (tx, rx) = std::sync::mpsc::channel();
+        driver.steps.push_back(Step::Settle {
+            frames: 1,
+            min_wait,
+            max_wait,
+            paint_for: min_wait,
+            started: None,
+            last_tree: None,
+            stable_frames: 0,
+        });
+        driver.steps.push_back(Step::Reply(Box::new(Pending {
+            id: json!(1),
+            method: "ui.snapshot".to_owned(),
+            params: Map::new(),
+            note: Value::Null,
+            reply: tx,
+        })));
+        rx
+    }
+
+    #[test]
+    fn settle_waits_for_inflight_tasks_applied_completion_and_two_stable_frames() {
+        let dir = std::env::temp_dir().join(format!(
+            "forja-driver-settle-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("clock")
+                .as_nanos()
+        ));
+        let mut runtime = forja_kernel::Runtime::new(
+            Vec::new(),
+            forja_kernel::RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                ..Default::default()
+            },
+        )
+        .expect("runtime");
+        let tasks = runtime.tasks().clone();
+        let ctx = test_egui_ctx();
+        let mut driver = Driver::new();
+        set_tree_button(&driver.tree, "Carregando");
+
+        let (entered_tx, entered_rx) = std::sync::mpsc::channel();
+        let (release_tx, release_rx) = std::sync::mpsc::channel();
+        tasks.spawn(
+            "testing",
+            move || {
+                let _ = entered_tx.send(());
+                let _ = release_rx.recv();
+            },
+            |_cx, ()| {},
+        );
+        entered_rx
+            .recv_timeout(Duration::from_secs(5))
+            .expect("worker entered");
+
+        let rx = push_settle_reply(
+            &mut driver,
+            Duration::from_millis(0),
+            Duration::from_secs(3),
+        );
+
+        // Initial frame + several frames while task is in flight must not reply.
+        for _ in 0..4 {
+            driver.tick(&ctx, &tasks, 0);
+            assert!(rx.try_recv().is_err(), "must not reply while task is inflight");
+        }
+
+        // Let the worker finish; completion stays pending in queue until polled.
+        release_tx.send(()).expect("release worker");
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while tasks.inflight() > 0 && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(2));
+        }
+        assert_eq!(tasks.pending(), 1);
+        driver.tick(&ctx, &tasks, 0);
+        assert!(rx.try_recv().is_err(), "must not reply while completion is pending");
+
+        // Drain the completion on this frame (`tasks_applied = 1`); the new tree
+        // is not captured until after this frame ends.
+        let applied = runtime.poll_tasks();
+        assert_eq!(applied, 1);
+        driver.tick(&ctx, &tasks, applied);
+        assert!(
+            rx.try_recv().is_err(),
+            "must not reply on the frame that applied the completion"
+        );
+
+        // Next frame observes the updated tree once (stable_frames = 1).
+        set_tree_button(&driver.tree, "Prévia de Forjar");
+        driver.tick(&ctx, &tasks, 0);
+        assert!(
+            rx.try_recv().is_err(),
+            "must require two consecutive frames with the same widget tree"
+        );
+
+        // A changing tree resets stability count back to 1.
+        set_tree_button(&driver.tree, "Prévia pronta");
+        driver.tick(&ctx, &tasks, 0);
+        assert!(rx.try_recv().is_err(), "changing tree must reset stability");
+
+        // Second consecutive identical frame replies with the latest widget.
+        driver.tick(&ctx, &tasks, 0);
+        let reply = rx
+            .try_recv()
+            .expect("replies after two stable frames")
+            .expect("json response");
+        assert!(reply.contains("Prévia pronta"), "unexpected reply: {reply}");
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn settle_replies_when_task_exceeds_deadline() {
+        let ctx = test_egui_ctx();
+        let tasks = Tasks::with_workers(1);
+        let mut driver = Driver::new();
+        set_tree_button(&driver.tree, "Carregando");
+
+        let (entered_tx, entered_rx) = std::sync::mpsc::channel();
+        let (release_tx, release_rx) = std::sync::mpsc::channel();
+        tasks.spawn(
+            "testing",
+            move || {
+                let _ = entered_tx.send(());
+                let _ = release_rx.recv();
+            },
+            |_cx, ()| {},
+        );
+        entered_rx
+            .recv_timeout(Duration::from_secs(5))
+            .expect("worker entered");
+
+        let rx = push_settle_reply(
+            &mut driver,
+            Duration::from_millis(0),
+            Duration::from_millis(40),
+        );
+        driver.tick(&ctx, &tasks, 0);
+        assert!(rx.try_recv().is_err());
+
+        std::thread::sleep(Duration::from_millis(60));
+        driver.tick(&ctx, &tasks, 0);
+        let reply = rx
+            .try_recv()
+            .expect("must reply once deadline expires")
+            .expect("json response");
+        assert!(reply.contains("Carregando"), "unexpected reply: {reply}");
+
+        let _ = release_tx.send(());
+    }
+
+    #[test]
+    fn settle_does_not_wait_on_running_service_tasks() {
+        let ctx = test_egui_ctx();
+        let tasks = Tasks::with_workers(2);
+        let mut driver = Driver::new();
+        set_tree_button(&driver.tree, "Pronto");
+
+        let (entered_tx, entered_rx) = std::sync::mpsc::channel();
+        let (release_tx, release_rx) = std::sync::mpsc::channel();
+        tasks.spawn_service(
+            "explorer",
+            move || {
+                let _ = entered_tx.send(());
+                let _ = release_rx.recv();
+            },
+            |_cx, ()| {},
+        );
+        entered_rx
+            .recv_timeout(Duration::from_secs(5))
+            .expect("service task entered");
+
+        let rx = push_settle_reply(&mut driver, Duration::from_millis(0), Duration::from_secs(3));
+        driver.tick(&ctx, &tasks, 0);
+        driver.tick(&ctx, &tasks, 0);
+        driver.tick(&ctx, &tasks, 0);
+        let reply = rx
+            .try_recv()
+            .expect("service task must not block settle")
+            .expect("json response");
+        assert!(reply.contains("Pronto"), "unexpected reply: {reply}");
+
+        let _ = release_tx.send(());
+    }
+
+    #[test]
+    fn await_keeps_waiting_across_missed_frames_until_target_appears() {
+        let ctx = test_egui_ctx();
+        let tasks = Tasks::with_workers(1);
+        let mut driver = Driver::new();
+        set_tree_button(&driver.tree, "Quadro");
+
+        let (reply_tx, reply_rx) = std::sync::mpsc::channel();
+        driver.steps.push_back(Step::Await {
+            target: Named {
+                name: "Nova bancada".to_owned(),
+                index: 0,
+            },
+            until: Instant::now() + Duration::from_secs(2),
+            message: "missing".to_owned(),
+        });
+        driver.steps.push_back(Step::Pointer {
+            kind: PointerKind::Move,
+            button: PointerButton::Primary,
+            target: Some(Named {
+                name: "Nova bancada".to_owned(),
+                index: 0,
+            }),
+            fallback: Pos2::new(26.0, 112.0),
+        });
+        driver.steps.push_back(Step::Reply(Box::new(Pending {
+            id: serde_json::json!(1),
+            method: "ui.click".to_owned(),
+            params: Map::new(),
+            note: Value::Null,
+            reply: reply_tx,
+        })));
+
+        // Target is absent for multiple frames: Await must remain queued and
+        // block the Pointer step from firing with the stale fallback position.
+        driver.tick(&ctx, &tasks, 0);
+        driver.tick(&ctx, &tasks, 0);
+        assert!(matches!(driver.steps.front(), Some(Step::Await { .. })));
+
+        // Once the widget appears, tick advances past Await to Pointer, and
+        // feed resolves the new widget instead of the fallback coordinates.
+        set_tree_button(&driver.tree, "Nova bancada");
+        driver.tick(&ctx, &tasks, 0);
+        assert!(matches!(driver.steps.front(), Some(Step::Pointer { .. })));
+
+        let mut raw = egui::RawInput::default();
+        driver.feed(&ctx, &mut raw);
+        assert!(raw.events.iter().any(|event| matches!(
+            event,
+            Event::PointerMoved(pos) if *pos == Pos2::new(100.0, 36.0)
+        )));
+
+        driver.tick(&ctx, &tasks, 0);
+        assert!(reply_rx.try_recv().is_ok());
     }
 }

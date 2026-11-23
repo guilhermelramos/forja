@@ -147,6 +147,16 @@ impl<'a> Registrar<'a> {
         self.registry.settings.push(spec);
     }
 
+    /// Declares a module-owned cache subdirectory relative to `data_dir` that
+    /// is pruned automatically according to `app.storage.cleanup_days`.
+    /// User data folders must never be registered here.
+    pub fn cache_dir(&mut self, relative_path: impl Into<String>) {
+        self.registry.cache_dirs.push(CacheDirSpec {
+            module: self.module_id.to_owned(),
+            relative_path: relative_path.into(),
+        });
+    }
+
     /// Parses the module's embedded `keymap.toml`.
     pub fn keymap(&mut self, text: &str) {
         match parse_bindings(text) {
@@ -261,12 +271,20 @@ impl<'a> Registrar<'a> {
     }
 }
 
+/// Cache subdirectory declared by a module under `data_dir`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CacheDirSpec {
+    pub module: String,
+    pub relative_path: String,
+}
+
 /// Everything modules registered, validated and ready for the runtime.
 pub struct Registry {
     modules: Vec<ModuleManifest>,
     commands: Vec<CommandSpec>,
     views: Vec<ViewContribution>,
     settings: Vec<SettingSpec>,
+    cache_dirs: Vec<CacheDirSpec>,
     keybinds: Vec<KeyBinding>,
     methods: Vec<MethodContribution>,
     event_signatures: Vec<EventSignature>,
@@ -285,6 +303,7 @@ impl Registry {
             commands: Vec::new(),
             views: Vec::new(),
             settings: Vec::new(),
+            cache_dirs: Vec::new(),
             keybinds: Vec::new(),
             methods: Vec::new(),
             event_signatures: Vec::new(),
@@ -324,6 +343,10 @@ impl Registry {
 
     pub fn settings(&self) -> &[SettingSpec] {
         &self.settings
+    }
+
+    pub fn cache_dirs(&self) -> &[CacheDirSpec] {
+        &self.cache_dirs
     }
 
     pub fn keybinds(&self) -> &[KeyBinding] {
@@ -497,6 +520,10 @@ impl Registry {
             }
         }
         for subscription in &mut self.subscriptions {
+            if subscription.type_id == TypeId::of::<crate::settings::SettingsChanged>() {
+                subscription.name = "settings.changed".to_owned();
+                continue;
+            }
             match self
                 .event_signatures
                 .iter()
@@ -523,6 +550,14 @@ impl Registry {
                 errors.push(format!(
                     "event `{}` belongs to unknown module `{}`",
                     signature.name, signature.module
+                ));
+            }
+        }
+        for cache_dir in &self.cache_dirs {
+            if let Err(reason) = crate::cache::validate_cache_relative_path(&cache_dir.relative_path) {
+                errors.push(format!(
+                    "module `{}` cache_dir `{}` is invalid: {reason}",
+                    cache_dir.module, cache_dir.relative_path
                 ));
             }
         }

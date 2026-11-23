@@ -110,7 +110,7 @@ impl ForjaApp {
     }
 
     fn run_settings_transfer(&mut self, operation: Operation, path: PathBuf) {
-        let values = self.runtime.settings().values().clone();
+        let values = self.runtime.settings().user_values().clone();
         let specs = self.runtime.registry().settings().to_vec();
         let mailbox = self.settings_page.transfer.mailbox.clone();
         self.settings_page.transfer.busy = true;

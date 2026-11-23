@@ -12,7 +12,9 @@ use crate::i18n::{BundleSource, I18n, Locale, TimeFormat, WeekStart};
 use crate::keymap::{BindingSource, Keymap, KeymapLayer};
 use crate::logging::{self, LogConfig};
 use crate::registry::{build_registry, Registry};
-use crate::settings::{SettingSpec, SettingValue, Settings, SettingsWriter};
+use crate::settings::{
+    SettingSource, SettingSpec, SettingValue, Settings, SettingsChanged, SettingsWriter,
+};
 use crate::store::{LoadResult, Store};
 use crate::tasks::{TaskId, Tasks, Wake};
 use forja_protocol::{codec, Method, MethodCatalog, ResultSchema, RpcError};
@@ -41,6 +43,9 @@ pub struct Runtime {
     store: Store,
     data_dir: PathBuf,
     user_dir: PathBuf,
+    bootstrap_path: PathBuf,
+    storage_restart_pending: bool,
+    cache_cleanup_started: bool,
     tasks: Tasks,
     events: EventBus,
     wake: Wake,
@@ -65,14 +70,32 @@ impl Runtime {
         options: RuntimeOptions,
     ) -> Result<Self> {
         let registry = build_registry(modules)?;
-        let data_dir = options
-            .data_dir
-            .clone()
-            .unwrap_or_else(crate::paths::default_data_dir);
-        let user_dir = options
-            .user_dir
-            .clone()
-            .unwrap_or_else(crate::paths::default_user_dir);
+        let resolved_bootstrap = if options.data_dir.is_none() || options.user_dir.is_none() {
+            Some(crate::bootstrap::resolve())
+        } else {
+            None
+        };
+        let data_dir = options.data_dir.clone().unwrap_or_else(|| {
+            resolved_bootstrap
+                .as_ref()
+                .map(|r| r.data_dir.clone())
+                .unwrap_or_else(crate::paths::default_data_dir)
+        });
+        let user_dir = options.user_dir.clone().unwrap_or_else(|| {
+            resolved_bootstrap
+                .as_ref()
+                .map(|r| r.user_dir.clone())
+                .unwrap_or_else(crate::paths::default_user_dir)
+        });
+        let bootstrap_path = {
+            let env_data = std::env::var_os("FORJA_DATA_DIR")
+                .is_some_and(|value| !value.is_empty());
+            if options.data_dir.is_some() || env_data {
+                data_dir.join(crate::bootstrap::BOOTSTRAP_FILE)
+            } else {
+                crate::bootstrap::bootstrap_file_path()
+            }
+        };
         let locale_setting = options
             .locale
             .clone()
@@ -90,6 +113,12 @@ impl Runtime {
         let (settings, setting_warnings) =
             Settings::load(data_dir.join("settings.toml"), registry.settings());
         logging::configure(data_dir.clone(), LogConfig::from_settings(&settings));
+        if let Some(resolved) = resolved_bootstrap {
+            for warning in resolved.warnings {
+                logging::log(logging::LogLevel::Warn, format!("forja: {warning}"));
+                warnings.push(warning);
+            }
+        }
         warnings.extend(setting_warnings);
         i18n.set_fallback(Locale::parse(
             settings
@@ -161,6 +190,7 @@ impl Runtime {
         }
 
         let mut events = EventBus::new();
+        events.register_signature("settings.changed", TypeId::of::<SettingsChanged>());
         for signature in registry.event_signatures() {
             events.register_signature(&signature.name, signature.type_id);
         }
@@ -180,6 +210,42 @@ impl Runtime {
         let wake = options.wake.unwrap_or_else(|| Arc::new(|| {}));
         tasks.set_wake(Arc::clone(&wake));
 
+        let cleanup_days = settings
+            .get("app.storage.cleanup_days")
+            .and_then(|value| value.as_f64().or_else(|| value.as_i64().map(|n| n as f64)))
+            .unwrap_or(30.0)
+            .max(0.0)
+            .round() as u64;
+        let cache_cleanup_started = if cleanup_days > 0 && !registry.cache_dirs().is_empty() {
+            let cleanup_root = data_dir.clone();
+            let cleanup_dirs = registry.cache_dirs().to_vec();
+            tasks.spawn(
+                "kernel",
+                move || {
+                    crate::cache::clean_stale_caches(
+                        &cleanup_root,
+                        &cleanup_dirs,
+                        cleanup_days,
+                        std::time::SystemTime::now(),
+                    )
+                },
+                |_cx, report| {
+                    if report.files_removed > 0 {
+                        logging::log(
+                            logging::LogLevel::Info,
+                            format!(
+                                "forja: cache cleanup removed {} stale file(s) ({} bytes) across {} folder(s)",
+                                report.files_removed, report.bytes_reclaimed, report.dirs_scanned
+                            ),
+                        );
+                    }
+                },
+            );
+            true
+        } else {
+            false
+        };
+
         Ok(Self {
             registry,
             i18n,
@@ -189,6 +255,9 @@ impl Runtime {
             store: Store::new(data_dir.clone()),
             data_dir,
             user_dir,
+            bootstrap_path,
+            storage_restart_pending: false,
+            cache_cleanup_started,
             tasks,
             events,
             wake,
@@ -275,6 +344,27 @@ impl Runtime {
     /// Folder of user content (`~/.forja` or the runtime override).
     pub fn user_dir(&self) -> &Path {
         &self.user_dir
+    }
+
+    /// Path of `bootstrap.toml` updated when `app.storage.*` folders change.
+    pub fn bootstrap_path(&self) -> &Path {
+        &self.bootstrap_path
+    }
+
+    /// Overrides the `bootstrap.toml` destination (primarily for isolated tests).
+    pub fn set_bootstrap_path(&mut self, path: PathBuf) {
+        self.bootstrap_path = path;
+    }
+
+    /// True after `app.storage.data_dir` or `app.storage.content_dir` changed
+    /// to a different folder that will take effect on the next startup.
+    pub fn storage_restart_pending(&self) -> bool {
+        self.storage_restart_pending
+    }
+
+    /// True when the startup cache cleanup task was queued.
+    pub fn cache_cleanup_started(&self) -> bool {
+        self.cache_cleanup_started
     }
 
     pub fn tasks(&self) -> &Tasks {
@@ -374,6 +464,49 @@ impl Runtime {
     }
 
     pub fn set_setting(&mut self, key: &str, value: SettingValue) -> Result<()> {
+        let before = self.settings.generation();
+        if matches!(key, "app.storage.data_dir" | "app.storage.content_dir") {
+            let Some(raw) = value.as_str() else {
+                return Err(KernelError::Settings(format!(
+                    "`{key}` expected text, got {}",
+                    value.type_name()
+                )));
+            };
+            let default_dir = if key == "app.storage.data_dir" {
+                crate::paths::base_default_data_dir()
+            } else {
+                crate::paths::base_default_user_dir()
+            };
+            let resolved_target = match crate::bootstrap::update_storage_setting(
+                &self.bootstrap_path,
+                key,
+                raw,
+                &default_dir,
+            ) {
+                Ok(target) => target,
+                Err(error) => {
+                    logging::log(
+                        logging::LogLevel::Warn,
+                        format!("forja: rejected `{key}` change: {error}"),
+                    );
+                    return Err(error);
+                }
+            };
+            self.settings
+                .set_memory(key, value, self.registry.settings())?;
+            let current_dir = if key == "app.storage.data_dir" {
+                &self.data_dir
+            } else {
+                &self.user_dir
+            };
+            self.storage_restart_pending =
+                self.storage_restart_pending || !crate::bootstrap::same_path(&resolved_target, current_dir);
+            self.settings_writer.submit(self.settings.snapshot());
+            if self.settings.generation() != before {
+                self.notify_settings_changed();
+            }
+            return Ok(());
+        }
         self.settings
             .set_memory(key, value, self.registry.settings())?;
         self.apply_i18n_setting(key);
@@ -384,7 +517,71 @@ impl Runtime {
             );
         }
         self.settings_writer.submit(self.settings.snapshot());
+        if self.settings.generation() != before {
+            self.notify_settings_changed();
+        }
         Ok(())
+    }
+
+    /// Directory of the currently active project, when one is loaded.
+    pub fn active_project(&self) -> Option<&Path> {
+        self.settings.active_project()
+    }
+
+    /// Switches the active project (or clears it when `None`), reloads its
+    /// `<project>\.forja\ajustes.toml` and notifies setting subscribers.
+    pub fn set_active_project(&mut self, project_dir: Option<&Path>) {
+        let before = self.settings.generation();
+        let warnings = self
+            .settings
+            .load_project(project_dir, self.registry.settings());
+        self.warnings.extend(warnings);
+        if self.settings.generation() != before {
+            self.notify_settings_changed();
+        }
+    }
+
+    /// Reloads `<project>\.forja\ajustes.toml` for `project_dir` and notifies subscribers.
+    pub fn reload_project_settings(&mut self, project_dir: Option<&Path>) {
+        self.set_active_project(project_dir);
+    }
+
+    /// Validates that `key` is project-safe (`scope = "project"`), updates the
+    /// active project's override in memory, queues an atomic write to
+    /// `<project>\.forja\ajustes.toml` and notifies subscribers.
+    pub fn set_project_setting(&mut self, key: &str, value: SettingValue) -> Result<()> {
+        let before = self.settings.generation();
+        self.settings
+            .set_project_memory(key, value, self.registry.settings())?;
+        let snapshot = self.settings.project_snapshot()?;
+        self.settings_writer.submit(snapshot);
+        if self.settings.generation() != before {
+            self.notify_settings_changed();
+        }
+        Ok(())
+    }
+
+    /// Removes a project override for `key` so it falls back to `user > default`,
+    /// queues an atomic write to `<project>\.forja\ajustes.toml` and notifies subscribers.
+    pub fn unset_project_setting(&mut self, key: &str) -> Result<()> {
+        let before = self.settings.generation();
+        self.settings
+            .unset_project_memory(key, self.registry.settings())?;
+        let snapshot = self.settings.project_snapshot()?;
+        self.settings_writer.submit(snapshot);
+        if self.settings.generation() != before {
+            self.notify_settings_changed();
+        }
+        Ok(())
+    }
+
+    fn notify_settings_changed(&mut self) {
+        let event = SettingsChanged {
+            generation: self.settings.generation(),
+            project_dir: self.settings.active_project().map(Path::to_path_buf),
+        };
+        let _ = self.emit(&event);
+        (self.wake)();
     }
 
     /// Keeps the locale preferences in sync when the settings UI writes them.
@@ -422,7 +619,7 @@ impl Runtime {
     /// Waits for queued setting writes. Tests use it before reading the file;
     /// the shell never needs to.
     pub fn flush_settings(&self) {
-        self.settings_writer.flush(self.settings.snapshot());
+        self.settings_writer.flush();
     }
 
     pub fn ctx(&mut self, module_id: &str) -> Ctx<'_> {
@@ -595,6 +792,18 @@ impl<'a> Ctx<'a> {
         self.runtime.tasks.spawn(&module_id, work, done)
     }
 
+    /// Spawns a long-lived background service task that is excluded from
+    /// [`Tasks::inflight`] counts while still returning its result via `done`.
+    pub fn spawn_service<T, W, D>(&self, work: W, done: D) -> TaskId
+    where
+        T: Send + 'static,
+        W: FnOnce() -> T + Send + 'static,
+        D: for<'c, 'd> FnOnce(&'d mut Ctx<'c>, T) + Send + 'static,
+    {
+        let module_id = self.module_id.clone();
+        self.runtime.tasks.spawn_service(&module_id, work, done)
+    }
+
     pub fn store(&self) -> StoreHandle<'_> {
         StoreHandle {
             store: &self.runtime.store,
@@ -612,6 +821,16 @@ impl<'a> Ctx<'a> {
         &self.runtime.user_dir
     }
 
+    /// Module-owned cache subfolder inside `data_dir` (`<data>/cache/<module>`).
+    pub fn cache_dir(&self) -> PathBuf {
+        self.runtime.data_dir.join("cache").join(&self.module_id)
+    }
+
+    /// True after `app.storage.*` folders changed and await app restart.
+    pub fn storage_restart_pending(&self) -> bool {
+        self.runtime.storage_restart_pending()
+    }
+
     /// Asks the window to draw another frame soon.
     pub fn request_repaint(&self) {
         (self.runtime.wake)();
@@ -621,8 +840,29 @@ impl<'a> Ctx<'a> {
         &self.runtime.settings
     }
 
+    /// Changes whenever a setting value or active project changed; cheap to compare.
+    pub fn settings_generation(&self) -> u64 {
+        self.runtime.settings_generation()
+    }
+
+    /// Effective setting value (`project > user > default`).
     pub fn setting(&self, key: &str) -> Option<&SettingValue> {
         self.runtime.settings.get(key)
+    }
+
+    /// User-level setting value (`user > default`), ignoring project overrides.
+    pub fn user_setting(&self, key: &str) -> Option<&SettingValue> {
+        self.runtime.settings.user_get(key)
+    }
+
+    /// Project override for `key`, or `None` when not overridden by the active project.
+    pub fn project_setting(&self, key: &str) -> Option<&SettingValue> {
+        self.runtime.settings.project_get(key)
+    }
+
+    /// Layer (`Default`, `User` or `Project`) that supplied the effective value for `key`.
+    pub fn setting_source(&self, key: &str) -> Option<SettingSource> {
+        self.runtime.settings.source_of(key)
     }
 
     pub fn setting_spec(&self, key: &str) -> Option<&SettingSpec> {
@@ -635,6 +875,26 @@ impl<'a> Ctx<'a> {
 
     pub fn set_setting(&mut self, key: &str, value: SettingValue) -> Result<()> {
         self.runtime.set_setting(key, value)
+    }
+
+    pub fn active_project(&self) -> Option<&Path> {
+        self.runtime.active_project()
+    }
+
+    pub fn set_active_project(&mut self, project_dir: Option<&Path>) {
+        self.runtime.set_active_project(project_dir);
+    }
+
+    pub fn reload_project_settings(&mut self, project_dir: Option<&Path>) {
+        self.runtime.reload_project_settings(project_dir);
+    }
+
+    pub fn set_project_setting(&mut self, key: &str, value: SettingValue) -> Result<()> {
+        self.runtime.set_project_setting(key, value)
+    }
+
+    pub fn unset_project_setting(&mut self, key: &str) -> Result<()> {
+        self.runtime.unset_project_setting(key)
     }
 
     pub fn keymap(&self) -> &Keymap {
@@ -1133,5 +1393,325 @@ mod tests {
             .expect("switch back to pt_BR");
         assert!(runtime.take_locale_setting_changed());
         assert_eq!(runtime.i18n().locale(), Locale::PtBr);
+    }
+
+    #[test]
+    fn runtime_project_settings_precedence_async_write_and_change_notifications() {
+        use crate::settings::{project_settings_path, SettingScope};
+        use std::sync::atomic::AtomicU64;
+
+        let seen_generations = Arc::new(AtomicU64::new(0));
+        let seen_clone = Arc::clone(&seen_generations);
+
+        struct ProjSettingsModule {
+            seen: Arc<AtomicU64>,
+        }
+
+        impl Module for ProjSettingsModule {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("projtest", "projtest.name", "0.1.0")
+            }
+
+            fn register(&mut self, registrar: &mut Registrar<'_>) {
+                registrar.i18n("projtest-name = ProjTest\n", "projtest-name = ProjTest\n");
+                registrar.setting(
+                    SettingSpec::new(
+                        "projtest.format.indent",
+                        SettingKind::Integer {
+                            min: Some(1),
+                            max: Some(8),
+                        },
+                        SettingValue::Integer(4),
+                        "projtest.name",
+                        "projtest.name",
+                    )
+                    .scope(SettingScope::Project),
+                );
+                registrar.setting(SettingSpec::new(
+                    "projtest.security.token",
+                    SettingKind::Text { max_len: None },
+                    SettingValue::Text("none".into()),
+                    "projtest.name",
+                    "projtest.name",
+                ));
+                let seen = Arc::clone(&self.seen);
+                registrar.subscribe(move |_cx, event: &SettingsChanged| {
+                    seen.store(event.generation, Ordering::SeqCst);
+                });
+            }
+        }
+
+        let dir = temp_dir("project-settings");
+        let proj_a = dir.join("proj-a");
+        let proj_b = dir.join("proj-b");
+        std::fs::create_dir_all(proj_b.join(".forja")).unwrap();
+        std::fs::write(
+            project_settings_path(&proj_b),
+            "projtest.format.indent = 2\nprojtest.security.token = \"stolen\"\n",
+        )
+        .unwrap();
+
+        let mut runtime = Runtime::new(
+            vec![Box::new(ProjSettingsModule { seen: seen_clone })],
+            RuntimeOptions {
+                data_dir: Some(dir.join("data")),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".into()),
+                wake: None,
+            },
+        )
+        .expect("runtime builds");
+
+        // Writing project setting without an active project fails with NoActiveProject.
+        let err = runtime
+            .set_project_setting("projtest.format.indent", SettingValue::Integer(6))
+            .expect_err("no project active");
+        assert!(err.is_no_active_project());
+
+        // User sets 6 (user > default 4).
+        runtime
+            .set_setting("projtest.format.indent", SettingValue::Integer(6))
+            .unwrap();
+        assert_eq!(
+            runtime.settings().get("projtest.format.indent"),
+            Some(&SettingValue::Integer(6))
+        );
+        assert_eq!(
+            seen_generations.load(Ordering::SeqCst),
+            runtime.settings_generation()
+        );
+
+        // Activate project A and write project override 8 asynchronously.
+        runtime.set_active_project(Some(&proj_a));
+        assert_eq!(runtime.active_project(), Some(proj_a.as_path()));
+        let err = runtime
+            .set_project_setting(
+                "projtest.security.token",
+                SettingValue::Text("secret".into()),
+            )
+            .expect_err("user-only setting refused");
+        assert!(err.is_unsafe_project_setting());
+
+        runtime
+            .set_project_setting("projtest.format.indent", SettingValue::Integer(8))
+            .unwrap();
+        runtime.flush_settings();
+        assert!(project_settings_path(&proj_a).is_file());
+        assert_eq!(
+            runtime.settings().get("projtest.format.indent"),
+            Some(&SettingValue::Integer(8))
+        );
+        assert_eq!(
+            seen_generations.load(Ordering::SeqCst),
+            runtime.settings_generation()
+        );
+
+        // Switch to project B: loads indent = 2, ignores unsafe security.token with warning.
+        let gen_before_b = runtime.settings_generation();
+        runtime.set_active_project(Some(&proj_b));
+        assert!(runtime.settings_generation() > gen_before_b);
+        assert_eq!(
+            seen_generations.load(Ordering::SeqCst),
+            runtime.settings_generation()
+        );
+        assert_eq!(
+            runtime.settings().get("projtest.format.indent"),
+            Some(&SettingValue::Integer(2))
+        );
+        assert_eq!(
+            runtime.settings().get("projtest.security.token"),
+            Some(&SettingValue::Text("none".into()))
+        );
+        assert!(runtime
+            .warnings()
+            .iter()
+            .any(|w| w.contains("projtest.security.token")));
+    }
+
+    #[test]
+    fn storage_settings_write_bootstrap_toml_and_mark_restart_without_moving_data() {
+        struct AppStorageStub;
+        impl Module for AppStorageStub {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("app", "app.name", "0.1.0")
+            }
+            fn register(&mut self, registrar: &mut Registrar<'_>) {
+                registrar.i18n("app-name = App\n", "app-name = App\n");
+                registrar.setting(SettingSpec::new(
+                    "app.storage.data_dir",
+                    SettingKind::Path,
+                    SettingValue::Text("%APPDATA%\\Forja".into()),
+                    "app.name",
+                    "app.name",
+                ));
+                registrar.setting(SettingSpec::new(
+                    "app.storage.content_dir",
+                    SettingKind::Path,
+                    SettingValue::Text("~/.forja".into()),
+                    "app.name",
+                    "app.name",
+                ));
+            }
+        }
+
+        let dir = temp_dir("storage-bootstrap");
+        let old_data = dir.join("old-data");
+        let old_user = dir.join("old-user");
+        let new_data = dir.join("new-data");
+        let new_user = dir.join("new-user");
+        let bootstrap = dir.join("bootstrap.toml");
+        std::fs::create_dir_all(&old_data).unwrap();
+        std::fs::write(old_data.join("existing.txt"), "keep-me").unwrap();
+
+        let mut runtime = Runtime::new(
+            vec![Box::new(AppStorageStub)],
+            RuntimeOptions {
+                data_dir: Some(old_data.clone()),
+                user_dir: Some(old_user),
+                locale: Some("pt-BR".into()),
+                wake: None,
+            },
+        )
+        .expect("runtime builds");
+        runtime.set_bootstrap_path(bootstrap.clone());
+        assert!(!runtime.storage_restart_pending());
+
+        // Relative path is refused without updating bootstrap.toml.
+        runtime
+            .set_setting(
+                "app.storage.data_dir",
+                SettingValue::Text("relative/folder".into()),
+            )
+            .expect_err("relative path must be refused");
+        assert!(!bootstrap.exists());
+        assert!(!runtime.storage_restart_pending());
+
+        // Valid paths update bootstrap.toml for next startup without moving existing files.
+        runtime
+            .set_setting(
+                "app.storage.data_dir",
+                SettingValue::Text(new_data.display().to_string()),
+            )
+            .unwrap();
+        runtime
+            .set_setting(
+                "app.storage.content_dir",
+                SettingValue::Text(new_user.display().to_string()),
+            )
+            .unwrap();
+        assert!(runtime.storage_restart_pending());
+        assert!(old_data.join("existing.txt").is_file());
+        assert!(!new_data.join("existing.txt").exists());
+
+        let config = crate::bootstrap::load_config_optional(&bootstrap).unwrap();
+        assert_eq!(config.data_dir, Some(new_data.display().to_string()));
+        assert_eq!(config.content_dir, Some(new_user.display().to_string()));
+    }
+
+    #[test]
+    fn startup_cache_cleanup_runs_in_background_for_declared_dirs() {
+        struct CacheModule;
+        impl Module for CacheModule {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("app", "app.name", "0.1.0")
+            }
+            fn register(&mut self, registrar: &mut Registrar<'_>) {
+                registrar.i18n("app-name = App\n", "app-name = App\n");
+                registrar.setting(SettingSpec::new(
+                    "app.storage.cleanup_days",
+                    SettingKind::Integer {
+                        min: Some(0),
+                        max: Some(365),
+                    },
+                    SettingValue::Integer(30),
+                    "app.name",
+                    "app.name",
+                ));
+                registrar.cache_dir("cache/app");
+            }
+        }
+
+        let dir = temp_dir("cache-cleanup");
+        let data = dir.join("data");
+        let cache = data.join("cache").join("app");
+        let modules_dir = data.join("modules");
+        std::fs::create_dir_all(&cache).unwrap();
+        std::fs::create_dir_all(&modules_dir).unwrap();
+
+        let old_cache = cache.join("stale.cache");
+        let fresh_cache = cache.join("fresh.cache");
+        let user_state = modules_dir.join("app.json");
+        std::fs::write(&old_cache, b"old").unwrap();
+        std::fs::write(&fresh_cache, b"fresh").unwrap();
+        std::fs::write(&user_state, b"{}").unwrap();
+
+        let old_time = std::time::SystemTime::now() - std::time::Duration::from_secs(45 * 86_400);
+        let file = std::fs::OpenOptions::new().write(true).open(&old_cache).unwrap();
+        file.set_modified(old_time).unwrap();
+        drop(file);
+
+        let (wake_tx, wake_rx) = std::sync::mpsc::channel();
+        let mut runtime = Runtime::new(
+            vec![Box::new(CacheModule)],
+            RuntimeOptions {
+                data_dir: Some(data.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("en".into()),
+                wake: Some(Arc::new(move || {
+                    let _ = wake_tx.send(());
+                })),
+            },
+        )
+        .expect("runtime builds");
+        assert!(runtime.cache_cleanup_started());
+
+        for _ in 0..50 {
+            runtime.poll_tasks();
+            if !old_cache.exists() {
+                break;
+            }
+            let _ = wake_rx.recv_timeout(std::time::Duration::from_millis(50));
+        }
+        assert!(!old_cache.exists(), "stale cache file must be removed");
+        assert!(fresh_cache.exists(), "fresh cache file must remain");
+        assert!(user_state.exists(), "user/module data must never be deleted");
+
+        // When cleanup_days = 0, startup cleanup does not run.
+        let dir_zero = temp_dir("cache-cleanup-zero");
+        let data_zero = dir_zero.join("data");
+        std::fs::create_dir_all(&data_zero).unwrap();
+        std::fs::write(
+            data_zero.join("settings.toml"),
+            "[app.storage]\ncleanup_days = 0\n",
+        )
+        .unwrap();
+        let runtime_zero = Runtime::new(
+            vec![Box::new(CacheModule)],
+            RuntimeOptions {
+                data_dir: Some(data_zero),
+                user_dir: Some(dir_zero.join("user")),
+                locale: Some("en".into()),
+                wake: None,
+            },
+        )
+        .expect("runtime builds");
+        assert!(!runtime_zero.cache_cleanup_started());
+    }
+
+    #[test]
+    fn escaping_cache_dir_is_rejected_at_registration() {
+        struct BadCacheModule;
+        impl Module for BadCacheModule {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("badcache", "badcache.name", "0.1.0")
+            }
+            fn register(&mut self, registrar: &mut Registrar<'_>) {
+                registrar.cache_dir("../outside");
+            }
+        }
+        let err = build_registry(vec![Box::new(BadCacheModule)])
+            .err()
+            .expect("escaping cache_dir must fail");
+        assert!(err.to_string().contains("invalid"));
     }
 }

@@ -176,15 +176,43 @@ impl Tasks {
         W: FnOnce() -> T + Send + 'static,
         D: for<'a, 'b> FnOnce(&'b mut Ctx<'a>, T) + Send + 'static,
     {
+        self.spawn_inner(module_id, work, done, true)
+    }
+
+    /// Queues a long-lived background service task (such as a file watcher)
+    /// that stays alive by design and is excluded from [`Tasks::inflight`].
+    pub fn spawn_service<T, W, D>(&self, module_id: &str, work: W, done: D) -> TaskId
+    where
+        T: Send + 'static,
+        W: FnOnce() -> T + Send + 'static,
+        D: for<'a, 'b> FnOnce(&'b mut Ctx<'a>, T) + Send + 'static,
+    {
+        self.spawn_inner(module_id, work, done, false)
+    }
+
+    fn spawn_inner<T, W, D>(
+        &self,
+        module_id: &str,
+        work: W,
+        done: D,
+        track_inflight: bool,
+    ) -> TaskId
+    where
+        T: Send + 'static,
+        W: FnOnce() -> T + Send + 'static,
+        D: for<'a, 'b> FnOnce(&'b mut Ctx<'a>, T) + Send + 'static,
+    {
         let id = TaskId(self.inner.next.fetch_add(1, Ordering::SeqCst));
         let module_id = module_id.to_owned();
         let inner = Arc::clone(&self.inner);
-        inner.acquire();
+        if track_inflight {
+            inner.acquire();
+        }
         let task_inner = Arc::clone(&inner);
         let job: Job = Box::new(move || {
-            let _guard = InflightGuard {
+            let _guard = track_inflight.then(|| InflightGuard {
                 inner: Arc::clone(&task_inner),
-            };
+            });
             let Some(result) = run_guarded(id, work) else {
                 return;
             };
@@ -201,7 +229,9 @@ impl Tasks {
             }
         };
         if !queued {
-            inner.release();
+            if track_inflight {
+                inner.release();
+            }
             logging::log(
                 LogLevel::Error,
                 format!("forja: task {id} was dropped: the task queue is closed"),
@@ -234,6 +264,11 @@ impl Tasks {
 
     pub fn pending(&self) -> usize {
         lock(&self.inner.queue).len()
+    }
+
+    /// Number of non-service tasks currently queued on or running in the worker pool.
+    pub fn inflight(&self) -> usize {
+        *lock(&self.inner.inflight)
     }
 }
 
@@ -354,5 +389,60 @@ mod tests {
             2,
             "the pool must run exactly its two workers, never more"
         );
+    }
+
+    #[test]
+    fn inflight_and_pending_track_queued_running_and_completed_tasks() {
+        let tasks = Tasks::with_workers(1);
+        assert_eq!(tasks.inflight(), 0);
+        assert_eq!(tasks.pending(), 0);
+
+        let (entered_tx, entered_rx) = mpsc::channel();
+        let (release_tx, release_rx) = mpsc::channel();
+        let _id = tasks.spawn(
+            "testing",
+            move || {
+                let _ = entered_tx.send(());
+                let _ = release_rx.recv();
+                42
+            },
+            |_cx, _value| {},
+        );
+        entered_rx.recv_timeout(Duration::from_secs(5)).expect("worker entered");
+        assert_eq!(tasks.inflight(), 1);
+
+        release_tx.send(()).expect("release worker");
+        let deadline = Instant::now() + Duration::from_secs(5);
+        while tasks.inflight() > 0 && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(2));
+        }
+        assert_eq!(tasks.inflight(), 0);
+        assert_eq!(tasks.pending(), 1);
+
+        let done = tasks.take_completed();
+        assert_eq!(done.len(), 1);
+        assert_eq!(tasks.pending(), 0);
+    }
+
+    #[test]
+    fn service_tasks_are_excluded_from_inflight_count() {
+        let tasks = Tasks::with_workers(2);
+        let (entered_tx, entered_rx) = mpsc::channel();
+        let (release_tx, release_rx) = mpsc::channel();
+        tasks.spawn_service(
+            "testing",
+            move || {
+                let _ = entered_tx.send(());
+                let _ = release_rx.recv();
+                7
+            },
+            |_cx, _value| {},
+        );
+        entered_rx.recv_timeout(Duration::from_secs(5)).expect("service worker entered");
+        assert_eq!(tasks.inflight(), 0);
+
+        release_tx.send(()).expect("release service worker");
+        let done = collect(&tasks, 1);
+        assert_eq!(done.len(), 1);
     }
 }

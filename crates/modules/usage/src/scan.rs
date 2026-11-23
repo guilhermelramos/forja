@@ -18,35 +18,70 @@ pub struct Roots {
 }
 
 impl Roots {
-    pub fn from_accounts(accounts: &[(String, String)]) -> Self {
-        let home = user_home();
+    /// Resolves local transcript folders, isolating test and demo runs from the
+    /// user's real `~/.claude`, `~/.codex` and OpenCode directories.
+    pub fn for_run(accounts: &[(String, String)], data_dir: &Path) -> Self {
+        let test_usage_dir = env_path("FORJA_TEST_USAGE_DIR");
+        let isolated = cfg!(test)
+            || env_path("FORJA_TEST_DRIVER").is_some()
+            || env_path("FORJA_SCREENSHOT").is_some();
+        Self::resolve(
+            accounts,
+            data_dir,
+            env_path("FORJA_DEMO").is_some(),
+            isolated,
+            test_usage_dir,
+        )
+    }
+
+    fn resolve(
+        accounts: &[(String, String)],
+        data_dir: &Path,
+        demo: bool,
+        isolated: bool,
+        test_usage_dir: Option<PathBuf>,
+    ) -> Self {
         // `--demo` reads only the sample folder the shell points at, so the
         // person's own sessions never show up in the demonstration.
-        if std::env::var_os("FORJA_DEMO").is_some() {
+        if demo {
             return Self {
-                claude: std::env::var_os("CLAUDE_CONFIG_DIR")
-                    .map(PathBuf::from)
-                    .into_iter()
-                    .collect(),
-                codex: std::env::var_os("CODEX_HOME")
-                    .map(PathBuf::from)
-                    .into_iter()
-                    .collect(),
+                claude: env_path("CLAUDE_CONFIG_DIR").into_iter().collect(),
+                codex: env_path("CODEX_HOME").into_iter().collect(),
+                opencode: Vec::new(),
+            };
+        }
+        if let Some(base) = test_usage_dir {
+            return Self::isolated_under(&base);
+        }
+        if isolated {
+            return Self::isolated_under(&data_dir.join("usage"));
+        }
+        Self::from_accounts(accounts)
+    }
+
+    fn isolated_under(base: &Path) -> Self {
+        Self {
+            claude: vec![base.to_path_buf(), base.join("claude")],
+            codex: vec![base.to_path_buf(), base.join("codex")],
+            opencode: vec![base.to_path_buf(), base.join("opencode")],
+        }
+    }
+
+    pub fn from_accounts(accounts: &[(String, String)]) -> Self {
+        let home = user_home();
+        if env_path("FORJA_DEMO").is_some() {
+            return Self {
+                claude: env_path("CLAUDE_CONFIG_DIR").into_iter().collect(),
+                codex: env_path("CODEX_HOME").into_iter().collect(),
                 opencode: Vec::new(),
             };
         }
         let mut claude = BTreeSet::new();
         claude.insert(
-            std::env::var_os("CLAUDE_CONFIG_DIR")
-                .map(PathBuf::from)
-                .unwrap_or_else(|| home.join(".claude")),
+            env_path("CLAUDE_CONFIG_DIR").unwrap_or_else(|| home.join(".claude")),
         );
         let mut codex = BTreeSet::new();
-        codex.insert(
-            std::env::var_os("CODEX_HOME")
-                .map(PathBuf::from)
-                .unwrap_or_else(|| home.join(".codex")),
-        );
+        codex.insert(env_path("CODEX_HOME").unwrap_or_else(|| home.join(".codex")));
         for (profile, dir) in accounts {
             let path = PathBuf::from(dir);
             if profile.contains("claude") {
@@ -56,11 +91,11 @@ impl Roots {
             }
         }
         let mut opencode = BTreeSet::new();
-        if let Some(appdata) = std::env::var_os("APPDATA") {
-            opencode.insert(PathBuf::from(appdata).join("opencode"));
+        if let Some(appdata) = env_path("APPDATA") {
+            opencode.insert(appdata.join("opencode"));
         }
-        if let Some(local) = std::env::var_os("LOCALAPPDATA") {
-            opencode.insert(PathBuf::from(local).join("opencode"));
+        if let Some(local) = env_path("LOCALAPPDATA") {
+            opencode.insert(local.join("opencode"));
         }
         opencode.insert(home.join(".local").join("share").join("opencode"));
         opencode.insert(home.join(".config").join("opencode"));
@@ -70,6 +105,12 @@ impl Roots {
             opencode: opencode.into_iter().filter(|path| path.exists()).collect(),
         }
     }
+}
+
+fn env_path(name: &str) -> Option<PathBuf> {
+    std::env::var_os(name)
+        .filter(|value| !value.is_empty())
+        .map(PathBuf::from)
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -521,5 +562,44 @@ mod tests {
         let summary = cache.summary_at(1_762_000_000_000, &Pricing::default());
         assert_eq!(summary.total.total_tokens, 202);
         let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn isolated_runs_never_scan_host_home_and_respect_test_usage_dir() {
+        let data_dir = Path::new("C:/isolated-data");
+        let accounts = vec![
+            ("claude-personal".to_owned(), "C:/real-user/.claude".to_owned()),
+            ("codex-work".to_owned(), "C:/real-user/.codex".to_owned()),
+        ];
+
+        let default_isolated = Roots::resolve(&accounts, data_dir, false, true, None);
+        assert_eq!(
+            default_isolated.claude,
+            vec![data_dir.join("usage"), data_dir.join("usage").join("claude")]
+        );
+        assert_eq!(
+            default_isolated.codex,
+            vec![data_dir.join("usage"), data_dir.join("usage").join("codex")]
+        );
+        assert_eq!(
+            default_isolated.opencode,
+            vec![data_dir.join("usage"), data_dir.join("usage").join("opencode")]
+        );
+
+        let override_dir = PathBuf::from("C:/custom-usage");
+        let overridden =
+            Roots::resolve(&accounts, data_dir, false, true, Some(override_dir.clone()));
+        assert_eq!(
+            overridden.claude,
+            vec![override_dir.clone(), override_dir.join("claude")]
+        );
+        assert_eq!(
+            overridden.codex,
+            vec![override_dir.clone(), override_dir.join("codex")]
+        );
+        assert_eq!(
+            overridden.opencode,
+            vec![override_dir.clone(), override_dir.join("opencode")]
+        );
     }
 }

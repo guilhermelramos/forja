@@ -2,7 +2,7 @@
   "title": "Layout de terminal restaurado não fecha o app (#70, #71)",
   "issue": 70,
   "locale": "pt-BR",
-  "seed": "09-terminal-restore",
+  "seed": "160-terminal-restore",
   "steps": [
     {"m": "ui.key", "keys": "Escape"},
     {"m": "ui.click", "target": "Abrir pasta"},
