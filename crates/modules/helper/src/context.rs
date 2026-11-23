@@ -79,6 +79,9 @@ fn truncate_chars(text: &str, limit: usize) -> String {
 pub fn read_rules_files(bench_dir: &Path, candidates: &[String]) -> Vec<RuleSnippet> {
     let mut rules = Vec::new();
     let mut remaining = MAX_TOTAL_CHARS;
+    let Ok(root) = std::fs::canonicalize(bench_dir) else {
+        return rules;
+    };
     for raw in candidates {
         if remaining == 0 {
             break;
@@ -87,7 +90,15 @@ pub fn read_rules_files(bench_dir: &Path, candidates: &[String]) -> Vec<RuleSnip
             continue;
         };
         let full = bench_dir.join(&rel);
-        let Ok(content) = std::fs::read_to_string(&full) else {
+        // A junção ou link simbólico pode apontar para fora da bancada; a
+        // validação lexical sozinha não detecta isso.
+        let Ok(effective) = std::fs::canonicalize(&full) else {
+            continue;
+        };
+        if !effective.starts_with(&root) {
+            continue;
+        }
+        let Ok(content) = std::fs::read_to_string(&effective) else {
             continue;
         };
         let trimmed = content.trim();
@@ -391,6 +402,34 @@ files = ["../secret.txt", "CUSTOM.md"]
         assert_eq!(paths, vec!["CUSTOM.md", "AGENTS.md", "CLAUDE.md"]);
         assert!(loaded[0].content.contains("Custom profile rule."));
         assert!(loaded[1].content.contains("Always run cargo test."));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn read_rules_rejects_junction_that_escapes_the_bench() {
+        let dir = temp_dir("junction");
+        let outside = dir.0.join("outside");
+        let bench = dir.0.join("bench");
+        std::fs::create_dir_all(&outside).unwrap();
+        std::fs::create_dir_all(&bench).unwrap();
+        std::fs::write(outside.join("AGENTS.md"), "EXTERNAL RULE").unwrap();
+        std::fs::write(bench.join("AGENTS.md"), "BENCH RULE").unwrap();
+
+        let link = bench.join("escape");
+        let output = forja_kernel::process::command("cmd")
+            .args(["/c", "mklink", "/J"])
+            .arg(&link)
+            .arg(&outside)
+            .output()
+            .expect("mklink runs");
+        assert!(output.status.success(), "mklink failed: {:?}", output);
+
+        let loaded = read_rules_files(&bench, &["escape/AGENTS.md".to_owned()]);
+        assert!(loaded.is_empty(), "junction to outside must be rejected");
+
+        let normal = read_rules_files(&bench, &["AGENTS.md".to_owned()]);
+        assert_eq!(normal.len(), 1);
+        assert!(normal[0].content.contains("BENCH RULE"));
     }
 
     #[test]
