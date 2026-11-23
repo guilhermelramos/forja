@@ -29,6 +29,12 @@ pub struct State {
     pub pending_resumes: BTreeMap<String, resume::PendingResume>,
     /// Avisos quando `auto` cai para `never`.
     pub resume_notices: BTreeMap<String, String>,
+    /// O arquivo persistente já foi carregado nesta sessão.
+    pub file_loaded: bool,
+    /// Uma gravação está em voo; as demais esperam na fila.
+    pub write_inflight: bool,
+    /// Snapshot mais recente aguardando a vez de gravar.
+    pub pending_write: Option<crate::store::HelperFile>,
 }
 
 /// Identidade e texto necessários para entregar o contexto inicial pelo destino certo.

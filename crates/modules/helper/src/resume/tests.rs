@@ -62,12 +62,24 @@
         }
         fn register(&mut self, r: &mut Registrar<'_>) {
             let core = Arc::clone(&self.0);
+            let save_core = Arc::clone(&self.0);
             r.command("test.record_session", "helper.name", move |cx, args| {
                 let bench_path = args.required_str("bench_path")?.to_owned();
                 let profile_id = args.required_str("profile_id")?.to_owned();
                 let session_id = args.str("session_id").map(str::to_owned);
                 let _ = ensure(cx, &core, Some(PathBuf::from(&bench_path)));
                 record_bench_session(cx, &core, &bench_path, &profile_id, session_id);
+                Ok(json!({}))
+            });
+            r.command("test.save", "helper.name", move |cx, args| {
+                let value = args.str("value").unwrap_or("").to_owned();
+                let _ = save_core.with_state(|state| {
+                    state
+                        .file
+                        .hook_consent
+                        .insert("test".to_owned(), value == "two");
+                });
+                save_file(cx, &save_core);
                 Ok(json!({}))
             });
         }
@@ -188,6 +200,7 @@
         let mut rec = Args::new();
         rec.insert("bench_path", json!(bench_ref.path));
         rec.insert("profile_id", json!("claude-code"));
+        rec.insert("session_id", json!("sess-u"));
         runtime.run_command("test.record_session", rec).unwrap();
         runtime
             .set_setting("helper.sessions.resume_policy", SettingValue::Text("auto".into()))
@@ -203,4 +216,95 @@
                 .launch.resume_notices
                 .contains_key(&context::path_key(&bench_dir)))
             .unwrap());
+    }
+
+    #[test]
+    fn launch_without_session_id_keeps_the_known_bench_session() {
+        let dir = temp_dir("keep-session");
+        let (mut runtime, core, opens, _) = setup_runtime(&dir.0);
+        let bench_dir = dir.0.join("bench");
+        let bench_ref = BenchRef {
+            project_id: "p1".into(),
+            bench_id: "b3".into(),
+            name: "bench".into(),
+            path: bench_dir.display().to_string(),
+            branch: Some("main".into()),
+        };
+
+        let mut rec = Args::new();
+        rec.insert("bench_path", json!(bench_ref.path));
+        rec.insert("profile_id", json!("claude-code"));
+        rec.insert("session_id", json!("archived-1"));
+        runtime.run_command("test.record_session", rec).unwrap();
+
+        // Um launch TUI comum não sabe o id e não pode apagar a sessão conhecida.
+        let mut rec = Args::new();
+        rec.insert("bench_path", json!(bench_ref.path));
+        rec.insert("profile_id", json!("claude-code"));
+        runtime.run_command("test.record_session", rec).unwrap();
+        let stored = core
+            .with_state(|s| {
+                s.file
+                    .bench_sessions
+                    .get(&context::path_key(&bench_dir))
+                    .cloned()
+            })
+            .unwrap();
+        assert_eq!(stored.and_then(|s| s.session_id).as_deref(), Some("archived-1"));
+
+        runtime
+            .set_setting("helper.sessions.resume_policy", SettingValue::Text("auto".into()))
+            .unwrap();
+        runtime.emit(&BenchActivated(bench_ref));
+        let opened = opens.lock().unwrap();
+        assert_eq!(opened.len(), 1);
+        let args = opened[0]["args"].as_str().unwrap();
+        assert!(args.contains("--resume archived-1"), "{args}");
+        assert!(!args.contains("--continue"), "{args}");
+    }
+
+    #[test]
+    fn bench_switch_keeps_persistent_state_and_writes_are_serialized() {
+        let dir = temp_dir("serialize");
+        let (mut runtime, core, _, _) = setup_runtime(&dir.0);
+        let bench_a = dir.0.join("a");
+        let bench_b = dir.0.join("b");
+        std::fs::create_dir_all(&bench_a).unwrap();
+        std::fs::create_dir_all(&bench_b).unwrap();
+
+        core.with_state(|state| {
+            state
+                .file
+                .profiles
+                .insert("claude-code".to_owned(), Default::default());
+        })
+        .unwrap();
+        for bench in [&bench_a, &bench_b, &bench_a] {
+            let mut args = Args::new();
+            args.insert("bench_path", json!(bench.display().to_string()));
+            runtime.run_command("helper.list", args).unwrap();
+        }
+        assert!(core
+            .with_state(|state| state.file.profiles.contains_key("claude-code"))
+            .unwrap());
+        assert!(core.with_state(|state| state.launch.file_loaded).unwrap());
+
+        let mut one = Args::new();
+        one.insert("value", json!("one"));
+        runtime.run_command("test.save", one).unwrap();
+        let mut two = Args::new();
+        two.insert("value", json!("two"));
+        runtime.run_command("test.save", two).unwrap();
+        for _ in 0..60 {
+            runtime.poll_tasks();
+            if !core.with_state(|state| state.launch.write_inflight).unwrap() {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        // `test.save` é registrado pelo módulo "test", então o store é test.json.
+        let path = dir.0.join("modules").join("test.json");
+        let saved: Value =
+            serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+        assert_eq!(saved["hook_consent"]["test"], true, "latest write must win");
     }

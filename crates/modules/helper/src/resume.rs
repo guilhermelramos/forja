@@ -108,16 +108,23 @@ pub(crate) fn record_bench_session(
     let key = context::path_key(Path::new(bench_path));
     let session = BenchSession {
         profile_id: profile_id.to_owned(),
-        session_id,
+        session_id: session_id.clone(),
         bench_path: bench_path.to_owned(),
         updated_at: chrono::Utc::now().to_rfc3339(),
     };
     let changed = core
         .with_state(|state| {
             state.launch.pending_resumes.remove(&key);
-            state.file.bench_sessions.insert(key, session);
+            // Um lançamento TUI ainda não sabe o id: não apague a sessão
+            // efetiva que já conhecemos para esta bancada.
+            if session_id.is_some() || !state.file.bench_sessions.contains_key(&key) {
+                state.file.bench_sessions.insert(key, session);
+                true
+            } else {
+                false
+            }
         })
-        .is_ok();
+        .unwrap_or(false);
     if changed {
         save_file(cx, core);
     }
@@ -221,6 +228,7 @@ fn find_previous_session(cx: &mut Ctx<'_>, core: &Shared, bench_path: &str) -> O
         .with_state(|state| state.file.bench_sessions.get(&key).cloned())
         .ok()
         .flatten()
+        .filter(|session| session.session_id.is_some())
     {
         return Some(session);
     }
@@ -317,6 +325,9 @@ fn resume_command(cx: &mut Ctx<'_>, core: &Shared, args: &Args) -> Result<Value,
         .map(str::to_owned)
         .or_else(|| pending.and_then(|item| item.session_id))
         .or_else(|| previous.and_then(|item| item.session_id));
+    if session_id.as_deref().map(str::trim).unwrap_or("").is_empty() {
+        return Err(cx.t("helper.resume.none-found"));
+    }
 
     let selected = core.with_state(|state| {
         let profile = state
@@ -355,12 +366,15 @@ fn execute_resume(
     session_id: Option<&str>,
     overrides: &ProfileOverride,
 ) -> Result<Value, String> {
+    let Some(session_id) = session_id.map(str::trim).filter(|id| !id.is_empty()) else {
+        return Err("no known session id for this bench; refusing to resume the global last session".to_owned());
+    };
     if cx.registry().command("terminal.open").is_none() {
         return Err("terminal module is not available; helper.resume needs terminal.open".to_owned());
     }
     let mut plan = launch::build_resume(
         profile,
-        session_id,
+        Some(session_id),
         PathBuf::from(bench_path),
         overrides,
     )?;
@@ -411,7 +425,7 @@ fn execute_resume(
         core,
         bench_path,
         &profile.id,
-        session_id.map(str::to_owned),
+        Some(session_id.to_owned()),
     );
     let _ = cx.emit(&HelperStatusChanged {
         bench_path: run.bench_path.clone(),

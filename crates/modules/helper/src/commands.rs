@@ -309,9 +309,17 @@ pub(crate) fn ensure(
             return Ok(());
         }
     }
-    let file = match cx.store().load::<HelperFile>() {
-        forja_kernel::store::LoadResult::Loaded(file) => file,
-        _ => HelperFile::default(),
+    let need_file = core
+        .with_state(|state| !state.launch.file_loaded)
+        .unwrap_or(true);
+    let file = if need_file {
+        match cx.store().load::<HelperFile>() {
+            forja_kernel::store::LoadResult::Loaded(file) => file,
+            _ => HelperFile::default(),
+        }
+    } else {
+        core.with_state(|state| state.file.clone())
+            .unwrap_or_default()
     };
     let profiles = profile::load_all(bench.as_deref(), |profile| trust_allows(cx, profile));
     let mut state = core
@@ -320,6 +328,7 @@ pub(crate) fn ensure(
         .map_err(|_| "helper state is poisoned".to_owned())?;
     state.profiles = profiles;
     state.file = file;
+    state.launch.file_loaded = true;
     state.loaded_for = bench.clone();
     if state.runs.is_empty() {
         // `--demo` leaves two stored runs so the page has state to show; the
@@ -848,19 +857,52 @@ fn start_detection(cx: &mut Ctx<'_>, core: &Shared) {
     );
 }
 
-pub(crate) fn save_file(cx: &mut Ctx<'_>, core: &crate::Core) {
-    let file = match core.with_state(|state| state.file.clone()) {
-        Ok(file) => file,
-        Err(_) => return,
+pub(crate) fn save_file(cx: &mut Ctx<'_>, core: &Shared) {
+    let Some(file) = core
+        .with_state(|state| {
+            let file = state.file.clone();
+            if state.launch.write_inflight {
+                state.launch.pending_write = Some(file.clone());
+                None
+            } else {
+                state.launch.write_inflight = true;
+                Some(file)
+            }
+        })
+        .ok()
+        .flatten()
+    else {
+        return;
     };
+    spawn_write(cx, core, file);
+}
+
+/// Grava um snapshot e, ao terminar, publica apenas o snapshot mais recente.
+fn spawn_write(cx: &mut Ctx<'_>, core: &Shared, file: HelperFile) {
     let path = cx.store().path();
+    let owned = Arc::clone(core);
     cx.spawn(
         move || {
             if let Ok(bytes) = serde_json::to_vec_pretty(&file) {
                 let _ = write_atomic_bytes(&path, &bytes);
             }
         },
-        |_, _| {},
+        move |cx, ()| {
+            let next = owned
+                .with_state(|state| {
+                    state.launch.write_inflight = false;
+                    let next = state.launch.pending_write.take();
+                    if next.is_some() {
+                        state.launch.write_inflight = true;
+                    }
+                    next
+                })
+                .ok()
+                .flatten();
+            if let Some(file) = next {
+                spawn_write(cx, &owned, file);
+            }
+        },
     );
 }
 
@@ -889,9 +931,6 @@ impl crate::Core {
         Ok(())
     }
 
-    pub(crate) fn save(&self, cx: &mut Ctx<'_>) {
-        save_file(cx, self);
-    }
 }
 
 fn error(message: impl ToString) -> KernelError {
