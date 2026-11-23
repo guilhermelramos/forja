@@ -594,7 +594,7 @@ impl HelperSettings {
         }
         for (id, overrides) in changes {
             let _ = self.core.set_override(&id, overrides);
-            crate::commands::save_file(cx, &self.core);
+            crate::persistence::save_file(cx, &self.core);
         }
         if let Some(action) = hook_action {
             let result = match action {
