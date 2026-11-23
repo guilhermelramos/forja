@@ -151,11 +151,7 @@ pub fn tabs(ui: &mut Ui, selected: &mut usize, labels: &[&str]) -> Response {
             text,
         );
         if active {
-            painter.hline(
-                piece.x_range(),
-                piece.bottom(),
-                Stroke::new(2.0, tokens.color.accent.to_color32()),
-            );
+            crate::selection_mark(ui, response.id.with("tabs.mark"), egui::Rect::from_min_max(egui::pos2(piece.left(), piece.bottom() - 2.0), piece.right_bottom()), false);
         }
         paint::paint_focus(
             ui,

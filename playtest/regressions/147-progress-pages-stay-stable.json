@@ -1,0 +1,28 @@
+{
+  "title": "Páginas com barras de progresso e orçamento mantêm a geometria (#202)",
+  "issue": 202,
+  "locale": "pt-BR",
+  "demo": true,
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Quadro" },
+    { "m": "ui.click", "target": "Mutirão" },
+    { "m": "ui.snapshot" },
+    { "m": "ui.click", "target": "Uso" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 3,
+      "window_count": 0,
+      "no_geometry_issues": true,
+      "max_primary_buttons": 1
+    },
+    {
+      "step": 5,
+      "window_count": 0,
+      "no_geometry_issues": true,
+      "max_primary_buttons": 1
+    }
+  ]
+}

@@ -36,13 +36,9 @@ pub(crate) fn hover_fill(fill: Color32, response: &Response, tokens: &Tokens) ->
     if !response.sense.interactive() {
         return fill;
     }
-    let amount = if response.is_pointer_button_down_on() {
-        0.14
-    } else if response.hovered() {
-        0.08
-    } else {
-        0.0
-    };
+    let hover = crate::motion_bool(&response.ctx, response.id.with("hover"), response.hovered(), crate::Motion::Fast);
+    let press = crate::motion_bool(&response.ctx, response.id.with("press"), response.is_pointer_button_down_on(), crate::Motion::Fast);
+    let amount = 0.08 * hover + 0.06 * press;
     mix_color32(fill, hover_tint(tokens.mode), amount)
 }
 

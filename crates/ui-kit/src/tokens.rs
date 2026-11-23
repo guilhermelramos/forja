@@ -128,6 +128,15 @@ pub struct Tokens {
     pub density: Density,
     /// Quando verdadeiro, as animações duram 0 ms.
     pub reduce_motion: bool,
+    /// Base duration in milliseconds; derived durations are capped at 250 ms.
+    #[serde(skip)]
+    pub motion_duration_ms: f32,
+    /// Suppress transitions and continuous animation in tests and captures.
+    #[serde(skip)]
+    pub deterministic: bool,
+    /// Shared tooltip policy; accessible names are never suppressed.
+    #[serde(skip)]
+    pub tooltips_enabled: bool,
     /// Cores.
     pub color: Palette,
 }
@@ -146,6 +155,9 @@ impl Tokens {
             mode: Mode::Dark,
             density: Density::Comfortable,
             reduce_motion: false,
+            motion_duration_ms: 150.0,
+            deterministic: cfg!(test),
+            tooltips_enabled: true,
             color: Palette {
                 bg: Color::rgb(0x12, 0x10, 0x10),
                 surface: Color::rgb(0x1B, 0x18, 0x16),
@@ -172,6 +184,9 @@ impl Tokens {
             mode: Mode::Light,
             density: Density::Comfortable,
             reduce_motion: false,
+            motion_duration_ms: 150.0,
+            deterministic: cfg!(test),
+            tooltips_enabled: true,
             color: Palette {
                 bg: Color::rgb(0xFA, 0xF8, 0xF5),
                 surface: Color::rgb(0xFF, 0xFF, 0xFF),
@@ -245,6 +260,9 @@ impl Tokens {
             mode: Mode::Dark,
             density: Density::Comfortable,
             reduce_motion: false,
+            motion_duration_ms: 150.0,
+            deterministic: cfg!(test),
+            tooltips_enabled: true,
             color: palette,
         }
     }
@@ -295,13 +313,22 @@ impl Tokens {
         }
     }
 
-    /// Duração das transições, em segundos. `0` quando o tema pede menos movimento.
+    /// Base transition duration, respecting accessibility and deterministic mode.
     pub fn motion_secs(&self) -> f32 {
-        if self.reduce_motion {
-            0.0
-        } else {
-            0.12
+        self.duration(crate::Motion::Base)
+    }
+
+    /// Resolve a Brasa token in seconds. No transition exceeds 250 ms.
+    pub fn duration(&self, motion: crate::Motion) -> f32 {
+        if self.reduce_motion || self.deterministic {
+            return 0.0;
         }
+        let ratio = match motion {
+            crate::Motion::Fast => 0.6,
+            crate::Motion::Base => 1.0,
+            crate::Motion::Slow => 1.6,
+        };
+        (self.motion_duration_ms * ratio).clamp(0.0, 250.0) / 1000.0
     }
 
     /// Lê um tema completo ou parcial. O que faltar vem do preset do `mode`.

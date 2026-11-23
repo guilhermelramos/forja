@@ -38,7 +38,7 @@ pub use settings::{
 };
 pub use status::{
     error_banner, error_notice, helper_missing_guide, progress_bar, stage_badge, toast,
-    truncated_label, wrapped_label, HelperMissingGuide, Stage, ToastKind,
+    toast_transition, truncated_label, wrapped_label, HelperMissingGuide, Stage, ToastKind,
 };
 pub use tabs::{panel_icon_tabs, tab_strip, PanelIconTab, TabItem, TabStripOutcome};
 pub use tabs_fit::{measure_tab_width, plan_tab_fit, TabFitPlan};

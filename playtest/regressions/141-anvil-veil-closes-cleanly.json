@@ -1,0 +1,24 @@
+{
+  "title": "Bigorna abre com véu e cartão e fecha sem deixar janela (#202)",
+  "issue": 202,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.key", "keys": "Ctrl+K" },
+    { "m": "ui.snapshot" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 2,
+      "window_count": 1,
+      "no_geometry_issues": true
+    },
+    {
+      "step": 4,
+      "window_count": 0,
+      "no_geometry_issues": true
+    }
+  ]
+}

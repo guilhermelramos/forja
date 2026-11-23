@@ -39,12 +39,12 @@ pub fn setting_row<R>(
                             .selectable(false)
                             .wrap(),
                     );
-                    ui.add(
+                    let help = ui.add(
                         egui::Label::new(highlighted_text(ui, row.help, row.query, false))
                             .selectable(false)
                             .truncate(),
-                    )
-                    .on_hover_text(row.help);
+                    );
+                    crate::tooltip(help, row.help);
                     if let Some(notice) = row.notice {
                         ui.label(
                             RichText::new(notice)
@@ -168,7 +168,7 @@ pub fn settings_navigation(ui: &mut Ui, label: &str, selected: bool) -> egui::Re
             egui::Stroke::new(2.0, tokens.color.accent.to_color32()),
         );
     }
-    response.on_hover_text(label)
+    crate::tooltip(response, label)
 }
 
 /// Text emphasis preserves original Unicode text and highlights every matching span.
