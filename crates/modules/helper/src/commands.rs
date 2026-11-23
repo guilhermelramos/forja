@@ -122,7 +122,7 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
                     })
                     .map(|run| {
                         let readiness = state
-                            .ready_states
+                            .launch.ready_states
                             .get(&run.terminal_id)
                             .copied()
                             .unwrap_or_default();
@@ -530,7 +530,7 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
                 move |cx, rules| {
                     let rules_text = context::format_rules_block(&rules);
                     let _ = owned.with_state(|state| {
-                        state.rules_cache.insert(cache_key, rules);
+                        state.launch.rules_cache.insert(cache_key, rules);
                     });
                     if let Some(text) = rules_text {
                         let mut send = Args::new();
@@ -635,16 +635,16 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
                 let rules_text = context::format_rules_block(&rules);
                 let is_ready = owned
                     .with_state(|state| {
-                        state.rules_cache.insert(cache_key, rules);
+                        state.launch.rules_cache.insert(cache_key, rules);
                         if let Some(text) = &rules_text {
                             state
-                                .deferred_sends
+                                .launch.deferred_sends
                                 .entry(tid.clone())
                                 .or_default()
                                 .insert(0, text.clone());
                         }
                         state
-                            .ready_states
+                            .launch.ready_states
                             .get(&tid)
                             .is_some_and(|entry| entry.ready)
                     })
@@ -701,7 +701,7 @@ fn hook_event(cx: &mut Ctx<'_>, core: &Shared, payload: Value) {
         .flatten();
     if let Some(terminal_id) = target {
         let _ = core.with_state(|state| {
-            let entry = state.ready_states.entry(terminal_id.clone()).or_default();
+            let entry = state.launch.ready_states.entry(terminal_id.clone()).or_default();
             entry.ready = true;
             entry.timed_out = false;
         });

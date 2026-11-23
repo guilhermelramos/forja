@@ -65,7 +65,7 @@ pub fn timeout_from_settings(cx: &Ctx<'_>) -> Duration {
 /// Entrega qualquer texto pendente aguardando prontidão para `terminal_id`.
 pub(crate) fn flush_deferred_sends(cx: &mut Ctx<'_>, core: &Shared, terminal_id: &str) {
     let payload = core
-        .with_state(|state| state.deferred_sends.remove(terminal_id))
+        .with_state(|state| state.launch.deferred_sends.remove(terminal_id))
         .ok()
         .flatten();
     let Some(parts) = payload else {
@@ -101,14 +101,14 @@ pub(crate) fn start_watch(
 ) {
     let _ = core.with_state(|state| {
         state
-            .ready_states
+            .launch.ready_states
             .insert(terminal_id.clone(), ReadyState::default());
         if let Some(prompt) = delayed_prompt
             .map(|text| text.trim().to_owned())
             .filter(|text| !text.is_empty())
         {
             state
-                .deferred_sends
+                .launch.deferred_sends
                 .entry(terminal_id.clone())
                 .or_default()
                 .push(prompt);
@@ -172,7 +172,7 @@ fn on_poll_tick(
             let run = state.runs.get(&terminal_id)?;
             let finished = matches!(run.status, HelperStatus::Finished);
             let ready = state
-                .ready_states
+                .launch.ready_states
                 .get(&terminal_id)
                 .is_some_and(|entry| entry.ready);
             Some((finished, ready))
@@ -205,7 +205,7 @@ fn on_poll_tick(
         let text = read.get("text").and_then(Value::as_str).unwrap_or("");
         if matcher.matches("", text) {
             let _ = core.with_state(|state| {
-                let entry = state.ready_states.entry(terminal_id.clone()).or_default();
+                let entry = state.launch.ready_states.entry(terminal_id.clone()).or_default();
                 entry.ready = true;
                 entry.timed_out = false;
                 if let Some(run) = state.runs.get_mut(&terminal_id) {
@@ -254,7 +254,7 @@ fn handle_timeout(
     );
     let _ = core.with_state(|state| {
         let entry = state
-            .ready_states
+            .launch.ready_states
             .entry(terminal_id.to_owned())
             .or_default();
         entry.timed_out = true;
@@ -262,7 +262,7 @@ fn handle_timeout(
             run.last_event = Some("ready timeout".to_owned());
         }
         state
-            .bench_notices
+            .launch.bench_notices
             .insert(context::path_key(Path::new(bench_path)), body.clone());
     });
     logging::log(
@@ -459,7 +459,7 @@ mod tests {
         for _ in 0..10 {
             runtime.poll_tasks();
             if core
-                .with_state(|s| s.ready_states.get("term-r1").is_some_and(|r| r.ready))
+                .with_state(|s| s.launch.ready_states.get("term-r1").is_some_and(|r| r.ready))
                 .unwrap()
             {
                 break;
@@ -468,7 +468,7 @@ mod tests {
         }
 
         let ready = core
-            .with_state(|s| s.ready_states.get("term-r1").copied().unwrap())
+            .with_state(|s| s.launch.ready_states.get("term-r1").copied().unwrap())
             .unwrap();
         assert!(ready.ready);
         assert!(!ready.timed_out);
@@ -541,7 +541,7 @@ mod tests {
             runtime.poll_tasks();
             if core
                 .with_state(|s| {
-                    s.ready_states
+                    s.launch.ready_states
                         .get("term-timeout")
                         .is_some_and(|r| r.timed_out)
                 })
@@ -552,7 +552,7 @@ mod tests {
         }
 
         let ready = core
-            .with_state(|s| s.ready_states.get("term-timeout").copied().unwrap())
+            .with_state(|s| s.launch.ready_states.get("term-timeout").copied().unwrap())
             .unwrap();
         assert!(!ready.ready);
         assert!(ready.timed_out);
@@ -563,7 +563,7 @@ mod tests {
         assert_eq!(notices[0]["bench_path"], bench);
         assert!(sends.lock().unwrap().is_empty());
         assert!(core
-            .with_state(|s| s.bench_notices.contains_key(&context::path_key(&dir.0)))
+            .with_state(|s| s.launch.bench_notices.contains_key(&context::path_key(&dir.0)))
             .unwrap());
     }
 }

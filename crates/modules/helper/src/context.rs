@@ -288,10 +288,10 @@ pub(crate) fn schedule_rules_preload(
     let key = cache_key(&bench_dir, &candidates);
     let should_start = core
         .with_state(|state| {
-            if state.rules_cache.contains_key(&key) || state.rules_loading.contains(&key) {
+            if state.launch.rules_cache.contains_key(&key) || state.launch.rules_loading.contains(&key) {
                 false
             } else {
-                state.rules_loading.insert(key.clone());
+                state.launch.rules_loading.insert(key.clone());
                 true
             }
         })
@@ -305,8 +305,8 @@ pub(crate) fn schedule_rules_preload(
         move || read_rules_files(&bench_dir, &candidates_bg),
         move |_cx, rules| {
             let _ = owned.with_state(|state| {
-                state.rules_loading.remove(&key);
-                state.rules_cache.insert(key, rules);
+                state.launch.rules_loading.remove(&key);
+                state.launch.rules_cache.insert(key, rules);
             });
         },
     );
@@ -330,7 +330,7 @@ pub(crate) fn resolve_rules_for_launch(
     }
     let candidates = profile.rule_files();
     let key = cache_key(bench_dir, &candidates);
-    core.with_state(|state| state.rules_cache.get(&key).cloned())
+    core.with_state(|state| state.launch.rules_cache.get(&key).cloned())
         .ok()
         .flatten()
 }
