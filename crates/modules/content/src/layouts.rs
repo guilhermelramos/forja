@@ -123,7 +123,7 @@ impl LayoutStore {
             let cached = state.cache.project == project;
             state.catalog = Catalog {
                 generation: state.generation,
-                project: project,
+                project,
                 entries: if cached {
                     state.cache.entries.clone()
                 } else {

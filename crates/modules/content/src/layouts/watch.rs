@@ -78,12 +78,10 @@ impl WatchRoots {
     }
 
     fn folder_for(&self, path: &Path) -> Option<&Path> {
-        for root in [&self.user, &self.builtin] {
-            if let Some(root) = root {
-                let layouts = root.join(super::LAYOUT_DIR);
-                if path.starts_with(&layouts) && path.parent() == Some(layouts.as_path()) {
-                    return Some(root);
-                }
+        for root in [&self.user, &self.builtin].into_iter().flatten() {
+            let layouts = root.join(super::LAYOUT_DIR);
+            if path.starts_with(&layouts) && path.parent() == Some(layouts.as_path()) {
+                return Some(root);
             }
         }
         let project = self.project.as_ref()?;
