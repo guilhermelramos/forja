@@ -504,7 +504,9 @@ mod tests {
         }
     }
 
-    fn setup_runtime(dir: &Path) -> (Runtime, Arc<Core>, Arc<Mutex<Vec<Value>>>, Arc<Mutex<Vec<Value>>>) {
+    type StubLog = Arc<Mutex<Vec<Value>>>;
+
+    fn setup_runtime(dir: &Path) -> (Runtime, Arc<Core>, StubLog, StubLog) {
         let core = Arc::new(Core::new());
         let opens = Arc::new(Mutex::new(Vec::new()));
         let notifies = Arc::new(Mutex::new(Vec::new()));
