@@ -47,7 +47,7 @@ pub(super) fn draw(
     }
     let mut chosen = None;
     let mut bounds = ui.ctx().content_rect();
-    bounds.min.y = (toolbar_bottom + forja_ui_kit::Spacing::SM).min(bounds.bottom());
+    bounds.min.y = (toolbar_bottom + 8.0).min(bounds.bottom());
     let window = egui::Window::new(texts.recipes.clone())
         .id(egui::Id::new("forja-terminal-recipe-picker"))
         .collapsible(false)
