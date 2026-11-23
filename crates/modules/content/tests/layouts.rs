@@ -2,8 +2,9 @@
 
 use forja_module_content::layouts::{
     read_catalog, remove_layout, write_layout, Catalog, CatalogCache, LayoutSources, LayoutStore,
-    DEBOUNCE,
+    WatchRoots, DEBOUNCE,
 };
+use notify::event::{CreateKind, Event, EventKind};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
@@ -235,6 +236,41 @@ fn a_disk_signal_invalidates_an_inflight_catalog() {
         assert_eq!(state.generation, 1);
         assert!(!state.ready);
     });
+}
+
+#[test]
+fn only_layout_files_and_folder_creation_are_relevant() {
+    let root = temp_dir("watch-filter");
+    let user = root.join("user");
+    let project = root.join("project");
+    std::fs::create_dir_all(user.join("layouts")).unwrap();
+    let roots = WatchRoots::from_context(user.clone(), Some(project.clone()), None);
+
+    let layout_event = Event {
+        kind: EventKind::Create(CreateKind::File),
+        paths: vec![user.join("layouts").join("own.toml")],
+        attrs: Default::default(),
+    };
+    assert!(roots.relevant(&layout_event));
+    let project_event = Event {
+        kind: EventKind::Create(CreateKind::File),
+        paths: vec![project.join(".forja").join("layouts").join("own.toml")],
+        attrs: Default::default(),
+    };
+    assert!(roots.relevant(&project_event));
+    let folder_event = Event {
+        kind: EventKind::Create(CreateKind::Folder),
+        paths: vec![project.join(".forja")],
+        attrs: Default::default(),
+    };
+    assert!(roots.relevant(&folder_event));
+    let unrelated = Event {
+        kind: EventKind::Create(CreateKind::File),
+        paths: vec![user.join("notes.txt")],
+        attrs: Default::default(),
+    };
+    assert!(!roots.relevant(&unrelated));
+    let _ = std::fs::remove_dir_all(root);
 }
 
 #[test]

@@ -9,7 +9,7 @@ mod watch;
 mod write;
 
 pub use catalog::{read_catalog, Catalog, CatalogCache, LayoutEntry, LayoutSources};
-pub use watch::{watch_roots, Watch, DEBOUNCE};
+pub use watch::{watch_roots, Watch, WatchRoots, DEBOUNCE};
 pub use write::{layout_path, remove_layout, write_layout};
 
 use forja_kernel::{Args, Ctx, KernelError, Registrar};
@@ -47,6 +47,7 @@ pub struct LayoutState {
     pub dirty_at: Option<Instant>,
     pub deadline_scheduled: bool,
     pub watch_requested: Vec<PathBuf>,
+    pub watch_token: u64,
     pub watch: Option<Watch>,
     /// Último resultado de gravação/remoção, para o seletor mostrar falhas.
     pub last_write: Option<String>,
@@ -78,10 +79,6 @@ impl LayoutStore {
         self.state.lock().ok()
     }
 
-    pub(crate) fn has_watch(&self) -> bool {
-        self.with(|state| state.watch.is_some()).unwrap_or(false)
-    }
-
     fn next_generation(&self) -> u64 {
         let Ok(mut state) = self.state.lock() else {
             return 0;
@@ -105,6 +102,7 @@ impl LayoutStore {
             state.queued = None;
             state.dirty_at = None;
             state.seen_generation = 0;
+            state.watch_token = state.watch_token.wrapping_add(1);
             // Publica imediatamente o snapshot da nova raiz: nunca devolve o
             // catálogo da bancada/projeto anterior enquanto a leitura corre.
             let cached = state.cache.project == project;
