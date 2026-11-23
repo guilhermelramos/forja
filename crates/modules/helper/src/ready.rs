@@ -13,12 +13,14 @@ use std::time::{Duration, Instant};
 const POLL_INTERVAL: Duration = Duration::from_millis(200);
 
 /// Estado de prontidão de uma execução no terminal.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct ReadyState {
     /// Ajudante respondeu ao sinal de prontidão esperado.
     pub ready: bool,
     /// O prazo `helper.launch.ready_timeout_s` expirou antes de ficar pronto.
     pub timed_out: bool,
+    /// `started_at` da execução que sinalizou prontidão (identidade do processo).
+    pub identity: Option<String>,
 }
 
 /// Critério verificável para saber quando a TUI/CLI está pronta para receber contexto.
@@ -63,20 +65,6 @@ impl ReadyMatcher {
     }
 }
 
-/// Entrega pendente após um curto prazo quando o perfil não declara sinal de prontidão.
-pub(crate) fn schedule_fallback_send(
-    cx: &mut Ctx<'_>,
-    core: &Shared,
-    terminal_id: String,
-    delay: Duration,
-) {
-    let owned = core.clone();
-    cx.spawn(
-        move || std::thread::sleep(delay),
-        move |cx, ()| flush_deferred_sends(cx, &owned, &terminal_id),
-    );
-}
-
 /// Prazo configurado em `helper.launch.ready_timeout_s` (5..=120s, padrão 30s).
 pub fn timeout_from_settings(cx: &Ctx<'_>) -> Duration {
     let seconds = cx
@@ -87,15 +75,41 @@ pub fn timeout_from_settings(cx: &Ctx<'_>) -> Duration {
     Duration::from_secs(seconds)
 }
 
-/// Entrega qualquer texto pendente aguardando prontidão para `terminal_id`.
+/// Entrega o texto pendente somente ao ajudante ativo que sinalizou prontidão.
 pub(crate) fn flush_deferred_sends(cx: &mut Ctx<'_>, core: &Shared, terminal_id: &str) {
     let payload = core
-        .with_state(|state| state.launch.deferred_sends.remove(terminal_id))
+        .with_state(|state| {
+            let ready = state.launch.ready_states.get(terminal_id);
+            let valid = state
+                .runs
+                .get(terminal_id)
+                .filter(|run| !matches!(run.status, HelperStatus::Finished))
+                .is_some_and(|run| {
+                    ready.is_some_and(|entry| entry.ready && entry.identity.as_deref() == Some(run.started_at.as_str()))
+                });
+            let payload = state.launch.deferred_sends.remove(terminal_id);
+            if valid {
+                payload
+            } else {
+                None
+            }
+        })
         .ok()
         .flatten();
     let Some(parts) = payload else {
         return;
     };
+    let mut read_args = Args::new();
+    read_args.insert("terminal_id", json!(terminal_id));
+    read_args.insert("lines", json!(1));
+    let alive = cx
+        .run_command("terminal.read", read_args)
+        .ok()
+        .and_then(|value| value.get("alive").and_then(Value::as_bool))
+        .unwrap_or(false);
+    if !alive {
+        return;
+    }
     let text = parts
         .into_iter()
         .map(|part| part.trim().to_owned())
@@ -234,6 +248,7 @@ fn on_poll_tick(
                 entry.ready = true;
                 entry.timed_out = false;
                 if let Some(run) = state.runs.get_mut(&terminal_id) {
+                    entry.identity = Some(run.started_at.clone());
                     if run.last_event.as_deref() == Some("launch") {
                         run.last_event = Some("ready".to_owned());
                     }
@@ -482,7 +497,15 @@ mod tests {
         watch_args.insert("name", json!("Fake Helper"));
         runtime.run_command("test.watch", watch_args).unwrap();
 
-        std::thread::sleep(Duration::from_millis(60));
+        // Inicialização lenta: nenhum byte vai para o PTY antes do sinal.
+        for _ in 0..6 {
+            runtime.poll_tasks();
+            std::thread::sleep(Duration::from_millis(30));
+        }
+        assert!(
+            sends.lock().unwrap().is_empty(),
+            "timer must never deliver context"
+        );
         *output.lock().unwrap() = "Boot done\nREADY> ".to_owned();
         for _ in 0..10 {
             runtime.poll_tasks();
@@ -496,7 +519,7 @@ mod tests {
         }
 
         let ready = core
-            .with_state(|s| s.launch.ready_states.get("term-r1").copied().unwrap())
+            .with_state(|s| s.launch.ready_states.get("term-r1").cloned().unwrap())
             .unwrap();
         assert!(ready.ready);
         assert!(!ready.timed_out);
@@ -580,7 +603,7 @@ mod tests {
         }
 
         let ready = core
-            .with_state(|s| s.launch.ready_states.get("term-timeout").copied().unwrap())
+            .with_state(|s| s.launch.ready_states.get("term-timeout").cloned().unwrap())
             .unwrap();
         assert!(!ready.ready);
         assert!(ready.timed_out);

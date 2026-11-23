@@ -10,7 +10,6 @@ use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::Duration;
 
 /// Estado em memória do contexto inicial, prontidão e retomada.
 #[derive(Default)]
@@ -114,15 +113,25 @@ fn send(cx: &mut Ctx<'_>, core: &Shared, delivery: &ContextDelivery, text: Optio
         return;
     }
     if let Some(terminal_id) = &delivery.terminal_id {
-        let _ = core.with_state(|state| {
-            state
-                .launch
-                .deferred_sends
-                .entry(terminal_id.clone())
-                .or_default()
-                .push(text);
-        });
-        ready::schedule_fallback_send(cx, core, terminal_id.clone(), Duration::from_millis(400));
+        let ready = core
+            .with_state(|state| {
+                state
+                    .launch
+                    .deferred_sends
+                    .entry(terminal_id.clone())
+                    .or_default()
+                    .push(text);
+                state
+                    .launch
+                    .ready_states
+                    .get(terminal_id)
+                    .is_some_and(|entry| entry.ready)
+            })
+            .unwrap_or(false);
+        // As regras podem chegar depois do sinal de prontidão: entregue de vez.
+        if ready {
+            ready::flush_deferred_sends(cx, core, terminal_id);
+        }
     }
 }
 
@@ -222,9 +231,10 @@ pub(crate) fn register(r: &mut Registrar<'_>, core: &Shared) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::profile::{Layer, Profile};
     use crate::{detect, Core, HelperModule};
     use forja_kernel::{Module, ModuleManifest, Runtime, RuntimeOptions, SettingValue};
-    use serde_json::{json, Map};
+    use serde_json::{json, Map, Value};
 
     struct TempDirGuard(PathBuf);
     impl Drop for TempDirGuard {
@@ -247,13 +257,22 @@ mod tests {
 
     #[test]
     fn launch_includes_rules_via_async_task_and_request_context_from_bench_contract() {
-        struct TerminalStub(Arc<std::sync::Mutex<Vec<(String, serde_json::Value)>>>);
+        struct TerminalStub {
+            calls: Arc<std::sync::Mutex<Vec<(String, serde_json::Value)>>>,
+            core: Arc<Core>,
+        }
         impl Module for TerminalStub {
             fn manifest(&self) -> ModuleManifest {
                 ModuleManifest::new("terminal", "helper.name", "0.0.0")
             }
             fn register(&mut self, r: &mut Registrar<'_>) {
-                let open_calls = Arc::clone(&self.0);
+                let flush_core = Arc::clone(&self.core);
+                r.command("terminal.flush-test", "helper.name", move |cx, args| {
+                    let tid = args.required_str("terminal_id")?.to_owned();
+                    crate::ready::flush_deferred_sends(cx, &flush_core, &tid);
+                    Ok(json!({}))
+                });
+                let open_calls = Arc::clone(&self.calls);
                 r.command("terminal.open", "helper.name", move |_, args| {
                     open_calls
                         .lock()
@@ -261,7 +280,7 @@ mod tests {
                         .push(("terminal.open".to_owned(), args.into_json()));
                     Ok(json!({ "terminal_id": "term-ctx" }))
                 });
-                let send_calls = Arc::clone(&self.0);
+                let send_calls = Arc::clone(&self.calls);
                 r.command("terminal.send", "helper.name", move |_, args| {
                     send_calls
                         .lock()
@@ -313,7 +332,10 @@ mod tests {
                 Box::new(HelperModule {
                     core: Arc::clone(&core),
                 }),
-                Box::new(TerminalStub(Arc::clone(&calls))),
+                Box::new(TerminalStub {
+                    calls: Arc::clone(&calls),
+                    core: Arc::clone(&core),
+                }),
                 Box::new(BenchStub(bench_dir.clone())),
             ],
             RuntimeOptions {
@@ -333,6 +355,10 @@ mod tests {
                     ..detect::Detection::default()
                 },
             );
+            if let Some(profile) = state.profiles.iter_mut().find(|p| p.id == "claude-code") {
+                profile.ready.patterns = vec!["READY>".to_owned()];
+            }
+            state.loaded_for = Some(bench_dir.clone());
         })
         .unwrap();
 
@@ -364,6 +390,26 @@ mod tests {
             }
             std::thread::sleep(std::time::Duration::from_millis(30));
         }
+        // Confirma a prontidão pelo sinal do ajudante (a detecção do sinal é
+        // provada em ready.rs); a entrega das regras depende dela.
+        core.with_state(|state| {
+            let started = state
+                .runs
+                .get("term-ctx")
+                .map(|run| run.started_at.clone())
+                .unwrap_or_default();
+            let entry = state
+                .launch
+                .ready_states
+                .entry("term-ctx".to_owned())
+                .or_default();
+            entry.ready = true;
+            entry.identity = Some(started);
+        })
+        .unwrap();
+        let mut flush = Args::new();
+        flush.insert("terminal_id", json!("term-ctx"));
+        runtime.run_command("terminal.flush-test", flush).unwrap();
         let sent = calls
             .lock()
             .unwrap()
@@ -458,5 +504,111 @@ mod tests {
             sends.lock().unwrap().is_empty(),
             "chat.send must not target another bench/session"
         );
+    }
+
+    #[test]
+    fn failed_helper_never_writes_the_request_to_the_pty() {
+        struct PtyStub(Arc<std::sync::Mutex<Vec<(String, Value)>>>);
+        impl Module for PtyStub {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("terminal", "helper.name", "0.0.0")
+            }
+            fn register(&mut self, r: &mut Registrar<'_>) {
+                r.command("terminal.open", "helper.name", move |_, _| {
+                    Ok(json!({ "terminal_id": "term-failed" }))
+                });
+                let sends = Arc::clone(&self.0);
+                r.command("terminal.send", "helper.name", move |_, args| {
+                    sends
+                        .lock()
+                        .unwrap()
+                        .push(("terminal.send".to_owned(), args.into_json()));
+                    Ok(json!({}))
+                });
+                let reads = Arc::clone(&self.0);
+                r.command("terminal.read", "helper.name", move |_, _| {
+                    reads
+                        .lock()
+                        .unwrap()
+                        .push(("terminal.read".to_owned(), json!({})));
+                    Ok(json!({ "text": "", "alive": true }))
+                });
+            }
+        }
+        struct NotifyStub(Arc<std::sync::Mutex<Vec<Value>>>);
+        impl Module for NotifyStub {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("notify", "helper.name", "0.0.0")
+            }
+            fn register(&mut self, r: &mut Registrar<'_>) {
+                let notices = Arc::clone(&self.0);
+                r.command("notify.show", "helper.name", move |_, args| {
+                    notices.lock().unwrap().push(args.into_json());
+                    Ok(json!({}))
+                });
+            }
+        }
+
+        let dir = temp_guard("failed-helper");
+        let bench_dir = dir.0.join("bench");
+        std::fs::create_dir_all(&bench_dir).unwrap();
+        let pwned = dir.0.join("pwned.txt");
+        let core = Arc::new(Core::new());
+        let calls = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let notices = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(HelperModule {
+                    core: Arc::clone(&core),
+                }),
+                Box::new(PtyStub(Arc::clone(&calls))),
+                Box::new(NotifyStub(Arc::clone(&notices))),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.0.clone()),
+                user_dir: Some(dir.0.join("user")),
+                locale: Some("en".to_owned()),
+                wake: None,
+            },
+        )
+        .unwrap();
+        let mut missing = Profile::parse(
+            "id = \"missing-cli\"\nname = \"Missing CLI\"\nmaker = \"Test\"\nsite = \"https://example.test\"\n[detect]\nexecutables=[\"definitely-not-a-real-executable-xyz\"]\n[start]\ncommand=\"definitely-not-a-real-executable-xyz\"\n",
+            PathBuf::from("missing-cli.toml"),
+            Layer::User,
+        )
+        .unwrap();
+        missing.trusted = true;
+        core.with_state(|state| {
+            state.profiles = vec![missing];
+            state.detection.clear();
+            state.probed.clear();
+            state.loaded_for = Some(bench_dir.clone());
+        })
+        .unwrap();
+
+        let mut args = Args::new();
+        args.insert("profile_id", json!("missing-cli"));
+        args.insert("bench_path", json!(bench_dir.display().to_string()));
+        args.insert(
+            "prompt",
+            json!(format!("& echo PWNED > \"{}\"", pwned.display())),
+        );
+        let result = runtime.run_command("helper.launch", args);
+        assert!(result.is_err(), "uninstalled helper must fail to launch");
+        for _ in 0..60 {
+            runtime.poll_tasks();
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        assert!(
+            calls
+                .lock()
+                .unwrap()
+                .iter()
+                .all(|(command, _)| command != "terminal.send"),
+            "failed launch must never write to the PTY"
+        );
+        assert!(!pwned.exists(), "untrusted text executed");
+        assert!(!notices.lock().unwrap().is_empty(), "failure must warn");
     }
 }

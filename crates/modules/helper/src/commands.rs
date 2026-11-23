@@ -125,7 +125,7 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
                         let readiness = state
                             .launch.ready_states
                             .get(&run.terminal_id)
-                            .copied()
+                            .cloned()
                             .unwrap_or_default();
                         json!({
                             "terminal_id": run.terminal_id,
@@ -561,7 +561,13 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
         &overrides,
     )?;
     if detected.is_none() {
-        return Err(cx.t_args("helper.launch.not-installed", &[("name", &profile.name)]));
+        let body = cx.t_args("helper.launch.not-installed", &[("name", &profile.name)]);
+        let mut notify = Args::new();
+        notify.insert("title", json!(cx.t("helper.notify.error-title")));
+        notify.insert("body", json!(body.clone()));
+        notify.insert("level", json!("warn"));
+        let _ = cx.run_command("notify.show", notify);
+        return Err(body);
     }
     inject_account_env(cx, &profile.id, &mut plan);
     let hook_token = if profile.hooks.supported {
@@ -690,6 +696,7 @@ fn hook_event(cx: &mut Ctx<'_>, core: &Shared, payload: Value) {
                 let entry = state.launch.ready_states.entry(terminal_id.clone()).or_default();
                 entry.ready = true;
                 entry.timed_out = false;
+                entry.identity = state.runs.get(&terminal_id).map(|run| run.started_at.clone());
             });
             ready::flush_deferred_sends(cx, core, &terminal_id);
         }
