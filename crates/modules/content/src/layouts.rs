@@ -167,12 +167,7 @@ impl LayoutStore {
             }
             state.queued = Some(state.generation);
             (
-                LayoutSources::from_paths(
-                    crate::model::builtin_root(),
-                    cx.user_dir().to_path_buf(),
-                    state.project.clone(),
-                    state.generation,
-                ),
+                LayoutSources::from_ctx(cx, state.project.clone(), state.generation),
                 state.cache.clone(),
             )
         };
@@ -307,6 +302,7 @@ pub fn register(r: &mut Registrar<'_>, store: &Arc<LayoutStore>) {
             "diagnostics": catalog.diagnostics,
             "last_write": snapshot.1,
             "last_write_hash": snapshot.3,
+            "known_views": catalog.views,
             "write_log": snapshot.2,
         }))
     });

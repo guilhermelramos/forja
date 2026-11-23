@@ -17,7 +17,7 @@ ratio = 0.24
 kind = "leaf"
 id = "board"
 collapsible = true
-tabs = ["board.page"]
+tabs = ["board.sidebar"]
 
 [root.second]
 kind = "split"

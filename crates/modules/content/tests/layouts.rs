@@ -41,6 +41,7 @@ fn sources(root: &Path, generation: u64, project: bool) -> LayoutSources {
         user: root.join("user"),
         project: project.then(|| root.join("project")),
         generation,
+        views: Default::default(),
     }
 }
 
@@ -119,6 +120,7 @@ fn valid_versions_are_kept_per_file_layer_and_project() {
         user: root.join("user"),
         project: Some(project_a.clone()),
         generation: 1,
+        views: Default::default(),
     };
     let user_path = write_file(&root, "user", "own", &layout_text("own"));
     std::fs::create_dir_all(project_a.join(".forja").join("layouts")).unwrap();
@@ -169,6 +171,7 @@ fn valid_versions_are_kept_per_file_layer_and_project() {
         user: root.join("user"),
         project: Some(project_b),
         generation: 2,
+        views: Default::default(),
     };
     let other = read_catalog(&sources_b, &cache);
     assert!(!other.entries.contains_key("own"), "project B cannot borrow project A cache");
@@ -245,6 +248,7 @@ fn a_stale_generation_or_project_is_never_applied() {
         diagnostics: Vec::new(),
         default_id: None,
         revision: 0,
+        views: Default::default(),
         valid: Default::default(),
     };
     assert!(store.apply(catalog.clone()));
@@ -269,6 +273,7 @@ fn a_disk_signal_invalidates_an_inflight_catalog() {
         diagnostics: Vec::new(),
         default_id: None,
         revision: 0,
+        views: Default::default(),
         valid: Default::default(),
     };
     assert!(store.apply(catalog.clone()));

@@ -3,6 +3,7 @@
 use crate::model::{self, Diagnostic, Layer};
 use forja_kernel::layout_spec::{validate_segment, LayoutSpecV1};
 use forja_kernel::settings::project_settings_path;
+use forja_kernel::Ctx;
 use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -37,6 +38,8 @@ pub struct Catalog {
     pub diagnostics: Vec<Diagnostic>,
     pub default_id: Option<String>,
     pub revision: u64,
+    /// Snapshot de ids e slots registrados no momento da leitura.
+    pub views: BTreeMap<String, String>,
     /// Todas as versões válidas lidas, mesmo as que não são efetivas.
     pub valid: BTreeMap<ValidKey, LayoutEntry>,
 }
@@ -48,9 +51,27 @@ pub struct LayoutSources {
     pub user: PathBuf,
     pub project: Option<PathBuf>,
     pub generation: u64,
+    pub views: BTreeMap<String, String>,
 }
 
 impl LayoutSources {
+    /// Snapshot do registro, tirado na thread da UI antes de spawnar a leitura.
+    pub fn from_ctx(cx: &Ctx<'_>, project: Option<PathBuf>, generation: u64) -> Self {
+        let mut sources = Self::from_paths(
+            model::builtin_root(),
+            cx.user_dir().to_path_buf(),
+            project,
+            generation,
+        );
+        sources.views = cx
+            .registry()
+            .views()
+            .iter()
+            .map(|view| (view.id.clone(), view.slot.id().to_owned()))
+            .collect();
+        sources
+    }
+
     pub fn from_paths(
         builtin: Option<PathBuf>,
         user: PathBuf,
@@ -62,6 +83,7 @@ impl LayoutSources {
             user,
             project,
             generation,
+            views: BTreeMap::new(),
         }
     }
 
@@ -144,7 +166,7 @@ pub fn read_catalog(sources: &LayoutSources, previous: &CatalogCache) -> Catalog
                 keep_previous(&mut entries, &mut valid, &key);
                 continue;
             }
-            if let Err(error) = spec.validate() {
+            if let Err(error) = spec.validate_views(Some(&sources.views)) {
                 diagnostics.push(Diagnostic::new(&path, layer, error.to_string()));
                 keep_previous(&mut entries, &mut valid, &key);
                 continue;
@@ -175,6 +197,7 @@ pub fn read_catalog(sources: &LayoutSources, previous: &CatalogCache) -> Catalog
         diagnostics,
         default_id: read_default_id(sources.project.as_deref()),
         revision: 0,
+        views: sources.views.clone(),
         valid,
     }
 }

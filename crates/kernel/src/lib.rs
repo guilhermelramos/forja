@@ -54,7 +54,7 @@ pub use keymap::{
 };
 pub use layout_spec::{
     LayoutChrome, LayoutError, LayoutNodeSpec, LayoutSpecV1, LocalizedName, SplitDir, TabSpec,
-    ViewRef,
+    TabTable, ViewRef,
 };
 pub use manifest::ModuleManifest;
 pub use module::{discovered_modules, module, Module, ModuleFactory, MODULE_FACTORIES};

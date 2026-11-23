@@ -6,7 +6,7 @@
 //! A validação contra as contribuições registradas pertence ao carregador.
 
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
 /// Versão do schema aceita por esta fatia.
@@ -105,26 +105,39 @@ impl ViewRef {
     }
 }
 
+/// Tabela de uma aba: chave extra é erro, para não esconder erro de digitação.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TabTable {
+    pub view: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub instance: Option<String>,
+}
+
 /// Uma aba no arquivo: uma string com o id da view ou uma tabela opcional.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum TabSpec {
     Id(String),
-    Table {
-        view: String,
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        instance: Option<String>,
-    },
+    Table(TabTable),
 }
 
 impl TabSpec {
+    pub fn table(view: impl Into<String>, instance: Option<String>) -> Self {
+        Self::Table(TabTable {
+            view: view.into(),
+            instance,
+        })
+    }
+
     /// Instância ausente usa a chave canônica `"1"`.
     pub fn view_ref(&self) -> ViewRef {
         match self {
             Self::Id(view) => ViewRef::new(view.clone(), "1"),
-            Self::Table { view, instance } => {
-                ViewRef::new(view.clone(), instance.clone().unwrap_or_else(|| "1".to_owned()))
-            }
+            Self::Table(table) => ViewRef::new(
+                table.view.clone(),
+                table.instance.clone().unwrap_or_else(|| "1".to_owned()),
+            ),
         }
     }
 }
@@ -228,7 +241,10 @@ impl LayoutSpecV1 {
     ///
     /// Referências desconhecidas e bem formadas são preservadas: elas viram
     /// cartão de painel indisponível na interface, não erro de arquivo.
-    pub fn validate_views(&self, known_views: Option<&BTreeSet<String>>) -> Result<(), LayoutError> {
+    pub fn validate_views(
+        &self,
+        known_views: Option<&BTreeMap<String, String>>,
+    ) -> Result<(), LayoutError> {
         if self.schema_version != SCHEMA_VERSION {
             return Err(LayoutError::new(
                 "schema_version",
@@ -257,15 +273,24 @@ impl LayoutSpecV1 {
             }
         }
 
-        // O conjunto de views registradas ainda não decide multiplicidade nesta
-        // fatia: uma referência desconhecida e bem formada é preservada como
-        // painel indisponível. Aqui só importa a forma e a unicidade do par.
-        let _ = known_views;
+        const DOCKABLE: [&str; 4] = ["rail", "sidebar", "bench_tab", "right_panel"];
         let refs = self.root.view_refs();
         let mut seen_refs = BTreeSet::new();
         for view in &refs {
             validate_view_id("root", &view.view_id)?;
             validate_segment("root", &view.instance)?;
+            if let Some(views) = known_views {
+                if let Some(slot) = views.get(&view.view_id) {
+                    if !DOCKABLE.contains(&slot.as_str()) {
+                        return Err(LayoutError::new(
+                            "root",
+                            format!("view `{}` is registered in non-dockable slot `{slot}`", view.view_id),
+                        ));
+                    }
+                }
+                // Ids desconhecidos e bem formados são preservados como painéis
+                // indisponíveis; a multiplicidade chega na Fatia 2.
+            }
             if !seen_refs.insert(view.clone()) {
                 return Err(LayoutError::new(
                     "root",
@@ -446,10 +471,7 @@ mod tests {
         if let LayoutNodeSpec::Leaf { tabs, .. } = &mut first {
             *tabs = vec![
                 TabSpec::Id("editor.tab".to_owned()),
-                TabSpec::Table {
-                    view: "chat.tab".to_owned(),
-                    instance: None,
-                },
+                TabSpec::table("chat.tab", None),
             ];
         }
         let root = split(first, leaf("tools", &[]));
@@ -483,6 +505,12 @@ mod tests {
         wrong.schema_version = 2;
         assert!(wrong.validate().unwrap_err().path == "schema_version");
         let text = "schema_version = 1\nid = \"x\"\nname = { pt-BR = \"X\", en = \"X\" }\nextra = 1\n[root]\nkind = \"leaf\"\nid = \"a\"\n";
+        assert!(LayoutSpecV1::parse(text).is_err());
+    }
+
+    #[test]
+    fn rejects_unknown_keys_in_a_tab_table() {
+        let text = "schema_version = 1\nid = \"x\"\nname = { pt-BR = \"X\", en = \"X\" }\n[root]\nkind = \"leaf\"\nid = \"a\"\ntabs = [{ view = \"editor.tab\", bogus = 1 }]\n";
         assert!(LayoutSpecV1::parse(text).is_err());
     }
 
@@ -534,10 +562,7 @@ mod tests {
         let mut wide = leaf("only", &[]);
         if let LayoutNodeSpec::Leaf { tabs, .. } = &mut wide {
             *tabs = (0..=MAX_TABS)
-                .map(|index| TabSpec::Table {
-                    view: "x".to_owned(),
-                    instance: Some(index.to_string()),
-                })
+                .map(|index| TabSpec::table("x", Some(index.to_string())))
                 .collect();
         }
         assert!(spec(wide).validate().is_err());
@@ -545,9 +570,12 @@ mod tests {
 
     #[test]
     fn known_views_still_accept_unknown_but_well_formed_ids() {
-        let known = BTreeSet::from(["editor.tab".to_owned()]);
+        let known = BTreeMap::from([("editor.tab".to_owned(), "bench_tab".to_owned())]);
         let layout = spec(leaf("a", &["editor.tab", "future.tab"]));
         assert!(layout.validate_views(Some(&known)).is_ok());
+        let modal = BTreeMap::from([("voice.overlay".to_owned(), "modal".to_owned())]);
+        let bad = spec(leaf("a", &["voice.overlay"]));
+        assert!(bad.validate_views(Some(&modal)).is_err());
     }
 
     #[test]

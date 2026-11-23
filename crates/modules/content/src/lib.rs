@@ -93,7 +93,8 @@ mod tests {
     use super::*;
     use crate::view::ContentAnvilView;
     use forja_kernel::ui_contract::View;
-    use forja_kernel::{contract, Args, Module, Registrar, Runtime, RuntimeOptions};
+    use forja_kernel::ui_contract::egui;
+    use forja_kernel::{contract, Args, Ctx, Module, Registrar, Runtime, RuntimeOptions, Slot};
     use serde_json::Map;
     use std::path::PathBuf;
     use std::time::{Duration, Instant};
@@ -430,6 +431,79 @@ mod tests {
             .unwrap()
             .iter()
             .any(|item| item["id"] == "oficina" && item["layer"] == "builtin"));
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn catalog_uses_the_registered_view_and_slot_snapshot() {
+        struct SidebarStub;
+        impl View for SidebarStub {
+            fn ui(&mut self, _ui: &mut egui::Ui, _cx: &mut Ctx<'_>) {}
+        }
+        struct ViewsStub;
+        impl Module for ViewsStub {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("test", "test.name", "0.1.0")
+            }
+            fn register(&mut self, r: &mut Registrar<'_>) {
+                r.view(
+                    Slot::Sidebar,
+                    "test.sidebar",
+                    "test.name",
+                    0,
+                    || Box::new(SidebarStub) as Box<dyn View>,
+                );
+            }
+        }
+        let dir = temp_dir("view-snapshot");
+        let user_layouts = dir.join("user").join("layouts");
+        std::fs::create_dir_all(&user_layouts).unwrap();
+        let text = |id: &str, view: &str| {
+            format!(
+                "schema_version = 1\nid = \"{id}\"\nname = {{ pt-BR = \"{id}\", en = \"{id}\" }}\n[root]\nkind = \"leaf\"\nid = \"only\"\ntabs = [\"{view}\"]\n"
+            )
+        };
+        std::fs::write(user_layouts.join("dockable.toml"), text("dockable", "test.sidebar"))
+            .unwrap();
+        std::fs::write(
+            user_layouts.join("fixed.toml"),
+            text("fixed", "content.settings"),
+        )
+        .unwrap();
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(ContentModule {
+                    core: Arc::new(ContentCore::new()),
+                }),
+                Box::new(ViewsStub),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.join("data")),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("runtime");
+        let _ = listed_layouts(&mut runtime);
+        pump(&mut runtime);
+        let listed = listed_layouts(&mut runtime);
+        assert_eq!(listed["known_views"]["test.sidebar"], "sidebar");
+        assert!(listed["layouts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["id"] == "dockable"));
+        assert!(!listed["layouts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["id"] == "fixed"));
+        assert!(listed["diagnostics"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["message"].as_str().unwrap().contains("non-dockable")));
         let _ = std::fs::remove_dir_all(dir);
     }
 

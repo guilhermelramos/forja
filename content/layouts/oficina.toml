@@ -17,7 +17,7 @@ ratio = 0.24
 kind = "leaf"
 id = "project"
 collapsible = true
-tabs = ["project.sidebar", "board.page"]
+tabs = ["project.sidebar", "board.sidebar"]
 active = 0
 
 [root.second]
