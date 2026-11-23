@@ -15,7 +15,7 @@ pub use write::{layout_path, project_layout_root, remove_layout, write_layout};
 use forja_kernel::{Args, Ctx, KernelError, Registrar};
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Instant;
 
@@ -51,17 +51,23 @@ pub struct LayoutState {
     pub watch: Option<Watch>,
     /// Último resultado de gravação/remoção, para o seletor mostrar falhas.
     pub last_write: Option<String>,
+    pub write_log: Vec<String>,
+    /// Hash confirmado pela última mutação, usado como revisão gravada.
+    pub last_write_hash: Option<String>,
 }
 
 /// Catálogo compartilhado pelo módulo `content`.
 pub struct LayoutStore {
     state: Mutex<LayoutState>,
+    /// Um lock por destino serializa checagem de hash e mutação.
+    locks: Mutex<BTreeMap<PathBuf, Arc<Mutex<()>>>>,
 }
 
 impl Default for LayoutStore {
     fn default() -> Self {
         Self {
             state: Mutex::new(LayoutState::default()),
+            locks: Mutex::new(BTreeMap::new()),
         }
     }
 }
@@ -77,6 +83,15 @@ impl LayoutStore {
 
     pub(crate) fn state_lock(&self) -> Option<MutexGuard<'_, LayoutState>> {
         self.state.lock().ok()
+    }
+
+    fn destination_lock(&self, destination: &Path) -> Arc<Mutex<()>> {
+        let mut locks = self.locks.lock().unwrap_or_else(|error| error.into_inner());
+        Arc::clone(
+            locks
+                .entry(destination.to_path_buf())
+                .or_insert_with(|| Arc::new(Mutex::new(()))),
+        )
     }
 
     fn next_generation(&self) -> u64 {
@@ -259,7 +274,15 @@ pub fn register(r: &mut Registrar<'_>, store: &Arc<LayoutStore>) {
         let watch = watch_enabled(cx);
         list.ensure(cx, project, watch);
         let snapshot = list
-            .with(|state| (state.catalog.clone(), state.last_write.clone(), state.generation))
+            .with(|state| {
+                (
+                    state.catalog.clone(),
+                    state.last_write.clone(),
+                    state.write_log.clone(),
+                    state.last_write_hash.clone(),
+                    state.generation,
+                )
+            })
             .unwrap_or_default();
         let catalog = snapshot.0;
         let layouts = catalog
@@ -278,11 +301,13 @@ pub fn register(r: &mut Registrar<'_>, store: &Arc<LayoutStore>) {
             .collect::<Vec<_>>();
         Ok(json!({
             "revision": catalog.revision,
-            "generation": snapshot.2,
+            "generation": snapshot.4,
             "default_id": catalog.default_id,
             "layouts": layouts,
             "diagnostics": catalog.diagnostics,
             "last_write": snapshot.1,
+            "last_write_hash": snapshot.3,
+            "write_log": snapshot.2,
         }))
     });
     let reload = Arc::clone(store);
@@ -309,13 +334,18 @@ fn queue_write(
     remove: bool,
 ) -> forja_kernel::Result<serde_json::Value> {
     let id = args.required_str("id")?.to_owned();
-    let root = match args.str("layer").unwrap_or("user") {
+    let layer = args.str("layer").unwrap_or("user").to_owned();
+    let project = current_project_root(cx);
+    let root = match layer.as_str() {
         "user" => cx.user_dir().to_path_buf(),
-        "project" => current_project_root(cx)
+        "project" => project
+            .clone()
             .ok_or_else(|| KernelError::message("no project is active"))
             .and_then(|project| project_layout_root(&project).map_err(KernelError::message))?,
         other => return Err(KernelError::message(format!("unknown layout layer `{other}`"))),
     };
+    let destination = root.join(LAYOUT_DIR).join(format!("{id}.toml"));
+    let lock = store.destination_lock(&destination);
     let text = if remove {
         String::new()
     } else {
@@ -324,29 +354,49 @@ fn queue_write(
     let expected = args.str("expected_hash").map(str::to_owned);
     let worker_id = id.clone();
     let result_id = id.clone();
-    let op = if remove { "remove" } else { "save" }.to_owned();
     let store = Arc::clone(store);
     cx.spawn(
         move || {
+            // Checagem de revisão e mutação são uma única seção crítica por
+            // destino: duas gravações não passam pelo mesmo hash.
+            let _guard = lock.lock().unwrap_or_else(|error| error.into_inner());
             if remove {
-                remove_layout(&root, &worker_id, expected.as_deref())
-                    .map(|()| (None, String::new()))
+                remove_layout(&root, &worker_id, expected.as_deref()).map(|()| None)
             } else {
-                write_layout(&root, &worker_id, &text, expected.as_deref())
-                    .map(|hash| (Some(hash), String::new()))
+                write_layout(&root, &worker_id, &text, expected.as_deref()).map(Some)
             }
         },
         move |cx, result| {
-            let ok = result.is_ok();
-            let message = match result {
-                Ok(_) => format!("{op} `{result_id}` ok"),
-                Err(error) => format!("{op} `{result_id}` failed: {error}"),
+            let (hash, detail) = match &result {
+                Ok(hash) => (hash.clone(), String::new()),
+                Err(error) => (None, error.clone()),
             };
-            let _ = store.with(|state| state.last_write = Some(message));
-            if ok {
-                let project = current_project_root(cx);
-                store.ensure(cx, project, watch_enabled(cx));
-                store.request_reload(cx);
+            let ok = result.is_ok();
+            let key = match (remove, ok) {
+                (false, true) => "content.layouts.save-ok",
+                (false, false) => "content.layouts.save-failed",
+                (true, true) => "content.layouts.remove-ok",
+                (true, false) => "content.layouts.remove-failed",
+            };
+            let message = cx.t_args(
+                key,
+                &[("id", &result_id), ("detail", &detail), ("hash", hash.as_deref().unwrap_or(""))],
+            );
+            let _ = store.with(|state| {
+                state.last_write = Some(message.clone());
+                state.write_log.push(message.clone());
+                if state.write_log.len() > 20 {
+                    state.write_log.remove(0);
+                }
+                state.last_write_hash = hash.clone();
+            });
+            let root_current = layer != "project" || current_project_root(cx) == project;
+            if ok && root_current {
+                let generation = store.request_reload(cx);
+                store.ensure(cx, project.clone(), watch_enabled(cx));
+                let _ = store.with(|state| {
+                    state.last_write = Some(format!("{message} · {generation} · {hash:?}"));
+                });
             }
             cx.request_repaint();
         },

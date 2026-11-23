@@ -434,6 +434,54 @@ mod tests {
     }
 
     #[test]
+    fn concurrent_saves_with_the_same_revision_only_one_wins() {
+        let dir = temp_dir("concurrent-writes");
+        let mut runtime = runtime(&dir);
+        let _ = listed_layouts(&mut runtime);
+        pump(&mut runtime);
+        let text = |name: &str| {
+            format!(
+                "schema_version = 1\nid = \"own\"\nname = {{ pt-BR = \"{name}\", en = \"{name}\" }}\n[root]\nkind = \"leaf\"\nid = \"only\"\n"
+            )
+        };
+        fn save(runtime: &mut Runtime, text: String, expected: Option<&str>) {
+            let mut args = Args::new();
+            args.insert("id", serde_json::json!("own"));
+            args.insert("layer", serde_json::json!("user"));
+            args.insert("text", serde_json::json!(text));
+            if let Some(hash) = expected {
+                args.insert("expected_hash", serde_json::json!(hash));
+            }
+            runtime.run_command("content.layouts.save", args).expect("save");
+        }
+        save(&mut runtime, text("One"), None);
+        pump(&mut runtime);
+        let listed = listed_layouts(&mut runtime);
+        let before = listed["write_log"].as_array().unwrap().len();
+        let hash = listed["layouts"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|item| item["id"] == "own")
+            .expect("saved layout")["hash"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+
+        save(&mut runtime, text("Two"), Some(&hash));
+        save(&mut runtime, text("Three"), Some(&hash));
+        pump(&mut runtime);
+        let listed = listed_layouts(&mut runtime);
+        let log = listed["write_log"].as_array().unwrap();
+        let competing = &log[before..];
+        let saved = competing.iter().filter(|item| item.as_str().unwrap().contains("salvo")).count();
+        let failed = competing.iter().filter(|item| item.as_str().unwrap().contains("Falha")).count();
+        assert_eq!(saved, 1, "one of the two competing saves must win: {competing:?}");
+        assert_eq!(failed, 1, "the stale revision must be refused: {competing:?}");
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
     fn two_benches_of_one_project_share_the_project_catalog() {
         use std::sync::atomic::{AtomicUsize, Ordering};
 

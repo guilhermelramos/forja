@@ -107,10 +107,12 @@ pub fn remove_layout(root: &Path, id: &str, expected_hash: Option<&str>) -> Resu
         .map(|value| value.as_nanos())
         .unwrap_or_default();
     let temporary = path.with_extension(format!("remove-{}-{nanos}", std::process::id()));
-    std::fs::rename(&path, &temporary).map_err(|error| error.to_string())?;
-    if let Err(error) = std::fs::remove_file(&temporary) {
-        let _ = std::fs::rename(&temporary, &path);
-        return Err(error.to_string());
+    if std::fs::symlink_metadata(&temporary).is_ok() {
+        return Err("removal temporary already exists".to_owned());
     }
-    Ok(())
+    // A visibilidade do arquivo termina no rename: nunca devolvemos o destino
+    // ao estado anterior, para não competir com um save concorrente.
+    std::fs::rename(&path, &temporary).map_err(|error| error.to_string())?;
+    std::fs::remove_file(&temporary).map_err(|error| error.to_string())
+
 }
