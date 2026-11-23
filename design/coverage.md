@@ -6,13 +6,13 @@
 
 | Métrica | Valor |
 |---|---|
-| Configurações no catálogo | 313 |
+| Configurações no catálogo | 314 |
 | Configurações sobreponíveis por projeto (`scope = "project"`) | 31 |
-| Configurações registradas no app | 285 (284 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 284 (283 do catálogo) |
+| Configurações registradas no app | 287 (286 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 286 (285 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
-| Configurações adiadas | 27 |
+| Configurações adiadas | 26 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
 | Atalhos no catálogo | 110 |
