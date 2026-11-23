@@ -55,6 +55,8 @@ Concept and vocabulary: `design/product.md`, section 2 ("Perfil de ajudante", id
 | `[hooks]` | `config` | list | files where hooks are declared |
 | `[hooks]` | `key` | text | key inside those files, when there is one |
 | `[hooks]` | `events` | list | event names the source documents |
+| `[rules]` | `files` | list, optional | relative project rule files read when `helper.launch.include_rules` is on (in addition to `AGENTS.md` and `CLAUDE.md`) |
+| `[ready]` | `prompt`, `patterns` | text, list | verifiable prompt/output substrings indicating the CLI is ready for delayed context |
 | `[sources]` | `date` | `YYYY-MM-DD` | day the source was read |
 | `[sources]` | `urls` | list | official pages read |
 | `[sources]` | `commands` | list | commands run locally (only `--version` and `--help`) |

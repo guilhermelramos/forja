@@ -310,13 +310,22 @@ pub(crate) fn ensure(
         .map_err(|_| "helper state is poisoned".to_owned())?;
     state.profiles = profiles;
     state.file = file;
-    state.loaded_for = bench;
+    state.loaded_for = bench.clone();
     if state.runs.is_empty() {
         // `--demo` leaves two stored runs so the page has state to show; the
         // real file never carries them and no process is started.
         for run in crate::demo::load(&forja_kernel::Store::new(cx.data_dir())) {
             state.runs.insert(run.terminal_id.clone(), run);
         }
+    }
+    drop(state);
+    if let Some(bench_dir) = bench {
+        context::schedule_rules_preload(
+            cx,
+            core,
+            bench_dir,
+            vec!["AGENTS.md".to_owned(), "CLAUDE.md".to_owned()],
+        );
     }
     Ok(())
 }
@@ -466,7 +475,7 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
     }
     let mut plan = launch::build(
         &profile,
-        &request,
+        &launch_req,
         &default_permission,
         bench.clone(),
         &overrides,

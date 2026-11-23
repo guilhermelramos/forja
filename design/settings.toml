@@ -2542,7 +2542,6 @@ help_key = "setting-helper-launch-initial_context-help"
 
 [[setting]]
 key = "helper.launch.include_rules"
-deferred = "Aguardando leitura assíncrona de regras no contrato de lançamento do ajudante."
 module = "helper"
 group = "helpers"
 scope = "user"

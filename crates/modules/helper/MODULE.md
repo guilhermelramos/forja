@@ -2,14 +2,18 @@
 
 Saídas com código de erro usam `helper.notifications.error`; saídas normais
 continuam usando `helper.notifications.done`.
-As opções de contexto, regras, prontidão e retomada automática estão adiadas
-no catálogo até os contratos de lançamento e de sessão correspondentes existirem.
+As opções `helper.launch.include_rules`, `helper.launch.initial_context`,
+`helper.launch.ready_timeout_s` e `helper.sessions.resume_policy` já estão ligadas;
+o convite interativo de UI para `ask` fica na camada de telas (outro branch),
+exposto pelos comandos `helper.resume`, `helper.resume.dismiss` e
+`helper.resume.pending`.
 
 Perfis, detecção, início e status dos ajudantes (CLIs de agente) da Forja.
 
 ## O que registra
 
 - Comandos `helper.list`, `helper.detect`, `helper.launch`, `helper.focus`,
+  `helper.resume`, `helper.resume.dismiss`, `helper.resume.pending`,
   `helper.hook`, `helper.hooks.consent`, `helper.hooks.status`,
   `helper.hooks.install`, `helper.hooks.remove`.
 - RPC de leitura/execução, exceto a concessão interna `helper.hooks.consent`;
@@ -54,6 +58,24 @@ quebra o resto do app.
 Com `helper.launch.mode = "chat"` e o módulo `chat` presente, `helper.launch`
 chama `chat.open` e, quando há prompt, `chat.send`, devolvendo `mode = "chat"`,
 `terminal_id = null` e `session_id`. Sem o módulo `chat`, cai na TUI.
+
+### Contexto inicial, regras, prontidão e retomada
+
+- `helper.launch.include_rules`: lê em tarefa de fundo (`cx.spawn`) os arquivos
+  declarados em `[rules].files` no perfil + `AGENTS.md` e `CLAUDE.md`, sem
+  bloquear o quadro ou a thread da UI, e os envia quando pronto (ou junto no
+  prompt quando já em cache).
+- `helper.launch.initial_context`: em `request`, inclui título, descrição e
+  links do pedido (`RequestRef` recebido em `from_request` ou consultado via
+  `bench.request`); em `bench`, inclui o resumo da bancada; em `none`, envia só
+  o prompt explícito (e regras se ativas).
+- `helper.launch.ready_timeout_s`: monitora `terminal.read` aguardando `[ready]`
+  (`prompt`/`patterns`) ou saída/hook esperado; ao estourar, grava aviso na
+  bancada (`notify.show`) e no log sem encerrar o processo.
+- `helper.sessions.resume_policy`: ao receber `bench.activated` para bancada
+  com sessão registrada (`helper.json` ou `archive.list`), aplica `never`,
+  `ask` (registra pendência + `helper.resume`) ou `auto` (retoma usando `[resume]`
+  se o perfil suportar; senão cai para `never` e avisa).
 
 ## Contas
 

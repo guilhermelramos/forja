@@ -8,11 +8,11 @@
 |---|---|
 | Configurações no catálogo | 313 |
 | Configurações sobreponíveis por projeto (`scope = "project"`) | 31 |
-| Configurações registradas no app | 285 (284 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 284 (283 do catálogo) |
+| Configurações registradas no app | 289 (288 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 288 (287 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
-| Configurações adiadas | 27 |
+| Configurações adiadas | 23 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
 | Atalhos no catálogo | 110 |
@@ -34,10 +34,6 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 - `appearance.motion.duration_ms`: Aguardando duração de animação configurável nos tokens do ui-kit.
 - `appearance.tabs.middle_click`: Aguardando contrato de fechamento das abas do shell.
 - `appearance.tooltips.enabled`: Aguardando controle compartilhado de dicas nos componentes da interface.
-- `helper.launch.initial_context`: Aguardando contrato de contexto do pedido e preparação assíncrona do lançamento.
-- `helper.launch.include_rules`: Aguardando leitura assíncrona de regras no contrato de lançamento do ajudante.
-- `helper.launch.ready_timeout_s`: Aguardando sinal de prontidão verificável do terminal e dos perfis de ajudante.
-- `helper.sessions.resume_policy`: Aguardando ciclo de vida persistente de sessões e retomada automática.
 - `voice.input.model_path`: Aguardando o motor local de transcrição (whisper.cpp) ser aprovado como dependência.
 - `voice.output.engine`: Aguardando a síntese de voz (SAPI ou Piper) ser aprovada como dependência.
 - `voice.output.model_path`: Aguardando a síntese de voz local (Piper) ser aprovada como dependência.
@@ -203,15 +199,15 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `helper.default.profile` | `helper` | `helper` | sim | ok | sim |
 | `helper.default.permissions` | `helper` | `helper` | sim | ok | sim |
 | `helper.launch.auto_start` | `helper` | `helper` | sim | ok | sim |
-| `helper.launch.initial_context` | `helper` | `-` | adiada | - | adiada |
-| `helper.launch.include_rules` | `helper` | `-` | adiada | - | adiada |
+| `helper.launch.initial_context` | `helper` | `helper` | sim | ok | sim |
+| `helper.launch.include_rules` | `helper` | `helper` | sim | ok | sim |
 | `helper.launch.mode` | `helper` | `helper` | sim | ok | sim |
-| `helper.launch.ready_timeout_s` | `helper` | `-` | adiada | - | adiada |
+| `helper.launch.ready_timeout_s` | `helper` | `helper` | sim | ok | sim |
 | `helper.monitor.idle_minutes` | `helper` | `helper` | sim | ok | sim |
 | `helper.notifications.waiting` | `helper` | `helper` | sim | ok | sim |
 | `helper.notifications.done` | `helper` | `helper` | sim | ok | sim |
 | `helper.notifications.error` | `helper` | `helper` | sim | ok | sim |
-| `helper.sessions.resume_policy` | `helper` | `-` | adiada | - | adiada |
+| `helper.sessions.resume_policy` | `helper` | `helper` | sim | ok | sim |
 | `helper.sessions.keep_transcripts` | `helper` | `helper` | sim | ok | sim |
 | `helper.hooks.enabled` | `helper` | `helper` | sim | ok | sim |
 | `helper.hooks.timeout_s` | `helper` | `helper` | sim | ok | sim |

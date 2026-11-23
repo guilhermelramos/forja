@@ -127,3 +127,21 @@ helper-view-set-default = Set default
 helper-launch-not-installed = Helper { $name } is not installed on this machine.
 
 helper-status-summary = { $working } working · { $waiting } waiting
+
+setting-helper-launch-initial_context-option-request = Request
+setting-helper-launch-initial_context-option-bench = Bench
+setting-helper-launch-initial_context-option-none = None
+setting-helper-sessions-resume_policy-option-ask = Ask
+setting-helper-sessions-resume_policy-option-auto = Always
+setting-helper-sessions-resume_policy-option-never = Never
+
+helper-command-resume = Resume previous helper session
+helper-command-resume-dismiss = Dismiss resume prompt
+helper-command-resume-pending = Pending resume session
+helper-ready-timeout-title = Helper startup timed out
+helper-ready-timeout-body = Helper { $name } did not become ready after { $seconds }s; process kept running.
+helper-resume-ask-title = Resume previous session?
+helper-resume-ask-body = Helper { $name } had a previous session on bench { $bench }. Run `helper.resume` to continue it.
+helper-resume-unsupported-title = Automatic resume unavailable
+helper-resume-unsupported-body = Helper { $name } does not support resuming sessions; falling back to never.
+helper-resume-none-found = No previous helper session found for this bench.

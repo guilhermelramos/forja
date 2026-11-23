@@ -5,6 +5,7 @@
 //! terminal, o launch falha com uma mensagem clara e o resto continua de pé.
 
 mod commands;
+mod context;
 pub mod demo;
 mod detect;
 mod hooks;
@@ -13,6 +14,8 @@ mod picker;
 mod profile;
 mod profile_cards;
 mod profile_data;
+mod ready;
+mod resume;
 mod rpc;
 mod status;
 mod status_view;
@@ -1053,6 +1056,141 @@ events = ["Stop"]
             )
             .expect_err("launch must obey the same installed verdict");
         assert!(error.message.contains("não está instalado"), "{}", error.message);
+    }
+
+    #[test]
+    fn launch_includes_rules_via_async_task_and_request_context_from_bench_contract() {
+        struct TerminalStub(Arc<std::sync::Mutex<Vec<(String, serde_json::Value)>>>);
+        impl Module for TerminalStub {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("terminal", "helper.name", "0.0.0")
+            }
+            fn register(&mut self, r: &mut Registrar<'_>) {
+                let open_calls = Arc::clone(&self.0);
+                r.command("terminal.open", "helper.name", move |_, args| {
+                    open_calls
+                        .lock()
+                        .unwrap()
+                        .push(("terminal.open".to_owned(), args.into_json()));
+                    Ok(json!({ "terminal_id": "term-ctx" }))
+                });
+                let send_calls = Arc::clone(&self.0);
+                r.command("terminal.send", "helper.name", move |_, args| {
+                    send_calls
+                        .lock()
+                        .unwrap()
+                        .push(("terminal.send".to_owned(), args.into_json()));
+                    Ok(json!({}))
+                });
+                r.command("terminal.read", "helper.name", move |_, _| {
+                    Ok(json!({ "text": "READY>", "alive": true }))
+                });
+            }
+        }
+        struct BenchStub(PathBuf);
+        impl Module for BenchStub {
+            fn manifest(&self) -> ModuleManifest {
+                ModuleManifest::new("bench", "helper.name", "0.0.0")
+            }
+            fn register(&mut self, r: &mut Registrar<'_>) {
+                let bench_path = self.0.display().to_string();
+                r.command("bench.request", "helper.name", move |_, _| {
+                    Ok(json!({
+                        "bench_id": "b-req",
+                        "bench_path": bench_path,
+                        "name": "pedido-12-fix",
+                        "branch": "forja/pedido-12-fix",
+                        "request_key": "#12",
+                        "request_ref": {
+                            "counter": "github",
+                            "key": "#12",
+                            "title": "Fix initial context",
+                            "url": "https://github.com/org/repo/issues/12",
+                            "description": "Pass request title, description and links.",
+                            "links": ["https://github.com/org/repo/issues/12", "https://docs.example.test/r12"]
+                        }
+                    }))
+                });
+            }
+        }
+
+        let dir = temp_guard("launch-rules-context");
+        let bench_dir = dir.0.join("bench");
+        std::fs::create_dir_all(&bench_dir).unwrap();
+        std::fs::write(bench_dir.join("AGENTS.md"), "Follow strict module boundaries.").unwrap();
+
+        let core = Arc::new(Core::new());
+        let calls = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(HelperModule {
+                    core: Arc::clone(&core),
+                }),
+                Box::new(TerminalStub(Arc::clone(&calls))),
+                Box::new(BenchStub(bench_dir.clone())),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.0.clone()),
+                user_dir: Some(dir.0.join("user")),
+                locale: Some("en".to_owned()),
+                wake: None,
+            },
+        )
+        .unwrap();
+
+        core.with_state(|state| {
+            state.detection.insert(
+                "claude-code".into(),
+                detect::Detection {
+                    executable: Some(dir.0.join("claude.exe")),
+                    ..detect::Detection::default()
+                },
+            );
+        })
+        .unwrap();
+
+        let result = runtime
+            .call_method(
+                "helper.launch",
+                Map::from_iter([
+                    ("profile_id".to_owned(), json!("claude-code")),
+                    ("bench_path".to_owned(), json!(bench_dir.display().to_string())),
+                ]),
+            )
+            .expect("launch with bench request context succeeds");
+        assert_eq!(result["terminal_id"], "term-ctx");
+        let cmdline = result["command_line"].as_str().unwrap().to_owned();
+        assert!(cmdline.contains("Fix initial context"), "{cmdline}");
+        assert!(cmdline.contains("Pass request title, description and links."), "{cmdline}");
+        assert!(cmdline.contains("https://docs.example.test/r12"), "{cmdline}");
+
+        // Async task reads AGENTS.md and delivers rules once ready without blocking launch.
+        for _ in 0..20 {
+            runtime.poll_tasks();
+            let sent = calls
+                .lock()
+                .unwrap()
+                .iter()
+                .any(|(cmd, payload)| {
+                    cmd == "terminal.send"
+                        && payload["text"]
+                            .as_str()
+                            .is_some_and(|text| text.contains("Follow strict module boundaries."))
+                });
+            if sent {
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(30));
+        }
+        assert!(
+            calls.lock().unwrap().iter().any(|(cmd, payload)| {
+                cmd == "terminal.send"
+                    && payload["text"]
+                        .as_str()
+                        .is_some_and(|text| text.contains("Follow strict module boundaries."))
+            }),
+            "expected async rule delivery via terminal.send"
+        );
     }
 }
 
