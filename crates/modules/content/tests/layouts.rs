@@ -181,6 +181,35 @@ fn writing_creates_the_folder_is_atomic_and_respects_the_expected_hash() {
     let _ = std::fs::remove_dir_all(root);
 }
 
+#[cfg(windows)]
+#[test]
+fn a_junction_cannot_redirect_the_layout_folder() {
+    let root = temp_dir("junction");
+    let outside = root.join("outside");
+    std::fs::create_dir_all(&outside).unwrap();
+    let link = root.join("layouts");
+    let output = forja_kernel::process::command("cmd")
+        .args([
+            "/C",
+            "mklink",
+            "/J",
+            &link.display().to_string(),
+            &outside.display().to_string(),
+        ])
+        .output()
+        .expect("mklink");
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        write_layout(&root, "own", &layout_text("own"), None).is_err(),
+        "a junction must not redirect the layouts folder"
+    );
+    let _ = std::fs::remove_dir_all(root);
+}
+
 #[test]
 fn debounce_coalesces_events_until_the_last_one() {
     let store = LayoutStore::new();

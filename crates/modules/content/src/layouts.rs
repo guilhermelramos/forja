@@ -10,7 +10,7 @@ mod write;
 
 pub use catalog::{read_catalog, Catalog, CatalogCache, LayoutEntry, LayoutSources};
 pub use watch::{watch_roots, Watch, WatchRoots, DEBOUNCE};
-pub use write::{layout_path, remove_layout, write_layout};
+pub use write::{layout_path, project_layout_root, remove_layout, write_layout};
 
 use forja_kernel::{Args, Ctx, KernelError, Registrar};
 use serde_json::{json, Value};
@@ -312,8 +312,8 @@ fn queue_write(
     let root = match args.str("layer").unwrap_or("user") {
         "user" => cx.user_dir().to_path_buf(),
         "project" => current_project_root(cx)
-            .map(|project| project.join(".forja"))
-            .ok_or_else(|| KernelError::message("no project is active"))?,
+            .ok_or_else(|| KernelError::message("no project is active"))
+            .and_then(|project| project_layout_root(&project).map_err(KernelError::message))?,
         other => return Err(KernelError::message(format!("unknown layout layer `{other}`"))),
     };
     let text = if remove {

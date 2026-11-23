@@ -9,6 +9,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::fs;
 use std::io::Write;
+use std::time::{SystemTime, UNIX_EPOCH};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
@@ -22,9 +23,17 @@ pub fn write_atomic_bytes(path: &Path, bytes: &[u8]) -> std::io::Result<()> {
     })?;
     fs::create_dir_all(parent)?;
     let seq = NEXT_TMP_ID.fetch_add(1, Ordering::Relaxed);
-    let tmp = path.with_extension(format!("tmp-{}-{seq}", std::process::id()));
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|value| value.as_nanos())
+        .unwrap_or_default();
+    let tmp = path.with_extension(format!("tmp-{}-{nanos}-{seq}", std::process::id()));
     let result = (|| {
-        let mut file = fs::File::create(&tmp)?;
+        // create_new never follows an existing temporary file or link.
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&tmp)?;
         file.write_all(bytes)?;
         file.sync_all()?;
         drop(file);

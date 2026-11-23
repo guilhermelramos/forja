@@ -4,24 +4,62 @@ use forja_kernel::layout_spec::{validate_segment, LayoutSpecV1};
 use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// Caminho seguro para `<root>/layouts/<id>.toml`.
+#[cfg(windows)]
+const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x0400;
+
+/// Links, junctions e outros reparse points são recusados: canonicalizar
+/// seguiria o redirecionamento e aceitaria um destino fora da raiz.
+fn is_redirect(metadata: &std::fs::Metadata) -> bool {
+    if metadata.file_type().is_symlink() {
+        return true;
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::MetadataExt;
+        return metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0;
+    }
+    #[cfg(not(windows))]
+    {
+        false
+    }
+}
+
+/// Verifica um componente sem seguir links. `create` vale para diretórios.
+fn check_component(path: &Path, create: bool) -> Result<(), String> {
+    if create && !path.exists() {
+        std::fs::create_dir_all(path).map_err(|error| error.to_string())?;
+    }
+    match std::fs::symlink_metadata(path) {
+        Ok(metadata) if is_redirect(&metadata) => {
+            Err(format!("`{}` is a link or junction", path.display()))
+        }
+        Ok(metadata) if create && !metadata.is_dir() => {
+            Err(format!("`{}` is not a folder", path.display()))
+        }
+        Ok(_) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound && !create => Ok(()),
+        Err(error) => Err(error.to_string()),
+    }
+}
+
+/// Caminho seguro para `<root>/layouts/<id>.toml`, componente a componente.
 pub fn layout_path(root: &Path, id: &str) -> Result<PathBuf, String> {
     validate_segment("id", id).map_err(|error| error.to_string())?;
     let directory = root.join(super::LAYOUT_DIR);
-    std::fs::create_dir_all(&directory).map_err(|error| error.to_string())?;
-    let root_canon = std::fs::canonicalize(root).map_err(|error| error.to_string())?;
-    let dir_canon = std::fs::canonicalize(&directory).map_err(|error| error.to_string())?;
-    if !dir_canon.starts_with(&root_canon) {
-        return Err("layouts folder escapes the content root".to_owned());
-    }
-    let name = format!("{id}.toml");
-    let path = dir_canon.join(&name);
-    if let Ok(metadata) = std::fs::symlink_metadata(&path) {
-        if metadata.file_type().is_symlink() {
-            return Err(format!("`{name}` is a link"));
-        }
+    check_component(&directory, true)?;
+    let path = directory.join(format!("{id}.toml"));
+    check_component(&path, false)?;
+    if path.exists() && !path.is_file() {
+        return Err(format!("`{}` is not a file", path.display()));
     }
     Ok(path)
+}
+
+/// Raiz `.forja` de um projeto, sem seguir junções no próprio `.forja`.
+pub fn project_layout_root(project: &Path) -> Result<PathBuf, String> {
+    let root = project.join(".forja");
+    check_component(&root, true)?;
+    Ok(root)
 }
 
 fn current_hash(path: &Path) -> Option<String> {
