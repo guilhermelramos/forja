@@ -27,13 +27,13 @@ mod conpty_test;
 
 use forja_contracts::names;
 use forja_contracts::{
-    HelperStatus, HelperStatusChanged, TerminalBell, TerminalCommandFinished, TerminalExited,
-    TerminalTitleChanged,
+    BenchActivated, HelperStatus, HelperStatusChanged, TerminalBell, TerminalCommandFinished,
+    TerminalExited, TerminalTitleChanged,
 };
 use forja_kernel::{
     Module, ModuleManifest, Registrar, SettingKind, SettingSpec, SettingValue, Slot,
 };
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::{Arc, Mutex};
 use views::{HelperPage, HelperSettings};
 use windows_sys::Win32::System::Power::{
@@ -84,6 +84,20 @@ pub struct HelperState {
     pub awake: bool,
     /// A prévia de captura já foi semeada.
     pub preview_seeded: bool,
+    /// Cache assíncrono dos arquivos de regras lidos por `(bancada, candidatos)`.
+    pub rules_cache: BTreeMap<context::RulesCacheKey, Vec<context::RuleSnippet>>,
+    /// Leituras assíncronas de regras atualmente em andamento.
+    pub rules_loading: BTreeSet<context::RulesCacheKey>,
+    /// Estado de prontidão de cada execução por `terminal_id`.
+    pub ready_states: BTreeMap<String, ready::ReadyState>,
+    /// Textos aguardando o ajudante sinalizar prontidão no terminal.
+    pub deferred_sends: BTreeMap<String, Vec<String>>,
+    /// Último aviso registrado para uma bancada (tempo de espera ou retomada).
+    pub bench_notices: BTreeMap<String, String>,
+    /// Retomadas pendentes aguardando confirmação (`resume_policy = "ask"`).
+    pub pending_resumes: BTreeMap<String, resume::PendingResume>,
+    /// Avisos quando `resume_policy = "auto"` cai para `never`.
+    pub resume_notices: BTreeMap<String, String>,
 }
 
 impl HelperState {
@@ -166,6 +180,7 @@ impl Module for HelperModule {
         r.keymap(include_str!("../keymap.toml"));
         register_settings(r);
         commands::register(r, &self.core);
+        resume::register(r, &self.core);
         picker::register(r);
         r.view(
             forja_kernel::Slot::Modal,
@@ -247,6 +262,19 @@ impl Module for HelperModule {
             "helper.profile-picker.cancel",
             "helper.notify.error-title",
             "helper.notify.error-body",
+            "helper.ready.timeout-title",
+            "helper.ready.timeout-body",
+            "helper.resume.ask-title",
+            "helper.resume.ask-body",
+            "helper.resume.unsupported-title",
+            "helper.resume.unsupported-body",
+            "helper.resume.none-found",
+            "setting.helper.launch.initial_context.option.request",
+            "setting.helper.launch.initial_context.option.bench",
+            "setting.helper.launch.initial_context.option.none",
+            "setting.helper.sessions.resume_policy.option.ask",
+            "setting.helper.sessions.resume_policy.option.auto",
+            "setting.helper.sessions.resume_policy.option.never",
         ] {
             r.uses_i18n(key);
         }
@@ -389,6 +417,16 @@ fn register_settings(r: &mut Registrar<'_>) {
         SettingValue::Bool(true),
     );
     add(
+        "helper.sessions.resume_policy",
+        SettingKind::Choice {
+            options: ["ask", "auto", "never"]
+                .into_iter()
+                .map(str::to_owned)
+                .collect(),
+        },
+        SettingValue::Text("ask".to_owned()),
+    );
+    add(
         "helper.sessions.keep_transcripts",
         SettingKind::Bool,
         SettingValue::Bool(true),
@@ -415,10 +453,22 @@ fn register_settings(r: &mut Registrar<'_>) {
 
 fn register_events(r: &mut Registrar<'_>, core: &Shared) {
     r.contract_event::<HelperStatusChanged>(names::HELPER_STATUS_CHANGED);
+    r.contract_event::<BenchActivated>(names::BENCH_ACTIVATED);
     r.contract_event::<TerminalExited>(names::TERMINAL_EXITED);
     r.contract_event::<TerminalBell>(names::TERMINAL_BELL);
     r.contract_event::<TerminalCommandFinished>(names::TERMINAL_COMMAND_FINISHED);
     r.contract_event::<TerminalTitleChanged>(names::TERMINAL_TITLE_CHANGED);
+
+    let bench_core = Arc::clone(core);
+    r.subscribe(move |cx, event: &BenchActivated| {
+        context::schedule_rules_preload(
+            cx,
+            &bench_core,
+            std::path::PathBuf::from(&event.0.path),
+            vec!["AGENTS.md".to_owned(), "CLAUDE.md".to_owned()],
+        );
+        resume::on_bench_activated(cx, &bench_core, &event.0);
+    });
 
     let exited_core = Arc::clone(core);
     r.subscribe(move |cx, event: &TerminalExited| {

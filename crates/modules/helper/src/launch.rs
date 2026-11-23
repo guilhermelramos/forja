@@ -167,6 +167,56 @@ pub fn build(
     })
 }
 
+/// Monta o plano de retomada para o perfil quando `[resume]` declara argumentos válidos.
+pub fn build_resume(
+    profile: &Profile,
+    session_id: Option<&str>,
+    cwd: PathBuf,
+    overrides: &ProfileOverride,
+) -> Result<LaunchPlan, String> {
+    if overrides.disabled {
+        return Err(format!("helper profile `{}` is disabled", profile.id));
+    }
+    if !profile.trusted {
+        return Err(profile
+            .risk_reason
+            .clone()
+            .unwrap_or_else(|| format!("helper profile `{}` is not trusted", profile.id)));
+    }
+    let clean_session = session_id
+        .map(str::trim)
+        .filter(|value| !value.is_empty());
+    let mut args = if let Some(id) = clean_session {
+        if !profile.resume.id.is_empty() {
+            profile
+                .resume
+                .id
+                .iter()
+                .map(|arg| arg.replace("{id}", id))
+                .collect()
+        } else {
+            profile.resume.last.clone()
+        }
+    } else {
+        profile.resume.last.clone()
+    };
+    if args.is_empty() {
+        return Err(format!(
+            "helper profile `{}` does not support resuming sessions",
+            profile.id
+        ));
+    }
+    args.extend(overrides.extra_args.clone());
+    Ok(LaunchPlan {
+        profile_id: profile.id.clone(),
+        cwd,
+        program: profile.start.command.clone(),
+        args,
+        environment: overrides.environment.clone(),
+        delayed_prompt: None,
+    })
+}
+
 /// Traduz o valor do catálogo para a chave do perfil.
 pub fn normalize_permission(value: &str) -> &'static str {
     match value.trim().to_ascii_lowercase().as_str() {
@@ -306,5 +356,44 @@ mod tests {
                 .map(String::as_str),
             Some("C:/accounts/ana")
         );
+    }
+
+    #[test]
+    fn resume_plan_uses_profile_flags_and_rejects_unsupported_profiles() {
+        let claude = profile("claude-code");
+        let by_id = build_resume(
+            &claude,
+            Some("sess-42"),
+            PathBuf::from("C:/work"),
+            &ProfileOverride::default(),
+        )
+        .expect("claude supports id resume");
+        assert_eq!(by_id.args, vec!["--resume", "sess-42"]);
+
+        let last = build_resume(
+            &claude,
+            None,
+            PathBuf::from("C:/work"),
+            &ProfileOverride::default(),
+        )
+        .expect("claude supports last resume");
+        assert_eq!(last.args, vec!["--continue"]);
+
+        let plain = Profile::parse(
+            "id = \"no-resume\"\nname = \"NoResume\"\nmaker = \"Test\"\nsite = \"https://example.test\"\n[detect]\nexecutables=[\"x\"]\n[start]\ncommand=\"x\"\n",
+            PathBuf::from("no-resume.toml"),
+            Layer::User,
+        )
+        .unwrap();
+        let mut plain = plain;
+        plain.trusted = true;
+        let err = build_resume(
+            &plain,
+            None,
+            PathBuf::from("C:/work"),
+            &ProfileOverride::default(),
+        )
+        .unwrap_err();
+        assert!(err.contains("does not support resuming"));
     }
 }

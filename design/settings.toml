@@ -2651,7 +2651,6 @@ help_key = "setting-helper-notifications-error-help"
 
 [[setting]]
 key = "helper.sessions.resume_policy"
-deferred = "Aguardando ciclo de vida persistente de sessões e retomada automática."
 module = "helper"
 group = "helpers"
 scope = "user"

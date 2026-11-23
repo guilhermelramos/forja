@@ -370,7 +370,7 @@ fn current_bench(cx: &mut Ctx<'_>) -> Option<PathBuf> {
         .or_else(|| std::env::current_dir().ok())
 }
 
-fn inject_account_env(cx: &mut Ctx<'_>, profile_id: &str, plan: &mut LaunchPlan) {
+pub(crate) fn inject_account_env(cx: &mut Ctx<'_>, profile_id: &str, plan: &mut LaunchPlan) {
     let mut args = Args::new();
     args.insert("profile_id", json!(profile_id));
     let Ok(value) = cx.run_command("accounts.env", args) else {
@@ -509,6 +509,37 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
                     .map_err(|error| error.to_string())?;
             }
         }
+        let session_id = opened
+            .get("session_id")
+            .and_then(Value::as_str)
+            .map(str::to_owned);
+        resume::record_bench_session(
+            cx,
+            core,
+            &bench.display().to_string(),
+            &profile.id,
+            session_id,
+        );
+        if rules_deferred {
+            let candidates = profile.rule_files();
+            let cache_key = context::cache_key(&bench, &candidates);
+            let bench_bg = bench.clone();
+            let owned = Arc::clone(core);
+            cx.spawn(
+                move || context::read_rules_files(&bench_bg, &candidates),
+                move |cx, rules| {
+                    let rules_text = context::format_rules_block(&rules);
+                    let _ = owned.with_state(|state| {
+                        state.rules_cache.insert(cache_key, rules);
+                    });
+                    if let Some(text) = rules_text {
+                        let mut send = Args::new();
+                        send.insert("prompt", json!(text));
+                        let _ = cx.run_command("chat.send", send);
+                    }
+                },
+            );
+        }
         return Ok(json!({
             "terminal_id": Value::Null,
             "profile_id": profile.id,
@@ -573,25 +604,54 @@ fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Val
             .insert(profile.id.clone(), bench.display().to_string());
         state.refresh_awake();
     })?;
+    resume::record_bench_session(cx, core, &bench.display().to_string(), &profile.id, None);
     let _ = cx.emit(&HelperStatusChanged {
         bench_path: run.bench_path.clone(),
         terminal_id: Some(terminal_id.clone()),
         profile_id: run.profile_id.clone(),
         status: run.status,
     });
-    if let Some(prompt) = plan.delayed_prompt.clone() {
-        let terminal_id = terminal_id.clone();
+    let ready_timeout = ready::timeout_from_settings(cx);
+    let matcher = ReadyMatcher::from_patterns(profile.ready_markers());
+    ready::start_watch(
+        cx,
+        core,
+        terminal_id.clone(),
+        bench.display().to_string(),
+        profile.name.clone(),
+        matcher,
+        ready_timeout,
+        plan.delayed_prompt.clone(),
+    );
+    if rules_deferred {
+        let candidates = profile.rule_files();
+        let cache_key = context::cache_key(&bench, &candidates);
+        let bench_bg = bench.clone();
+        let owned = Arc::clone(core);
+        let tid = terminal_id.clone();
         cx.spawn(
-            move || {
-                std::thread::sleep(Duration::from_millis(1_200));
-                prompt
-            },
-            move |cx, prompt| {
-                let mut send = Args::new();
-                send.insert("terminal_id", json!(terminal_id));
-                send.insert("text", json!(prompt));
-                send.insert("enter", json!(true));
-                let _ = cx.run_command("terminal.send", send);
+            move || context::read_rules_files(&bench_bg, &candidates),
+            move |cx, rules| {
+                let rules_text = context::format_rules_block(&rules);
+                let is_ready = owned
+                    .with_state(|state| {
+                        state.rules_cache.insert(cache_key, rules);
+                        if let Some(text) = &rules_text {
+                            state
+                                .deferred_sends
+                                .entry(tid.clone())
+                                .or_default()
+                                .insert(0, text.clone());
+                        }
+                        state
+                            .ready_states
+                            .get(&tid)
+                            .is_some_and(|entry| entry.ready)
+                    })
+                    .unwrap_or(false);
+                if is_ready && rules_text.is_some() {
+                    ready::flush_deferred_sends(cx, &owned, &tid);
+                }
             },
         );
     }
@@ -810,7 +870,7 @@ fn start_detection(cx: &mut Ctx<'_>, core: &Shared) {
     );
 }
 
-fn save_file(cx: &mut Ctx<'_>, core: &crate::Core) {
+pub(crate) fn save_file(cx: &mut Ctx<'_>, core: &crate::Core) {
     let file = match core.with_state(|state| state.file.clone()) {
         Ok(file) => file,
         Err(_) => return,
