@@ -155,12 +155,12 @@ impl View for EditorView {
 
         self.tab_strip(ui, cx, muted, accent);
         if let Some(status) = self.state.status() {
-            ui.label(egui::RichText::new(status).small().color(muted));
+            forja_ui_kit::text(ui, egui::RichText::new(status).small().color(muted));
         }
         let Some(mut tab) = self.state.active_tab() else {
             self.text_focused = false;
-            ui.add_space(24.0);
-            ui.label(
+            ui.add_space(forja_ui_kit::Spacing::XL);
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("editor.view.empty"))
                     .color(muted)
                     .italics(),
@@ -168,17 +168,21 @@ impl View for EditorView {
             return;
         };
         if !self.caches.contains_key(&tab.path) {
-            self.caches.insert(tab.path.clone(), HighlightCache::default());
+            self.caches
+                .insert(tab.path.clone(), HighlightCache::default());
         }
         self.toolbar(ui, cx, &tab);
         if tab.external_changed {
             self.external_banner(ui, cx, &tab, muted);
         }
         if let Some(notice) = &tab.notice {
-            ui.label(egui::RichText::new(notice).small().color(muted));
+            forja_ui_kit::text(ui, egui::RichText::new(notice).small().color(muted));
         }
         ui.separator();
-        let mut find = self.state.with(|state| state.find.clone()).unwrap_or_default();
+        let mut find = self
+            .state
+            .with(|state| state.find.clone())
+            .unwrap_or_default();
         if find.open {
             self.find_bar(ui, cx, &tab, &mut find, muted, danger);
         }
@@ -202,7 +206,13 @@ impl View for EditorView {
 }
 
 impl EditorView {
-    fn tab_strip(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, muted: egui::Color32, accent: egui::Color32) {
+    fn tab_strip(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        muted: egui::Color32,
+        accent: egui::Color32,
+    ) {
         let tabs = self.state.tabs();
         let active = self.state.active_index();
         ui.horizontal_wrapped(|ui| {
@@ -226,10 +236,13 @@ impl EditorView {
                 if response.clicked() {
                     self.state.set_active(index);
                 }
-                if ui
-                    .small_button("x")
-                    .on_hover_text(cx.t("editor.tab.close"))
-                    .clicked()
+                if forja_ui_kit::icon_button(
+                    ui,
+                    forja_ui_kit::Icon::Close,
+                    &cx.t("editor.tab.close"),
+                )
+                .on_hover_text(cx.t("editor.tab.close"))
+                .clicked()
                 {
                     self.state.close(index);
                 }
@@ -240,36 +253,72 @@ impl EditorView {
 
     fn toolbar(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, tab: &Tab) {
         ui.horizontal_wrapped(|ui| {
-            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Primary, &cx.t("editor.action.save"))
-                .clicked()
+            if forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Primary,
+                &cx.t("editor.action.save"),
+            )
+            .clicked()
             {
                 let mut args = Args::new();
                 args.insert("path", json!(tab.path));
                 let _ = cx.run_command("editor.save", args);
             }
-            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t("editor.action.find")).clicked() {
+            if forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Ghost,
+                &cx.t("editor.action.find"),
+            )
+            .clicked()
+            {
                 let _ = cx.run_command("editor.find", Args::new());
             }
-            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t("editor.action.replace")).clicked() {
+            if forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Ghost,
+                &cx.t("editor.action.replace"),
+            )
+            .clicked()
+            {
                 let mut args = Args::new();
                 args.insert("replace", json!(true));
                 let _ = cx.run_command("editor.find", args);
             }
-            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t("editor.action.goto")).clicked() {
+            if forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Ghost,
+                &cx.t("editor.action.goto"),
+            )
+            .clicked()
+            {
                 self.goto_open = !self.goto_open;
             }
-            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t("editor.action.format")).clicked() {
+            if forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Ghost,
+                &cx.t("editor.action.format"),
+            )
+            .clicked()
+            {
                 let mut args = Args::new();
                 args.insert("path", json!(tab.path));
                 let _ = cx.run_command("editor.format", args);
             }
-            let wrap = if tab.wrap { cx.t("editor.action.wrap-on") } else { cx.t("editor.action.wrap-off") };
+            let wrap = if tab.wrap {
+                cx.t("editor.action.wrap-on")
+            } else {
+                cx.t("editor.action.wrap-off")
+            };
             if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &wrap).clicked() {
                 let mut args = Args::new();
                 args.insert("path", json!(tab.path));
                 let _ = cx.run_command("editor.wrap.toggle", args);
             }
-            let preview = if tab.preview_mode { cx.t("editor.action.edit") } else { cx.t("editor.action.preview") };
+            let preview = if tab.preview_mode {
+                cx.t("editor.action.edit")
+            } else {
+                cx.t("editor.action.preview")
+            };
             if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &preview).clicked() {
                 if tab.preview_mode {
                     self.preview_open = false;
@@ -285,9 +334,15 @@ impl EditorView {
         if self.goto_open {
             let mut line = self.goto_text.clone();
             ui.horizontal(|ui| {
-                ui.label(cx.t("editor.goto.label"));
+                forja_ui_kit::text(ui, cx.t("editor.goto.label"));
                 ui.add(egui::TextEdit::singleline(&mut line).desired_width(80.0));
-                if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &cx.t("editor.action.goto-go")).clicked() {
+                if forja_ui_kit::button(
+                    ui,
+                    forja_ui_kit::ButtonKind::Secondary,
+                    &cx.t("editor.action.goto-go"),
+                )
+                .clicked()
+                {
                     if let Ok(line) = line.trim().parse::<usize>() {
                         self.state.with(|state| state.pending_line = Some(line));
                         self.goto_open = false;
@@ -298,23 +353,45 @@ impl EditorView {
         }
     }
 
-    fn external_banner(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, tab: &Tab, muted: egui::Color32) {
+    fn external_banner(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        tab: &Tab,
+        muted: egui::Color32,
+    ) {
         ui.horizontal_wrapped(|ui| {
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("editor.banner.external"))
                     .color(c32(forja_ui_kit::applied_tokens(ui.ctx()).color.spark)),
             );
-            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Secondary, &cx.t("editor.banner.reload")).clicked() {
+            if forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Secondary,
+                &cx.t("editor.banner.reload"),
+            )
+            .clicked()
+            {
                 let mut args = Args::new();
                 args.insert("path", json!(tab.path));
                 let _ = cx.run_command("editor.reload", args);
             }
-            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t("editor.banner.compare")).clicked() {
+            if forja_ui_kit::button(
+                ui,
+                forja_ui_kit::ButtonKind::Ghost,
+                &cx.t("editor.banner.compare"),
+            )
+            .clicked()
+            {
                 let mut args = Args::new();
                 args.insert("path", json!(tab.path));
                 let _ = cx.run_command("editor.compare", args);
             }
-            ui.label(egui::RichText::new(cx.t("editor.banner.hint")).small().color(muted));
+            forja_ui_kit::text(ui,
+                egui::RichText::new(cx.t("editor.banner.hint"))
+                    .small()
+                    .color(muted),
+            );
         });
     }
 
@@ -335,20 +412,38 @@ impl EditorView {
                 .show(ui)
                 .response
                 .changed();
-            changed |= ui.checkbox(&mut find.case_sensitive, cx.t("editor.find.case")).changed();
-            changed |= ui.checkbox(&mut find.whole_word, cx.t("editor.find.word")).changed();
-            changed |= ui.checkbox(&mut find.regex, cx.t("editor.find.regex")).changed();
+            changed |= ui
+                .checkbox(&mut find.case_sensitive, cx.t("editor.find.case"))
+                .changed();
+            changed |= ui
+                .checkbox(&mut find.whole_word, cx.t("editor.find.word"))
+                .changed();
+            changed |= ui
+                .checkbox(&mut find.regex, cx.t("editor.find.regex"))
+                .changed();
             let count = if find.matches.is_empty() {
                 "0".to_owned()
             } else {
                 format!("{}/{}", find.current + 1, find.matches.len())
             };
-            ui.label(egui::RichText::new(count).small().color(muted));
-            if ui.small_button("^").clicked() {
+            forja_ui_kit::text(ui, egui::RichText::new(count).small().color(muted));
+            if forja_ui_kit::icon_button(
+                ui,
+                forja_ui_kit::Icon::ArrowUp,
+                &cx.t("editor.command.find_previous"),
+            )
+            .clicked()
+            {
                 find.previous();
                 self.select_find_match(ui, tab, find);
             }
-            if ui.small_button("v").clicked() {
+            if forja_ui_kit::icon_button(
+                ui,
+                forja_ui_kit::Icon::ArrowDown,
+                &cx.t("editor.command.find_next"),
+            )
+            .clicked()
+            {
                 find.next();
                 self.select_find_match(ui, tab, find);
             }
@@ -368,13 +463,15 @@ impl EditorView {
                     let _ = cx.run_command("editor.replace.all", args);
                 }
             }
-            if ui.small_button("x").clicked() {
+            if forja_ui_kit::icon_button(ui, forja_ui_kit::Icon::Close, &cx.t("editor.find.close"))
+                .clicked()
+            {
                 find.open = false;
                 find.replace_open = false;
             }
         });
         if let Some(error) = &find.error {
-            ui.label(egui::RichText::new(error).small().color(danger));
+            forja_ui_kit::text(ui, egui::RichText::new(error).small().color(danger));
         }
         let key = find_key(&tab.path, &tab.content, find);
         if changed || key != self.last_find_key {
@@ -391,10 +488,11 @@ impl EditorView {
         let end = model::byte_to_char(&tab.content, *end);
         let id = editor_id(&tab.path);
         if let Some(mut edit) = egui::widgets::text_edit::TextEditState::load(ui.ctx(), id) {
-            edit.cursor.set_char_range(Some(egui::text::CCursorRange::two(
-                egui::text::CCursor::new(start),
-                egui::text::CCursor::new(end),
-            )));
+            edit.cursor
+                .set_char_range(Some(egui::text::CCursorRange::two(
+                    egui::text::CCursor::new(start),
+                    egui::text::CCursor::new(end),
+                )));
             edit.store(ui.ctx(), id);
             ui.memory_mut(|memory| memory.request_focus(id));
         }
@@ -427,7 +525,11 @@ impl EditorView {
         let mut completion = false;
         let mut parameter_hint = false;
         let mut escape = false;
-        let ctrl_shift = egui::Modifiers { ctrl: true, shift: true, ..Default::default() };
+        let ctrl_shift = egui::Modifiers {
+            ctrl: true,
+            shift: true,
+            ..Default::default()
+        };
         ui.input_mut(|input| {
             save = input.consume_key(egui::Modifiers::CTRL, egui::Key::S);
             find = input.consume_key(egui::Modifiers::CTRL, egui::Key::F);
@@ -606,10 +708,11 @@ impl EditorView {
             .unwrap_or(false)
         {
             if let Some(mut edit) = egui::widgets::text_edit::TextEditState::load(ui.ctx(), id) {
-                edit.cursor.set_char_range(Some(egui::text::CCursorRange::two(
-                    egui::text::CCursor::new(0),
-                    egui::text::CCursor::new(content.chars().count()),
-                )));
+                edit.cursor
+                    .set_char_range(Some(egui::text::CCursorRange::two(
+                        egui::text::CCursor::new(0),
+                        egui::text::CCursor::new(content.chars().count()),
+                    )));
                 edit.store(ui.ctx(), id);
                 ui.memory_mut(|memory| memory.request_focus(id));
             }
@@ -624,9 +727,9 @@ impl EditorView {
                         ui.vertical(|ui| {
                             ui.spacing_mut().item_spacing.y =
                                 (line_height - 1.0).max(0.0) * font_size;
-                            ui.add_space(4.0);
+                            ui.add_space(forja_ui_kit::Spacing::XS);
                             for line in 1..=lines {
-                                ui.label(
+                                forja_ui_kit::text(ui,
                                     egui::RichText::new(format!("{line:>4}"))
                                         .monospace()
                                         .size(font_size)
@@ -639,21 +742,22 @@ impl EditorView {
                     let cache = self.caches.entry(tab.path.clone()).or_default();
                     let path = tab.path.clone();
                     let family_key = family.clone();
-                    let mut layouter = |ui: &egui::Ui, buffer: &dyn egui::TextBuffer, wrap_width: f32| {
-                        let job = cache.get_or_build(
-                            ui,
-                            &path,
-                            buffer.as_str(),
-                            wrap_width,
-                            crate::highlight::LayoutStyle {
-                                dark,
-                                font_size,
-                                family: family_key.as_deref(),
-                                line_height,
-                            },
-                        );
-                        ui.fonts_mut(|fonts| fonts.layout_job(job))
-                    };
+                    let mut layouter =
+                        |ui: &egui::Ui, buffer: &dyn egui::TextBuffer, wrap_width: f32| {
+                            let job = cache.get_or_build(
+                                ui,
+                                &path,
+                                buffer.as_str(),
+                                wrap_width,
+                                crate::highlight::LayoutStyle {
+                                    dark,
+                                    font_size,
+                                    family: family_key.as_deref(),
+                                    line_height,
+                                },
+                            );
+                            ui.fonts_mut(|fonts| fonts.layout_job(job))
+                        };
                     let wrap_mode = cx
                         .setting("editor.wrap.mode")
                         .and_then(forja_kernel::SettingValue::as_str)
@@ -682,8 +786,10 @@ impl EditorView {
                     if let Some(range) = output.cursor_range {
                         let primary = range.primary.index;
                         let secondary = range.secondary.index;
-                        self.state
-                            .set_cursor(primary, Some((primary.min(secondary), primary.max(secondary))));
+                        self.state.set_cursor(
+                            primary,
+                            Some((primary.min(secondary), primary.max(secondary))),
+                        );
                         self.state
                             .set_cursor_line(model::line_of_char(&content, primary));
                     }
@@ -695,18 +801,14 @@ impl EditorView {
                         paint_guides(ui, &output, &indents, indent_size, muted, font_size);
                     }
                     if whitespace != "never" {
-                        paint_whitespace(
-                            ui,
-                            &output,
-                            &whitespace,
-                            selection,
-                            muted,
-                        );
+                        paint_whitespace(ui, &output, &whitespace, selection, muted);
                     }
                     if minimap {
                         paint_minimap(ui, &content, muted);
                     }
-                    if let Some(mut edit) = egui::widgets::text_edit::TextEditState::load(ui.ctx(), id) {
+                    if let Some(mut edit) =
+                        egui::widgets::text_edit::TextEditState::load(ui.ctx(), id)
+                    {
                         let pending_match = self
                             .state
                             .with(|state| std::mem::take(&mut state.pending_match))
@@ -714,9 +816,10 @@ impl EditorView {
                         let pending = self.state.with(|state| state.pending_line.take()).flatten();
                         if let Some(line) = pending {
                             let index = model::char_index_for_line(&content, line);
-                            edit.cursor.set_char_range(Some(egui::text::CCursorRange::one(
-                                egui::text::CCursor::new(index),
-                            )));
+                            edit.cursor
+                                .set_char_range(Some(egui::text::CCursorRange::one(
+                                    egui::text::CCursor::new(index),
+                                )));
                             edit.store(ui.ctx(), id);
                             self.state.set_cursor_line(line);
                         }
@@ -788,11 +891,14 @@ impl EditorView {
     ) {
         let muted = c32(forja_ui_kit::applied_tokens(ui.ctx()).color.text_muted);
         let Some(document) = document else {
-            ui.label(egui::RichText::new(cx.t("editor.preview.loading")).color(muted));
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t("editor.preview.loading")).color(muted));
             return;
         };
         if let Some(error) = &document.error {
-            ui.label(egui::RichText::new(error).color(c32(forja_ui_kit::applied_tokens(ui.ctx()).color.danger)));
+            forja_ui_kit::text(ui,
+                egui::RichText::new(error)
+                    .color(c32(forja_ui_kit::applied_tokens(ui.ctx()).color.danger)),
+            );
             return;
         }
         egui::ScrollArea::vertical()
@@ -804,11 +910,17 @@ impl EditorView {
                             if !markdown.toc.is_empty() {
                                 ui.vertical(|ui| {
                                     ui.set_width(170.0);
-                                    ui.label(egui::RichText::new(cx.t("viewers.markdown.toc")).small().color(muted));
+                                    forja_ui_kit::text(ui,
+                                        egui::RichText::new(cx.t("viewers.markdown.toc"))
+                                            .small()
+                                            .color(muted),
+                                    );
                                     for entry in &markdown.toc {
                                         ui.horizontal(|ui| {
-                                            ui.add_space((entry.level.saturating_sub(1) as f32) * 8.0);
-                                            ui.label(egui::RichText::new(&entry.text).small());
+                                            ui.add_space(
+                                                (entry.level.saturating_sub(1) as f32) * 8.0,
+                                            );
+                                            forja_ui_kit::text(ui, egui::RichText::new(&entry.text).small());
                                         });
                                     }
                                 });
@@ -820,35 +932,46 @@ impl EditorView {
                 }
                 "table" => {
                     if let Some(table) = &document.table {
-                        ui.label(format!("{} {}", table.rows.len(), cx.t("viewers.table.rows")));
-                        egui::Grid::new("editor.preview.table").striped(true).show(ui, |ui| {
-                            for header in &table.headers {
-                                ui.label(egui::RichText::new(header).strong());
-                            }
-                            ui.end_row();
-                            for row in table.rows.iter().take(80) {
-                                for cell in row {
-                                    ui.label(cell);
+                        forja_ui_kit::text(ui, format!(
+                            "{} {}",
+                            table.rows.len(),
+                            cx.t("viewers.table.rows")
+                        ));
+                        egui::Grid::new("editor.preview.table")
+                            .striped(true)
+                            .show(ui, |ui| {
+                                for header in &table.headers {
+                                    forja_ui_kit::text(ui, egui::RichText::new(header).strong());
                                 }
                                 ui.end_row();
-                            }
-                        });
+                                for row in table.rows.iter().take(80) {
+                                    for cell in row {
+                                        forja_ui_kit::text(ui, cell);
+                                    }
+                                    ui.end_row();
+                                }
+                            });
                     }
                 }
                 "notebook" => {
                     if let Some(notebook) = &document.notebook {
                         for (index, cell) in notebook.cells.iter().enumerate() {
-                            ui.label(
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(format!("[{}] {}", index + 1, cell.kind))
                                     .small()
                                     .color(muted),
                             );
                             if cell.kind == "markdown" {
-                                ui.label(&cell.source);
+                                forja_ui_kit::text(ui, &cell.source);
                             } else {
-                                ui.label(egui::RichText::new(&cell.source).monospace());
+                                forja_ui_kit::text(ui, egui::RichText::new(&cell.source).monospace());
                                 for output in &cell.outputs {
-                                    ui.label(egui::RichText::new(output).small().monospace().color(muted));
+                                    forja_ui_kit::text(ui,
+                                        egui::RichText::new(output)
+                                            .small()
+                                            .monospace()
+                                            .color(muted),
+                                    );
                                 }
                             }
                             ui.separator();
@@ -857,22 +980,42 @@ impl EditorView {
                 }
                 "image" => {
                     if let Some(image) = &document.image {
-                        ui.label(format!("{} x {} px", image.width, image.height));
+                        forja_ui_kit::text(ui, format!("{} x {} px", image.width, image.height));
                         if image.frames > 1 {
-                            ui.label(cx.t_args("viewers.image.frames", &[("frames", &image.frames.to_string())]));
+                            forja_ui_kit::text(ui, cx.t_args(
+                                "viewers.image.frames",
+                                &[("frames", &image.frames.to_string())],
+                            ));
                         }
-                        ui.label(egui::RichText::new(&image.path).monospace().small().color(muted));
+                        forja_ui_kit::text(ui,
+                            egui::RichText::new(&image.path)
+                                .monospace()
+                                .small()
+                                .color(muted),
+                        );
                     }
                 }
                 "pdf" => {
                     if let Some(pdf) = &document.pdf {
-                        ui.label(cx.t_args("viewers.pdf.pages", &[("pages", &pdf.pages.to_string())]));
-                        ui.label(egui::RichText::new(cx.t("viewers.pdf.hint")).small().color(muted));
+                        forja_ui_kit::text(ui,
+                            cx.t_args("viewers.pdf.pages", &[("pages", &pdf.pages.to_string())]),
+                        );
+                        forja_ui_kit::text(ui,
+                            egui::RichText::new(cx.t("viewers.pdf.hint"))
+                                .small()
+                                .color(muted),
+                        );
                     }
                 }
                 _ => {}
             });
-        if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t("viewers.action.open-external")).clicked() {
+        if forja_ui_kit::button(
+            ui,
+            forja_ui_kit::ButtonKind::Ghost,
+            &cx.t("viewers.action.open-external"),
+        )
+        .clicked()
+        {
             let mut args = Args::new();
             args.insert("path", json!(&document.path));
             let _ = cx.run_command("viewers.open_external", args);
@@ -901,12 +1044,19 @@ impl EditorView {
             let line = self.state.cursor_line();
             let text = cx.t_args(
                 "editor.status.line",
-                &[("line", &line.to_string()), ("lines", &model::line_count(&tab.content).to_string())],
+                &[
+                    ("line", &line.to_string()),
+                    ("lines", &model::line_count(&tab.content).to_string()),
+                ],
             );
-            ui.label(egui::RichText::new(text).small().color(muted));
-            ui.label(egui::RichText::new(format!("{eol} · {encoding}")).small().color(muted));
+            forja_ui_kit::text(ui, egui::RichText::new(text).small().color(muted));
+            forja_ui_kit::text(ui,
+                egui::RichText::new(format!("{eol} · {encoding}"))
+                    .small()
+                    .color(muted),
+            );
             if !find.matches.is_empty() {
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t_args(
                         "editor.status.matches",
                         &[("count", &find.matches.len().to_string())],
@@ -916,9 +1066,13 @@ impl EditorView {
                 );
             }
             if tab.dirty {
-                ui.label(egui::RichText::new(cx.t("editor.status.unsaved")).small().color(muted));
+                forja_ui_kit::text(ui,
+                    egui::RichText::new(cx.t("editor.status.unsaved"))
+                        .small()
+                        .color(muted),
+                );
             }
-            ui.label(egui::RichText::new(&tab.path).small().color(muted));
+            forja_ui_kit::text(ui, egui::RichText::new(&tab.path).small().color(muted));
         });
     }
 
@@ -942,7 +1096,7 @@ impl EditorView {
                     if forja_ui_kit::window_header(ui, &title, &close_label) {
                         open = false;
                     }
-                    ui.label(
+                    forja_ui_kit::text(ui,
                         egui::RichText::new(cx.t_args(
                             "editor.peek.line",
                             &[("word", &peek.word), ("line", &peek.line.to_string())],
@@ -950,9 +1104,11 @@ impl EditorView {
                         .small()
                         .color(muted),
                     );
-                    ui.label(egui::RichText::new(&peek.text).monospace().color(
-                        c32(forja_ui_kit::applied_tokens(ui.ctx()).color.text),
-                    ));
+                    forja_ui_kit::text(ui,
+                        egui::RichText::new(&peek.text)
+                            .monospace()
+                            .color(c32(forja_ui_kit::applied_tokens(ui.ctx()).color.text)),
+                    );
                     if forja_ui_kit::button(
                         ui,
                         forja_ui_kit::ButtonKind::Ghost,
@@ -968,10 +1124,7 @@ impl EditorView {
             }
         }
 
-        let completion = self
-            .state
-            .with(|state| state.completion.clone())
-            .flatten();
+        let completion = self.state.with(|state| state.completion.clone()).flatten();
         if let Some(completion) = completion {
             let mut open = true;
             let title = cx.t("editor.completion.title");
@@ -1027,15 +1180,14 @@ impl EditorView {
                     if forja_ui_kit::window_header(ui, &title, &close_label) {
                         open = false;
                     }
-                    ui.label(
-                        egui::RichText::new(cx.t_args(
-                            "editor.parameter.line",
-                            &[("line", &hint.line.to_string())],
-                        ))
+                    forja_ui_kit::text(ui,
+                        egui::RichText::new(
+                            cx.t_args("editor.parameter.line", &[("line", &hint.line.to_string())]),
+                        )
                         .small()
                         .color(muted),
                     );
-                    ui.label(egui::RichText::new(&hint.text).monospace());
+                    forja_ui_kit::text(ui, egui::RichText::new(&hint.text).monospace());
                     if forja_ui_kit::button(
                         ui,
                         forja_ui_kit::ButtonKind::Ghost,
@@ -1065,7 +1217,7 @@ impl EditorView {
                     if forja_ui_kit::window_header(ui, &title, &close_label) {
                         open = false;
                     }
-                    ui.label(egui::RichText::new(&rename.word).monospace().color(muted));
+                    forja_ui_kit::text(ui, egui::RichText::new(&rename.word).monospace().color(muted));
                     ui.add(
                         egui::TextEdit::singleline(&mut rename.text)
                             .hint_text(cx.t("editor.rename.hint")),
@@ -1162,28 +1314,38 @@ impl EditorView {
                 if forja_ui_kit::window_header(ui, &title, &close_label) {
                     open = false;
                 }
-                ui.label(
+                forja_ui_kit::text(ui,
                     egui::RichText::new(cx.t("editor.compare.hint"))
                         .small()
                         .color(muted),
                 );
                 let diff = similar::TextDiff::from_lines(&disk, &buffer);
-                egui::ScrollArea::vertical().max_height(420.0).show(ui, |ui| {
-                    for change in diff.iter_all_changes() {
-                        let (sign, color) = match change.tag() {
-                            similar::ChangeTag::Delete => ("-", c32(forja_ui_kit::applied_tokens(ui.ctx()).color.danger)),
-                            similar::ChangeTag::Insert => ("+", c32(forja_ui_kit::applied_tokens(ui.ctx()).color.ok)),
-                            similar::ChangeTag::Equal => (" ", muted),
-                        };
-                        ui.label(
-                            egui::RichText::new(format!("{sign} {}", change.value().trim_end_matches('\n')))
+                egui::ScrollArea::vertical()
+                    .max_height(420.0)
+                    .show(ui, |ui| {
+                        for change in diff.iter_all_changes() {
+                            let (sign, color) = match change.tag() {
+                                similar::ChangeTag::Delete => (
+                                    "-",
+                                    c32(forja_ui_kit::applied_tokens(ui.ctx()).color.danger),
+                                ),
+                                similar::ChangeTag::Insert => {
+                                    ("+", c32(forja_ui_kit::applied_tokens(ui.ctx()).color.ok))
+                                }
+                                similar::ChangeTag::Equal => (" ", muted),
+                            };
+                            forja_ui_kit::text(ui,
+                                egui::RichText::new(format!(
+                                    "{sign} {}",
+                                    change.value().trim_end_matches('\n')
+                                ))
                                 .monospace()
                                 .small()
                                 .color(color),
-                        );
-                    }
-                });
-                ui.label(egui::RichText::new(&tab.path).small().color(muted));
+                            );
+                        }
+                    });
+                forja_ui_kit::text(ui, egui::RichText::new(&tab.path).small().color(muted));
             });
         if !open {
             self.state.with(|state| state.compare = None);
@@ -1202,14 +1364,22 @@ fn render_blocks(ui: &mut egui::Ui, cx: &mut Ctx<'_>, blocks: &[forja_contracts:
                     3 => tokens.metrics().body + 3.0,
                     _ => tokens.metrics().body + 1.0,
                 };
-                ui.add_space(4.0);
-                ui.label(egui::RichText::new(&block.text).size(size).strong().color(c32(tokens.color.text)));
+                ui.add_space(forja_ui_kit::Spacing::XS);
+                forja_ui_kit::text(ui,
+                    egui::RichText::new(&block.text)
+                        .size(size)
+                        .strong()
+                        .color(c32(tokens.color.text)),
+                );
             }
             "paragraph" | "quote" => {
-                ui.label(egui::RichText::new(&block.text).color(c32(tokens.color.text)));
+                forja_ui_kit::text(ui, egui::RichText::new(&block.text).color(c32(tokens.color.text)));
             }
             "list_item" => {
-                ui.label(egui::RichText::new(format!("\u{2022} {}", block.text)).color(c32(tokens.color.text)));
+                forja_ui_kit::text(ui,
+                    egui::RichText::new(format!("\u{2022} {}", block.text))
+                        .color(c32(tokens.color.text)),
+                );
             }
             "code" => {
                 egui::Frame::new()
@@ -1217,7 +1387,7 @@ fn render_blocks(ui: &mut egui::Ui, cx: &mut Ctx<'_>, blocks: &[forja_contracts:
                     .corner_radius(6)
                     .inner_margin(egui::Margin::symmetric(8, 6))
                     .show(ui, |ui| {
-                        ui.label(egui::RichText::new(&block.text).monospace());
+                        forja_ui_kit::text(ui, egui::RichText::new(&block.text).monospace());
                     });
             }
             "callout" => {
@@ -1232,17 +1402,15 @@ fn render_blocks(ui: &mut egui::Ui, cx: &mut Ctx<'_>, blocks: &[forja_contracts:
                     .corner_radius(6)
                     .inner_margin(egui::Margin::symmetric(10, 8))
                     .show(ui, |ui| {
-                        ui.label(
-                            egui::RichText::new(
-                                cx.t(&format!(
-                                    "viewers.callout.{}",
-                                    block.callout.as_deref().unwrap_or("note")
-                                )),
-                            )
+                        forja_ui_kit::text(ui,
+                            egui::RichText::new(cx.t(&format!(
+                                "viewers.callout.{}",
+                                block.callout.as_deref().unwrap_or("note")
+                            )))
                             .strong()
                             .color(c32(color)),
                         );
-                        ui.label(&block.text);
+                        forja_ui_kit::text(ui, &block.text);
                     });
             }
             "rule" => {
@@ -1250,11 +1418,12 @@ fn render_blocks(ui: &mut egui::Ui, cx: &mut Ctx<'_>, blocks: &[forja_contracts:
             }
             _ => {
                 if !block.text.is_empty() {
-                    ui.label(&block.text);
+                    forja_ui_kit::text(ui, &block.text);
                 }
             }
         }
-        ui.add_space(2.0);    }
+        ui.add_space(2.0);
+    }
 }
 
 /// Leading whitespace columns per line, with tabs expanded by `indent_size`.
@@ -1285,7 +1454,9 @@ fn paint_current_line(
         return;
     }
     let index = model::char_index_for_line(content, line);
-    let rect = output.galley.pos_from_cursor(egui::text::CCursor::new(index));
+    let rect = output
+        .galley
+        .pos_from_cursor(egui::text::CCursor::new(index));
     let top = output.galley_pos.y + rect.top();
     let bottom = output.galley_pos.y + rect.bottom();
     if !ui.clip_rect().intersects(egui::Rect::from_min_max(
@@ -1296,7 +1467,10 @@ fn paint_current_line(
     }
     let area = egui::Rect::from_min_max(
         egui::pos2(output.galley_pos.x - 4.0, top),
-        egui::pos2(ui.clip_rect().right().max(output.galley_pos.x + 24.0), bottom),
+        egui::pos2(
+            ui.clip_rect().right().max(output.galley_pos.x + 24.0),
+            bottom,
+        ),
     );
     ui.painter().rect_filled(
         area,
@@ -1314,7 +1488,8 @@ fn paint_guides(
     font_size: f32,
 ) {
     let char_width = (font_size * 0.62).max(4.0);
-    let stroke = egui::Stroke::new(1.0_f32,
+    let stroke = egui::Stroke::new(
+        1.0_f32,
         egui::Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), 46),
     );
     let mut line_index = 0usize;
@@ -1330,9 +1505,7 @@ fn paint_guides(
             let columns = indents.get(line_index).copied().unwrap_or(0);
             let levels = columns / indent_size.max(1);
             for level in 1..=levels {
-                let x = output.galley_pos.x
-                    + ((level * indent_size) as f32 * char_width)
-                    + 2.0;
+                let x = output.galley_pos.x + ((level * indent_size) as f32 * char_width) + 2.0;
                 ui.painter().vline(x, top..=bottom, stroke);
             }
         }
@@ -1382,11 +1555,10 @@ fn paint_whitespace(
                 '\t' => {
                     let y = bottom - 2.0;
                     let end = x + glyph.advance_width.max(4.0) - 1.0;
-                    ui.painter().line_segment([egui::pos2(x + 1.0, y), egui::pos2(end, y)], stroke);
-                    ui.painter().line_segment(
-                        [egui::pos2(end, y), egui::pos2(end - 3.0, y - 3.0)],
-                        stroke,
-                    );
+                    ui.painter()
+                        .line_segment([egui::pos2(x + 1.0, y), egui::pos2(end, y)], stroke);
+                    ui.painter()
+                        .line_segment([egui::pos2(end, y), egui::pos2(end - 3.0, y - 3.0)], stroke);
                 }
                 _ => {}
             }
@@ -1416,7 +1588,8 @@ fn paint_minimap(ui: &mut egui::Ui, text: &str, color: egui::Color32) {
         .max(1);
     let step = lines.len().div_ceil(300).max(1);
     let slots = lines.len().div_ceil(step);
-    let stroke = egui::Stroke::new(1.0_f32,
+    let stroke = egui::Stroke::new(
+        1.0_f32,
         egui::Color32::from_rgba_unmultiplied(color.r(), color.g(), color.b(), 120),
     );
     for (slot, line) in lines.iter().step_by(step).enumerate() {
@@ -1464,7 +1637,7 @@ fn wrap_desired_width(
 }
 
 fn c32(color: forja_ui_kit::Color) -> egui::Color32 {
-    egui::Color32::from_rgba_unmultiplied(color.r, color.g, color.b, color.a)
+    color.to_color32()
 }
 
 #[cfg(test)]
@@ -1473,7 +1646,10 @@ mod tests {
 
     #[test]
     fn column_wrap_clamps_to_column_budget() {
-        assert_eq!(wrap_desired_width("window", 80, false, 13.0, 1200.0), 4000.0);
+        assert_eq!(
+            wrap_desired_width("window", 80, false, 13.0, 1200.0),
+            4000.0
+        );
         let col = wrap_desired_width("column", 80, true, 13.0, 1200.0);
         assert!(col < 1192.0 && col > 500.0);
     }

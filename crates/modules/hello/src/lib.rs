@@ -163,7 +163,7 @@ impl View for HelloView {
         }
         let (history, error) = self.state.snapshot();
         if let Some(error) = error {
-            ui.label(egui::RichText::new(error).color(egui::Color32::from_rgb(0xE5, 0x53, 0x4B)));
+            ui.label(egui::RichText::new(error).color(ui.visuals().error_fg_color));
         }
         ui.add_space(8.0);
         ui.label(cx.t("hello.view.history"));

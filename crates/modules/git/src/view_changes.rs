@@ -259,41 +259,6 @@ fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &m
         }
     });
 
-    ui.horizontal_wrapped(|ui| {
-        if small(ui, &cx.t("git.changes.refresh")) {
-            let mut args = Map::new();
-            args.insert("path".to_owned(), json!(path));
-            let _ = run(cx, "git.refresh", args);
-        }
-        for (label, command) in [
-            ("git.changes.fetch", "git.fetch"),
-            ("git.changes.pull", "git.pull"),
-            ("git.changes.sync", "git.sync"),
-            ("git.changes.publish", "git.publish"),
-            ("git.changes.abort", "git.abort"),
-        ] {
-            if small(ui, &cx.t(label)) {
-                let mut args = Map::new();
-                args.insert("path".to_owned(), json!(path));
-                let _ = run(cx, command, args);
-            }
-        }
-    });
-    ui.horizontal_wrapped(|ui| {
-        if small(ui, &cx.t("git.changes.push")) {
-            let mut args = Map::new();
-            args.insert("path".to_owned(), json!(path));
-            args.insert("force_with_lease".to_owned(), json!(*force));
-            let _ = run(cx, "git.push", args);
-        }
-        ui.checkbox(force, cx.t("git.changes.force-with-lease"));
-        if small(ui, &cx.t("git.changes.rebase")) {
-            let mut args = Map::new();
-            args.insert("path".to_owned(), json!(path));
-            let _ = run(cx, "git.rebase", args);
-        }
-    });
-
     ui.add_space(4.0);
     let mut message = state.commit_message();
     let changed = ui
@@ -309,7 +274,7 @@ fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &m
     ui.horizontal(|ui| {
         if forja_ui_kit::button(
             ui,
-            forja_ui_kit::ButtonKind::Primary,
+            forja_ui_kit::ButtonKind::Secondary,
             &cx.t("git.changes.commit"),
         )
         .clicked()
@@ -324,31 +289,68 @@ fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &m
                 let _ = run(cx, "git.commit", args);
             }
         }
-        if small(ui, &cx.t("git.changes.generate")) {
-            if let Err(error) = generate_message(cx, &path, state) {
-                state.set_error(Some(error));
-            }
+        if forja_ui_kit::icon_button(ui, forja_ui_kit::Icon::Refresh, &cx.t("git.changes.sync"))
+            .clicked()
+        {
+            let _ = run(
+                cx,
+                "git.sync",
+                Map::from_iter([("path".to_owned(), json!(path))]),
+            );
         }
-        if small(ui, &cx.t("git.changes.commit-all")) {
-            let mut args = Map::new();
-            args.insert("path".to_owned(), json!(path));
-            args.insert("message".to_owned(), json!(message));
-            args.insert("all".to_owned(), json!(true));
-            args.insert("clear_message".to_owned(), json!(true));
-            let _ = run(cx, "git.commit", args);
-        }
-    });
-    ui.horizontal_wrapped(|ui| {
-        if small(ui, &cx.t("git.changes.stage-all")) {
-            let mut args = Map::new();
-            args.insert("path".to_owned(), json!(path));
-            let _ = run(cx, "git.stage_all", args);
-        }
-        if small(ui, &cx.t("git.changes.unstage-all")) {
-            let mut args = Map::new();
-            args.insert("path".to_owned(), json!(path));
-            let _ = run(cx, "git.unstage_all", args);
-        }
+        let more =
+            forja_ui_kit::icon_button(ui, forja_ui_kit::Icon::More, &cx.t("git.changes.more"));
+        egui::Popup::from_response(&more)
+            .kind(egui::PopupKind::Menu)
+            .layout(egui::Layout::top_down(egui::Align::Min))
+            .open_memory(more.clicked().then_some(egui::SetOpenCommand::Toggle))
+            .show(|ui| {
+                for (key, command) in [
+                    ("git.changes.refresh", "git.refresh"),
+                    ("git.changes.fetch", "git.fetch"),
+                    ("git.changes.pull", "git.pull"),
+                    ("git.changes.publish", "git.publish"),
+                    ("git.changes.push", "git.push"),
+                    ("git.changes.abort", "git.abort"),
+                    ("git.changes.rebase", "git.rebase"),
+                    ("git.changes.generate", "generate"),
+                    ("git.changes.commit-all", "commit-all"),
+                    ("git.changes.stage-all", "git.stage_all"),
+                    ("git.changes.unstage-all", "git.unstage_all"),
+                ] {
+                    if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &cx.t(key))
+                        .clicked()
+                    {
+                        let mut args = Map::from_iter([("path".to_owned(), json!(path))]);
+                        if command == "generate" {
+                            if let Err(error) = generate_message(cx, &path, state) {
+                                state.set_error(Some(error));
+                            }
+                        } else {
+                            if command == "git.push" {
+                                args.insert("force_with_lease".to_owned(), json!(*force));
+                            }
+                            if command == "commit-all" {
+                                args.insert("message".to_owned(), json!(message));
+                                args.insert("all".to_owned(), json!(true));
+                                args.insert("clear_message".to_owned(), json!(true));
+                            }
+                            let _ = run(
+                                cx,
+                                if command == "commit-all" {
+                                    "git.commit"
+                                } else {
+                                    command
+                                },
+                                args,
+                            );
+                        }
+                        ui.close();
+                    }
+                }
+                ui.separator();
+                ui.checkbox(force, cx.t("git.changes.force-with-lease"));
+            });
     });
     ui.separator();
 
@@ -364,13 +366,34 @@ fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &m
                     ui.horizontal(|ui| {
                         ui.set_max_width(ui.available_width().max(1.0));
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if small(ui, "\u{21ba}") {
+                            if forja_ui_kit::icon_button(
+                                ui,
+                                forja_ui_kit::Icon::Delete,
+                                &cx.t("git.changes.discard"),
+                            )
+                            .clicked()
+                            {
                                 state.set_discard(Some(vec![file.path.clone()]));
                             }
-                            if file.staged && small(ui, "\u{2212}") {
+                            if file.staged
+                                && forja_ui_kit::icon_button(
+                                    ui,
+                                    forja_ui_kit::Icon::Back,
+                                    &cx.t("git.changes.unstage"),
+                                )
+                                .clicked()
+                            {
                                 unstage(cx, &path, std::slice::from_ref(&file.path));
                             }
-                            if !file.staged && !file.conflict && !file.untracked && small(ui, "+")
+                            if !file.staged
+                                && !file.conflict
+                                && !file.untracked
+                                && forja_ui_kit::icon_button(
+                                    ui,
+                                    forja_ui_kit::Icon::Add,
+                                    &cx.t("git.changes.stage"),
+                                )
+                                .clicked()
                             {
                                 stage(cx, &path, std::slice::from_ref(&file.path));
                             }
@@ -434,12 +457,14 @@ fn render_changes(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared, force: &m
                 .default_width(360.0)
                 .show(ui.ctx(), |ui| {
                     forja_ui_kit::register_keyboard_layer(ui, layer);
-                    ui.label(cx.t_args("git.changes.discard-body", &[("files", &files.join(", "))]));
+                    ui.label(
+                        cx.t_args("git.changes.discard-body", &[("files", &files.join(", "))]),
+                    );
                     ui.add_space(8.0);
                     ui.horizontal(|ui| {
                         if forja_ui_kit::button(
                             ui,
-                            forja_ui_kit::ButtonKind::Danger,
+                            forja_ui_kit::ButtonKind::DangerConfirm,
                             &cx.t("git.changes.discard-confirm"),
                         )
                         .clicked()
@@ -593,7 +618,9 @@ pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> forja_kernel::HumanErro
         return forja_kernel::HumanError::simple(cx.t("git.error.nothing-to-abort"));
     }
     if let Some(branch) = trimmed.strip_prefix("protected:") {
-        return forja_kernel::HumanError::simple(cx.t_args("git.error.protected", &[("branch", branch)]));
+        return forja_kernel::HumanError::simple(
+            cx.t_args("git.error.protected", &[("branch", branch)]),
+        );
     }
     if trimmed == "no file selected" {
         return forja_kernel::HumanError::simple(cx.t("git.error.no-file"));
@@ -646,7 +673,7 @@ pub(crate) fn humanize_error(cx: &Ctx<'_>, raw: &str) -> forja_kernel::HumanErro
 }
 
 pub(crate) fn c32(color: forja_ui_kit::Color) -> egui::Color32 {
-    egui::Color32::from_rgba_unmultiplied(color.r, color.g, color.b, color.a)
+    color.to_color32()
 }
 
 #[cfg(test)]

@@ -170,4 +170,14 @@ mod tests {
         );
         assert_eq!(wheel_bytes(true, 0, 0, false, false), b"\x1b[A");
     }
+    #[test]
+    fn bracketed_paste_wraps_two_hundred_lines_once() {
+        let text = (0..200).map(|n| format!("line-{n}")).collect::<Vec<_>>().join("\n");
+        let bytes = paste_bytes(&text, true);
+        assert!(bytes.starts_with(b"\x1b[200~line-0\r"));
+        assert!(bytes.ends_with(b"line-199\x1b[201~"));
+        assert_eq!(bytes.iter().filter(|byte| **byte == b'\r').count(),199);
+        assert_eq!(bytes.iter().filter(|byte| **byte == 27).count(),2);
+    }
+
 }

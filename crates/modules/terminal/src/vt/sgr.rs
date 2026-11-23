@@ -28,6 +28,10 @@ pub(super) fn apply_sgr(surface: &mut Surface, values: &[usize]) {
             3 => surface.flags |= attrs::ITALIC,
             4 => surface.flags |= attrs::UNDERLINE,
             7 => surface.flags |= attrs::REVERSE,
+            9 => surface.flags |= attrs::STRIKE,
+            53 => surface.flags |= attrs::OVERLINE,
+            29 => surface.flags &= !attrs::STRIKE,
+            55 => surface.flags &= !attrs::OVERLINE,
             8 => surface.flags |= attrs::CONCEAL,
             22 => surface.flags &= !(attrs::BOLD | attrs::DIM),
             23 => surface.flags &= !attrs::ITALIC,
@@ -51,7 +55,7 @@ pub(super) fn apply_sgr(surface: &mut Surface, values: &[usize]) {
                 surface.fg = Color32::TRANSPARENT;
             }
             38 | 48 if values.get(index + 1) == Some(&2) && values.len() > index + 4 => {
-                let color = Color32::from_rgb(
+                let color = Color32::from_rgb( // ui-lint: allow terminal SGR true-color bytes supplied by the child process
                     values[index + 2].min(255) as u8,
                     values[index + 3].min(255) as u8,
                     values[index + 4].min(255) as u8,
@@ -85,6 +89,8 @@ pub(super) fn apply_sgr(surface: &mut Surface, values: &[usize]) {
 pub(super) fn apply_modes(surface: &mut Surface, values: &[usize], enabled: bool) {
     for code in values {
         match code {
+            2026 => surface.synchronize(enabled),
+            1004 => surface.focus_reporting = enabled,
             25 => surface.cursor_visible = enabled,
             1 => surface.application_cursor = enabled,
             7 => surface.autowrap = enabled,

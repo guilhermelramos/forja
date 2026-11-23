@@ -61,7 +61,10 @@ impl Module for ExtensionModule {
     }
 
     fn register(&mut self, r: &mut Registrar<'_>) {
-        r.i18n(include_str!("../i18n/en.ftl"), include_str!("../i18n/pt-BR.ftl"));
+        r.i18n(
+            include_str!("../i18n/en.ftl"),
+            include_str!("../i18n/pt-BR.ftl"),
+        );
         r.setting(SettingSpec::new(
             "extension.mode.enabled",
             SettingKind::Bool,
@@ -250,10 +253,14 @@ impl Module for ExtensionModule {
         }
 
         let page_core = Arc::clone(&self.core);
-        r.view(Slot::Rail, "extension.page", "extension.page.title", 90, move || {
-            Box::new(ExtensionPage::new(Arc::clone(&page_core)))
-        });
-        r.view_glyph("extension.page", forja_ui_kit::EXTENSION);
+        r.view(
+            Slot::Rail,
+            "extension.page",
+            "extension.page.title",
+            90,
+            move || Box::new(ExtensionPage::new(Arc::clone(&page_core))),
+        );
+        r.view_glyph("extension.page", forja_ui_kit::EXTENSION.id());
         for (slot, id, order) in [
             (Slot::RightPanel, "extension.panels.right", 90),
             (Slot::BenchTab, "extension.panels.bench", 90),

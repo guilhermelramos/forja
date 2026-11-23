@@ -1,5 +1,10 @@
 # forja-module-helper
 
+Na seção de Ajustes, cada perfil distingue o estado do CLI dos hooks: CLI ausente
+aparece como não instalado e o controle Habilitado fica desmarcado e indisponível,
+sem alterar a preferência salva para quando o executável voltar a existir.
+
+
 Saídas com código de erro usam `helper.notifications.error`; saídas normais
 continuam usando `helper.notifications.done`.
 As opções de contexto, regras, prontidão e retomada automática estão adiadas

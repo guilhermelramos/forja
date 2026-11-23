@@ -30,7 +30,15 @@ pub const MAX_HISTORY: usize = 200_000;
 pub const DEFAULT_HISTORY: usize = 10_000;
 
 /// Buffer de tela e histórico.
+#[derive(Clone)]
 pub struct Surface {
+    /// Application-selected cursor style (0..=6), absent until DECSCUSR.
+    pub cursor_shape: Option<u8>,
+    pub focus_reporting: bool,
+    pub synchronized_output: bool,
+    pub(crate) synchronized_at: Option<std::time::Instant>,
+    pub(crate) frozen: Option<Box<Surface>>,
+    focused: bool,
     pub(crate) lines: VecDeque<Row>,
     pub(crate) history: VecDeque<Row>,
     pub(crate) history_start: usize,
@@ -92,9 +100,40 @@ impl Surface {
         super::parser::feed(self, bytes);
     }
 
+    /// Published frame; parser updates remain private during synchronized output.
+    pub fn display(&self) -> &Self { self.frozen.as_deref().unwrap_or(self) }
+
+    pub(crate) fn synchronize(&mut self, enabled: bool) {
+        if enabled && !self.synchronized_output {
+            self.frozen = Some(Box::new(self.clone()));
+            self.synchronized_at = Some(std::time::Instant::now());
+        } else if !enabled { self.frozen = None; self.synchronized_at = None; }
+        self.synchronized_output = enabled;
+    }
+
+    /// Publishes an abandoned synchronized frame after the safety limit.
+    pub fn publish_if_due(&mut self, now: std::time::Instant) {
+        if self.synchronized_at.is_some_and(|at| now.saturating_duration_since(at) >= std::time::Duration::from_millis(150)) {
+            self.frozen = None; self.synchronized_at = None;
+        }
+    }
+
+    /// Remaining time before a synchronized frame must be published.
+    pub fn synchronization_wait(&self, now: std::time::Instant) -> Option<std::time::Duration> {
+        self.synchronized_at.map(|at| std::time::Duration::from_millis(150).saturating_sub(now.saturating_duration_since(at)))
+    }
+
+    /// Focus protocol reports only transitions while mode 1004 is enabled.
+    pub fn focus_event(&mut self, focused: bool) -> Option<&'static [u8]> {
+        let changed = self.focused != focused;
+        self.focused = focused;
+        (changed && self.focus_reporting).then_some(if focused { b"\x1b[I" } else { b"\x1b[O" })
+    }
+
     /// Cria uma tela 100x30 com histórico de 10 mil linhas.
     pub fn new() -> Self {
         Self {
+            cursor_shape: None, focus_reporting: false, synchronized_output: false, synchronized_at: None, frozen: None, focused: false,
             lines: (0..30).map(|_| Row::blank(100)).collect(),
             history: VecDeque::new(),
             history_start: 0,
@@ -140,6 +179,7 @@ impl Surface {
 
     /// Redimensiona a grade sem reescrever o histórico.
     pub fn resize(&mut self, cols: usize, rows: usize) {
+        if let Some(frozen) = self.frozen.as_mut() { frozen.resize(cols, rows); }
         let cols = cols.max(1);
         let rows = rows.max(1);
         while self.lines.len() > rows {

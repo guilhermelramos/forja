@@ -148,7 +148,7 @@ fn build_layout(
                 let start = offset + line_offset;
                 let end = start + piece.len();
                 let mut format = default.clone();
-                format.color = Color32::from_rgb(
+                format.color = Color32::from_rgb( // ui-lint: allow syntax colors from the selected code-content theme
                     style.foreground.r,
                     style.foreground.g,
                     style.foreground.b,

@@ -245,7 +245,11 @@ impl Driver {
                 })));
             }
             Err(error) => {
-                self.write_log(&request.method, &request.params, &json!({ "error": error.message }));
+                self.write_log(
+                    &request.method,
+                    &request.params,
+                    &json!({ "error": error.message }),
+                );
                 let _ = reply.send(Some(codec::error_response(id, &error)));
             }
         }
@@ -318,13 +322,13 @@ impl Driver {
                             .get("view_id")
                             .and_then(Value::as_str)
                             .filter(|view| !view.trim().is_empty())
-                            .ok_or_else(|| RpcError::invalid_params("view_id is required for a view panic"))?;
+                            .ok_or_else(|| {
+                                RpcError::invalid_params("view_id is required for a view panic")
+                            })?;
                         self.debug_view_panic = Some(view.to_owned());
                     }
                     _ => {
-                        return Err(RpcError::invalid_params(
-                            "where must be `view` or `main`",
-                        ));
+                        return Err(RpcError::invalid_params("where must be `view` or `main`"));
                     }
                 }
                 Ok((vec![settle(0)], Value::Null))
@@ -424,13 +428,20 @@ impl Driver {
     }
 
     /// Point to act on: `x,y` in screen pixels, a widget `id`, or a `target` name.
-    fn locate(&self, params: &Map<String, Value>, ctx: &egui::Context) -> Result<(Pos2, Value), RpcError> {
+    fn locate(
+        &self,
+        params: &Map<String, Value>,
+        ctx: &egui::Context,
+    ) -> Result<(Pos2, Value), RpcError> {
         let ppp = ctx.pixels_per_point();
         if let (Some(x), Some(y)) = (
             params.get("x").and_then(Value::as_f64),
             params.get("y").and_then(Value::as_f64),
         ) {
-            return Ok((Pos2::new(x as f32 / ppp, y as f32 / ppp), json!({ "at": [x, y] })));
+            return Ok((
+                Pos2::new(x as f32 / ppp, y as f32 / ppp),
+                json!({ "at": [x, y] }),
+            ));
         }
         let elements = self.elements(ctx);
         let chosen = if let Some(id) = params.get("id").and_then(Value::as_u64) {
@@ -459,7 +470,9 @@ impl Driver {
             };
             found
         } else {
-            return Err(RpcError::invalid_params("give target (widget name), id, or x and y"));
+            return Err(RpcError::invalid_params(
+                "give target (widget name), id, or x and y",
+            ));
         };
         let centre = centre_of(chosen, ctx);
         Ok((centre, json!({ "clicked": chosen })))
@@ -634,7 +647,9 @@ impl Driver {
                 }
                 Some(Step::Screenshot) => {
                     if !self.screenshot_requested {
-                        ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::default()));
+                        ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(
+                            egui::UserData::default(),
+                        ));
                         self.screenshot_requested = true;
                         break;
                     }
@@ -656,7 +671,9 @@ impl Driver {
                     return;
                 }
                 Some(Step::Reply(_)) => {
-                    let Some(Step::Reply(pending)) = self.steps.pop_front() else { return };
+                    let Some(Step::Reply(pending)) = self.steps.pop_front() else {
+                        return;
+                    };
                     self.reply(*pending, ctx);
                 }
             }
@@ -766,16 +783,22 @@ impl Driver {
         if let Some(png) = self.image.take() {
             result["png_base64"] = Value::String(png);
         }
-        self.write_log(&pending.method, &pending.params, &json!({
-            "action": pending.note,
-            "changes": result["changes"],
-            "elements": result["elements"].as_array().map_or(0, Vec::len),
-        }));
+        self.write_log(
+            &pending.method,
+            &pending.params,
+            &json!({
+                "action": pending.note,
+                "changes": result["changes"],
+                "elements": result["elements"].as_array().map_or(0, Vec::len),
+            }),
+        );
         self.previous = elements
             .into_iter()
             .map(|element| (element["id"].as_u64().unwrap_or_default(), element))
             .collect();
-        let _ = pending.reply.send(Some(codec::ok_response(&pending.id, result)));
+        let _ = pending
+            .reply
+            .send(Some(codec::ok_response(&pending.id, result)));
     }
 
     /// Visible widgets worth acting on, in screen pixels, top to bottom.
@@ -859,7 +882,9 @@ impl Driver {
     }
 
     fn write_log(&mut self, method: &str, params: &Map<String, Value>, outcome: &Value) {
-        let Some(file) = self.log.as_mut() else { return };
+        let Some(file) = self.log.as_mut() else {
+            return;
+        };
         let line = json!({
             "t_ms": self.started.elapsed().as_millis() as u64,
             "method": method,
@@ -918,6 +943,9 @@ fn elements_from(tree: &LatestTree, ctx: &egui::Context) -> Vec<Value> {
             }
             let scale = f64::from(ppp);
             let mut state = Vec::new();
+            if node.author_id() == Some("forja.button.primary") {
+                state.push("primary");
+            }
             if node.is_disabled() {
                 state.push("disabled");
             }
@@ -967,14 +995,21 @@ fn key_steps(key: Key, modifiers: Modifiers) -> Vec<Step> {
         repeat: false,
         modifiers,
     };
-    vec![Step::Input(vec![event(true)]), Step::Input(vec![event(false)])]
+    vec![
+        Step::Input(vec![event(true)]),
+        Step::Input(vec![event(false)]),
+    ]
 }
 
 /// `"Ctrl+Shift+K"` -> (`K`, ctrl+shift).
 pub fn parse_keys(keys: &str) -> Result<(Key, Modifiers), RpcError> {
     let mut modifiers = Modifiers::NONE;
     let mut key = None;
-    for part in keys.split('+').map(str::trim).filter(|part| !part.is_empty()) {
+    for part in keys
+        .split('+')
+        .map(str::trim)
+        .filter(|part| !part.is_empty())
+    {
         match part.to_ascii_lowercase().as_str() {
             "ctrl" | "control" => {
                 modifiers.ctrl = true;
@@ -1109,7 +1144,13 @@ fn fingerprint(element: &Value) -> String {
     let component = |key: &str| element[key].as_str().unwrap_or("");
     let states = element["state"]
         .as_array()
-        .map(|states| states.iter().filter_map(Value::as_str).collect::<Vec<_>>().join(","))
+        .map(|states| {
+            states
+                .iter()
+                .filter_map(Value::as_str)
+                .collect::<Vec<_>>()
+                .join(",")
+        })
         .unwrap_or_default();
     format!(
         "{}|{}|{}|{}|{}|{}",

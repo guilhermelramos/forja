@@ -126,7 +126,7 @@ impl Module for ChatModule {
         let order = if std::env::var_os("FORJA_CHAT_PREVIEW").is_some() {
             1
         } else {
-            100
+            12
         };
         r.view(
             Slot::BenchTab,

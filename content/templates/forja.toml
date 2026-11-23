@@ -19,11 +19,9 @@ setup = "cargo check"
 teardown = ""
 
 # Abas que serão abertas automaticamente ao criar uma nova bancada.
-# Ordem de abertura e tipos disponíveis:
-#   "terminal"  - Terminal de linha de comando (ConPTY)
-#   "helper"    - Sessão com o ajudante de IA configurado
-#   "editor"    - Editor de código embutido
-#   "diff"      - Visualizador de diferenças
+# Terminais ("terminal", "helper", ou nomes livres de terminal) e abas de
+# ferramenta ("editor", "diff", "chat", "browser", "viewer", "bench", "review",
+# "history", "extensions" ou o id completo da view):
 tabs = ["terminal", "helper"]
 
 [request]

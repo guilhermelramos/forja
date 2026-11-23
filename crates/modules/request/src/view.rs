@@ -100,7 +100,8 @@ impl RequestsView {
             return;
         }
         self.started = true;
-        self.query_draft = with_state(&self.shared, |state| state.query.clone()).unwrap_or_default();
+        self.query_draft =
+            with_state(&self.shared, |state| state.query.clone()).unwrap_or_default();
         commands::ensure_local(cx, &self.shared);
         let _ = commands::refresh(cx, &self.shared);
     }
@@ -128,37 +129,57 @@ impl RequestsView {
         }
     }
 
-    fn header(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, frame: &Frame) {
+    fn header(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) -> forja_ui_kit::Page {
         let title = cx.t("request-name");
-        let loading = frame.loading.then(|| cx.t("request-loading"));
-        forja_ui_kit::page_heading(ui, &title, loading.as_deref(), |ui| {
-            if button(ui, ButtonKind::Secondary, &cx.t("request-refresh")).clicked() {
-                let _ = commands::refresh(cx, &self.shared);
-            }
-            let label = cx.t("request-local-create");
-            if button(ui, ButtonKind::Ghost, &label).clicked() {
-                self.local_open = !self.local_open;
-            }
-        });
+        let refresh = cx.t("request.page-state.refresh");
+        let create = cx.t("request-local-create");
+        let page = forja_ui_kit::page(
+            ui,
+            forja_ui_kit::PageSpec::new("request.page", &title)
+                .wide()
+                .primary(&create)
+                .refresh(&refresh),
+        );
+        if page.response.refresh_clicked {
+            let _ = commands::refresh(cx, &self.shared);
+        }
+        if page.response.primary_clicked {
+            self.local_open = !self.local_open;
+        }
+        page
     }
 
     fn filters(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, frame: &Frame) {
-        let labels: Vec<String> = Filter::ALL.iter().map(|f| cx.t(f.label_key())).collect();
-        let refs: Vec<&str> = labels.iter().map(String::as_str).collect();
-        let mut selected = Filter::ALL
-            .iter()
-            .position(|filter| *filter == frame.filter)
-            .unwrap_or(4);
-        if segmented(ui, &mut selected, &refs).changed() {
-            if let Some(filter) = Filter::ALL.get(selected).copied() {
-                self.set_filter(filter);
-                let _ = commands::refresh(cx, &self.shared);
-            }
-        }
-        self.source_row(ui, cx, frame);
-        if text_field(ui, &mut self.query_draft, &cx.t("request-search-hint")).changed() {
-            self.set_query(&self.query_draft.clone());
-        }
+        let width = ui.available_width();
+        ui.horizontal(|ui| {
+            ui.scope(|ui| {
+                ui.set_width((width * 0.25).clamp(100.0, 240.0));
+                if text_field(ui, &mut self.query_draft, &cx.t("request-search-hint")).changed() {
+                    self.set_query(&self.query_draft.clone());
+                }
+            });
+            ui.scope(|ui| {
+                ui.set_width(
+                    (width - (width * 0.25).clamp(100.0, 240.0) - 130.0 - 16.0).max(160.0),
+                );
+                let labels: Vec<String> = Filter::ALL.iter().map(|f| cx.t(f.label_key())).collect();
+                let refs: Vec<&str> = labels.iter().map(String::as_str).collect();
+                let mut selected = Filter::ALL
+                    .iter()
+                    .position(|filter| *filter == frame.filter)
+                    .unwrap_or(4);
+                if segmented(ui, &mut selected, &refs).changed() {
+                    if let Some(filter) = Filter::ALL.get(selected).copied() {
+                        self.set_filter(filter);
+                        let _ = commands::refresh(cx, &self.shared);
+                    }
+                }
+            });
+            ui.scope(|ui| {
+                ui.set_width(130.0);
+                self.source_row(ui, cx, frame);
+            });
+        });
     }
 
     /// Balcão mostrado: local, cada balcão instalado e todos.
@@ -182,7 +203,7 @@ impl RequestsView {
             .iter()
             .position(|option| *option == frame.source)
             .unwrap_or(options.len() - 1);
-        if segmented(ui, &mut selected, &refs).changed() {
+        if forja_ui_kit::select(ui, &mut selected, &refs).changed() {
             if let Some(source) = options.get(selected).cloned() {
                 commands::set_source(&self.shared, source);
                 let _ = commands::refresh(cx, &self.shared);
@@ -192,13 +213,13 @@ impl RequestsView {
 
     fn notices(&self, ui: &mut egui::Ui, cx: &Ctx<'_>, frame: &Frame) {
         if !frame.project_known && !forja_counter_kit::fixtures_enabled() {
-            ui.label(egui::RichText::new(cx.t("request-no-project")).weak());
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t("request-no-project")).weak());
         }
         if let Some(notice) = &frame.notice {
             let color = match notice.kind {
-                NoticeKind::Ok => egui::Color32::from_rgb(0x6C, 0xC4, 0x8A),
-                NoticeKind::Warn => egui::Color32::from_rgb(0xFF, 0xC1, 0x4D),
-                NoticeKind::Error => egui::Color32::from_rgb(0xE5, 0x53, 0x4B),
+                NoticeKind::Ok => forja_ui_kit::applied_tokens(ui.ctx()).color.ok.to_color32(),
+                NoticeKind::Warn => forja_ui_kit::applied_tokens(ui.ctx()).color.spark.to_color32(),
+                NoticeKind::Error => forja_ui_kit::applied_tokens(ui.ctx()).color.danger.to_color32(),
                 NoticeKind::Info => ui.visuals().weak_text_color(),
             };
             ui.colored_label(color, cx.t(&notice.key));
@@ -208,9 +229,17 @@ impl RequestsView {
             let error_text = cx.t(key);
             let line = cx.t_args(
                 "request-error-line",
-                &[("counter", counter_name.as_str()), ("error", error_text.as_str())],
+                &[
+                    ("counter", counter_name.as_str()),
+                    ("error", error_text.as_str()),
+                ],
             );
-            ui.colored_label(egui::Color32::from_rgb(0xE5, 0x53, 0x4B), line);
+            forja_ui_kit::page_state(
+                ui,
+                forja_ui_kit::PageState::Error,
+                &cx.t("request.page-state.error"),
+                Some(&line),
+            );
         }
     }
 
@@ -219,24 +248,32 @@ impl RequestsView {
             return;
         }
         if !frame.local_loaded {
-            ui.label(cx.t("request-local-loading"));
+            forja_ui_kit::text(ui, cx.t("request-local-loading"));
             return;
         }
         let mut submit = false;
         ui.group(|ui| {
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("request-local-title-label"))
                     .small()
                     .strong(),
             );
-            let title = text_field(ui, &mut self.local_title, &cx.t("request-local-title-hint"));
-            ui.add_space(4.0);
-            ui.label(
+            let title_hint = cx.t("request-local-title-hint");
+            let title = text_field(ui, &mut self.local_title, &title_hint);
+            title.widget_info(|| {
+                egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, ui.is_enabled(), &title_hint)
+            });
+            ui.add_space(forja_ui_kit::Spacing::XS);
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t("request-local-body-label"))
                     .small()
                     .strong(),
             );
-            let body = text_field(ui, &mut self.local_body, &cx.t("request-local-body-hint"));
+            let body_hint = cx.t("request-local-body-hint");
+            let body = text_field(ui, &mut self.local_body, &body_hint);
+            body.widget_info(|| {
+                egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, ui.is_enabled(), &body_hint)
+            });
             let enter_pressed = ui.input(|input| input.key_pressed(egui::Key::Enter));
             let title_active = title.has_focus() || title.lost_focus();
             let body_active = body.has_focus() || body.lost_focus();
@@ -263,7 +300,20 @@ impl RequestsView {
 
     fn list(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, frame: &Frame) {
         if frame.items.is_empty() {
-            forja_ui_kit::empty_state(ui, forja_ui_kit::REQUESTS, &cx.t("request-empty"), None);
+            forja_ui_kit::page_state(
+                ui,
+                if frame.loading {
+                    forja_ui_kit::PageState::Loading
+                } else {
+                    forja_ui_kit::PageState::Empty
+                },
+                &cx.t(if frame.loading {
+                    "request.page-state.loading"
+                } else {
+                    "request.page-state.empty"
+                }),
+                Some(&cx.t("request-empty")),
+            );
             return;
         }
         egui::ScrollArea::vertical()
@@ -278,12 +328,8 @@ impl RequestsView {
                     if ui.selectable_label(selected, title).clicked() {
                         let _ = commands::open(cx, &self.shared, &item.counter, &item.key);
                     }
-                    ui.label(
-                        egui::RichText::new(row_meta(cx, item))
-                            .small()
-                            .weak(),
-                    );
-                    ui.add_space(4.0);
+                    forja_ui_kit::text(ui, egui::RichText::new(row_meta(cx, item)).small().weak());
+                    ui.add_space(forja_ui_kit::Spacing::XS);
                 }
             });
     }
@@ -328,7 +374,12 @@ impl RequestsView {
                     wrapped_label(ui, url, caption_font.clone(), muted_color);
                 }
                 ui.add_space(6.0);
-                match item.body.as_deref().map(str::trim).filter(|body| !body.is_empty()) {
+                match item
+                    .body
+                    .as_deref()
+                    .map(str::trim)
+                    .filter(|body| !body.is_empty())
+                {
                     Some(body) => {
                         wrapped_label(ui, body, body_font.clone(), text_color);
                     }
@@ -341,12 +392,12 @@ impl RequestsView {
                         );
                     }
                 }
-                ui.add_space(8.0);
+                ui.add_space(forja_ui_kit::Spacing::SM);
                 self.actions(ui, cx, &item, frame.project_known);
-                ui.add_space(8.0);
-                ui.label(egui::RichText::new(cx.t("request-detail-comments")).strong());
+                ui.add_space(forja_ui_kit::Spacing::SM);
+                forja_ui_kit::text(ui, egui::RichText::new(cx.t("request-detail-comments")).strong());
                 if item.comments.is_empty() {
-                    ui.label(egui::RichText::new(cx.t("request-detail-no-comments")).weak());
+                    forja_ui_kit::text(ui, egui::RichText::new(cx.t("request-detail-no-comments")).weak());
                 }
                 for comment in &item.comments {
                     let who = if comment.author.is_empty() {
@@ -361,7 +412,7 @@ impl RequestsView {
                         muted_color,
                     );
                     wrapped_label(ui, comment.body.as_str(), body_font.clone(), text_color);
-                    ui.add_space(4.0);
+                    ui.add_space(forja_ui_kit::Spacing::XS);
                 }
                 ui.add(
                     egui::TextEdit::multiline(&mut self.comment_draft)
@@ -373,14 +424,21 @@ impl RequestsView {
                     && !self.comment_draft.trim().is_empty()
                 {
                     let body = self.comment_draft.clone();
-                    if commands::comment(cx, &self.shared, &item.counter, &item.key, &body).is_ok() {
+                    if commands::comment(cx, &self.shared, &item.counter, &item.key, &body).is_ok()
+                    {
                         self.comment_draft.clear();
                     }
                 }
             });
     }
 
-    fn actions(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, item: &RequestItem, project_known: bool) {
+    fn actions(
+        &mut self,
+        ui: &mut egui::Ui,
+        cx: &mut Ctx<'_>,
+        item: &RequestItem,
+        project_known: bool,
+    ) {
         ui.horizontal_wrapped(|ui| {
             let can_forge = project_known || forja_counter_kit::fixtures_enabled();
             ui.add_enabled_ui(can_forge, |ui| {
@@ -405,25 +463,28 @@ impl View for RequestsView {
         self.start(cx);
         self.maybe_refresh(cx, ui);
         let frame = self.frame();
-        if !self.auto_selected && forja_counter_kit::fixtures_enabled() && frame.selected.is_none() {
+        if !self.auto_selected && forja_counter_kit::fixtures_enabled() && frame.selected.is_none()
+        {
             if let Some(first) = frame.items.first().cloned() {
                 self.auto_selected = true;
                 let _ = commands::open(cx, &self.shared, &first.counter, &first.key);
             }
         }
-        self.header(ui, cx, &frame);
-        self.filters(ui, cx, &frame);
-        self.notices(ui, cx, &frame);
-        self.local_form(ui, cx, &frame);
-        ui.separator();
-        if frame.selected.is_some() {
-            ui.columns(2, |columns| {
-                self.list(&mut columns[0], cx, &frame);
-                self.drawer(&mut columns[1], cx, &frame);
-            });
-        } else {
-            self.list(ui, cx, &frame);
-        }
+        let mut page = self.header(ui, cx);
+        page.filters(|ui| self.filters(ui, cx, &frame));
+        page.body(|ui| {
+            self.notices(ui, cx, &frame);
+            self.local_form(ui, cx, &frame);
+            ui.separator();
+            if frame.selected.is_some() {
+                ui.columns(2, |columns| {
+                    self.list(&mut columns[0], cx, &frame);
+                    self.drawer(&mut columns[1], cx, &frame);
+                });
+            } else {
+                self.list(ui, cx, &frame);
+            }
+        });
         self.forge_preview.ui(ui, cx, &self.shared);
     }
 }
@@ -455,4 +516,3 @@ fn row_meta(cx: &Ctx<'_>, item: &RequestItem) -> String {
     }
     parts.join(" · ")
 }
-

@@ -23,7 +23,11 @@ impl View for DetailView {
         let tokens = forja_ui_kit::applied_tokens(ui.ctx());
         forja_ui_kit::page_heading(ui, &cx.t("bench.detail.title"), None, |_| {});
         let Some(bench) = self.state.current() else {
-            let message = format!("{}\n{}", cx.t("bench.detail.empty"), cx.t("bench.detail.empty-hint"));
+            let message = format!(
+                "{}\n{}",
+                cx.t("bench.detail.empty"),
+                cx.t("bench.detail.empty-hint")
+            );
             let create = forja_ui_kit::empty_state(
                 ui,
                 forja_ui_kit::BOARD,
@@ -61,31 +65,31 @@ impl View for DetailView {
                 ui.set_max_width(max_w);
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if bench.sleeping {
-                        ui.label(
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(cx.t("bench.detail.sleeping"))
                                 .small()
                                 .color(c32(tokens.color.info)),
                         );
                     }
                     if bench.archived {
-                        ui.label(
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(cx.t("bench.detail.archived"))
                                 .small()
                                 .color(c32(tokens.color.text_muted)),
                         );
                     }
                     if bench.unread {
-                        ui.label(egui::RichText::new("\u{25cf}").color(c32(tokens.color.accent)));
+                        forja_ui_kit::icon(ui, forja_ui_kit::Icon::Info, 16.0);
                     }
                     if bench.pinned {
-                        ui.label(egui::RichText::new("\u{2605}").color(c32(tokens.color.spark)));
+                        forja_ui_kit::icon(ui, forja_ui_kit::Icon::Pin, 16.0);
                     }
                     stage_badge(ui, &stage.0, &stage.1, &tokens);
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                         forja_ui_kit::truncated_label(
                             ui,
                             &bench.name,
-                            egui::FontId::proportional(17.0),
+                            forja_ui_kit::TextRole::Section.font(),
                             c32(tokens.color.text),
                         );
                     });
@@ -113,8 +117,8 @@ impl View for DetailView {
             }
         });
 
-        ui.add_space(8.0);
-        ui.label(
+        ui.add_space(forja_ui_kit::Spacing::SM);
+        forja_ui_kit::text(ui,
             egui::RichText::new(cx.t("bench.detail.actions"))
                 .small()
                 .color(c32(tokens.color.text_muted)),
@@ -231,10 +235,12 @@ impl DetailView {
                     &cx.t("kernel.error.details"),
                 );
             } else {
-                ui.label(
-                    egui::RichText::new(cx.t_args("bench.detail.notice", &[("message", &human.summary)]))
-                        .small()
-                        .color(c32(tokens.color.info)),
+                forja_ui_kit::text(ui,
+                    egui::RichText::new(
+                        cx.t_args("bench.detail.notice", &[("message", &human.summary)]),
+                    )
+                    .small()
+                    .color(c32(tokens.color.info)),
                 );
             }
         }
@@ -269,7 +275,7 @@ fn stage_info(cx: &mut Ctx<'_>, state: &Shared, bench: &BenchRecord) -> (String,
 }
 
 fn stage_badge(ui: &mut egui::Ui, label: &str, dot: &str, tokens: &forja_ui_kit::Tokens) {
-    let font = egui::FontId::proportional(12.0);
+    let font = forja_ui_kit::TextRole::Caption.font();
     let galley = ui
         .painter()
         .layout_no_wrap(label.to_owned(), font, c32(tokens.color.text));
@@ -325,7 +331,7 @@ fn detail_row(ui: &mut egui::Ui, tokens: &forja_ui_kit::Tokens, label: &str, val
 
 pub(crate) fn field_label(ui: &mut egui::Ui, label: &str) {
     let tokens = forja_ui_kit::applied_tokens(ui.ctx());
-    ui.label(
+    forja_ui_kit::text(ui,
         egui::RichText::new(label)
             .small()
             .color(c32(tokens.color.text_muted)),
@@ -337,5 +343,5 @@ fn run(cx: &mut Ctx<'_>, id: &str, map: Map<String, Value>) -> forja_kernel::Res
 }
 
 pub(crate) fn c32(color: forja_ui_kit::Color) -> egui::Color32 {
-    egui::Color32::from_rgba_unmultiplied(color.r, color.g, color.b, color.a)
+    color.to_color32()
 }

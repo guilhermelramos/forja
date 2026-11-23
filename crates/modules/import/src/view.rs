@@ -26,14 +26,21 @@ impl View for SettingsView {
         {
             let _ = cx.run_command("import.harbor.preview", Args::new());
         }
-        forja_ui_kit::page_heading(ui, &cx.t("import.settings.title"), Some(&cx.t("import.settings.hint")), |_| {});
+        forja_ui_kit::page_heading(
+            ui,
+            &cx.t("import.settings.title"),
+            Some(&cx.t("import.settings.hint")),
+            |_| {},
+        );
 
         if status.get("busy") == Some(&Value::Bool(true)) {
             ui.label(egui::RichText::new(cx.t("import.settings.loading")).weak());
             return;
         }
         if let Some(key) = status.get("error").and_then(Value::as_str) {
-            ui.label(egui::RichText::new(cx.t(key)).color(egui::Color32::from_rgb(0xE5, 0x53, 0x4B)));
+            ui.label(
+                egui::RichText::new(cx.t(key)).color(forja_ui_kit::applied_tokens(ui.ctx()).color.danger.to_color32()),
+            );
         }
         if status.get("available") != Some(&Value::Bool(true)) {
             ui.label(egui::RichText::new(cx.t("import.settings.none")).weak());
@@ -82,7 +89,7 @@ impl View for SettingsView {
                     ui.label(egui::RichText::new(detail).weak().monospace());
                 }
                 if done {
-                    ui.label(egui::RichText::new("✓").weak());
+                    forja_ui_kit::icon(ui, forja_ui_kit::Icon::Ok, 16.0);
                 }
             });
         }
@@ -90,7 +97,13 @@ impl View for SettingsView {
             let _ = cx.run_command("import.harbor.run", Args::new());
         }
         if let Some(summary) = status.get("summary").filter(|value| value.is_object()) {
-            let count = |name: &str| summary.get(name).and_then(Value::as_u64).unwrap_or(0).to_string();
+            let count = |name: &str| {
+                summary
+                    .get(name)
+                    .and_then(Value::as_u64)
+                    .unwrap_or(0)
+                    .to_string()
+            };
             let line = cx.t_args(
                 "import.result.line",
                 &[

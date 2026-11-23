@@ -52,7 +52,7 @@ impl View for PortsView {
                     ],
                 )
             };
-            ui.label(egui::RichText::new(count_text).small().color(muted));
+            forja_ui_kit::text(ui, egui::RichText::new(count_text).small().color(muted));
             if forja_ui_kit::button(
                 ui,
                 forja_ui_kit::ButtonKind::Ghost,
@@ -67,10 +67,10 @@ impl View for PortsView {
             }
         });
 
-        ui.add_space(4.0);
+        ui.add_space(forja_ui_kit::Spacing::XS);
         forja_ui_kit::text_field(ui, &mut self.filter, &cx.t("ports.view.filter-hint"));
         if !self.filter.is_empty() {
-            ui.add_space(4.0);
+            ui.add_space(forja_ui_kit::Spacing::XS);
             if forja_ui_kit::button(
                 ui,
                 forja_ui_kit::ButtonKind::Ghost,
@@ -81,7 +81,7 @@ impl View for PortsView {
                 self.filter.clear();
             }
         }
-        ui.add_space(4.0);
+        ui.add_space(forja_ui_kit::Spacing::XS);
         toggle_wrapped(ui, &mut self.show_all, &cx.t("ports.view.show-all"));
         ui.separator();
 
@@ -100,7 +100,7 @@ impl View for PortsView {
             ) {
                 self.shared.clear_error();
             }
-            ui.add_space(4.0);
+            ui.add_space(forja_ui_kit::Spacing::XS);
         }
 
         let pending = self.shared.pending_kill();
@@ -109,18 +109,18 @@ impl View for PortsView {
             .auto_shrink([false, false])
             .show(ui, |ui| {
                 if snapshot.ports.is_empty() {
-                    ui.add_space(8.0);
-                    ui.label(egui::RichText::new(cx.t("ports.view.empty")).color(muted));
+                    ui.add_space(forja_ui_kit::Spacing::SM);
+                    forja_ui_kit::text(ui, egui::RichText::new(cx.t("ports.view.empty")).color(muted));
                     return;
                 }
                 if groups.is_empty() {
-                    ui.add_space(8.0);
+                    ui.add_space(forja_ui_kit::Spacing::SM);
                     let empty_key = if self.filter.trim().is_empty() {
                         "ports.view.empty-benches"
                     } else {
                         "ports.view.empty-filter"
                     };
-                    ui.label(egui::RichText::new(cx.t(empty_key)).color(muted));
+                    forja_ui_kit::text(ui, egui::RichText::new(cx.t(empty_key)).color(muted));
                     if !self.show_all && self.filter.trim().is_empty() {
                         ui.add_space(6.0);
                         if forja_ui_kit::button(
@@ -152,7 +152,7 @@ impl View for PortsView {
                     .show(ui, |ui| {
                         for port in &group.ports {
                             self.row(ui, cx, port, pending, muted);
-                            ui.add_space(4.0);
+                            ui.add_space(forja_ui_kit::Spacing::XS);
                         }
                     });
                 }
@@ -185,32 +185,32 @@ impl PortsView {
                 .show(ui, |ui| {
                     ui.set_width(ui.available_width());
                     ui.horizontal_wrapped(|ui| {
-                        ui.label(
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(format!(":{}", port.port))
                                 .strong()
                                 .color(c32(tokens.color.text)),
                         );
-                        ui.label(
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(format!("{} · {}", port.process, port.pid))
                                 .small()
                                 .color(text_color),
                         );
-                        ui.label(
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(&port.address)
                                 .small()
                                 .monospace()
                                 .color(muted),
                         );
                         if let Some(bench) = port.bench_label() {
-                            ui.label(egui::RichText::new(bench).small().color(spark));
+                            forja_ui_kit::text(ui, egui::RichText::new(bench).small().color(spark));
                         } else if port.from_tree {
-                            ui.label(
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(cx.t("ports.view.group-forja"))
                                     .small()
                                     .color(spark),
                             );
                         } else {
-                            ui.label(
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(cx.t("ports.view.no-bench"))
                                     .small()
                                     .color(muted),
@@ -424,7 +424,7 @@ impl View for PortsStatus {
         } else {
             c32(tokens.color.text_muted)
         };
-        ui.label(
+        forja_ui_kit::text(ui,
             egui::RichText::new(cx.t_args(
                 "ports.status.count",
                 &[("count", &snapshot.ports.len().to_string())],
@@ -584,5 +584,5 @@ pub fn fixture() -> bool {
 }
 
 fn c32(color: forja_ui_kit::Color) -> egui::Color32 {
-    egui::Color32::from_rgba_unmultiplied(color.r, color.g, color.b, color.a)
+    color.to_color32()
 }

@@ -4,11 +4,10 @@
   "locale": "pt-BR",
   "steps": [
     { "m": "ui.key", "keys": "Escape" },
-    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Abrir pasta" },
     { "m": "ui.click", "target": "Escolher…" },
     { "m": "ui.click", "target": "Adicionar" },
-    { "m": "ui.click", "target": "Mais abas", "index": 1 },
-    { "m": "ui.click", "target": "Bancada" },
+    { "m": "ui.open_tab", "target": "Bancada" },
     { "m": "ui.click", "target": "Nova bancada" }
   ],
   "expect": [

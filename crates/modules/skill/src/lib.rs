@@ -65,9 +65,11 @@ impl Module for SkillModule {
         }
 
         let shared = self.shared.clone();
-        r.command("skill.refresh", "skill.command.refresh", move |cx, _args| {
-            commands::refresh(cx, &shared)
-        });
+        r.command(
+            "skill.refresh",
+            "skill.command.refresh",
+            move |cx, _args| commands::refresh(cx, &shared),
+        );
 
         let shared = self.shared.clone();
         r.command("skill.install", "skill.command.install", move |cx, args| {
@@ -124,12 +126,12 @@ impl Module for SkillModule {
                         .describe("Id do dono: forja ou o id de um ajudante."),
                 )
                 .param(
-                    ParamSchema::required("scope", ParamKind::String)
-                        .describe("user ou project."),
+                    ParamSchema::required("scope", ParamKind::String).describe("user ou project."),
                 )
                 .param(
-                    ParamSchema::optional("overwrite", ParamKind::Boolean)
-                        .describe("Substitui a skill de mesmo nome; a versão antiga vai para a lixeira."),
+                    ParamSchema::optional("overwrite", ParamKind::Boolean).describe(
+                        "Substitui a skill de mesmo nome; a versão antiga vai para a lixeira.",
+                    ),
                 )
                 .param(
                     ParamSchema::optional("consent", ParamKind::Boolean)
@@ -147,6 +149,6 @@ impl Module for SkillModule {
         r.view(Slot::Rail, "skill.page", "skill.tab.title", 60, move || {
             Box::new(view::SkillView::new(shared.clone())) as Box<dyn View>
         });
-        r.view_glyph("skill.page", forja_ui_kit::SKILLS);
+        r.view_glyph("skill.page", forja_ui_kit::SKILLS.id());
     }
 }

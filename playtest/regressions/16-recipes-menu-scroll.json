@@ -4,7 +4,7 @@
   "locale": "pt-BR",
   "steps": [
     { "m": "ui.click", "target": "Fechar" },
-    { "m": "ui.click", "target": "Adicionar pasta" },
+    { "m": "ui.click", "target": "Abrir pasta" },
     { "m": "ui.click", "target": "Escolher…" },
     { "m": "ui.click", "id": 6810641461030805666 },
     { "m": "ui.type", "text": "Exemplo" },

@@ -102,12 +102,28 @@ impl TabSet {
         &self.closed
     }
 
-    pub fn from_closed(indexes: Vec<usize>, total: usize) -> Self {
+    pub fn was_closed(&self, index: usize) -> bool {
+        self.closed.contains(&index)
+    }
+
+    pub fn from_hidden_and_closed(
+        hidden_indexes: impl IntoIterator<Item = usize>,
+        closed_indexes: impl IntoIterator<Item = usize>,
+        total: usize,
+    ) -> Self {
         let mut hidden = BTreeSet::new();
+        for index in hidden_indexes {
+            if index < total {
+                hidden.insert(index);
+            }
+        }
         let mut closed = Vec::new();
-        for index in indexes {
-            if index < total && hidden.insert(index) {
-                closed.push(index);
+        for index in closed_indexes {
+            if index < total {
+                hidden.insert(index);
+                if !closed.contains(&index) {
+                    closed.push(index);
+                }
             }
         }
         Self { hidden, closed }

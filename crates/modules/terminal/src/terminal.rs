@@ -62,6 +62,8 @@ pub struct SearchState {
 pub struct Terminal {
     /// Id estável.
     pub id: TerminalId,
+    pub(crate) focus_id: Option<egui::Id>,
+    pub(crate) drawn_frame: Option<u64>,
     /// Pasta de trabalho.
     pub dir: PathBuf,
     /// Executável do shell.
@@ -119,6 +121,7 @@ impl Terminal {
         let mut surface = Surface::new();
         surface.set_history_limit(settings.history_limit());
         surface.set_shell_marks(settings.shell_marks);
+        surface.set_inline_images(settings.images_enabled);
         if let Some(text) = restored_text {
             surface.feed(b"\x1b[2m");
             surface.feed(text.replace('\n', "\r\n").as_bytes());
@@ -136,6 +139,7 @@ impl Terminal {
         let title = custom_title.clone().unwrap_or_else(|| shell_label.clone());
         Self {
             id,
+            focus_id: None, drawn_frame: None,
             dir,
             shell: shell.program,
             args: shell.arguments,
@@ -216,6 +220,7 @@ impl Terminal {
             self.surface.feed(&data);
             self.dirty = true;
         }
+        self.surface.publish_if_due(now);
         for signal in std::mem::take(&mut self.surface.signals) {
             match signal {
                 Signal::Bell => {
@@ -264,6 +269,11 @@ impl Terminal {
             events.push(TerminalEvent::TitleChanged);
         }
         events
+    }
+
+    /// Delivers a pane/window focus transition to the terminal process.
+    pub fn report_focus(&mut self, focused: bool) {
+        if let Some(bytes) = self.surface.focus_event(focused) { self.write(bytes); }
     }
 
     /// Escreve bytes no processo, guardando se ele ainda está abrindo.
@@ -322,6 +332,7 @@ impl Terminal {
         let mut want = |delay: Duration| {
             wake = Some(wake.map_or(delay, |current| current.min(delay)));
         };
+        if let Some(wait) = self.surface.synchronization_wait(now) { want(wait); }
         if self.spawning.is_some() {
             want(SPAWN_TICK);
         }
@@ -373,7 +384,7 @@ impl Terminal {
     pub fn apply_settings(&mut self, settings: &TermSettings) {
         self.surface.set_history_limit(settings.history_limit());
         self.surface.set_shell_marks(settings.shell_marks);
-        self.surface.set_inline_images(true);
+        self.surface.set_inline_images(settings.images_enabled);
         if settings.follow_output {
             self.follow = true;
         }
@@ -381,12 +392,12 @@ impl Terminal {
 
     /// Intervalo de linhas visível.
     pub fn visible_range(&self) -> (usize, usize) {
-        let total = self.surface.total_rows();
+        let total = self.surface.display().total_rows();
         let rows = self.visible_rows.max(1);
         let start = if self.follow {
-            self.surface.history.len()
+            self.surface.display().history.len()
         } else {
-            self.scroll_row.min(self.surface.history.len())
+            self.scroll_row.min(self.surface.display().history.len())
         };
         (start, (start + rows).min(total))
     }
@@ -612,6 +623,39 @@ impl Terminal {
     /// Conteúdo mudou desde a última gravação.
     pub fn take_dirty(&mut self) -> bool {
         std::mem::take(&mut self.dirty)
+    }
+
+    /// Cria um terminal sem processo filho para testes de renderização.
+    #[cfg(test)]
+    pub(crate) fn test_dummy(id: TerminalId) -> Self {
+        Self {
+            id,
+            focus_id: None,
+            drawn_frame: None,
+            dir: PathBuf::from("."),
+            shell: "test".to_owned(),
+            args: String::new(),
+            launch_env: BTreeMap::new(),
+            pty: None,
+            spawning: None,
+            pending_input: Vec::new(),
+            surface: Surface::new(),
+            selection: None,
+            search: SearchState::default(),
+            custom_title: None,
+            last_title: "test".to_owned(),
+            exit_reported: false,
+            error: None,
+            follow: true,
+            scroll_row: 0,
+            visible_rows: 24,
+            bell_until: None,
+            focus_request: false,
+            paste_request: false,
+            preview_alive: true,
+            dirty: false,
+            shell_label: "test".to_owned(),
+        }
     }
 
     /// Encerra a árvore de processos agora (usado nos testes do hub).

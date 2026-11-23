@@ -38,7 +38,7 @@ pub fn apply(ctx: &egui::Context, tokens: &Tokens) {
         );
         style.text_styles.insert(
             TextStyle::Heading,
-            FontId::new(metrics.title, semibold_family()),
+            FontId::new(metrics.section, semibold_family()),
         );
         style.text_styles.insert(
             TextStyle::Monospace,

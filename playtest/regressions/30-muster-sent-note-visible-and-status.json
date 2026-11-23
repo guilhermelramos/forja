@@ -6,6 +6,10 @@
   "test_helpers": "none",
   "steps": [
     { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Abrir pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.key", "keys": "Escape" },
     { "m": "ui.click", "target": "Mutirão" },
     { "m": "ui.click", "target": "escolha uma atribuição" },
     { "m": "ui.click", "target": "Validar e-mail (sem ajudante)" },
@@ -21,7 +25,7 @@
   ],
   "expect": [
     {
-      "step": 6,
+      "step": 10,
       "present": [
         "Você",
         "Enviado · sem ajudante",
@@ -33,7 +37,6 @@
       "absent_contains": ["task-1", "task-2", "assignment-1"]
     },
     {
-      "step": 12,
       "present": [
         "Enviado · na fila",
         "Revisar testes",

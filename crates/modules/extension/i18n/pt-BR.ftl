@@ -84,3 +84,7 @@ extension-setting-dev-label = Recarregar ao editar
 extension-setting-dev-help = Pastas de desenvolvimento recarregam sem pedir de novo quando as capacidades não mudam.
 
 extension-details = Detalhes
+extension-page-state-refresh = Atualizar
+extension-page-state-empty = Ainda não há itens.
+extension-page-state-loading = Carregando…
+extension-page-state-error = Não foi possível carregar.

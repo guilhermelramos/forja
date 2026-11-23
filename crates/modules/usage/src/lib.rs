@@ -110,7 +110,7 @@ impl Module for UsageModule {
             70,
             move || Box::new(view::UsagePage::new(page.clone())),
         );
-        r.view_glyph("usage.page", forja_ui_kit::BOARD);
+        r.view_glyph("usage.page", forja_ui_kit::Icon::Usage.id());
         let status = self.state.clone();
         r.view(
             Slot::StatusBar,

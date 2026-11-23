@@ -120,7 +120,7 @@ impl Module for DiffModule {
             Slot::BenchTab,
             "diff.tab",
             "diff.tab.title",
-            bench_tab_order(30),
+            bench_tab_order(14),
             move || Box::new(view::DiffView::new(view_state.clone())),
         );
     }

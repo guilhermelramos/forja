@@ -1,0 +1,63 @@
+{
+  "title": "Erros ficam na linha e ajudantes ausentes não aparecem habilitados (#199, #163)",
+  "issue": 199,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.click",
+      "target": "Ajustes"
+    },
+    {
+      "m": "ui.click",
+      "target": "Buscar ajustes"
+    },
+    {
+      "m": "ui.type",
+      "text": "appearance.colors.accent"
+    },
+    {
+      "m": "ui.click",
+      "target": "Cor de destaque"
+    },
+    {
+      "m": "ui.key",
+      "keys": "Ctrl+A"
+    },
+    {
+      "m": "ui.type",
+      "text": "invalid"
+    },
+    {
+      "m": "ui.snapshot"
+    },
+    {
+      "m": "ui.click",
+      "target": "Ajudantes",
+      "index": 1
+    },
+    {
+      "m": "ui.snapshot"
+    }
+  ],
+  "expect": [
+    {
+      "step": 7,
+      "present_contains": [
+        "informe uma cor no formato #RRGGBB"
+      ],
+      "no_geometry_issues": true
+    },
+    {
+      "step": 9,
+      "present_contains": [
+        "CLI não instalado"
+      ],
+      "no_geometry_issues": true
+    }
+  ]
+}

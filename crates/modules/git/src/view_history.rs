@@ -23,6 +23,14 @@ impl HistoryView {
 }
 
 impl View for HistoryView {
+    fn empty_by_nature(&self) -> bool {
+        true
+    }
+
+    fn has_content(&self) -> bool {
+        self.state.has_history_content()
+    }
+
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         if !self.checked {
             self.checked = true;

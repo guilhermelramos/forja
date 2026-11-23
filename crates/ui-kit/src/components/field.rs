@@ -52,7 +52,8 @@ pub fn select(ui: &mut Ui, selected: &mut usize, options: &[&str]) -> Response {
     let text_color = tokens.color.text.to_color32();
     let width =
         (paint::text_size(ui, label, font.clone(), text_color).x + metrics.pad_x * 2.0 + 28.0)
-            .max(metrics.control * 4.0);
+            .max(metrics.control * 4.0)
+            .min(ui.available_width().max(metrics.control));
     let (rect, mut response) =
         ui.allocate_exact_size(egui::vec2(width, metrics.control), Sense::click());
     response.widget_info(|| {

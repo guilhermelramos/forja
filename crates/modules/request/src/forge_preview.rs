@@ -159,32 +159,32 @@ impl ForgePreview {
                 forja_ui_kit::register_keyboard_layer(ui, layer);
                 ui.set_min_width(540.0);
                 ui.heading(cx.t("request.forge.preview.title"));
-                ui.add_space(8.0);
+                ui.add_space(forja_ui_kit::Spacing::SM);
                 match &preview_state {
                     ForgePreviewState::Loading { .. } => {
                         ui.horizontal(|ui| {
                             forja_ui_kit::spinner_if_active(ui);
-                            ui.label(cx.t("request.forge.preview.loading"));
+                            forja_ui_kit::text(ui, cx.t("request.forge.preview.loading"));
                         });
                     }
                     ForgePreviewState::Ready { preview, .. } => {
-                        ui.label(preview_row(cx, "request.forge.preview.name", &preview.name));
-                        ui.label(preview_row(
+                        forja_ui_kit::text(ui, preview_row(cx, "request.forge.preview.name", &preview.name));
+                        forja_ui_kit::text(ui, preview_row(
                             cx,
                             "request.forge.preview.branch",
                             &preview.branch,
                         ));
-                        ui.label(preview_row(cx, "request.forge.preview.base", &preview.base));
-                        ui.label(preview_row(cx, "request.forge.preview.path", &preview.path));
+                        forja_ui_kit::text(ui, preview_row(cx, "request.forge.preview.base", &preview.base));
+                        forja_ui_kit::text(ui, preview_row(cx, "request.forge.preview.path", &preview.path));
                         if preview.fetch_before {
-                            ui.label(
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(cx.t("request.forge.preview.fetch")).weak(),
                             );
                         }
                         ui.add_space(6.0);
-                        ui.label(egui::RichText::new(cx.t("request.forge.preview.setup")).strong());
+                        forja_ui_kit::text(ui, egui::RichText::new(cx.t("request.forge.preview.setup")).strong());
                         if preview.setup.is_empty() {
-                            ui.label(
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(cx.t("request.forge.preview.setup.none"))
                                     .weak(),
                             );
@@ -192,17 +192,17 @@ impl ForgePreview {
                             egui::ScrollArea::vertical()
                                 .max_height(96.0)
                                 .show(ui, |ui| {
-                                    ui.label(egui::RichText::new(&preview.setup).monospace());
+                                    forja_ui_kit::text(ui, egui::RichText::new(&preview.setup).monospace());
                                 });
                             let setup_status = match preview.setup_state.as_str() {
                                 "approved" => "request.forge.preview.setup.approved",
                                 "disabled" => "request.forge.preview.setup.disabled",
                                 _ => "request.forge.preview.setup.needs-approval",
                             };
-                            ui.label(egui::RichText::new(cx.t(setup_status)).weak());
+                            forja_ui_kit::text(ui, egui::RichText::new(cx.t(setup_status)).weak());
                         }
                         if !preview.setup_warnings.is_empty() {
-                            ui.label(
+                            forja_ui_kit::text(ui,
                                 egui::RichText::new(preview.setup_warnings.join("\n"))
                                     .color(ui.visuals().warn_fg_color),
                             );
@@ -213,7 +213,7 @@ impl ForgePreview {
                         } else {
                             "request.forge.preview.helper.no"
                         };
-                        ui.label(preview_row(
+                        forja_ui_kit::text(ui, preview_row(
                             cx,
                             "request.forge.preview.helper",
                             &cx.t(helper_status),
@@ -238,13 +238,13 @@ impl ForgePreview {
                             ui.visuals().error_fg_color,
                             cx.t("request.forge.preview.error"),
                         );
-                        ui.label(summary);
+                        forja_ui_kit::text(ui, summary);
                         if let Some(detail) = detail {
-                            ui.label(egui::RichText::new(detail).monospace().weak());
+                            forja_ui_kit::text(ui, egui::RichText::new(detail).monospace().weak());
                         }
                     }
                 }
-                ui.add_space(12.0);
+                ui.add_space(forja_ui_kit::Spacing::MD);
                 ui.separator();
                 ui.horizontal(|ui| {
                     ui.add_enabled_ui(can_confirm, |ui| {

@@ -23,24 +23,21 @@ pub(crate) fn draw_installed_profile(
 ) -> Option<ProfileAction> {
     let mut action = None;
     ui.horizontal(|ui| {
-        ui.label(egui::RichText::new(&profile.name).strong());
+        forja_ui_kit::text(ui, egui::RichText::new(&profile.name).strong());
         if let Some(version) = detection.and_then(|item| item.version.as_deref()) {
-            ui.label(egui::RichText::new(version).weak());
+            forja_ui_kit::text(ui, egui::RichText::new(version).weak());
         } else {
-            ui.label(egui::RichText::new(cx.t("helper.view.installed")).weak());
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t("helper.view.installed")).weak());
         }
         if is_default {
-            ui.label(
-                egui::RichText::new(cx.t("helper.view.default-badge"))
-                    .color(egui::Color32::from_rgb(0x6C, 0xC4, 0x8A)),
-            );
+            forja_ui_kit::tag(ui, &cx.t("helper.view.default-badge"));
         }
         if let Some(bench) = last_bench {
             let name = std::path::Path::new(bench)
                 .file_name()
                 .map(|part| part.to_string_lossy().into_owned())
                 .unwrap_or_else(|| bench.to_owned());
-            ui.label(
+            forja_ui_kit::text(ui,
                 egui::RichText::new(cx.t_args("helper.view.last-bench", &[("bench", &name)]))
                     .weak(),
             );
@@ -85,11 +82,11 @@ pub(crate) fn draw_missing_profile(
     copied_profile: &mut Option<String>,
 ) {
     ui.horizontal(|ui| {
-        ui.label(&profile.name);
-        ui.label(egui::RichText::new(cx.t("helper.view.not-installed")).weak());
+        forja_ui_kit::text(ui, &profile.name);
+        forja_ui_kit::text(ui, egui::RichText::new(cx.t("helper.view.not-installed")).weak());
         if let Some(command) = detect::install_hint(&profile.id) {
-            ui.label(egui::RichText::new(cx.t("helper.view.how-to-install")).weak());
-            ui.label(egui::RichText::new(command).monospace());
+            forja_ui_kit::text(ui, egui::RichText::new(cx.t("helper.view.how-to-install")).weak());
+            forja_ui_kit::text(ui, egui::RichText::new(command).monospace());
             let copied = copied_profile.as_deref() == Some(profile.id.as_str());
             let label = if copied {
                 cx.t("helper.view.copied")
@@ -127,15 +124,15 @@ pub(crate) fn run_status_label(cx: &Ctx<'_>, run: &Run) -> String {
     })
 }
 
-pub(crate) fn run_status_color(run: &Run) -> egui::Color32 {
+pub(crate) fn run_status_color(run: &Run, color: &forja_ui_kit::Palette) -> egui::Color32 {
     if matches!(run.status, HelperStatus::Finished) && status::is_failed(run) {
-        return egui::Color32::from_rgb(0xE5, 0x53, 0x4B);
+        return color.danger.to_color32();
     }
     match run.status {
-        HelperStatus::NeedsYou => egui::Color32::from_rgb(0xFF, 0xC1, 0x4D),
-        HelperStatus::Working => egui::Color32::from_rgb(0x6F, 0xA8, 0xDC),
-        HelperStatus::Idle => egui::Color32::from_rgb(0x6C, 0xC4, 0x8A),
-        HelperStatus::Finished => egui::Color32::from_rgb(0xA6, 0x9C, 0x93),
-        HelperStatus::Unknown => egui::Color32::GRAY,
+        HelperStatus::NeedsYou => color.spark.to_color32(),
+        HelperStatus::Working => color.info.to_color32(),
+        HelperStatus::Idle => color.ok.to_color32(),
+        HelperStatus::Finished => color.text_muted.to_color32(),
+        HelperStatus::Unknown => color.text_muted.to_color32(),
     }
 }

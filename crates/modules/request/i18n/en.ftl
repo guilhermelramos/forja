@@ -109,3 +109,7 @@ setting-request-local-prefix-label = Local request prefix
 setting-request-local-prefix-help = Prefix for locally created requests.
 setting-request-local-counter_start-label = First local request
 setting-request-local-counter_start-help = Starting number for local requests.
+request-page-state-refresh = Refresh
+request-page-state-empty = No items yet.
+request-page-state-loading = Loading…
+request-page-state-error = Could not load.

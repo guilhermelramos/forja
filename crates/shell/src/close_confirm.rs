@@ -121,7 +121,7 @@ pub fn render_close_confirm_modal(
         }
         ui.add_space(12.0);
         ui.horizontal(|ui| {
-            if button(ui, ButtonKind::Danger, &texts.close_anyway).clicked() {
+            if button(ui, ButtonKind::DangerConfirm, &texts.close_anyway).clicked() {
                 choice = CloseChoice::CloseAnyway;
             }
             if tray_enabled && button(ui, ButtonKind::Secondary, &texts.minimize_to_tray).clicked()
@@ -304,7 +304,10 @@ mod tests {
         }
 
         fn register(&mut self, r: &mut Registrar<'_>) {
-            r.i18n("test-helper-name = Helper\n", "test-helper-name = Ajudante\n");
+            r.i18n(
+                "test-helper-name = Helper\n",
+                "test-helper-name = Ajudante\n",
+            );
             let runs = self.runs.clone();
             r.command("helper.status", "test.helper.name", move |_cx, _| {
                 Ok(json!({ "runs": runs }))
@@ -324,7 +327,10 @@ mod tests {
 
         fn register(&mut self, r: &mut Registrar<'_>) {
             use forja_kernel::forja_protocol::{Method, MethodEffect, ResultSchema};
-            r.i18n("test-routine-name = Routine\n", "test-routine-name = Rotina\n");
+            r.i18n(
+                "test-routine-name = Routine\n",
+                "test-routine-name = Rotina\n",
+            );
             let running = self.running;
             let queued = self.queued;
             r.rpc(

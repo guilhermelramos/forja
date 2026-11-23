@@ -47,3 +47,9 @@ onboarding-import-run = Import selected
 onboarding-import-skip = Skip
 onboarding-import-done = Import done. The chosen items are now in Forja.
 onboarding-import-none = Nothing to import from Harbor.
+
+onboarding-step-count = { $current } of { $total }
+onboarding-theme-preview = Theme preview
+onboarding-theme-sample = A bench ready for your ideas.
+onboarding-helpers-default = Default helper
+onboarding-helpers-auto = Choose automatically

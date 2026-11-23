@@ -114,6 +114,7 @@ fn used_keys() -> Vec<&'static str> {
     vec![
         "bench.name",
         "bench.command.current",
+        "bench.command.tool_tabs",
         "bench.command.list",
         "bench.command.list_cards",
         "bench.command.activate",

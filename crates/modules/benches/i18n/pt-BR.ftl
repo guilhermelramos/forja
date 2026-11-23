@@ -1,5 +1,6 @@
 bench-name = Bancadas
 bench-command-current = Bancada atual
+bench-command-tool_tabs = Abas de ferramenta da bancada
 bench-command-list = Listar bancadas
 bench-command-list_cards = Listar cartões de bancada
 bench-command-activate = Ativar bancada
@@ -147,6 +148,8 @@ setting-bench-worktree-auto_prune_days-label = Limpar bancadas antigas (dias)
 setting-bench-worktree-auto_prune_days-help = Remove bancadas guardadas após esse prazo; 0 desliga.
 setting-bench-layout-tabs-label = Abas iniciais
 setting-bench-layout-tabs-help = Abas abertas automaticamente ao criar uma bancada.
+setting-bench-layout-tool_tabs-label = Abas de ferramenta
+setting-bench-layout-tool_tabs-help = Abas de ferramenta abertas ao iniciar uma bancada nova.
 setting-bench-layout-restore-label = Restaurar abas
 setting-bench-layout-restore-help = Reabre as abas da última visita a cada bancada.
 setting-bench-setup-policy-label = Rodar preparo do forja.toml

@@ -47,3 +47,9 @@ onboarding-import-run = Importar selecionados
 onboarding-import-skip = Pular
 onboarding-import-done = Importação feita. Os itens escolhidos já estão na Forja.
 onboarding-import-none = Nada a importar do Harbor.
+
+onboarding-step-count = { $current } de { $total }
+onboarding-theme-preview = Prévia do tema
+onboarding-theme-sample = Uma bancada pronta para suas ideias.
+onboarding-helpers-default = Ajudante padrão
+onboarding-helpers-auto = Escolher automaticamente

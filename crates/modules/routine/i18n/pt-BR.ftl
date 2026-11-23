@@ -116,3 +116,7 @@ setting-routine-notifications-failure-label = Avisar falha
 setting-routine-notifications-failure-help = Notifica quando uma rotina falha.
 setting-routine-notifications-success-label = Avisar sucesso
 setting-routine-notifications-success-help = Notifica quando uma rotina termina com sucesso.
+routine-page-state-refresh = Atualizar
+routine-page-state-empty = Ainda não há itens.
+routine-page-state-loading = Carregando…
+routine-page-state-error = Não foi possível carregar.

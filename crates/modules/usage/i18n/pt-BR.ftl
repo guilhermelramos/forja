@@ -49,3 +49,7 @@ setting-usage-budget-monthly_usd-label = Limite de gasto mensal (US$)
 setting-usage-budget-monthly_usd-help = Avisa em 80% e 100% do custo estimado do mês; 0 desliga.
 setting-usage-display-status_bar-label = Mostrar uso na barra de status
 setting-usage-display-status_bar-help = Mostra o uso acumulado na barra de status.
+usage-page-state-refresh = Atualizar
+usage-page-state-empty = Ainda não há itens.
+usage-page-state-loading = Carregando…
+usage-page-state-error = Não foi possível carregar.

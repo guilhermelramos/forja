@@ -63,8 +63,8 @@ pub struct TermSettings {
     pub close_confirm_running: bool,
     /// Whether closing an active helper needs confirmation.
     pub helper_close_confirm_running: bool,
-    /// `terminal.gpu.mode`.
-    pub gpu_mode: String,
+    /// `terminal.images.enabled`.
+    pub images_enabled: bool,
     /// `terminal.osc52.enabled`.
     pub osc52_enabled: bool,
 }
@@ -99,7 +99,7 @@ impl Default for TermSettings {
             shell_marks: true,
             close_confirm_running: true,
             helper_close_confirm_running: true,
-            gpu_mode: "auto".to_owned(),
+            images_enabled: true,
             osc52_enabled: false,
         }
     }
@@ -162,7 +162,7 @@ impl TermSettings {
                 defaults.close_confirm_running,
             ),
             helper_close_confirm_running: boolean("helper.close.confirm_running", true),
-            gpu_mode: text("terminal.gpu.mode", &defaults.gpu_mode),
+            images_enabled: boolean("terminal.images.enabled", defaults.images_enabled),
             osc52_enabled: boolean("terminal.osc52.enabled", defaults.osc52_enabled),
         }
     }
@@ -217,6 +217,32 @@ impl TermSettings {
     }
 }
 
+/// Lê a chave antiga `terminal.gpu.mode` de um `settings.toml` quando
+/// `terminal.images.enabled` ainda não foi gravada, para compatibilidade.
+pub fn legacy_images_enabled_from_toml(text: &str) -> Option<bool> {
+    let table: toml::Table = toml::from_str(text).ok()?;
+    let terminal = table.get("terminal")?.as_table()?;
+    if terminal
+        .get("images")
+        .and_then(toml::Value::as_table)
+        .and_then(|images| images.get("enabled"))
+        .and_then(toml::Value::as_bool)
+        .is_some()
+    {
+        return None;
+    }
+    let mode = terminal
+        .get("gpu")
+        .and_then(toml::Value::as_table)
+        .and_then(|gpu| gpu.get("mode"))
+        .and_then(toml::Value::as_str)?;
+    match mode {
+        "off" => Some(false),
+        "on" | "auto" => Some(true),
+        _ => None,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -244,7 +270,7 @@ mod tests {
         assert_eq!(settings.links_open_with, "system");
         assert!(settings.shell_marks);
         assert!(settings.close_confirm_running);
-        assert_eq!(settings.gpu_mode, "auto");
+        assert!(settings.images_enabled);
         assert!(!settings.osc52_enabled);
     }
 
@@ -297,5 +323,32 @@ mod recipe_settings_tests {
         assert!(!settings.recipe_confirm);
         assert_eq!(settings.recipe_show_scope, "all");
         assert_eq!(settings.recipe_shell, "inherit");
+    }
+
+    #[test]
+    fn legacy_gpu_mode_maps_to_images_enabled_until_new_key_exists() {
+        assert_eq!(
+            legacy_images_enabled_from_toml("terminal.gpu.mode = \"off\"\n"),
+            Some(false)
+        );
+        assert_eq!(
+            legacy_images_enabled_from_toml("[terminal.gpu]\nmode = \"off\"\n"),
+            Some(false)
+        );
+        assert_eq!(
+            legacy_images_enabled_from_toml("[terminal.gpu]\nmode = \"on\"\n"),
+            Some(true)
+        );
+        assert_eq!(
+            legacy_images_enabled_from_toml("[terminal.gpu]\nmode = \"auto\"\n"),
+            Some(true)
+        );
+        assert_eq!(
+            legacy_images_enabled_from_toml(
+                "terminal.images.enabled = true\nterminal.gpu.mode = \"off\"\n"
+            ),
+            None
+        );
+        assert_eq!(legacy_images_enabled_from_toml(""), None);
     }
 }

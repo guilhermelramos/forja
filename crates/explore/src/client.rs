@@ -247,7 +247,7 @@ impl AppSession {
             .env("FORJA_TEST_SAVE_DIR", self.out_dir.join("downloads"))
             .env(
                 "FORJA_TEST_HELPERS",
-                self.test_helpers.as_deref().unwrap_or(""),
+                self.test_helpers.as_deref().unwrap_or("none"),
             )
             .stdin(Stdio::null())
             .stdout(Stdio::null())

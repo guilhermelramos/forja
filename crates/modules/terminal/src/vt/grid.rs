@@ -5,6 +5,13 @@
 
 use forja_kernel::ui_contract::egui::Color32;
 use std::ops::{Deref, DerefMut};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static NEXT_ROW_STAMP: AtomicU64 = AtomicU64::new(1);
+
+fn next_row_stamp() -> u64 {
+    NEXT_ROW_STAMP.fetch_add(1, Ordering::Relaxed)
+}
 
 /// Bits de atributo de um glifo.
 pub mod attrs {
@@ -14,6 +21,8 @@ pub mod attrs {
     pub const UNDERLINE: u8 = 8;
     pub const REVERSE: u8 = 16;
     pub const CONCEAL: u8 = 32;
+    pub const STRIKE: u8 = 64;
+    pub const OVERLINE: u8 = 128;
 }
 
 /// Origem de uma cor: 0–15 ANSI, 16–255 estendida, 256 padrão, 257 RGB.
@@ -66,6 +75,7 @@ impl Default for Glyph {
 #[derive(Clone)]
 pub struct Row {
     cells: Vec<Glyph>,
+    stamp: u64,
 }
 
 impl Row {
@@ -78,7 +88,13 @@ impl Row {
     pub fn filled(cols: usize, cell: Glyph) -> Self {
         Self {
             cells: vec![cell; cols],
+            stamp: next_row_stamp(),
         }
+    }
+
+    /// Identificador monotônico desta versão da linha para cache de desenho.
+    pub fn stamp(&self) -> u64 {
+        self.stamp
     }
 
     /// Célula visível, escondendo a metade direita de um glifo largo cortado.
@@ -93,6 +109,7 @@ impl Row {
 
     /// Restaura pares largos quando uma edição deixou órfãos.
     pub(crate) fn repair_wide(&mut self) {
+        let mut repaired = false;
         for col in 0..self.cells.len() {
             let invalid = match self.cells[col].width {
                 0 => col == 0 || self.cells[col - 1].width != 2,
@@ -101,7 +118,11 @@ impl Row {
             };
             if invalid {
                 self.cells[col] = Glyph::default();
+                repaired = true;
             }
+        }
+        if repaired {
+            self.stamp = next_row_stamp();
         }
     }
 
@@ -130,6 +151,7 @@ impl Deref for Row {
 
 impl DerefMut for Row {
     fn deref_mut(&mut self) -> &mut Self::Target {
+        self.stamp = next_row_stamp();
         &mut self.cells
     }
 }

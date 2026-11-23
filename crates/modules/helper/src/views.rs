@@ -5,8 +5,7 @@ use crate::hooks::{self, InstallState};
 use crate::launch::ProfileOverride;
 use crate::profile::{self, Profile};
 use crate::profile_cards::{
-    draw_installed_profile, draw_missing_profile, run_status_color, run_status_label,
-    ProfileAction,
+    draw_installed_profile, draw_missing_profile, run_status_color, run_status_label, ProfileAction,
 };
 use crate::status::Run;
 use crate::Shared;
@@ -94,34 +93,27 @@ impl View for HelperPage {
         let _ = ensure_current(cx, &self.core);
         maybe_detect(cx, &self.core);
         self.seed_preview();
-        let (
-            mut runs,
-            profiles,
-            detection,
-            installed_ids,
-            detecting,
-            has_verdict,
-            last_benches,
-        ) = match self.core.state.lock() {
-            Ok(state) => {
-                let installed_ids: BTreeSet<String> = state
-                    .profiles
-                    .iter()
-                    .filter(|profile| state.is_installed(&profile.id))
-                    .map(|profile| profile.id.clone())
-                    .collect();
-                (
-                    state.runs.values().cloned().collect::<Vec<_>>(),
-                    state.profiles.clone(),
-                    state.detection.clone(),
-                    installed_ids,
-                    state.detecting,
-                    state.has_detection_verdict(),
-                    state.last_benches.clone(),
-                )
-            }
-            Err(_) => return,
-        };
+        let (mut runs, profiles, detection, installed_ids, detecting, has_verdict, last_benches) =
+            match self.core.state.lock() {
+                Ok(state) => {
+                    let installed_ids: BTreeSet<String> = state
+                        .profiles
+                        .iter()
+                        .filter(|profile| state.is_installed(&profile.id))
+                        .map(|profile| profile.id.clone())
+                        .collect();
+                    (
+                        state.runs.values().cloned().collect::<Vec<_>>(),
+                        state.profiles.clone(),
+                        state.detection.clone(),
+                        installed_ids,
+                        state.detecting,
+                        state.has_detection_verdict(),
+                        state.last_benches.clone(),
+                    )
+                }
+                Err(_) => return,
+            };
         runs.sort_by_key(|run| rank(run.status));
         let active_count = runs
             .iter()
@@ -140,261 +132,295 @@ impl View for HelperPage {
             .iter()
             .partition(|profile| is_installed(&profile.id));
 
-        forja_ui_kit::page_heading(ui, &cx.t("helper.view.title"), Some(&active), |ui| {
-            if detecting {
-                ui.label(egui::RichText::new(cx.t("helper.view.detecting")).weak());
-            } else if has_verdict {
-                let summary = cx.t_args(
-                    "helper.view.detect-summary",
-                    &[
-                        ("installed", &installed.len().to_string()),
-                        ("missing", &missing.len().to_string()),
-                    ],
-                );
-                ui.label(egui::RichText::new(summary).weak());
-            }
-            if !detecting
-                && forja_ui_kit::button(
-                    ui,
-                    forja_ui_kit::ButtonKind::Secondary,
-                    &cx.t("helper.view.detect"),
-                )
-                .clicked()
-            {
-                let _ = cx.run_command("helper.detect", Args::new());
-            }
-        });
-        if let Some(error) = &self.launch_error {
-            let human = forja_kernel::human_error::humanize_ctx(cx, error);
-            forja_ui_kit::error_banner(
-                ui,
-                &human.summary,
-                human.detail.as_deref(),
-                &cx.t("kernel.error.details"),
-            );
+        let title = cx.t("helper.view.title");
+        let refresh = cx.t("helper.page-state.refresh");
+        let mut page = forja_ui_kit::page(
+            ui,
+            forja_ui_kit::PageSpec::new("helper.tab", &title)
+                .subtitle(&active)
+                .refresh(&refresh),
+        );
+        if page.response.refresh_clicked && !detecting {
+            let _ = cx.run_command("helper.detect", Args::new());
         }
-        if runs.is_empty() {
-            forja_ui_kit::empty_state(ui, forja_ui_kit::HELPERS, &cx.t("helper.view.empty"), None);
-        }
-        let mut focus = None;
-        for run in &runs {
-            let name = profile_name(&profiles, &run.profile_id);
-            let status = run_status_label(cx, run);
+        page.filters(|ui| {
             ui.horizontal(|ui| {
-                ui.label(
-                    egui::RichText::new(status).color(run_status_color(run)),
-                );
-                ui.label(egui::RichText::new(name).strong());
-                ui.label(
-                    egui::RichText::new(
-                        std::path::Path::new(&run.bench_path)
-                            .file_name()
-                            .map(|name| name.to_string_lossy().into_owned())
-                            .unwrap_or_else(|| run.bench_path.clone()),
-                    )
-                    .weak(),
-                );
-                ui.label(egui::RichText::new(format_duration(&run.started_at)).weak());
-                if forja_ui_kit::button(
-                    ui,
-                    forja_ui_kit::ButtonKind::Ghost,
-                    &cx.t("helper.view.focus"),
+                let search_label = cx.t("helper.view.search-hint");
+                forja_ui_kit::text(ui, egui::RichText::new(cx.t("helper.view.profiles")).strong());
+                ui.add(
+                    egui::TextEdit::singleline(&mut self.search)
+                        .hint_text(search_label.clone())
+                        .desired_width(220.0),
                 )
-                .clicked()
+                .widget_info(|| {
+                    egui::WidgetInfo::labeled(
+                        egui::WidgetType::TextEdit,
+                        true,
+                        search_label.clone(),
+                    )
+                });
+                if !self.search.trim().is_empty()
+                    && forja_ui_kit::button(
+                        ui,
+                        forja_ui_kit::ButtonKind::Ghost,
+                        &cx.t("helper.view.clear-filter"),
+                    )
+                    .clicked()
                 {
-                    focus = Some(run.terminal_id.clone());
+                    self.search.clear();
                 }
             });
-        }
-        if let Some(terminal_id) = focus {
-            let mut args = Args::new();
-            args.insert("terminal_id", json!(terminal_id));
-            let _ = cx.run_command("helper.focus", args);
-        }
-        ui.separator();
-        ui.horizontal(|ui| {
-            let search_label = cx.t("helper.view.search-hint");
-            ui.label(egui::RichText::new(cx.t("helper.view.profiles")).strong());
-            ui.add(
-                egui::TextEdit::singleline(&mut self.search)
-                    .hint_text(search_label.clone())
-                    .desired_width(220.0),
-            )
-            .widget_info(|| {
-                egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, true, search_label.clone())
-            });
-            if !self.search.trim().is_empty()
-                && forja_ui_kit::button(
-                    ui,
-                    forja_ui_kit::ButtonKind::Ghost,
-                    &cx.t("helper.view.clear-filter"),
-                )
-                .clicked()
-            {
-                self.search.clear();
-            }
         });
-        let raw_query = self.search.trim().to_owned();
-        let query = raw_query.to_ascii_lowercase();
-        let matches_query = |profile: &Profile| -> bool {
-            query.is_empty()
-                || profile.name.to_ascii_lowercase().contains(&query)
-                || profile.id.to_ascii_lowercase().contains(&query)
-        };
-        let installed_filtered: Vec<&Profile> = installed
-            .iter()
-            .copied()
-            .filter(|profile| matches_query(profile))
-            .collect();
-        let missing_filtered: Vec<&Profile> = missing
-            .iter()
-            .copied()
-            .filter(|profile| matches_query(profile))
-            .collect();
-        let mut action: Option<ProfileAction> = None;
-        let mut clear_filter = false;
-        egui::ScrollArea::vertical()
-            .max_height(460.0)
-            .show(ui, |ui| {
-                ui.label(
-                    egui::RichText::new(format!(
-                        "{} ({})",
-                        cx.t("helper.view.installed-section"),
-                        installed.len()
-                    ))
-                    .strong(),
-                );
-                if installed.is_empty() {
-                    ui.label(egui::RichText::new(cx.t("helper.view.installed-empty")).weak());
-                } else if installed_filtered.is_empty() {
-                    ui.horizontal(|ui| {
-                        ui.label(
+        page.body(|ui| {
+            egui::ScrollArea::vertical()
+                .id_salt("helper.page.body")
+                .show(ui, |ui| {
+                    if detecting {
+                        forja_ui_kit::page_state(
+                            ui,
+                            forja_ui_kit::PageState::Loading,
+                            &cx.t("helper.page-state.loading"),
+                            None,
+                        );
+                    } else if has_verdict {
+                        forja_ui_kit::text(ui,
                             egui::RichText::new(cx.t_args(
-                                "helper.view.filter-empty",
-                                &[("query", &raw_query)],
+                                "helper.view.detect-summary",
+                                &[
+                                    ("installed", &installed.len().to_string()),
+                                    ("missing", &missing.len().to_string()),
+                                ],
                             ))
                             .weak(),
                         );
-                        if forja_ui_kit::button(
+                    }
+                    if let Some(error) = &self.launch_error {
+                        let human = forja_kernel::human_error::humanize_ctx(cx, error);
+                        let detail = human
+                            .detail
+                            .as_ref()
+                            .map(|detail| format!("{}\n{}", human.summary, detail))
+                            .unwrap_or(human.summary);
+                        forja_ui_kit::page_state(
                             ui,
-                            forja_ui_kit::ButtonKind::Ghost,
-                            &cx.t("helper.view.clear-filter"),
-                        )
-                        .clicked()
-                        {
-                            clear_filter = true;
-                        }
-                    });
-                }
-                for profile in &installed_filtered {
-                    if action.is_none() {
-                        action = draw_installed_profile(
-                            ui,
-                            cx,
-                            profile,
-                            detection.get(&profile.id),
-                            default_id.as_deref() == Some(profile.id.as_str()),
-                            last_benches.get(&profile.id).map(String::as_str),
-                        );
-                    } else {
-                        let _ = draw_installed_profile(
-                            ui,
-                            cx,
-                            profile,
-                            detection.get(&profile.id),
-                            default_id.as_deref() == Some(profile.id.as_str()),
-                            last_benches.get(&profile.id).map(String::as_str),
+                            forja_ui_kit::PageState::Error,
+                            &cx.t("helper.page-state.error"),
+                            Some(&detail),
                         );
                     }
-                }
-                if !missing.is_empty() {
-                    ui.add_space(8.0);
-                    let expanded = self.show_missing || (!query.is_empty() && !missing_filtered.is_empty());
-                    let toggle_key = if expanded {
-                        "helper.view.hide-not-installed"
-                    } else {
-                        "helper.view.show-not-installed"
-                    };
-                    let toggle_label = cx.t_args(
-                        toggle_key,
-                        &[("count", &missing.len().to_string())],
-                    );
-                    if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &toggle_label)
-                        .clicked()
-                    {
-                        if expanded && !self.show_missing {
-                            clear_filter = true;
-                        } else {
-                            self.show_missing = !self.show_missing;
-                        }
-                    }
-                    if expanded && !missing_filtered.is_empty() {
-                        ui.label(
-                            egui::RichText::new(cx.t("helper.view.not-installed-section")).strong(),
+                    if runs.is_empty() {
+                        forja_ui_kit::page_state(
+                            ui,
+                            forja_ui_kit::PageState::Empty,
+                            &cx.t("helper.page-state.empty"),
+                            Some(&cx.t("helper.view.empty")),
                         );
-                        for profile in &missing_filtered {
-                            draw_missing_profile(
+                    }
+                    let mut focus = None;
+                    for run in &runs {
+                        let name = profile_name(&profiles, &run.profile_id);
+                        let status = run_status_label(cx, run);
+                        ui.horizontal(|ui| {
+                            forja_ui_kit::text(ui, egui::RichText::new(status).color(run_status_color(run, &forja_ui_kit::applied_tokens(ui.ctx()).color)));
+                            forja_ui_kit::text(ui, egui::RichText::new(name).strong());
+                            forja_ui_kit::text(ui,
+                                egui::RichText::new(
+                                    std::path::Path::new(&run.bench_path)
+                                        .file_name()
+                                        .map(|name| name.to_string_lossy().into_owned())
+                                        .unwrap_or_else(|| run.bench_path.clone()),
+                                )
+                                .weak(),
+                            );
+                            forja_ui_kit::text(ui, egui::RichText::new(format_duration(&run.started_at)).weak());
+                            if forja_ui_kit::button(
                                 ui,
-                                cx,
-                                profile,
-                                &mut self.copied_profile,
+                                forja_ui_kit::ButtonKind::Ghost,
+                                &cx.t("helper.view.focus"),
+                            )
+                            .clicked()
+                            {
+                                focus = Some(run.terminal_id.clone());
+                            }
+                        });
+                    }
+                    if let Some(terminal_id) = focus {
+                        let mut args = Args::new();
+                        args.insert("terminal_id", json!(terminal_id));
+                        let _ = cx.run_command("helper.focus", args);
+                    }
+                    ui.separator();
+                    let raw_query = self.search.trim().to_owned();
+                    let query = raw_query.to_ascii_lowercase();
+                    let matches_query = |profile: &Profile| -> bool {
+                        query.is_empty()
+                            || profile.name.to_ascii_lowercase().contains(&query)
+                            || profile.id.to_ascii_lowercase().contains(&query)
+                    };
+                    let installed_filtered: Vec<&Profile> = installed
+                        .iter()
+                        .copied()
+                        .filter(|profile| matches_query(profile))
+                        .collect();
+                    let missing_filtered: Vec<&Profile> = missing
+                        .iter()
+                        .copied()
+                        .filter(|profile| matches_query(profile))
+                        .collect();
+                    let mut action: Option<ProfileAction> = None;
+                    let mut clear_filter = false;
+                    egui::ScrollArea::vertical()
+                        .max_height(460.0)
+                        .show(ui, |ui| {
+                            forja_ui_kit::text(ui,
+                                egui::RichText::new(format!(
+                                    "{} ({})",
+                                    cx.t("helper.view.installed-section"),
+                                    installed.len()
+                                ))
+                                .strong(),
+                            );
+                            if installed.is_empty() {
+                                forja_ui_kit::text(ui,
+                                    egui::RichText::new(cx.t("helper.view.installed-empty")).weak(),
+                                );
+                            } else if installed_filtered.is_empty() {
+                                ui.horizontal(|ui| {
+                                    forja_ui_kit::text(ui,
+                                        egui::RichText::new(cx.t_args(
+                                            "helper.view.filter-empty",
+                                            &[("query", &raw_query)],
+                                        ))
+                                        .weak(),
+                                    );
+                                    if forja_ui_kit::button(
+                                        ui,
+                                        forja_ui_kit::ButtonKind::Ghost,
+                                        &cx.t("helper.view.clear-filter"),
+                                    )
+                                    .clicked()
+                                    {
+                                        clear_filter = true;
+                                    }
+                                });
+                            }
+                            for profile in &installed_filtered {
+                                if action.is_none() {
+                                    action = draw_installed_profile(
+                                        ui,
+                                        cx,
+                                        profile,
+                                        detection.get(&profile.id),
+                                        default_id.as_deref() == Some(profile.id.as_str()),
+                                        last_benches.get(&profile.id).map(String::as_str),
+                                    );
+                                } else {
+                                    let _ = draw_installed_profile(
+                                        ui,
+                                        cx,
+                                        profile,
+                                        detection.get(&profile.id),
+                                        default_id.as_deref() == Some(profile.id.as_str()),
+                                        last_benches.get(&profile.id).map(String::as_str),
+                                    );
+                                }
+                            }
+                            if !missing.is_empty() {
+                                ui.add_space(forja_ui_kit::Spacing::SM);
+                                let expanded = self.show_missing
+                                    || (!query.is_empty() && !missing_filtered.is_empty());
+                                let toggle_key = if expanded {
+                                    "helper.view.hide-not-installed"
+                                } else {
+                                    "helper.view.show-not-installed"
+                                };
+                                let toggle_label =
+                                    cx.t_args(toggle_key, &[("count", &missing.len().to_string())]);
+                                if forja_ui_kit::button(
+                                    ui,
+                                    forja_ui_kit::ButtonKind::Ghost,
+                                    &toggle_label,
+                                )
+                                .clicked()
+                                {
+                                    if expanded && !self.show_missing {
+                                        clear_filter = true;
+                                    } else {
+                                        self.show_missing = !self.show_missing;
+                                    }
+                                }
+                                if expanded && !missing_filtered.is_empty() {
+                                    forja_ui_kit::text(ui,
+                                        egui::RichText::new(
+                                            cx.t("helper.view.not-installed-section"),
+                                        )
+                                        .strong(),
+                                    );
+                                    for profile in &missing_filtered {
+                                        draw_missing_profile(
+                                            ui,
+                                            cx,
+                                            profile,
+                                            &mut self.copied_profile,
+                                        );
+                                    }
+                                }
+                            }
+                        });
+                    if clear_filter {
+                        self.search.clear();
+                    }
+                    match action {
+                        Some(ProfileAction::Launch(profile_id)) => {
+                            self.launch_error = None;
+                            let mut args = Args::new();
+                            args.insert("profile_id", json!(profile_id));
+                            if let Err(error) = cx.run_command("helper.launch", args) {
+                                let message = match error {
+                                    forja_kernel::KernelError::Command { message, .. } => message,
+                                    other => other.to_string(),
+                                };
+                                self.launch_error = Some(message);
+                            }
+                        }
+                        Some(ProfileAction::Chat(profile_id)) => {
+                            self.launch_error = None;
+                            let mut args = Args::new();
+                            args.insert("profile_id", json!(profile_id));
+                            if let Err(error) = cx.run_command("chat.open", args) {
+                                let message = match error {
+                                    forja_kernel::KernelError::Command { message, .. } => message,
+                                    other => other.to_string(),
+                                };
+                                self.launch_error = Some(message);
+                            } else if cx.registry().command("shell.tab.open").is_some() {
+                                let mut tab = Args::new();
+                                tab.insert("view_id", json!("chat.tab"));
+                                let _ = cx.run_command("shell.tab.open", tab);
+                            }
+                        }
+                        Some(ProfileAction::SetDefault(profile_id)) => {
+                            let _ = cx.set_setting(
+                                "helper.default.profile",
+                                SettingValue::Text(profile_id),
                             );
                         }
+                        None => {}
                     }
-                }
-            });
-        if clear_filter {
-            self.search.clear();
-        }
-        match action {
-            Some(ProfileAction::Launch(profile_id)) => {
-                self.launch_error = None;
-                let mut args = Args::new();
-                args.insert("profile_id", json!(profile_id));
-                if let Err(error) = cx.run_command("helper.launch", args) {
-                    let message = match error {
-                        forja_kernel::KernelError::Command { message, .. } => message,
-                        other => other.to_string(),
-                    };
-                    self.launch_error = Some(message);
-                }
-            }
-            Some(ProfileAction::Chat(profile_id)) => {
-                self.launch_error = None;
-                let mut args = Args::new();
-                args.insert("profile_id", json!(profile_id));
-                if let Err(error) = cx.run_command("chat.open", args) {
-                    let message = match error {
-                        forja_kernel::KernelError::Command { message, .. } => message,
-                        other => other.to_string(),
-                    };
-                    self.launch_error = Some(message);
-                } else if cx.registry().command("shell.tab.open").is_some() {
-                    let mut tab = Args::new();
-                    tab.insert("view_id", json!("chat.tab"));
-                    let _ = cx.run_command("shell.tab.open", tab);
-                }
-            }
-            Some(ProfileAction::SetDefault(profile_id)) => {
-                let _ = cx.set_setting(
-                    "helper.default.profile",
-                    SettingValue::Text(profile_id),
-                );
-            }
-            None => {}
-        }
-        if std::env::var_os("FORJA_HELPER_SETTINGS_PREVIEW").is_some() {
-            egui::Window::new(cx.t("helper.settings.title"))
-                .id(egui::Id::new("forja-helper-settings-preview"))
-                .default_width(620.0)
-                .max_height(680.0)
-                .collapsible(false)
-                .show(ui.ctx(), |ui| {
-                    egui::ScrollArea::vertical().show(ui, |ui| {
-                        self.settings.draw(ui, cx);
-                    });
+                    if std::env::var_os("FORJA_HELPER_SETTINGS_PREVIEW").is_some() {
+                        egui::Window::new(cx.t("helper.settings.title"))
+                            .id(egui::Id::new("forja-helper-settings-preview"))
+                            .default_width(620.0)
+                            .max_height(680.0)
+                            .collapsible(false)
+                            .show(ui.ctx(), |ui| {
+                                egui::ScrollArea::vertical().show(ui, |ui| {
+                                    self.settings.draw(ui, cx);
+                                });
+                            });
+                    }
                 });
-        }
+        });
     }
 }
 
@@ -407,23 +433,31 @@ pub struct HelperSettings {
 impl HelperSettings {
     /// Cria a seção ligada ao estado.
     pub fn new(core: Shared) -> Self {
-        Self {
-            core,
-            notice: None,
-        }
+        Self { core, notice: None }
     }
-
-
 }
 
 impl HelperSettings {
     fn draw(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         let _ = ensure_current(cx, &self.core);
-        let (profiles, file) = match self.core.state.lock() {
-            Ok(state) => (state.profiles.clone(), state.file.clone()),
+        maybe_detect(cx, &self.core);
+        let (profiles, file, installed) = match self.core.state.lock() {
+            Ok(state) => (
+                state.profiles.clone(),
+                state.file.clone(),
+                state
+                    .profiles
+                    .iter()
+                    .filter(|profile| state.is_installed(&profile.id))
+                    .map(|profile| profile.id.clone())
+                    .collect::<BTreeSet<_>>(),
+            ),
             Err(_) => return,
         };
-        for profile in profiles.iter().filter(|profile| profile.hooks.supported) {
+        for profile in profiles
+            .iter()
+            .filter(|profile| profile.hooks.supported && installed.contains(&profile.id))
+        {
             let mut args = Args::new();
             args.insert("profile_id", json!(profile.id));
             let _ = cx.run_command("helper.hooks.status", args);
@@ -445,12 +479,9 @@ impl HelperSettings {
         let mut changes: Vec<(String, ProfileOverride)> = Vec::new();
         let mut hook_action: Option<HookAction> = None;
         for profile in &profiles {
-            let overrides = file
-                .profiles
-                .get(&profile.id)
-                .cloned()
-                .unwrap_or_default();
-            let mut enabled = !overrides.disabled;
+            let overrides = file.profiles.get(&profile.id).cloned().unwrap_or_default();
+            let is_installed = installed.contains(&profile.id);
+            let mut enabled = is_installed && !overrides.disabled;
             let mut extra = overrides.extra_args.join(" ");
             let mut environment = overrides
                 .environment
@@ -465,23 +496,31 @@ impl HelperSettings {
                 .unwrap_or(false);
             ui.separator();
             ui.horizontal(|ui| {
-                ui.label(egui::RichText::new(&profile.name).strong());
-                if ui.checkbox(&mut enabled, cx.t("helper.settings.enabled")).changed() {
+                forja_ui_kit::text(ui, egui::RichText::new(&profile.name).strong());
+                forja_ui_kit::text(ui, cx.t(if is_installed {
+                    "helper.settings.cli-installed"
+                } else {
+                    "helper.settings.cli-missing"
+                }));
+                let response = ui
+                    .add_enabled(
+                        is_installed,
+                        egui::Checkbox::new(&mut enabled, cx.t("helper.settings.enabled")),
+                    )
+                    .on_hover_text(cx.t("helper.settings.enabled-help"));
+                if response.changed() {
                     let mut next = overrides.clone();
                     next.disabled = !enabled;
                     changes.push((profile.id.clone(), next));
                 }
             });
-            ui.label(
-                egui::RichText::new(format!(
-                    "{}: {}",
-                    cx.t("helper.settings.command"),
-                    profile.start.command
-                ))
-                .monospace(),
-            );
+            forja_ui_kit::text(ui, egui::RichText::new(format!(
+                "{}: {}",
+                cx.t("helper.settings.command"),
+                profile.start.command
+            )));
             ui.horizontal(|ui| {
-                ui.label(cx.t("helper.settings.extra-args"));
+                forja_ui_kit::text(ui, cx.t("helper.settings.extra-args"));
                 if ui
                     .add(egui::TextEdit::singleline(&mut extra).desired_width(260.0))
                     .lost_focus()
@@ -492,7 +531,7 @@ impl HelperSettings {
                 }
             });
             ui.horizontal(|ui| {
-                ui.label(cx.t("helper.settings.environment"));
+                forja_ui_kit::text(ui, cx.t("helper.settings.environment"));
                 if ui
                     .add(egui::TextEdit::singleline(&mut environment).desired_width(320.0))
                     .lost_focus()
@@ -504,24 +543,28 @@ impl HelperSettings {
             });
             if profile.hooks.supported {
                 let state = hook_results.get(&hooks::consent_key(profile));
-                let state_label = match state {
-                    Some(Ok(status)) => hook_state_label(cx, status.state),
-                    Some(Err(message)) => message.clone(),
-                    None => cx.t("helper.settings.status.loading"),
+                let state_label = if !is_installed {
+                    cx.t("helper.settings.cli-missing")
+                } else {
+                    match state {
+                        Some(Ok(status)) => hook_state_label(cx, status.state),
+                        Some(Err(message)) => message.clone(),
+                        None => cx.t("helper.settings.status.loading"),
+                    }
                 };
                 if let Some(path) = hooks::config_path(profile) {
                     ui.horizontal(|ui| {
-                        ui.label(cx.t("helper.settings.hook-target"));
-                        ui.label(egui::RichText::new(path.display().to_string()).monospace());
+                        forja_ui_kit::text(ui, cx.t("helper.settings.hook-target"));
+                        forja_ui_kit::text(ui, egui::RichText::new(path.display().to_string()).monospace());
                     });
                 }
                 ui.horizontal(|ui| {
-                    ui.label(cx.t("helper.settings.hooks"));
-                    ui.label(egui::RichText::new(state_label).weak());
+                    forja_ui_kit::text(ui, cx.t("helper.settings.hooks"));
+                    forja_ui_kit::text(ui, egui::RichText::new(state_label).weak());
                     let mut consent_now = consent;
                     if ui
                         .add_enabled(
-                            profile.trusted && !hook_busy,
+                            is_installed && profile.trusted && !hook_busy,
                             egui::Checkbox::new(&mut consent_now, cx.t("helper.settings.consent")),
                         )
                         .changed()
@@ -529,18 +572,23 @@ impl HelperSettings {
                         hook_action = Some(HookAction::Consent(profile.id.clone(), consent_now));
                     }
                     if ui
-                        .add_enabled(consent && !hook_busy, egui::Button::new(cx.t("helper.settings.install")))
+                        .add_enabled(
+                            is_installed && consent && !hook_busy,
+                            egui::Button::new(cx.t("helper.settings.install")),
+                        )
                         .clicked()
                     {
                         hook_action = Some(HookAction::Install(profile.id.clone()));
                     }
                     if ui
-                        .add_enabled(consent && !hook_busy, egui::Button::new(cx.t("helper.settings.remove")))
+                        .add_enabled(
+                            is_installed && consent && !hook_busy,
+                            egui::Button::new(cx.t("helper.settings.remove")),
+                        )
                         .clicked()
                     {
                         hook_action = Some(HookAction::Remove(profile.id.clone()));
                     }
-
                 });
             }
         }
@@ -570,7 +618,6 @@ impl HelperSettings {
             if let Err(error) = result {
                 self.notice = Some(error.to_string());
             }
-
         }
     }
 }
@@ -657,5 +704,3 @@ fn parse_environment(text: &str) -> BTreeMap<String, String> {
         .map(|(key, value)| (key.trim().to_owned(), value.trim().to_owned()))
         .collect()
 }
-
-

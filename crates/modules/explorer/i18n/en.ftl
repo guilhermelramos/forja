@@ -51,3 +51,5 @@ setting-explorer-tree-show_ignored-label = Show ignored files
 setting-explorer-tree-show_ignored-help = Lists files that .gitignore hides.
 setting-explorer-tree-follow_symlinks-label = Follow symbolic links
 setting-explorer-tree-follow_symlinks-help = Lists the targets of symbolic links.
+explorer-tree-collapse = Collapse folder
+explorer-tree-expand = Expand folder

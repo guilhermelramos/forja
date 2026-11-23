@@ -30,6 +30,7 @@ jobs:
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Provenance
         run: cargo xtask provenance
+      - run: cargo xtask ui-lint
 
   regressions:
     runs-on: windows-latest

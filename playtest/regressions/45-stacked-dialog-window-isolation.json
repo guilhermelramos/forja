@@ -4,7 +4,7 @@
   "locale": "pt-BR",
   "steps": [
     { "m": "ui.key", "keys": "Escape" },
-    { "m": "ui.click", "target": "Clonar" },
+    { "m": "ui.click", "target": "Clonar repositório" },
     { "m": "ui.snapshot" }
   ],
   "expect": [

@@ -27,3 +27,5 @@ A página de importação é só interface: ela lê `import.harbor.status`, cham
 ```
 cargo test -p forja-module-onboarding
 ```
+
+O guia mostra a posição na sequência efetiva de passos, uma prévia com tokens explícitos no passo de tema e o seletor que grava `helper.default.profile` no passo de ajudantes.

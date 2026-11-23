@@ -57,3 +57,7 @@ cargo run -p forja-app -- --screenshot shots/lateral.png --slot sidebar
 
 Os testes usam pastas temporárias, criam um repositório git local e removem tudo
 no final; nenhum teste toca `%APPDATA%\Forja` ou `~/.forja`.
+
+## Início
+
+A view `project.home` contribui no slot BenchTab; o shell a separa das abas e a apresenta quando `project.current` é nulo, recolhendo lateral e painel direito. Projetos controla os fluxos já existentes e acessa detecção e atalhos pelas APIs do kernel, sem depender do crate de ajudantes. `project.close` fecha o registro aberto preservando até oito recentes; remover explicitamente também esquece o recente. Reabrir recente usa o mesmo fluxo de ativação/registro. Nenhum arquivo do projeto é apagado.

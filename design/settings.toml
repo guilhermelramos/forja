@@ -533,7 +533,6 @@ help_key = "setting-appearance-window-start_maximized-help"
 
 [[setting]]
 key = "appearance.tabs.middle_click"
-deferred = "Aguardando contrato de fechamento das abas do shell."
 module = "appearance"
 group = "appearance"
 scope = "user"
@@ -911,6 +910,22 @@ help_en = "Tabs opened automatically when creating a bench."
 why = "Terminal e ajudante são o par mínimo do fluxo de forja."
 label_key = "setting-bench-layout-tabs-label"
 help_key = "setting-bench-layout-tabs-help"
+
+[[setting]]
+key = "bench.layout.tool_tabs"
+module = "bench"
+group = "benches"
+scope = "user"
+type = "list"
+default = ["terminal", "chat", "diff", "editor"]
+item = "id de aba"
+label_pt = "Abas de ferramenta"
+label_en = "Tool tabs"
+help_pt = "Abas de ferramenta abertas ao iniciar uma bancada nova."
+help_en = "Tool tabs opened automatically on a new bench."
+why = "Mantém apenas as quatro abas essenciais na faixa; as demais abrem sob demanda pelo botão +."
+label_key = "setting-bench-layout-tool_tabs-label"
+help_key = "setting-bench-layout-tool_tabs-help"
 
 [[setting]]
 key = "bench.layout.restore"
@@ -1767,20 +1782,19 @@ label_key = "setting-terminal-close-confirm_running-label"
 help_key = "setting-terminal-close-confirm_running-help"
 
 [[setting]]
-key = "terminal.gpu.mode"
+key = "terminal.images.enabled"
 module = "terminal"
 group = "terminal"
 scope = "user"
-type = "choice"
-default = "auto"
-options = ["auto", "on", "off"]
-label_pt = "Renderização por GPU"
-label_en = "GPU rendering"
-help_pt = "Usa a GPU para desenhar o terminal."
-help_en = "Uses the GPU to draw the terminal."
-why = "Auto liga quando o driver é confiável e desliga em caso de artefato."
-label_key = "setting-terminal-gpu-mode-label"
-help_key = "setting-terminal-gpu-mode-help"
+type = "toggle"
+default = true
+label_pt = "Imagens no terminal"
+label_en = "Terminal images"
+help_pt = "Desenha imagens embutidas enviadas pelos programas no terminal."
+help_en = "Draws inline images sent by terminal programs."
+why = "Desligar evita decodificar e desenhar imagens embutidas quando você só quer texto."
+label_key = "setting-terminal-images-enabled-label"
+help_key = "setting-terminal-images-enabled-help"
 
 [[setting]]
 key = "terminal.osc52.enabled"

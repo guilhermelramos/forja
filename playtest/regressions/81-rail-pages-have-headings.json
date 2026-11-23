@@ -1,0 +1,185 @@
+{
+  "title": "As nove páginas têm título semântico, refresh unificado e geometria válida (#197)",
+  "issue": 197,
+  "locale": "pt-BR",
+  "demo": true,
+  "steps": [
+    {
+      "m": "ui.key",
+      "keys": "Escape"
+    },
+    {
+      "m": "ui.click",
+      "target": "Quadro"
+    },
+    {
+      "m": "ui.click",
+      "target": "Pedidos"
+    },
+    {
+      "m": "ui.click",
+      "target": "Ajudantes"
+    },
+    {
+      "m": "ui.click",
+      "target": "Rotinas"
+    },
+    {
+      "m": "ui.click",
+      "target": "Mutirão"
+    },
+    {
+      "m": "ui.click",
+      "target": "Acervo"
+    },
+    {
+      "m": "ui.click",
+      "target": "Skills"
+    },
+    {
+      "m": "ui.click",
+      "target": "Uso"
+    },
+    {
+      "m": "ui.click",
+      "target": "Extensões"
+    }
+  ],
+  "expect": [
+    {
+      "step": 1,
+      "present_elements": [
+        {
+          "name": "Quadro",
+          "role": "Heading"
+        },
+        {
+          "name": "Atualizar",
+          "role": "Button"
+        }
+      ],
+      "no_geometry_issues": true,
+      "no_unnamed_buttons": true
+    },
+    {
+      "step": 2,
+      "present_elements": [
+        {
+          "name": "Pedidos",
+          "role": "Heading"
+        },
+        {
+          "name": "Atualizar",
+          "role": "Button"
+        }
+      ],
+      "no_geometry_issues": true,
+      "no_unnamed_buttons": true
+    },
+    {
+      "step": 3,
+      "present_elements": [
+        {
+          "name": "Ajudantes",
+          "role": "Heading"
+        },
+        {
+          "name": "Atualizar",
+          "role": "Button"
+        }
+      ],
+      "no_geometry_issues": true,
+      "no_unnamed_buttons": true
+    },
+    {
+      "step": 4,
+      "present_elements": [
+        {
+          "name": "Rotinas",
+          "role": "Heading"
+        },
+        {
+          "name": "Atualizar",
+          "role": "Button"
+        }
+      ],
+      "no_geometry_issues": true,
+      "no_unnamed_buttons": true
+    },
+    {
+      "step": 5,
+      "present_elements": [
+        {
+          "name": "Mutirão",
+          "role": "Heading"
+        },
+        {
+          "name": "Atualizar",
+          "role": "Button"
+        }
+      ],
+      "no_geometry_issues": true,
+      "no_unnamed_buttons": true
+    },
+    {
+      "step": 6,
+      "present_elements": [
+        {
+          "name": "Acervo",
+          "role": "Heading"
+        },
+        {
+          "name": "Atualizar",
+          "role": "Button"
+        }
+      ],
+      "no_geometry_issues": true,
+      "no_unnamed_buttons": true
+    },
+    {
+      "step": 7,
+      "present_elements": [
+        {
+          "name": "Skills",
+          "role": "Heading"
+        },
+        {
+          "name": "Atualizar",
+          "role": "Button"
+        }
+      ],
+      "no_geometry_issues": true,
+      "no_unnamed_buttons": true
+    },
+    {
+      "step": 8,
+      "present_elements": [
+        {
+          "name": "Uso",
+          "role": "Heading"
+        },
+        {
+          "name": "Atualizar",
+          "role": "Button"
+        }
+      ],
+      "no_geometry_issues": true,
+      "no_unnamed_buttons": true
+    },
+    {
+      "step": 9,
+      "present_elements": [
+        {
+          "name": "Extensões",
+          "role": "Heading"
+        },
+        {
+          "name": "Atualizar",
+          "role": "Button"
+        }
+      ],
+      "no_geometry_issues": true,
+      "no_unnamed_buttons": true
+    }
+  ]
+}

@@ -24,8 +24,14 @@ fixas a partir dos slots e liga o RPC por named pipe.
   valor na própria Bigorna: lista filtrável lida de outro comando ou texto no
   campo de busca. O mecanismo é genérico (`anvil_ask.rs`); o módulo só diz qual
   comando devolve as opções e quais campos ler.
-- gera Ajustes a partir do schema de cada módulo; a busca recebe o foco ao abrir,
-  a roda/barra e PageUp/PageDown rolam a lista e Tab revela o controle focado;
+- Ajustes ocupa a área central, com engrenagem selecionada e retorno por Escape ou
+  pela engrenagem à página anterior. Os 13 grupos vêm de `design/settings.toml`,
+  com seções próprias abaixo do separador; a busca cruza rótulos, ajuda e chaves.
+  Linhas mostram ajuda, alteração/restauração, reinício e validação no local;
+  Aparência tem prévia viva. A busca recebe foco ao abrir, PageUp/PageDown e a
+  roda rolam a lista e Tab revela o controle focado. O rodapé importa/exporta
+  TOML em Tasks, restaura com confirmação e desativa abrir arquivo nos testes;
+  o escopo continua usuário até #212;
 - executa os atalhos do keymap; Ctrl+K, Ctrl+Shift+P, Ctrl+P, Ctrl+Vírgula,
   Ctrl+Shift+B, setas entre abas e Ctrl+1..0 funcionam com o texto focado;
 - abas da bancada: próxima/anterior, fechar (Ctrl+W e Ctrl+Shift+W em qualquer
@@ -59,7 +65,11 @@ chaves `notifications.*`.
 | `src/layout.rs` | regiões do produto |
 | `src/anvil.rs` | Bigorna |
 | `src/anvil_ask.rs` | valores que faltam, perguntados na Bigorna |
-| `src/overlays.rs` | Ajustes gerados |
+| `src/overlays.rs` | janela de atalhos e helpers de texto/rolagem |
+| `src/settings_page.rs` | página e navegação de Ajustes |
+| `src/settings_catalog.rs` | grupos, ordem e avisos do catálogo embutido |
+| `src/settings_controls.rs` | controles gerados e validação por linha |
+| `src/settings_transfer.rs` | seletor interno e importação/exportação assíncronas |
 | `src/theme.rs` | tokens a partir do modo e da densidade |
 | `src/system.rs` | tema e idioma do Windows |
 | `src/hosts.rs` | módulos âncora e comandos do chrome |

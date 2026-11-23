@@ -10,11 +10,11 @@
 
 mod commands;
 pub mod demo;
-mod forge_preview;
 mod forge;
+mod forge_preview;
 mod local;
-mod sync;
 mod state;
+mod sync;
 mod view;
 
 #[cfg(test)]
@@ -22,14 +22,16 @@ mod tests;
 
 use crate::commands::ListParams;
 use crate::state::{Shared, State};
-use forja_contracts::{names, BenchActivated, BenchCreated, CounterResult, RequestState, StageChanged};
+use forja_contracts::{
+    names, BenchActivated, BenchCreated, CounterResult, RequestState, StageChanged,
+};
 use forja_kernel::forja_protocol::{
     Method, MethodEffect, ParamKind, ParamSchema, ResultSchema, RpcError,
 };
 use forja_kernel::ui_contract::View;
 use forja_kernel::{
-    Args, KernelError, Module, ModuleManifest, Registrar, SettingKind, SettingSpec,
-    SettingValue, Slot,
+    Args, KernelError, Module, ModuleManifest, Registrar, SettingKind, SettingSpec, SettingValue,
+    Slot,
 };
 use serde_json::{json, Value};
 use std::sync::{Arc, Mutex};
@@ -103,10 +105,14 @@ impl Module for RequestModule {
         });
 
         let shared = Arc::clone(&self.shared);
-        r.command("request.refresh", "request.command.refresh", move |cx, _args| {
-            commands::refresh(cx, &shared)?;
-            Ok(json!({ "started": true }))
-        });
+        r.command(
+            "request.refresh",
+            "request.command.refresh",
+            move |cx, _args| {
+                commands::refresh(cx, &shared)?;
+                Ok(json!({ "started": true }))
+            },
+        );
 
         let shared = Arc::clone(&self.shared);
         r.command("request.forge", "request.command.forge", move |cx, args| {
@@ -116,20 +122,28 @@ impl Module for RequestModule {
         });
 
         let shared = Arc::clone(&self.shared);
-        r.command("request.comment", "request.command.comment", move |cx, args| {
-            let counter = args.required_str("counter")?.to_owned();
-            let key = args.required_str("key")?.to_owned();
-            let body = args.required_str("body")?.to_owned();
-            commands::comment(cx, &shared, &counter, &key, &body)
-        });
+        r.command(
+            "request.comment",
+            "request.command.comment",
+            move |cx, args| {
+                let counter = args.required_str("counter")?.to_owned();
+                let key = args.required_str("key")?.to_owned();
+                let body = args.required_str("body")?.to_owned();
+                commands::comment(cx, &shared, &counter, &key, &body)
+            },
+        );
 
         let shared = Arc::clone(&self.shared);
-        r.command("request.transition", "request.command.transition", move |cx, args| {
-            let counter = args.required_str("counter")?.to_owned();
-            let key = args.required_str("key")?.to_owned();
-            let to: RequestState = serde_json::from_value(json!(args.required_str("to")?))?;
-            commands::transition(cx, &shared, &counter, &key, to)
-        });
+        r.command(
+            "request.transition",
+            "request.command.transition",
+            move |cx, args| {
+                let counter = args.required_str("counter")?.to_owned();
+                let key = args.required_str("key")?.to_owned();
+                let to: RequestState = serde_json::from_value(json!(args.required_str("to")?))?;
+                commands::transition(cx, &shared, &counter, &key, to)
+            },
+        );
 
         let shared = Arc::clone(&self.shared);
         r.command("request.open", "request.command.open", move |cx, args| {
@@ -162,15 +176,17 @@ impl Module for RequestModule {
                     ParamSchema::optional("query", ParamKind::String)
                         .describe("Texto para filtrar título, chave, rótulos e autor."),
                 )
-                .result(ResultSchema::new("request.method.list.result").schema(json!({
-                    "type": "object",
-                    "properties": {
-                        "filter": { "type": "string" },
-                        "items": { "type": "array" },
-                        "loading": { "type": "boolean" }
-                    },
-                    "required": ["items"]
-                }))),
+                .result(
+                    ResultSchema::new("request.method.list.result").schema(json!({
+                        "type": "object",
+                        "properties": {
+                            "filter": { "type": "string" },
+                            "items": { "type": "array" },
+                            "loading": { "type": "boolean" }
+                        },
+                        "required": ["items"]
+                    })),
+                ),
             move |cx, params| {
                 let args = Args::from_map(params);
                 commands::list(cx, &shared, list_params(&args))
@@ -180,18 +196,24 @@ impl Module for RequestModule {
 
         let shared = Arc::clone(&self.shared);
         r.rpc(
-            Method::new("request.local.create", "request.method.local_create.description")
-                .effect(MethodEffect::Write)
-                .param(ParamSchema::required("title", ParamKind::String).alias("titulo"))
-                .param(ParamSchema::optional("body", ParamKind::String).alias("corpo"))
-                .result(ResultSchema::new("request.method.local_create.result")),
+            Method::new(
+                "request.local.create",
+                "request.method.local_create.description",
+            )
+            .effect(MethodEffect::Write)
+            .param(ParamSchema::required("title", ParamKind::String).alias("titulo"))
+            .param(ParamSchema::optional("body", ParamKind::String).alias("corpo"))
+            .result(ResultSchema::new("request.method.local_create.result")),
             move |cx, params| {
                 let title = params
                     .get("title")
                     .and_then(Value::as_str)
                     .ok_or_else(|| RpcError::invalid_params("title is required"))?
                     .to_owned();
-                let body = params.get("body").and_then(Value::as_str).map(str::to_owned);
+                let body = params
+                    .get("body")
+                    .and_then(Value::as_str)
+                    .map(str::to_owned);
                 commands::create_local(cx, &shared, &title, body.as_deref())
                     .map_err(|error: KernelError| RpcError::app(error.to_string()))
             },
@@ -221,10 +243,14 @@ impl Module for RequestModule {
         );
 
         let shared = Arc::clone(&self.shared);
-        r.view(Slot::Rail, "request.page", "request.tab.title", 50, move || {
-            Box::new(view::RequestsView::new(Arc::clone(&shared))) as Box<dyn View>
-        });
-        r.view_glyph("request.page", forja_ui_kit::REQUESTS);
+        r.view(
+            Slot::Rail,
+            "request.page",
+            "request.tab.title",
+            50,
+            move || Box::new(view::RequestsView::new(Arc::clone(&shared))) as Box<dyn View>,
+        );
+        r.view_glyph("request.page", forja_ui_kit::REQUESTS.id());
 
         for key in USED_KEYS.iter().copied() {
             r.uses_i18n(key);

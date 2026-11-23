@@ -13,7 +13,7 @@
     },
     {
       "m": "ui.click",
-      "target": "Bigorna"
+      "target": "Buscar ou executar… Ctrl+K"
     },
     {
       "m": "ui.snapshot"
