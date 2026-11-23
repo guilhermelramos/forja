@@ -8,7 +8,7 @@ mod catalog;
 mod watch;
 mod write;
 
-pub use catalog::{read_catalog, Catalog, CatalogCache, LayoutEntry, LayoutSources};
+pub use catalog::{read_catalog, read_limited, Catalog, CatalogCache, LayoutEntry, LayoutSources};
 pub use watch::{watch_roots, Watch, WatchRoots, DEBOUNCE};
 pub use write::{layout_path, project_layout_root, remove_layout, write_layout};
 

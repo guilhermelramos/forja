@@ -1,8 +1,8 @@
 //! Testes do catálogo de arranjos: camadas, escrita, debounce e geração.
 
 use forja_module_content::layouts::{
-    read_catalog, remove_layout, write_layout, Catalog, CatalogCache, LayoutSources, LayoutStore,
-    WatchRoots, DEBOUNCE,
+    read_catalog, read_limited, remove_layout, write_layout, Catalog, CatalogCache, LayoutSources,
+    LayoutStore, WatchRoots, DEBOUNCE,
 };
 use notify::event::{CreateKind, Event, EventKind};
 use std::path::{Path, PathBuf};
@@ -94,6 +94,19 @@ fn an_invalid_file_keeps_the_last_valid_version() {
     });
     assert!(!third.entries.contains_key("bad"));
     assert!(third.diagnostics.iter().any(|item| item.message.contains("declares id")));
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
+fn oversized_layout_files_are_refused_at_the_descriptor() {
+    let root = temp_dir("size-limit");
+    let path = root.join("huge.toml");
+    let mut text = layout_text("huge");
+    text.push_str(&"x".repeat(forja_kernel::layout_spec::MAX_INPUT_BYTES));
+    std::fs::write(&path, &text).unwrap();
+    let limit = forja_kernel::layout_spec::MAX_INPUT_BYTES as u64;
+    let error = read_limited(&path, limit).unwrap_err();
+    assert!(error.contains("exceeds"), "{error}");
     let _ = std::fs::remove_dir_all(root);
 }
 

@@ -238,6 +238,9 @@ impl LayoutSpecV1 {
                 ),
             ));
         }
+        // A profundidade vem primeiro: uma árvore muito funda é recusada antes
+        // de qualquer travessia que colete refs, folhas ou abas.
+        validate_depth(&self.root, 0)?;
         validate_segment("id", &self.id)?;
         if self.name.pt_br.trim().is_empty() || self.name.en.trim().is_empty() {
             return Err(LayoutError::new("name", "both locales are required"));
@@ -298,6 +301,22 @@ impl LayoutSpecV1 {
         }
         validate_node(&self.root, "root", 0)?;
         Ok(())
+    }
+}
+
+fn validate_depth(node: &LayoutNodeSpec, depth: usize) -> Result<(), LayoutError> {
+    match node {
+        LayoutNodeSpec::Split { first, second, .. } => {
+            if depth >= MAX_SPLIT_DEPTH {
+                return Err(LayoutError::new(
+                    "root",
+                    format!("more than {MAX_SPLIT_DEPTH} splits in a path"),
+                ));
+            }
+            validate_depth(first, depth + 1)?;
+            validate_depth(second, depth + 1)
+        }
+        LayoutNodeSpec::Leaf { .. } => Ok(()),
     }
 }
 
@@ -505,7 +524,11 @@ mod tests {
         for index in 0..=MAX_SPLIT_DEPTH {
             deep = split(deep, leaf(&format!("extra{index}"), &[]));
         }
-        assert!(spec(deep).validate().is_err());
+        let error = spec(deep).validate().unwrap_err();
+        assert!(
+            error.message.contains("splits"),
+            "depth must be checked before leaf/tab limits: {error}"
+        );
 
         // Use distinct instance ids to exercise the tab count, not uniqueness.
         let mut wide = leaf("only", &[]);
