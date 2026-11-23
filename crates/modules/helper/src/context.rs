@@ -75,6 +75,62 @@ fn truncate_chars(text: &str, limit: usize) -> String {
     out
 }
 
+/// Caminho final resolvido a partir do handle já aberto, não de uma segunda abertura.
+#[cfg(windows)]
+fn final_path_from_handle(file: &std::fs::File, fallback: &Path) -> Option<PathBuf> {
+    use std::os::windows::ffi::OsStringExt;
+    use std::os::windows::io::AsRawHandle;
+    use windows_sys::Win32::Storage::FileSystem::{
+        GetFinalPathNameByHandleW, FILE_NAME_NORMALIZED,
+    };
+    let _ = fallback;
+    let handle = file.as_raw_handle() as _;
+    // SAFETY: o handle permanece aberto e o buffer nulo tem comprimento zero.
+    let length = unsafe {
+        GetFinalPathNameByHandleW(handle, std::ptr::null_mut(), 0, FILE_NAME_NORMALIZED)
+    };
+    if length == 0 {
+        return None;
+    }
+    let mut buffer = vec![0u16; length as usize + 1];
+    // SAFETY: o handle está aberto e o buffer é gravável no tamanho declarado.
+    let written = unsafe {
+        GetFinalPathNameByHandleW(handle, buffer.as_mut_ptr(), buffer.len() as u32, FILE_NAME_NORMALIZED)
+    };
+    if written == 0 || written as usize >= buffer.len() {
+        return None;
+    }
+    buffer.truncate(written as usize);
+    Some(PathBuf::from(std::ffi::OsString::from_wide(&buffer)))
+}
+
+#[cfg(not(windows))]
+fn final_path_from_handle(file: &std::fs::File, fallback: &Path) -> Option<PathBuf> {
+    let _ = file;
+    fallback.canonicalize().ok()
+}
+
+/// Valida e lê pelo mesmo handle: trocar o arquivo entre as duas operações não adianta.
+fn read_open_rule(
+    file: std::fs::File,
+    root: &Path,
+    fallback: &Path,
+    limit: usize,
+) -> Option<String> {
+    use std::io::Read;
+    let final_path = final_path_from_handle(&file, fallback)?;
+    if !final_path.starts_with(root) {
+        return None;
+    }
+    let mut text = String::new();
+    let mut limited = file.take(limit as u64 + 1);
+    limited.read_to_string(&mut text).ok()?;
+    if text.chars().count() > limit {
+        return None;
+    }
+    Some(text)
+}
+
 /// Lê os arquivos de regras existentes na pasta da bancada (sem bloquear a thread da UI).
 pub fn read_rules_files(bench_dir: &Path, candidates: &[String]) -> Vec<RuleSnippet> {
     let mut rules = Vec::new();
@@ -90,22 +146,17 @@ pub fn read_rules_files(bench_dir: &Path, candidates: &[String]) -> Vec<RuleSnip
             continue;
         };
         let full = bench_dir.join(&rel);
-        // A junção ou link simbólico pode apontar para fora da bancada; a
-        // validação lexical sozinha não detecta isso.
-        let Ok(effective) = std::fs::canonicalize(&full) else {
+        let budget = remaining.min(MAX_FILE_CHARS);
+        let Ok(file) = std::fs::File::open(&full) else {
             continue;
         };
-        if !effective.starts_with(&root) {
-            continue;
-        }
-        let Ok(content) = std::fs::read_to_string(&effective) else {
+        let Some(content) = read_open_rule(file, &root, &full, budget) else {
             continue;
         };
         let trimmed = content.trim();
         if trimmed.is_empty() {
             continue;
         }
-        let budget = remaining.min(MAX_FILE_CHARS);
         let clipped = truncate_chars(trimmed, budget);
         let used = clipped.chars().count();
         remaining = remaining.saturating_sub(used);
@@ -430,6 +481,44 @@ files = ["../secret.txt", "CUSTOM.md"]
         let normal = read_rules_files(&bench, &["AGENTS.md".to_owned()]);
         assert_eq!(normal.len(), 1);
         assert!(normal[0].content.contains("BENCH RULE"));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn read_open_rule_ignores_a_swap_after_open() {
+        let dir = temp_dir("swap");
+        let outside = dir.0.join("outside");
+        let bench = dir.0.join("bench");
+        let rules_dir = bench.join("rules");
+        std::fs::create_dir_all(&outside).unwrap();
+        std::fs::create_dir_all(&rules_dir).unwrap();
+        std::fs::write(outside.join("AGENTS.md"), "EXTERNAL RULE").unwrap();
+        std::fs::write(rules_dir.join("AGENTS.md"), "INTERNAL RULE").unwrap();
+        let root = std::fs::canonicalize(&bench).unwrap();
+        let file = std::fs::File::open(rules_dir.join("AGENTS.md")).unwrap();
+
+        // Um caminho alternativo vira junção para fora: a validação pelo handle
+        // já aberto continua apontando para o arquivo interno.
+        let swapped = bench.join("escape");
+        let output = forja_kernel::process::command("cmd")
+            .args(["/c", "mklink", "/J"])
+            .arg(&swapped)
+            .arg(&outside)
+            .output()
+            .unwrap();
+        assert!(output.status.success(), "{:?}", output);
+        assert!(std::fs::read_to_string(swapped.join("AGENTS.md"))
+            .unwrap()
+            .contains("EXTERNAL RULE"));
+
+        let text = read_open_rule(file, &root, &swapped.join("AGENTS.md"), 8_000)
+            .expect("the already-open handle stays internal");
+        assert!(text.contains("INTERNAL RULE"), "{text}");
+        assert!(!text.contains("EXTERNAL RULE"), "{text}");
+
+        // Uma abertura nova do caminho externo é recusada.
+        let fresh = std::fs::File::open(swapped.join("AGENTS.md")).unwrap();
+        assert!(read_open_rule(fresh, &root, &swapped.join("AGENTS.md"), 8_000).is_none());
     }
 
     #[test]
