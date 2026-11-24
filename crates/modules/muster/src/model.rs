@@ -140,6 +140,9 @@ pub struct MusterRun {
     pub objective: String,
     /// Quem coordena.
     pub coordinator: String,
+    /// Perfil de ajudante que coordena o mutirão; `auto` usa o padrão do ajudante.
+    #[serde(default = "default_auto")]
+    pub coordinator_profile: String,
     /// Estado.
     pub state: RunState,
     /// Criação em ms.
@@ -309,6 +312,7 @@ impl MusterFile {
             title: non_empty(title, "Mutirão"),
             objective: objective.trim().to_owned(),
             coordinator: non_empty(coordinator, "coordinator"),
+            coordinator_profile: "auto".to_owned(),
             state: RunState::Open,
             created_ms: now_ms(),
             bench_path,
@@ -927,6 +931,10 @@ pub fn status_key(status: HelperStatus) -> &'static str {
 
 fn default_true() -> bool {
     true
+}
+
+fn default_auto() -> String {
+    "auto".to_owned()
 }
 
 fn non_empty(value: &str, fallback: &str) -> String {

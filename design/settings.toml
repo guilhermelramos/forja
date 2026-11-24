@@ -3114,7 +3114,6 @@ help_key = "setting-muster-mode-enabled-help"
 
 [[setting]]
 key = "muster.coordinator.profile"
-deferred = "Aguardando ciclo de vida do ajudante coordenador."
 module = "muster"
 group = "muster"
 scope = "user"

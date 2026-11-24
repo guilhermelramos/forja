@@ -39,6 +39,7 @@ pub fn demo_seed(store: &Store, bench_path: &str) -> Result<(), String> {
         title: "Relatório do trimestre".to_owned(),
         objective: "Fechar o relatório com números conferidos e a página pronta.".to_owned(),
         coordinator: "voce".to_owned(),
+        coordinator_profile: "auto".to_owned(),
         state: RunState::Open,
         created_ms: start_ms(),
         bench_path: Some(bench_path.to_owned()),

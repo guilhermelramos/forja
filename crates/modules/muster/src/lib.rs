@@ -94,6 +94,38 @@ fn register_settings(r: &mut Registrar<'_>) {
         "setting-muster-mode-enabled-help",
     ));
     r.setting(SettingSpec::new(
+        "muster.coordinator.profile",
+        // Espelha `helper.default.profile`; o helper ainda não expõe uma API
+        // pública com a lista de perfis descobertos.
+        SettingKind::Choice {
+            options: [
+                "auto",
+                "aider",
+                "amp",
+                "antigravity",
+                "claude-code",
+                "cline",
+                "codex",
+                "continue",
+                "copilot",
+                "crush",
+                "cursor-agent",
+                "gemini",
+                "goose",
+                "kimi-code",
+                "kiro",
+                "opencode",
+                "qwen-code",
+            ]
+            .into_iter()
+            .map(str::to_owned)
+            .collect(),
+        },
+        SettingValue::Text("auto".to_owned()),
+        "setting-muster-coordinator-profile-label",
+        "setting-muster-coordinator-profile-help",
+    ));
+    r.setting(SettingSpec::new(
         "muster.plan.max_tasks",
         SettingKind::Integer {
             min: Some(1),
@@ -325,6 +357,89 @@ mod tests {
             .run_command("muster.open", forja_kernel::Args::new())
             .expect("open");
         assert_eq!(calls.lock().unwrap().as_slice(), ["muster.page"]);
+    }
+
+    struct StubHelper {
+        profiles: Arc<std::sync::Mutex<Vec<String>>>,
+    }
+
+    impl Module for StubHelper {
+        fn manifest(&self) -> ModuleManifest {
+            ModuleManifest::new("helper", "muster.name", "0.0.0")
+        }
+
+        fn register(&mut self, r: &mut Registrar<'_>) {
+            let profiles = Arc::clone(&self.profiles);
+            r.command("helper.launch", "muster.command.start", move |_, args| {
+                let profile = args.str("profile_id").unwrap_or("auto").to_owned();
+                profiles.lock().unwrap().push(profile.clone());
+                Ok(json!({
+                    "profile_id": profile,
+                    "terminal_id": "9",
+                    "mode": "tui"
+                }))
+            });
+        }
+    }
+
+    #[test]
+    fn coordinator_profile_setting_drives_task_launch() {
+        let dir = temp_dir();
+        let profiles = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(MusterModule::new()),
+                Box::new(StubHelper {
+                    profiles: Arc::clone(&profiles),
+                }),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.0.clone()),
+                user_dir: Some(dir.0.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("muster and helper register");
+        runtime
+            .set_setting(
+                "muster.coordinator.profile",
+                SettingValue::Text("codex".to_owned()),
+            )
+            .unwrap();
+        runtime
+            .set_setting("muster.plan.require_approval", SettingValue::Bool(false))
+            .unwrap();
+        let run = runtime
+            .call_method(
+                "muster.run",
+                Map::from_iter([("title".to_owned(), json!("Perfil"))]),
+            )
+            .unwrap();
+        let task = runtime
+            .call_method(
+                "muster.task",
+                Map::from_iter([
+                    ("run".to_owned(), run["id"].clone()),
+                    ("title".to_owned(), json!("Tarefa")),
+                ]),
+            )
+            .unwrap();
+        runtime
+            .call_method(
+                "muster.start",
+                Map::from_iter([
+                    ("task".to_owned(), task["id"].clone()),
+                    (
+                        "bench_path".to_owned(),
+                        json!(dir.0.display().to_string()),
+                    ),
+                ]),
+            )
+            .expect("helper launches");
+        assert_eq!(profiles.lock().unwrap().as_slice(), ["codex"]);
+        let status = runtime.call_method("muster.status", Map::new()).unwrap();
+        assert_eq!(status["runs"][0]["coordinator_profile"], "codex");
     }
 
     #[test]

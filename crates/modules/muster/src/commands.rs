@@ -282,12 +282,14 @@ fn run(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, KernelEr
         .and_then(Value::as_f64)
         .unwrap_or(default_budget)
         .max(0.0);
+    let coordinator_profile = configured_profile(cx, "muster.coordinator.profile");
     let run = with(shared, |state| {
         let mut run = state
             .store
             .create_run(title, objective, coordinator, bench_path);
         run.plan_approved = !require_approval;
         run.budget_usd = budget;
+        run.coordinator_profile = coordinator_profile;
         if let Some(stored) = state.store.runs.iter_mut().find(|item| item.id == run.id) {
             *stored = run.clone();
         }
@@ -344,7 +346,7 @@ fn start(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kernel
     state::ensure_loaded(cx, shared);
     ensure_writable(shared)?;
     let task_id = args.required_str("task")?.to_owned();
-    let profile = args.str("profile_id").map(str::to_owned);
+    let explicit_profile = args.str("profile_id").map(str::to_owned);
     let permission = args.str("permission").map(str::to_owned);
     let new_bench = args.bool("new_bench").unwrap_or(false);
     let bench_arg = args.str("bench_path").map(str::to_owned);
@@ -372,6 +374,9 @@ fn start(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kernel
             "o plano do mutirão precisa ser aprovado antes de iniciar".to_owned(),
         ));
     }
+    let profile = explicit_profile.or_else(|| {
+        (run.coordinator_profile != "auto").then(|| run.coordinator_profile.clone())
+    });
     let assignments = with(shared, |state| state.store.assignments.clone()).unwrap_or_default();
     let spent = automatic_spend_usd(cx, &run, &assignments).unwrap_or(run.spent_usd);
     if run.budget_usd > 0.0 && spent >= run.budget_usd {
@@ -978,6 +983,16 @@ fn automatic_spend_usd(
 
 fn current_bench(cx: &mut Ctx<'_>) -> Option<Value> {
     cx.run_command("bench.current", Args::new()).ok()
+}
+
+/// Perfil de ajudante configurado; `auto` e vazio deixam o padrão do ajudante.
+fn configured_profile(cx: &Ctx<'_>, key: &str) -> String {
+    cx.setting(key)
+        .and_then(SettingValue::as_str)
+        .map(str::trim)
+        .filter(|value| !value.is_empty() && *value != "auto")
+        .unwrap_or("auto")
+        .to_owned()
 }
 
 fn current_bench_path(cx: &mut Ctx<'_>) -> Option<String> {
