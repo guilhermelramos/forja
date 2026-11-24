@@ -11,6 +11,7 @@ mod images;
 mod model;
 mod state;
 mod view;
+mod view_error;
 
 use crate::state::Shared;
 use forja_contracts::{BenchActivated, GitComparisonChanged, GitStatusChanged, names};
@@ -179,6 +180,22 @@ fn register_settings(r: &mut Registrar<'_>) {
 }
 
 fn register_rpc(r: &mut Registrar<'_>, shared: &Shared) {
+    let open = shared.clone();
+    r.rpc(
+        Method::new("diff.open", "diff.method.open.description")
+            .effect(MethodEffect::Read)
+            .idempotent(true)
+            .param(ParamSchema::optional("path", ParamKind::String).alias("caminho"))
+            .param(ParamSchema::optional("file", ParamKind::String).alias("arquivo"))
+            .param(ParamSchema::optional("comparison", ParamKind::String))
+            .param(ParamSchema::optional("staged", ParamKind::Boolean))
+            .result(ResultSchema::new("diff.method.open.result")),
+        move |cx, params| {
+            let args = args_from(&params);
+            commands::open(cx, &open, &args).map_err(rpc_error)
+        },
+    );
+
     let changes = shared.clone();
     r.rpc(
         Method::new("diff.changes", "diff.method.changes.description")

@@ -4,6 +4,7 @@
 //! a camada de comandos conversa com `bench`, `helper` e `terminal`.
 
 use forja_contracts::HelperStatus;
+pub use crate::model_ops::{BenchOwnership, PendingDispatch, RetryRequest};
 use serde::{Deserialize, Serialize};
 
 /// Estado de um mutirão.
@@ -140,6 +141,9 @@ pub struct MusterRun {
     pub objective: String,
     /// Quem coordena.
     pub coordinator: String,
+    /// Perfil de ajudante que coordena o mutirão; `auto` usa o padrão do ajudante.
+    #[serde(default = "default_auto")]
+    pub coordinator_profile: String,
     /// Estado.
     pub state: RunState,
     /// Criação em ms.
@@ -156,6 +160,9 @@ pub struct MusterRun {
     /// Custo acumulado em dólares.
     #[serde(default)]
     pub spent_usd: f64,
+    /// A limpeza de bancadas deste mutirão já foi decidida.
+    #[serde(default)]
+    pub cleanup_done: bool,
 }
 
 /// Uma tarefa do mutirão.
@@ -225,6 +232,7 @@ pub struct Assignment {
     pub escalated: bool,
 }
 
+
 /// Estado de entrega de um recado enviado pelo coordenador.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NoteDeliveryState {
@@ -285,6 +293,12 @@ pub struct MusterFile {
     pub assignments: Vec<Assignment>,
     /// Recados.
     pub notes: Vec<Note>,
+    /// Criações de bancada esperadas, identificadas pelo `bench_id`.
+    #[serde(default)]
+    pub pending_dispatches: Vec<PendingDispatch>,
+    /// Bancadas que o mutirão criou.
+    #[serde(default)]
+    pub owned_benches: Vec<BenchOwnership>,
     next_id: u64,
 }
 
@@ -309,12 +323,14 @@ impl MusterFile {
             title: non_empty(title, "Mutirão"),
             objective: objective.trim().to_owned(),
             coordinator: non_empty(coordinator, "coordinator"),
+            coordinator_profile: "auto".to_owned(),
             state: RunState::Open,
             created_ms: now_ms(),
             bench_path,
             plan_approved: true,
             budget_usd: 0.0,
             spent_usd: 0.0,
+            cleanup_done: false,
         };
         self.runs.push(run.clone());
         run
@@ -500,77 +516,6 @@ impl MusterFile {
         }
     }
 
-    /// Atualiza o status de uma atribuição e devolve um alerta quando ela para
-    /// sem entregar.
-    pub fn update_status(
-        &mut self,
-        assignment_id: &str,
-        status: HelperStatus,
-        terminal_tail: &str,
-    ) -> Option<Note> {
-        let (run, task_id, was_running, delivered, escalated) = {
-            let assignment = self.assignment(assignment_id)?;
-            (
-                assignment.run.clone(),
-                assignment.task.clone(),
-                matches!(
-                    assignment.state,
-                    AssignmentState::Running | AssignmentState::NeedsYou
-                ),
-                matches!(
-                    assignment.state,
-                    AssignmentState::Delivered
-                        | AssignmentState::Failed
-                        | AssignmentState::Blocked
-                ),
-                assignment.escalated,
-            )
-        };
-        {
-            let assignment = self
-                .assignments
-                .iter_mut()
-                .find(|assignment| assignment.id == assignment_id)?;
-            assignment.last_event_ms = now_ms();
-            assignment.last_status = status_key(status).to_owned();
-            if !delivered {
-                assignment.state = match status {
-                    HelperStatus::Working => AssignmentState::Running,
-                    HelperStatus::NeedsYou => AssignmentState::NeedsYou,
-                    HelperStatus::Idle => AssignmentState::Idle,
-                    HelperStatus::Finished => AssignmentState::Stopped,
-                    HelperStatus::Unknown => AssignmentState::Idle,
-                };
-            }
-        }
-        let stopped = matches!(status, HelperStatus::Idle | HelperStatus::Finished);
-        if stopped && was_running && !delivered && !escalated {
-            let assignment = self
-                .assignments
-                .iter_mut()
-                .find(|assignment| assignment.id == assignment_id)?;
-            assignment.escalated = true;
-            assignment.retries = assignment.retries.saturating_add(1);
-            if let Some(task) = self.tasks.iter_mut().find(|task| task.id == task_id) {
-                if !matches!(task.state, TaskState::Delivered) {
-                    task.state = TaskState::Blocked;
-                }
-            }
-            let alert = self.note(
-                &run,
-                Some(task_id.clone()),
-                Some(assignment_id.to_owned()),
-                "muster",
-                "coordinator",
-                NoteKind::Alert,
-                &format!("parou sem entregar: {}", tail(terminal_tail)),
-                false,
-                false,
-            );
-            return Some(alert);
-        }
-        None
-    }
 
     /// Recado para um ajudante. Fica na fila quando ele está ocupado ou pedindo
     /// aprovação.
@@ -877,7 +822,7 @@ impl MusterFile {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn note(
+    pub(crate) fn note(
         &mut self,
         run: &str,
         task: Option<String>,
@@ -908,7 +853,7 @@ impl MusterFile {
         note
     }
 
-    fn id(&mut self, prefix: &str) -> String {
+    pub(crate) fn id(&mut self, prefix: &str) -> String {
         self.next_id += 1;
         format!("{prefix}{}", self.next_id)
     }
@@ -929,6 +874,10 @@ fn default_true() -> bool {
     true
 }
 
+fn default_auto() -> String {
+    "auto".to_owned()
+}
+
 fn non_empty(value: &str, fallback: &str) -> String {
     let value = value.trim();
     if value.is_empty() {
@@ -938,7 +887,7 @@ fn non_empty(value: &str, fallback: &str) -> String {
     }
 }
 
-fn tail(text: &str) -> String {
+pub(crate) fn tail(text: &str) -> String {
     let lines: Vec<&str> = text.lines().filter(|line| !line.trim().is_empty()).collect();
     let start = lines.len().saturating_sub(30);
     lines[start..].join("\n").chars().take(4000).collect()
@@ -956,6 +905,14 @@ pub fn now_ms() -> i64 {
 mod tests {
     use super::*;
 
+    fn run_with_task(file: &mut MusterFile) -> (MusterRun, Task) {
+        let run = file.create_run("Mutirão", "Objetivo", "coordinator", None);
+        let task = file
+            .add_task(&run.id, "Tarefa", "Spec", Vec::new())
+            .unwrap();
+        (run, task)
+    }
+
     #[test]
     fn retention_prunes_expired_notes_but_keeps_queued_delivery() {
         let mut file = MusterFile { notes: vec![
@@ -966,14 +923,6 @@ mod tests {
         assert_eq!(file.prune_notes(20), 1);
         assert_eq!(file.notes.len(), 2);
         assert!(file.notes[0].queued);
-    }
-
-    fn run_with_task(file: &mut MusterFile) -> (MusterRun, Task) {
-        let run = file.create_run("Mutirão", "Objetivo", "coordinator", None);
-        let task = file
-            .add_task(&run.id, "Tarefa", "Spec", Vec::new())
-            .unwrap();
-        (run, task)
     }
 
     #[test]
@@ -1052,6 +1001,7 @@ mod tests {
             .is_none());
         assert_eq!(file.inbox(Some(&run.id), false).len(), 1);
     }
+
 
     #[test]
     fn dependencies_gate_ready_tasks_until_delivery() {

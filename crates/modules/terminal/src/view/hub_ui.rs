@@ -15,6 +15,7 @@ use crate::theme::Palette;
 use forja_kernel::ui_contract::egui::{
     self, Rect, RichText, Sense, Stroke, UiBuilder,
 };
+use forja_kernel::Ctx;
 use forja_ui_kit::{applied_tokens, Tokens};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
@@ -32,12 +33,12 @@ pub(super) enum Control {
 pub fn draw(
     hub: &mut Hub,
     ui: &mut egui::Ui,
+    cx: &mut Ctx<'_>,
     settings: &TermSettings,
     texts: &UiText,
     wsl: &[String],
     textures: &mut HashMap<u32, egui::TextureHandle>,
     line_cache: &mut LineCache,
-    approve_recipe: &mut dyn FnMut(&Recipe) -> Result<(), String>,
     actions: &mut Vec<ViewAction>,
 ) {
     line_cache.retain_terminals(|id| hub.terminals.contains_key(&id));
@@ -57,12 +58,9 @@ pub fn draw(
         .cloned()
         .collect();
     if let Some(notice) = hub.notice.clone() {
-        ui.horizontal(|ui| {
-            ui.label(RichText::new(notice).color(c32(tokens.color.spark)));
-            if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &texts.notice_dismiss).clicked() {
-                hub.notice = None;
-            }
-        });
+        if super::error::notice(ui, cx, &notice, &texts.notice_dismiss) {
+            hub.notice = None;
+        }
     }
     if hub.root.is_none() {
         forja_ui_kit::page_heading(ui, &texts.empty_title, None, |_| {});
@@ -162,7 +160,7 @@ pub fn draw(
     let toolbar_bottom = pane_area.top() + tokens.metrics().control;
     recipe_picker::draw(hub, ui, texts, settings, &mut run_recipe, toolbar_bottom);
     if let Some(recipe) = run_recipe {
-        match approve_recipe(&recipe) {
+        match crate::recipe_trust::approve(cx, &recipe) {
             Ok(()) if settings.recipe_confirm => hub.pending_recipe = Some(recipe),
             Ok(()) => {
                 if let Err(error) = hub.run_recipe(&recipe, settings) {

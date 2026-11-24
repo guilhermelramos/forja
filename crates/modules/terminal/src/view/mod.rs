@@ -1,6 +1,7 @@
 //! Views do módulo: a aba de terminal e a lista de receitas da Bigorna.
 
 mod chrome;
+mod error;
 mod fonts;
 mod hub_ui;
 mod input;
@@ -442,17 +443,15 @@ impl View for TerminalView {
             }
             hub.seed_preview(&settings);
             let events = hub.poll(now, &settings, Some(ui.ctx()));
-            let mut approve_recipe =
-                |recipe: &crate::recipes::Recipe| crate::recipe_trust::approve(cx, recipe);
             hub_ui::draw(
                 &mut hub,
                 ui,
+                cx,
                 &settings,
                 &texts,
                 &wsl,
                 &mut self.textures,
                 &mut self.line_cache,
-                &mut approve_recipe,
                 &mut actions,
             );
             let persist = hub.persist_if_due(now, false);
@@ -710,7 +709,7 @@ impl View for RecipeView {
             }
         }
         if let Some(error) = &self.error {
-            ui.label(egui::RichText::new(error).color(egui::Color32::LIGHT_RED));
+            error::banner(ui, cx, error);
         }
     }
 }

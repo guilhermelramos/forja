@@ -108,7 +108,7 @@ impl View for ViewerView {
         });
         ui.separator();
         if let Some(error) = &document.error {
-            forja_ui_kit::text(ui, egui::RichText::new(error).color(c32(tokens.color.danger)));
+            crate::view_error::banner(ui, cx, error);
             return;
         }
         match document.kind.as_str() {

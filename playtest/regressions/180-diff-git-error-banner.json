@@ -1,0 +1,33 @@
+{
+  "title": "Diferenças mostra erro do Git de forma humana, sem texto cru (#180)",
+  "issue": 180,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Abrir pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 1200 },
+    { "m": "ui.click", "target": "Diferenças" },
+    { "m": "diff.open", "comparison": "forja-ghost-base...HEAD" },
+    { "m": "ui.wait", "ms": 2500 },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 8,
+      "present_contains": [
+        "A branch base ou referência informada não existe neste repositório.",
+        "Detalhes técnicos"
+      ],
+      "absent_contains": [
+        "rev-parse",
+        "unknown revision",
+        "fatal:",
+        "failed:",
+        "os error"
+      ]
+    }
+  ]
+}

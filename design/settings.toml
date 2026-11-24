@@ -3110,7 +3110,6 @@ help_key = "setting-muster-mode-enabled-help"
 
 [[setting]]
 key = "muster.coordinator.profile"
-deferred = "Aguardando ciclo de vida do ajudante coordenador."
 module = "muster"
 group = "muster"
 scope = "user"
@@ -3177,7 +3176,6 @@ help_key = "setting-muster-dispatch-max_parallel-help"
 
 [[setting]]
 key = "muster.dispatch.target"
-deferred = "Aguardando contrato de conclusão e falha da criação assíncrona de bancada."
 module = "muster"
 group = "muster"
 scope = "user"
@@ -3243,7 +3241,6 @@ help_key = "setting-muster-handoff-require_evidence-help"
 
 [[setting]]
 key = "muster.escalation.max_retries"
-deferred = "Aguardando verificação de encerramento e identidade para reenvio seguro."
 module = "muster"
 group = "muster"
 scope = "user"
@@ -3278,7 +3275,6 @@ help_key = "setting-muster-budget-max_usd-help"
 
 [[setting]]
 key = "muster.cleanup.on_finish"
-deferred = "Aguardando rastreamento de posse das bancadas e conclusão assíncrona do arquivamento."
 module = "muster"
 group = "muster"
 scope = "user"
@@ -3310,7 +3306,6 @@ help_key = "setting-muster-notifications-task_failed-help"
 
 [[setting]]
 key = "muster.workspace.isolation"
-deferred = "Aguardando contrato de criação e prontidão de bancada isolada."
 module = "muster"
 group = "muster"
 scope = "user"
