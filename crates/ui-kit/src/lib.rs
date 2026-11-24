@@ -72,9 +72,9 @@ pub use components::{
     helper_missing_guide, icon_menu, list, measure_tab_width, menu_panel, modal,
     modal_explicit_close, modal_preview, page, page_heading, page_marker, page_state,
     panel_icon_tabs, plan_tab_fit, popup_menu, popup_menu_contents, progress_bar, secret_field,
-    segmented, select, select_labeled, stage_badge, tab_strip, tabs, text_area, text_field,
-    text_field_labeled, theme_sample, toast, toast_transition, toggle, toggle_labeled, tree,
-    truncated_label, virtual_table,
+    segmented, select, select_labeled, selectable_wrapped_label, stage_badge, tab_strip, tabs,
+    text_area, text_field, text_field_labeled, theme_sample, toast, toast_transition, toggle,
+    toggle_labeled, tree, truncated_label, virtual_table,
     window_header, window_header_with_focus, wrapped_label, ButtonKind, Column, HelperMissingGuide,
     ListItem, MenuItem, Page, PageIconAction, PageMarker, PageResponse, PageSpec, PageState,
     PageWidth, PanelIconTab, Stage, TabFitPlan, TabItem, TabStripOutcome, ToastKind, TreeNode,
@@ -95,7 +95,8 @@ pub use icon::{
     SPLIT_DOWN, SPLIT_RIGHT, TERMINAL, THEME,
 };
 pub use keyboard_layer::{
-    consume_layer_escape, keyboard_layer_active, register_keyboard_layer, release_keyboard_focus,
+    begin_keyboard_frame, consume_layer_escape, keyboard_layer_active, register_keyboard_layer,
+    release_keyboard_focus,
 };
 pub use terminal::{AnsiPalette, TerminalTheme};
 pub use tokens::{Density, Metrics, Mode, Palette, ThemeError, Tokens, GRID};

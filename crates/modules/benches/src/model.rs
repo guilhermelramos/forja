@@ -49,6 +49,9 @@ pub struct BenchRecord {
     /// Key of the request this bench was forged from, when it came from one.
     #[serde(default)]
     pub request_key: Option<String>,
+    /// Rich request summary (title, description, links) preserved from `from_request`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub request_ref: Option<forja_contracts::RequestRef>,
 }
 
 fn default_stage() -> String {
@@ -319,6 +322,7 @@ mod tests {
             request_command: None,
             open_tabs: Vec::new(),
             request_key: None,
+            request_ref: None,
         }
     }
 }

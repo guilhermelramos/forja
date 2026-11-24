@@ -1,19 +1,18 @@
 //! Comandos do módulo helper.
 
+use crate::context;
 use crate::detect;
 use crate::hooks;
 use crate::launch::{self, LaunchPlan, LaunchRequest};
 use crate::profile::{self, Profile};
-use crate::status::{self, Run};
+use crate::status;
 use crate::store::HelperFile;
 use crate::{HelperState, Shared};
-use forja_contracts::{HelperStatus, HelperStatusChanged};
-use forja_kernel::store::write_atomic_bytes;
+use forja_contracts::HelperStatus;
 use forja_kernel::{Args, Ctx, KernelError, Registrar};
 use serde_json::{json, Value};
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::Duration;
 
 pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
     let list_core = Arc::clone(core);
@@ -44,7 +43,7 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
 
     let launch_core = Arc::clone(core);
     r.command("helper.launch", "helper.command.launch", move |cx, args| {
-        launch(cx, &launch_core, launch_request(&args)).map_err(KernelError::Message)
+        crate::launch_flow::launch(cx, &launch_core, crate::launch_flow::launch_request(&args)).map_err(KernelError::Message)
     });
 
     let launch_default_core = Arc::clone(core);
@@ -52,14 +51,14 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
         "helper.launch.default",
         "helper.command.launch-default",
         move |cx, _args| {
-            launch(cx, &launch_default_core, LaunchRequest::default()).map_err(KernelError::Message)
+            crate::launch_flow::launch(cx, &launch_default_core, LaunchRequest::default()).map_err(KernelError::Message)
         },
     );
 
     let hook_core = Arc::clone(core);
     r.command("helper.hook", "helper.command.hook", move |cx, args| {
         let payload = args.get("payload").cloned().unwrap_or(Value::Null);
-        hook_event(cx, &hook_core, payload);
+        crate::launch_flow::hook_event(cx, &hook_core, payload);
         Ok(json!({}))
     });
 
@@ -119,6 +118,11 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
                                 .is_none_or(|id| run.terminal_id == *id)
                     })
                     .map(|run| {
+                        let readiness = state
+                            .launch.ready_states
+                            .get(&run.terminal_id)
+                            .cloned()
+                            .unwrap_or_default();
                         json!({
                             "terminal_id": run.terminal_id,
                             "profile_id": run.profile_id,
@@ -127,6 +131,8 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
                             "status": run.status,
                             "failed": status::is_failed(run),
                             "last_event": run.last_event,
+                            "ready": readiness.ready,
+                            "ready_timed_out": readiness.timed_out,
                         })
                     })
                     .collect::<Vec<_>>()
@@ -160,7 +166,7 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
                     state.file.hook_consent.insert(key, granted);
                 })
                 .map_err(error)?;
-            save_file(cx, &consent_core);
+            crate::persistence::save_file(cx, &consent_core);
             Ok(json!({ "granted": granted }))
         },
     );
@@ -187,7 +193,7 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
             }
             if let Some(result) = cached {
                 return match result {
-                    Ok(status) => Ok(hook_status_json(&status)),
+                    Ok(status) => Ok(crate::launch_flow::hook_status_json(&status)),
                     Err(message) => Err(KernelError::Message(message)),
                 };
             }
@@ -299,9 +305,17 @@ pub(crate) fn ensure(
             return Ok(());
         }
     }
-    let file = match cx.store().load::<HelperFile>() {
-        forja_kernel::store::LoadResult::Loaded(file) => file,
-        _ => HelperFile::default(),
+    let need_file = core
+        .with_state(|state| !state.launch.file_loaded)
+        .unwrap_or(true);
+    let file = if need_file {
+        match cx.store().load::<HelperFile>() {
+            forja_kernel::store::LoadResult::Loaded(file) => file,
+            _ => HelperFile::default(),
+        }
+    } else {
+        core.with_state(|state| state.file.clone())
+            .unwrap_or_default()
     };
     let profiles = profile::load_all(bench.as_deref(), |profile| trust_allows(cx, profile));
     let mut state = core
@@ -310,13 +324,23 @@ pub(crate) fn ensure(
         .map_err(|_| "helper state is poisoned".to_owned())?;
     state.profiles = profiles;
     state.file = file;
-    state.loaded_for = bench;
+    state.launch.file_loaded = true;
+    state.loaded_for = bench.clone();
     if state.runs.is_empty() {
         // `--demo` leaves two stored runs so the page has state to show; the
         // real file never carries them and no process is started.
         for run in crate::demo::load(&forja_kernel::Store::new(cx.data_dir())) {
             state.runs.insert(run.terminal_id.clone(), run);
         }
+    }
+    drop(state);
+    if let Some(bench_dir) = bench {
+        context::schedule_rules_preload(
+            cx,
+            core,
+            bench_dir,
+            vec!["AGENTS.md".to_owned(), "CLAUDE.md".to_owned()],
+        );
     }
     Ok(())
 }
@@ -331,7 +355,7 @@ pub(crate) fn ensure_current(cx: &mut Ctx<'_>, core: &Shared) -> Result<(), Stri
     ensure(cx, core, bench)
 }
 
-fn trust_allows(cx: &mut Ctx<'_>, profile: &Profile) -> bool {
+pub(crate) fn trust_allows(cx: &mut Ctx<'_>, profile: &Profile) -> bool {
     let mut args = Args::new();
     args.insert("kind", json!("helper_profile"));
     args.insert(
@@ -345,255 +369,20 @@ fn trust_allows(cx: &mut Ctx<'_>, profile: &Profile) -> bool {
         .unwrap_or(false)
 }
 
-fn current_bench(cx: &mut Ctx<'_>) -> Option<PathBuf> {
+pub(crate) fn current_bench(cx: &mut Ctx<'_>) -> Option<PathBuf> {
     cx.run_command("bench.current", Args::new())
         .ok()
         .and_then(|value| value.get("path").and_then(Value::as_str).map(PathBuf::from))
         .or_else(|| std::env::current_dir().ok())
 }
 
-fn inject_account_env(cx: &mut Ctx<'_>, profile_id: &str, plan: &mut LaunchPlan) {
+pub(crate) fn inject_account_env(cx: &mut Ctx<'_>, profile_id: &str, plan: &mut LaunchPlan) {
     let mut args = Args::new();
     args.insert("profile_id", json!(profile_id));
     let Ok(value) = cx.run_command("accounts.env", args) else {
         return;
     };
     plan.merge_env(&value);
-}
-
-fn launch_request(args: &Args) -> LaunchRequest {
-    LaunchRequest {
-        profile_id: args.str("profile_id").map(str::to_owned),
-        bench_path: args.str("bench_path").map(str::to_owned),
-        prompt: args.str("prompt").map(str::to_owned),
-        permission: args.str("permission").map(str::to_owned),
-        model: args.str("model").map(str::to_owned),
-        effort: args.str("effort").map(str::to_owned),
-    }
-}
-
-fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) -> Result<Value, String> {
-    let bench = request
-        .bench_path
-        .clone()
-        .map(PathBuf::from)
-        .or_else(|| current_bench(cx))
-        .unwrap_or_else(|| PathBuf::from("."));
-    ensure(cx, core, Some(bench.clone()))?;
-    ensure_probed(core);
-    let default_profile = cx
-        .setting("helper.default.profile")
-        .and_then(|value| value.as_str())
-        .unwrap_or("auto")
-        .to_owned();
-    let default_permission = cx
-        .setting("helper.default.permissions")
-        .and_then(|value| value.as_str())
-        .unwrap_or("ask")
-        .to_owned();
-    let selected = core.with_state(|state| {
-        let profile = match &request.profile_id {
-            Some(id) => state
-                .profiles
-                .iter()
-                .find(|profile| &profile.id == id)
-                .cloned(),
-            None => profile::pick_default(
-                &state.profiles,
-                |id| state.is_installed(id),
-                &default_profile,
-            )
-            .cloned(),
-        };
-        let profile = profile.ok_or_else(|| cx.t("helper.view.installed-empty"))?;
-        let overrides = state.overrides(&profile.id);
-        let detected = state.executable_for(&profile.id).map(std::path::Path::to_path_buf);
-        Ok::<_, String>((profile, overrides, detected))
-    })?;
-    let (profile, overrides, detected) = selected?;
-    if overrides.disabled {
-        return Err(format!("helper profile `{}` is disabled", profile.id));
-    }
-    if !profile.trusted {
-        return Err(profile
-            .risk_reason
-            .clone()
-            .unwrap_or_else(|| format!("helper profile `{}` is not trusted", profile.id)));
-    }
-    let chat_mode = cx
-        .setting("helper.launch.mode")
-        .and_then(|value| value.as_str())
-        .unwrap_or("tui")
-        == "chat";
-    if chat_mode && cx.registry().command("chat.open").is_some() {
-        let mut open = Args::new();
-        open.insert("profile_id", json!(profile.id.clone()));
-        open.insert("bench_path", json!(bench.display().to_string()));
-        open.insert(
-            "permission",
-            json!(request
-                .permission
-                .clone()
-                .unwrap_or_else(|| default_permission.clone())),
-        );
-        if let Some(model) = &request.model {
-            open.insert("model", json!(model));
-        }
-        if let Some(effort) = &request.effort {
-            open.insert("effort", json!(effort));
-        }
-        let opened = cx
-            .run_command("chat.open", open)
-            .map_err(|error| error.to_string())?;
-        if let Some(prompt) = request.prompt.as_deref().map(str::trim) {
-            if !prompt.is_empty() {
-                let mut send = Args::new();
-                send.insert("prompt", json!(prompt));
-                cx.run_command("chat.send", send)
-                    .map_err(|error| error.to_string())?;
-            }
-        }
-        return Ok(json!({
-            "terminal_id": Value::Null,
-            "profile_id": profile.id,
-            "session_id": opened.get("session_id").cloned().unwrap_or(Value::Null),
-            "command_line": "",
-            "mode": "chat"
-        }));
-    }
-    if cx.registry().command("terminal.open").is_none() {
-        return Err("terminal module is not available; helper.launch needs terminal.open".to_owned());
-    }
-    let mut plan = launch::build(
-        &profile,
-        &request,
-        &default_permission,
-        bench.clone(),
-        &overrides,
-    )?;
-    if detected.is_none() {
-        return Err(cx.t_args("helper.launch.not-installed", &[("name", &profile.name)]));
-    }
-    inject_account_env(cx, &profile.id, &mut plan);
-    let hook_token = if profile.hooks.supported {
-        let token = hooks::new_run_token()?;
-        plan.environment
-            .insert(hooks::HOOK_TOKEN_ENV.to_owned(), token.clone());
-        token
-    } else {
-        String::new()
-    };
-    let mut args = Args::new();
-    args.insert("cwd", json!(bench.display().to_string()));
-    args.insert("command", json!(plan.program.clone()));
-    args.insert("args", json!(plan.args_text()));
-    args.insert("title", json!(profile.name));
-    args.insert("env", json!(plan.environment));
-    let opened = cx.run_command("terminal.open", args).map_err(|_| {
-        "terminal module is not available; helper.launch needs terminal.open".to_owned()
-    })?;
-    let terminal_id = opened
-        .get("terminal_id")
-        .and_then(Value::as_str)
-        .ok_or_else(|| "terminal.open returned no terminal_id".to_owned())?
-        .to_owned();
-    let run = Run {
-        terminal_id: terminal_id.clone(),
-        profile_id: profile.id.clone(),
-        bench_path: bench.display().to_string(),
-        started_at: chrono::Utc::now().to_rfc3339(),
-        hook_token,
-        status: if request.prompt.is_some() {
-            HelperStatus::Working
-        } else {
-            HelperStatus::Idle
-        },
-        last_event: Some("launch".to_owned()),
-    };
-    core.with_state(|state| {
-        state.runs.insert(terminal_id.clone(), run.clone());
-        state
-            .last_benches
-            .insert(profile.id.clone(), bench.display().to_string());
-        state.refresh_awake();
-    })?;
-    let _ = cx.emit(&HelperStatusChanged {
-        bench_path: run.bench_path.clone(),
-        terminal_id: Some(terminal_id.clone()),
-        profile_id: run.profile_id.clone(),
-        status: run.status,
-    });
-    if let Some(prompt) = plan.delayed_prompt.clone() {
-        let terminal_id = terminal_id.clone();
-        cx.spawn(
-            move || {
-                std::thread::sleep(Duration::from_millis(1_200));
-                prompt
-            },
-            move |cx, prompt| {
-                let mut send = Args::new();
-                send.insert("terminal_id", json!(terminal_id));
-                send.insert("text", json!(prompt));
-                send.insert("enter", json!(true));
-                let _ = cx.run_command("terminal.send", send);
-            },
-        );
-    }
-    Ok(json!({
-        "terminal_id": terminal_id,
-        "profile_id": profile.id,
-        "command_line": plan.command_line(),
-        "mode": "tui"
-    }))
-}
-
-fn hook_event(cx: &mut Ctx<'_>, core: &Shared, payload: Value) {
-    if !cx
-        .setting("helper.hooks.enabled")
-        .and_then(|value| value.as_bool())
-        .unwrap_or(true)
-    {
-        return;
-    }
-    let _ = ensure_current(cx, core);
-    let Some(profile_id) = payload.get("forja_profile_id").and_then(Value::as_str) else {
-        return;
-    };
-    let Some(token) = payload.get("forja_token").and_then(Value::as_str) else {
-        return;
-    };
-    let hook_payload = payload.get("payload").unwrap_or(&payload);
-    let Some(cwd) = ["cwd", "workspace", "workspace_path", "project_path"]
-        .iter()
-        .find_map(|key| hook_payload.get(key).and_then(Value::as_str))
-    else {
-        return;
-    };
-    let Some(status) = hooks::map_event(&payload) else {
-        return;
-    };
-    let event = payload
-        .get("forja_event")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let target = core
-        .with_state(|state| {
-            status::match_hook_run(&state.runs, profile_id, token, cwd)
-                .map(|run| run.terminal_id.clone())
-        })
-        .ok()
-        .flatten();
-    if let Some(terminal_id) = target {
-        status::update_run_by_id(cx, core, &terminal_id, status, event);
-    }
-}
-
-fn hook_status_json(status: &hooks::HookStatus) -> Value {
-    json!({
-        "state": status.state.as_str(),
-        "config_path": status.config_path.as_ref().map(|path| path.display().to_string()),
-        "detail": status.detail
-    })
 }
 
 fn profile_infos(state: &HelperState) -> Vec<Value> {
@@ -723,7 +512,7 @@ fn focus_bench_in_shell(cx: &mut Ctx<'_>, bench_path: &str) {
     let _ = cx.run_command("shell.bench.focus", focus);
 }
 
-fn start_detection(cx: &mut Ctx<'_>, core: &Shared) {
+pub(crate) fn start_detection(cx: &mut Ctx<'_>, core: &Shared) {
     let profiles = match core.with_state(|state| {
         if state.detecting {
             return None;
@@ -745,22 +534,6 @@ fn start_detection(cx: &mut Ctx<'_>, core: &Shared) {
                 state.detect_runs += 1;
             }
         },
-    );
-}
-
-fn save_file(cx: &mut Ctx<'_>, core: &crate::Core) {
-    let file = match core.with_state(|state| state.file.clone()) {
-        Ok(file) => file,
-        Err(_) => return,
-    };
-    let path = cx.store().path();
-    cx.spawn(
-        move || {
-            if let Ok(bytes) = serde_json::to_vec_pretty(&file) {
-                let _ = write_atomic_bytes(&path, &bytes);
-            }
-        },
-        |_, _| {},
     );
 }
 
@@ -789,9 +562,6 @@ impl crate::Core {
         Ok(())
     }
 
-    pub(crate) fn save(&self, cx: &mut Ctx<'_>) {
-        save_file(cx, self);
-    }
 }
 
 fn error(message: impl ToString) -> KernelError {

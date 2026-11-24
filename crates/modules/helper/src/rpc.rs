@@ -49,6 +49,8 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
             .param(ParamSchema::optional("permission", ParamKind::String))
             .param(ParamSchema::optional("model", ParamKind::String))
             .param(ParamSchema::optional("effort", ParamKind::String))
+            .param(ParamSchema::optional("from_request", ParamKind::Json))
+            .param(ParamSchema::optional("initial_context", ParamKind::String))
             .result(ResultSchema::new("helper.method.launch.result").schema(json!({
                 "type": "object",
                 "properties": {

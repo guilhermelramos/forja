@@ -141,11 +141,78 @@ impl RequestItem {
 
     /// Referência que o comando `bench.create` recebe em `from_request`.
     pub fn request_ref(&self) -> RequestRef {
+        let description = self
+            .body
+            .as_deref()
+            .map(str::trim)
+            .filter(|body| !body.is_empty())
+            .map(str::to_owned);
+        let mut links = Vec::new();
+        if let Some(url) = self
+            .url
+            .as_deref()
+            .map(str::trim)
+            .filter(|url| !url.is_empty())
+        {
+            push_unique_link(&mut links, url);
+        }
+        if let Some(body) = self.body.as_deref() {
+            extract_urls(body, &mut links);
+        }
+        for comment in &self.comments {
+            extract_urls(&comment.body, &mut links);
+        }
         RequestRef {
             counter: self.counter.clone(),
             key: self.key.clone(),
             title: self.title.clone(),
             url: self.url.clone(),
+            description,
+            links,
+        }
+    }
+}
+
+fn push_unique_link(links: &mut Vec<String>, candidate: &str) {
+    if !links.iter().any(|existing| existing == candidate) {
+        links.push(candidate.to_owned());
+    }
+}
+
+fn extract_urls(text: &str, links: &mut Vec<String>) {
+    // Link com rótulo: [texto](https://...). O destino não aparece sozinho
+    // entre espaços, então precisa ser lido antes da varredura de tokens.
+    let bytes = text.as_bytes();
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index] == b'[' {
+            if let Some(close_rel) = text[index + 1..].find(']') {
+                let close = index + 1 + close_rel;
+                if text[close + 1..].starts_with('(') {
+                    let start = close + 2;
+                    if let Some(end_rel) = text[start..].find(')') {
+                        let url = text[start..start + end_rel].trim();
+                        if (url.starts_with("https://") || url.starts_with("http://"))
+                            && url.len() > "http://".len()
+                        {
+                            push_unique_link(links, url);
+                        }
+                        index = start + end_rel + 1;
+                        continue;
+                    }
+                }
+            }
+        }
+        index += 1;
+    }
+    for token in text.split_whitespace() {
+        let trimmed = token.trim_start_matches(['(', '[', '<', '"', '\'']);
+        if !(trimmed.starts_with("https://") || trimmed.starts_with("http://")) {
+            continue;
+        }
+        let cleaned = trimmed.trim_end_matches([')', ']', '>', ',', '.', ';', '"', '\'']);
+        if cleaned.len() > "http://".len() {
+            push_unique_link(links, cleaned);
         }
     }
 }
@@ -158,6 +225,10 @@ pub struct RequestRef {
     pub title: String,
     #[serde(default)]
     pub url: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub links: Vec<String>,
 }
 
 /// Motivo de falha de um balcão. A tela traduz cada variante por i18n; nenhuma mensagem
@@ -425,8 +496,40 @@ mod tests {
     fn request_ref_copies_the_identity_fields() {
         let mut item = RequestItem::new("linear", "ENG-42", "Cache");
         item.url = Some("https://linear.app/x/issue/ENG-42".into());
+        item.body = Some("Fix cache invalidation. See https://docs.example.test/cache and (https://linear.app/x/issue/ENG-42). Also [the spec](https://docs.example.test/spec).".into());
         let reference = item.request_ref();
         assert_eq!(reference.key, "ENG-42");
         assert_eq!(reference.url, item.url);
+        assert_eq!(
+            reference.description.as_deref(),
+            Some("Fix cache invalidation. See https://docs.example.test/cache and (https://linear.app/x/issue/ENG-42). Also [the spec](https://docs.example.test/spec).")
+        );
+        assert_eq!(
+            reference.links,
+            vec![
+                "https://linear.app/x/issue/ENG-42".to_owned(),
+                "https://docs.example.test/spec".to_owned(),
+                "https://docs.example.test/cache".to_owned(),
+            ]
+        );
+    }
+
+    #[test]
+    fn request_ref_accepts_legacy_json_without_description_or_links() {
+        let legacy: RequestRef = serde_json::from_str(
+            r##"{"counter":"github","key":"#7","title":"Old request","url":"https://github.com/o/r/issues/7"}"##,
+        )
+        .unwrap();
+        assert_eq!(legacy.description, None);
+        assert!(legacy.links.is_empty());
+        let current: RequestRef = serde_json::from_str(
+            r##"{"counter":"github","key":"#7","title":"New request","url":null,"description":"Body [spec](https://docs.example.test/spec)","links":["https://docs.example.test/spec"]}"##,
+        )
+        .unwrap();
+        assert_eq!(
+            current.description.as_deref(),
+            Some("Body [spec](https://docs.example.test/spec)")
+        );
+        assert_eq!(current.links, vec!["https://docs.example.test/spec".to_owned()]);
     }
 }
