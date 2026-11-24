@@ -6,6 +6,7 @@ mod fonts;
 mod hub_ui;
 mod input;
 mod line_cache;
+mod pane_divider;
 mod recipe_picker;
 mod render;
 mod terminal_ui;

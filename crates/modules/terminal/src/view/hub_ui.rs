@@ -2,6 +2,7 @@
 
 use super::chrome::{c32, draw_pane_header, HeaderControl, TabInfo};
 use super::line_cache::LineCache;
+use super::pane_divider;
 use super::recipe_picker;
 use super::terminal_ui::draw_terminal;
 use super::{UiText, ViewAction};
@@ -13,7 +14,7 @@ use crate::settings::TermSettings;
 use crate::terminal::Terminal;
 use crate::theme::Palette;
 use forja_kernel::ui_contract::egui::{
-    self, Rect, RichText, Sense, Stroke, UiBuilder,
+    self, Rect, RichText, Stroke, UiBuilder,
 };
 use forja_kernel::Ctx;
 use forja_ui_kit::{applied_tokens, Tokens};
@@ -250,49 +251,16 @@ fn draw_node(
                 divider.min.y += size;
                 divider.max.y = divider.min.y + thickness;
             }
-            let divider_name = texts.resize_panes.clone();
-            let response = ui.interact(
-                divider,
-                ui.id().with(("terminal-divider", first_pane(first), first_pane(second))),
-                Sense::click_and_drag(),
-            );
-            response.widget_info(|| {
-                egui::WidgetInfo::slider(ui.is_enabled(), f64::from(*ratio), divider_name.clone())
-            });
-            if response.clicked() {
-                response.request_focus();
+            let response = pane_divider::Divider {
+                rect: divider,
+                id: ui.id().with(("terminal-divider", first_pane(first), first_pane(second))),
+                name: &texts.resize_panes,
+                horizontal,
+                ratio,
+                bounds: (lower, upper),
+                available,
             }
-            // O splitter do ui-kit só arrasta no eixo x e usa limites fixos;
-            // aqui o divisor também serve painéis empilhados e respeita os
-            // tamanhos mínimos das duas árvores. Mantemos o arrasto e damos as
-            // mesmas setas de teclado do contrato do splitter.
-            if response.has_focus() && ui.is_enabled() {
-                let (less, more) = if horizontal {
-                    (egui::Key::ArrowLeft, egui::Key::ArrowRight)
-                } else {
-                    (egui::Key::ArrowUp, egui::Key::ArrowDown)
-                };
-                if ui.input(|input| input.key_pressed(less)) {
-                    *ratio -= 0.01;
-                }
-                if ui.input(|input| input.key_pressed(more)) {
-                    *ratio += 0.01;
-                }
-                *ratio = (*ratio).clamp(lower, upper);
-                ui.ctx().request_repaint();
-            }
-            let response = forja_ui_kit::tooltip(response, divider_name);
-            if response.dragged() && available > 0.0 {
-                let delta = response.drag_delta();
-                *ratio = (*ratio + (if horizontal { delta.x } else { delta.y }) / available)
-                    .clamp(lower, upper);
-                ui.ctx().request_repaint();
-            }
-            let response = response.on_hover_cursor(if horizontal {
-                egui::CursorIcon::ResizeHorizontal
-            } else {
-                egui::CursorIcon::ResizeVertical
-            });
+            .draw(ui);
             let line = if horizontal {
                 Rect::from_center_size(divider.center(), egui::vec2(thickness, divider.height()))
             } else {
