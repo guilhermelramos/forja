@@ -1111,9 +1111,9 @@ fn shortcut_target(id: &str, has_create_dialog: bool) -> &str {
 }
 
 /// Shortcuts that keep working while a text surface or a shell window owns the
-/// keyboard. `terminal.toggle` belongs here because `design/keymap.toml` marks
-/// it `even_in_terminal = true`.
-fn always_shortcut(id: &str) -> bool {
+/// keyboard. `terminal.toggle` and `layout.switch` belong here because
+/// `design/keymap.toml` marks them `even_in_terminal = true`.
+pub(crate) fn always_shortcut(id: &str) -> bool {
     matches!(
         id,
         "anvil.open"
@@ -1124,6 +1124,7 @@ fn always_shortcut(id: &str) -> bool {
             | "settings.keymap"
             | "help.keymap"
             | "panel.toggle"
+            | "layout.switch"
             | "terminal.toggle"
             | "view.zoom.in"
             | "view.zoom.out"
@@ -1241,6 +1242,7 @@ mod shortcut_tests {
     #[test]
     fn terminal_toggle_works_while_the_terminal_owns_the_keyboard() {
         assert!(always_shortcut("terminal.toggle"));
+        assert!(always_shortcut("layout.switch"));
         assert!(always_shortcut("bench.create"));
         assert!(always_shortcut("tab.focus"));
         assert!(!always_shortcut("terminal.copy"));

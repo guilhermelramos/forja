@@ -22,6 +22,8 @@ mod icon_contract_tests;
 mod layout;
 mod layout_presets;
 mod layout_settings;
+#[cfg(test)]
+mod layout_shortcut_tests;
 mod overlays;
 mod pacer;
 #[cfg(test)]
