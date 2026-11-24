@@ -12,6 +12,18 @@ pub(crate) enum Outcome {
     Cancel,
 }
 
+/// True on the frame a dialog regains the top keyboard layer (for example when
+/// the Anvil above it closes), so it can take focus back.
+fn layer_reactivated(ctx: &egui::Context, layer: egui::Id) -> bool {
+    let key = layer.with("was_active");
+    let active = forja_ui_kit::keyboard_layer_active(ctx, layer);
+    ctx.data_mut(|data| {
+        let was_active = data.get_temp::<bool>(key).unwrap_or(false);
+        data.insert_temp(key, active);
+        active && !was_active
+    })
+}
+
 /// Shows the new file / new folder window, using the top keyboard layer.
 pub(crate) fn new_entry_window(
     ctx: &egui::Context,
@@ -23,11 +35,13 @@ pub(crate) fn new_entry_window(
 ) -> Outcome {
     let layer = egui::Id::new("forja.explorer.new_entry.keyboard");
     let focus_key = egui::Id::new("forja.explorer.new_entry.focus");
+    let field_key = egui::Id::new("forja.explorer.new_entry.field");
     if forja_ui_kit::consume_layer_escape(ctx, layer) {
         ctx.data_mut(|data| data.remove_temp::<bool>(focus_key));
         return Outcome::Cancel;
     }
-    let focus_name = !ctx.data(|data| data.get_temp::<bool>(focus_key).unwrap_or(false));
+    let first_focus = !ctx.data(|data| data.get_temp::<bool>(focus_key).unwrap_or(false));
+    let refocus = first_focus || layer_reactivated(ctx, layer);
     let label = cx.t("explorer.dialog.name.label");
     let template_label = cx.t("explorer.dialog.template.label");
     let none = cx.t("explorer.dialog.template.none");
@@ -43,7 +57,8 @@ pub(crate) fn new_entry_window(
             forja_ui_kit::register_keyboard_layer(ui, layer);
             forja_ui_kit::text(ui, label);
             let edit = forja_ui_kit::text_field(ui, name, "");
-            if focus_name {
+            ctx.data_mut(|data| data.insert_temp(field_key, edit.id));
+            if refocus {
                 edit.request_focus();
                 ctx.data_mut(|data| data.insert_temp(focus_key, true));
             }
@@ -99,7 +114,8 @@ pub(crate) fn name_window(
         ctx.data_mut(|data| data.remove_temp::<bool>(focus_key));
         return Outcome::Cancel;
     }
-    let focus_name = !ctx.data(|data| data.get_temp::<bool>(focus_key).unwrap_or(false));
+    let first_focus = !ctx.data(|data| data.get_temp::<bool>(focus_key).unwrap_or(false));
+    let refocus = first_focus || layer_reactivated(ctx, layer);
     let label = cx.t("explorer.dialog.name.label");
     let ok = cx.t("explorer.dialog.confirm");
     let cancel = cx.t("explorer.dialog.cancel");
@@ -113,7 +129,7 @@ pub(crate) fn name_window(
             forja_ui_kit::register_keyboard_layer(ui, layer);
             forja_ui_kit::text(ui, label);
             let edit = forja_ui_kit::text_field(ui, name, "");
-            if focus_name {
+            if refocus {
                 edit.request_focus();
                 ctx.data_mut(|data| data.insert_temp(focus_key, true));
             }
@@ -238,6 +254,7 @@ mod tests {
 
         // Frame 1: both dialogs render; projects modal registers last so it owns the top layer.
         let _ = ctx.run(Default::default(), |ctx| {
+            forja_ui_kit::begin_keyboard_frame(ctx);
             let outcome = new_entry_window(ctx, &cx, "New folder", &mut name, &[], &mut template);
             assert_eq!(outcome, Outcome::Open);
             egui::Window::new("Clone repository")
@@ -249,6 +266,7 @@ mod tests {
 
         // Frame 2: Escape closes only the top dialog; New folder remains open.
         let _ = ctx.run(key_escape(), |ctx| {
+            forja_ui_kit::begin_keyboard_frame(ctx);
             let outcome = new_entry_window(ctx, &cx, "New folder", &mut name, &[], &mut template);
             entry_open = outcome == Outcome::Open;
             if forja_ui_kit::consume_layer_escape(ctx, top_layer) {
@@ -266,10 +284,54 @@ mod tests {
 
         // Frame 3: second Escape now reaches New folder's layer and closes it.
         let _ = ctx.run(key_escape(), |ctx| {
+            forja_ui_kit::begin_keyboard_frame(ctx);
             let outcome = new_entry_window(ctx, &cx, "New folder", &mut name, &[], &mut template);
             entry_open = outcome == Outcome::Open;
         });
         assert!(!entry_open, "second Escape should close New folder");
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn closing_the_top_window_gives_focus_back_to_new_entry() {
+        let (mut runtime, dir) = test_runtime("refocus-new-entry");
+        let cx = runtime.ctx("explorer");
+        let ctx = egui::Context::default();
+        let top_layer = egui::Id::new("forja.projects.clone.keyboard");
+        let field_key = egui::Id::new("forja.explorer.new_entry.field");
+        let mut top_open = true;
+        let mut name = String::new();
+        let mut template = None;
+
+        let _ = ctx.run(Default::default(), |ctx| {
+            forja_ui_kit::begin_keyboard_frame(ctx);
+            let _ = new_entry_window(ctx, &cx, "New file", &mut name, &[], &mut template);
+            egui::Window::new("Clone repository")
+                .id(egui::Id::new("forja.projects.clone"))
+                .show(ctx, |ui| forja_ui_kit::register_keyboard_layer(ui, top_layer));
+        });
+        let _ = ctx.run(key_escape(), |ctx| {
+            forja_ui_kit::begin_keyboard_frame(ctx);
+            let _ = new_entry_window(ctx, &cx, "New file", &mut name, &[], &mut template);
+            if forja_ui_kit::consume_layer_escape(ctx, top_layer) {
+                top_open = false;
+            } else if top_open {
+                egui::Window::new("Clone repository")
+                    .id(egui::Id::new("forja.projects.clone"))
+                    .show(ctx, |ui| forja_ui_kit::register_keyboard_layer(ui, top_layer));
+            }
+        });
+        assert!(!top_open, "Escape should close the top window");
+
+        // Next frame: the remaining dialog owns the keyboard again and asks
+        // for focus on its name field.
+        let _ = ctx.run(Default::default(), |ctx| {
+            forja_ui_kit::begin_keyboard_frame(ctx);
+            let _ = new_entry_window(ctx, &cx, "New file", &mut name, &[], &mut template);
+        });
+        let field = ctx.data(|data| data.get_temp::<egui::Id>(field_key));
+        let focused = ctx.memory(|memory| memory.focused());
+        assert!(field.is_some_and(|field| focused == Some(field)), "name field should receive focus back");
         let _ = std::fs::remove_dir_all(dir);
     }
 }
