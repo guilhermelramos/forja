@@ -6,9 +6,9 @@ button = 9
 label = 159
 color = 5
 space = 50
-raw_text_edit = 52
+raw_text_edit = 53
 raw_combo_box = 6
-raw_checkbox = 14
+raw_checkbox = 17
 raw_sense_click = 13
 
 [allowed]

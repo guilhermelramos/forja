@@ -8,8 +8,8 @@
 |---|---|
 | Configurações no catálogo | 315 |
 | Configurações sobreponíveis por projeto (`scope = "project"`) | 31 |
-| Configurações registradas no app | 298 (297 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 297 (296 do catálogo) |
+| Configurações registradas no app | 299 (298 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 298 (297 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
 | Configurações adiadas | 15 |
