@@ -7,7 +7,7 @@ schema_version = 1
 id = "appearance"
 label_pt = "Aparência"
 label_en = "Appearance"
-setting_count = 35
+setting_count = 36
 
 [[group]]
 id = "benches"
@@ -499,6 +499,22 @@ help_en = "Shows branch, active helpers, usage and resources at the bottom."
 why = "A barra é o painel de saúde do trabalho em andamento."
 label_key = "setting-appearance-status_bar-visible-label"
 help_key = "setting-appearance-status_bar-visible-help"
+
+[[setting]]
+key = "appearance.layout.default"
+module = "appearance"
+group = "appearance"
+scope = "user"
+type = "text"
+default = "oficina"
+max_len = 64
+label_pt = "Arranjo padrão"
+label_en = "Default layout"
+help_pt = "Id do arranjo usado quando a bancada não tem escolha explícita."
+help_en = "Layout id used when a bench has no explicit choice."
+why = "Uma bancada nova precisa de um ponto de partida previsível; o projeto pode sobrescrever."
+label_key = "setting-appearance-layout-default-label"
+help_key = "setting-appearance-layout-default-help"
 
 [[setting]]
 key = "appearance.window.remember_geometry"

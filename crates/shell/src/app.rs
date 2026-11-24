@@ -13,6 +13,7 @@ pub(crate) mod tab_bar;
 
 use crate::actions::{self, AnvilMode};
 use crate::hosts;
+use crate::layout_presets::LayoutState;
 use crate::rpc::RpcHost;
 use crate::screenshot::{self, ScreenshotJob};
 use crate::shell_module::ShellModule;
@@ -144,6 +145,8 @@ pub struct ForjaApp {
     pub(crate) anvil_group: usize,
     pub(crate) shell_data: shell_store::ShellData,
     pub(crate) shell_writer: shell_store::ShellWriter,
+    /// Seletor, projeção e gravação de arranjos (estado em memória).
+    pub(crate) layout_state: crate::layout_presets::LayoutState,
     pub(crate) current_bench_id: Option<String>,
     pub(crate) show_sidebar: bool,
     pub(crate) last_sidebar_setting: bool,
@@ -302,6 +305,7 @@ impl ForjaApp {
         let mut app = Self {
             runtime,
             tokens: Tokens::brasa_dark(),
+            layout_state: LayoutState::initial(&shell_data, current_bench_id.as_deref(), &rail_views),
             rail_views,
             sidebar_views,
             bench_views,
@@ -858,6 +862,10 @@ impl ForjaApp {
                         self.rail_page = None;
                     }
                 }
+                action if crate::layout_presets::is_layout_action(&action) => {
+                    self.handle_layout_action(action)
+                }
+                _ => {}
             }
         }
     }
@@ -1019,6 +1027,13 @@ impl ForjaApp {
             ctx.request_repaint();
         }
     }
+
+    /// Diverts egui's exit commands to the kernel's test log before eframe
+    /// can hand them to `egui-winit` (which would open a browser or write to
+    /// the system clipboard). Outside a test run this does nothing.
+    fn isolate_external_output(&self, ctx: &egui::Context) {
+        crate::externals::isolate_external_output(ctx);
+    }
 }
 
 impl eframe::App for ForjaApp {
@@ -1039,6 +1054,7 @@ impl eframe::App for ForjaApp {
         }
         let tasks_applied = self.runtime.poll_tasks();
         self.runtime.poll_ticks();
+        self.poll_layout_catalog();
         self.handle_shortcuts(ctx);
         self.drain_actions(ctx);
         self.show_demos();
@@ -1055,9 +1071,13 @@ impl eframe::App for ForjaApp {
         self.keymap_window(ctx);
         self.anvil_window(ctx);
         self.modal_windows(ctx);
+        self.layout_windows(ctx);
         self.sync_shell_store();
         self.diagnostics_overlay(ctx);
         self.capture(ctx);
+        // Must happen before eframe takes the platform output: in a test run
+        // an URL or a copy must never reach the real browser or clipboard.
+        self.isolate_external_output(ctx);
         if let Some(driver) = self.driver.as_mut() {
             driver.tick(ctx, self.runtime.tasks(), tasks_applied);
         }
@@ -1091,9 +1111,9 @@ fn shortcut_target(id: &str, has_create_dialog: bool) -> &str {
 }
 
 /// Shortcuts that keep working while a text surface or a shell window owns the
-/// keyboard. `terminal.toggle` belongs here because `design/keymap.toml` marks
-/// it `even_in_terminal = true`.
-fn always_shortcut(id: &str) -> bool {
+/// keyboard. `terminal.toggle` and `layout.switch` belong here because
+/// `design/keymap.toml` marks them `even_in_terminal = true`.
+pub(crate) fn always_shortcut(id: &str) -> bool {
     matches!(
         id,
         "anvil.open"
@@ -1104,6 +1124,7 @@ fn always_shortcut(id: &str) -> bool {
             | "settings.keymap"
             | "help.keymap"
             | "panel.toggle"
+            | "layout.switch"
             | "terminal.toggle"
             | "view.zoom.in"
             | "view.zoom.out"
@@ -1221,6 +1242,7 @@ mod shortcut_tests {
     #[test]
     fn terminal_toggle_works_while_the_terminal_owns_the_keyboard() {
         assert!(always_shortcut("terminal.toggle"));
+        assert!(always_shortcut("layout.switch"));
         assert!(always_shortcut("bench.create"));
         assert!(always_shortcut("tab.focus"));
         assert!(!always_shortcut("terminal.copy"));

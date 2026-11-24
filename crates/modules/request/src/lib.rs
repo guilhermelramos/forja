@@ -356,6 +356,7 @@ pub(crate) const USED_KEYS: &[&str] = &[
     "request-filter-recent",
     "request-filter-all",
     "request-search-hint",
+    "request-source-label",
     "request-refresh",
     "request-loading",
     "request-empty",

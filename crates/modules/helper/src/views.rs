@@ -93,8 +93,16 @@ impl View for HelperPage {
         let _ = ensure_current(cx, &self.core);
         maybe_detect(cx, &self.core);
         self.seed_preview();
-        let (mut runs, profiles, detection, installed_ids, detecting, has_verdict, last_benches) =
-            match self.core.state.lock() {
+        let (
+            mut runs,
+            profiles,
+            detection,
+            installed_ids,
+            detecting,
+            has_verdict,
+            last_benches,
+            launch_error,
+        ) = match self.core.state.lock() {
                 Ok(state) => {
                     let installed_ids: BTreeSet<String> = state
                         .profiles
@@ -110,6 +118,7 @@ impl View for HelperPage {
                         state.detecting,
                         state.has_detection_verdict(),
                         state.last_benches.clone(),
+                        state.last_launch_error.clone(),
                     )
                 }
                 Err(_) => return,
@@ -117,7 +126,7 @@ impl View for HelperPage {
         runs.sort_by_key(|run| rank(run.status));
         let active_count = runs
             .iter()
-            .filter(|run| !matches!(run.status, HelperStatus::Finished))
+            .filter(|run| !matches!(run.status, HelperStatus::Finished | HelperStatus::Error))
             .count();
         let active = format!("{}: {}", cx.t("helper.view.active"), active_count);
         let default_setting = cx
@@ -194,18 +203,14 @@ impl View for HelperPage {
                             .weak(),
                         );
                     }
-                    if let Some(error) = &self.launch_error {
+                    let shown_error = self.launch_error.as_deref().or(launch_error.as_deref());
+                    if let Some(error) = shown_error {
                         let human = forja_kernel::human_error::humanize_ctx(cx, error);
-                        let detail = human
-                            .detail
-                            .as_ref()
-                            .map(|detail| format!("{}\n{}", human.summary, detail))
-                            .unwrap_or(human.summary);
-                        forja_ui_kit::page_state(
+                        forja_ui_kit::error_banner(
                             ui,
-                            forja_ui_kit::PageState::Error,
-                            &cx.t("helper.page-state.error"),
-                            Some(&detail),
+                            &human.summary,
+                            human.detail.as_deref(),
+                            &cx.t("kernel.error.details"),
                         );
                     }
                     if runs.is_empty() {
@@ -645,7 +650,8 @@ fn rank(status: HelperStatus) -> u8 {
         HelperStatus::Working => 1,
         HelperStatus::Idle => 2,
         HelperStatus::Finished => 3,
-        HelperStatus::Unknown => 4,
+        HelperStatus::Error => 4,
+        HelperStatus::Unknown => 5,
     }
 }
 

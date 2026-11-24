@@ -158,10 +158,10 @@ fn tab_order_starts_with_content_and_wraps_cleanly_across_steps() {
     assert_eq!(
         cycle,
         vec![
-            Some("Follow Windows".into()),
+            Some("Interface language".into()),
             Some("Next".into()),
             Some("Close".into()),
-            Some("Follow Windows".into()),
+            Some("Interface language".into()),
         ]
     );
 
@@ -201,11 +201,11 @@ fn tab_order_starts_with_content_and_wraps_cleanly_across_steps() {
     assert_eq!(
         theme_cycle,
         vec![
-            Some("Follow Windows".into()),
+            Some("Visual theme".into()),
             Some("Back".into()),
             Some("Next".into()),
             Some("Close".into()),
-            Some("Follow Windows".into()),
+            Some("Visual theme".into()),
         ]
     );
 
@@ -229,7 +229,7 @@ fn tab_order_starts_with_content_and_wraps_cleanly_across_steps() {
     assert_eq!(
         helpers_cycle,
         vec![
-            Some("Choose automatically".into()),
+            Some("Default helper".into()),
             Some("Back".into()),
             Some("Next".into()),
             Some("Close".into()),
@@ -341,7 +341,7 @@ fn helper_step_has_progress_and_saves_the_default_choice() {
     let _ = render_wizard(&mut runtime, &mut view, &ctx, empty_frame());
     let _ = render_wizard(&mut runtime, &mut view, &ctx, empty_frame());
     let out = press_key(&mut runtime, &mut view, &ctx, egui::Key::Tab);
-    assert_eq!(focused_label(&out).as_deref(), Some("Choose automatically"));
+    assert_eq!(focused_label(&out).as_deref(), Some("Default helper"));
     let _ = press_key(&mut runtime, &mut view, &ctx, egui::Key::Space);
     let _ = press_key(&mut runtime, &mut view, &ctx, egui::Key::ArrowDown);
     let _ = press_key(&mut runtime, &mut view, &ctx, egui::Key::Enter);

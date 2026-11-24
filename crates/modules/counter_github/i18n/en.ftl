@@ -19,6 +19,7 @@ counter_github-error-decode = The counter sent an unexpected response.
 counter_github-error-config = The counter settings are incomplete.
 counter_github-error-vault = The system credential vault did not respond.
 counter_github-error-unsupported = The counter does not support this action.
+counter_github-token-label = GitHub token
 counter_github-token-hint = Token
 counter_github-action-connect = Connect
 counter_github-action-test = Test

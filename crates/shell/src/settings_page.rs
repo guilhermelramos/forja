@@ -252,6 +252,9 @@ impl ForjaApp {
                 continue;
             }
             ui.heading(group.label(self.runtime.i18n().locale()));
+            if query.is_empty() && group.id == "appearance" {
+                self.layout_settings_ui(ui);
+            }
             if query.is_empty() && group.id == "helpers" {
                 self.settings_custom_views(ui, &group.id, false);
             }

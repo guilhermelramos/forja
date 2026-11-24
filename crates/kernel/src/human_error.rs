@@ -2,9 +2,18 @@
 //! messages, keeping the raw technical text only as an optional detail.
 
 use crate::error::KernelError;
+use crate::human_error_helper::{
+    classify_launch_key, is_exact_internal_id, is_internal_command_failure_inner,
+    is_known_internal_command,
+};
 use crate::i18n::I18n;
 use crate::runtime::Ctx;
 use std::io;
+
+pub use crate::human_error_helper::{
+    is_helper_executable_missing, is_internal_command_failure, is_provider_failure,
+    redact_internal_ids,
+};
 
 /// User-facing error message paired with optional raw technical context.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -43,6 +52,9 @@ pub fn humanize_error(i18n: &I18n, raw: &str) -> HumanError {
     let lower = normalized.to_ascii_lowercase();
     let full_lower = trimmed.to_ascii_lowercase();
 
+    // Os "Detalhes técnicos" ficam recolhidos e mostram o texto original, sem
+    // redação, para quem precisa diagnosticar. A frase principal nunca mostra
+    // ids nem nomes de comando internos.
     if let Some(key) = classify_key(&full_lower, &lower) {
         return HumanError::with_detail(i18n.t(key), trimmed);
     }
@@ -52,10 +64,10 @@ pub fn humanize_error(i18n: &I18n, raw: &str) -> HumanError {
     }
 
     if normalized != trimmed {
-        return HumanError::with_detail(normalized, trimmed);
+        return HumanError::with_detail(redact_internal_ids(normalized), trimmed);
     }
 
-    HumanError::simple(trimmed)
+    HumanError::simple(redact_internal_ids(trimmed))
 }
 
 /// Convenience wrapper for module views and command handlers.
@@ -88,7 +100,7 @@ pub fn humanize_kernel_error(i18n: &I18n, error: &KernelError) -> HumanError {
     }
 }
 
-fn strip_wrappers(mut text: &str) -> &str {
+pub(crate) fn strip_wrappers(mut text: &str) -> &str {
     loop {
         let before = text;
         if let Some(rest) = text.strip_prefix("command `") {
@@ -124,6 +136,9 @@ fn classify_key(full_lower: &str, inner_lower: &str) -> Option<&'static str> {
     if is_program_not_found(full_lower, inner_lower) {
         return Some("kernel.error.program-not-found");
     }
+    if let Some(launch_key) = classify_launch_key(full_lower, inner_lower) {
+        return Some(launch_key);
+    }
     if is_permission_error(inner_lower) {
         return Some("kernel.error.permission");
     }
@@ -147,6 +162,15 @@ fn classify_key(full_lower: &str, inner_lower: &str) -> Option<&'static str> {
     }
     if is_network_error(inner_lower) {
         return Some("kernel.error.network");
+    }
+    // Último recurso: só uma pista interna, sem causa específica (git,
+    // permissão, rede, credencial etc.) identificada antes.
+    if is_internal_command_failure_inner(full_lower, inner_lower) {
+        return Some("kernel.error.internal-command-failed");
+    }
+    // Um id de sessão sem outra pista aponta para uma resposta do provedor.
+    if full_lower.contains("ses_") {
+        return Some("kernel.error.provider-unavailable");
     }
     None
 }
@@ -239,6 +263,18 @@ fn is_not_found(lower: &str) -> bool {
 fn classify_git_key(full_lower: &str, inner_lower: &str) -> Option<&'static str> {
     if inner_lower.contains("not a git repository") {
         return Some("kernel.error.git-not-repo");
+    }
+    if inner_lower.contains("does not have any commits yet")
+        || inner_lower.contains("no commits yet")
+        || inner_lower.contains("unborn branch")
+        || inner_lower.contains("não tem nenhum commit")
+        || inner_lower.contains("nao tem nenhum commit")
+        || inner_lower.contains("sem nenhum commit")
+    {
+        return Some("kernel.error.git-no-commits");
+    }
+    if inner_lower.contains("needed a single revision") {
+        return Some("kernel.error.git-invalid-ref");
     }
     if inner_lower.contains("invalid reference:")
         || (inner_lower.contains("base branch") && inner_lower.contains("does not exist"))
@@ -334,7 +370,7 @@ fn has_ascii_word(haystack: &str, word: &str) -> bool {
     false
 }
 
-fn has_backtick_internal_id(text: &str) -> bool {
+pub(crate) fn has_backtick_internal_id(text: &str) -> bool {
     let mut rest = text;
     while let Some(open) = rest.find('`') {
         let after = &rest[open + 1..];
@@ -342,14 +378,7 @@ fn has_backtick_internal_id(text: &str) -> bool {
             break;
         };
         let inner = &after[..close];
-        if inner.len() >= 3
-            && inner.len() <= 64
-            && !inner.contains(char::is_whitespace)
-            && (inner.contains('.') || inner.contains('_'))
-            && inner
-                .chars()
-                .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-' | ':'))
-        {
+        if is_exact_internal_id(inner) || is_known_internal_command(inner) {
             return true;
         }
         rest = &after[close + 1..];
@@ -498,5 +527,46 @@ mod tests {
             "Esta branch já está em uso em outra bancada."
         );
         assert!(worktree_delete.detail.is_some());
+    }
+
+    #[test]
+    fn humanizes_repository_without_commits_and_bad_revision() {
+        let pt = test_i18n(Locale::PtBr);
+        let en = test_i18n(Locale::En);
+        let no_commits = "git log --graph --date-order --max-count=200 --pretty=format:%H%x1f%h%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%s failed: fatal: your current branch 'master' does not have any commits yet";
+
+        let pt_no_commits = humanize_error(&pt, no_commits);
+        assert_eq!(
+            pt_no_commits.summary,
+            "Este repositório ainda não tem nenhum commit. Faça o primeiro commit para ver o histórico."
+        );
+        let pt_lower = pt_no_commits.summary.to_ascii_lowercase();
+        assert!(!pt_lower.contains("fatal"));
+        assert!(!pt_lower.contains("git log"));
+        assert!(!pt_lower.contains("does not have any"));
+        assert!(pt_no_commits.detail.as_deref().unwrap().contains("does not have any commits yet"));
+
+        let en_no_commits = humanize_error(&en, no_commits);
+        assert_eq!(
+            en_no_commits.summary,
+            "This repository has no commits yet. Make the first commit to see the history."
+        );
+        let en_lower = en_no_commits.summary.to_ascii_lowercase();
+        assert!(!en_lower.contains("fatal"));
+        assert!(!en_lower.contains("git log"));
+        assert!(!en_lower.contains("does not have any"));
+        assert!(en_no_commits.detail.is_some());
+
+        let bad_rev = humanize_error(
+            &pt,
+            "git rev-parse --verify --end-of-options C:\\forja-missing-folder\\ghost\\999^{commit} failed: fatal: Needed a single revision",
+        );
+        assert_eq!(
+            bad_rev.summary,
+            "A branch base ou referência informada não existe neste repositório."
+        );
+        assert!(!bad_rev.summary.contains("rev-parse"));
+        assert!(!bad_rev.summary.to_ascii_lowercase().contains("failed"));
+        assert!(bad_rev.detail.is_some());
     }
 }

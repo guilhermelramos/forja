@@ -33,6 +33,7 @@ helper-view-select = Selecionar
 helper-view-working = Trabalhando
 helper-view-needs-you = Precisa de você
 helper-view-finished = Terminou
+helper-view-error = Erro
 helper-view-idle = Ocioso
 helper-view-unknown = Desconhecido
 helper-view-installed = instalado

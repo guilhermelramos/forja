@@ -244,11 +244,15 @@ impl MusterFile {
                     HelperStatus::NeedsYou => AssignmentState::NeedsYou,
                     HelperStatus::Idle => AssignmentState::Idle,
                     HelperStatus::Finished => AssignmentState::Stopped,
+                    HelperStatus::Error => AssignmentState::Stopped,
                     HelperStatus::Unknown => AssignmentState::Idle,
                 };
             }
         }
-        let stopped = matches!(status, HelperStatus::Idle | HelperStatus::Finished);
+        let stopped = matches!(
+            status,
+            HelperStatus::Idle | HelperStatus::Finished | HelperStatus::Error
+        );
         if stopped && was_running && !delivered && !escalated {
             let assignment = self
                 .assignments

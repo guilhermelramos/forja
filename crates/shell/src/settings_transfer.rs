@@ -249,8 +249,9 @@ impl ForjaApp {
                         }
                     }
                 });
-            ui.label(self.text("shell.settings.file-path"));
-            ui.add(egui::TextEdit::singleline(&mut picker.path).desired_width(460.0));
+            let path_label = self.text("shell.settings.file-path");
+            ui.label(&path_label);
+            forja_ui_kit::text_field_labeled(ui, &mut picker.path, &path_label, "");
             if forja_ui_kit::button(
                 ui,
                 ButtonKind::Primary,

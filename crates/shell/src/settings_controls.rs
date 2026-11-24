@@ -68,15 +68,7 @@ impl ForjaApp {
         match &spec.kind {
             SettingKind::Bool => {
                 let mut value = current.as_bool().unwrap_or(false);
-                let response = forja_ui_kit::toggle(ui, &mut value, "");
-                response.widget_info(|| {
-                    egui::WidgetInfo::selected(
-                        egui::WidgetType::Checkbox,
-                        ui.is_enabled(),
-                        value,
-                        label,
-                    )
-                });
+                let response = forja_ui_kit::toggle_labeled(ui, &mut value, label);
                 response.changed().then_some(SettingValue::Bool(value))
             }
             SettingKind::Integer { min, max } => {

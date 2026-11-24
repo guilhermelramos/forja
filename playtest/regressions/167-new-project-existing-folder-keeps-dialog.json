@@ -15,8 +15,7 @@
   "expect": [
     {
       "window_count": 1,
-      "present": ["A pasta de destino não está vazia.", "Fechar aviso", "Teste A", "Criar", "Cancelar"],
-      "present_contains": ["sample"]
+      "present": ["A pasta de destino não está vazia.", "Fechar aviso", "Usa o nome da pasta quando vazio", "Criar", "Cancelar", "C:\\dev\\projeto"]
     }
   ]
 }

@@ -21,10 +21,12 @@ impl Module for ShellModule {
         for key in CHROME_KEYS {
             registrar.uses_i18n(key);
         }
+        crate::layout_commands::register_i18n(registrar);
         open_rail(registrar);
         focus_bench(registrar);
         open_logs(registrar);
         toggle_diagnostics(registrar);
+        crate::layout_commands::register(registrar);
     }
 }
 
@@ -39,7 +41,7 @@ fn open_logs(registrar: &mut Registrar<'_>) {
             cx.spawn(
                 move || {
                     std::fs::create_dir_all(&task_path)
-                        .and_then(|()| open_folder(&task_path))
+                        .and_then(|()| forja_kernel::process::reveal_folder(&task_path))
                         .map_err(|error| error.to_string())
                 },
                 move |_cx, result| {
@@ -54,23 +56,6 @@ fn open_logs(registrar: &mut Registrar<'_>) {
         }
         Ok(json!({ "path": displayed }))
     });
-}
-
-#[cfg(all(windows, not(test)))]
-fn open_folder(path: &std::path::Path) -> std::io::Result<()> {
-    forja_kernel::process::command("explorer.exe")
-        .arg(path)
-        .stdin(std::process::Stdio::null())
-        .spawn()
-        .map(|_| ())
-}
-
-#[cfg(all(not(windows), not(test)))]
-fn open_folder(_path: &std::path::Path) -> std::io::Result<()> {
-    Err(std::io::Error::new(
-        std::io::ErrorKind::Unsupported,
-        "opening a folder is only available on Windows",
-    ))
 }
 
 fn focus_bench(registrar: &mut Registrar<'_>) {
@@ -515,10 +500,10 @@ mod tests {
             helper_en.summary
         );
         assert!(!helper_en.summary.contains('`'));
-        assert!(helper_en
-            .detail
-            .as_deref()
-            .is_some_and(|detail| detail.contains("helper.launch")));
+        let helper_detail = helper_en.detail.as_deref().unwrap_or("");
+        assert!(helper_detail.contains("No installed helpers found"), "{helper_detail}");
+        // Detalhes recolhidos mostram o original, inclusive o comando interno.
+        assert!(helper_detail.contains("helper.launch"), "{helper_detail}");
 
         drop(runtime);
         let _ = std::fs::remove_dir_all(dir);

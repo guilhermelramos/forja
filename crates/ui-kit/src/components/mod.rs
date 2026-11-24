@@ -23,7 +23,9 @@ mod tree;
 pub use button::{action_tile, button, ButtonKind};
 pub use card::{card, list, ListItem};
 pub use choice::{segmented, tabs};
-pub use field::{select, text_field};
+pub use field::{
+    secret_field, select, select_labeled, text_area, text_field, text_field_labeled,
+};
 pub use menu::{context_menu, icon_menu, menu_panel, popup_menu, popup_menu_contents, MenuItem};
 pub use modal::{
     modal, modal_explicit_close, modal_preview, window_header, window_header_with_focus,
@@ -43,5 +45,5 @@ pub use status::{
 };
 pub use tabs::{panel_icon_tabs, tab_strip, PanelIconTab, TabItem, TabStripOutcome};
 pub use tabs_fit::{measure_tab_width, plan_tab_fit, TabFitPlan};
-pub use toggle::toggle;
+pub use toggle::{toggle, toggle_labeled};
 pub use tree::{tree, virtual_table, Column, TreeNode};

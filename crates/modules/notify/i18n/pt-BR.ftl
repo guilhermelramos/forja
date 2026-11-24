@@ -6,6 +6,7 @@ notify-method-show-description = Mostra um aviso na janela e, quando o catálogo
 notify-method-show-result = Se o aviso, a notificação do Windows e o som foram enviados.
 notify-toasts-title = Avisos
 notify-center-title = Notificações
+notify-item-open = Abrir notificação: { $summary }
 notify-center-count = { $count ->
     [1] { $count } aviso
    *[other] { $count } avisos

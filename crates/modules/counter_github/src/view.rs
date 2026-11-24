@@ -7,7 +7,7 @@ use crate::{Shared, Status};
 use forja_counter_kit::error_key;
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::{Args, Ctx};
-use forja_ui_kit::{button, ButtonKind};
+use forja_ui_kit::{button, secret_field, ButtonKind};
 use forja_contracts::CounterError;
 use serde_json::json;
 
@@ -36,11 +36,11 @@ impl View for ConnectionView {
 
         let mut action = None;
         ui.add_enabled_ui(!status.busy, |ui| {
-            ui.add(
-                egui::TextEdit::singleline(&mut self.token)
-                    .password(true)
-                    .hint_text(cx.t("counter_github-token-hint"))
-                    .desired_width(f32::INFINITY),
+            secret_field(
+                ui,
+                &mut self.token,
+                &cx.t("counter_github-token-label"),
+                &cx.t("counter_github-token-hint"),
             );
             ui.horizontal(|ui| {
                 let can_connect = !self.token.trim().is_empty();
@@ -109,7 +109,8 @@ fn status_line(cx: &Ctx<'_>, status: &Status) -> String {
 }
 
 /// Chaves de texto da seção de Ajustes, declaradas com `uses_i18n` pelo módulo.
-pub const I18N_KEYS: [&str; 7] = [
+pub const I18N_KEYS: [&str; 8] = [
+    "counter_github-token-label",
     "counter_github-token-hint",
     "counter_github-action-connect",
     "counter_github-action-test",

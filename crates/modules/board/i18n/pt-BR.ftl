@@ -43,6 +43,7 @@ board-card-helper-needs-you = Precisa de você
 board-card-helper-working = Trabalhando
 board-card-helper-idle = Parado
 board-card-helper-finished = Concluído
+board-card-helper-error = Erro
 board-card-helper-unknown = Estado desconhecido
 board-action-move = Mover etapa
 board-action-move-to = Mover para { $stage }

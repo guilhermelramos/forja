@@ -1,5 +1,7 @@
 counter_jira-name = Jira
+counter_jira-site-label = Site do Jira
 counter_jira-site-hint = Site, por exemplo acme.atlassian.net
+counter_jira-email-label = E-mail da conta Jira
 counter_jira-email-hint = E-mail da conta
 counter_jira-command-describe = Descrever o balcão Jira
 counter_jira-command-list = Listar pedidos do Jira
@@ -21,6 +23,7 @@ counter_jira-error-decode = O balcão mandou uma resposta inesperada.
 counter_jira-error-config = A configuração do balcão está incompleta.
 counter_jira-error-vault = O cofre de credenciais do sistema não respondeu.
 counter_jira-error-unsupported = O balcão não tem esta ação.
+counter_jira-token-label = Token da API Jira
 counter_jira-token-hint = Token
 counter_jira-action-connect = Conectar
 counter_jira-action-test = Testar

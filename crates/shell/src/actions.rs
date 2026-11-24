@@ -35,6 +35,15 @@ pub enum Action {
     CloseTab,
     ReopenTab,
     SwitchTab(usize),
+    OpenLayoutPicker,
+    SwitchLayout {
+        id: String,
+        layer: crate::layout_settings::LayoutLayer,
+        name: String,
+    },
+    SaveLayout,
+    ResetLayout,
+    ManageLayouts,
 }
 
 #[cfg(not(test))]
@@ -115,6 +124,10 @@ pub fn dispatch(id: &str) {
         "tab.switch_8" => Action::SwitchTab(8),
         "tab.switch_9" => Action::SwitchTab(9),
         "tab.switch_10" => Action::SwitchTab(10),
+        "layout.switch" => Action::OpenLayoutPicker,
+        "layout.save" => Action::SaveLayout,
+        "layout.reset" => Action::ResetLayout,
+        "layout.manage" => Action::ManageLayouts,
         _ => return,
     };
     push(action);

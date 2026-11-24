@@ -549,6 +549,7 @@ mod tests {
             id,
             role: role.to_owned(),
             name: name.to_owned(),
+            value: String::new(),
             rect,
             clickable,
             editable: false,
@@ -582,6 +583,7 @@ mod tests {
             elements,
             frames: 0,
             closed: false,
+            externals: Vec::new(),
         }
     }
 

@@ -43,6 +43,7 @@ board-card-helper-needs-you = Needs you
 board-card-helper-working = Working
 board-card-helper-idle = Idle
 board-card-helper-finished = Finished
+board-card-helper-error = Error
 board-card-helper-unknown = Helper unknown
 board-action-move = Move stage
 board-action-move-to = Move to { $stage }

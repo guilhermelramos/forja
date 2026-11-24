@@ -19,6 +19,7 @@ request-filter-open = Open
 request-filter-recent = Recent
 request-filter-all = All
 request-search-hint = Search by title, key, label or author
+request-source-label = Request counter
 request-refresh = Refresh
 request-loading = Loading…
 request-empty = No request in this filter.

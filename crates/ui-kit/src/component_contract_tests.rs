@@ -144,3 +144,104 @@ fn splitter_clamps_even_without_interaction_and_disabled_rows_do_not_click() {
         });
     });
 }
+
+fn labels(output: &egui::FullOutput) -> Vec<String> {
+    let tree = output.platform_output.accesskit_update.as_ref().unwrap();
+    tree.nodes
+        .iter()
+        .filter_map(|(_, node)| node.label().map(str::to_owned))
+        .collect()
+}
+
+#[test]
+fn named_inputs_expose_a_non_empty_accessible_name() {
+    for name in ["Rótulo do campo", "Chave secreta", "Área grande", "Idioma", "Ajuste"] {
+        let output = draw(Tokens::brasa_dark(), |ui| {
+            let mut value = String::new();
+            let mut index = 0usize;
+            let mut on = false;
+            text_field_labeled(ui, &mut value, name, "dica");
+            secret_field(ui, &mut value, name, "dica");
+            text_area(ui, &mut value, name, "dica", 3);
+            select_labeled(ui, &mut index, name, &["A", "B"]);
+            toggle_labeled(ui, &mut on, name);
+        });
+        assert!(
+            labels(&output).iter().filter(|label| *label == name).count() >= 2,
+            "expected the control and its tooltip to carry {name:?}"
+        );
+    }
+}
+
+#[test]
+fn legacy_text_field_uses_the_hint_as_accessible_name() {
+    let output = draw(Tokens::brasa_dark(), |ui| {
+        let mut value = String::new();
+        text_field(ui, &mut value, "Buscar arquivos");
+    });
+    assert!(labels(&output)
+        .iter()
+        .any(|label| label == "Buscar arquivos"));
+}
+
+#[test]
+fn tab_close_button_has_a_tooltip() {
+    let ctx = egui::Context::default();
+    let _ = install_fonts(&ctx);
+    apply(&ctx, &Tokens::brasa_dark());
+    ctx.style_mut(|style| style.interaction.tooltip_delay = 0.0);
+    ctx.enable_accesskit();
+    let mut close_center = None;
+    let mut output = None;
+    for _ in 0..3 {
+        let mut input = egui::RawInput::default();
+        if let Some(point) = close_center {
+            input.events.push(egui::Event::PointerMoved(point));
+        }
+        output = Some(ctx.run(input, |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                tab_strip(
+                    ui,
+                    "tabs",
+                    &[TabItem {
+                        icon: Icon::Terminal,
+                        label: "Terminal",
+                        close_label: Some("Fechar aba"),
+                        tooltip: None,
+                    }],
+                    0,
+                    false,
+                    |count| format!("+{count}"),
+                    "Adicionar",
+                    &[],
+                    false,
+                );
+            });
+        }));
+        if close_center.is_none() {
+            let tree = output
+                .as_ref()
+                .unwrap()
+                .platform_output
+                .accesskit_update
+                .as_ref()
+                .unwrap();
+            let node = tree
+                .nodes
+                .iter()
+                .map(|(_, node)| node)
+                .find(|node| node.label() == Some("Fechar aba"))
+                .expect("close button has an accessible name");
+            let bounds = node.bounds().unwrap();
+            close_center = Some(egui::pos2(
+                ((bounds.x0 + bounds.x1) * 0.5) as f32,
+                ((bounds.y0 + bounds.y1) * 0.5) as f32,
+            ));
+        }
+    }
+    assert!(output
+        .unwrap()
+        .shapes
+        .iter()
+        .any(|shape| matches!(&shape.shape, egui::Shape::Text(text) if text.galley.text() == "Fechar aba")));
+}

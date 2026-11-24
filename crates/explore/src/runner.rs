@@ -336,6 +336,7 @@ mod tests {
                 id: 1,
                 role: "Window".to_owned(),
                 name: label.to_owned(),
+                value: String::new(),
                 rect: [10.0, 10.0, 400.0, 300.0],
                 clickable: false,
                 editable: false,
@@ -344,6 +345,7 @@ mod tests {
             }],
             frames: 0,
             closed: false,
+            externals: Vec::new(),
         }
     }
 

@@ -7,8 +7,8 @@ use eframe::egui::{self, Align, Layout, Margin, RichText, Sense, Stroke, Viewpor
 use forja_ui_kit::{button, ButtonKind};
 use std::sync::Arc;
 
-struct RailPage {
-    id: String,
+pub(crate) struct RailPage {
+    pub(crate) id: String,
     title: String,
     glyph: forja_ui_kit::Icon,
     png: Option<Arc<[u8]>>,
@@ -33,6 +33,10 @@ impl ForjaApp {
             .inner_margin(Margin::symmetric(10, 4))
             .stroke(Stroke::new(1.0_f32, self.paint(self.tokens.color.border)));
         let crumb = self.active_project_crumb();
+        let crumb_label = self.text("shell.top.crumb-label");
+        // The accessible name carries both the label and the live value so a
+        // screen reader announces which project and bench are active.
+        let crumb_name = self.text_args("shell.top.crumb-name", &[("value", &crumb)]);
         let search_label = format!(
             "{} {}",
             self.text("shell.top.search"),
@@ -46,13 +50,14 @@ impl ForjaApp {
                 let drag = ui.interact(
                     bounds,
                     egui::Id::new("forja.top.drag"),
+                    // ui-lint: allow bar drag moves the window; the crumb carries the name
                     Sense::click_and_drag(),
                 );
                 if drag.drag_started_by(egui::PointerButton::Primary) {
                     ctx.send_viewport_cmd(ViewportCommand::StartDrag);
                 }
                 let left_width = (bounds.width() * 0.24).clamp(100.0, 280.0);
-                let controls_width = 184.0;
+                let controls_width = 286.0;
                 let search_width =
                     (bounds.width() - left_width - controls_width - 40.0).clamp(180.0, 420.0);
                 let search_x =
@@ -72,6 +77,15 @@ impl ForjaApp {
                                 .truncate()
                                 .sense(Sense::click_and_drag()),
                         );
+                        let title_name = crumb_name.clone();
+                        title.widget_info(|| {
+                            egui::WidgetInfo::labeled(
+                                egui::WidgetType::Button,
+                                ui.is_enabled(),
+                                &title_name,
+                            )
+                        });
+                        let title = forja_ui_kit::tooltip(title, crumb_label.clone());
                         if title.drag_started_by(egui::PointerButton::Primary) {
                             ctx.send_viewport_cmd(ViewportCommand::StartDrag);
                         }
@@ -181,6 +195,7 @@ impl ForjaApp {
                         {
                             self.set_theme_mode(["system", "dark", "light"][index]);
                         }
+                        self.layout_selector(ui);
                     },
                 );
             });
@@ -188,7 +203,7 @@ impl ForjaApp {
     }
 
     pub(crate) fn status_bar(&mut self, ctx: &egui::Context) {
-        if !self.setting_bool("appearance.status_bar.visible", true) {
+        if !self.layout_status_bar_visible() {
             return;
         }
         let frame = egui::Frame::NONE
@@ -294,7 +309,7 @@ impl ForjaApp {
     }
 
     pub(crate) fn left_panels(&mut self, ctx: &egui::Context) {
-        if self.setting_bool("appearance.rail.visible", true) {
+        if self.layout_rail_visible() {
             self.rail(ctx);
         }
         if !self.no_project() {
@@ -358,7 +373,7 @@ impl ForjaApp {
                         self.rail_page = None;
                         self.settings_open = false;
                     }
-                    for page in &pages {
+                    for page in self.visible_rail_pages(pages) {
                         let selected = self.rail_page.as_deref() == Some(page.id.as_str());
                         let mark = page.glyph;
                         if self
@@ -415,7 +430,8 @@ impl ForjaApp {
                 ));
             }
         }
-        if let Some(texture) = &self.logo {
+        let bench_name = self.text("shell.rail.bench");
+        let response = if let Some(texture) = &self.logo {
             ui.add(
                 egui::Image::from_texture(texture)
                     .fit_to_exact_size(egui::vec2(28.0, 28.0))
@@ -430,7 +446,11 @@ impl ForjaApp {
                 )
                 .sense(Sense::click()),
             )
-        }
+        };
+        response.widget_info(|| {
+            egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), &bench_name)
+        });
+        response
     }
 
     fn rail_button(
@@ -764,6 +784,31 @@ fn window_button(ui: &mut egui::Ui, glyph: forja_ui_kit::Icon, label: &str) -> e
 #[cfg(test)]
 mod tests {
     use super::{panel_max_width, rail_tooltip, single_line};
+    use forja_kernel::i18n::{BundleSource, I18n, Locale};
+
+    fn shell_i18n(locale: Locale) -> I18n {
+        let source = BundleSource {
+            module: "shell".to_owned(),
+            en: include_str!("../i18n/en.ftl").to_owned(),
+            pt_br: include_str!("../i18n/pt-BR.ftl").to_owned(),
+        };
+        let (i18n, warnings) = I18n::build(&[source], locale);
+        assert!(warnings.is_empty(), "{warnings:?}");
+        i18n
+    }
+
+    #[test]
+    fn crumb_accessible_name_carries_label_and_live_value() {
+        let value = "sample · bancada-teste";
+        assert_eq!(
+            shell_i18n(Locale::PtBr).t_args("shell.top.crumb-name", &[("value", value)]),
+            "Projeto e bancada ativos: sample · bancada-teste"
+        );
+        assert_eq!(
+            shell_i18n(Locale::En).t_args("shell.top.crumb-name", &[("value", value)]),
+            "Active project and bench: sample · bancada-teste"
+        );
+    }
 
     #[test]
     fn rail_tooltips_keep_the_accessible_name_separate_from_the_shortcut() {

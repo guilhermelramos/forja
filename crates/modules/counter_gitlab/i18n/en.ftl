@@ -19,6 +19,7 @@ counter_gitlab-error-decode = The counter sent an unexpected response.
 counter_gitlab-error-config = The counter settings are incomplete.
 counter_gitlab-error-vault = The system credential vault did not respond.
 counter_gitlab-error-unsupported = The counter does not support this action.
+counter_gitlab-token-label = GitLab token
 counter_gitlab-token-hint = Token
 counter_gitlab-action-connect = Connect
 counter_gitlab-action-test = Test
