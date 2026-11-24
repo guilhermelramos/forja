@@ -212,7 +212,7 @@ fn draw_tab_chip(
         resp.widget_info(|| {
             egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), close_label)
         });
-        resp
+        crate::tooltip(resp, close_label.to_owned())
     });
 
     let hovered = body_resp.hovered() || close_resp.as_ref().is_some_and(Response::hovered);
