@@ -3,13 +3,13 @@
 # Exemptions are audited independently and must not grow silently.
 [ceiling]
 button = 9
-label = 159
+label = 157
 color = 5
 space = 50
-raw_text_edit = 52
+raw_text_edit = 42
 raw_combo_box = 6
-raw_checkbox = 14
-raw_sense_click = 13
+raw_checkbox = 10
+raw_sense_click = 11
 
 [allowed]
 button = 0

@@ -1,0 +1,27 @@
+{
+  "title": "Fluxo principal expõe nomes acessíveis nos campos e áreas interativas (#207)",
+  "issue": 207,
+  "locale": "pt-BR",
+  "demo": true,
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.open_tab", "target": "Busca" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 2,
+      "present": [
+        "Buscar nos arquivos",
+        "Incluir: *.rs, src/**",
+        "Excluir: target/**",
+        "Substituir por"
+      ],
+      "present_elements": [
+        { "name": "Buscar nos arquivos", "role": "TextInput" },
+        { "name": "Substituir por", "role": "TextInput" }
+      ],
+      "no_unnamed_buttons": true
+    }
+  ]
+}
