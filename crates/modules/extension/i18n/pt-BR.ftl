@@ -11,6 +11,7 @@ extension-install-error-missing-entry = O arquivo de entrada { $entry } não foi
 extension-install-error-exists = Já existe uma extensão com o id { $id } instalada.
 extension-install-error-symbolic-link = Não é possível instalar extensões com links simbólicos.
 extension-page-search = Buscar
+extension-log-label = Registro da extensão
 extension-page-empty = Nenhuma extensão encontrada.
 extension-page-empty-hint = Coloque uma pasta com extension.toml e init.lua em ~/.forja/extensions.
 extension-command-list-title = Listar extensões

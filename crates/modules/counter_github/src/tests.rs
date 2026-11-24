@@ -450,6 +450,67 @@ fn fixture_mode_builds_the_mine_and_review_lists_without_network() {
 }
 
 #[test]
+fn token_field_exposes_a_non_empty_name_and_a_tooltip() {
+    let mut runtime = runtime_with(Env {
+        transport: Arc::new(FakeTransport::new()),
+        secrets: Arc::new(MemorySecretStore::new()),
+    });
+    let mut view = ConnectionView {
+        status: Arc::new(Mutex::new(Status::default())),
+        token: String::new(),
+    };
+    use forja_kernel::ui_contract::egui;
+    let ctx = egui::Context::default();
+    ctx.enable_accesskit();
+    let _ = forja_ui_kit::install_fonts(&ctx);
+    forja_ui_kit::apply(&ctx, &forja_ui_kit::Tokens::brasa_dark());
+    ctx.style_mut(|style| style.interaction.tooltip_delay = 0.0);
+    let mut cx = runtime.ctx("counter_github");
+    let mut point = None;
+    let mut output = None;
+    for _ in 0..3 {
+        let mut input = egui::RawInput {
+            screen_rect: Some(egui::Rect::from_min_size(
+                egui::Pos2::ZERO,
+                egui::vec2(900.0, 600.0),
+            )),
+            ..Default::default()
+        };
+        if let Some(point) = point {
+            input.events.push(egui::Event::PointerMoved(point));
+        }
+        output = Some(ctx.run(input, |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                forja_kernel::ui_contract::View::ui(&mut view, ui, &mut cx);
+            });
+        }));
+        if point.is_none() {
+            let tree = output.as_ref().unwrap().platform_output.accesskit_update.as_ref().unwrap();
+            let node = tree
+                .nodes
+                .iter()
+                .map(|(_, node)| node)
+                .find(|node| node.label() == Some("Token do GitHub"))
+                .expect("the token field has a non-empty accessible name");
+            let bounds = node.bounds().unwrap();
+            point = Some(egui::pos2(
+                ((bounds.x0 + bounds.x1) * 0.5) as f32,
+                ((bounds.y0 + bounds.y1) * 0.5) as f32,
+            ));
+        }
+    }
+    drop(cx);
+    let output = output.unwrap();
+    assert!(
+        output.shapes.iter().any(|shape| matches!(
+            &shape.shape,
+            egui::Shape::Text(text) if text.galley.text() == "Token do GitHub"
+        )),
+        "hovering the field shows its accessible name as a tooltip"
+    );
+}
+
+#[test]
 fn secrets_stay_out_of_debug_output() {
     let args = ConnectArgs {
         token: "ghp_visible".into(),

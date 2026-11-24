@@ -19,6 +19,7 @@ request-filter-open = Abertos
 request-filter-recent = Recentes
 request-filter-all = Todos
 request-search-hint = Buscar por título, chave, rótulo ou autor
+request-source-label = Balcão de pedidos
 request-refresh = Atualizar
 request-loading = Carregando…
 request-empty = Nenhum pedido neste filtro.

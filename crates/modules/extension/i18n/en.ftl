@@ -11,6 +11,7 @@ extension-install-error-missing-entry = The entry file { $entry } is missing.
 extension-install-error-exists = An extension with id { $id } is already installed.
 extension-install-error-symbolic-link = Extensions containing symbolic links cannot be installed.
 extension-page-search = Search
+extension-log-label = Extension log
 extension-page-empty = No extensions found.
 extension-page-empty-hint = Put a folder with extension.toml and init.lua in ~/.forja/extensions.
 extension-command-list-title = List extensions

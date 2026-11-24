@@ -211,6 +211,7 @@ impl Module for ExtensionModule {
             "extension.page.installed",
             "extension.page.rescan",
             "extension.page.search",
+            "extension.log.label",
             "extension.page.empty",
             "extension.page.empty-hint",
             "extension.state.pending",
