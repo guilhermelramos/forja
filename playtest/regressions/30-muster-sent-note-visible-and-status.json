@@ -19,7 +19,7 @@
     { "m": "ui.click", "target": "Enviar" },
     { "m": "ui.click", "target": "Destinatário do recado" },
     { "m": "ui.click", "target": "Revisar testes (OpenCode · precisa de você)" },
-    { "m": "ui.scroll", "target": "Revisar testes (OpenCode · precisa de você)", "dy": -200 },
+    { "m": "ui.scroll", "target": "Destinatário do recado", "dy": -200 },
     { "m": "ui.click", "target": "Escreva um recado; ele espera se o ajudante estiver ocupado ou pedindo aprovação." },
     { "m": "ui.type", "text": "Aguarde minha revisao" },
     { "m": "ui.key", "keys": "Enter" },
