@@ -35,19 +35,14 @@ pub enum Action {
     CloseTab,
     ReopenTab,
     SwitchTab(usize),
-    /// Abre o seletor de arranjos (`Ctrl+Alt+L`).
     OpenLayoutPicker,
-    /// Aplica um arranjo efetivo do catálogo.
     SwitchLayout {
         id: String,
         layer: crate::layout_settings::LayoutLayer,
         name: String,
     },
-    /// Abre o modal "Salvar layout atual…".
     SaveLayout,
-    /// Reaplica o chrome declarado pelo arranjo atual.
     ResetLayout,
-    /// Abre Ajustes → Layout para gerenciar os arranjos.
     ManageLayouts,
 }
 

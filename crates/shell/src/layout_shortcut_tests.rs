@@ -4,6 +4,7 @@
 //! "mesmo no terminal" (`always_shortcut`).
 
 use crate::app::always_shortcut;
+use eframe::egui;
 
 #[test]
 fn layout_switch_survives_a_focused_text_surface() {

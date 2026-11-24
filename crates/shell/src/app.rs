@@ -13,6 +13,7 @@ pub(crate) mod tab_bar;
 
 use crate::actions::{self, AnvilMode};
 use crate::hosts;
+use crate::layout_presets::LayoutState;
 use crate::rpc::RpcHost;
 use crate::screenshot::{self, ScreenshotJob};
 use crate::shell_module::ShellModule;
@@ -255,12 +256,6 @@ impl ForjaApp {
         let mut shell_writer = shell_store::ShellWriter::default();
         shell_writer.seed(shell_data.clone());
         let current_bench_id = Self::query_current_bench_id(&mut runtime);
-        let saved_selection = current_bench_id
-            .as_deref()
-            .and_then(|id| shell_data.layout.get(id))
-            .and_then(|layout| layout.layout.clone());
-        let rail_registration: Vec<String> =
-            rail_views.iter().map(|view| view.id.clone()).collect();
         let resolved = {
             let base_layout = current_bench_id
                 .as_deref()
@@ -310,6 +305,7 @@ impl ForjaApp {
         let mut app = Self {
             runtime,
             tokens: Tokens::brasa_dark(),
+            layout_state: LayoutState::initial(&shell_data, current_bench_id.as_deref(), &rail_views),
             rail_views,
             sidebar_views,
             bench_views,
@@ -350,11 +346,6 @@ impl ForjaApp {
             anvil_group: 0,
             shell_data,
             shell_writer,
-            layout_state: crate::layout_presets::LayoutState {
-                selection: saved_selection,
-                rail_registration,
-                ..Default::default()
-            },
             current_bench_id,
             show_sidebar: resolved.sidebar_open,
             last_sidebar_setting: default_sidebar_open,
@@ -871,11 +862,10 @@ impl ForjaApp {
                         self.rail_page = None;
                     }
                 }
-                action @ (actions::Action::OpenLayoutPicker
-                | actions::Action::SwitchLayout { .. }
-                | actions::Action::SaveLayout
-                | actions::Action::ResetLayout
-                | actions::Action::ManageLayouts) => self.handle_layout_action(action),
+                action if crate::layout_presets::is_layout_action(&action) => {
+                    self.handle_layout_action(action)
+                }
+                _ => {}
             }
         }
     }
@@ -1073,8 +1063,7 @@ impl eframe::App for ForjaApp {
         self.keymap_window(ctx);
         self.anvil_window(ctx);
         self.modal_windows(ctx);
-        self.layout_picker_window(ctx);
-        self.layout_save_window(ctx);
+        self.layout_windows(ctx);
         self.sync_shell_store();
         self.diagnostics_overlay(ctx);
         self.capture(ctx);

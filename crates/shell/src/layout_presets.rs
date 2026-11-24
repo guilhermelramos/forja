@@ -6,9 +6,10 @@
 
 use crate::actions::{self, Action};
 use crate::app::ForjaApp;
+use crate::layout_projection::{apply_rail_edit, order_side_tabs, project, Projection, RailEdit};
+use crate::layout_save::SaveDialog;
 use crate::layout_settings::{
-    apply_rail_edit, export, new_spec, order_side_tabs, project, resolve_selection, CatalogSnapshot,
-    LayoutCandidate, LayoutLayer, LayoutSelection, Projection, RailEdit,
+    resolve_selection, CatalogSnapshot, LayoutCandidate, LayoutLayer, LayoutSelection,
 };
 use eframe::egui;
 use forja_kernel::{Args, Locale, SettingValue};
@@ -33,16 +34,39 @@ pub struct LayoutState {
     pub last_notified_refs: Vec<String>,
 }
 
-#[derive(Default, Clone, Debug)]
-pub struct SaveDialog {
-    pub open: bool,
-    pub name: String,
-    pub layer: LayoutLayer,
-    pub make_default: bool,
-    pub error: Option<String>,
+pub(crate) const FACTORY_IDS: [&str; 4] = ["oficina", "foco", "revisao", "mutirao"];
+
+impl LayoutState {
+    /// Estado inicial: honra a escolha salva da bancada e a ordem de registro
+    /// do trilho sem espalhar essa montagem pela construção da janela.
+    pub(crate) fn initial(
+        shell_data: &crate::app::shell_store::ShellData,
+        bench_id: Option<&str>,
+        rail_views: &[crate::app::ViewInstance],
+    ) -> Self {
+        let selection = bench_id
+            .and_then(|id| shell_data.layout.get(id))
+            .and_then(|layout| layout.layout.clone());
+        let rail_registration = rail_views.iter().map(|view| view.id.clone()).collect();
+        Self {
+            selection,
+            rail_registration,
+            ..Default::default()
+        }
+    }
 }
 
-pub(crate) const FACTORY_IDS: [&str; 4] = ["oficina", "foco", "revisao", "mutirao"];
+/// Ações do seletor de arranjos, despachadas pelo shell numa única braça.
+pub(crate) fn is_layout_action(action: &Action) -> bool {
+    matches!(
+        action,
+        Action::OpenLayoutPicker
+            | Action::SwitchLayout { .. }
+            | Action::SaveLayout
+            | Action::ResetLayout
+            | Action::ManageLayouts
+    )
+}
 
 impl ForjaApp {
     /// Chamado em `update()`, nunca em `ui()`. O comando devolve o snapshot já
@@ -408,6 +432,12 @@ impl ForjaApp {
         }
     }
 
+    /// Abre as duas janelas do seletor numa única chamada do loop do app.
+    pub(crate) fn layout_windows(&mut self, ctx: &egui::Context) {
+        self.layout_picker_window(ctx);
+        self.layout_save_window(ctx);
+    }
+
     /// Modal do seletor, também aberto por `Ctrl+Alt+L`.
     pub(crate) fn layout_picker_window(&mut self, ctx: &egui::Context) {
         if !self.layout_state.picker_open {
@@ -438,131 +468,6 @@ impl ForjaApp {
 }
 
 impl ForjaApp {
-    /// "Salvar layout atual…": grava pelo catálogo do módulo `content`, nunca
-    /// escrevendo arquivos diretamente do shell.
-    pub(crate) fn layout_save_window(&mut self, ctx: &egui::Context) {
-        if !self.layout_state.save_dialog.open {
-            return;
-        }
-        let mut dialog = self.layout_state.save_dialog.clone();
-        let has_project = !self.no_project();
-        let mut open = true;
-        let mut confirm = false;
-        let mut cancel = false;
-        egui::Window::new(self.text("shell.layout.save-title"))
-            .open(&mut open)
-            .collapsible(false)
-            .resizable(false)
-            .show(ctx, |ui| {
-                ui.label(self.text("shell.layout.save-hint"));
-                let name_label = self.text("shell.layout.save-name");
-                let edit = ui.add(
-                    egui::TextEdit::singleline(&mut dialog.name).hint_text(&name_label),
-                );
-                edit.widget_info(|| {
-                    egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, ui.is_enabled(), &name_label)
-                });
-                ui.radio_value(
-                    &mut dialog.layer,
-                    LayoutLayer::User,
-                    self.text("shell.layout.origin-user"),
-                );
-                let project_scope = self.text("shell.layout.origin-project");
-                ui.add_enabled_ui(has_project, |ui| {
-                    ui.radio_value(&mut dialog.layer, LayoutLayer::Project, project_scope);
-                });
-                ui.checkbox(
-                    &mut dialog.make_default,
-                    self.text("shell.layout.save-default"),
-                );
-                if let Some(error) = &dialog.error {
-                    ui.label(error);
-                }
-                ui.horizontal(|ui| {
-                    confirm = forja_ui_kit::button(
-                        ui,
-                        forja_ui_kit::ButtonKind::Primary,
-                        &self.text("shell.layout.save-confirm"),
-                    )
-                    .clicked();
-                    cancel = forja_ui_kit::button(
-                        ui,
-                        forja_ui_kit::ButtonKind::Ghost,
-                        &self.text("shell.layout.save-cancel"),
-                    )
-                    .clicked();
-                });
-            });
-        dialog.open = open;
-        if cancel {
-            dialog.open = false;
-        }
-        self.layout_state.save_dialog = dialog;
-        if confirm {
-            self.queue_layout_save();
-        }
-    }
-
-    fn queue_layout_save(&mut self) {
-        let dialog = self.layout_state.save_dialog.clone();
-        let id = slugify(&dialog.name);
-        if let Err(error) = forja_kernel::layout_spec::validate_segment("layout.id", &id) {
-            self.layout_state.save_dialog.error = Some(self.text_args(
-                "shell.layout.save-invalid-name",
-                &[("detail", &error.to_string())],
-            ));
-            return;
-        }
-        if dialog.layer == LayoutLayer::Project && self.no_project() {
-            self.layout_state.save_dialog.error = Some(self.text("shell.layout.save-no-project"));
-            return;
-        }
-        let text = self.layout_text_for_save(&id, &dialog.name);
-        let expected = self
-            .layout_state
-            .catalog
-            .candidates
-            .iter()
-            .find(|candidate| candidate.id == id && candidate.layer == dialog.layer)
-            .map(|candidate| candidate.hash.clone())
-            .filter(|hash| !hash.is_empty());
-        let mut args = Args::new();
-        args.insert("id", serde_json::json!(id));
-        args.insert("layer", serde_json::json!(dialog.layer.as_str()));
-        args.insert("text", serde_json::json!(text));
-        if let Some(hash) = expected {
-            args.insert("expected_hash", serde_json::json!(hash));
-        }
-        let revision = self.layout_state.catalog.revision;
-        if let Err(error) = self.runtime.run_command("content.layouts.save", args) {
-            self.layout_state.save_dialog.error = Some(error.to_string());
-            return;
-        }
-        if dialog.make_default {
-            self.layout_state.pending_default = Some((id, revision));
-        }
-        self.layout_state.save_dialog.open = false;
-        self.layout_state.save_dialog.error = None;
-    }
-
-    fn layout_text_for_save(&self, id: &str, name: &str) -> String {
-        let selection = self.layout_state.selection.as_ref();
-        let Some(selection) = selection else {
-            return new_spec(id, name, name, &[])
-                .to_toml()
-                .unwrap_or_default();
-        };
-        let mut spec = self
-            .layout_state
-            .catalog
-            .spec_for(&selection.id)
-            .unwrap_or_else(|| new_spec(id, name, name, &[]));
-        spec.id = id.to_owned();
-        spec.name.pt_br = name.to_owned();
-        spec.name.en = name.to_owned();
-        export(&spec, &self.layout_state.projection).unwrap_or_default()
-    }
-
     /// Ajustes → Layout: edita o chrome do arranjo atual. As mudanças ficam na
     /// projeção em memória até "Salvar layout atual…" gravar pelo catálogo.
     pub(crate) fn layout_settings_ui(&mut self, ui: &mut egui::Ui) {
@@ -642,18 +547,5 @@ impl ForjaApp {
             self.restore_layout_defaults();
         }
     }
-}
-
-fn slugify(name: &str) -> String {
-    let mut out: String = name
-        .trim()
-        .to_ascii_lowercase()
-        .chars()
-        .map(|ch| if ch.is_ascii_alphanumeric() { ch } else { '-' })
-        .collect();
-    while out.contains("--") {
-        out = out.replace("--", "-");
-    }
-    out.trim_matches('-').chars().take(64).collect()
 }
 
