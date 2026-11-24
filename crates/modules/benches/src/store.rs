@@ -6,7 +6,7 @@ use crate::service::{
     close_terminals, ensure_main, notify, project_path, setting_bool, setting_i64, setting_str,
 };
 use crate::state::Shared;
-use forja_contracts::{names, BenchStored, BenchStoreOutcome};
+use forja_contracts::{BenchStored, BenchStoreOutcome};
 use forja_kernel::Ctx;
 use std::path::{Path, PathBuf};
 pub fn store(
