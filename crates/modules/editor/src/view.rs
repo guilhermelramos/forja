@@ -895,9 +895,13 @@ impl EditorView {
             return;
         };
         if let Some(error) = &document.error {
-            forja_ui_kit::text(ui,
-                egui::RichText::new(error)
-                    .color(c32(forja_ui_kit::applied_tokens(ui.ctx()).color.danger)),
+            let human = forja_kernel::human_error::humanize_ctx(cx, error);
+            let details_label = cx.t("kernel.error.details");
+            forja_ui_kit::error_banner(
+                ui,
+                &human.summary,
+                human.detail.as_deref(),
+                &details_label,
             );
             return;
         }
