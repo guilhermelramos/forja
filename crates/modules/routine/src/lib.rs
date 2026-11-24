@@ -228,6 +228,7 @@ impl Module for RoutineModule {
             move || {
                 Box::new(view::TickView {
                     shared: Arc::clone(&shared),
+                    next: None,
                 }) as Box<dyn View>
             },
         );

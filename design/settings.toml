@@ -517,6 +517,38 @@ label_key = "setting-appearance-layout-default-label"
 help_key = "setting-appearance-layout-default-help"
 
 [[setting]]
+key = "appearance.focus.hide_bars"
+module = "appearance"
+group = "appearance"
+scope = "user"
+type = "choice"
+default = "chrome"
+options = ["side_panels", "chrome", "all"]
+label_pt = "Modo Foco oculta"
+label_en = "Focus Mode hides"
+help_pt = "Painéis laterais sempre recolhem; chrome também oculta trilho e barra de status; all troca a barra superior por uma faixa de saída."
+help_en = "Side panels always collapse; chrome also hides the rail and status bar; all replaces the top bar with a small exit strip."
+why = "O Modo Foco guarda a visibilidade anterior e o foco de retorno; Ctrl+F11 restaura tudo."
+label_key = "setting-appearance-focus-hide_bars-label"
+help_key = "setting-appearance-focus-hide_bars-help"
+
+[[setting]]
+key = "appearance.status_bar.items"
+module = "appearance"
+group = "appearance"
+scope = "user"
+type = "list"
+default = ["bench.status", "helper.status-bar", "usage.status", "ports.status", "notify.center"]
+item = "id da contribuição"
+label_pt = "Itens da barra de status"
+label_en = "Status bar items"
+help_pt = "Lista ordenada de ids das contribuições da barra; ids desconhecidos são preservados ao editar."
+help_en = "Ordered id list of the status bar contributions; unknown ids are kept when editing."
+why = "A ordem é do design e editá-la não pode apagar contribuições ainda não registradas."
+label_key = "setting-appearance-status_bar-items-label"
+help_key = "setting-appearance-status_bar-items-help"
+
+[[setting]]
 key = "appearance.window.remember_geometry"
 module = "appearance"
 group = "appearance"

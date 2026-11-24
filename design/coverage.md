@@ -6,17 +6,17 @@
 
 | Métrica | Valor |
 |---|---|
-| Configurações no catálogo | 315 |
+| Configurações no catálogo | 317 |
 | Configurações sobreponíveis por projeto (`scope = "project"`) | 31 |
-| Configurações registradas no app | 299 (298 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 298 (297 do catálogo) |
+| Configurações registradas no app | 301 (300 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 300 (299 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
 | Configurações adiadas | 15 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
-| Atalhos no catálogo | 111 |
-| Atalhos registrados no app | 111 (111 do catálogo + 0 extras) |
+| Atalhos no catálogo | 112 |
+| Atalhos registrados no app | 112 (112 do catálogo + 0 extras) |
 | Atalhos do catálogo ausentes no app | 0 |
 | Atalhos com tecla ou escopo divergente | 0 |
 
@@ -64,6 +64,8 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `appearance.rail.visible` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.status_bar.visible` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.layout.default` | `appearance` | `appearance` | sim | ok | sim |
+| `appearance.focus.hide_bars` | `appearance` | `appearance` | sim | ok | sim |
+| `appearance.status_bar.items` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.window.remember_geometry` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.window.start_maximized` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.tabs.middle_click` | `appearance` | `appearance` | sim | ok | sim |
@@ -477,6 +479,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `anvil.run_background` | `Ctrl+Enter` | `anvil` | sim | `Ctrl+Enter` | ok |
 | `voice.dictate` | `Ctrl+Alt+V` | `voice` | sim | `Ctrl+Alt+V` | ok |
 | `layout.switch` | `Ctrl+Alt+L` | `global` | sim | `Ctrl+Alt+L` | ok |
+| `layout.focus_mode` | `Ctrl+F11` | `global` | sim | `Ctrl+F11` | ok |
 
 ## Registrados no app mas ausentes do catálogo
 

@@ -100,7 +100,7 @@ impl Module for TrustModule {
 
         let approval_core = Arc::clone(&self.core);
         r.view(
-            Slot::StatusBar,
+            Slot::Modal,
             "trust.approval",
             "trust.approval.title",
             10,
@@ -182,6 +182,43 @@ mod tests {
             .call_method("trust.list", Map::new())
             .expect("list");
         assert_eq!(list["entries"].as_array().map(Vec::len), Some(0));
+        drop(runtime);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn approval_is_hosted_with_the_status_bar_hidden() {
+        use forja_kernel::ui_contract;
+        use forja_kernel::Slot;
+
+        let dir = temp_dir("hidden-chrome");
+        let mut runtime = runtime(&dir);
+        // Nenhuma view de StatusBar é instanciada: a aprovação vive na camada
+        // modal e ainda assim pede a janela quando há um pedido pendente.
+        assert!(runtime.registry().views_in(Slot::StatusBar).iter().all(|view| view.id != "trust.approval"));
+        let contribution = runtime
+            .registry()
+            .views_in(Slot::Modal)
+            .into_iter()
+            .find(|view| view.id == "trust.approval")
+            .expect("approval is a modal view");
+        let mut view = ui_contract::downcast(contribution.instantiate()).expect("typed view");
+        runtime
+            .call_method(
+                "trust.request",
+                Map::from_iter([
+                    ("kind".to_owned(), json!("recipe")),
+                    ("source_path".to_owned(), json!("C:/p/.forja/recipes/a.toml")),
+                    ("content".to_owned(), json!("cargo test")),
+                    ("summary".to_owned(), json!("Tests")),
+                ]),
+            )
+            .expect("request");
+        {
+            let mut cx = runtime.ctx("trust");
+            view.poll(&mut cx);
+        }
+        assert!(runtime.modal_is_open("trust.approval"));
         drop(runtime);
         let _ = std::fs::remove_dir_all(dir);
     }

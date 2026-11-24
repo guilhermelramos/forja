@@ -44,6 +44,7 @@ pub enum Action {
     SaveLayout,
     ResetLayout,
     ManageLayouts,
+    ToggleFocusMode,
 }
 
 #[cfg(not(test))]
@@ -128,6 +129,7 @@ pub fn dispatch(id: &str) {
         "layout.save" => Action::SaveLayout,
         "layout.reset" => Action::ResetLayout,
         "layout.manage" => Action::ManageLayouts,
+        "layout.focus_mode" => Action::ToggleFocusMode,
         _ => return,
     };
     push(action);
