@@ -183,16 +183,12 @@ impl ArchiveView {
         ui.horizontal_wrapped(|ui| {
             ui.scope(|ui| {
                 ui.set_max_width(180.0);
-                forja_ui_kit::text_field(ui, &mut self.query, &cx.t("archive.view.search-hint"));
+                forja_ui_kit::text_field_labeled(ui, &mut self.query, &cx.t("archive.view.search"), &cx.t("archive.view.search-help"));
             });
             forja_ui_kit::text(ui, cx.t("archive.view.project"));
             ui.scope(|ui| {
                 ui.set_max_width(100.0);
-                forja_ui_kit::text_field(
-                    ui,
-                    &mut self.project_filter,
-                    &cx.t("archive.view.project-hint"),
-                );
+                forja_ui_kit::text_field_labeled(ui, &mut self.project_filter, &cx.t("archive.view.project"), &cx.t("archive.view.project-help"));
             });
             // `select` não marca `changed()`: comparamos o índice antes e depois.
             let mut helpers: Vec<(Option<String>, String)> =
@@ -207,7 +203,8 @@ impl ArchiveView {
                 .position(|(id, _)| *id == self.profile_filter)
                 .unwrap_or(0);
             let mut index = current;
-            if forja_ui_kit::select(ui, &mut index, &helper_labels).changed() {
+            let filter_label = cx.t("archive.view.helper-filter");
+            if forja_ui_kit::select_labeled(ui, &mut index, &filter_label, &helper_labels).changed() {
                 self.profile_filter = helpers[index].0.clone();
             }
             let dates = ["all", "7", "30", "365"];
@@ -218,7 +215,8 @@ impl ArchiveView {
                 .position(|value| *value == self.date_filter)
                 .unwrap_or(0);
             let mut index = current;
-            if forja_ui_kit::select(ui, &mut index, &date_labels).changed() {
+            let filter_label = cx.t("archive.view.date-filter");
+            if forja_ui_kit::select_labeled(ui, &mut index, &filter_label, &date_labels).changed() {
                 self.date_filter = dates[index].to_owned();
             }
         });
