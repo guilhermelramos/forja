@@ -217,7 +217,7 @@ fn apply_policy(cx: &mut Ctx<'_>, core: &Shared, bench: &BenchRef) {
         .with_state(|state| {
             state.runs.values().any(|run| {
                 crate::status::same_path(&run.bench_path, &bench.path)
-                    && !matches!(run.status, HelperStatus::Finished)
+                    && !matches!(run.status, HelperStatus::Finished | HelperStatus::Error)
             })
         })
         .unwrap_or(false);

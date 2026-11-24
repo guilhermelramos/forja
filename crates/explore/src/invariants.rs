@@ -549,6 +549,7 @@ mod tests {
             id,
             role: role.to_owned(),
             name: name.to_owned(),
+            value: String::new(),
             rect,
             clickable,
             editable: false,

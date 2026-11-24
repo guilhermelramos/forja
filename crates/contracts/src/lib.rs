@@ -255,6 +255,8 @@ pub enum HelperStatus {
     Working,
     NeedsYou,
     Finished,
+    /// O ajudante falhou ao iniciar ou encerrou com erro.
+    Error,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HelperStatusChanged {

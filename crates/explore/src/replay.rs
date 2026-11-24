@@ -72,6 +72,9 @@ pub struct Expectation {
     pub present: Option<StringOrList>,
     #[serde(default)]
     pub present_contains: Option<StringOrList>,
+    /// Text typed into a field, checked against the element's current value.
+    #[serde(default)]
+    pub value_contains: Option<StringOrList>,
     #[serde(default)]
     pub absent: Option<StringOrList>,
     #[serde(default)]
@@ -249,17 +252,24 @@ fn run_file(
             } else {
                 let mut params = Map::new();
                 for (k, v) in step {
-                    if k != "m" && k != "view" {
+                    if k != "m" && k != "view" && k != "allow_error" {
                         params.insert(k.clone(), v.clone());
                     }
                 }
-                let reply = call_ui(session.pipe(), method, Value::Object(params), CALL_TIMEOUT)
-                    .map_err(|err| format!("step {step_idx} ({method}) failed: {err}"))?;
+                let allow_error = step
+                    .get("allow_error")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+                let reply = call_ui(session.pipe(), method, Value::Object(params), CALL_TIMEOUT);
                 if method.starts_with("ui.") {
+                    let reply = reply.map_err(|err| format!("step {step_idx} ({method}) failed: {err}"))?;
                     Snapshot::from_rpc_result(&reply).map_err(|err| {
                         format!("step {step_idx} ({method}) invalid snapshot: {err}")
                     })?
                 } else {
+                    if let (Err(err), false) = (&reply, allow_error) {
+                        return Err(format!("step {step_idx} ({method}) failed: {err}"));
+                    }
                     let snap_reply =
                         call_ui(session.pipe(), "ui.snapshot", json!({}), CALL_TIMEOUT).map_err(
                             |err| format!("step {step_idx} ({method} snapshot) failed: {err}"),
@@ -425,6 +435,15 @@ pub fn evaluate_expectations(
                 if !snap.elements.iter().any(|el| el.name.contains(needle)) {
                     return Err(format!(
                         "expectation {exp_idx} (step {target_idx}): expected element containing \"{needle}\""
+                    ));
+                }
+            }
+        }
+        if let Some(value_contains) = &exp.value_contains {
+            for needle in value_contains.as_slice() {
+                if !snap.elements.iter().any(|el| el.value.contains(needle)) {
+                    return Err(format!(
+                        "expectation {exp_idx} (step {target_idx}): expected field value containing \"{needle}\""
                     ));
                 }
             }
@@ -595,6 +614,7 @@ mod tests {
                 id: i as u64 + 1,
                 role: "Window".into(),
                 name: format!("W{i}"),
+                value: String::new(),
                 rect: [0.0, 0.0, 400.0, 400.0],
                 clickable: false,
                 editable: false,
@@ -607,6 +627,7 @@ mod tests {
                 id: 100 + i as u64,
                 role: "Button".into(),
                 name: (*n).to_owned(),
+                value: String::new(),
                 rect: [10.0, 10.0, 90.0, 40.0],
                 clickable: true,
                 editable: false,
@@ -668,6 +689,25 @@ mod tests {
         );
         snap.elements[0].role = "Label".into();
         assert!(evaluate_expectations(&expected, &[snap]).is_ok());
+    }
+
+    #[test]
+    fn value_contains_checks_typed_text_not_the_field_label() {
+        let expectations: Vec<Expectation> = serde_json::from_str(
+            r#"[{"present_contains":"C:\\dev\\projeto","value_contains":"99999999999999999999"}]"#,
+        )
+        .unwrap();
+        let mut snap = snap_with(&["C:\\dev\\projeto"], 0, &[]);
+        assert!(
+            evaluate_expectations(&expectations, &[snap.clone()]).is_err(),
+            "a field without the typed value must not satisfy value_contains"
+        );
+        snap.elements[0].role = "TextInput".into();
+        snap.elements[0].value = "99999999999999999999".into();
+        assert!(evaluate_expectations(&expectations, &[snap.clone()]).is_ok());
+
+        snap.elements[0].value = "123".into();
+        assert!(evaluate_expectations(&expectations, &[snap]).is_err());
     }
 
     #[test]
@@ -759,6 +799,7 @@ mod tests {
             id,
             role: "Button".into(),
             name: name.into(),
+            value: String::new(),
             rect: [10.0, 10.0, 90.0, 40.0],
             clickable,
             editable: false,

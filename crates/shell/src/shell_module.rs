@@ -515,10 +515,10 @@ mod tests {
             helper_en.summary
         );
         assert!(!helper_en.summary.contains('`'));
-        assert!(helper_en
-            .detail
-            .as_deref()
-            .is_some_and(|detail| detail.contains("helper.launch")));
+        let helper_detail = helper_en.detail.as_deref().unwrap_or("");
+        assert!(helper_detail.contains("No installed helpers found"), "{helper_detail}");
+        // Detalhes recolhidos mostram o original, inclusive o comando interno.
+        assert!(helper_detail.contains("helper.launch"), "{helper_detail}");
 
         drop(runtime);
         let _ = std::fs::remove_dir_all(dir);
