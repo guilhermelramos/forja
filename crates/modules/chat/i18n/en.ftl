@@ -71,6 +71,8 @@ chat-view-copy-install = Copy command
 chat-view-copied = Copied
 chat-view-error-not-found = The { $helper } executable was not found on PATH. Check installation in Helpers.
 chat-view-error-launch = Could not start { $helper }. Check installation in Helpers.
+chat-view-error-provider = { $helper } could not answer. Check the provider's balance, credentials and plan limits, or try another helper or model.
+chat-view-error-internal = Could not complete an internal action. Try again; if it keeps happening, check the log in Settings.
 
 chat-view-model = Model
 
