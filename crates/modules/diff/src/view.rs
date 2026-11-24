@@ -77,11 +77,7 @@ impl View for DiffView {
         let muted = c32(tokens.color.text_muted);
         self.toolbar(ui, cx, muted);
         if let Some(status) = self.state.status() {
-            forja_ui_kit::text(ui,
-                egui::RichText::new(status)
-                    .small()
-                    .color(c32(tokens.color.danger)),
-            );
+            crate::view_error::banner(ui, cx, &status);
         }
         if let Some(notice) = self.state.notice() {
             forja_ui_kit::text(ui,
@@ -697,3 +693,4 @@ fn setting_usize(cx: &Ctx<'_>, key: &str, fallback: usize) -> usize {
 fn c32(color: forja_ui_kit::Color) -> egui::Color32 {
     color.to_color32()
 }
+

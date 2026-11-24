@@ -415,6 +415,7 @@ pub(crate) fn helper_status_key(status: &str) -> &'static str {
         "working" => "board.card.helper.working",
         "idle" => "board.card.helper.idle",
         "finished" => "board.card.helper.finished",
+        "error" => "board.card.helper.error",
         _ => "board.card.helper.unknown",
     }
 }

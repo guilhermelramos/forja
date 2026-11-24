@@ -120,6 +120,7 @@ pub(crate) fn run_status_label(cx: &Ctx<'_>, run: &Run) -> String {
         HelperStatus::Working => "helper.view.working",
         HelperStatus::Idle => "helper.view.idle",
         HelperStatus::Finished => "helper.view.finished",
+        HelperStatus::Error => "helper.view.error",
         HelperStatus::Unknown => "helper.view.unknown",
     })
 }
@@ -133,6 +134,7 @@ pub(crate) fn run_status_color(run: &Run, color: &forja_ui_kit::Palette) -> egui
         HelperStatus::Working => color.info.to_color32(),
         HelperStatus::Idle => color.ok.to_color32(),
         HelperStatus::Finished => color.text_muted.to_color32(),
+        HelperStatus::Error => color.danger.to_color32(),
         HelperStatus::Unknown => color.text_muted.to_color32(),
     }
 }

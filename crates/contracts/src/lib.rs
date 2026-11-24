@@ -19,7 +19,9 @@ pub mod names {
     pub const PROJECT_ACTIVATED: &str = "project.activated";
     pub const BENCH_ACTIVATED: &str = "bench.activated";
     pub const BENCH_CREATED: &str = "bench.created";
+    pub const BENCH_CREATE_FAILED: &str = "bench.create_failed";
     pub const BENCH_STORED: &str = "bench.stored";
+    pub const BENCH_STORE_OUTCOME: &str = "bench.store_outcome";
     pub const BENCH_SLEEP_CHANGED: &str = "bench.sleep_changed";
     pub const STAGE_CHANGED: &str = "stage.changed";
     pub const TERMINAL_EXITED: &str = "terminal.exited";
@@ -65,10 +67,25 @@ pub struct ProjectRemoved {
 pub struct BenchActivated(pub BenchRef);
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BenchCreated(pub BenchRef);
+/// Falha verificável da criação assíncrona pedida por `bench.create`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BenchCreateFailed {
+    pub bench_id: String,
+    pub name: String,
+    pub reason: String,
+}
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BenchStored {
     pub bench_id: String,
     pub path: String,
+}
+/// Resultado da remoção assíncrona pedida por `bench.store`, emitido depois que
+/// a tarefa de bancadas conferiu o git logo antes de apagar. `outcome` é
+/// `stored`, `kept_dirty` ou `error`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BenchStoreOutcome {
+    pub bench_id: String,
+    pub outcome: String,
 }
 /// Everything the board and the bench list need about one bench. `BenchRef`
 /// stays the minimal shared reference; this richer card is additive and read
@@ -238,6 +255,8 @@ pub enum HelperStatus {
     Working,
     NeedsYou,
     Finished,
+    /// O ajudante falhou ao iniciar ou encerrou com erro.
+    Error,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HelperStatusChanged {

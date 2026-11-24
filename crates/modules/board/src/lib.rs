@@ -122,6 +122,7 @@ impl Module for BoardModule {
             "board.card.helper.working",
             "board.card.helper.idle",
             "board.card.helper.finished",
+            "board.card.helper.error",
             "board.card.helper.unknown",
             "board.forging-offer.body",
             "board.forging-offer.start",

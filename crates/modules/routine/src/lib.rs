@@ -100,7 +100,7 @@ impl Module for RoutineModule {
 
         let shared = Arc::clone(&self.shared);
         r.subscribe(move |cx, event: &HelperStatusChanged| {
-            let finished = event.status == HelperStatus::Finished;
+            let finished = matches!(event.status, HelperStatus::Finished | HelperStatus::Error);
             actions::helper_status(cx, &shared, &event.bench_path, finished);
         });
 

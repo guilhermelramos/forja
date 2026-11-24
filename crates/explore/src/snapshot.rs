@@ -27,6 +27,9 @@ pub struct Element {
     pub role: String,
     #[serde(default)]
     pub name: String,
+    /// Current text of an editable field, when it differs from the label.
+    #[serde(default)]
+    pub value: String,
     pub rect: [f64; 4],
     #[serde(default)]
     pub clickable: bool,
@@ -153,6 +156,7 @@ mod tests {
                 id: 1,
                 role: "Button".into(),
                 name: "Ajustes".into(),
+                value: String::new(),
                 rect: [10.0, 20.0, 50.0, 60.0],
                 clickable: true,
                 editable: false,
@@ -163,6 +167,7 @@ mod tests {
                 id: 2,
                 role: "Label".into(),
                 name: "Pronto".into(),
+                value: String::new(),
                 rect: [0.0, 0.0, 40.0, 20.0],
                 clickable: false,
                 editable: false,
@@ -175,6 +180,7 @@ mod tests {
                 id: 99,
                 role: "Label".into(),
                 name: "Pronto".into(),
+                value: String::new(),
                 rect: [100.0, 200.0, 140.0, 220.0],
                 clickable: false,
                 editable: false,
@@ -185,6 +191,7 @@ mod tests {
                 id: 88,
                 role: "Button".into(),
                 name: "Ajustes".into(),
+                value: String::new(),
                 rect: [30.0, 40.0, 70.0, 80.0],
                 clickable: true,
                 editable: false,
@@ -198,6 +205,7 @@ mod tests {
             id: 1,
             role: "Window".into(),
             name: "Ajustes".into(),
+            value: String::new(),
             rect: [10.0, 10.0, 300.0, 300.0],
             clickable: false,
             editable: false,

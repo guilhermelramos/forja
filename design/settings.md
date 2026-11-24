@@ -289,7 +289,7 @@ Sobre início, contexto, prontidão e retomada de sessões:
 
 ## 3.6 Mutirão (`muster`)
 
-Mutirão define o plano, o despacho, os recados e as entregas da coordenação multiajudante. O padrão é aprovar antes de gastar recursos e exigir evidência antes de aceitar trabalho.
+Mutirão define o plano, o despacho, os recados e as entregas da coordenação multiajudante. O padrão é aprovar antes de gastar recursos e exigir evidência antes de aceitar trabalho. As cinco opções antes adiadas — perfil do coordenador, destino de despacho, reenvios, limpeza e isolamento — estão ligadas: o perfil nomeia o ajudante padrão das tarefas, o destino escolhe `ask`, `current` ou `new` (com conclusão e falha verificáveis), os reenvios só repetem uma tarefa encerrada com a mesma identidade, a limpeza remove apenas bancadas próprias e limpas, e o isolamento define se cada tarefa ganha uma bancada.
 
 | Chave | Tipo | Padrão (por quê) | Faixa / opções | Rótulo pt-BR · en | Ajuda | Dono |
 |---|---|---|---|---|---|---|

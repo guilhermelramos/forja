@@ -9,7 +9,7 @@ use crate::service::{
 use crate::tabs::open_tabs;
 use crate::stages;
 use crate::state::{ApproveForm, Dialog, Shared};
-use forja_contracts::{BenchCreated, BenchRef, ProjectRef};
+use forja_contracts::{BenchCreateFailed, BenchCreated, BenchRef, ProjectRef};
 use forja_kernel::Ctx;
 use std::path::{Path, PathBuf};
 pub fn create(
@@ -93,10 +93,11 @@ pub(crate) fn create_with_request(
         from_request: from_request.map(str::to_owned),
         request_ref,
     };
+    let identity = (job.bench_id.clone(), job.name.clone());
     let state = shared.clone();
     cx.spawn(
         move || run_create(job),
-        move |cx, result| finish_create(cx, &state, result),
+        move |cx, result| finish_create(cx, &state, result, &identity.0, &identity.1),
     );
     Ok(BenchRef {
         project_id: project_id.to_owned(),
@@ -212,10 +213,21 @@ fn run_create(job: CreateJob) -> Result<Created, String> {
     })
 }
 
-fn finish_create(cx: &mut Ctx<'_>, shared: &Shared, result: Result<Created, String>) {
+fn finish_create(
+    cx: &mut Ctx<'_>,
+    shared: &Shared,
+    result: Result<Created, String>,
+    bench_id: &str,
+    name: &str,
+) {
     let created = match result {
         Ok(created) => created,
         Err(error) => {
+            cx.emit(&BenchCreateFailed {
+                bench_id: bench_id.to_owned(),
+                name: name.to_owned(),
+                reason: error.clone(),
+            });
             let human = humanize_error(cx, &error);
             shared.finish_create(Some(error.clone()));
             shared.set_error(Some(error));

@@ -7,8 +7,53 @@ use eframe::egui::{
 
 use crate::paint::{self, body_font, chevron, hover_fill, paint_text, painter_for};
 
+/// Último recurso diagnóstico quando nem rótulo nem dica foram passados.
+/// Não é texto de interface: só existe para nenhum controle ficar sem nome.
+const FALLBACK_NAME: &str = "control";
+
+/// Nome acessível: o rótulo explícito, ou a dica quando o rótulo está vazio.
+/// Um rótulo vazio é erro de contrato em depuração, mas nunca derruba o app.
+pub(crate) fn accessible_name<'a>(label: &'a str, hint: &'a str) -> &'a str {
+    let label = label.trim();
+    if !label.is_empty() {
+        return label;
+    }
+    debug_assert!(false, "ui-kit controls require a non-empty accessible label");
+    let hint = hint.trim();
+    if !hint.is_empty() {
+        return hint;
+    }
+    debug_assert!(false, "ui-kit controls require a label or a hint");
+    FALLBACK_NAME
+}
+
 /// Campo de uma linha, com dica quando está vazio.
+/// Registra a dica como nome acessível quando há dica (API legada).
 pub fn text_field(ui: &mut Ui, text: &mut String, hint: &str) -> Response {
+    draw_single_line(ui, text, hint, hint.trim(), false)
+}
+
+/// Campo de uma linha com rótulo acessível obrigatório (i18n de quem chama).
+pub fn text_field_labeled(ui: &mut Ui, text: &mut String, label: &str, hint: &str) -> Response {
+    let name = accessible_name(label, hint);
+    let response = draw_single_line(ui, text, hint, name, false);
+    crate::tooltip(response, name.to_owned())
+}
+
+/// Campo de senha/token com rótulo acessível obrigatório.
+pub fn secret_field(ui: &mut Ui, text: &mut String, label: &str, hint: &str) -> Response {
+    let name = accessible_name(label, hint);
+    let response = draw_single_line(ui, text, hint, name, true);
+    crate::tooltip(response, name.to_owned())
+}
+
+fn draw_single_line(
+    ui: &mut Ui,
+    text: &mut String,
+    hint: &str,
+    name: &str,
+    password: bool,
+) -> Response {
     let tokens = paint::tokens(ui);
     let metrics = tokens.metrics();
     let width = ui.available_width().max(metrics.control * 4.0);
@@ -20,7 +65,7 @@ pub fn text_field(ui: &mut Ui, text: &mut String, hint: &str) -> Response {
         Stroke::new(1.0, tokens.color.border.to_color32()),
         StrokeKind::Inside,
     );
-    let output = TextEdit::singleline(text)
+    let mut edit = TextEdit::singleline(text)
         .hint_text(hint)
         .desired_width(width)
         .min_size(egui::vec2(width, metrics.control))
@@ -30,8 +75,17 @@ pub fn text_field(ui: &mut Ui, text: &mut String, hint: &str) -> Response {
             crate::apply::pad_i8(4.0),
         ))
         .font(body_font(&metrics))
-        .text_color(tokens.color.text.to_color32())
-        .show(ui);
+        .text_color(tokens.color.text.to_color32());
+    if password {
+        edit = edit.password(true);
+    }
+    let output = edit.show(ui);
+    if !name.is_empty() {
+        let name = name.to_owned();
+        output.response.widget_info(|| {
+            egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, ui.is_enabled(), name.clone())
+        });
+    }
     if output.response.has_focus() && ui.is_enabled() {
         paint::focus_ring(
             ui,
@@ -43,11 +97,72 @@ pub fn text_field(ui: &mut Ui, text: &mut String, hint: &str) -> Response {
     output.response
 }
 
-/// Seletor. `selected` é o índice em `options`.
+/// Área de texto multilinha com rótulo acessível obrigatório.
+pub fn text_area(
+    ui: &mut Ui,
+    text: &mut String,
+    label: &str,
+    hint: &str,
+    rows: usize,
+) -> Response {
+    let name = accessible_name(label, hint);
+    let tokens = paint::tokens(ui);
+    let metrics = tokens.metrics();
+    let width = ui.available_width().max(metrics.control * 4.0);
+    let output = TextEdit::multiline(text)
+        .hint_text(hint)
+        .desired_width(width)
+        .desired_rows(rows.max(1))
+        .frame(false)
+        .margin(Margin::symmetric(
+            crate::apply::pad_i8(metrics.pad_x),
+            crate::apply::pad_i8(4.0),
+        ))
+        .font(body_font(&metrics))
+        .text_color(tokens.color.text.to_color32())
+        .show(ui);
+    let name_owned = name.to_owned();
+    output.response.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, ui.is_enabled(), name_owned.clone())
+    });
+    if output.response.has_focus() && ui.is_enabled() {
+        paint::focus_ring(
+            ui,
+            output.response.rect,
+            metrics.radius_control,
+            tokens.color.accent.to_color32(),
+        );
+    }
+    crate::tooltip(output.response, name.to_owned())
+}
+
+/// Seletor legado: expõe a opção atual como nome (API sem rótulo).
 pub fn select(ui: &mut Ui, selected: &mut usize, options: &[&str]) -> Response {
+    select_inner(ui, selected, options, None)
+}
+
+/// Seletor com rótulo acessível obrigatório (i18n de quem chama).
+pub fn select_labeled(
+    ui: &mut Ui,
+    selected: &mut usize,
+    label: &str,
+    options: &[&str],
+) -> Response {
+    let name = accessible_name(label, "");
+    let response = select_inner(ui, selected, options, Some(name));
+    crate::tooltip(response, name.to_owned())
+}
+
+fn select_inner(
+    ui: &mut Ui,
+    selected: &mut usize,
+    options: &[&str],
+    accessible: Option<&str>,
+) -> Response {
     let tokens = paint::tokens(ui);
     let metrics = tokens.metrics();
     let label = options.get(*selected).copied().unwrap_or("—");
+    let name = accessible.unwrap_or(label);
     let font = body_font(&metrics);
     let text_color = tokens.color.text.to_color32();
     let width =
@@ -56,8 +171,9 @@ pub fn select(ui: &mut Ui, selected: &mut usize, options: &[&str]) -> Response {
             .min(ui.available_width().max(metrics.control));
     let (rect, mut response) =
         ui.allocate_exact_size(egui::vec2(width, metrics.control), Sense::click());
+    let name = name.to_owned();
     response.widget_info(|| {
-        egui::WidgetInfo::labeled(egui::WidgetType::ComboBox, ui.is_enabled(), label)
+        egui::WidgetInfo::labeled(egui::WidgetType::ComboBox, ui.is_enabled(), name.clone())
     });
     let before = *selected;
     let fill = hover_fill(tokens.color.surface.to_color32(), &response, &tokens);

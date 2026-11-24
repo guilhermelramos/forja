@@ -6,6 +6,7 @@ notify-method-show-description = Shows a toast and, when the catalog allows, a W
 notify-method-show-result = Whether the toast, the Windows notification and the sound were sent.
 notify-toasts-title = Toasts
 notify-center-title = Notifications
+notify-item-open = Open notification: { $summary }
 notify-center-count = { $count ->
     [one] { $count } notice
    *[other] { $count } notices

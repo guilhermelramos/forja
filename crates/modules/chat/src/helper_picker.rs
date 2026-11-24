@@ -172,23 +172,34 @@ pub(crate) fn humanize_error(
 ) -> forja_kernel::HumanError {
     let trimmed = raw.trim();
     let lower = trimmed.to_ascii_lowercase();
+    // Detalhes técnicos recolhidos mostram o texto original, sem redação.
+    let detail = trimmed;
+    if forja_kernel::human_error::is_provider_failure(trimmed) {
+        return forja_kernel::HumanError::with_detail(
+            cx.t_args("chat.view.error-provider", &[("helper", helper_name)]),
+            detail,
+        );
+    }
     if trimmed.starts_with("executable-not-found:")
         || lower.contains("os error 2")
         || lower.contains("not found")
     {
         return forja_kernel::HumanError::with_detail(
             cx.t_args("chat.view.error-not-found", &[("helper", helper_name)]),
-            trimmed,
+            detail,
         );
     }
     if lower.contains("is not installed") || lower.contains("não está instalado") {
-        return forja_kernel::HumanError::with_detail(cx.t("chat.view.send-no-helper"), trimmed);
+        return forja_kernel::HumanError::with_detail(cx.t("chat.view.send-no-helper"), detail);
     }
     if trimmed.starts_with("launch-failed:") {
         return forja_kernel::HumanError::with_detail(
             cx.t_args("chat.view.error-launch", &[("helper", helper_name)]),
-            trimmed,
+            detail,
         );
+    }
+    if forja_kernel::human_error::is_internal_command_failure(trimmed) {
+        return forja_kernel::HumanError::with_detail(cx.t("chat.view.error-internal"), detail);
     }
     forja_kernel::human_error::humanize_ctx(cx, trimmed)
 }

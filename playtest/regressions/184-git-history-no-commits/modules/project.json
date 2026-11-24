@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "projects": [
+    {
+      "id": "reg-184-no-commits",
+      "name": "Reg 184",
+      "path": "C:\\Users\\Guilherme\\AppData\\Local\\Temp\\forja-reg-184-sem-commits",
+      "icon": "▣",
+      "color": "#6FA8DC",
+      "created_at": 0
+    }
+  ],
+  "recent": [
+    {
+      "id": "reg-184-no-commits",
+      "name": "Reg 184",
+      "path": "C:\\Users\\Guilherme\\AppData\\Local\\Temp\\forja-reg-184-sem-commits",
+      "icon": "▣",
+      "color": "#6FA8DC",
+      "created_at": 0
+    }
+  ],
+  "active_id": "reg-184-no-commits"
+}
