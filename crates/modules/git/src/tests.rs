@@ -242,6 +242,21 @@ fn status_refresh_keeps_operation_errors_visible() {
     assert_eq!(state.error().as_deref(), Some("pull failed"));
 }
 
+fn log_line(subject: &str) -> log::LogLine {
+    log::LogLine {
+        graph: String::new(),
+        commit: Some(log::LogCommit {
+            hash: subject.to_owned(),
+            short: subject.to_owned(),
+            parents: Vec::new(),
+            author: "ana".to_owned(),
+            email: "ana@example.invalid".to_owned(),
+            time: 0,
+            subject: subject.to_owned(),
+        }),
+    }
+}
+
 #[test]
 fn mutations_invalidate_the_cached_history() {
     let state = Shared::new();
@@ -249,6 +264,44 @@ fn mutations_invalidate_the_cached_history() {
     assert!(state.log_for("C:/bancada"));
     state.invalidate_log();
     assert!(!state.log_for("C:/bancada"));
+}
+
+#[test]
+fn a_stale_log_task_cannot_overwrite_the_history_after_a_commit() {
+    let state = Shared::new();
+    state.set_path(Some("C:/bancada".to_owned()));
+    let stale = state.begin_log_load("C:/bancada").expect("first read starts");
+    assert!(state.log_loading());
+    state.invalidate_log(); // git.commit published a new HEAD.
+    assert!(!state.log_loading());
+
+    // The read that started before the commit comes back late.
+    state.finish_log_load(stale, "C:/bancada", Ok(vec![log_line("old commit")]));
+    assert!(state.commits().is_empty(), "the stale generation is discarded");
+
+    let fresh = state.begin_log_load("C:/bancada").expect("reload starts");
+    state.finish_log_load(fresh, "C:/bancada", Ok(vec![log_line("new commit")]));
+    assert_eq!(state.commits()[0].commit.as_ref().unwrap().subject, "new commit");
+    assert!(state.log_for("C:/bancada"));
+    assert!(!state.log_loading());
+}
+
+#[test]
+fn only_the_active_benchs_status_invalidates_the_history() {
+    let state = Shared::new();
+    state.set_path(Some("C:/bancada".to_owned()));
+    state.set_commits("C:/bancada", vec![log_line("keep me")]);
+    let other = forja_contracts::GitStatusChanged {
+        bench_path: "C:/outra".to_owned(),
+        summary: forja_contracts::GitSummary::default(),
+        files: Vec::new(),
+    };
+    let mine = forja_contracts::GitStatusChanged {
+        bench_path: "C:/bancada".to_owned(),
+        ..other.clone()
+    };
+    assert!(!crate::status_invalidates_log(&state, &other));
+    assert!(crate::status_invalidates_log(&state, &mine));
 }
 
 #[test]

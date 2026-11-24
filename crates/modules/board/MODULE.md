@@ -28,6 +28,8 @@ O módulo não depende do crate de bancadas. Ele usa os comandos públicos:
   `bench.pin`, `bench.read`, `bench.sleep`, `bench.wake` e
   `bench.approve_dialog`;
 - `project.list` — nome do projeto em cada cartão.
+- `git.status_changed` (`GitStatusChanged`): a contagem de `files` vira o badge
+  de arquivos alterados do cartão da bancada, sem rodar git no Quadro.
 
 Se o módulo de bancadas não estiver presente, o Quadro mostra uma faixa de
 indisponibilidade e não quebra o resto do app.

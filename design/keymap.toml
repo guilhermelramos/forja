@@ -6,7 +6,7 @@ platform = "windows"
 [meta]
 name_pt = "Mapa de atalhos da Forja"
 name_en = "Forja keymap"
-binding_count = 108
+binding_count = 109
 
 [[binding]]
 id = "anvil.open"
@@ -983,3 +983,25 @@ title_pt = "Ditar por voz"
 title_en = "Voice dictation"
 note_pt = "Alterna o ditado do Windows no painel de voz."
 note_en = "Toggles Windows dictation in the voice panel."
+
+[[binding]]
+id = "layout.switch"
+key = "Ctrl+Alt+L"
+scope = "global"
+family = "layout"
+title_pt = "Alternar arranjo"
+title_en = "Switch layout"
+even_in_terminal = true
+note_pt = "Abre o seletor com os arranjos de fábrica, do usuário e do projeto."
+note_en = "Opens the selector with factory, user and project layouts."
+
+[[binding]]
+id = "layout.focus_mode"
+key = "Ctrl+F11"
+scope = "global"
+family = "layout"
+title_pt = "Alternar Modo Foco"
+title_en = "Toggle Focus Mode"
+even_in_terminal = true
+note_pt = "Recolhe o chrome escolhido e repete o atalho para restaurar visibilidade e foco."
+note_en = "Collapses the chosen chrome; pressing it again restores visibility and focus."

@@ -65,3 +65,6 @@ board-page-state-empty = No items yet.
 board-page-state-loading = Loading…
 board-page-state-error = Could not load.
 board-card-actions = Card actions for { $name }
+
+board-card-changed = { $count } changed
+board-card-changed-hint = Changed files in this bench

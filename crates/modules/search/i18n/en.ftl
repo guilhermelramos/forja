@@ -55,3 +55,4 @@ search-notice-changed = Nothing was written: these files changed since the previ
 search-notice-io = Write failed ({ $message }). Written: { $written }; restored: { $restored }.
 search-notice-error = Could not finish: { $message }
 search-error-invalid-regex = Invalid regular expression.
+search-result-open-line = Open { $path } at line { $line }

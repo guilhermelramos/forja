@@ -20,6 +20,8 @@ pub struct BenchLayout {
     pub right_tab: Option<String>,
     pub sidebar_open: bool,
     pub right_panel_open: bool,
+    /// Arranjo escolhido e camada de origem. Ausente em estado antigo.
+    pub layout: Option<crate::layout_settings::LayoutSelection>,
 }
 
 fn json_string_list(value: &Value, key: &str) -> Option<Vec<String>> {
@@ -56,6 +58,7 @@ impl BenchLayout {
             right_tab: str_opt("right_tab"),
             sidebar_open: bool_or("sidebar_open", default_sidebar_open),
             right_panel_open: bool_or("right_panel_open", true),
+            layout: crate::layout_settings::LayoutSelection::from_json(value.get("layout")),
         }
     }
 
@@ -69,6 +72,9 @@ impl BenchLayout {
             "right_tab": self.right_tab,
             "sidebar_open": self.sidebar_open,
             "right_panel_open": self.right_panel_open,
+            "layout": self.layout.as_ref().map(
+                crate::layout_settings::LayoutSelection::to_json,
+            ),
         })
     }
 
@@ -364,6 +370,7 @@ impl ForjaApp {
                 .map(|view| view.id.clone()),
             sidebar_open: self.show_sidebar,
             right_panel_open: self.show_right_panel,
+            layout: self.layout_state.selection.clone(),
         }
     }
 
@@ -409,6 +416,7 @@ impl ForjaApp {
     }
 
     pub(crate) fn switch_bench_layout(&mut self, next_bench_id: Option<String>, keep_page: bool) {
+        self.exit_focus_for_bench_switch();
         if let Some(prev_id) = self.current_bench_id.take() {
             let layout = self.capture_bench_layout();
             self.shell_data.layout.insert(prev_id, layout);
@@ -498,6 +506,7 @@ mod tests {
             right_tab: Some("helper.runs".to_owned()),
             sidebar_open: false,
             right_panel_open: false,
+            layout: None,
         };
         let mut resolved = layout.resolve(&bench_views, &rail_views, &sidebar_views, &right_views);
         assert_eq!(resolved.active_tab, 2);
@@ -527,6 +536,7 @@ mod tests {
             right_tab: Some("chat.panel".to_owned()),
             sidebar_open: true,
             right_panel_open: false,
+            layout: None,
         };
         let mut resolved = saved.resolve(&bench_views, &rail_views, &sidebar_views, &right_views);
         resolved.apply_cli_overrides(
@@ -600,6 +610,7 @@ mod tests {
                 right_tab: Some("helper.runs".to_owned()),
                 sidebar_open: false,
                 right_panel_open: true,
+                layout: None,
             },
         );
 

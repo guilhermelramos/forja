@@ -1557,11 +1557,12 @@ fn shared_benches(run: &MusterRun, assignments: &[Assignment]) -> BTreeMap<Strin
     counts
 }
 
-/// Passo da barra de status: tenta entregar recados na fila no intervalo
-/// configurado, mesmo com a página fechada.
+/// Serviço de entrega de recados: roda em `poll()`, nunca em `ui()`, e continua
+/// ativo com o chrome oculto. O prazo real é o intervalo configurado.
 pub struct MusterTick {
     shared: Shared,
     last: Instant,
+    interval: Duration,
 }
 
 impl MusterTick {
@@ -1570,23 +1571,35 @@ impl MusterTick {
         Self {
             shared,
             last: Instant::now(),
+            interval: Duration::from_secs(3),
         }
     }
-}
 
-impl View for MusterTick {
-    fn ui(&mut self, _ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
+    fn refresh_interval(&mut self, cx: &Ctx<'_>) {
         let seconds = cx
             .setting("muster.notes.poll_s")
             .and_then(|value| value.as_i64())
             .unwrap_or(3)
             .clamp(1, 60) as u64;
-        if self.last.elapsed() < Duration::from_secs(seconds) {
+        self.interval = Duration::from_secs(seconds);
+    }
+}
+
+impl View for MusterTick {
+    fn poll(&mut self, cx: &mut Ctx<'_>) {
+        self.refresh_interval(cx);
+        if self.last.elapsed() < self.interval {
             return;
         }
         self.last = Instant::now();
         commands::flush_pending(cx, &self.shared);
     }
+
+    fn next_poll_at(&self) -> Option<Duration> {
+        Some(self.interval.saturating_sub(self.last.elapsed()))
+    }
+
+    fn ui(&mut self, _ui: &mut egui::Ui, _cx: &mut Ctx<'_>) {}
 }
 
 impl MusterView {

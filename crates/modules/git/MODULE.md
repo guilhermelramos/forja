@@ -11,7 +11,8 @@ Módulo `git`: painel Mudanças, histórico com grafo, blame e sincronização.
   `git.log` e `git.blame`.
 - Comandos assíncronos `git.compare` e `git.compare.result`, para resumir os
   commits e arquivos entre uma base e `HEAD`.
-- Evento de contrato `git.status_changed` (`bench_path`, `summary`).
+- Evento de contrato `git.status_changed` (`bench_path`, `summary`, `files`),
+  publicado por `status_event.rs` com os caminhos alterados relativos à bancada.
 - Evento de contrato `git.comparison_changed` (`bench_path`, `base?`) quando
   um resumo de comparação novo fica pronto.
 - View `git.changes` no painel direito (ordem 5, para ficar visível enquanto o
@@ -37,7 +38,8 @@ módulo `diff` da onda C2.
   os rastreados voltam para `HEAD`.
 - **Commit** usa `git.identity.*`, `git.commit.sign`, `git.commit.gpg_key` e
   `git.commit.sign_off`. Branches em `git.protected.branches` recusam commit e
-  rebase.
+  rebase. O status publicado invalida o grafo em cache; o Histórico relê `git log`
+  numa `Task` com geração, descartando leituras antigas (#36).
 - **Push** usa `git.push.auto_set_upstream`, aceita `--force-with-lease` e
   publica o upstream.
 - **Fetch automático:** `git.sync.fetch_interval_min > 0` faz fetch em segundo

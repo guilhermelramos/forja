@@ -178,3 +178,4 @@ setting-editor-markdown-preview-label = Prévia de Markdown
 setting-editor-markdown-preview-help = Abre a prévia ao editar um arquivo Markdown.
 editor-command-active_file = Arquivo aberto no editor
 editor-find-close = Fechar busca
+editor-canvas-label = Editor de código: { $file }

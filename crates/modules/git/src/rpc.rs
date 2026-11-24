@@ -4,7 +4,6 @@ use crate::engine;
 use crate::helpers::{files_from, required, setting_list, setting_str, spawn_op, truthy, unit};
 use crate::log;
 use crate::state::Shared;
-use forja_contracts::GitStatusChanged;
 use forja_kernel::Registrar;
 use forja_kernel::forja_protocol::{
     Method, MethodEffect, ParamKind, ParamSchema, ResultSchema, RpcError,
@@ -24,10 +23,7 @@ pub(crate) fn register_rpc(r: &mut Registrar<'_>, shared: &Shared) {
             if s.path().as_deref() == Some(path) {
                 s.set_report(report.clone());
             }
-            cx.emit(&GitStatusChanged {
-                bench_path: path.to_owned(),
-                summary: report.summary.clone(),
-            });
+            crate::status_event::emit(cx, path, &report);
             Ok(serde_json::to_value(report.summary).unwrap_or(Value::Null))
         },
     );

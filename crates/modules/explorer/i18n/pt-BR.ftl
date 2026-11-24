@@ -53,3 +53,6 @@ setting-explorer-tree-follow_symlinks-label = Seguir links simbólicos
 setting-explorer-tree-follow_symlinks-help = Lista o destino dos links simbólicos.
 explorer-tree-collapse = Recolher pasta
 explorer-tree-expand = Expandir pasta
+
+explorer-tree-modified = M
+explorer-tree-modified-hint = Arquivo alterado nesta bancada

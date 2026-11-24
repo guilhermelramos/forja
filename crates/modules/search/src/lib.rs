@@ -207,6 +207,9 @@ impl Module for SearchModule {
 }
 
 #[cfg(test)]
+mod a11y_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use forja_kernel::{contract, Args, Runtime, RuntimeOptions};

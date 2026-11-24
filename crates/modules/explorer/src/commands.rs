@@ -579,6 +579,7 @@ fn switch_root(cx: &Ctx<'_>, shared: &Shared, root: Option<PathBuf>, name: Optio
         state.dialog = None;
         state.watcher = None;
         state.ignores.clear();
+        state.changed_paths.clear();
         state.watch_generation += 1;
         state.watch_generation
     };

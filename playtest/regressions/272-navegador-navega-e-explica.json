@@ -11,7 +11,7 @@
     { "m": "ui.click", "target": "Abrir aba de ferramenta" },
     { "m": "ui.click", "target": "Navegador" },
     { "m": "ui.wait", "ms": 300 },
-    { "m": "ui.click", "target": "forja://inicio" },
+    { "m": "ui.click", "target": "Endereço" },
     { "m": "ui.key", "keys": "Ctrl+A" },
     { "m": "ui.type", "text": "https://example.com" },
     { "m": "ui.key", "keys": "Enter" },

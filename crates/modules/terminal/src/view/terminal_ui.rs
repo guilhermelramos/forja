@@ -61,6 +61,7 @@ pub(super) fn draw_terminal(
     terminal.focus_id = Some(focus_id);
     terminal.drawn_frame = focused_pane.then_some(ui.ctx().cumulative_frame_nr());
     let keyboard_focus = ui.memory(|memory| memory.has_focus(focus_id));
+    let surface_label = texts.surface_label.replace("{ $title }", &terminal.title());
     let grid = render::draw_grid(
         ui,
         terminal,
@@ -70,6 +71,7 @@ pub(super) fn draw_terminal(
         line_cache.for_terminal(terminal.id),
         body,
         focused_pane && keyboard_focus && ui.input(|input| input.focused),
+        &surface_label,
     );
     let response = grid.response;
     let metrics = grid.metrics;
@@ -218,11 +220,16 @@ fn draw_search(ui: &mut egui::Ui, terminal: &mut Terminal, texts: &UiText) {
     let single_row_only = ui.available_height() < 54.0;
     let field_width = (ui.available_width() - 210.0).clamp(60.0, 220.0);
     let mut contents = |ui: &mut egui::Ui| {
-        let response = ui.add(
-            egui::TextEdit::singleline(&mut terminal.search.query)
-                .hint_text(texts.search_hint.clone())
-                .desired_width(field_width),
+        let search_label = texts.search_hint.clone();
+        let full_width = ui.available_width();
+        ui.set_width(field_width);
+        let response = forja_ui_kit::text_field_labeled(
+            ui,
+            &mut terminal.search.query,
+            &search_label,
+            &search_label,
         );
+        ui.set_width(full_width);
         if terminal.search.focus_requested {
             terminal.search.focus_requested = false;
             response.request_focus();

@@ -14,6 +14,7 @@ mod log;
 mod rpc;
 mod settings;
 mod state;
+mod status_event;
 #[cfg(test)]
 mod tests;
 mod view_changes;
@@ -64,6 +65,16 @@ impl Module for GitModule {
         r.subscribe::<BenchActivated, _>(move |cx, event| {
             event_state.set_path(Some(event.0.path.clone()));
             refresh_async(cx, &event_state);
+        });
+        // A published status is the single source of truth for "HEAD or the
+        // worktree changed". Once it arrives for the current bench, the cached
+        // commit graph may be stale: drop it and let the History view reload it
+        // in a task. Old log reads are discarded by the generation bump.
+        let status_state = self.state.clone();
+        r.subscribe(move |_cx, event: &GitStatusChanged| {
+            if status_invalidates_log(&status_state, event) {
+                status_state.invalidate_log();
+            }
         });
         let project_state = self.state.clone();
         r.subscribe::<ProjectActivated, _>(move |cx, event| {
@@ -123,6 +134,12 @@ impl Module for GitModule {
             move || Box::new(view_history::HistoryView::new(history_state.clone())),
         );
     }
+}
+
+/// Only a status published for the bench whose History is cached can make that
+/// cache stale. Other benches' status events must not cause a reload.
+fn status_invalidates_log(state: &Shared, event: &GitStatusChanged) -> bool {
+    state.path().as_deref() == Some(event.bench_path.as_str())
 }
 
 fn used_keys() -> Vec<&'static str> {

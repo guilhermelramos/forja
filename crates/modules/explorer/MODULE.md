@@ -27,6 +27,8 @@ Consome (ver `design/contracts.md`):
 
 - `bench.activated` (benches, `BenchActivated`): troca a raiz da árvore, o watcher
   e o cache. Este módulo declara e assina o evento (`contract_event` + `subscribe`).
+- `git.status_changed` (git, `GitStatusChanged`): os caminhos alterados publicados
+  pelo git viram badges na árvore (`changed.rs`), sem ler git nem disco na view.
 - `bench.current` (benches): lido uma vez ao iniciar e de novo enquanto não há
   bancada (ela pode aparecer depois). Sem o módulo `benches`, o painel mostra
   "Nenhuma bancada ativa".

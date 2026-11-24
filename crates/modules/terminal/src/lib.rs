@@ -229,4 +229,6 @@ fn register_events(r: &mut Registrar<'_>, core: &Shared) {
 }
 
 #[cfg(test)]
+mod a11y_tests;
+#[cfg(test)]
 mod tests;

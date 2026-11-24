@@ -12,6 +12,8 @@ struct State {
     report: Option<StatusReport>,
     commits: Vec<LogLine>,
     log_for: Option<String>,
+    log_generation: u64,
+    log_loading: bool,
     blame: Vec<BlameLine>,
     blame_for: Option<(String, String)>,
     blame_file: String,
@@ -67,6 +69,8 @@ impl Shared {
                 state.report = None;
                 state.commits.clear();
                 state.log_for = None;
+                state.log_generation = state.log_generation.wrapping_add(1);
+                state.log_loading = false;
                 state.selected_commit = None;
                 state.commit_detail = None;
                 state.commit_detail_loading = None;
@@ -160,6 +164,7 @@ impl Shared {
             .unwrap_or(false)
     }
 
+    #[cfg(test)]
     pub fn set_commits(&self, path: &str, commits: Vec<LogLine>) {
         if let Ok(mut state) = self.0.lock() {
             state.commits = commits;
@@ -167,6 +172,7 @@ impl Shared {
         }
     }
 
+    #[cfg(test)]
     pub fn log_for(&self, path: &str) -> bool {
         self.0
             .lock()
@@ -175,11 +181,65 @@ impl Shared {
     }
 
     /// Forces the next History draw to read the log again after a commit,
-    /// pull, rebase or explicit refresh changed HEAD.
+    /// pull, rebase or explicit refresh changed HEAD. Bumping the generation
+    /// makes any log read already in flight obsolete: its result is discarded.
     pub fn invalidate_log(&self) {
         if let Ok(mut state) = self.0.lock() {
             state.log_for = None;
+            state.log_generation = state.log_generation.wrapping_add(1);
+            state.log_loading = false;
         }
+    }
+
+    /// Starts one background log read for `path`. Returns `None` when the log
+    /// is current for this path or another read is already in flight.
+    pub fn begin_log_load(&self, path: &str) -> Option<u64> {
+        let Ok(mut state) = self.0.lock() else {
+            return None;
+        };
+        if state.log_loading || state.log_for.as_deref() == Some(path) {
+            return None;
+        }
+        state.log_loading = true;
+        state.log_generation = state.log_generation.wrapping_add(1);
+        Some(state.log_generation)
+    }
+
+    /// Publishes a log read only when it still belongs to the current request.
+    pub fn finish_log_load(
+        &self,
+        generation: u64,
+        path: &str,
+        result: Result<Vec<LogLine>, String>,
+    ) {
+        let Ok(mut state) = self.0.lock() else {
+            return;
+        };
+        if generation != state.log_generation {
+            return;
+        }
+        state.log_loading = false;
+        match result {
+            Ok(lines) => {
+                state.commits = lines;
+                state.log_for = Some(path.to_owned());
+                state.error = None;
+            }
+            Err(error) => {
+                state.error = Some(error);
+                // Remember the attempt so a failing repository does not start
+                // a new task on every frame until something actually changes.
+                state.log_for = Some(path.to_owned());
+            }
+        }
+    }
+
+    #[cfg(test)]
+    pub fn log_loading(&self) -> bool {
+        self.0
+            .lock()
+            .map(|state| state.log_loading)
+            .unwrap_or(false)
     }
 
     pub fn blame(&self) -> Vec<BlameLine> {

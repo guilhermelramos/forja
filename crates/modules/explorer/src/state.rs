@@ -7,7 +7,7 @@
 
 use crate::ops::History;
 use crate::tree::{IgnoreCache, TreeCache};
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Instant;
@@ -51,6 +51,8 @@ pub struct State {
     pub watcher: Option<notify::RecommendedWatcher>,
     /// Last time the active bench was read, to avoid asking on every frame.
     pub bench_checked: Option<Instant>,
+    /// Changed paths relative to the tree root, from published git status events.
+    pub changed_paths: BTreeSet<String>,
 }
 
 /// Locks the state, recovering from a poisoned mutex (the data is still usable).

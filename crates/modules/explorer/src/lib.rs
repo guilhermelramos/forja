@@ -3,6 +3,7 @@
 //!
 //! Contratos publicados e consumidos estão em `MODULE.md` e em `design/contracts.md`.
 
+mod changed;
 mod commands;
 mod dialogs;
 mod ops;
@@ -15,7 +16,7 @@ mod watch;
 use crate::state::{lock, Shared, State};
 use crate::view::ExplorerView;
 use forja_contracts::{
-    names, BenchActivated, FileOpenRequested, ProjectActivated, ProjectRemoved,
+    names, BenchActivated, FileOpenRequested, GitStatusChanged, ProjectActivated, ProjectRemoved,
 };
 use forja_kernel::{
     Args, Ctx, KernelError, Module, ModuleManifest, Registrar, Result as KResult, SettingKind,
@@ -79,6 +80,7 @@ impl Module for ExplorerModule {
         r.contract_event::<BenchActivated>(names::BENCH_ACTIVATED);
         r.contract_event::<ProjectActivated>(names::PROJECT_ACTIVATED);
         r.contract_event::<ProjectRemoved>(names::PROJECT_REMOVED);
+        r.contract_event::<GitStatusChanged>(names::GIT_STATUS_CHANGED);
         let shared = Arc::clone(&self.shared);
         r.subscribe(move |cx, event: &BenchActivated| {
             commands::on_bench_activated(cx, &shared, &event.0);
@@ -95,6 +97,10 @@ impl Module for ExplorerModule {
             cx.request_repaint();
         });
 
+        let shared_status = Arc::clone(&self.shared);
+        r.subscribe(move |_cx, event: &GitStatusChanged| {
+            changed::apply(&shared_status, event);
+        });
         let shared = Arc::clone(&self.shared);
         r.command(
             "explorer.new_file",
@@ -269,6 +275,8 @@ impl Module for ExplorerModule {
             "explorer.error.permission",
             "explorer.error.exists",
             "explorer.copy_suffix",
+            "explorer.tree.modified",
+            "explorer.tree.modified-hint",
         ] {
             r.uses_i18n(key);
         }
