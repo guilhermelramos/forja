@@ -1,0 +1,32 @@
+{
+  "title": "Pedidos e Extensões expõem nomes acessíveis nos campos e seletores (#207)",
+  "issue": 207,
+  "locale": "pt-BR",
+  "demo": true,
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Pedidos" },
+    { "m": "ui.snapshot" },
+    { "m": "ui.click", "target": "Extensões" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 2,
+      "present_elements": [
+        { "name": "Buscar por título, chave, rótulo ou autor", "role": "TextInput" },
+        { "name": "Balcão de pedidos", "role": "ComboBox" }
+      ],
+      "no_unnamed_buttons": true,
+      "no_geometry_issues": true
+    },
+    {
+      "step": 4,
+      "present_elements": [
+        { "name": "Buscar", "role": "TextInput" }
+      ],
+      "no_unnamed_buttons": true,
+      "no_geometry_issues": true
+    }
+  ]
+}
