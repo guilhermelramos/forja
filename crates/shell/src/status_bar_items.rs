@@ -97,10 +97,22 @@ impl ForjaApp {
     }
 
     fn registration_order(&self) -> Vec<String> {
-        self.status_views
+        let registered: Vec<String> = self
+            .status_views
             .iter()
             .map(|view| view.id.clone())
-            .collect()
+            .collect();
+        let mut order: Vec<String> = DEFAULT_ITEMS
+            .iter()
+            .filter(|id| registered.iter().any(|registered| registered == *id))
+            .map(|id| (*id).to_owned())
+            .collect();
+        for id in registered {
+            if !order.contains(&id) {
+                order.push(id);
+            }
+        }
+        order
     }
 
     /// Roda uma vez por quadro, antes da barra. Só pede repaint no prazo real:
