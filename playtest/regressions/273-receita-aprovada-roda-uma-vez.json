@@ -1,0 +1,34 @@
+{
+  "title": "Receita aprovada roda uma vez, com a identidade da receita aprovada (#29)",
+  "issue": 29,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Abrir pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 250 },
+    { "m": "ui.click", "target": "Terminal" },
+    { "m": "ui.click", "target": "Receitas" },
+    { "m": "ui.type", "text": "pytest" },
+    { "m": "ui.click", "target": "Executar testes com pytest" },
+    { "m": "ui.click", "target": "Executar" },
+    { "m": "ui.snapshot" },
+    { "m": "ui.click", "target": "Aprovar uma vez" },
+    { "m": "ui.wait", "ms": 400 },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 10,
+      "present": ["Aprovar uma vez", "Aprovar este conteúdo", "Recusar"],
+      "present_contains": ["precisa de aprovação antes de rodar"],
+      "window_count_min": 1
+    },
+    {
+      "step": 13,
+      "present_contains": ["Run tests with pytest"],
+      "absent_contains": ["precisa de aprovação antes de rodar"]
+    }
+  ]
+}
