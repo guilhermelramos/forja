@@ -152,6 +152,15 @@ fn classify_key(full_lower: &str, inner_lower: &str) -> Option<&'static str> {
     if is_network_error(inner_lower) {
         return Some("kernel.error.network");
     }
+    // Último recurso: só uma pista interna, sem causa específica (git,
+    // permissão, rede, credencial etc.) identificada antes.
+    if is_internal_command_failure_inner(full_lower, inner_lower) {
+        return Some("kernel.error.internal-command-failed");
+    }
+    // Um id de sessão sem outra pista aponta para uma resposta do provedor.
+    if full_lower.contains("ses_") {
+        return Some("kernel.error.provider-unavailable");
+    }
     None
 }
 
@@ -162,13 +171,6 @@ fn classify_launch_key(full_lower: &str, inner_lower: &str) -> Option<&'static s
     }
     if is_helper_executable_missing_inner(full_lower, inner_lower) {
         return Some("kernel.error.helper-executable-missing");
-    }
-    if is_internal_command_failure_inner(full_lower, inner_lower) {
-        return Some("kernel.error.internal-command-failed");
-    }
-    // Um id de sessão sem outra pista aponta para uma resposta do provedor.
-    if full_lower.contains("ses_") {
-        return Some("kernel.error.provider-unavailable");
     }
     None
 }
@@ -274,7 +276,6 @@ fn is_provider_failure_inner(_full_lower: &str, inner_lower: &str) -> bool {
         "billing",
         "invalid api key",
         "bad credentials",
-        "credential",
         "sem saldo",
         "saldo insuficiente",
     ]
@@ -630,7 +631,29 @@ mod tests {
         let limit = humanize_error(&en, "rate limit exceeded for the current model");
         assert!(limit.summary.contains("plan limits"), "{}", limit.summary);
         assert!(!limit.summary.to_ascii_lowercase().contains("rate limit"));
-        assert!(is_provider_failure("credential is invalid"));
+        // Só texto específico do provedor conta; "credential" solto não.
+        assert!(is_provider_failure("invalid api key"));
+        assert!(is_provider_failure("bad credentials"));
+        assert!(!is_provider_failure("credential is invalid"));
+    }
+
+    #[test]
+    fn internal_command_classifier_does_not_steal_specific_causes() {
+        let en = test_i18n(Locale::En);
+
+        let auth = humanize_error(&en, "command `git.fetch` failed: fatal: authentication failed");
+        assert_eq!(
+            auth.summary,
+            "Authentication was refused while accessing the remote repository."
+        );
+        assert!(auth.detail.as_deref().unwrap().contains("git.fetch"));
+
+        let perm = humanize_error(&en, "command `x` failed: Access is denied. (os error 5)");
+        assert_eq!(
+            perm.summary,
+            "Permission was denied or the file is in use by another process."
+        );
+        assert!(perm.detail.as_deref().unwrap().contains("os error 5"));
     }
 
     #[test]
