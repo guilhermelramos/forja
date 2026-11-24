@@ -22,7 +22,6 @@ pub struct Watch {
 }
 
 /// Registro de tudo o que foi lido.
-#[derive(Default)]
 pub struct ContentState {
     pub loaded: bool,
     pub project: Option<PathBuf>,
@@ -36,6 +35,28 @@ pub struct ContentState {
     pub watched: Vec<PathBuf>,
     pub dirty_at: Option<Instant>,
     pub last_bench_check: Option<Instant>,
+    /// Raiz embutida já aplicada; vem do valor guardado no `LayoutStore`.
+    pub builtin_root: Option<PathBuf>,
+}
+
+impl Default for ContentState {
+    fn default() -> Self {
+        Self {
+            loaded: false,
+            project: None,
+            commands: BTreeMap::new(),
+            themes: BTreeMap::new(),
+            templates: BTreeMap::new(),
+            recipes: BTreeMap::new(),
+            diagnostics: Vec::new(),
+            revision: 0,
+            watch: None,
+            watched: Vec::new(),
+            dirty_at: None,
+            last_bench_check: None,
+            builtin_root: model::builtin_root_hint(),
+        }
+    }
 }
 
 /// Estado compartilhado do módulo.
@@ -79,11 +100,12 @@ pub fn current_project(cx: &mut Ctx<'_>) -> Option<PathBuf> {
 /// Garante que o estado corresponde à bancada atual.
 pub fn ensure(core: &ContentCore, cx: &mut Ctx<'_>, force: bool) {
     let project = current_project(cx);
+    let builtin = core.layouts.builtin_root();
     let reload = {
         let Ok(mut state) = core.state.lock() else {
             return;
         };
-        let changed = state.project != project;
+        let changed = state.project != project || state.builtin_root != builtin;
         state.last_bench_check = Some(Instant::now());
         force || !state.loaded || changed
     };
@@ -103,6 +125,8 @@ pub fn ensure(core: &ContentCore, cx: &mut Ctx<'_>, force: bool) {
 /// Lê todas as camadas para `project`.
 pub fn load(core: &ContentCore, cx: &mut Ctx<'_>, project: Option<PathBuf>) {
     let project_for_keymap = project.clone();
+    // Valor guardado em `Tasks`: nenhum `is_dir`/`current_exe` na thread da UI.
+    let builtin_root = core.layouts.builtin_root();
     // A failed read or parse keeps the previous version of that one file alive.
     let (previous_commands, previous_themes, previous_templates, previous_recipes) = core
         .with(|state| {
@@ -121,8 +145,8 @@ pub fn load(core: &ContentCore, cx: &mut Ctx<'_>, project: Option<PathBuf>) {
     let mut diagnostics = Vec::new();
     let user = cx.user_dir().to_path_buf();
     let mut roots: Vec<(Layer, PathBuf)> = Vec::new();
-    if let Some(root) = model::builtin_root() {
-        roots.push((Layer::Builtin, root));
+    if let Some(root) = &builtin_root {
+        roots.push((Layer::Builtin, root.clone()));
     }
     roots.push((Layer::User, user));
     if let Some(project) = &project {
@@ -268,6 +292,7 @@ pub fn load(core: &ContentCore, cx: &mut Ctx<'_>, project: Option<PathBuf>) {
     if let Ok(mut state) = core.state.lock() {
         state.loaded = true;
         state.project = project;
+        state.builtin_root = builtin_root;
         state.commands = commands;
         state.themes = themes;
         state.templates = templates;
@@ -336,6 +361,7 @@ fn ensure_watcher(core: &ContentCore, cx: &mut Ctx<'_>) {
 /// Drena o observador e recarrega depois de 300 ms sem mudanças.
 pub fn tick(core: &ContentCore, cx: &mut Ctx<'_>) {
     let mut should_reload = false;
+    let builtin = core.layouts.builtin_root();
     if let Ok(mut state) = core.state.lock() {
         let mut touched = false;
         if let Some(watch) = &state.watch {
@@ -351,6 +377,10 @@ pub fn tick(core: &ContentCore, cx: &mut Ctx<'_>) {
             .is_some_and(|at| at.elapsed() >= DEBOUNCE)
         {
             state.dirty_at = None;
+            should_reload = true;
+        }
+        if state.builtin_root != builtin {
+            state.builtin_root = builtin.clone();
             should_reload = true;
         }
     }

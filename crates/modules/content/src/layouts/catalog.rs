@@ -56,20 +56,44 @@ pub struct LayoutSources {
 
 impl LayoutSources {
     /// Snapshot do registro, tirado na thread da UI antes de spawnar a leitura.
-    pub fn from_ctx(cx: &Ctx<'_>, project: Option<PathBuf>, generation: u64) -> Self {
-        let mut sources = Self::from_paths(
-            model::builtin_root(),
-            cx.user_dir().to_path_buf(),
-            project,
-            generation,
-        );
-        sources.views = cx
+    /// `builtin` já vem do valor guardado no estado: nenhuma E/S acontece aqui.
+    pub fn from_ctx(
+        cx: &Ctx<'_>,
+        builtin: Option<PathBuf>,
+        project: Option<PathBuf>,
+        generation: u64,
+    ) -> Self {
+        let views = cx
             .registry()
             .views()
             .iter()
             .map(|view| (view.id.clone(), view.slot.id().to_owned()))
             .collect();
-        sources
+        Self::from_resolved(
+            builtin,
+            cx.user_dir().to_path_buf(),
+            project,
+            generation,
+            views,
+        )
+    }
+
+    /// Monta as fontes apenas com valores já resolvidos, sem tocar o disco.
+    /// É o núcleo puro de `from_ctx`, usado pela UI e testável sem I/O.
+    pub fn from_resolved(
+        builtin: Option<PathBuf>,
+        user: PathBuf,
+        project: Option<PathBuf>,
+        generation: u64,
+        views: BTreeMap<String, String>,
+    ) -> Self {
+        Self {
+            builtin,
+            user,
+            project,
+            generation,
+            views,
+        }
     }
 
     pub fn from_paths(
@@ -78,13 +102,7 @@ impl LayoutSources {
         project: Option<PathBuf>,
         generation: u64,
     ) -> Self {
-        Self {
-            builtin,
-            user,
-            project,
-            generation,
-            views: BTreeMap::new(),
-        }
+        Self::from_resolved(builtin, user, project, generation, BTreeMap::new())
     }
 
     /// Pais das pastas de arranjos, para observar criação e renomes.

@@ -35,7 +35,6 @@ pub fn current_project_root(cx: &mut Ctx<'_>) -> Option<PathBuf> {
         })
 }
 
-#[derive(Default)]
 pub struct LayoutState {
     pub catalog: Catalog,
     pub cache: CatalogCache,
@@ -54,6 +53,34 @@ pub struct LayoutState {
     pub write_log: Vec<String>,
     /// Hash confirmado pela última mutação, usado como revisão gravada.
     pub last_write_hash: Option<String>,
+    /// Raiz embutida guardada. A UI só lê este valor; nunca faz E/S para obtê-lo.
+    pub builtin_root: Option<PathBuf>,
+    /// Verdadeiro depois que a resolução em `Tasks` foi agendada (uma só vez).
+    pub builtin_root_pending: bool,
+}
+
+impl Default for LayoutState {
+    fn default() -> Self {
+        Self {
+            catalog: Catalog::default(),
+            cache: CatalogCache::default(),
+            generation: 0,
+            project: None,
+            queued: None,
+            ready: false,
+            seen_generation: 0,
+            dirty_at: None,
+            deadline_scheduled: false,
+            watch_requested: Vec::new(),
+            watch_token: 0,
+            watch: None,
+            last_write: None,
+            write_log: Vec::new(),
+            last_write_hash: None,
+            builtin_root: crate::model::builtin_root_hint(),
+            builtin_root_pending: false,
+        }
+    }
 }
 
 /// Catálogo compartilhado pelo módulo `content`.
@@ -83,6 +110,43 @@ impl LayoutStore {
 
     pub(crate) fn state_lock(&self) -> Option<MutexGuard<'_, LayoutState>> {
         self.state.lock().ok()
+    }
+
+    /// Valor guardado da raiz embutida: leitura sem E/S, segura na thread da UI.
+    pub fn builtin_root(&self) -> Option<PathBuf> {
+        self.with(|state| state.builtin_root.clone()).unwrap_or(None)
+    }
+
+    /// Agenda uma única vez a resolução definitiva da raiz embutida em `Tasks`.
+    /// O `is_dir`/`current_exe` roda no worker; a UI só publica o resultado.
+    pub fn ensure_builtin_root(self: &Arc<Self>, cx: &Ctx<'_>) {
+        let already = self
+            .with(|state| {
+                if state.builtin_root_pending {
+                    true
+                } else {
+                    state.builtin_root_pending = true;
+                    false
+                }
+            })
+            .unwrap_or(true);
+        if already {
+            return;
+        }
+        let store = Arc::clone(self);
+        cx.spawn(crate::model::builtin_root, move |cx, resolved| {
+            let changed = store
+                .with(|state| {
+                    let changed = state.builtin_root != resolved;
+                    state.builtin_root = resolved;
+                    changed
+                })
+                .unwrap_or(false);
+            if changed {
+                store.request_reload(cx);
+            }
+            cx.request_repaint();
+        });
     }
 
     fn destination_lock(&self, destination: &Path) -> Arc<Mutex<()>> {
@@ -158,6 +222,7 @@ impl LayoutStore {
 
     /// Copia as entradas atuais e lê o catálogo inteiro em `Tasks`.
     pub fn queue(self: &Arc<Self>, cx: &Ctx<'_>) {
+        self.ensure_builtin_root(cx);
         let (sources, previous) = {
             let Ok(mut state) = self.state.lock() else {
                 return;
@@ -167,7 +232,12 @@ impl LayoutStore {
             }
             state.queued = Some(state.generation);
             (
-                LayoutSources::from_ctx(cx, state.project.clone(), state.generation),
+                LayoutSources::from_ctx(
+                    cx,
+                    state.builtin_root.clone(),
+                    state.project.clone(),
+                    state.generation,
+                ),
                 state.cache.clone(),
             )
         };

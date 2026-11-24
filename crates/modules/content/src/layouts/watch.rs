@@ -130,12 +130,8 @@ pub fn ensure_watcher(store: &Arc<LayoutStore>, cx: &Ctx<'_>, enabled: bool) {
     let candidates = if enabled {
         let state = store.state_lock();
         let root = state.as_ref().and_then(|state| state.project.clone());
-        WatchRoots::from_context(
-            cx.user_dir().to_path_buf(),
-            root,
-            crate::model::builtin_root(),
-        )
-        .candidates()
+        let builtin = state.as_ref().and_then(|state| state.builtin_root.clone());
+        WatchRoots::from_context(cx.user_dir().to_path_buf(), root, builtin).candidates()
     } else {
         Vec::new()
     };
@@ -167,7 +163,7 @@ pub fn ensure_watcher(store: &Arc<LayoutStore>, cx: &Ctx<'_>, enabled: bool) {
     let roots = WatchRoots::from_context(
         cx.user_dir().to_path_buf(),
         store.with(|state: &mut LayoutState| state.project.clone()).flatten(),
-        crate::model::builtin_root(),
+        store.builtin_root(),
     );
     let generation = Arc::new(AtomicU64::new(0));
     let callback_generation = Arc::clone(&generation);

@@ -6,6 +6,9 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 use super::tests::{runtime, temp_dir};
+use crate::layouts::{LayoutSources, LAYOUT_DIR};
+use crate::model::Layer;
+use std::collections::BTreeMap;
 
 
     fn pump(runtime: &mut Runtime) {
@@ -511,5 +514,62 @@ use super::tests::{runtime, temp_dir};
                 .as_str()
                 .unwrap()
                 .contains("appearance.layout.default")));
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn catalog_sources_are_built_from_the_stored_root_without_disk_probes() {
+        // A UI monta as fontes com a raiz embutida já guardada. O caminho
+        // injetado não existe: se a montagem consultasse o disco (is_dir/
+        // exists/current_exe), ele seria descartado. Ele aparece intacto.
+        let dir = temp_dir("sources-no-io");
+        let injected = dir.join("builtin-inexistente");
+        assert!(!injected.exists());
+        let user = dir.join("user");
+        let project = dir.join("project");
+        let mut views = BTreeMap::new();
+        views.insert("content.settings".to_owned(), "sidebar".to_owned());
+
+        let sources = LayoutSources::from_resolved(
+            Some(injected.clone()),
+            user.clone(),
+            Some(project.clone()),
+            7,
+            views.clone(),
+        );
+        assert_eq!(sources.builtin, Some(injected.clone()));
+        assert_eq!(sources.views, views);
+        assert!(sources.roots().contains(&(Layer::Builtin, injected.clone())));
+        let watch = sources.watch_roots();
+        assert!(watch.contains(&injected));
+        assert!(watch.contains(&injected.join(LAYOUT_DIR)));
+
+        // Sem raiz guardada, nenhuma fonte embutida é inventada.
+        let none = LayoutSources::from_resolved(None, user, Some(project), 7, views);
+        assert!(none.roots().iter().all(|(layer, _)| *layer != Layer::Builtin));
+        assert!(!none.watch_roots().contains(&injected));
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn builtin_root_is_resolved_once_into_the_state() {
+        let dir = temp_dir("builtin-root-task");
+        let core = Arc::new(ContentCore::new());
+        let mut runtime = Runtime::new(
+            vec![Box::new(ContentModule {
+                core: Arc::clone(&core),
+            })],
+            RuntimeOptions {
+                data_dir: Some(dir.join("data")),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("runtime");
+        let _ = listed_layouts(&mut runtime);
+        pump(&mut runtime);
+        assert!(core.layouts.with(|state| state.builtin_root_pending).unwrap_or(false));
+        assert_eq!(core.layouts.builtin_root(), crate::model::builtin_root_hint());
         let _ = std::fs::remove_dir_all(dir);
     }
