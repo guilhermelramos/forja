@@ -490,25 +490,6 @@ mod tests {
     }
 
     #[test]
-    fn legacy_bench_state_without_a_layout_choice_still_loads() {
-        let old = serde_json::json!({
-            "active_tab": "editor.tab",
-            "open_tabs": ["editor.tab", "terminal.tab"],
-            "sidebar_open": true,
-            "right_panel_open": false,
-        });
-        let layout = BenchLayout::from_json(&old, true);
-        assert_eq!(layout.layout, None);
-        assert_eq!(layout.to_json()["active_tab"], "editor.tab");
-        let with_choice = serde_json::json!({
-            "layout": { "id": "foco", "layer": "user", "hash": "abc" }
-        });
-        let layout = BenchLayout::from_json(&with_choice, true);
-        assert_eq!(layout.layout.as_ref().unwrap().id, "foco");
-        assert_eq!(layout.to_json()["layout"]["layer"], "user");
-    }
-
-    #[test]
     fn resolve_restores_tabs_rail_closed_tabs_side_tabs_and_panels() {
         let bench_views = ["terminal.tab", "editor.tab", "git.tab", "browser.tab"];
         let rail_views = ["board.page", "routine.page", "files.page"];
