@@ -214,8 +214,7 @@ pub fn environment(list: &[String]) -> BTreeMap<String, String> {
 /// Abre uma URL ou pasta no programa padrão do sistema, sem janela de console.
 /// Em teste, só registra o pedido no kernel.
 pub fn open_external(target: &str) -> std::io::Result<()> {
-    forja_kernel::process::open_external(target)
-        .map_err(|error| std::io::Error::new(std::io::ErrorKind::Other, error))
+    forja_kernel::process::open_external(target).map_err(std::io::Error::other)
 }
 
 /// Aviso sonoro do sistema, sem abrir janela.
