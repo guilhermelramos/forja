@@ -1,5 +1,6 @@
 bench-name = Bancadas
 bench-command-current = Bancada atual
+bench-command-request = Contexto do pedido da bancada
 bench-command-tool_tabs = Abas de ferramenta da bancada
 bench-command-list = Listar bancadas
 bench-command-list_cards = Listar cartões de bancada
@@ -56,6 +57,7 @@ bench-detail-title = Bancada
 bench-detail-empty = Nenhuma bancada ativa.
 bench-detail-empty-hint = Crie uma bancada ou escolha uma na lateral ou no Quadro.
 bench-detail-project = Projeto
+bench-detail-project-unknown = Projeto desconhecido
 bench-detail-branch = Branch
 bench-detail-path = Pasta
 bench-detail-base = Base

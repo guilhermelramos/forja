@@ -1,0 +1,15 @@
+# Arranjo selecionável de uma folha só, independente do Modo Foco.
+schema_version = 1
+id = "foco"
+name = { pt-BR = "Foco", en = "Focus" }
+
+[chrome]
+rail_visible = false
+rail_hidden = []
+status_bar_visible = false
+
+[root]
+kind = "leaf"
+id = "focus"
+tabs = ["editor.tab", "terminal.tab", "chat.tab"]
+active = 0

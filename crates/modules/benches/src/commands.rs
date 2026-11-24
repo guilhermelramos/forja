@@ -67,6 +67,39 @@ pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
     });
 
     let s = shared.clone();
+    r.command("bench.request", "bench.command.request", move |cx, args| {
+        s.ensure_loaded(cx);
+        service::ensure_main(cx, &s).map_err(kernel_error)?;
+        let file = s.file();
+        let target_id = args.str("bench_id");
+        let target_path = args.str("bench_path").map(std::path::Path::new);
+        let record = file
+            .benches
+            .iter()
+            .find(|bench| {
+                if let Some(id) = target_id {
+                    bench.bench_id == id
+                } else if let Some(path) = target_path {
+                    crate::git::same_path(std::path::Path::new(&bench.path), path)
+                } else {
+                    file.current.as_deref() == Some(bench.bench_id.as_str())
+                }
+            })
+            .cloned();
+        Ok(match record {
+            Some(bench) => json!({
+                "bench_id": bench.bench_id,
+                "bench_path": bench.path,
+                "name": bench.name,
+                "branch": bench.branch,
+                "request_key": bench.request_key,
+                "request_ref": bench.request_ref,
+            }),
+            None => Value::Null,
+        })
+    });
+
+    let s = shared.clone();
     r.command("bench.tool_tabs", "bench.command.tool_tabs", move |cx, args| {
         s.ensure_loaded(cx);
         service::ensure_main(cx, &s).map_err(kernel_error)?;
@@ -115,18 +148,28 @@ pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
         move |cx, args| {
             let project_id = args.required_str("project_id")?;
             let name = args.required_str("name")?;
-            let from_request = args.str("from_request").or_else(|| {
-                args.get("from_request")
-                    .and_then(|value| value.get("key"))
-                    .and_then(Value::as_str)
-            });
-            let bench = crate::create::create(
+            let from_request_ref = args
+                .get("from_request")
+                .cloned()
+                .and_then(|value| serde_json::from_value::<forja_contracts::RequestRef>(value).ok());
+            let from_request = args
+                .str("from_request")
+                .map(str::to_owned)
+                .or_else(|| from_request_ref.as_ref().map(|reference| reference.key.clone()))
+                .or_else(|| {
+                    args.get("from_request")
+                        .and_then(|value| value.get("key"))
+                        .and_then(Value::as_str)
+                        .map(str::to_owned)
+                });
+            let bench = crate::create::create_with_request(
                 cx,
                 &s,
                 project_id,
                 name,
                 args.str("base"),
-                from_request,
+                from_request.as_deref(),
+                from_request_ref,
                 args.bool("fetch"),
             )
             .map_err(kernel_error)?;

@@ -1,5 +1,6 @@
 bench-name = Benches
 bench-command-current = Current bench
+bench-command-request = Bench request context
 bench-command-tool_tabs = Bench tool tabs
 bench-command-list = List benches
 bench-command-list_cards = List bench cards
@@ -56,6 +57,7 @@ bench-detail-title = Bench
 bench-detail-empty = No bench is active.
 bench-detail-empty-hint = Create a bench, or pick one in the sidebar or board.
 bench-detail-project = Project
+bench-detail-project-unknown = Unknown project
 bench-detail-branch = Branch
 bench-detail-path = Folder
 bench-detail-base = Base

@@ -239,6 +239,12 @@ Editor reúne edição de texto, diferenças e busca. As decisões favorecem rev
 
 Ajudantes cobre como um agente nasce, como é observado, o que é guardado da sessão e como o chat e a voz se comportam. Permissões e isolamento são decisões de segurança, não conveniência.
 
+Sobre início, contexto, prontidão e retomada de sessões:
+- `helper.launch.include_rules`: lê de forma assíncrona em tarefa do kernel (`AGENTS.md`, `CLAUDE.md` e eventuais `[rules].files` declarados pelo perfil) sem bloquear o quadro nem a interface.
+- `helper.launch.initial_context`: em `request`, inclui título, descrição e links do pedido preservados em `RequestRef` via `from_request` ou `bench.request`; em `bench`, envia um resumo da bancada; `none` envia apenas o prompt explícito (e regras, se ativas).
+- `helper.launch.ready_timeout_s`: monitora a saída via `terminal.read` (padrões `[ready]` do perfil ou saída/hook esperado); ao vencer, registra aviso na bancada e no log sem matar o processo.
+- `helper.sessions.resume_policy`: ao reabrir uma bancada com sessão anterior, `auto` retoma com `[resume]` apenas quando o perfil suporta retomada (caso contrário, cai para `never` e avisa na bancada e no log); `ask` guarda o convite (`helper.resume`) e notifica a bancada (a interface interativa dedicada fica para a frente de telas); `never` não retoma.
+
 | Chave | Tipo | Padrão (por quê) | Faixa / opções | Rótulo pt-BR · en | Ajuda | Dono |
 |---|---|---|---|---|---|---|
 | `helper.default.profile` | escolha | `auto` — Auto usa o primeiro perfil instalado na ordem que decidimos. | `auto` + descobertos de `profiles` | Perfil padrão · Default profile | Perfil de ajudante usado quando o projeto não escolhe um. | `helper` |

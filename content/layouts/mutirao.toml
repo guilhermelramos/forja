@@ -1,0 +1,46 @@
+# Quadro à esquerda; mutirão sobre terminal/portas à direita.
+schema_version = 1
+id = "mutirao"
+name = { pt-BR = "Mutirão", en = "Muster" }
+
+[chrome]
+rail_visible = true
+rail_hidden = []
+status_bar_visible = true
+
+[root]
+kind = "split"
+dir = "columns"
+ratio = 0.24
+
+[root.first]
+kind = "leaf"
+id = "board"
+collapsible = true
+tabs = ["board.sidebar"]
+
+[root.second]
+kind = "split"
+dir = "columns"
+ratio = 0.64
+
+[root.second.first]
+kind = "split"
+dir = "rows"
+ratio = 0.55
+
+[root.second.first.first]
+kind = "leaf"
+id = "muster"
+tabs = ["muster.page"]
+
+[root.second.first.second]
+kind = "leaf"
+id = "terminal"
+tabs = ["terminal.tab", "ports.panel"]
+
+[root.second.second]
+kind = "leaf"
+id = "tools"
+collapsible = true
+tabs = ["chat.tab", "git.changes"]

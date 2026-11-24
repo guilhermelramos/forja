@@ -52,6 +52,7 @@ pub fn demo_seed(
             request_command: None,
             open_tabs: Vec::new(),
             request_key: None,
+            request_ref: None,
         });
     }
     for (index, bench) in benches.iter().enumerate() {
@@ -75,6 +76,7 @@ pub fn demo_seed(
             request_command: None,
             open_tabs: Vec::new(),
             request_key: bench.request.clone(),
+            request_ref: None,
         });
     }
     let file = BenchFile {

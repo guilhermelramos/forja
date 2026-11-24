@@ -5,6 +5,12 @@
 //! terminal, o launch falha com uma mensagem clara e o resto continua de pé.
 
 mod commands;
+mod context;
+mod launch_context;
+mod launch_flow;
+mod persistence;
+mod ready;
+mod resume;
 pub mod demo;
 mod detect;
 mod hooks;
@@ -24,8 +30,7 @@ mod conpty_test;
 
 use forja_contracts::names;
 use forja_contracts::{
-    HelperStatus, HelperStatusChanged, TerminalBell, TerminalCommandFinished, TerminalExited,
-    TerminalTitleChanged,
+    HelperStatus, HelperStatusChanged, TerminalBell, TerminalExited, TerminalTitleChanged,
 };
 use forja_kernel::{
     Module, ModuleManifest, Registrar, SettingKind, SettingSpec, SettingValue, Slot,
@@ -81,6 +86,8 @@ pub struct HelperState {
     pub awake: bool,
     /// A prévia de captura já foi semeada.
     pub preview_seeded: bool,
+    /// Contexto de launch, prontidão e retomada.
+    pub launch: launch_context::State,
 }
 
 impl HelperState {
@@ -166,6 +173,7 @@ impl Module for HelperModule {
         r.keymap(include_str!("../keymap.toml"));
         register_settings(r);
         commands::register(r, &self.core);
+        launch_context::register(r, &self.core);
         picker::register(r);
         r.view(
             forja_kernel::Slot::Modal,
@@ -396,7 +404,6 @@ fn register_events(r: &mut Registrar<'_>, core: &Shared) {
     r.contract_event::<HelperStatusChanged>(names::HELPER_STATUS_CHANGED);
     r.contract_event::<TerminalExited>(names::TERMINAL_EXITED);
     r.contract_event::<TerminalBell>(names::TERMINAL_BELL);
-    r.contract_event::<TerminalCommandFinished>(names::TERMINAL_COMMAND_FINISHED);
     r.contract_event::<TerminalTitleChanged>(names::TERMINAL_TITLE_CHANGED);
 
     let exited_core = Arc::clone(core);
@@ -413,17 +420,6 @@ fn register_events(r: &mut Registrar<'_>, core: &Shared) {
             &event.terminal,
             HelperStatus::NeedsYou,
             Some("bell".to_owned()),
-        );
-    });
-    let finished_core = Arc::clone(core);
-    r.subscribe(move |cx, event: &TerminalCommandFinished| {
-        let _ = commands::ensure_current(cx, &finished_core);
-        status::update_run(
-            cx,
-            &finished_core,
-            &event.terminal,
-            HelperStatus::Idle,
-            Some("command finished".to_owned()),
         );
     });
     let title_core = Arc::clone(core);
@@ -662,81 +658,6 @@ events = ["Stop"]
         }
         drop(runtime);
         std::fs::remove_dir_all(dir).unwrap();
-    }
-
-    struct StubChat {
-        calls: Arc<std::sync::Mutex<Vec<(String, serde_json::Value)>>>,
-    }
-
-    impl Module for StubChat {
-        fn manifest(&self) -> ModuleManifest {
-            ModuleManifest::new("chat", "chat.name", "0.0.0")
-        }
-
-        fn register(&mut self, r: &mut Registrar<'_>) {
-            let open_calls = Arc::clone(&self.calls);
-            r.command("chat.open", "chat.command.open", move |_, args| {
-                open_calls
-                    .lock()
-                    .unwrap()
-                    .push(("chat.open".to_owned(), args.into_json()));
-                Ok(json!({ "session_id": serde_json::Value::Null }))
-            });
-            let send_calls = Arc::clone(&self.calls);
-            r.command("chat.send", "chat.command.send", move |_, args| {
-                send_calls
-                    .lock()
-                    .unwrap()
-                    .push(("chat.send".to_owned(), args.into_json()));
-                Ok(json!({ "queued": false, "pending": 0 }))
-            });
-        }
-    }
-
-    #[test]
-    fn chat_mode_calls_chat_open_and_send() {
-        let dir = temp_guard("chat-mode");
-        let dir = &dir.0;
-        let calls = Arc::new(std::sync::Mutex::new(Vec::new()));
-        let mut runtime = Runtime::new(
-            vec![
-                Box::new(HelperModule {
-                    core: Arc::new(Core::new()),
-                }),
-                Box::new(StubChat {
-                    calls: Arc::clone(&calls),
-                }),
-            ],
-            RuntimeOptions {
-                data_dir: Some(dir.clone()),
-                user_dir: Some(dir.join("user")),
-                locale: Some("pt-BR".to_owned()),
-                wake: None,
-            },
-        )
-        .expect("helper and stub chat register");
-        runtime
-            .set_setting("helper.launch.mode", SettingValue::Text("chat".to_owned()))
-            .unwrap();
-        let value = runtime
-            .call_method(
-                "helper.launch",
-                Map::from_iter([
-                    ("profile_id".to_owned(), json!("claude-code")),
-                    ("prompt".to_owned(), json!("oi")),
-                    ("bench_path".to_owned(), json!(dir.display().to_string())),
-                ]),
-            )
-            .expect("chat launch");
-        assert_eq!(value["mode"], "chat");
-        let calls = calls.lock().unwrap();
-        assert_eq!(calls[0].0, "chat.open");
-        assert_eq!(calls[0].1["profile_id"], "claude-code");
-        assert_eq!(calls[1].0, "chat.send");
-        assert_eq!(calls[1].1["prompt"], "oi");
-        drop(calls);
-        drop(runtime);
-        let _ = std::fs::remove_dir_all(dir);
     }
 
     #[test]

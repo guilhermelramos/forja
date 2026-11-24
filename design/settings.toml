@@ -2537,7 +2537,6 @@ help_key = "setting-helper-launch-auto_start-help"
 
 [[setting]]
 key = "helper.launch.initial_context"
-deferred = "Aguardando contrato de contexto do pedido e preparação assíncrona do lançamento."
 module = "helper"
 group = "helpers"
 scope = "user"
@@ -2554,7 +2553,6 @@ help_key = "setting-helper-launch-initial_context-help"
 
 [[setting]]
 key = "helper.launch.include_rules"
-deferred = "Aguardando leitura assíncrona de regras no contrato de lançamento do ajudante."
 module = "helper"
 group = "helpers"
 scope = "user"
@@ -2586,7 +2584,6 @@ help_key = "setting-helper-launch-mode-help"
 
 [[setting]]
 key = "helper.launch.ready_timeout_s"
-deferred = "Aguardando sinal de prontidão verificável do terminal e dos perfis de ajudante."
 module = "helper"
 group = "helpers"
 scope = "user"
@@ -2666,7 +2663,6 @@ help_key = "setting-helper-notifications-error-help"
 
 [[setting]]
 key = "helper.sessions.resume_policy"
-deferred = "Aguardando ciclo de vida persistente de sessões e retomada automática."
 module = "helper"
 group = "helpers"
 scope = "user"
