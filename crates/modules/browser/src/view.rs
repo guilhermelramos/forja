@@ -507,11 +507,15 @@ impl BrowserView {
                 let _ = tab;
             }
             let mut address = self.address.clone();
-            let response = ui.add(
-                egui::TextEdit::singleline(&mut address)
-                    .hint_text(cx.t("browser.view.address"))
-                    .desired_width(420.0),
+            let address_label = cx.t("browser.view.address");
+            ui.set_width(420.0);
+            let response = forja_ui_kit::text_field_labeled(
+                ui,
+                &mut address,
+                &address_label,
+                &address_label,
             );
+            ui.set_width(f32::INFINITY);
             if self.state.take_address_focus() {
                 response.request_focus();
             }
@@ -607,11 +611,11 @@ impl BrowserView {
     fn find_bar(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, muted: egui::Color32) {
         ui.horizontal(|ui| {
             let mut query = self.state.find_query();
-            let response = ui.add(
-                egui::TextEdit::singleline(&mut query)
-                    .hint_text(cx.t("browser.view.find"))
-                    .desired_width(260.0),
-            );
+            let find_label = cx.t("browser.view.find");
+            ui.set_width(260.0);
+            let response =
+                forja_ui_kit::text_field_labeled(ui, &mut query, &find_label, &find_label);
+            ui.set_width(f32::INFINITY);
             let enter =
                 response.lost_focus() && ui.input(|input| input.key_pressed(egui::Key::Enter));
             if enter || response.changed() {
