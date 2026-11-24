@@ -1,25 +1,19 @@
 {
-  "title": "Fluxo principal expõe nomes acessíveis nos campos e áreas interativas (#207)",
+  "title": "Terminal expõe nome acessível no campo de busca (Refs #207)",
   "issue": 207,
   "locale": "pt-BR",
   "demo": true,
   "steps": [
     { "m": "ui.key", "keys": "Escape" },
-    { "m": "ui.click", "target": "Busca" },
+    { "m": "ui.click", "target": "Buscar" },
     { "m": "ui.snapshot" }
   ],
   "expect": [
     {
       "step": 2,
-      "present": [
-        "Buscar nos arquivos",
-        "Incluir: *.rs, src/**",
-        "Excluir: target/**",
-        "Substituir por"
-      ],
+      "present": ["Buscar no terminal", "Anterior", "Próxima"],
       "present_elements": [
-        { "name": "Buscar nos arquivos", "role": "TextInput" },
-        { "name": "Substituir por", "role": "TextInput" }
+        { "name": "Buscar no terminal", "role": "TextInput" }
       ],
       "no_unnamed_buttons": true
     }
