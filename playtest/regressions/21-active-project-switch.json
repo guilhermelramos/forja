@@ -6,7 +6,7 @@
     { "m": "ui.key", "keys": "Escape" },
     { "m": "ui.click", "target": "Novo projeto" },
     { "m": "ui.click", "target": "Escolher…" },
-    { "m": "ui.click", "target": "\\sample" },
+    { "m": "ui.click", "target": "C:\\dev\\projeto" },
     { "m": "ui.key", "keys": "End" },
     { "m": "ui.type", "text": "-beta" },
     { "m": "ui.click", "target": "Criar" },

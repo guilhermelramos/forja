@@ -18,7 +18,7 @@
     {
       "step": 8,
       "window_count": 1,
-      "present": ["Bancada Foco", "main", "Criar bancada"]
+      "present": ["Nome", "Branch base", "Criar bancada"]
     },
     {
       "window_count": 0,

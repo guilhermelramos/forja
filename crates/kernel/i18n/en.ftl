@@ -9,6 +9,7 @@ kernel-error-disk-full = There is not enough disk space to complete this action.
 kernel-error-invalid-name = The name or path is too long or contains invalid characters.
 kernel-error-network = Could not connect to the remote service.
 kernel-error-git-not-repo = This folder is not a Git repository.
+kernel-error-git-no-commits = This repository has no commits yet. Make the first commit to see the history.
 kernel-error-git-invalid-ref = The selected base branch or reference does not exist in this repository.
 kernel-error-git-worktree-in-use = This branch is already in use by another bench.
 kernel-error-git-nothing-to-commit = There are no staged changes to commit.

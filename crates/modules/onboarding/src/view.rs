@@ -5,7 +5,9 @@ use crate::Shared;
 use forja_kernel::human_error::{humanize_ctx, humanize_io_error, HumanError};
 use forja_kernel::ui_contract::egui;
 use forja_kernel::{Args, Ctx, SettingValue};
-use forja_ui_kit::{button, modal_explicit_close, select, text_field, toggle, ButtonKind};
+use forja_ui_kit::{
+    button, modal_explicit_close, select_labeled, text_field_labeled, toggle, ButtonKind,
+};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 
@@ -205,7 +207,8 @@ fn language(ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         "en" => 2,
         _ => 0,
     };
-    select(ui, &mut index, &refs);
+    let label = cx.t("onboarding.language.label");
+    select_labeled(ui, &mut index, &label, &refs);
     let value = ["auto", "pt_BR", "en"][index];
     if value != current {
         let _ = cx.set_setting("i18n.language.mode", SettingValue::Text(value.to_owned()));
@@ -228,7 +231,8 @@ fn theme(ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
     ui.horizontal(|ui| {
         ui.vertical(|ui| {
             ui.set_width(170.0);
-            select(ui, &mut index, &refs);
+            let label = cx.t("onboarding.theme.label");
+            select_labeled(ui, &mut index, &label, &refs);
         });
         let tokens = match index {
             1 => forja_ui_kit::Tokens::brasa_dark(),
@@ -267,7 +271,7 @@ fn folder(ui: &mut egui::Ui, cx: &mut Ctx<'_>, state: &Shared) {
     ui.label(cx.t("onboarding.folder.hint"));
     let placeholder = cx.t("onboarding.folder.placeholder");
     let mut path = folder_input_value(cx, state);
-    if text_field(ui, &mut path, &placeholder).changed() {
+    if text_field_labeled(ui, &mut path, &placeholder, &placeholder).changed() {
         state.set_folder_draft(Some(path));
         state.set_folder_error(None);
     }
@@ -451,9 +455,10 @@ fn helpers(ui: &mut egui::Ui, cx: &mut Ctx<'_>, _state: &Shared) {
         }
     }
     let mut index = ids.iter().position(|id| id == &current).unwrap_or(0);
-    ui.label(cx.t("onboarding.helpers.default"));
+    let default_label = cx.t("onboarding.helpers.default");
+    ui.label(&default_label);
     let refs: Vec<_> = labels.iter().map(String::as_str).collect();
-    if select(ui, &mut index, &refs).changed() {
+    if select_labeled(ui, &mut index, &default_label, &refs).changed() {
         let _ = cx.set_setting(
             "helper.default.profile",
             SettingValue::Text(ids[index].clone()),

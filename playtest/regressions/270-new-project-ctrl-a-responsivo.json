@@ -1,0 +1,27 @@
+{
+  "title": "Novo projeto responde a Ctrl+A e subsequences de texto (#178)",
+  "issue": 178,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Novo projeto" },
+    { "m": "ui.key", "keys": "Ctrl+A" },
+    { "m": "ui.type", "text": "C:\\forja-missing-folder\\ghost\\999" },
+    { "m": "ui.key", "keys": "Ctrl+A" },
+    { "m": "ui.type", "text": "99999999999999999999" },
+    { "m": "ui.key", "keys": "Ctrl+A" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 1,
+      "present": ["Nova pasta", "Criar", "Cancelar"],
+      "window_count": 1
+    },
+    {
+      "step": 6,
+      "present_contains": ["99999999999999999999", "Novo projeto"],
+      "absent_contains": ["erro de aplica"]
+    }
+  ]
+}

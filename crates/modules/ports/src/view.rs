@@ -68,7 +68,8 @@ impl View for PortsView {
         });
 
         ui.add_space(forja_ui_kit::Spacing::XS);
-        forja_ui_kit::text_field(ui, &mut self.filter, &cx.t("ports.view.filter-hint"));
+        let filter_hint = cx.t("ports.view.filter-hint");
+        forja_ui_kit::text_field_labeled(ui, &mut self.filter, &filter_hint, &filter_hint);
         if !self.filter.is_empty() {
             ui.add_space(forja_ui_kit::Spacing::XS);
             if forja_ui_kit::button(

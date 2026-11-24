@@ -9,7 +9,7 @@
     { "m": "ui.click", "target": "Adicionar" }
   ],
   "expect": [
-    { "step": 2, "window_count": 1, "present_contains": ["sample"] },
+    { "step": 2, "window_count": 1, "present": ["C:\\dev\\projeto"] },
     { "window_count": 0, "present": ["sample"], "absent": ["Nenhum projeto ainda. Adicione uma pasta ou crie um novo."] }
   ]
 }

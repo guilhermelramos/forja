@@ -6,7 +6,7 @@ use crate::app::ForjaApp;
 use eframe::egui::{self, Align2, FontId, RichText, Sense};
 use forja_kernel::keymap::Scope;
 use forja_kernel::Args;
-use forja_ui_kit::{text_field, Color, Tokens};
+use forja_ui_kit::{text_field_labeled, Color, Tokens};
 use serde_json::Value;
 use std::time::{Duration, Instant};
 
@@ -178,7 +178,7 @@ impl ForjaApp {
                 } else {
                     "shell.anvil.search"
                 });
-                let search = text_field(ui, &mut self.anvil_query, &hint);
+                let search = text_field_labeled(ui, &mut self.anvil_query, &hint, &hint);
                 ui.ctx()
                     .data_mut(|data| data.insert_temp(search_id, search.id));
                 if search.changed() {

@@ -15,6 +15,7 @@ mod model;
 mod state;
 mod symbols;
 mod view;
+mod view_error;
 
 use crate::state::Shared;
 use forja_contracts::{names, FileOpenRequested};
