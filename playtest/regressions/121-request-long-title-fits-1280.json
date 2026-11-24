@@ -1,0 +1,32 @@
+{
+  "title": "Pedido com título longo não estica a gaveta para fora da janela (#186)",
+  "issue": 186,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.wait", "ms": 500 },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Abrir pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 800 },
+    { "m": "ui.click", "target": "Pedidos" },
+    { "m": "ui.wait", "ms": 300 },
+    { "m": "ui.click", "target": "Novo pedido local" },
+    { "m": "ui.click", "target": "Ex.: Revisar o fluxo de autenticação" },
+    { "m": "ui.type", "text": "reqtitle-superlong-unbreakable-0123456789-abcdefghijklmnopqrstuvwxyz-without-spaces-0123456789" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.type", "text": "body" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.wait", "ms": 400 },
+    { "m": "ui.click", "target": "reqtitle-superlong-unbreakable-0123456789-abcdefghijklmnopqrstuvwxyz-without-spaces-0123456789" },
+    { "m": "ui.wait", "ms": 200 },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 17,
+      "present_contains": ["reqtitle-superlong-unbreakable", "Comentar"],
+      "no_geometry_issues": true
+    }
+  ]
+}
