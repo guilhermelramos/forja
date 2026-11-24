@@ -6,17 +6,19 @@
 //! [`command`], so no terminal ever flashes on the person's screen. The
 //! integrated terminal uses ConPTY (headless) and is not affected.
 //!
-//! [`open_external`] is the single exit to the system's default apps (browser,
-//! Explorer, file associations). Every module uses it, so a test run has one
-//! place where that exit can be closed: with `--test-driver`, `--screenshot`,
-//! `--demo` or `cfg(test)` nothing is launched, and the request is recorded
-//! for [`external_requests`] instead. The shell also forwards egui's URL and
-//! clipboard output to [`record_external`] in a test run.
+//! [`open_external`], [`reveal`] and [`reveal_folder`] are the single exits to
+//! the system's default apps (browser, Explorer, file associations). Every
+//! module uses them, so a test run has one place where those exits can be
+//! closed: with `--test-driver`, `--screenshot`, `--demo` or `cfg(test)` nothing
+//! is launched, and the request is recorded for [`external_requests`] instead.
+//! The shell also forwards egui's URL and clipboard output to
+//! [`record_external`] in a test run.
 
 use std::ffi::OsStr;
+use std::path::Path;
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 #[cfg(test)]
 use std::sync::atomic::AtomicU64;
 
@@ -24,6 +26,7 @@ use std::sync::atomic::AtomicU64;
 pub const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 static TEST_MODE: AtomicBool = AtomicBool::new(false);
+static TEST_ENV: OnceLock<bool> = OnceLock::new();
 static EXTERNALS: Mutex<Vec<ExternalRequest>> = Mutex::new(Vec::new());
 /// Keeps a long play-test from growing the log without bound.
 const MAX_RECORDED_EXTERNALS: usize = 256;
@@ -37,6 +40,8 @@ pub enum ExternalKind {
     Open,
     /// Write text (or an image) to the system clipboard.
     Copy,
+    /// Show a path in Windows Explorer (selected or as an opened folder).
+    Reveal,
 }
 
 impl ExternalKind {
@@ -45,6 +50,7 @@ impl ExternalKind {
         match self {
             Self::Open => "open",
             Self::Copy => "copy",
+            Self::Reveal => "reveal",
         }
     }
 }
@@ -66,11 +72,18 @@ pub fn set_test_mode(enabled: bool) {
 
 /// Whether this process must never reach the person's browser, Explorer or
 /// clipboard. Unit tests of the kernel are test runs too.
+///
+/// `forja-app` sets `FORJA_TEST_DRIVER` / `FORJA_SCREENSHOT` itself when it
+/// starts with those flags (see `crates/shell/src/main.rs`), and other modules
+/// use the same convention. OR-ing the environment with the in-process flag
+/// keeps the kernel in step with them even before `set_test_mode` runs. It is
+/// read once per process instead of twice on every frame.
 pub fn is_test_mode() -> bool {
     TEST_MODE.load(Ordering::Relaxed)
         || cfg!(test)
-        || env_flag("FORJA_TEST_DRIVER")
-        || env_flag("FORJA_SCREENSHOT")
+        || *TEST_ENV.get_or_init(|| {
+            env_flag("FORJA_TEST_DRIVER") || env_flag("FORJA_SCREENSHOT")
+        })
 }
 
 fn env_flag(name: &str) -> bool {
@@ -127,6 +140,53 @@ pub fn open_external(target: impl Into<String>) -> Result<(), String> {
         })
         .map(|_| ())
         .map_err(|error| error.to_string())
+}
+
+/// Shows `path` selected in Windows Explorer.
+///
+/// In a test run this only records a [`ExternalKind::Reveal`] request and
+/// launches nothing. Outside a test run it performs the same
+/// `explorer.exe /select,<path>` launch the Files panel used before exits were
+/// centralised here.
+pub fn reveal(path: impl AsRef<Path>) -> std::io::Result<()> {
+    launch_reveal(path.as_ref(), true)
+}
+
+/// Opens a folder in Windows Explorer. Also used for "open with the default
+/// app" paths, which is what `explorer.exe <path>` does on Windows.
+///
+/// Like [`reveal`], a test run only records the request.
+pub fn reveal_folder(path: impl AsRef<Path>) -> std::io::Result<()> {
+    launch_reveal(path.as_ref(), false)
+}
+
+fn launch_reveal(path: &Path, select: bool) -> std::io::Result<()> {
+    if is_test_mode() {
+        record_external(ExternalKind::Reveal, path.display().to_string());
+        return Ok(());
+    }
+    #[cfg(test)]
+    LAUNCHES.fetch_add(1, Ordering::Relaxed);
+    #[cfg(windows)]
+    {
+        let arg = if select {
+            format!("/select,{}", path.display())
+        } else {
+            path.display().to_string()
+        };
+        command("explorer.exe")
+            .arg(arg)
+            .stdin(std::process::Stdio::null())
+            .spawn()
+            .map(|_| ())
+    }
+    #[cfg(not(windows))]
+    {
+        Err(std::io::Error::new(
+            std::io::ErrorKind::Unsupported,
+            "revealing files is only available on Windows",
+        ))
+    }
 }
 
 fn launch_external(target: &str) -> std::io::Result<()> {
@@ -191,6 +251,27 @@ mod tests {
         assert_eq!(requests.len(), 1);
         assert_eq!(requests[0].kind, ExternalKind::Open);
         assert_eq!(requests[0].target, target);
+    }
+
+    #[test]
+    fn test_mode_reveal_records_without_spawning() {
+        let _guard = TEST_LOCK.lock().unwrap_or_else(|error| error.into_inner());
+        assert!(is_test_mode());
+        clear_external_requests();
+        let launches = LAUNCHES.load(Ordering::Relaxed);
+        let path = std::path::Path::new("C:\\forja-test\\arquivo.txt");
+
+        reveal(path).unwrap();
+        reveal_folder(path).unwrap();
+
+        assert_eq!(LAUNCHES.load(Ordering::Relaxed), launches);
+        let requests = external_requests();
+        assert_eq!(requests.len(), 2);
+        for request in &requests {
+            assert_eq!(request.kind, ExternalKind::Reveal);
+            assert_eq!(request.kind.as_str(), "reveal");
+            assert_eq!(request.target, path.display().to_string());
+        }
     }
 
     #[test]
