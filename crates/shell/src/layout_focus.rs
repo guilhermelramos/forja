@@ -89,6 +89,21 @@ fn exit_hover_id() -> egui::Id {
     egui::Id::new("forja.focus.exit-hover")
 }
 
+fn exit_focus_id() -> egui::Id {
+    egui::Id::new("forja.focus.exit-strip")
+}
+
+fn exit_focused_id() -> egui::Id {
+    egui::Id::new("forja.focus.exit-focused")
+}
+
+/// A faixa abre ao apontar **ou** ao receber foco de teclado (Tab/F6).
+fn exit_strip_expanded(ctx: &egui::Context, hovered: bool, button_focused: bool) -> bool {
+    hovered
+        || button_focused
+        || ctx.memory(|memory| memory.focused() == Some(exit_focus_id()))
+}
+
 impl ForjaApp {
     pub(crate) fn focus_active(&self) -> bool {
         self.layout_state.focus.active
@@ -156,7 +171,12 @@ impl ForjaApp {
         let hovered = ctx
             .data(|data| data.get_temp::<bool>(exit_hover_id()))
             .unwrap_or(false);
-        let height = if hovered { 24.0 } else { 6.0 };
+        let button_focused = ctx
+            .data(|data| data.get_temp::<bool>(exit_focused_id()))
+            .unwrap_or(false);
+        let anchor_focused = ctx.memory(|memory| memory.focused() == Some(exit_focus_id()));
+        let expanded = exit_strip_expanded(ctx, hovered, button_focused);
+        let height = if expanded { 24.0 } else { 6.0 };
         let frame = egui::Frame::NONE
             .fill(self.paint(self.tokens.color.surface_alt))
             .inner_margin(Margin::symmetric(8, 1));
@@ -166,16 +186,45 @@ impl ForjaApp {
             .exact_height(height)
             .frame(frame)
             .show(ctx, |ui| {
-                if hovered {
+                if expanded {
                     ui.horizontal_centered(|ui| {
                         let button = forja_ui_kit::button(ui, ButtonKind::Ghost, &label);
+                        if anchor_focused {
+                            ctx.memory_mut(|memory| memory.request_focus(button.id));
+                        }
+                        let focused = button.has_focus();
+                        let hovered = button.hovered();
                         if forja_ui_kit::tooltip(button, tip).clicked() {
                             self.exit_focus_mode(ctx);
                         }
+                        ctx.data_mut(|data| {
+                            data.insert_temp(exit_hover_id(), hovered);
+                            data.insert_temp(exit_focused_id(), focused);
+                        });
+                    });
+                } else {
+                    // Alvo de foco sempre presente: o Tab/F6 precisa alcançar a
+                    // faixa mesmo antes de ela se expandir. O nome acessível é
+                    // o mesmo do botão exibido quando aberta.
+                    let bounds = ui.max_rect();
+                    let anchor = egui::Rect::from_min_size(
+                        bounds.left_top(),
+                        egui::vec2(16.0, bounds.height().max(1.0)),
+                    );
+                    let response = ui.interact(
+                        anchor,
+                        exit_focus_id(),
+                        egui::Sense::focusable_noninteractive(),
+                    );
+                    response.widget_info(|| {
+                        egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), &label)
+                    });
+                    ctx.data_mut(|data| {
+                        data.insert_temp(exit_hover_id(), response.hovered());
+                        data.insert_temp(exit_focused_id(), false);
                     });
                 }
             });
-        ctx.data_mut(|data| data.insert_temp(exit_hover_id(), response.response.hovered()));
         self.slot_rects.insert("top".into(), response.response.rect);
     }
 }
@@ -214,6 +263,21 @@ mod tests {
         assert!(all.hides_chrome());
         assert!(all.replaces_top_bar());
         assert_eq!(FocusHide::parse("unknown"), FocusHide::Chrome);
+    }
+
+    #[test]
+    fn exit_strip_expands_from_keyboard_focus_without_the_pointer() {
+        let ctx = egui::Context::default();
+        assert!(!exit_strip_expanded(&ctx, false, false));
+        assert!(exit_strip_expanded(&ctx, true, false));
+        assert!(exit_strip_expanded(&ctx, false, true));
+
+        // Tab/F6 can reach the strip while it is collapsed; the anchor is the
+        // focus target, and the same accessible name is used when it opens.
+        ctx.memory_mut(|memory| memory.request_focus(exit_focus_id()));
+        assert!(exit_strip_expanded(&ctx, false, false));
+        let label = shell_i18n(Locale::PtBr).t("shell.layout.focus-exit");
+        assert_eq!(label, "Sair do Modo Foco");
     }
 
     #[test]
