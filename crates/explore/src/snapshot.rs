@@ -70,7 +70,7 @@ impl Element {
 /// One exit to the system that the app recorded instead of performing.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExternalRequest {
-    /// `open` for a URL/path, `copy` for clipboard text.
+    /// `open` for a URL/path, `copy` for clipboard text, `reveal` for Explorer.
     #[serde(default)]
     pub kind: String,
     #[serde(default)]

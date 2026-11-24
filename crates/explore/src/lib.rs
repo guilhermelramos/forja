@@ -1,6 +1,7 @@
 //! `forja-explore`: coverage-guided UI explorer without AI and recorded regression runner.
 
 pub mod client;
+mod external_expectations;
 pub mod ftl;
 pub mod invariants;
 pub mod outcome;

@@ -1024,33 +1024,7 @@ impl ForjaApp {
     /// can hand them to `egui-winit` (which would open a browser or write to
     /// the system clipboard). Outside a test run this does nothing.
     fn isolate_external_output(&self, ctx: &egui::Context) {
-        if !forja_kernel::process::is_test_mode() {
-            return;
-        }
-        ctx.output_mut(|output| {
-            for command in std::mem::take(&mut output.commands) {
-                match command {
-                    egui::OutputCommand::OpenUrl(url) => {
-                        forja_kernel::process::record_external(
-                            forja_kernel::process::ExternalKind::Open,
-                            url.url,
-                        );
-                    }
-                    egui::OutputCommand::CopyText(text) => {
-                        forja_kernel::process::record_external(
-                            forja_kernel::process::ExternalKind::Copy,
-                            text,
-                        );
-                    }
-                    egui::OutputCommand::CopyImage(_) => {
-                        forja_kernel::process::record_external(
-                            forja_kernel::process::ExternalKind::Copy,
-                            "<image>",
-                        );
-                    }
-                }
-            }
-        });
+        crate::externals::isolate_external_output(ctx);
     }
 }
 

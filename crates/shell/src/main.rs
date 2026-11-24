@@ -14,6 +14,7 @@ mod appearance;
 mod crash;
 mod demo;
 mod diagnostics;
+mod externals;
 mod hosts;
 mod hosts_motion;
 mod icon;
