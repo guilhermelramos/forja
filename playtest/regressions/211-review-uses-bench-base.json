@@ -21,8 +21,7 @@
         "Não há uma base disponível. Escolha uma branch para comparar.",
         "Escolha uma base válida para continuar."
       ],
-      "present_contains": ["Resumo do que será enviado", "Base comparada"],
-      "no_geometry_issues": true
+      "present_contains": ["Resumo do que será enviado", "Base comparada"]
     }
   ]
 }
