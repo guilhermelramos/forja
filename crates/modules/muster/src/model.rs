@@ -249,6 +249,16 @@ pub struct PendingDispatch {
     pub permission: Option<String>,
 }
 
+/// Reenvio seguro: a tarefa mantém a identidade e a atribuição anterior já
+/// encerrou.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RetryRequest {
+    pub task: String,
+    pub run: String,
+    pub profile_id: String,
+    pub bench_path: String,
+}
+
 /// Estado de entrega de um recado enviado pelo coordenador.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NoteDeliveryState {
@@ -585,6 +595,80 @@ impl MusterFile {
         Some(pending)
     }
 
+    /// Tarefas prontas para reenvio: a anterior encerrou e não há execução
+    /// simultânea da mesma tarefa.
+    pub fn retry_candidates(&self) -> Vec<RetryRequest> {
+        self.tasks
+            .iter()
+            .filter(|task| task.state == TaskState::Failed)
+            .filter_map(|task| {
+                let previous = self.assignments.iter().rev().find(|a| a.task == task.id)?;
+                if !previous.escalated
+                    || !matches!(
+                        previous.state,
+                        AssignmentState::Failed
+                            | AssignmentState::Stopped
+                            | AssignmentState::Blocked
+                            | AssignmentState::Delivered
+                    )
+                    || self.assignments.iter().any(|a| {
+                        a.task == task.id
+                            && matches!(
+                                a.state,
+                                AssignmentState::Starting
+                                    | AssignmentState::Running
+                                    | AssignmentState::NeedsYou
+                            )
+                    })
+                {
+                    return None;
+                }
+                Some(RetryRequest {
+                    task: task.id.clone(),
+                    run: task.run.clone(),
+                    profile_id: previous.profile_id.clone(),
+                    bench_path: previous.bench_path.clone(),
+                })
+            })
+            .collect()
+    }
+
+    /// Reabre a mesma tarefa. Recusa quando a anterior ainda não encerrou; a
+    /// checagem e a criação da nova atribuição acontecem juntas no estado.
+    pub fn retry(
+        &mut self,
+        task_id: &str,
+        profile_id: &str,
+        bench_path: &str,
+    ) -> Result<Assignment, String> {
+        let previous = self
+            .assignments
+            .iter()
+            .rev()
+            .find(|assignment| assignment.task == task_id)
+            .ok_or_else(|| "a tarefa não tem atribuição anterior".to_owned())?;
+        if !matches!(
+            previous.state,
+            AssignmentState::Failed
+                | AssignmentState::Stopped
+                | AssignmentState::Blocked
+                | AssignmentState::Delivered
+        ) {
+            return Err("a atribuição anterior ainda não encerrou".to_owned());
+        }
+        let retries = previous.retries.saturating_add(1);
+        let mut assignment = self.start(task_id, profile_id, bench_path)?;
+        if let Some(open) = self
+            .assignments
+            .iter_mut()
+            .find(|item| item.id == assignment.id)
+        {
+            open.retries = retries;
+        }
+        assignment.retries = retries;
+        Ok(assignment)
+    }
+
     /// Marca que o mutirão criou esta bancada.
     pub fn own_bench(&mut self, run: &str, task: &str, bench_id: &str) {
         if !self
@@ -601,12 +685,25 @@ impl MusterFile {
     }
 
     /// Atualiza o status de uma atribuição e devolve um alerta quando ela para
-    /// sem entregar.
+    /// sem entregar. Sem limite configurado, a tarefa fica bloqueada.
+    #[cfg(test)]
     pub fn update_status(
         &mut self,
         assignment_id: &str,
         status: HelperStatus,
         terminal_tail: &str,
+    ) -> Option<Note> {
+        self.update_status_with_retries(assignment_id, status, terminal_tail, 0)
+    }
+
+    /// Como `update_status`, mas com reenvio enquanto couber no limite. Só
+    /// reenvia depois que o ajudante anterior encerrou (`Finished`).
+    pub fn update_status_with_retries(
+        &mut self,
+        assignment_id: &str,
+        status: HelperStatus,
+        terminal_tail: &str,
+        max_retries: u32,
     ) -> Option<Note> {
         let (run, task_id, was_running, delivered, escalated) = {
             let assignment = self.assignment(assignment_id)?;
@@ -650,12 +747,26 @@ impl MusterFile {
                 .iter_mut()
                 .find(|assignment| assignment.id == assignment_id)?;
             assignment.escalated = true;
-            assignment.retries = assignment.retries.saturating_add(1);
+            // A atribuição anterior encerrou de verdade: o reenvio não pode
+            // dividir a bancada com uma execução ainda viva.
+            let can_retry = assignment.retries < max_retries;
+            if can_retry {
+                assignment.state = AssignmentState::Failed;
+            }
             if let Some(task) = self.tasks.iter_mut().find(|task| task.id == task_id) {
                 if !matches!(task.state, TaskState::Delivered) {
-                    task.state = TaskState::Blocked;
+                    task.state = if can_retry {
+                        TaskState::Failed
+                    } else {
+                        TaskState::Blocked
+                    };
                 }
             }
+            let message = if can_retry {
+                "parou sem entregar; reenviando a mesma tarefa"
+            } else {
+                "parou sem entregar; limite de reenvios atingido"
+            };
             let alert = self.note(
                 &run,
                 Some(task_id.clone()),
@@ -663,7 +774,7 @@ impl MusterFile {
                 "muster",
                 "coordinator",
                 NoteKind::Alert,
-                &format!("parou sem entregar: {}", tail(terminal_tail)),
+                &format!("{message}: {}", tail(terminal_tail)),
                 false,
                 false,
             );
@@ -1155,6 +1266,49 @@ mod tests {
             .update_status(&assignment.id, HelperStatus::Idle, "again")
             .is_none());
         assert_eq!(file.inbox(Some(&run.id), false).len(), 1);
+    }
+
+    #[test]
+    fn max_retries_resends_the_same_task_and_then_blocks() {
+        let mut file = MusterFile::default();
+        let (_run, task) = run_with_task(&mut file);
+        let first = file.start(&task.id, "codex", "C:/bench").unwrap();
+        file.launched(&first.id, "codex", Some("1".into()), None, "tui")
+            .unwrap();
+
+        assert!(file
+            .update_status_with_retries(&first.id, HelperStatus::Finished, "fim", 1)
+            .is_some());
+        assert_eq!(file.task(&task.id).unwrap().state, TaskState::Failed);
+        let candidates = file.retry_candidates();
+        assert_eq!(candidates.len(), 1);
+        assert_eq!(candidates[0].task, task.id);
+
+        let second = file.retry(&task.id, "codex", "C:/bench").unwrap();
+        assert_eq!(second.task, task.id);
+        assert_eq!(second.retries, 1);
+        file.launched(&second.id, "codex", Some("2".into()), None, "tui")
+            .unwrap();
+        // Duas execuções da mesma tarefa nunca coexistem.
+        assert!(file.retry(&task.id, "codex", "C:/bench").is_err());
+        assert!(file.retry_candidates().is_empty());
+
+        assert!(file
+            .update_status_with_retries(&second.id, HelperStatus::Finished, "fim", 1)
+            .is_some());
+        assert_eq!(file.task(&task.id).unwrap().state, TaskState::Blocked);
+        assert!(file.retry_candidates().is_empty());
+    }
+
+    #[test]
+    fn retry_requires_the_previous_assignment_to_have_ended() {
+        let mut file = MusterFile::default();
+        let (_run, task) = run_with_task(&mut file);
+        let first = file.start(&task.id, "codex", "C:/bench").unwrap();
+        file.launched(&first.id, "codex", Some("1".into()), None, "tui")
+            .unwrap();
+        assert!(file.retry(&task.id, "codex", "C:/bench").is_err());
+        assert_eq!(file.assignments.len(), 1);
     }
 
     #[test]

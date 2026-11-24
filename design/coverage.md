@@ -8,11 +8,11 @@
 |---|---|
 | Configurações no catálogo | 314 |
 | Configurações sobreponíveis por projeto (`scope = "project"`) | 31 |
-| Configurações registradas no app | 291 (290 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 290 (289 do catálogo) |
+| Configurações registradas no app | 292 (291 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 291 (290 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
-| Configurações adiadas | 22 |
+| Configurações adiadas | 21 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
 | Atalhos no catálogo | 110 |
@@ -40,7 +40,6 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 - `voice.output.model_path`: Aguardando a síntese de voz local (Piper) ser aprovada como dependência.
 - `voice.output.rate`: Aguardando a síntese de voz (SAPI ou Piper) ser aprovada como dependência.
 - `voice.output.auto_read`: Aguardando a síntese de voz (SAPI ou Piper) ser aprovada como dependência.
-- `muster.escalation.max_retries`: Aguardando verificação de encerramento e identidade para reenvio seguro.
 - `muster.cleanup.on_finish`: Aguardando rastreamento de posse das bancadas e conclusão assíncrona do arquivamento.
 - `muster.workspace.isolation`: Aguardando contrato de criação e prontidão de bancada isolada.
 - `mcp.client.enabled`: Cliente MCP ainda não implementado.
@@ -243,7 +242,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `muster.notes.poll_s` | `muster` | `muster` | sim | ok | sim |
 | `muster.notes.retention_days` | `muster` | `muster` | sim | ok | sim |
 | `muster.handoff.require_evidence` | `muster` | `muster` | sim | ok | sim |
-| `muster.escalation.max_retries` | `muster` | `-` | adiada | - | adiada |
+| `muster.escalation.max_retries` | `muster` | `muster` | sim | ok | sim |
 | `muster.budget.max_usd` | `muster` | `muster` | sim | ok | sim |
 | `muster.cleanup.on_finish` | `muster` | `-` | adiada | - | adiada |
 | `muster.notifications.task_failed` | `muster` | `muster` | sim | ok | sim |

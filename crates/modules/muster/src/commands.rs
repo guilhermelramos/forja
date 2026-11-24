@@ -515,6 +515,27 @@ fn launch_task(
     .ok_or_else(|| KernelError::Message("muster state is unavailable".to_owned()))?
     .map_err(KernelError::Message)?;
 
+    open_helper(
+        cx,
+        shared,
+        assignment,
+        profile,
+        permission,
+        bench_path,
+        preamble,
+    )
+}
+
+/// Abre o ajudante de uma atribuição já registrada no estado.
+fn open_helper(
+    cx: &mut Ctx<'_>,
+    shared: &Shared,
+    assignment: Assignment,
+    profile: Option<String>,
+    permission: Option<String>,
+    bench_path: &str,
+    preamble: String,
+) -> Result<Value, KernelError> {
     let mut launch = Args::new();
     if let Some(profile) = &profile {
         launch.insert("profile_id", json!(profile));
@@ -574,6 +595,46 @@ fn launch_task(
         "bench_path": bench_path,
         "preamble": preamble
     }))
+}
+
+/// Reenvia a mesma tarefa depois que a atribuição anterior encerrou.
+fn retry_task(
+    cx: &mut Ctx<'_>,
+    shared: &Shared,
+    request: &crate::model::RetryRequest,
+) -> Result<Value, KernelError> {
+    let run = with(shared, |state| {
+        state
+            .store
+            .runs
+            .iter()
+            .find(|run| run.id == request.run)
+            .cloned()
+    })
+    .flatten()
+    .ok_or_else(|| KernelError::Message("mutirão não encontrado".to_owned()))?;
+    let task = with(shared, |state| state.store.task(&request.task).cloned())
+        .flatten()
+        .ok_or_else(|| KernelError::Message("tarefa sumiu".to_owned()))?;
+    let assignment = with(shared, |state| {
+        state.store.retry(
+            &request.task,
+            &request.profile_id,
+            &request.bench_path,
+        )
+    })
+    .ok_or_else(|| KernelError::Message("muster state is unavailable".to_owned()))?
+    .map_err(KernelError::Message)?;
+    let preamble = helper_preamble(&run, &task, &request.bench_path);
+    open_helper(
+        cx,
+        shared,
+        assignment,
+        Some(request.profile_id.clone()),
+        None,
+        &request.bench_path,
+        preamble,
+    )
 }
 
 fn note(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, KernelError> {
@@ -1140,10 +1201,21 @@ pub(super) fn on_status(
         return;
     };
     let terminal_tail = read_terminal(cx, terminal_id).unwrap_or_default();
+    let max_retries = cx
+        .setting("muster.escalation.max_retries")
+        .and_then(SettingValue::as_i64)
+        .unwrap_or(2)
+        .clamp(0, 10) as u32;
+    // Só `Finished` confirma o fim do processo; `Idle` ainda pode voltar.
+    let limit = if status == HelperStatus::Finished {
+        max_retries
+    } else {
+        0
+    };
     let alert = with(shared, |state| {
         state
             .store
-            .update_status(&assignment, status, &terminal_tail)
+            .update_status_with_retries(&assignment, status, &terminal_tail, limit)
     })
     .flatten();
     if let Some(alert) = alert {
@@ -1163,6 +1235,20 @@ pub(super) fn on_status(
         flush_queued(cx, shared, &assignment, status);
     } else {
         state::persist(cx, shared);
+    }
+    let retries = with(shared, |state| state.store.retry_candidates()).unwrap_or_default();
+    for request in retries {
+        let shared = Arc::clone(shared);
+        cx.spawn(
+            move || request,
+            move |cx, request| {
+                if let Err(error) = retry_task(cx, &shared, &request) {
+                    let body =
+                        cx.t_args("muster.error.unavailable", &[("detail", &error.to_string())]);
+                    notify(cx, "muster.notify.alert-title", &body, None);
+                }
+            },
+        );
     }
 }
 

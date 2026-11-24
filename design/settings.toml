@@ -3245,7 +3245,6 @@ help_key = "setting-muster-handoff-require_evidence-help"
 
 [[setting]]
 key = "muster.escalation.max_retries"
-deferred = "Aguardando verificação de encerramento e identidade para reenvio seguro."
 module = "muster"
 group = "muster"
 scope = "user"

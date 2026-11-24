@@ -192,6 +192,16 @@ fn register_settings(r: &mut Registrar<'_>) {
         "setting-muster-handoff-require_evidence-help",
     ));
     r.setting(SettingSpec::new(
+        "muster.escalation.max_retries",
+        SettingKind::Integer {
+            min: Some(0),
+            max: Some(10),
+        },
+        SettingValue::Integer(2),
+        "setting-muster-escalation-max_retries-label",
+        "setting-muster-escalation-max_retries-help",
+    ));
+    r.setting(SettingSpec::new(
         "muster.budget.max_usd",
         SettingKind::Number {
             min: Some(0.0),
@@ -213,7 +223,7 @@ fn register_settings(r: &mut Registrar<'_>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use forja_contracts::{BenchCreateFailed, BenchCreated, BenchRef};
+    use forja_contracts::{BenchCreateFailed, BenchCreated, BenchRef, TerminalExited, TerminalRef};
     use forja_kernel::{contract, Runtime, RuntimeOptions};
     use serde_json::{json, Map};
     use std::path::PathBuf;
@@ -885,6 +895,53 @@ mod tests {
             )
             .unwrap_err();
         assert!(error.message.contains("bancada"), "{}", error.message);
+    }
+
+    #[test]
+    fn escalation_resends_after_a_confirmed_exit_without_overlapping() {
+        let dir = temp_dir();
+        let (mut runtime, stubs) = bench_runtime(&dir.0);
+        runtime
+            .set_setting("muster.plan.require_approval", SettingValue::Bool(false))
+            .unwrap();
+        runtime
+            .set_setting("muster.escalation.max_retries", SettingValue::Integer(1))
+            .unwrap();
+        let (_, task_id) = new_run_and_task(&mut runtime);
+        runtime
+            .call_method(
+                "muster.start",
+                Map::from_iter([
+                    ("task".to_owned(), json!(task_id.clone())),
+                    ("bench_path".to_owned(), json!("C:/atual")),
+                ]),
+            )
+            .unwrap();
+        assert_eq!(stubs.profiles.lock().unwrap().len(), 1);
+
+        let exit = TerminalExited {
+            terminal: TerminalRef {
+                terminal_id: "9".to_owned(),
+                bench_path: "C:/atual".to_owned(),
+                title: "tarefa".to_owned(),
+            },
+            exit_code: Some(1),
+        };
+        runtime.emit(&exit);
+        settle(&mut runtime);
+        assert_eq!(stubs.profiles.lock().unwrap().len(), 2);
+        let status = runtime.call_method("muster.status", Map::new()).unwrap();
+        let assignments = status["assignments"].as_array().unwrap();
+        assert_eq!(assignments.len(), 2);
+        assert_eq!(assignments[0]["task"], task_id);
+        assert_eq!(assignments[1]["task"], task_id);
+        assert_eq!(assignments[1]["retries"], 1);
+
+        runtime.emit(&exit);
+        settle(&mut runtime);
+        assert_eq!(stubs.profiles.lock().unwrap().len(), 2, "sem terceira execução");
+        let status = runtime.call_method("muster.status", Map::new()).unwrap();
+        assert_eq!(status["tasks"][0]["state"], "blocked");
     }
 
     #[test]
