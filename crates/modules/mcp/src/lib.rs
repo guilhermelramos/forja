@@ -516,7 +516,7 @@ mod tests {
     // destination then cannot change while a test asserts on its own log.
     static LOG_DEST_LOCK: Mutex<()> = Mutex::new(());
 
-    struct TempGuard(PathBuf, std::sync::MutexGuard<'static, ()>);
+    struct TempGuard(PathBuf, #[allow(dead_code)] std::sync::MutexGuard<'static, ()>);
 
     impl std::ops::Deref for TempGuard {
         type Target = PathBuf;

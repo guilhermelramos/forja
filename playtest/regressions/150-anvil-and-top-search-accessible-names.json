@@ -12,7 +12,7 @@
     {
       "step": 1,
       "present_elements": [
-        { "name": "Projeto e bancada ativos", "role": "Button" }
+        { "name": "Projeto e bancada ativos: Início", "role": "Button" }
       ],
       "no_unnamed_buttons": true,
       "no_geometry_issues": true
