@@ -250,11 +250,15 @@ fn draw_node(
                 divider.min.y += size;
                 divider.max.y = divider.min.y + thickness;
             }
+            let divider_name = texts.resize_panes.clone();
             let response = ui.interact(
                 divider,
                 ui.id().with(("terminal-divider", first_pane(first), first_pane(second))),
                 Sense::click_and_drag(),
             );
+            response.widget_info(|| {
+                egui::WidgetInfo::slider(ui.is_enabled(), f64::from(*ratio), divider_name.clone())
+            });
             if response.clicked() {
                 response.request_focus();
             }
@@ -277,10 +281,6 @@ fn draw_node(
                 *ratio = (*ratio).clamp(lower, upper);
                 ui.ctx().request_repaint();
             }
-            let divider_name = texts.resize_panes.clone();
-            response.widget_info(|| {
-                egui::WidgetInfo::slider(ui.is_enabled(), f64::from(*ratio), divider_name.clone())
-            });
             let response = forja_ui_kit::tooltip(response, divider_name);
             if response.dragged() && available > 0.0 {
                 let delta = response.drag_delta();
