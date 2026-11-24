@@ -580,7 +580,7 @@ mod tests {
         assert!(!human.summary.contains("failed:"));
         assert!(!human.summary.contains("is not installed"));
         let detail = human.detail.as_deref().unwrap();
-        assert!(!detail.contains("helper.launch"), "{detail}");
-        assert!(!detail.contains('`'), "{detail}");
+        assert!(detail.contains("helper.launch"), "{detail}");
+        assert!(detail.contains('`'), "{detail}");
     }
 }

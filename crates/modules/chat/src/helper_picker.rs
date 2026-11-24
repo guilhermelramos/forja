@@ -172,7 +172,8 @@ pub(crate) fn humanize_error(
 ) -> forja_kernel::HumanError {
     let trimmed = raw.trim();
     let lower = trimmed.to_ascii_lowercase();
-    let detail = forja_kernel::human_error::redact_internal_ids(trimmed);
+    // Detalhes técnicos recolhidos mostram o texto original, sem redação.
+    let detail = trimmed;
     if forja_kernel::human_error::is_provider_failure(trimmed) {
         return forja_kernel::HumanError::with_detail(
             cx.t_args("chat.view.error-provider", &[("helper", helper_name)]),

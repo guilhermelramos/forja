@@ -43,20 +43,22 @@ pub fn humanize_error(i18n: &I18n, raw: &str) -> HumanError {
     let lower = normalized.to_ascii_lowercase();
     let full_lower = trimmed.to_ascii_lowercase();
 
-    let safe_detail = redact_internal_ids(trimmed);
+    // Os "Detalhes técnicos" ficam recolhidos e mostram o texto original, sem
+    // redação, para quem precisa diagnosticar. A frase principal nunca mostra
+    // ids nem nomes de comando internos.
     if let Some(key) = classify_key(&full_lower, &lower) {
-        return HumanError::with_detail(i18n.t(key), safe_detail);
+        return HumanError::with_detail(i18n.t(key), trimmed);
     }
 
     if looks_technical(normalized, &lower) {
-        return HumanError::with_detail(i18n.t("kernel.error.generic"), safe_detail);
+        return HumanError::with_detail(i18n.t("kernel.error.generic"), trimmed);
     }
 
     if normalized != trimmed {
-        return HumanError::with_detail(normalized, safe_detail);
+        return HumanError::with_detail(redact_internal_ids(normalized), trimmed);
     }
 
-    HumanError::simple(trimmed)
+    HumanError::simple(redact_internal_ids(trimmed))
 }
 
 /// Convenience wrapper for module views and command handlers.
@@ -198,60 +200,94 @@ fn is_internal_command_failure_inner(full_lower: &str, inner_lower: &str) -> boo
     (wrapped && technical) || has_backtick_internal_id(inner_lower)
 }
 
-/// Remove ids internos (`ses_…`, `ctx_…`) e nomes de comandos internos entre
-/// crases antes de mostrar o texto técnico nos detalhes da interface.
+/// Prefixos de ids internos: só contam quando seguidos de alfanuméricos.
+const INTERNAL_ID_PREFIXES: [&str; 2] = ["ses_", "ctx_"];
+
+/// Módulos com comandos internos conhecidos, usados no formato `modulo.acao`.
+const KNOWN_COMMAND_MODULES: &[&str] = &[
+    "accounts", "archive", "bench", "benches", "board", "browser", "chat", "content", "counter",
+    "diff", "editor", "explorer", "extension", "file", "find", "git", "hello", "helper", "hook",
+    "import", "integrations", "kernel", "mcp", "muster", "network", "notify", "onboarding",
+    "ports", "privacy", "project", "projects", "remote", "request", "review", "routine", "search",
+    "shell", "skill", "terminal", "test", "trust", "update", "usage", "viewers", "voice",
+];
+
+/// Verdadeiro só para o formato exato de id interno: prefixo + alfanuméricos.
+pub(crate) fn is_exact_internal_id(text: &str) -> bool {
+    INTERNAL_ID_PREFIXES.iter().any(|prefix| {
+        text.strip_prefix(prefix)
+            .is_some_and(|rest| !rest.is_empty() && rest.bytes().all(|byte| byte.is_ascii_alphanumeric()))
+    })
+}
+
+fn is_command_segment(text: &str) -> bool {
+    !text.is_empty()
+        && text
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'_')
+}
+
+/// Nome de comando interno no formato `modulo.acao`, com módulo conhecido.
+pub(crate) fn is_known_internal_command(text: &str) -> bool {
+    if text.len() < 3 || text.len() > 64 || !text.is_ascii() || text.contains(char::is_whitespace) {
+        return false;
+    }
+    let mut segments = text.split('.');
+    let module = segments.next().unwrap_or("");
+    let action: Vec<&str> = segments.collect();
+    !action.is_empty()
+        && is_command_segment(module)
+        && action.iter().all(|part| is_command_segment(part))
+        && KNOWN_COMMAND_MODULES
+            .iter()
+            .any(|known| known.eq_ignore_ascii_case(module))
+}
+
+/// Reduz ids internos (`ses_…`, `ctx_…`) e nomes de comando conhecidos
+/// (`modulo.acao`) na frase principal. Texto legítimo entre crases fica intacto.
 pub fn redact_internal_ids(text: &str) -> String {
-    let bytes = text.as_bytes();
     let mut out = String::with_capacity(text.len());
     let mut index = 0;
     while index < text.len() {
         let rest = &text[index..];
-        let mut hit = None;
-        for prefix in ["ses_", "ctx_"] {
+        let mut hit: Option<(usize, usize)> = None;
+
+        for prefix in INTERNAL_ID_PREFIXES {
             if let Some(offset) = rest.find(prefix) {
-                if hit.is_none_or(|(earliest, _)| offset < earliest) {
-                    hit = Some((offset, prefix));
+                let after = offset + prefix.len();
+                let end = after
+                    + rest[after..]
+                        .bytes()
+                        .take_while(|byte| byte.is_ascii_alphanumeric())
+                        .count();
+                if end > after && hit.is_none_or(|(earliest, _)| offset < earliest) {
+                    hit = Some((offset, end));
                 }
             }
         }
+
         if let Some(open) = rest.find('`') {
             if hit.is_none_or(|(earliest, _)| open < earliest) {
-                hit = Some((open, "`"));
+                if let Some(close) = rest[open + 1..].find('`') {
+                    let inner = &rest[open + 1..open + 1 + close];
+                    if is_known_internal_command(inner) {
+                        hit = Some((open, open + close + 2));
+                    }
+                }
             }
         }
-        let Some((offset, marker)) = hit else {
+
+        let Some((offset, end)) = hit else {
             out.push_str(rest);
             break;
         };
         out.push_str(&rest[..offset]);
-        let start = index + offset;
-        let mut end = start + marker.len();
-        if marker == "`" {
-            if let Some(close) = text[start + 1..].find('`') {
-                let inner = &text[start + 1..start + 1 + close];
-                end = start + 1 + close + 1;
-                let internal = inner.len() >= 3
-                    && inner.len() <= 64
-                    && !inner.contains(char::is_whitespace)
-                    && (inner.contains('.') || inner.contains('_'))
-                    && inner
-                        .chars()
-                        .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-' | ':'));
-                if internal {
-                    out.push_str("[interno]");
-                } else {
-                    out.push_str(&text[start..end]);
-                }
-            } else {
-                out.push('`');
-            }
+        out.push_str(if rest[offset..].starts_with('`') {
+            "[interno]"
         } else {
-            while end < text.len() && bytes[end].is_ascii_alphanumeric() {
-                end += 1;
-            }
-            out.push_str("[id]");
-        }
-        index = end;
+            "[id]"
+        });
+        index += end;
     }
     out
 }
@@ -483,7 +519,7 @@ fn has_ascii_word(haystack: &str, word: &str) -> bool {
     false
 }
 
-fn has_backtick_internal_id(text: &str) -> bool {
+pub(crate) fn has_backtick_internal_id(text: &str) -> bool {
     let mut rest = text;
     while let Some(open) = rest.find('`') {
         let after = &rest[open + 1..];
@@ -491,14 +527,7 @@ fn has_backtick_internal_id(text: &str) -> bool {
             break;
         };
         let inner = &after[..close];
-        if inner.len() >= 3
-            && inner.len() <= 64
-            && !inner.contains(char::is_whitespace)
-            && (inner.contains('.') || inner.contains('_'))
-            && inner
-                .chars()
-                .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-' | ':'))
-        {
+        if is_exact_internal_id(inner) || is_known_internal_command(inner) {
             return true;
         }
         rest = &after[close + 1..];
@@ -669,14 +698,29 @@ mod tests {
         );
         assert!(!human.summary.contains("helper.launch"));
         assert!(!human.summary.contains("ctx_"));
+        // Os detalhes são recolhidos e mostram o texto original para diagnóstico.
         let detail = human.detail.as_deref().unwrap();
-        assert!(!detail.contains("helper.launch"), "{detail}");
-        assert!(!detail.contains("ctx_ab12"), "{detail}");
+        assert!(detail.contains("helper.launch"), "{detail}");
+        assert!(detail.contains("ctx_ab12"), "{detail}");
 
         let clean = humanize_error(&en, "command `content.run` falhou: error: unknown step");
         assert!(clean.summary.contains("Could not complete an internal application action"));
         assert!(!clean.summary.to_ascii_lowercase().contains("failed"));
         assert!(is_internal_command_failure(raw));
+    }
+
+    #[test]
+    fn summary_redaction_keeps_user_backtick_text() {
+        let pt = test_i18n(Locale::PtBr);
+        let raw = "Não achei `meu_arquivo` nem `config.toml` para ses_abc123";
+        let human = humanize_error(&pt, raw);
+        assert!(human.summary.contains("`meu_arquivo`"), "{}", human.summary);
+        assert!(human.summary.contains("`config.toml`"), "{}", human.summary);
+        assert!(!human.summary.contains("ses_abc123"), "{}", human.summary);
+        assert!(human.summary.contains("[id]"), "{}", human.summary);
+
+        let redacted = redact_internal_ids("rodei `helper.launch` e `meu_arquivo` com ctx_ab12");
+        assert_eq!(redacted, "rodei [interno] e `meu_arquivo` com [id]");
     }
 
     #[test]
