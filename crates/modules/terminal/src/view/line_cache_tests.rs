@@ -38,6 +38,7 @@ fn draw_frame(
                 cache,
                 body,
                 true,
+                "Terminal: teste",
             );
         });
     });
@@ -231,6 +232,7 @@ fn perf_5000_lines_cached_vs_uncached_and_multi_pane() {
                             &mut caches[idx],
                             *pane_body,
                             idx == 0,
+                            "Terminal: teste",
                         );
                     }
                 });

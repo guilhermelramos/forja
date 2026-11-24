@@ -100,6 +100,8 @@ pub struct UiText {
     pub error_retry: String,
     pub error_settings: String,
     pub error_details: String,
+    pub resize_panes: String,
+    pub surface_label: String,
     pub locale: String,
 }
 
@@ -194,6 +196,8 @@ impl UiText {
             error_retry: cx.t("terminal.view.error-retry"),
             error_settings: cx.t("terminal.view.error-settings"),
             error_details: cx.t("terminal.view.error-details"),
+            resize_panes: cx.t("terminal.view.resize-panes"),
+            surface_label: cx.t_args("terminal.view.surface-label", &[("title", "{ $title }")]),
             locale: cx.i18n().locale().id().to_owned(),
         }
     }

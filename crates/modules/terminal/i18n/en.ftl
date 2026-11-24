@@ -172,3 +172,5 @@ terminal-view-error-launch-body = The terminal process failed to start.
 terminal-view-error-retry = Retry
 terminal-view-error-settings = Open Settings
 terminal-view-error-details = Details
+terminal-view-resize-panes = Resize terminal panes
+terminal-view-surface-label = Terminal: { $title }

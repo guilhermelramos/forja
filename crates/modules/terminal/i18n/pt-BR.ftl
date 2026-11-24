@@ -172,3 +172,5 @@ terminal-view-error-launch-body = O processo do terminal falhou ao iniciar.
 terminal-view-error-retry = Tentar de novo
 terminal-view-error-settings = Abrir Ajustes
 terminal-view-error-details = Detalhes
+terminal-view-resize-panes = Redimensionar painéis do terminal
+terminal-view-surface-label = Terminal: { $title }

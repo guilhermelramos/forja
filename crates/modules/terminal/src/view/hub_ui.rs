@@ -255,6 +255,11 @@ fn draw_node(
                 ui.id().with(("terminal-divider", first_pane(first), first_pane(second))),
                 Sense::drag(),
             );
+            let divider_name = texts.resize_panes.clone();
+            response.widget_info(|| {
+                egui::WidgetInfo::slider(ui.is_enabled(), f64::from(*ratio), divider_name.clone())
+            });
+            let response = forja_ui_kit::tooltip(response, divider_name);
             if response.dragged() && available > 0.0 {
                 let delta = response.drag_delta();
                 *ratio = (*ratio + (if horizontal { delta.x } else { delta.y }) / available)

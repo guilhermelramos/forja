@@ -165,11 +165,8 @@ pub(super) fn draw(
                 chosen = visible_recipe(picker.selected).cloned();
             }
 
-            let search = ui.add(
-                egui::TextEdit::singleline(&mut picker.query)
-                    .hint_text(texts.recipe_picker_filter.clone())
-                    .desired_width(f32::INFINITY),
-            );
+            let label = texts.recipe_picker_filter.clone();
+            let search = forja_ui_kit::text_field_labeled(ui, &mut picker.query, &label, &label);
             if first_frame || refocus_search {
                 search.request_focus();
             }
