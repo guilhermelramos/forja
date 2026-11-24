@@ -592,6 +592,9 @@ fn used_keys() -> Vec<&'static str> {
 }
 
 #[cfg(test)]
+mod a11y_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use forja_kernel::{contract, Args, Module, ModuleManifest, Registrar, Runtime, RuntimeOptions};

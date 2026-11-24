@@ -195,15 +195,21 @@ impl HomeState {
                             "browser.home.servers-active-only",
                             &[("bench", &root.name)],
                         );
-                        ui.checkbox(&mut self.only_active_bench, toggle_label);
+                        forja_ui_kit::toggle(
+                            ui,
+                            &mut self.only_active_bench,
+                            &toggle_label,
+                        );
                     }
                 }
             });
             ui.add_space(forja_ui_kit::Spacing::XS);
-            forja_ui_kit::text_field(
+            let filter_hint = cx.t("browser.home.servers-filter-hint");
+            forja_ui_kit::text_field_labeled(
                 ui,
                 &mut self.port_filter,
-                &cx.t("browser.home.servers-filter-hint"),
+                &filter_hint,
+                &filter_hint,
             );
             ui.add_space(6.0);
 
