@@ -19,6 +19,7 @@ counter_linear-error-decode = The counter sent an unexpected response.
 counter_linear-error-config = The counter settings are incomplete.
 counter_linear-error-vault = The system credential vault did not respond.
 counter_linear-error-unsupported = The counter does not support this action.
+counter_linear-token-label = Linear token
 counter_linear-token-hint = Token
 counter_linear-action-connect = Connect
 counter_linear-action-test = Test

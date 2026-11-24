@@ -7,7 +7,7 @@ use crate::{Shared, Status};
 use forja_counter_kit::error_key;
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::{Args, Ctx};
-use forja_ui_kit::{button, ButtonKind};
+use forja_ui_kit::{button, secret_field, text_field_labeled, ButtonKind};
 use forja_contracts::CounterError;
 use serde_json::json;
 
@@ -40,21 +40,23 @@ impl View for ConnectionView {
 
         let mut action = None;
         ui.add_enabled_ui(!status.busy, |ui| {
-            ui.add(
-                egui::TextEdit::singleline(&mut self.site)
-                    .hint_text(cx.t("counter_jira-site-hint"))
-                    .desired_width(f32::INFINITY),
+            text_field_labeled(
+                ui,
+                &mut self.site,
+                &cx.t("counter_jira-site-label"),
+                &cx.t("counter_jira-site-hint"),
             );
-            ui.add(
-                egui::TextEdit::singleline(&mut self.email)
-                    .hint_text(cx.t("counter_jira-email-hint"))
-                    .desired_width(f32::INFINITY),
+            text_field_labeled(
+                ui,
+                &mut self.email,
+                &cx.t("counter_jira-email-label"),
+                &cx.t("counter_jira-email-hint"),
             );
-            ui.add(
-                egui::TextEdit::singleline(&mut self.token)
-                    .password(true)
-                    .hint_text(cx.t("counter_jira-token-hint"))
-                    .desired_width(f32::INFINITY),
+            secret_field(
+                ui,
+                &mut self.token,
+                &cx.t("counter_jira-token-label"),
+                &cx.t("counter_jira-token-hint"),
             );
             ui.horizontal(|ui| {
                 let can_connect = !self.site.trim().is_empty()
@@ -127,9 +129,12 @@ fn status_line(cx: &Ctx<'_>, status: &Status) -> String {
 }
 
 /// Chaves de texto da seção de Ajustes, declaradas com `uses_i18n` pelo módulo.
-pub const I18N_KEYS: [&str; 9] = [
+pub const I18N_KEYS: [&str; 12] = [
+    "counter_jira-site-label",
     "counter_jira-site-hint",
+    "counter_jira-email-label",
     "counter_jira-email-hint",
+    "counter_jira-token-label",
     "counter_jira-token-hint",
     "counter_jira-action-connect",
     "counter_jira-action-test",
