@@ -27,6 +27,15 @@ alfabética do arquivo e vira diagnóstico.
   O painel Arquivos oferece os modelos no diálogo "Novo arquivo".
 - **Receitas** (`recipes/*.toml`): `content.recipes.list`; o terminal usa essa
   lista e cai para o leitor local se o módulo não estiver presente.
+- **Arranjos** (`layouts/*.toml`, Refs #214): `LayoutSpecV1` do kernel valida
+  versão, ids, limites e razões. O catálogo efetivo tem uma entrada por id,
+  com precedência fábrica < usuário < projeto. `content.layouts.list`,
+  `content.layouts.reload`, `content.layouts.save` e `content.layouts.remove`
+  usam `Tasks`: leitura, gravação atômica e observador nunca rodam na thread da
+  UI. Um TOML inválido conserva a última versão válida daquele arquivo e
+  publica diagnóstico; resultados de geração obsoleta são descartados.
+  O padrão `appearance.layout.default` é lido de `.forja/ajustes.toml` na
+  mesma tarefa do catálogo, sem usar o carregador de Ajustes.
 
 ## Trust
 

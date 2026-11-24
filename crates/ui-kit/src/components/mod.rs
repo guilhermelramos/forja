@@ -37,8 +37,9 @@ pub use settings::{
     highlighted_text, setting_row, settings_navigation, settings_viewport, SettingRow,
 };
 pub use status::{
-    error_banner, error_notice, helper_missing_guide, progress_bar, stage_badge, toast,
-    toast_transition, truncated_label, wrapped_label, HelperMissingGuide, Stage, ToastKind,
+    error_banner, error_notice, helper_missing_guide, progress_bar, selectable_wrapped_label,
+    stage_badge, toast, toast_transition, truncated_label, wrapped_label, HelperMissingGuide,
+    Stage, ToastKind,
 };
 pub use tabs::{panel_icon_tabs, tab_strip, PanelIconTab, TabItem, TabStripOutcome};
 pub use tabs_fit::{measure_tab_width, plan_tab_fit, TabFitPlan};

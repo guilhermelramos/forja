@@ -57,6 +57,7 @@ bench-detail-title = Bancada
 bench-detail-empty = Nenhuma bancada ativa.
 bench-detail-empty-hint = Crie uma bancada ou escolha uma na lateral ou no Quadro.
 bench-detail-project = Projeto
+bench-detail-project-unknown = Projeto desconhecido
 bench-detail-branch = Branch
 bench-detail-path = Pasta
 bench-detail-base = Base

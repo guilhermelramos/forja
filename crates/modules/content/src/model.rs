@@ -515,7 +515,18 @@ pub fn files_in(root: &Path, kind: &str, extension: &str) -> Vec<PathBuf> {
     read_files(&root.join(kind), extension)
 }
 
+/// Semente sem E/S da raiz embutida: variável de ambiente ou a pasta do
+/// manifesto, conhecida em tempo de compilação. Não consulta o disco; a
+/// resolução definitiva acontece uma única vez dentro de `Tasks` (`builtin_root`).
+pub fn builtin_root_hint() -> Option<PathBuf> {
+    if let Some(value) = std::env::var_os("FORJA_BUILTIN_CONTENT_DIR") {
+        return Some(PathBuf::from(value));
+    }
+    Some(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../content"))
+}
+
 /// Caminho do conteúdo embutido: pasta do repositório ou pasta ao lado do exe.
+/// Faz E/S (`is_dir`, `current_exe`): chamar apenas dentro de `Tasks`.
 pub fn builtin_root() -> Option<PathBuf> {
     if let Some(value) = std::env::var_os("FORJA_BUILTIN_CONTENT_DIR") {
         return Some(PathBuf::from(value));
