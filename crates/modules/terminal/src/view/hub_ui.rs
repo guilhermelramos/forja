@@ -253,8 +253,30 @@ fn draw_node(
             let response = ui.interact(
                 divider,
                 ui.id().with(("terminal-divider", first_pane(first), first_pane(second))),
-                Sense::drag(),
+                Sense::click_and_drag(),
             );
+            if response.clicked() {
+                response.request_focus();
+            }
+            // O splitter do ui-kit só arrasta no eixo x e usa limites fixos;
+            // aqui o divisor também serve painéis empilhados e respeita os
+            // tamanhos mínimos das duas árvores. Mantemos o arrasto e damos as
+            // mesmas setas de teclado do contrato do splitter.
+            if response.has_focus() && ui.is_enabled() {
+                let (less, more) = if horizontal {
+                    (egui::Key::ArrowLeft, egui::Key::ArrowRight)
+                } else {
+                    (egui::Key::ArrowUp, egui::Key::ArrowDown)
+                };
+                if ui.input(|input| input.key_pressed(less)) {
+                    *ratio -= 0.01;
+                }
+                if ui.input(|input| input.key_pressed(more)) {
+                    *ratio += 0.01;
+                }
+                *ratio = (*ratio).clamp(lower, upper);
+                ui.ctx().request_repaint();
+            }
             let divider_name = texts.resize_panes.clone();
             response.widget_info(|| {
                 egui::WidgetInfo::slider(ui.is_enabled(), f64::from(*ratio), divider_name.clone())
