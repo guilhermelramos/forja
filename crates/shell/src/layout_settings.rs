@@ -284,6 +284,9 @@ pub struct Projection {
     pub bench_tabs: Vec<String>,
     pub sidebar_tabs: Vec<String>,
     pub right_tabs: Vec<String>,
+    /// Refs cujo slot não existe hoje (ou cuja view não está registrada). São
+    /// sinalizadas ao usuário e preservadas na árvore ao reexportar.
+    pub unavailable_refs: Vec<String>,
 }
 
 fn push_unique(list: &mut Vec<String>, seen: &mut BTreeSet<String>, id: String) {
@@ -300,11 +303,13 @@ fn collect(
     sidebar: &mut Vec<String>,
     right: &mut Vec<String>,
     seen: &mut BTreeSet<String>,
+    unavailable: &mut Vec<String>,
+    unavailable_seen: &mut BTreeSet<String>,
 ) {
     match node {
         LayoutNodeSpec::Split { first, second, .. } => {
-            collect(first, known, rails, bench, sidebar, right, seen);
-            collect(second, known, rails, bench, sidebar, right, seen);
+            collect(first, known, rails, bench, sidebar, right, seen, unavailable, unavailable_seen);
+            collect(second, known, rails, bench, sidebar, right, seen, unavailable, unavailable_seen);
         }
         LayoutNodeSpec::Leaf { tabs, .. } => {
             for tab in tabs {
@@ -313,13 +318,17 @@ fn collect(
                     TabSpec::Table(table) => table.view.clone(),
                 };
                 // Uma referência desconhecida sobrevive como aba indisponível;
-                // nunca é descartada.
+                // nunca é descartada — e agora também é sinalizada.
                 match known.get(&view).map(String::as_str) {
                     Some("rail") => push_unique(rails, seen, view),
                     Some("sidebar") => push_unique(sidebar, seen, view),
                     Some("right_panel") => push_unique(right, seen, view),
-                    Some("bench_tab") | None => push_unique(bench, seen, view),
-                    Some(_) => {}
+                    Some("bench_tab") => push_unique(bench, seen, view),
+                    None => {
+                        push_unique(unavailable, unavailable_seen, view.clone());
+                        push_unique(bench, seen, view);
+                    }
+                    Some(_) => push_unique(unavailable, unavailable_seen, view),
                 }
             }
         }
@@ -337,7 +346,9 @@ pub fn project(
     let mut bench = Vec::new();
     let mut sidebar = Vec::new();
     let mut right = Vec::new();
+    let mut unavailable = Vec::new();
     let mut seen = BTreeSet::new();
+    let mut unavailable_seen = BTreeSet::new();
     collect(
         &spec.root,
         known,
@@ -346,6 +357,8 @@ pub fn project(
         &mut sidebar,
         &mut right,
         &mut seen,
+        &mut unavailable,
+        &mut unavailable_seen,
     );
     let hidden: BTreeSet<&str> = spec
         .chrome
@@ -377,6 +390,7 @@ pub fn project(
         bench_tabs: bench,
         sidebar_tabs: sidebar,
         right_tabs: right,
+        unavailable_refs: unavailable,
     }
 }
 
@@ -429,9 +443,9 @@ pub(crate) fn order_side_tabs(
         .filter(|id| current.contains(id))
         .cloned()
         .collect();
-    let mut seen: BTreeSet<&str> = order.iter().map(String::as_str).collect();
+    let mut seen: BTreeSet<String> = order.iter().cloned().collect();
     for id in current {
-        if seen.insert(id.as_str()) {
+        if seen.insert(id.clone()) {
             order.push(id.clone());
         }
     }
@@ -687,6 +701,11 @@ mod tests {
         let text = "schema_version = 1\nid = \"obscuro\"\nname = { pt-BR = \"Obscuro\", en = \"Obscure\" }\n[root]\nkind = \"leaf\"\nid = \"a\"\ntabs = [\"editor.tab\", \"future.tab\"]\nactive = 1\n";
         let spec = LayoutSpecV1::parse(text).expect("spec with an unknown ref parses");
         let mut projection = project(&spec, &known(), &[]);
+        assert_eq!(
+            projection.unavailable_refs,
+            vec!["future.tab".to_owned()],
+            "an unknown ref must be diagnosed, not silently dropped"
+        );
         projection.rail_visible = Some(false);
         projection.rail_hidden = vec!["board.page".to_owned()];
         let out = export(&spec, &projection).expect("export");
@@ -695,6 +714,19 @@ mod tests {
         assert_eq!(again.chrome.rail_visible, Some(false));
         assert_eq!(again.chrome.rail_hidden, vec!["board.page".to_owned()]);
         assert_eq!(again.root.view_refs()[1].view_id, "future.tab");
+    }
+
+    #[test]
+    fn unavailable_ref_messages_exist_in_both_locales() {
+        let en = include_str!("../i18n/en.ftl");
+        let pt_br = include_str!("../i18n/pt-BR.ftl");
+        for key in [
+            "shell-layout-unavailable-ref-title",
+            "shell-layout-unavailable-ref",
+        ] {
+            assert!(en.contains(&format!("{key} =")), "missing {key} in en");
+            assert!(pt_br.contains(&format!("{key} =")), "missing {key} in pt-BR");
+        }
     }
 
     #[test]

@@ -473,5 +473,7 @@ shell-layout-up = Move up
 shell-layout-down = Move down
 shell-layout-hide = Hide
 shell-layout-show = Show { $id }
+shell-layout-unavailable-ref-title = Unavailable layout panel
+shell-layout-unavailable-ref = Panel { $id } is not registered; the reference was preserved in the layout file.
 setting-appearance-layout-default-label = Default layout
 setting-appearance-layout-default-help = Layout id used when a bench has no explicit choice.

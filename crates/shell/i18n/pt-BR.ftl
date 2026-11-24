@@ -473,5 +473,7 @@ shell-layout-up = Subir
 shell-layout-down = Descer
 shell-layout-hide = Ocultar
 shell-layout-show = Mostrar { $id }
+shell-layout-unavailable-ref-title = Painel de arranjo indisponível
+shell-layout-unavailable-ref = O painel { $id } não está registrado; a referência foi preservada no arquivo do arranjo.
 setting-appearance-layout-default-label = Arranjo padrão
 setting-appearance-layout-default-help = Id do arranjo usado quando a bancada não tem escolha explícita.

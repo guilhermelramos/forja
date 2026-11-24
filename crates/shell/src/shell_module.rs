@@ -352,6 +352,8 @@ const CHROME_KEYS: &[&str] = &[
     "shell.layout.down",
     "shell.layout.hide",
     "shell.layout.show",
+    "shell.layout.unavailable-ref-title",
+    "shell.layout.unavailable-ref",
     "setting-appearance-layout-default-label",
     "setting-appearance-layout-default-help",
 ];

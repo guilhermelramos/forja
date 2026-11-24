@@ -29,6 +29,8 @@ pub struct LayoutState {
     pub save_dialog: SaveDialog,
     /// `(id, revisão do catálogo na fila)`: só muda o padrão após a gravação.
     pub pending_default: Option<(String, u64)>,
+    /// Último conjunto de refs indisponíveis avisado, para não repetir o toast.
+    pub last_notified_refs: Vec<String>,
 }
 
 #[derive(Default, Clone, Debug)]
@@ -175,6 +177,28 @@ impl ForjaApp {
         self.apply_side_panel(false, &projection.right_tabs, reset_tabs);
         self.layout_state.projection = projection;
         self.layout_state.applied = true;
+        self.notify_unavailable_refs();
+    }
+
+    /// Refs que a projeção não consegue mostrar viram diagnóstico no canal dos
+    /// avisos (toast `attention`), em pt-BR/en, sem descartar a ref do arquivo.
+    pub(crate) fn notify_unavailable_refs(&mut self) {
+        let refs = self.layout_state.projection.unavailable_refs.clone();
+        if refs.is_empty() || refs == self.layout_state.last_notified_refs {
+            return;
+        }
+        self.layout_state.last_notified_refs = refs.clone();
+        let title = self.text("shell.layout.unavailable-ref-title");
+        let body = refs
+            .iter()
+            .map(|id| self.text_args("shell.layout.unavailable-ref", &[("id", id)]))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let mut args = Args::new();
+        args.insert("title", serde_json::Value::String(title));
+        args.insert("body", serde_json::Value::String(body));
+        args.insert("level", serde_json::Value::String("attention".into()));
+        let _ = self.runtime.run_command("notify.show", args);
     }
 
     /// Reordena a lateral conforme a projeção e(ao trocar de arranjo) escolhe a
