@@ -1,0 +1,24 @@
+{
+  "title": "Em teste, Abrir docs e Copiar comando só registram o pedido (#179)",
+  "issue": 179,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Ajudantes" },
+    { "m": "ui.click", "target": "Mostrar não instalados" },
+    { "m": "ui.click", "target": "Copiar comando" },
+    { "m": "ui.click", "target": "Abrir docs" },
+    { "m": "ui.externals" }
+  ],
+  "expect": [
+    {
+      "step": 2,
+      "present": ["Abrir docs", "Copiar comando"]
+    },
+    {
+      "step": 5,
+      "external_kinds": ["copy", "open"],
+      "externals_contains": ["https://", "install"]
+    }
+  ]
+}
