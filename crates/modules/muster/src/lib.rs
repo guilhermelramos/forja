@@ -253,7 +253,7 @@ mod tests {
         names, BenchCreateFailed, BenchCreated, BenchRef, BenchStoreOutcome, TerminalExited,
         TerminalRef,
     };
-    use forja_kernel::{contract, Runtime, RuntimeOptions};
+    use forja_kernel::{contract, Runtime, RuntimeOptions, SettingKind};
     use serde_json::{json, Map};
     use std::path::PathBuf;
     use std::sync::Arc;
@@ -714,6 +714,46 @@ mod tests {
             )
             .expect_err("usage spend exceeds the ceiling");
         assert!(error.message.contains("teto"), "{}", error.message);
+    }
+
+    /// Lê os ids do catálogo do ajudante direto do fonte dele: o módulo
+    /// `helper` não publica API com essa lista e não pode virar dependência do
+    /// Mutirão. Se um lado mudar, este teste quebra.
+    fn helper_profile_ids() -> Vec<String> {
+        let source = include_str!("../../helper/src/lib.rs");
+        let start = source
+            .find("\"helper.default.profile\"")
+            .expect("helper.default.profile");
+        let block = &source[start..];
+        let open = block.find("options: [").expect("helper options");
+        let rest = &block[open + "options: [".len()..];
+        let close = rest.find(']').expect("helper options end");
+        rest[..close]
+            .split(',')
+            .map(str::trim)
+            .filter_map(|item| item.strip_prefix('"').and_then(|s| s.strip_suffix('"')))
+            .map(str::to_owned)
+            .collect()
+    }
+
+    #[test]
+    fn coordinator_profile_ids_match_helper_default_profile() {
+        let dir = temp_dir();
+        let runtime = runtime(&dir.0);
+        let spec = runtime
+            .registry()
+            .settings()
+            .iter()
+            .find(|spec| spec.key == "muster.coordinator.profile")
+            .expect("muster.coordinator.profile");
+        let SettingKind::Choice { options } = &spec.kind else {
+            panic!("muster.coordinator.profile deve ser Choice");
+        };
+        assert_eq!(
+            options,
+            &helper_profile_ids(),
+            "a lista de perfis do Mutirão saiu de sincronia com helper.default.profile"
+        );
     }
 
     #[test]
