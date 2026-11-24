@@ -20,6 +20,7 @@ pub mod contract;
 pub mod error;
 pub mod events;
 pub mod human_error;
+mod human_error_helper;
 pub mod i18n;
 pub mod keymap;
 pub mod logging;
