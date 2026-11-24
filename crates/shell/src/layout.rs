@@ -47,12 +47,9 @@ impl ForjaApp {
                 let drag = ui.interact(
                     bounds,
                     egui::Id::new("forja.top.drag"),
+                    // ui-lint: allow bar drag moves the window; the crumb carries the name
                     Sense::click_and_drag(),
                 );
-                let drag_name = crumb_label.clone();
-                drag.widget_info(|| {
-                    egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), &drag_name)
-                });
                 if drag.drag_started_by(egui::PointerButton::Primary) {
                     ctx.send_viewport_cmd(ViewportCommand::StartDrag);
                 }

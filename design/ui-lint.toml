@@ -19,4 +19,4 @@ space = 0
 raw_text_edit = 0
 raw_combo_box = 0
 raw_checkbox = 0
-raw_sense_click = 0
+raw_sense_click = 1

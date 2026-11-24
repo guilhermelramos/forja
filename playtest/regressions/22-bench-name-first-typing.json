@@ -15,7 +15,7 @@
     { "m": "ui.snapshot" }
   ],
   "expect": [
-    { "step": 6, "present": "feature-a" },
+    { "step": 6, "present": "Nome" },
     {
       "step": 9,
       "present_contains": "feature-a",
