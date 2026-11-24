@@ -19,10 +19,13 @@ pub enum ToastKind {
     Danger,
 }
 
-/// Quebra `text` dentro da largura disponível do `Ui`, inclusive no meio de
-/// sequências contínuas sem espaços (caminhos, URLs, entradas longas).
-pub fn wrapped_label(ui: &mut Ui, text: &str, font: egui::FontId, color: Color32) -> Response {
-    let max_width = ui.available_width().max(1.0);
+fn wrapped_galley(
+    ui: &Ui,
+    text: &str,
+    font: egui::FontId,
+    color: Color32,
+    max_width: f32,
+) -> std::sync::Arc<egui::text::Galley> {
     let mut job = egui::text::LayoutJob::single_section(
         text.to_owned(),
         egui::TextFormat {
@@ -37,8 +40,30 @@ pub fn wrapped_label(ui: &mut Ui, text: &str, font: egui::FontId, color: Color32
         break_anywhere: true,
         ..Default::default()
     };
-    let galley = ui.painter().layout_job(job);
-    ui.add(egui::Label::new(galley))
+    ui.painter().layout_job(job)
+}
+
+/// Quebra `text` dentro da largura disponível do `Ui`, inclusive no meio de
+/// sequências contínuas sem espaços (caminhos, URLs, entradas longas).
+pub fn wrapped_label(ui: &mut Ui, text: &str, font: egui::FontId, color: Color32) -> Response {
+    let max_width = ui.available_width().max(1.0);
+    ui.add(egui::Label::new(wrapped_galley(ui, text, font, color, max_width)))
+}
+
+/// Linha selecionável que quebra o texto dentro da largura disponível, mantendo
+/// o nome completo acessível e nenhum elemento além da janela.
+pub fn selectable_wrapped_label(
+    ui: &mut Ui,
+    selected: bool,
+    text: &str,
+    font: egui::FontId,
+    color: Color32,
+) -> Response {
+    // O `SelectableLabel` acrescenta o espaçamento interno do botão; reservá-lo
+    // aqui mantém a linha inteira dentro da largura pedida pelo chamador.
+    let max_width = (ui.available_width() - 10.0).max(1.0);
+    let galley = wrapped_galley(ui, text, font, color, max_width);
+    ui.selectable_label(selected, egui::WidgetText::Galley(galley))
 }
 
 /// Exibe `text` em uma linha com reticências quando ultrapassar a largura
@@ -375,6 +400,22 @@ mod tests {
             );
         });
         assert!(truncated_rect.width() <= 160.5);
+    }
+
+    #[test]
+    fn selectable_wrapped_label_keeps_long_titles_inside_the_column() {
+        let long = "FORJA-999  reqtitle-superlong-unbreakable-0123456789-abcdefghijklmnopqrstuvwxyz-without-spaces-0123456789";
+        let font = FontId::proportional(14.0);
+        let rect = run_in_width(180.0, |ui| {
+            let response =
+                selectable_wrapped_label(ui, false, long, font.clone(), Color32::WHITE);
+            assert!(
+                response.rect.width() <= 180.5,
+                "selectable width {} > 180",
+                response.rect.width()
+            );
+        });
+        assert!(rect.width() <= 180.5);
     }
 
     #[test]

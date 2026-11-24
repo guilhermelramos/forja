@@ -96,11 +96,12 @@ impl View for DetailView {
                 });
             });
             ui.add_space(6.0);
+            let project_label = project_label(cx, &bench.project_id);
             detail_row(
                 ui,
                 &tokens,
                 &cx.t("bench.detail.project"),
-                &bench.project_id,
+                &project_label,
             );
             detail_row(
                 ui,
@@ -245,6 +246,14 @@ impl DetailView {
             }
         }
     }
+}
+
+/// Nome amigável do projeto da bancada; nunca mostra o id interno.
+pub(crate) fn project_label(cx: &mut Ctx<'_>, project_id: &str) -> String {
+    service::project_by_id(cx, project_id)
+        .map(|project| project.name)
+        .filter(|name| !name.trim().is_empty())
+        .unwrap_or_else(|| cx.t("bench.detail.project-unknown"))
 }
 
 fn stage_info(cx: &mut Ctx<'_>, state: &Shared, bench: &BenchRecord) -> (String, String) {

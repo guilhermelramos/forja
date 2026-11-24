@@ -1032,6 +1032,7 @@ impl ForjaApp {
 impl eframe::App for ForjaApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.pacer.begin();
+        forja_ui_kit::begin_keyboard_frame(ctx);
         self.handle_close(ctx);
         let focused = ctx.input(|input| input.viewport().focused.unwrap_or(true));
         self.runtime.set_viewport_focused(focused);
