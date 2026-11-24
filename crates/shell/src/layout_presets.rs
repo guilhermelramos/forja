@@ -187,6 +187,10 @@ impl ForjaApp {
                     }
                 }
             }
+            // Como `bench_tabs`, as laterais só são recompostas na troca
+            // explícita; na restauração, abas e estado salvos continuam abrindo.
+            self.apply_side_panel(true, &projection.sidebar_tabs);
+            self.apply_side_panel(false, &projection.right_tabs);
         }
         let order = projection.effective_rail_order.clone();
         self.rail_views.sort_by_key(|view| {
@@ -195,10 +199,6 @@ impl ForjaApp {
                 .position(|id| id == &view.id)
                 .unwrap_or(order.len())
         });
-        // O arranjo também declara as abas das laterais; aplicar só `bench_tabs`
-        // deixaria `sidebar_tabs` e `right_tabs` calculados e nunca usados.
-        self.apply_side_panel(true, &projection.sidebar_tabs, reset_tabs);
-        self.apply_side_panel(false, &projection.right_tabs, reset_tabs);
         self.layout_state.projection = projection;
         self.layout_state.applied = true;
         self.notify_unavailable_refs();
@@ -225,14 +225,9 @@ impl ForjaApp {
         let _ = self.runtime.run_command("notify.show", args);
     }
 
-    /// Reordena a lateral conforme a projeção e(ao trocar de arranjo) escolhe a
-    /// primeira aba declarada. Nas restaurações preserva a aba que já estava ativa.
-    fn apply_side_panel(&mut self, sidebar: bool, declared: &[String], select_first: bool) {
-        let active_id = if sidebar {
-            self.sidebar_views.get(self.sidebar_tab).map(|view| view.id.clone())
-        } else {
-            self.right_views.get(self.right_tab).map(|view| view.id.clone())
-        };
+    /// Reordena a lateral pela projeção e escolhe a primeira aba declarada,
+    /// exatamente como `bench_tabs` faz na troca explícita de arranjo.
+    fn apply_side_panel(&mut self, sidebar: bool, declared: &[String]) {
         let (views, tab) = if sidebar {
             (&mut self.sidebar_views, &mut self.sidebar_tab)
         } else {
@@ -240,9 +235,13 @@ impl ForjaApp {
         };
         let ids: Vec<String> = views.iter().map(|view| view.id.clone()).collect();
         let (order, first) = order_side_tabs(&ids, declared);
-        views.sort_by_key(|view| order.iter().position(|id| id == &view.id).unwrap_or(order.len()));
-        let wanted = if select_first { first.or(active_id) } else { active_id };
-        if let Some(id) = wanted {
+        views.sort_by_key(|view| {
+            order
+                .iter()
+                .position(|id| id == &view.id)
+                .unwrap_or(order.len())
+        });
+        if let Some(id) = first {
             if let Some(index) = views.iter().position(|view| view.id == id) {
                 *tab = index;
             }
