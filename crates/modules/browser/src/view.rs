@@ -508,12 +508,17 @@ impl BrowserView {
             }
             let mut address = self.address.clone();
             let address_label = cx.t("browser.view.address");
-            let response = forja_ui_kit::text_field_labeled(
-                ui,
-                &mut address,
-                &address_label,
-                &address_label,
-            );
+            let field_height = forja_ui_kit::applied_tokens(ui.ctx()).metrics().control;
+            let response = ui
+                .allocate_ui(egui::vec2(420.0, field_height), |ui| {
+                    forja_ui_kit::text_field_labeled(
+                        ui,
+                        &mut address,
+                        &address_label,
+                        &address_label,
+                    )
+                })
+                .inner;
             if self.state.take_address_focus() {
                 response.request_focus();
             }
@@ -610,8 +615,12 @@ impl BrowserView {
         ui.horizontal(|ui| {
             let mut query = self.state.find_query();
             let find_label = cx.t("browser.view.find");
-            let response =
-                forja_ui_kit::text_field_labeled(ui, &mut query, &find_label, &find_label);
+            let field_height = forja_ui_kit::applied_tokens(ui.ctx()).metrics().control;
+            let response = ui
+                .allocate_ui(egui::vec2(260.0, field_height), |ui| {
+                    forja_ui_kit::text_field_labeled(ui, &mut query, &find_label, &find_label)
+                })
+                .inner;
             let enter =
                 response.lost_focus() && ui.input(|input| input.key_pressed(egui::Key::Enter));
             if enter || response.changed() {
