@@ -146,11 +146,6 @@ impl ReviewView {
             }
             let mut changed_base = false;
             if let Some(comparison) = &state.comparison {
-                if !comparison.remote {
-                    forja_ui_kit::text(ui,
-                        egui::RichText::new(cx.t("review.summary.remote-missing")).color(muted),
-                    );
-                }
                 ui.horizontal_wrapped(|ui| {
                     forja_ui_kit::text(ui, cx.t("review.summary.base"));
                     forja_ui_kit::text(ui,
@@ -172,7 +167,11 @@ impl ReviewView {
                     }
                     if !comparison.branches.is_empty() {
                         egui::ComboBox::from_id_salt("review-base-branch")
-                            .selected_text(cx.t("review.summary.choose-base-label"))
+                            .selected_text(if base.trim().is_empty() {
+                                cx.t("review.summary.choose-base-label")
+                            } else {
+                                base.clone()
+                            })
                             .show_ui(ui, |ui| {
                                 for branch in &comparison.branches {
                                     if ui.selectable_label(base == branch, branch).clicked() {
@@ -192,13 +191,7 @@ impl ReviewView {
                         )],
                     ));
                 }
-                if comparison.base.is_none() {
-                    forja_ui_kit::text(ui,
-                        egui::RichText::new(cx.t("review.summary.no-base"))
-                            .small()
-                            .color(muted),
-                    );
-                } else {
+                if comparison.base.is_some() {
                     forja_ui_kit::text(ui, cx.t_args(
                         "review.summary.ahead",
                         &[("count", &comparison.ahead.to_string())],
@@ -307,12 +300,13 @@ impl ReviewView {
                         }
                     }
                 }
-            } else if !state.comparison_loading {
-                forja_ui_kit::text(ui,
-                    egui::RichText::new(cx.t("review.summary.no-base"))
-                        .small()
-                        .color(muted),
-                );
+            }
+            if state.comparison.as_ref().is_none_or(|comparison| comparison.base.is_none())
+                && !state.comparison_loading
+                && crate::view_empty::render(ui, cx, state, muted)
+            {
+                *base = crate::view_empty::suggested_base(state);
+                changed_base = true;
             }
             if changed_base {
                 self.comparison_debounce = Some(Instant::now() + Duration::from_millis(250));
@@ -439,7 +433,11 @@ impl ReviewView {
                 &cx.t("review.create.open"),
             )
         });
-        if let Some(reason) = disabled_reason {
+        // The summary already shows the single base message with its direct
+        // action; repeating it here is what produced three messages for one state.
+        if let Some(reason) =
+            disabled_reason.filter(|reason| *reason != cx.t("review.summary.base-missing"))
+        {
             forja_ui_kit::text(ui, egui::RichText::new(reason).small().color(muted));
         }
         if response.inner.clicked() {
@@ -489,10 +487,10 @@ fn create_disabled_reason(state: &State, cx: &Ctx<'_>) -> Option<String> {
         return Some(cx.t("review.summary.loading"));
     }
     let Some(comparison) = &state.comparison else {
-        return Some(cx.t("review.summary.choose-base"));
+        return Some(cx.t("review.summary.base-missing"));
     };
     if comparison.base.is_none() || comparison.base.as_deref() != Some(state.base.trim()) {
-        return Some(cx.t("review.summary.choose-base"));
+        return Some(cx.t("review.summary.base-missing"));
     }
     if comparison.ahead == 0 {
         return Some(cx.t("review.summary.nothing-to-send"));

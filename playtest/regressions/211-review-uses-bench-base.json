@@ -1,0 +1,28 @@
+{
+  "title": "Revisão usa a base da bancada e mostra uma só mensagem (#172)",
+  "issue": 172,
+  "locale": "pt-BR",
+  "demo": true,
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Revisão" },
+    { "m": "ui.wait", "ms": 1500 },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 1,
+      "present": ["Revisão"]
+    },
+    {
+      "step": 3,
+      "absent": [
+        "Este projeto não tem remote. Escolha uma branch local como base; para abrir um pull request, configure um remote.",
+        "Não há uma base disponível. Escolha uma branch para comparar.",
+        "Escolha uma base válida para continuar."
+      ],
+      "present_contains": ["Resumo do que será enviado", "Base comparada"],
+      "no_geometry_issues": true
+    }
+  ]
+}

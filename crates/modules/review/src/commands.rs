@@ -17,9 +17,8 @@ pub fn refresh(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value> 
     } else {
         bench_path(cx, shared, args)?
     };
-    let compare_base = shared
-        .with(|state| (!state.base.trim().is_empty()).then(|| state.base.clone()))
-        .flatten();
+    let compare_base = crate::bench_base::resolve_for_refresh(cx, shared, &bench);
+    let bench_base = compare_base.clone();
     start_comparison(cx, shared, &bench, compare_base.as_deref());
     let github = host(cx, Provider::GitHub);
     let gitlab = host(cx, Provider::GitLab);
@@ -27,7 +26,7 @@ pub fn refresh(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value> 
     let state = shared.clone();
     state.set_loading(true);
     cx.spawn(
-        move || load(&bench, &github, &gitlab, network.as_ref()),
+        move || load(&bench, &github, &gitlab, network.as_ref(), bench_base.as_deref()),
         move |_cx, result| match result {
             Ok(snapshot) => state.apply(snapshot),
             Err(error) if error.contains("no origin remote") => state.set_status(None),
@@ -91,12 +90,13 @@ fn load(
     github: &str,
     gitlab: &str,
     network: Option<&Value>,
+    bench_base: Option<&str>,
 ) -> std::result::Result<Snapshot, String> {
     if fixtures() {
         return Ok(fixtures::snapshot());
     }
     let branch = local_branch(bench)?;
-    let base = local_base(bench, &branch);
+    let base = crate::bench_base::prefer(bench_base, || local_base(bench, &branch));
     let target = api::detect(Path::new(bench), github, gitlab)?;
     let owner = target.repo.split('/').next().unwrap_or("");
     let client = Client::connect_with_policy(target.clone(), network)?;
@@ -142,13 +142,13 @@ pub fn create(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value> {
                 return Some(cx.t("review.summary.loading"));
             }
             let Some(comparison) = &state.comparison else {
-                return Some(cx.t("review.summary.choose-base"));
+                return Some(cx.t("review.summary.base-missing"));
             };
             if comparison.base.as_deref() != Some(state.base.trim()) {
-                return Some(cx.t("review.summary.choose-base"));
+                return Some(cx.t("review.summary.base-missing"));
             }
             if comparison.base.is_none() {
-                return Some(cx.t("review.summary.choose-base"));
+                return Some(cx.t("review.summary.base-missing"));
             }
             if comparison.ahead == 0 {
                 return Some(cx.t("review.summary.nothing-to-send"));

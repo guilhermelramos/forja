@@ -14,6 +14,9 @@ threads de revisão, merge e texto gerado pelo ajudante.
 - Assinatura de `BenchActivated` para trocar a bancada mostrada.
 - Consome `git.compare`/`git.compare.result` para exibir a base, commits,
   arquivos e totais da comparação antes do formulário.
+- A base declarada pela bancada (`bench.list_cards`, `base_branch`) é aplicada
+  ao resumo e à comparação; o painel mostra uma única mensagem de base ausente
+  com ação direta (#172).
 - Assina `git.status_changed` para atualizar a comparação após alterações da
   bancada, e `git.comparison_changed` para receber resultados em segundo plano.
 - Bundles Fluent `i18n/en.ftl` e `i18n/pt-BR.ftl`; o `keymap.toml` fica vazio

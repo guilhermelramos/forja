@@ -2,12 +2,14 @@
 
 mod ai;
 mod api;
+mod bench_base;
 mod client;
 mod commands;
 mod fixtures;
 mod parse;
 mod state;
 mod view;
+mod view_empty;
 
 use crate::state::Shared;
 use forja_contracts::{BenchActivated, GitComparisonChanged, GitStatusChanged, names};
@@ -263,6 +265,8 @@ fn used_keys() -> Vec<&'static str> {
         "review.summary.total",
         "review.summary.view-diff",
         "review.summary.choose-base",
+        "review.summary.base-missing",
+        "review.summary.use-base",
         "review.summary.provider-unavailable",
         "review.error.title-required",
         "review.pr.title",

@@ -96,3 +96,6 @@ review-method-merge-description = Merges the pull request with the chosen option
 review-method-merge-result = Accepted; the merge finishes in the background.
 review-method-generate-description = Generates commit, PR or branch text with the helper profile.
 review-method-generate-result = Accepted; the generated text appears in the tab.
+
+review-summary-base-missing = Choose the bench base ({ $base }) to compare.
+review-summary-use-base = Use base { $base }
