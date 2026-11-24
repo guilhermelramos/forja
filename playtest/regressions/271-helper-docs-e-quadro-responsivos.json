@@ -15,7 +15,7 @@
       "present": ["Abrir docs", "Copiar comando"]
     },
     {
-      "step": 7,
+      "step": 4,
       "present": ["Quadro", "Nova bancada", "Rascunho"],
       "present_contains": ["Nenhuma bancada neste quadro"],
       "absent_contains": ["Ajudantes ativos:"]
