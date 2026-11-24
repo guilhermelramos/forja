@@ -77,14 +77,7 @@ impl View for DiffView {
         let muted = c32(tokens.color.text_muted);
         self.toolbar(ui, cx, muted);
         if let Some(status) = self.state.status() {
-            let human = humanize_error(cx, &status);
-            let details_label = cx.t("kernel.error.details");
-            forja_ui_kit::error_banner(
-                ui,
-                &human.summary,
-                human.detail.as_deref(),
-                &details_label,
-            );
+            crate::view_error::banner(ui, cx, &status);
         }
         if let Some(notice) = self.state.notice() {
             forja_ui_kit::text(ui,
@@ -701,39 +694,3 @@ fn c32(color: forja_ui_kit::Color) -> egui::Color32 {
     color.to_color32()
 }
 
-/// Humaniza o erro bruto vindo dos comandos do Git antes de mostrar na tela.
-fn humanize_error(cx: &Ctx<'_>, raw: &str) -> forja_kernel::HumanError {
-    forja_kernel::human_error::humanize_ctx(cx, raw.trim())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::humanize_error;
-    use forja_kernel::{Runtime, RuntimeOptions};
-
-    #[test]
-    fn git_rev_parse_error_becomes_human_phrase() {
-        let root = std::env::temp_dir().join(format!("forja-diff-human-{}", std::process::id()));
-        let mut runtime = Runtime::new(
-            vec![],
-            RuntimeOptions {
-                data_dir: Some(root.join("data")),
-                user_dir: Some(root.join("user")),
-                locale: Some("pt-BR".to_owned()),
-                wake: None,
-            },
-        )
-        .expect("runtime");
-        let raw = "git rev-parse --verify --end-of-options C:\\ghost\\999^{commit} failed: fatal: Needed a single revision";
-        let cx = runtime.ctx("diff");
-        let human = humanize_error(&cx, raw);
-        assert_eq!(
-            human.summary,
-            "A branch base ou referência informada não existe neste repositório."
-        );
-        assert!(!human.summary.contains("rev-parse"));
-        assert!(!human.summary.to_ascii_lowercase().contains("failed"));
-        assert!(human.detail.is_some());
-        let _ = std::fs::remove_dir_all(&root);
-    }
-}

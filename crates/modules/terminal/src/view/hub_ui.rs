@@ -58,14 +58,7 @@ pub fn draw(
         .cloned()
         .collect();
     if let Some(notice) = hub.notice.clone() {
-        let human = forja_kernel::human_error::humanize_ctx(cx, &notice);
-        if forja_ui_kit::error_notice(
-            ui,
-            &human.summary,
-            human.detail.as_deref(),
-            &texts.error_details,
-            Some(&texts.notice_dismiss),
-        ) {
+        if super::error::notice(ui, cx, &notice, &texts.notice_dismiss) {
             hub.notice = None;
         }
     }

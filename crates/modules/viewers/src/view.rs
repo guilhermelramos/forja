@@ -108,14 +108,7 @@ impl View for ViewerView {
         });
         ui.separator();
         if let Some(error) = &document.error {
-            let human = forja_kernel::human_error::humanize_ctx(cx, error);
-            let details_label = cx.t("kernel.error.details");
-            forja_ui_kit::error_banner(
-                ui,
-                &human.summary,
-                human.detail.as_deref(),
-                &details_label,
-            );
+            crate::view_error::banner(ui, cx, error);
             return;
         }
         match document.kind.as_str() {

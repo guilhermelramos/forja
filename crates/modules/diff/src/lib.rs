@@ -11,6 +11,7 @@ mod images;
 mod model;
 mod state;
 mod view;
+mod view_error;
 
 use crate::state::Shared;
 use forja_contracts::{BenchActivated, GitComparisonChanged, GitStatusChanged, names};

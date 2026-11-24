@@ -1,6 +1,7 @@
 //! Views do módulo: a aba de terminal e a lista de receitas da Bigorna.
 
 mod chrome;
+mod error;
 mod fonts;
 mod hub_ui;
 mod input;
@@ -708,14 +709,7 @@ impl View for RecipeView {
             }
         }
         if let Some(error) = &self.error {
-            let human = forja_kernel::human_error::humanize_ctx(cx, error);
-            let details_label = cx.t("kernel.error.details");
-            forja_ui_kit::error_banner(
-                ui,
-                &human.summary,
-                human.detail.as_deref(),
-                &details_label,
-            );
+            error::banner(ui, cx, error);
         }
     }
 }
