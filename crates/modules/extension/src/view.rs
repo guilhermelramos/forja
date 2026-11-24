@@ -202,7 +202,7 @@ impl ExtensionPage {
             match setting.kind.as_str() {
                 "toggle" => {
                     let mut checked = value.as_bool().unwrap_or(false);
-                    if forja_ui_kit::toggle_labeled(ui, &mut checked, &label).changed() {
+                    if forja_ui_kit::toggle_labeled(ui, &mut checked, label).changed() {
                         state::set_setting(&self.core, &entry.id, &setting.name, json!(checked));
                     }
                 }
@@ -217,7 +217,7 @@ impl ExtensionPage {
                         forja_ui_kit::text(ui, label);
                         let options: Vec<&str> =
                             setting.options.iter().map(String::as_str).collect();
-                        if forja_ui_kit::select_labeled(ui, &mut index, &label, &options).changed() {
+                        if forja_ui_kit::select_labeled(ui, &mut index, label, &options).changed() {
                             if let Some(option) = setting.options.get(index) {
                                 state::set_setting(
                                     &self.core,
@@ -236,7 +236,7 @@ impl ExtensionPage {
                         .unwrap_or_default();
                     ui.horizontal(|ui| {
                         forja_ui_kit::text(ui, label);
-                        if forja_ui_kit::text_field_labeled(ui, &mut text, &label, &hint).changed() {
+                        if forja_ui_kit::text_field_labeled(ui, &mut text, label, hint).changed() {
                             if let Ok(number) = text.parse::<f64>() {
                                 state::set_setting(
                                     &self.core,
@@ -257,7 +257,7 @@ impl ExtensionPage {
                         .unwrap_or_else(|| value.as_str().unwrap_or_default().to_owned());
                     ui.horizontal(|ui| {
                         forja_ui_kit::text(ui, label);
-                        if forja_ui_kit::text_field_labeled(ui, &mut text, &label, &hint).changed() {
+                        if forja_ui_kit::text_field_labeled(ui, &mut text, label, hint).changed() {
                             self.field_drafts.insert(key.clone(), text.clone());
                             state::set_setting(&self.core, &entry.id, &setting.name, json!(text));
                         }

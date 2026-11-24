@@ -17,7 +17,7 @@
     {
       "present_elements": [
         {
-          "name": "Local",
+          "name": "Balcão de pedidos",
           "role": "ComboBox"
         }
       ],
@@ -27,7 +27,7 @@
         "Abertos",
         "Recentes",
         "Todos",
-        "Local"
+        "Balcão de pedidos"
       ],
       "max_primary_buttons": 1,
       "no_geometry_issues": true
