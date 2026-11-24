@@ -441,5 +441,6 @@ shell-settings-section-mcp = Servidor MCP
 shell-settings-section-voice = Voz
 shell-settings-section-import = Importar
 shell-top-crumb-label = Projeto e bancada ativos
+shell-top-crumb-name = { shell-top-crumb-label }: { $value }
 shell-top-search = Buscar ou executar…
 shell-window-restore = Restaurar

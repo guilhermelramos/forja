@@ -441,5 +441,6 @@ shell-settings-section-mcp = MCP server
 shell-settings-section-voice = Voice
 shell-settings-section-import = Import
 shell-top-crumb-label = Active project and bench
+shell-top-crumb-name = { shell-top-crumb-label }: { $value }
 shell-top-search = Search or run…
 shell-window-restore = Restore
