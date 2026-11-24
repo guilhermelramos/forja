@@ -1,0 +1,36 @@
+{
+  "title": "Navegador: navegar responde e explica quando a superfície nativa fica oculta (#30)",
+  "issue": 30,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Abrir pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 250 },
+    { "m": "ui.click", "target": "Abrir aba de ferramenta" },
+    { "m": "ui.click", "target": "Navegador" },
+    { "m": "ui.wait", "ms": 300 },
+    { "m": "ui.click", "target": "forja://inicio" },
+    { "m": "ui.key", "keys": "Ctrl+A" },
+    { "m": "ui.type", "text": "https://example.com" },
+    { "m": "ui.key", "keys": "Enter" },
+    { "m": "ui.wait", "ms": 400 },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 6,
+      "present_contains": ["Servidores locais das bancadas", "Documentação do projeto"]
+    },
+    {
+      "step": 11,
+      "present_contains": ["https://example.com"],
+      "absent_contains": ["could not create the webview"]
+    },
+    {
+      "step": 13,
+      "present_contains": ["O navegador embutido fica oculto", "https://example.com"]
+    }
+  ]
+}
