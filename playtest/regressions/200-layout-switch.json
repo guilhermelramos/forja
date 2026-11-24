@@ -30,11 +30,12 @@
     {
       "step": 5,
       "present": ["Layout: Foco"],
+      "absent": ["Bancada", "0 trabalhando · 0 esperando"],
       "no_geometry_issues": true
     },
     {
       "step": 9,
-      "present": ["Layout: Oficina"],
+      "present": ["Layout: Oficina", "Bancada", "0 trabalhando · 0 esperando"],
       "no_geometry_issues": true
     }
   ]
