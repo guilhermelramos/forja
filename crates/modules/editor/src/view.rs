@@ -334,8 +334,11 @@ impl EditorView {
         if self.goto_open {
             let mut line = self.goto_text.clone();
             ui.horizontal(|ui| {
-                forja_ui_kit::text(ui, cx.t("editor.goto.label"));
-                ui.add(egui::TextEdit::singleline(&mut line).desired_width(80.0));
+                let goto_label = cx.t("editor.goto.label");
+                forja_ui_kit::text(ui, goto_label.clone());
+                ui.set_width(80.0);
+                forja_ui_kit::text_field_labeled(ui, &mut line, &goto_label, &goto_label);
+                ui.set_width(f32::INFINITY);
                 if forja_ui_kit::button(
                     ui,
                     forja_ui_kit::ButtonKind::Secondary,
@@ -406,21 +409,20 @@ impl EditorView {
     ) {
         let mut changed = false;
         ui.horizontal_wrapped(|ui| {
-            changed |= egui::TextEdit::singleline(&mut find.query)
-                .hint_text(cx.t("editor.find.hint"))
-                .desired_width(220.0)
-                .show(ui)
-                .response
-                .changed();
-            changed |= ui
-                .checkbox(&mut find.case_sensitive, cx.t("editor.find.case"))
-                .changed();
-            changed |= ui
-                .checkbox(&mut find.whole_word, cx.t("editor.find.word"))
-                .changed();
-            changed |= ui
-                .checkbox(&mut find.regex, cx.t("editor.find.regex"))
-                .changed();
+            let find_hint = cx.t("editor.find.hint");
+            ui.set_width(220.0);
+            changed |=
+                forja_ui_kit::text_field_labeled(ui, &mut find.query, &find_hint, &find_hint)
+                    .changed();
+            ui.set_width(f32::INFINITY);
+            changed |=
+                forja_ui_kit::toggle(ui, &mut find.case_sensitive, &cx.t("editor.find.case"))
+                    .changed();
+            changed |=
+                forja_ui_kit::toggle(ui, &mut find.whole_word, &cx.t("editor.find.word"))
+                    .changed();
+            changed |=
+                forja_ui_kit::toggle(ui, &mut find.regex, &cx.t("editor.find.regex")).changed();
             let count = if find.matches.is_empty() {
                 "0".to_owned()
             } else {
@@ -449,12 +451,11 @@ impl EditorView {
             }
             if find.replace_open {
                 ui.separator();
-                changed |= egui::TextEdit::singleline(&mut find.replacement)
-                    .hint_text(cx.t("editor.find.replace-hint"))
-                    .desired_width(180.0)
-                    .show(ui)
-                    .response
-                    .changed();
+                let replace_hint = cx.t("editor.find.replace-hint");
+                ui.set_width(180.0);
+                changed |= forja_ui_kit::text_field_labeled(
+                    ui, &mut find.replacement, &replace_hint, &replace_hint).changed();
+                ui.set_width(f32::INFINITY);
                 if ui.button(cx.t("editor.find.replace-all")).clicked() {
                     let mut args = Args::new();
                     args.insert("path", json!(tab.path));
@@ -695,6 +696,7 @@ impl EditorView {
         let family = self.font_family(cx);
         let dark = ui.visuals().dark_mode;
         let mut content = tab.content.clone();
+        let canvas_label = cx.t_args("editor.canvas.label", &[("file", &tab.path)]);
         let id = editor_id(&tab.path);
         let mut response_focused = false;
         let mut changed = false;
@@ -780,6 +782,10 @@ impl EditorView {
                         .margin(egui::Margin::ZERO)
                         .layouter(&mut layouter)
                         .show(ui);
+                    let canvas_name = canvas_label.clone();
+                    output.response.widget_info(|| {
+                        egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, ui.is_enabled(), canvas_name.clone())
+                    });
                     changed = output.response.changed();
                     response_focused =
                         output.response.has_focus() || ui.memory(|memory| memory.has_focus(id));
@@ -1215,10 +1221,8 @@ impl EditorView {
                         open = false;
                     }
                     forja_ui_kit::text(ui, egui::RichText::new(&rename.word).monospace().color(muted));
-                    ui.add(
-                        egui::TextEdit::singleline(&mut rename.text)
-                            .hint_text(cx.t("editor.rename.hint")),
-                    );
+                    let rename_hint = cx.t("editor.rename.hint");
+                    forja_ui_kit::text_field_labeled(ui, &mut rename.text, &rename_hint, &rename_hint);
                     let apply = forja_ui_kit::button(
                         ui,
                         forja_ui_kit::ButtonKind::Primary,
