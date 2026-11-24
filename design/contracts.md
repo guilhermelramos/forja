@@ -462,7 +462,7 @@ Métodos RPC equivalentes: `muster.run`, `muster.task`, `muster.start`, `muster.
 - **Entrega.** `muster.handoff.require_evidence` exige `evidence` quando o resultado é `feito`.
 - **Plano.** Com `muster.plan.require_approval` ligado, o mutirão nasce com `plan_approved: false`; `muster.start` recusa até `muster.plan.approve`. `muster.plan.max_tasks` limita `muster.task`.
 - **Orçamento.** `budget_usd` vem do pedido ou de `muster.budget.max_usd`; `muster.spend` soma o custo e `muster.start` recusa quando o teto já foi atingido.
-- **Despacho.** `muster.dispatch.target` escolhe `ask` (exige `bench_path`), `current` (usa a bancada atual) ou `new` (`bench.create`, com posse registrada ao concluir). O despacho `new` só sobe o ajudante quando chega `bench.created` com o mesmo `bench_id`; `bench.create_failed` fecha o pedido, marca a tarefa como falha e avisa.
+- **Despacho.** `muster.dispatch.target` escolhe `ask` (exige `bench_path`), `current` (usa a bancada atual) ou `new` (`bench.create`, com posse registrada ao concluir). O despacho `new` só sobe o ajudante quando chega `bench.created` com o mesmo `bench_id`; `bench.create_failed` fecha o pedido, marca a tarefa como falha e avisa. `muster.workspace.isolation = worktree` recusa reaproveitar a bancada de outra tarefa do mesmo mutirão; `shared` permite.
 - **Limpeza.** `muster.cleanup.on_finish` só remove bancadas que o próprio mutirão criou (posse persistida). Consulta `bench.is_dirty` por `bench_id` e chama `bench.store` sem `force`: bancada suja fica e gera aviso.
 - **Eventos.** Consome `helper.status_changed`, `terminal.exited`, `terminal.command_finished`, `bench.created` e `bench.create_failed`; não publica eventos próprios.
 

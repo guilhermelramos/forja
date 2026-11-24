@@ -3310,7 +3310,6 @@ help_key = "setting-muster-notifications-task_failed-help"
 
 [[setting]]
 key = "muster.workspace.isolation"
-deferred = "Aguardando contrato de criação e prontidão de bancada isolada."
 module = "muster"
 group = "muster"
 scope = "user"

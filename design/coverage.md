@@ -8,11 +8,11 @@
 |---|---|
 | Configurações no catálogo | 314 |
 | Configurações sobreponíveis por projeto (`scope = "project"`) | 31 |
-| Configurações registradas no app | 293 (292 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 292 (291 do catálogo) |
+| Configurações registradas no app | 294 (293 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 293 (292 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
-| Configurações adiadas | 20 |
+| Configurações adiadas | 19 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
 | Atalhos no catálogo | 110 |
@@ -40,7 +40,6 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 - `voice.output.model_path`: Aguardando a síntese de voz local (Piper) ser aprovada como dependência.
 - `voice.output.rate`: Aguardando a síntese de voz (SAPI ou Piper) ser aprovada como dependência.
 - `voice.output.auto_read`: Aguardando a síntese de voz (SAPI ou Piper) ser aprovada como dependência.
-- `muster.workspace.isolation`: Aguardando contrato de criação e prontidão de bancada isolada.
 - `mcp.client.enabled`: Cliente MCP ainda não implementado.
 - `mcp.startup.timeout_s`: Cliente MCP ainda não implementado.
 - `browser.privacy.third_party_cookies`: Aguardando a API de perfil do WebView2 para bloquear cookies de terceiros.
@@ -245,7 +244,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `muster.budget.max_usd` | `muster` | `muster` | sim | ok | sim |
 | `muster.cleanup.on_finish` | `muster` | `muster` | sim | ok | sim |
 | `muster.notifications.task_failed` | `muster` | `muster` | sim | ok | sim |
-| `muster.workspace.isolation` | `muster` | `-` | adiada | - | adiada |
+| `muster.workspace.isolation` | `muster` | `muster` | sim | ok | sim |
 | `routine.mode.enabled` | `routine` | `routine` | sim | ok | sim |
 | `routine.schedule.timezone` | `routine` | `routine` | sim | ok | sim |
 | `routine.schedule.missed` | `routine` | `routine` | sim | ok | sim |

@@ -13,6 +13,7 @@ mod plan;
 mod preamble;
 mod state;
 mod view;
+mod workspace;
 
 use forja_kernel::{
     Module, ModuleManifest, Registrar, SettingKind, SettingSpec, SettingValue, Slot,
@@ -223,6 +224,18 @@ fn register_settings(r: &mut Registrar<'_>) {
         SettingValue::Text("ask".to_owned()),
         "setting-muster-cleanup-on_finish-label",
         "setting-muster-cleanup-on_finish-help",
+    ));
+    r.setting(SettingSpec::new(
+        "muster.workspace.isolation",
+        SettingKind::Choice {
+            options: ["worktree", "shared"]
+                .into_iter()
+                .map(str::to_owned)
+                .collect(),
+        },
+        SettingValue::Text("worktree".to_owned()),
+        "setting-muster-workspace-isolation-label",
+        "setting-muster-workspace-isolation-help",
     ));
     r.setting(SettingSpec::new(
         "muster.notifications.task_failed",
@@ -920,6 +933,77 @@ mod tests {
         });
         runtime.emit(&ready);
         settle(runtime);
+    }
+
+    #[test]
+    fn isolation_shared_allows_one_bench_but_worktree_refuses_reuse() {
+        let dir = temp_dir();
+        let (mut runtime, stubs) = bench_runtime(&dir.0);
+        runtime
+            .set_setting("muster.plan.require_approval", SettingValue::Bool(false))
+            .unwrap();
+        runtime
+            .set_setting(
+                "muster.dispatch.target",
+                SettingValue::Text("current".to_owned()),
+            )
+            .unwrap();
+        runtime
+            .set_setting(
+                "muster.workspace.isolation",
+                SettingValue::Text("shared".to_owned()),
+            )
+            .unwrap();
+        let (run_id, first) = new_run_and_task(&mut runtime);
+        runtime
+            .call_method(
+                "muster.start",
+                Map::from_iter([("task".to_owned(), json!(first))]),
+            )
+            .unwrap();
+        let second = runtime
+            .call_method(
+                "muster.task",
+                Map::from_iter([
+                    ("run".to_owned(), json!(run_id.clone())),
+                    ("title".to_owned(), json!("Segunda")),
+                ]),
+            )
+            .unwrap();
+        runtime
+            .call_method(
+                "muster.start",
+                Map::from_iter([("task".to_owned(), second["id"].clone())]),
+            )
+            .unwrap();
+        assert_eq!(
+            stubs.paths.lock().unwrap().as_slice(),
+            ["C:/atual", "C:/atual"]
+        );
+
+        runtime
+            .set_setting(
+                "muster.workspace.isolation",
+                SettingValue::Text("worktree".to_owned()),
+            )
+            .unwrap();
+        let third = runtime
+            .call_method(
+                "muster.task",
+                Map::from_iter([
+                    ("run".to_owned(), json!(run_id)),
+                    ("title".to_owned(), json!("Terceira")),
+                ]),
+            )
+            .unwrap();
+        let error = runtime
+            .call_method(
+                "muster.start",
+                Map::from_iter([("task".to_owned(), third["id"].clone())]),
+            )
+            .unwrap_err();
+        assert!(error.message.contains("bancada própria"), "{}", error.message);
+        assert_eq!(stubs.paths.lock().unwrap().len(), 2);
     }
 
     #[test]

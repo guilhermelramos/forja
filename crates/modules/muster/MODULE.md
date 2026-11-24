@@ -3,10 +3,15 @@
 `muster.mode.enabled` blocks new runs and dispatches while leaving existing
 state readable. `muster.notes.retention_days` prunes expired notes during the
 poll, retaining notes that still await delivery.
-Coordinator launch, dispatch targeting, safe retries, bench cleanup and isolation remain deferred
-until their respective lifecycle and bench contracts are available.
-Starting with `new_bench` is refused until bench creation has a completion and
-failure contract; create the bench first, wait for readiness, and pass its path.
+`muster.coordinator.profile` records the coordinating helper profile and is the
+default when a task has no explicit profile. `muster.dispatch.target` chooses
+`ask`, `current` or `new`; `new` calls `bench.create` and waits for
+`bench.created`/`bench.create_failed` with the same `bench_id` before launching.
+`muster.escalation.max_retries` resends the same task only after the previous
+assignment ended, and the state refuses a second simultaneous execution.
+`muster.cleanup.on_finish` removes only benches the muster created and that are
+clean, using `bench.store` without force. `muster.workspace.isolation` keeps one
+bench per task under `worktree` and allows sharing under `shared`.
 
 Mutirão: coordena tarefas entre bancadas e ajudantes. Estado persistido em
 `<dados>/modules/muster.json`. `muster.run` exige um título que contenha
@@ -48,10 +53,13 @@ caracteres além de espaços.
 
 `muster.start`:
 
-1. usa a bancada informada ou a atual, já pronta;
+1. escolhe a bancada por `muster.dispatch.target` e `muster.workspace.isolation`;
 2. monta o preâmbulo em `preamble.rs`;
 3. chama `helper.launch` com a spec e o preâmbulo;
 4. registra terminal/sessão e estado da atribuição.
+
+Com `new`, o passo 3 só acontece depois de `bench.created` com o mesmo
+`bench_id` do pedido; `bench.create_failed` marca a tarefa como falha e avisa.
 
 O preâmbulo ensina os comandos `forja muster note .` e
 `forja muster handoff --result feito --summary .` e diz que recados são dados,
@@ -94,8 +102,20 @@ Cada `MusterRun` carrega `plan_approved`, `budget_usd` e `spent_usd`.
 
 Assina `helper.status_changed`, `terminal.exited` e
 `terminal.command_finished`. Quando uma atribuição que estava trabalhando fica
-ociosa ou termina sem entrega, cria um `alerta` com o fim do texto do terminal
-e marca a tarefa como `blocked`. O alerta aparece uma vez por atribuição.
+ociosa ou termina sem entrega, cria um `alerta` com o fim do texto do terminal.
+Só `terminal.exited` confirma o encerramento: com `muster.escalation.max_retries`
+a mesma tarefa é reaberta até o limite; sem tentativas restantes, fica
+`blocked`. O estado impede duas execuções simultâneas da mesma tarefa e o alerta
+aparece uma vez por atribuição.
+
+## Isolamento e limpeza
+
+`muster.workspace.isolation = worktree` recusa reaproveitar, numa tarefa, a
+bancada já usada por outra do mesmo mutirão; `shared` permite o reaproveitamento.
+As bancadas criadas pelo mutirão ficam marcadas em `owned_benches`. Ao terminar,
+`muster.cleanup.on_finish = remove` chama `bench.store` só para as bancadas
+próprias e limpas, depois de `bench.is_dirty`; suja ou alheia nunca é removida e
+gera aviso na página.
 
 ## Contratos
 

@@ -8,6 +8,7 @@ use crate::model::{
 };
 use crate::preamble::helper_preamble;
 use crate::state::{self, with, Shared};
+use crate::workspace::{self, Isolation};
 use forja_contracts::{
     names, BenchCreateFailed, BenchCreated, HelperStatus, HelperStatusChanged,
     TerminalCommandFinished, TerminalExited,
@@ -62,6 +63,7 @@ pub const USED_KEYS: &[&str] = &[
     "muster.error.bench-conflict",
     "muster.error.bench-service",
     "muster.error.bench-service-empty",
+    "muster.error.isolation",
     "muster.error.empty-title",
     "muster-task-pending",
     "muster-task-running",
@@ -403,16 +405,50 @@ fn start(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kernel
     }
     check_parallel(cx, shared)?;
 
-    if new_bench || target == "new" {
-        return create_dispatch_bench(cx, shared, &task_id, &run_id, profile, permission);
-    }
-    let bench_path = match bench_arg {
-        Some(path) => path,
-        None if target == "current" => current_bench_path(cx)
-            .ok_or_else(|| KernelError::Message(cx.t("muster.error.bench-ask")))?,
-        None => return Err(KernelError::Message(cx.t("muster.error.bench-ask"))),
+    let isolation = Isolation::parse(
+        cx.setting("muster.workspace.isolation")
+            .and_then(SettingValue::as_str)
+            .unwrap_or("worktree"),
+    );
+    let used: Vec<String> = with(shared, |state| {
+        state
+            .store
+            .assignments
+            .iter()
+            .filter(|assignment| assignment.run == run_id && assignment.task != task_id)
+            .map(|assignment| assignment.bench_path.clone())
+            .collect()
+    })
+    .unwrap_or_default();
+    let wants_new = new_bench || target == "new";
+    let current = if target == "current"
+        && bench_arg.is_none()
+        && run.bench_path.is_none()
+        && !wants_new
+    {
+        current_bench_path(cx)
+    } else {
+        None
     };
-    launch_task(cx, shared, &task_id, &run, profile, permission, &bench_path)
+    let choice = workspace::choose(
+        isolation,
+        bench_arg.as_deref(),
+        run.bench_path.as_deref(),
+        current.as_deref(),
+        &used,
+        wants_new,
+    )
+    .map_err(|detail| {
+        KernelError::Message(cx.t_args("muster.error.isolation", &[("detail", &detail)]))
+    })?;
+    match choice {
+        workspace::BenchChoice::Create => {
+            create_dispatch_bench(cx, shared, &task_id, &run_id, profile, permission)
+        }
+        workspace::BenchChoice::Use(path) => {
+            launch_task(cx, shared, &task_id, &run, profile, permission, &path)
+        }
+    }
 }
 
 /// Número de ajudantes em paralelo, contando criações de bancada pendentes.
