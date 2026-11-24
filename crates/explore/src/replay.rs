@@ -249,17 +249,24 @@ fn run_file(
             } else {
                 let mut params = Map::new();
                 for (k, v) in step {
-                    if k != "m" && k != "view" {
+                    if k != "m" && k != "view" && k != "allow_error" {
                         params.insert(k.clone(), v.clone());
                     }
                 }
-                let reply = call_ui(session.pipe(), method, Value::Object(params), CALL_TIMEOUT)
-                    .map_err(|err| format!("step {step_idx} ({method}) failed: {err}"))?;
+                let allow_error = step
+                    .get("allow_error")
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+                let reply = call_ui(session.pipe(), method, Value::Object(params), CALL_TIMEOUT);
                 if method.starts_with("ui.") {
+                    let reply = reply.map_err(|err| format!("step {step_idx} ({method}) failed: {err}"))?;
                     Snapshot::from_rpc_result(&reply).map_err(|err| {
                         format!("step {step_idx} ({method}) invalid snapshot: {err}")
                     })?
                 } else {
+                    if let (Err(err), false) = (&reply, allow_error) {
+                        return Err(format!("step {step_idx} ({method}) failed: {err}"));
+                    }
                     let snap_reply =
                         call_ui(session.pipe(), "ui.snapshot", json!({}), CALL_TIMEOUT).map_err(
                             |err| format!("step {step_idx} ({method} snapshot) failed: {err}"),

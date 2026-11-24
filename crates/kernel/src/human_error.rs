@@ -226,8 +226,20 @@ pub fn redact_internal_ids(text: &str) -> String {
         let mut end = start + marker.len();
         if marker == "`" {
             if let Some(close) = text[start + 1..].find('`') {
+                let inner = &text[start + 1..start + 1 + close];
                 end = start + 1 + close + 1;
-                out.push_str("[interno]");
+                let internal = inner.len() >= 3
+                    && inner.len() <= 64
+                    && !inner.contains(char::is_whitespace)
+                    && (inner.contains('.') || inner.contains('_'))
+                    && inner
+                        .chars()
+                        .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-' | ':'));
+                if internal {
+                    out.push_str("[interno]");
+                } else {
+                    out.push_str(&text[start..end]);
+                }
             } else {
                 out.push('`');
             }

@@ -118,6 +118,8 @@ impl Module for ChatModule {
             "chat.view.copied",
             "chat.view.error-not-found",
             "chat.view.error-launch",
+            "chat.view.error-provider",
+            "chat.view.error-internal",
         ] {
             r.uses_i18n(key);
         }
@@ -577,6 +579,8 @@ mod tests {
         assert!(!human.summary.contains("command `"));
         assert!(!human.summary.contains("failed:"));
         assert!(!human.summary.contains("is not installed"));
-        assert_eq!(human.detail.as_deref(), Some(raw));
+        let detail = human.detail.as_deref().unwrap();
+        assert!(!detail.contains("helper.launch"), "{detail}");
+        assert!(!detail.contains('`'), "{detail}");
     }
 }

@@ -200,6 +200,7 @@ impl Module for HelperModule {
             "helper.view.working",
             "helper.view.needs-you",
             "helper.view.finished",
+            "helper.view.error",
             "helper.view.failed",
             "helper.view.idle",
             "helper.view.unknown",
