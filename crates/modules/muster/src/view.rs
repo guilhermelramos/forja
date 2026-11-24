@@ -10,8 +10,8 @@ use crate::state::{self, Shared};
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::{Args, Ctx, Locale};
 use forja_ui_kit::{
-    applied_tokens, button, icon_button, modal_explicit_close, progress_bar, text_field,
-    wrapped_label, ButtonKind, CLOSE,
+    applied_tokens, button, icon_button, modal_explicit_close, progress_bar, text_area,
+    text_field_labeled, wrapped_label, ButtonKind, CLOSE,
 };
 use serde_json::json;
 use std::collections::BTreeMap;
@@ -120,6 +120,20 @@ pub const USED_KEYS: &[&str] = &[
     "muster.note-target-no-helper",
     "muster.no-targets",
     "muster.error.empty-note",
+    "muster.run-title-help",
+    "muster.run-objective-help",
+    "muster.budget-label",
+    "muster.budget-label-help",
+    "muster.bench-help",
+    "muster.task-title-help",
+    "muster.task-spec-help",
+    "muster.task-deps-help",
+    "muster.spend-help",
+    "muster.budget-edit",
+    "muster.budget-edit-help",
+    "muster.note-target-label",
+    "muster.note-body-help",
+    "muster.reply-help",
 ];
 
 #[derive(Clone)]
@@ -333,14 +347,10 @@ impl MusterView {
         }
         egui::Frame::group(ui.style()).show(ui, |ui| {
             forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.run-title")).strong());
-            text_field(ui, &mut self.run_title, &cx.t("muster.run-title"));
+            text_field_labeled(ui, &mut self.run_title, &cx.t("muster.run-title"), &cx.t("muster.run-title-help"));
             forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.run-objective")).strong());
-            ui.add(
-                egui::TextEdit::multiline(&mut self.run_objective)
-                    .desired_rows(2)
-                    .desired_width(f32::INFINITY),
-            );
-            text_field(ui, &mut self.run_budget, &cx.t("muster.budget-hint"));
+            text_area(ui, &mut self.run_objective, &cx.t("muster.run-objective"), &cx.t("muster.run-objective-help"), 2);
+            text_field_labeled(ui, &mut self.run_budget, &cx.t("muster.budget-label"), &cx.t("muster.budget-label-help"));
             ui.horizontal(|ui| {
                 if button(ui, ButtonKind::Primary, &cx.t("muster.create")).clicked() {
                     let mut args = Args::new();
@@ -521,71 +531,31 @@ impl MusterView {
     fn task_pickers(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         ui.add_space(forja_ui_kit::Spacing::XS);
         forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.profile")).small().weak());
-        let auto_label = cx.t("muster.profile-auto");
-        let not_installed = cx.t("muster.profile-not-installed");
-        let selected_label = if self.profile.trim().is_empty() {
-            auto_label.clone()
-        } else if let Some(found) = self
+        let helpers: Vec<(String, String, bool)> = self
             .helper_options
             .iter()
-            .find(|opt| opt.id == self.profile)
-        {
-            if found.installed {
-                found.name.clone()
-            } else {
-                format!("{} ({not_installed})", found.name)
-            }
-        } else {
-            self.profile.clone()
-        };
-        egui::ComboBox::from_id_salt("muster-profile-picker")
-            .selected_text(selected_label)
-            .width(ui.available_width().clamp(120.0, 190.0))
-            .show_ui(ui, |ui| {
-                if ui
-                    .selectable_label(self.profile.trim().is_empty(), &auto_label)
-                    .clicked()
-                {
-                    self.profile.clear();
-                }
-                for option in &self.helper_options {
-                    let label = if option.installed {
-                        option.name.clone()
-                    } else {
-                        format!("{} ({not_installed})", option.name)
-                    };
-                    if ui
-                        .selectable_label(self.profile == option.id, label)
-                        .clicked()
-                    {
-                        self.profile = option.id.clone();
-                    }
-                }
-            });
+            .map(|option| (option.id.clone(), option.name.clone(), option.installed))
+            .collect();
+        if let Some(profile) = crate::pickers::profile_picker(ui, cx, &helpers, &self.profile) {
+            self.profile = profile;
+        }
         ui.add_space(forja_ui_kit::Spacing::XS);
         forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.bench")).small().weak());
-        ui.add(
-            egui::TextEdit::singleline(&mut self.bench)
-                .hint_text("C:/forja/pedido-123")
-                .desired_width(ui.available_width().clamp(120.0, 220.0)),
-        );
-        ui.add_enabled(
-            false,
-            egui::Checkbox::new(&mut self.new_bench, cx.t("muster.new-bench")),
-        )
-        .on_hover_text(cx.t("muster.error.bench-pending"));
+        ui.scope(|ui| {
+            ui.set_max_width(ui.available_width().clamp(120.0, 220.0));
+            text_field_labeled(ui, &mut self.bench, &cx.t("muster.bench"), &cx.t("muster.bench-help"));
+        });
+        ui.add_enabled_ui(false, |ui| {
+            forja_ui_kit::toggle_labeled(ui, &mut self.new_bench, &cx.t("muster.new-bench"));
+        });
     }
 
     fn new_task_form(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>, run: &str) {
         egui::Frame::group(ui.style()).show(ui, |ui| {
-            text_field(ui, &mut self.task_title, &cx.t("muster.task-title"));
+            text_field_labeled(ui, &mut self.task_title, &cx.t("muster.task-title"), &cx.t("muster.task-title-help"));
             forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.task-spec")).strong());
-            ui.add(
-                egui::TextEdit::multiline(&mut self.task_spec)
-                    .desired_rows(2)
-                    .desired_width(f32::INFINITY),
-            );
-            text_field(ui, &mut self.task_deps, &cx.t("muster.task-deps"));
+            text_area(ui, &mut self.task_spec, &cx.t("muster.task-spec"), &cx.t("muster.task-spec-help"), 2);
+            text_field_labeled(ui, &mut self.task_deps, &cx.t("muster.task-deps"), &cx.t("muster.task-deps-help"));
             if button(ui, ButtonKind::Primary, &cx.t("muster.create")).clicked() {
                 let mut args = Args::new();
                 args.insert("run", json!(run));
@@ -946,11 +916,10 @@ impl MusterView {
             }
             forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.spend")).small().weak());
             ui.horizontal_wrapped(|ui| {
-                ui.add(
-                    egui::TextEdit::singleline(&mut self.spend_input)
-                        .hint_text(cx.t("muster.spend-hint"))
-                        .desired_width(90.0),
-                );
+                ui.scope(|ui| {
+                    ui.set_max_width(90.0);
+                    text_field_labeled(ui, &mut self.spend_input, &cx.t("muster.spend-hint"), &cx.t("muster.spend-help"));
+                });
                 if button(ui, ButtonKind::Ghost, &cx.t("muster.spend-add")).clicked() {
                     if let Ok(usd) = self.spend_input.trim().parse::<f64>() {
                         let mut args = Args::new();
@@ -970,11 +939,10 @@ impl MusterView {
         ui.add_space(6.0);
         forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.budget")).small().weak());
         ui.horizontal_wrapped(|ui| {
-            ui.add(
-                egui::TextEdit::singleline(&mut self.budget_input)
-                    .hint_text(cx.t("muster.budget-hint"))
-                    .desired_width(90.0),
-            );
+            ui.scope(|ui| {
+                ui.set_max_width(90.0);
+                text_field_labeled(ui, &mut self.budget_input, &cx.t("muster.budget-edit"), &cx.t("muster.budget-edit-help"));
+            });
             if button(ui, ButtonKind::Ghost, &cx.t("muster.budget-save")).clicked() {
                 if let Ok(budget) = self.budget_input.trim().parse::<f64>() {
                     let mut args = Args::new();
@@ -1227,38 +1195,30 @@ impl MusterView {
             forja_ui_kit::text(ui, egui::RichText::new(cx.t("muster.no-targets")).weak());
             return;
         }
+        let target_labels: Vec<&str> = targets.iter().map(|target| target.label.as_str()).collect();
+        let current = self
+            .note_target
+            .as_ref()
+            .and_then(|id| targets.iter().position(|target| &target.id == id))
+            .unwrap_or(0);
+        if let Some(index) = crate::pickers::named_select(
+            ui,
+            &cx.t("muster.note-target-label"),
+            &target_labels,
+            current,
+        ) {
+            self.note_target = Some(targets[index].id.clone());
+        }
         let selected_target = self
             .note_target
             .as_ref()
             .and_then(|id| targets.iter().find(|target| &target.id == id))
             .cloned();
-        let label = selected_target
-            .as_ref()
-            .map(|target| target.label.clone())
-            .unwrap_or_else(|| cx.t("muster.note-target"));
-        egui::ComboBox::from_id_salt("muster-note-target")
-            .selected_text(label)
-            .width(ui.available_width().clamp(120.0, 260.0))
-            .truncate()
-            .show_ui(ui, |ui| {
-                for target in &targets {
-                    ui.selectable_value(
-                        &mut self.note_target,
-                        Some(target.id.clone()),
-                        &target.label,
-                    );
-                }
-            });
         ui.horizontal_wrapped(|ui| {
-            let hint = cx.t("muster.note-hint");
-            let input = ui.add(
-                egui::TextEdit::singleline(&mut self.note_body)
-                    .hint_text(&hint)
-                    .desired_width((ui.available_width() - 96.0).max(90.0)),
-            );
-            input.widget_info(|| {
-                egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, ui.is_enabled(), hint.clone())
-            });
+            let input = ui.scope(|ui| {
+                ui.set_max_width((ui.available_width() - 96.0).max(90.0));
+                text_field_labeled(ui, &mut self.note_body, &cx.t("muster.note-hint"), &cx.t("muster.note-body-help"))
+            }).inner;
             let enter = input.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter));
             if button(ui, ButtonKind::Primary, &cx.t("muster.send")).clicked() || enter {
                 self.submit_note(cx, selected_target.as_ref());
@@ -1326,7 +1286,7 @@ impl MusterView {
             }
         });
         if incoming && self.reply_to.as_deref() == Some(note.id.as_str()) {
-            text_field(ui, &mut self.reply_body, &cx.t("muster.reply-hint"));
+            text_field_labeled(ui, &mut self.reply_body, &cx.t("muster.reply-hint"), &cx.t("muster.reply-help"));
             if button(ui, ButtonKind::Primary, &cx.t("muster.send")).clicked() {
                 let mut args = Args::new();
                 args.insert("note", json!(note.id));

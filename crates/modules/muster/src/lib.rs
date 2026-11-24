@@ -11,6 +11,7 @@ mod dispatch;
 pub mod demo;
 mod model;
 mod model_ops;
+mod pickers;
 mod plan;
 mod preamble;
 mod state;
