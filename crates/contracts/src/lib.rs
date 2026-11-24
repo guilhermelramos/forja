@@ -219,6 +219,10 @@ pub struct GitSummary {
 pub struct GitStatusChanged {
     pub bench_path: String,
     pub summary: GitSummary,
+    /// Paths changed in this bench, relative to its root. Additive so older
+    /// events still deserialize; used by the Files tree and the Board cards.
+    #[serde(default)]
+    pub files: Vec<String>,
 }
 
 /// A background branch comparison finished for a bench.

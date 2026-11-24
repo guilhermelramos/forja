@@ -7,7 +7,7 @@ use crate::helpers::{
 };
 use crate::log;
 use crate::state::Shared;
-use forja_contracts::{GitComparisonChanged, GitStatusChanged};
+use forja_contracts::GitComparisonChanged;
 use forja_kernel::Registrar;
 use serde_json::json;
 pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
@@ -18,10 +18,7 @@ pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
         if s.path().as_deref() == Some(path) {
             s.set_report(report.clone());
         }
-        cx.emit(&GitStatusChanged {
-            bench_path: path.to_owned(),
-            summary: report.summary.clone(),
-        });
+        crate::status_event::emit(cx, path, &report);
         Ok(serde_json::to_value(report.summary)?)
     });
 

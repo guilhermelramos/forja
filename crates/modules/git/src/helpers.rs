@@ -1,6 +1,5 @@
 use crate::engine;
 use crate::state::Shared;
-use forja_contracts::GitStatusChanged;
 use forja_kernel::forja_protocol::RpcError;
 use forja_kernel::{Args, Ctx, SettingValue};
 use serde_json::{Map, Value};
@@ -12,10 +11,7 @@ pub(crate) fn refresh_now(
     let report = engine::status(std::path::Path::new(&path)).map_err(kernel_error)?;
     shared.set_report(report.clone());
     shared.invalidate_log();
-    cx.emit(&GitStatusChanged {
-        bench_path: path,
-        summary: report.summary.clone(),
-    });
+    crate::status_event::emit(cx, &path, &report);
     Ok(serde_json::to_value(report)?)
 }
 
@@ -32,12 +28,8 @@ pub(crate) fn refresh_async(cx: &mut Ctx<'_>, shared: &Shared) {
         move || engine::status(std::path::Path::new(&target)),
         move |cx, result| match result {
             Ok(report) => {
-                let summary = report.summary.clone();
-                state.set_report(report);
-                cx.emit(&GitStatusChanged {
-                    bench_path: path,
-                    summary,
-                });
+                state.set_report(report.clone());
+                crate::status_event::emit(cx, &path, &report);
             }
             Err(error) => {
                 state.finish_refresh();

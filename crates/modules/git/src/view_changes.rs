@@ -3,7 +3,6 @@
 use crate::engine;
 use crate::state::Shared;
 use crate::view_history_panel::{load_log, render_blame_panel, render_history};
-use forja_contracts::GitStatusChanged;
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::{Args, Ctx, SettingValue};
 use serde_json::{json, Map, Value};
@@ -95,12 +94,8 @@ pub(crate) fn refresh_if_needed(cx: &mut Ctx<'_>, state: &Shared) {
         move || engine::status(Path::new(&target)),
         move |cx, result| match result {
             Ok(report) => {
-                let summary = report.summary.clone();
-                shared.set_report(report);
-                cx.emit(&GitStatusChanged {
-                    bench_path: path,
-                    summary,
-                });
+                shared.set_report(report.clone());
+                crate::status_event::emit(cx, &path, &report);
             }
             Err(error) => {
                 shared.finish_refresh();
@@ -170,12 +165,8 @@ fn refresh_async(cx: &mut Ctx<'_>, state: &Shared) {
         move || engine::status(Path::new(&target)),
         move |cx, result| match result {
             Ok(report) => {
-                let summary = report.summary.clone();
-                shared.set_report(report);
-                cx.emit(&GitStatusChanged {
-                    bench_path: path,
-                    summary,
-                });
+                shared.set_report(report.clone());
+                crate::status_event::emit(cx, &path, &report);
             }
             Err(error) => {
                 shared.finish_refresh();

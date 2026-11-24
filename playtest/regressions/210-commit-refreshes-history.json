@@ -1,0 +1,40 @@
+{
+  "title": "Commit recarrega o Histórico da bancada (#36)",
+  "issue": 36,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Abrir pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 1000 },
+    { "m": "ui.click", "target": "Mudanças" },
+    { "m": "ui.wait", "ms": 600 },
+    { "m": "ui.click", "target": "Preparar tudo" },
+    { "m": "ui.wait", "ms": 500 },
+    { "m": "ui.click", "target": "Mensagem do commit" },
+    { "m": "ui.type", "text": "Commit da regressao 210" },
+    { "m": "ui.click", "target": "Commitar" },
+    { "m": "ui.wait", "ms": 1500 },
+    { "m": "ui.click", "target": "Histórico" },
+    { "m": "ui.wait", "ms": 1000 },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 6,
+      "present": ["Mudanças", "Preparar tudo", "Mensagem do commit", "Commitar"]
+    },
+    {
+      "step": 12,
+      "present_contains": ["Commit da regressao 210"]
+    },
+    {
+      "step": 15,
+      "present_contains": ["Commit da regressao 210"],
+      "absent_contains": ["Nenhum commit ainda"],
+      "no_geometry_issues": true
+    }
+  ]
+}

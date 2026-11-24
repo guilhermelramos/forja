@@ -241,21 +241,23 @@ pub(crate) fn render_blame_panel(
         });
 }
 
+/// Reads the commit graph in a kernel task. A commit (or any other HEAD change)
+/// invalidates the log and bumps the generation, so a read that was already in
+/// flight for the old HEAD cannot overwrite the fresh one.
 pub(crate) fn load_log(cx: &mut Ctx<'_>, state: &Shared) {
-    let _ = cx;
     let Some(path) = state.path() else {
         return;
     };
-    if state.log_for(&path) {
+    let Some(generation) = state.begin_log_load(&path) else {
         return;
-    }
-    match log::log(Path::new(&path), 200) {
-        Ok(lines) => {
-            state.set_error(None);
-            state.set_commits(&path, lines);
-        }
-        Err(error) => state.set_error(Some(error)),
-    }
+    };
+    let target = path.clone();
+    let result_path = path;
+    let shared = state.clone();
+    cx.spawn(
+        move || log::log(Path::new(&target), 200),
+        move |_cx, result| shared.finish_log_load(generation, &result_path, result),
+    );
 }
 
 /// Path of the file currently open in the editor, when that module is loaded.
