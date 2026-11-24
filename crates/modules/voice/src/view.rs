@@ -10,11 +10,13 @@ use crate::state::{
 };
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::{Ctx, SettingValue};
-use forja_ui_kit::{button, progress_bar, select, toggle, ButtonKind};
+use forja_ui_kit::{button, progress_bar, secret_field, select_labeled, text_area, toggle, ButtonKind};
 
 /// Chaves que as telas montam em tempo de execução.
 pub const USED_KEYS: &[&str] = &[
     "voice-overlay-title",
+    "voice-transcript-label",
+    "voice-transcript-help",
     "voice-state-idle",
     "voice-state-recording",
     "voice-state-transcribing",
@@ -180,9 +182,14 @@ impl OverlayView {
 
         if !snap.transcript.is_empty() || snap.seconds.is_some() {
             let mut text = snap.transcript.clone();
-            let changed = ui
-                .add(egui::TextEdit::multiline(&mut text).desired_rows(4).desired_width(f32::INFINITY))
-                .changed();
+            let changed = text_area(
+                ui,
+                &mut text,
+                &cx.t("voice-transcript-label"),
+                &cx.t("voice-transcript-help"),
+                4,
+            )
+            .changed();
             if changed {
                 self.shared.with(|state| state.transcript = text);
             }
@@ -211,7 +218,7 @@ impl OverlayView {
                 return;
             }
             let mut index = self.target.min(labels.len() - 1);
-            select(ui, &mut index, &labels);
+            select_labeled(ui, &mut index, &cx.t("voice-target-label"), &labels);
             self.target = index;
             let enabled = !snap.transcript.trim().is_empty();
             ui.add_enabled_ui(enabled, |ui| {
@@ -288,7 +295,7 @@ impl View for SettingsView {
         let mut engine = usize::from(settings.engine == "whisper_cpp");
         ui.horizontal_wrapped(|ui| {
             ui.label(cx.t("setting-voice-input-engine-label"));
-            if select(ui, &mut engine, &engine_refs).changed() {
+            if select_labeled(ui, &mut engine, &cx.t("setting-voice-input-engine-label"), &engine_refs).changed() {
                 let value = if engine == 1 { "whisper_cpp" } else { "windows" };
                 let _ = cx.set_setting("voice.input.engine", SettingValue::Text(value.to_owned()));
             }
@@ -310,7 +317,7 @@ impl View for SettingsView {
             .unwrap_or(0);
         ui.horizontal_wrapped(|ui| {
             ui.label(cx.t("setting-voice-input-language-label"));
-            if select(ui, &mut language, &language_refs).changed() {
+            if select_labeled(ui, &mut language, &cx.t("setting-voice-input-language-label"), &language_refs).changed() {
                 let value = language_values[language];
                 let _ = cx.set_setting("voice.input.language", SettingValue::Text(value.to_owned()));
             }
@@ -340,12 +347,15 @@ impl SettingsView {
         };
         ui.label(cx.t("voice-key-label"));
         ui.label(egui::RichText::new(cx.t(status_key)).weak());
-        ui.add(
-            egui::TextEdit::singleline(&mut self.key_text)
-                .password(true)
-                .hint_text(cx.t("voice-key-hint"))
-                .desired_width(320.0),
-        );
+        ui.scope(|ui| {
+            ui.set_max_width(320.0);
+            secret_field(
+                ui,
+                &mut self.key_text,
+                &cx.t("voice-key-label"),
+                &cx.t("voice-key-hint"),
+            );
+        });
         ui.horizontal(|ui| {
             if button(ui, ButtonKind::Primary, &cx.t("voice-key-save")).clicked() && !self.key_text.is_empty() {
                 let key = std::mem::take(&mut self.key_text);
