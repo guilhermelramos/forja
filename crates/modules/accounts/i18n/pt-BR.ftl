@@ -4,6 +4,7 @@ accounts-settings-subtitle = Cada conta usa uma home de configuração separada 
 accounts-settings-empty = Nenhum perfil de ajudante declara uma home de conta.
 accounts-add = Adicionar conta
 accounts-add-hint = Nome
+accounts-add-help = Nome para identificar esta conta do ajudante
 accounts-active = ativa
 accounts-remove = Remover
 accounts-confirm = Confirmar

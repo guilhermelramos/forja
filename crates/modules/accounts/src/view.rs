@@ -155,11 +155,15 @@ impl View for AccountsSettings {
                 }
                 ui.horizontal(|ui| {
                     let mut label = self.adding.get(&meta.id).cloned().unwrap_or_default();
-                    let response = ui.add(
-                        egui::TextEdit::singleline(&mut label)
-                            .hint_text(cx.t("accounts.add-hint"))
-                            .desired_width(180.0),
-                    );
+                    let response = ui.scope(|ui| {
+                        ui.set_max_width(180.0);
+                        forja_ui_kit::text_field_labeled(
+                            ui,
+                            &mut label,
+                            &cx.t("accounts.add-hint"),
+                            &cx.t("accounts.add-help"),
+                        )
+                    }).inner;
                     if response.changed() {
                         self.adding.insert(meta.id.clone(), label.clone());
                     }

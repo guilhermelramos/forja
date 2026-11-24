@@ -4,6 +4,7 @@ accounts-settings-subtitle = Each account uses a separate config home for its he
 accounts-settings-empty = No helper profile declares an account home.
 accounts-add = Add account
 accounts-add-hint = Name
+accounts-add-help = Name to identify this helper account
 accounts-active = active
 accounts-remove = Remove
 accounts-confirm = Confirm
