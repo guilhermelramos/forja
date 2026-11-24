@@ -29,47 +29,31 @@ pub struct Projection {
     pub unavailable_refs: Vec<String>,
 }
 
-fn push_unique(list: &mut Vec<String>, seen: &mut BTreeSet<String>, id: String) {
-    if seen.insert(id.clone()) {
-        list.push(id);
+/// Acumuladores da leitura da árvore, num só valor para manter `collect` curto.
+#[derive(Default)]
+struct Collector {
+    rails: Vec<String>,
+    bench: Vec<String>,
+    sidebar: Vec<String>,
+    right: Vec<String>,
+    unavailable: Vec<String>,
+    seen: BTreeSet<String>,
+    unavailable_seen: BTreeSet<String>,
+}
+
+impl Collector {
+    fn push(list: &mut Vec<String>, seen: &mut BTreeSet<String>, id: String) {
+        if seen.insert(id.clone()) {
+            list.push(id);
+        }
     }
 }
 
-fn collect(
-    node: &LayoutNodeSpec,
-    known: &BTreeMap<String, String>,
-    rails: &mut Vec<String>,
-    bench: &mut Vec<String>,
-    sidebar: &mut Vec<String>,
-    right: &mut Vec<String>,
-    seen: &mut BTreeSet<String>,
-    unavailable: &mut Vec<String>,
-    unavailable_seen: &mut BTreeSet<String>,
-) {
+fn collect(node: &LayoutNodeSpec, known: &BTreeMap<String, String>, out: &mut Collector) {
     match node {
         LayoutNodeSpec::Split { first, second, .. } => {
-            collect(
-                first,
-                known,
-                rails,
-                bench,
-                sidebar,
-                right,
-                seen,
-                unavailable,
-                unavailable_seen,
-            );
-            collect(
-                second,
-                known,
-                rails,
-                bench,
-                sidebar,
-                right,
-                seen,
-                unavailable,
-                unavailable_seen,
-            );
+            collect(first, known, out);
+            collect(second, known, out);
         }
         LayoutNodeSpec::Leaf { tabs, .. } => {
             for tab in tabs {
@@ -80,15 +64,23 @@ fn collect(
                 // Uma referência desconhecida sobrevive como aba indisponível;
                 // nunca é descartada — e agora também é sinalizada.
                 match known.get(&view).map(String::as_str) {
-                    Some("rail") => push_unique(rails, seen, view),
-                    Some("sidebar") => push_unique(sidebar, seen, view),
-                    Some("right_panel") => push_unique(right, seen, view),
-                    Some("bench_tab") => push_unique(bench, seen, view),
+                    Some("rail") => Collector::push(&mut out.rails, &mut out.seen, view),
+                    Some("sidebar") => Collector::push(&mut out.sidebar, &mut out.seen, view),
+                    Some("right_panel") => Collector::push(&mut out.right, &mut out.seen, view),
+                    Some("bench_tab") => Collector::push(&mut out.bench, &mut out.seen, view),
                     None => {
-                        push_unique(unavailable, unavailable_seen, view.clone());
-                        push_unique(bench, seen, view);
+                        Collector::push(
+                            &mut out.unavailable,
+                            &mut out.unavailable_seen,
+                            view.clone(),
+                        );
+                        Collector::push(&mut out.bench, &mut out.seen, view);
                     }
-                    Some(_) => push_unique(unavailable, unavailable_seen, view),
+                    Some(_) => Collector::push(
+                        &mut out.unavailable,
+                        &mut out.unavailable_seen,
+                        view,
+                    ),
                 }
             }
         }
@@ -102,24 +94,8 @@ pub fn project(
     known: &BTreeMap<String, String>,
     registration_order: &[String],
 ) -> Projection {
-    let mut rails = Vec::new();
-    let mut bench = Vec::new();
-    let mut sidebar = Vec::new();
-    let mut right = Vec::new();
-    let mut unavailable = Vec::new();
-    let mut seen = BTreeSet::new();
-    let mut unavailable_seen = BTreeSet::new();
-    collect(
-        &spec.root,
-        known,
-        &mut rails,
-        &mut bench,
-        &mut sidebar,
-        &mut right,
-        &mut seen,
-        &mut unavailable,
-        &mut unavailable_seen,
-    );
+    let mut out = Collector::default();
+    collect(&spec.root, known, &mut out);
     let hidden: BTreeSet<&str> = spec
         .chrome
         .rail_hidden
@@ -129,7 +105,7 @@ pub fn project(
     let declared = spec.chrome.rail_order.clone().unwrap_or_else(|| {
         // Sem ordem declarada, a leitura da árvore vem primeiro e o registro
         // completa a lista com as páginas que o arranjo não menciona.
-        let mut order = rails.clone();
+        let mut order = out.rails.clone();
         order.extend(registration_order.iter().cloned());
         order
     });
@@ -147,10 +123,10 @@ pub fn project(
         rail_hidden: spec.chrome.rail_hidden.clone(),
         rail_order: spec.chrome.rail_order.clone(),
         effective_rail_order: rail_order,
-        bench_tabs: bench,
-        sidebar_tabs: sidebar,
-        right_tabs: right,
-        unavailable_refs: unavailable,
+        bench_tabs: out.bench,
+        sidebar_tabs: out.sidebar,
+        right_tabs: out.right,
+        unavailable_refs: out.unavailable,
     }
 }
 
