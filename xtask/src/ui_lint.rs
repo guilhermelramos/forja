@@ -1,31 +1,67 @@
 //! Ratcheting audit of raw widgets in product modules (not tests or comments).
 use std::path::Path;
 
-const NAMES: [&str; 4] = ["button", "label", "color", "space"];
+const NAMES: [&str; 8] = [
+    "button",
+    "label",
+    "color",
+    "space",
+    "raw_text_edit",
+    "raw_combo_box",
+    "raw_checkbox",
+    "raw_sense_click",
+];
 
 #[derive(Debug, Default, PartialEq, Eq, serde::Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(default, deny_unknown_fields)]
 struct Counts {
     button: usize,
     label: usize,
     color: usize,
     space: usize,
+    raw_text_edit: usize,
+    raw_combo_box: usize,
+    raw_checkbox: usize,
+    raw_sense_click: usize,
 }
 impl Counts {
-    fn values(&self) -> [usize; 4] {
-        [self.button, self.label, self.color, self.space]
+    fn values(&self) -> [usize; 8] {
+        [
+            self.button,
+            self.label,
+            self.color,
+            self.space,
+            self.raw_text_edit,
+            self.raw_combo_box,
+            self.raw_checkbox,
+            self.raw_sense_click,
+        ]
     }
     fn increment(&mut self, index: usize) {
         match index {
             0 => self.button += 1,
             1 => self.label += 1,
             2 => self.color += 1,
-            _ => self.space += 1,
+            3 => self.space += 1,
+            4 => self.raw_text_edit += 1,
+            5 => self.raw_combo_box += 1,
+            6 => self.raw_checkbox += 1,
+            7 => self.raw_sense_click += 1,
+            _ => unreachable!("unknown ui-lint counter"),
         }
     }
     fn add(&mut self, other: &Self) {
         for (i, value) in other.values().into_iter().enumerate() {
             for _ in 0..value {
+                self.increment(i);
+            }
+        }
+    }
+    /// O shell entra só nos contadores de acessibilidade: os tetos do item 9
+    /// ([9,159,5,50]) foram medidos em `crates/modules` e não podem subir.
+    fn add_accessibility(&mut self, other: &Self) {
+        for i in 4..NAMES.len() {
+            for _ in 0..other.values()[i] {
                 self.increment(i);
             }
         }
@@ -159,6 +195,13 @@ fn lex(source: &str) -> Vec<Token> {
     tokens
 }
 
+/// Um `Sense::click` sem `widget_info` por perto vira controle clicável sem nome.
+fn has_widget_info(tokens: &[Token], at: usize) -> bool {
+    let start = at.saturating_sub(8);
+    let end = (at + 40).min(tokens.len());
+    tokens[start..end].iter().any(|t| t.text == "widget_info")
+}
+
 fn count_source(source: &str) -> Result<(Counts, Counts), String> {
     let tokens = lex(source);
     let annotations: std::collections::BTreeMap<_, _> = tokens
@@ -220,6 +263,21 @@ fn count_source(source: &str) -> Result<(Counts, Counts), String> {
             && tokens.get(i + 3).is_some_and(|t| t.text == ")")
         {
             Some(3)
+        } else if matches(&["TextEdit", ":", ":"]) {
+            Some(4)
+        } else if matches(&["ComboBox", ":", ":"]) {
+            Some(5)
+        } else if matches(&["ui", ".", "checkbox", "("])
+            || matches(&["Checkbox", ":", ":"])
+        {
+            Some(6)
+        } else if (matches(&["Sense", ":", ":", "click"])
+            || matches(&["Sense", ":", ":", "CLICK"])
+            || matches(&["Sense", ":", ":", "click_and_drag"])
+            || matches(&["Sense", ":", ":", "drag"]))
+            && !has_widget_info(&tokens, i)
+        {
+            Some(7)
         } else {
             None
         };
@@ -295,27 +353,46 @@ fn check(actual: &Counts, ceiling: &Counts) -> Result<(), String> {
 pub fn run() -> Result<(), String> {
     let root = crate::util::repo_root();
     let modules = root.join("crates/modules");
-    let (actual, allowed) = count_tree(&modules)?;
-    println!("ui-lint: button label color space (exemptions separately)");
-    for entry in std::fs::read_dir(&modules).map_err(|e| e.to_string())? {
-        let path = entry.map_err(|e| e.to_string())?.path();
-        if path.is_dir() {
-            let (counts, exempt) = count_tree(&path)?;
-            if counts
-                .values()
-                .iter()
-                .chain(exempt.values().iter())
-                .any(|n| *n > 0)
-            {
-                println!(
-                    "{}: {:?}; allowed {:?}",
-                    path.file_name().unwrap().to_string_lossy(),
-                    counts.values(),
-                    exempt.values()
-                );
+    let shell = root.join("crates/shell/src");
+    let (mut actual, mut allowed) = (Counts::default(), Counts::default());
+    for root in [&modules, &shell] {
+        let counts = count_tree(root)?;
+        if root == &shell {
+            actual.add_accessibility(&counts.0);
+            allowed.add_accessibility(&counts.1);
+        } else {
+            actual.add(&counts.0);
+            allowed.add(&counts.1);
+        }
+    }
+    println!("ui-lint: {} (exemptions separately)", NAMES.join(" "));
+    for root in [&modules, &shell] {
+        for entry in std::fs::read_dir(root).map_err(|e| e.to_string())? {
+            let path = entry.map_err(|e| e.to_string())?.path();
+            if path.is_dir() {
+                let (counts, exempt) = count_tree(&path)?;
+                if counts
+                    .values()
+                    .iter()
+                    .chain(exempt.values().iter())
+                    .any(|n| *n > 0)
+                {
+                    println!(
+                        "{}: {:?}; allowed {:?}",
+                        path.file_name().unwrap().to_string_lossy(),
+                        counts.values(),
+                        exempt.values()
+                    );
+                }
             }
         }
     }
+    let (shell_counts, shell_exempt) = count_tree(&shell)?;
+    println!(
+        "shell/src: {:?}; allowed {:?}",
+        shell_counts.values(),
+        shell_exempt.values()
+    );
     println!(
         "TOTAL: {:?}; allowed {:?}",
         actual.values(),
@@ -340,7 +417,8 @@ mod tests {
                 button: 1,
                 label: 2,
                 color: 1,
-                space: 2
+                space: 2,
+                ..Counts::default()
             }
         );
         assert_eq!(
@@ -361,7 +439,7 @@ mod tests {
 
     #[test]
     fn ceiling_fails_on_each_increase() {
-        for i in 0..4 {
+        for i in 0..NAMES.len() {
             let mut actual = Counts::default();
             actual.increment(i);
             assert!(check(&actual, &Counts::default()).is_err());
@@ -377,5 +455,79 @@ mod tests {
                 .0,
             Counts::default()
         );
+    }
+
+    #[test]
+    fn raw_text_edit_counter_counts_only_direct_constructors() {
+        assert_eq!(
+            count_source("egui::TextEdit::singleline(&mut text);")
+                .unwrap()
+                .0
+                .raw_text_edit,
+            1
+        );
+        assert_eq!(
+            count_source("text_field_labeled(ui, &mut text, \"Label\", \"\");")
+                .unwrap()
+                .0
+                .raw_text_edit,
+            0
+        );
+    }
+
+    #[test]
+    fn raw_combo_box_counter_counts_only_direct_constructors() {
+        assert_eq!(
+            count_source("egui::ComboBox::from_label(\"x\");")
+                .unwrap()
+                .0
+                .raw_combo_box,
+            1
+        );
+        assert_eq!(
+            count_source("select_labeled(ui, &mut index, \"Label\", &[\"x\"]);")
+                .unwrap()
+                .0
+                .raw_combo_box,
+            0
+        );
+    }
+
+    #[test]
+    fn raw_checkbox_counter_counts_only_direct_checkboxes() {
+        assert_eq!(
+            count_source("ui.checkbox(&mut on, \"Label\");")
+                .unwrap()
+                .0
+                .raw_checkbox,
+            1
+        );
+        assert_eq!(
+            count_source("toggle_labeled(ui, &mut on, \"Label\");")
+                .unwrap()
+                .0
+                .raw_checkbox,
+            0
+        );
+    }
+
+    #[test]
+    fn raw_sense_click_requires_a_name_or_an_allowed_reason() {
+        let raw = "ui.allocate_exact_size(size, Sense::click());";
+        assert_eq!(count_source(raw).unwrap().0.raw_sense_click, 1);
+        assert_eq!(
+            count_source(
+                "let (rect, response) = ui.allocate_exact_size(size, Sense::click());\n\
+                 response.widget_info(|| WidgetInfo::button(true));"
+            )
+            .unwrap()
+            .0
+            .raw_sense_click,
+            0
+        );
+        let (actual, allowed) = count_source(&format!("{raw} // ui-lint: allow named elsewhere"))
+            .unwrap();
+        assert_eq!(actual.raw_sense_click, 0);
+        assert_eq!(allowed.raw_sense_click, 1);
     }
 }
