@@ -416,6 +416,7 @@ impl ForjaApp {
     }
 
     pub(crate) fn switch_bench_layout(&mut self, next_bench_id: Option<String>, keep_page: bool) {
+        self.exit_focus_for_bench_switch();
         if let Some(prev_id) = self.current_bench_id.take() {
             let layout = self.capture_bench_layout();
             self.shell_data.layout.insert(prev_id, layout);

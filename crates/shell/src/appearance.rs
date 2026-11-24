@@ -308,4 +308,23 @@ mod tests {
         assert_eq!(tokens.color.accent, forja_ui_kit::Color::rgb(0, 0, 255));
         assert_eq!(tokens.color.on_accent, forja_ui_kit::Color::rgb(255, 255, 255));
     }
+
+    #[test]
+    fn motion_duration_is_wired_and_reduction_zeros_every_transition() {
+        use forja_ui_kit::Motion;
+
+        let spec = crate::hosts_motion::specs()
+            .into_iter()
+            .find(|spec| spec.key == "appearance.motion.duration_ms")
+            .expect("motion duration is registered");
+        let base = spec.default.as_f64().expect("a number");
+        assert!(base > 0.0, "the design duration must actually be wired");
+        let mut tokens = forja_ui_kit::Tokens::brasa_dark();
+        tokens.motion_duration_ms = base as f32;
+        assert!(tokens.duration(Motion::Base) > 0.0);
+        tokens.reduce_motion = true;
+        for motion in [Motion::Fast, Motion::Base, Motion::Slow] {
+            assert_eq!(tokens.duration(motion), 0.0);
+        }
+    }
 }

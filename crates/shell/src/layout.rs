@@ -28,6 +28,10 @@ fn panel_max_width(available: f32, reserved: f32) -> f32 {
 
 impl ForjaApp {
     pub(crate) fn top_bar(&mut self, ctx: &egui::Context) {
+        if self.focus_replaces_top_bar() {
+            self.focus_exit_strip(ctx);
+            return;
+        }
         let frame = egui::Frame::NONE
             .fill(self.paint(self.tokens.color.surface))
             .inner_margin(Margin::symmetric(10, 4))
@@ -203,7 +207,7 @@ impl ForjaApp {
     }
 
     pub(crate) fn status_bar(&mut self, ctx: &egui::Context) {
-        if !self.layout_status_bar_visible() {
+        if !self.layout_status_bar_visible() || self.focus_hides_status_bar() {
             return;
         }
         let frame = egui::Frame::NONE
@@ -249,7 +253,9 @@ impl ForjaApp {
                         }
                     }
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        for view in self.status_views.iter_mut().rev() {
+                        let order = crate::status_bar_items::ordered_view_indexes(self);
+                        for index in order.into_iter().rev() {
+                            let view = &mut self.status_views[index];
                             let module = view.module.clone();
                             let mut cx = self.runtime.ctx(&module);
                             ui.push_id(&view.id, |ui| view.view.ui(ui, &mut cx));
@@ -259,6 +265,10 @@ impl ForjaApp {
             });
         self.slot_rects
             .insert("status".into(), response.response.rect);
+        if response.response.secondary_clicked() {
+            crate::status_bar_items::open_status_items_menu(ctx);
+        }
+        self.status_items_context(ctx);
         if self.status_details_open {
             if let Some(status) = self.status.clone() {
                 let mut open = true;
@@ -309,10 +319,10 @@ impl ForjaApp {
     }
 
     pub(crate) fn left_panels(&mut self, ctx: &egui::Context) {
-        if self.layout_rail_visible() {
+        if self.layout_rail_visible() && !self.focus_hides_rail() {
             self.rail(ctx);
         }
-        if !self.no_project() {
+        if !self.no_project() && !self.focus_hides_side_panels() {
             self.sidebar(ctx);
         }
     }
@@ -551,7 +561,7 @@ impl ForjaApp {
     }
 
     pub(crate) fn right_panel(&mut self, ctx: &egui::Context) {
-        if self.no_project() {
+        if self.no_project() || self.focus_hides_side_panels() {
             return;
         }
         let frame = egui::Frame::NONE

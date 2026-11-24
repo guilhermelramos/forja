@@ -251,6 +251,7 @@ fn register_appearance(registrar: &mut Registrar<'_>) {
         ),
     ];
     specs.extend(crate::hosts_motion::specs());
+    specs.extend(crate::hosts_focus::specs());
     specs.extend([
         flag(
             "appearance.sidebar.visible",

@@ -10,6 +10,7 @@ use serde_json::json;
 /// Chaves de interface usadas pelo seletor e pela edição de chrome.
 pub(crate) const I18N_KEYS: &[&str] = &[
     "shell.command.layout-switch",
+    "shell.command.layout-focus",
     "shell.command.layout-save",
     "shell.command.layout-reset",
     "shell.command.layout-manage",
@@ -36,6 +37,12 @@ pub(crate) const I18N_KEYS: &[&str] = &[
     "shell.layout.settings-rail",
     "shell.layout.settings-status",
     "shell.layout.settings-rail-order",
+    "shell.layout.focus-mode",
+    "shell.layout.focus-exit",
+    "shell.layout.focus-exit-tip",
+    "shell.layout.status-items",
+    "shell.layout.status-item",
+    "shell.layout.status-items-menu",
     "shell.layout.up",
     "shell.layout.down",
     "shell.layout.hide",
@@ -44,6 +51,13 @@ pub(crate) const I18N_KEYS: &[&str] = &[
     "shell.layout.unavailable-ref",
     "setting-appearance-layout-default-label",
     "setting-appearance-layout-default-help",
+    "setting-appearance-focus-hide_bars-label",
+    "setting-appearance-focus-hide_bars-help",
+    "setting.appearance.focus.hide_bars.option.side_panels",
+    "setting.appearance.focus.hide_bars.option.chrome",
+    "setting.appearance.focus.hide_bars.option.all",
+    "setting-appearance-status_bar-items-label",
+    "setting-appearance-status_bar-items-help",
 ];
 
 pub(crate) fn register_i18n(registrar: &mut Registrar<'_>) {
@@ -72,6 +86,14 @@ pub(crate) fn register(registrar: &mut Registrar<'_>) {
         }
         Ok(json!({ "opening": true }))
     });
+    registrar.command(
+        "layout.focus_mode",
+        "shell.command.layout-focus",
+        |_, _| {
+            actions::dispatch("layout.focus_mode");
+            Ok(json!({}))
+        },
+    );
     for (id, title) in [
         ("layout.save", "shell.command.layout-save"),
         ("layout.reset", "shell.command.layout-reset"),
@@ -84,6 +106,9 @@ pub(crate) fn register(registrar: &mut Registrar<'_>) {
     }
     registrar.keymap(
         "[[binding]]\nid = \"layout.switch\"\nkey = \"Ctrl+Alt+L\"\nscope = \"global\"\n",
+    );
+    registrar.keymap(
+        "[[binding]]\nid = \"layout.focus_mode\"\nkey = \"Ctrl+F11\"\nscope = \"global\"\n",
     );
 }
 
@@ -118,6 +143,7 @@ mod tests {
         contract::assert_ok(runtime.registry(), runtime.i18n());
         for id in [
             "layout.switch",
+            "layout.focus_mode",
             "layout.save",
             "layout.reset",
             "layout.manage",
@@ -130,6 +156,12 @@ mod tests {
             .iter()
             .any(|binding| binding.binding.command.as_str() == "layout.switch"
                 && binding.binding.chord.to_string() == "Ctrl+Alt+L"));
+        assert!(runtime
+            .keymap()
+            .bindings()
+            .iter()
+            .any(|binding| binding.binding.command.as_str() == "layout.focus_mode"
+                && binding.binding.chord.to_string() == "Ctrl+F11"));
         let _ = actions::drain();
         runtime
             .run_command(

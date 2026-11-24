@@ -6,6 +6,7 @@
 
 use crate::actions::{self, Action};
 use crate::app::ForjaApp;
+use crate::layout_focus::FocusOverlay;
 use crate::layout_projection::{apply_rail_edit, order_side_tabs, project, Projection, RailEdit};
 use crate::layout_save::SaveDialog;
 use crate::layout_settings::{
@@ -32,6 +33,8 @@ pub struct LayoutState {
     pub pending_default: Option<(String, u64)>,
     /// Último conjunto de refs indisponíveis avisado, para não repetir o toast.
     pub last_notified_refs: Vec<String>,
+    /// Overlay transitório do Modo Foco (nunca gravado).
+    pub focus: FocusOverlay,
 }
 
 pub(crate) const FACTORY_IDS: [&str; 4] = ["oficina", "foco", "revisao", "mutirao"];
@@ -65,6 +68,7 @@ pub(crate) fn is_layout_action(action: &Action) -> bool {
             | Action::SaveLayout
             | Action::ResetLayout
             | Action::ManageLayouts
+            | Action::ToggleFocusMode
     )
 }
 
@@ -328,6 +332,11 @@ impl ForjaApp {
         if labels.is_empty() {
             labels.push(self.text("shell.layout.fallback"));
         }
+        labels.push(if self.focus_active() {
+            self.text("shell.layout.focus-exit")
+        } else {
+            self.text("shell.layout.focus-mode")
+        });
         labels.push(self.text("shell.layout.save"));
         labels.push(self.text("shell.layout.restore"));
         labels
@@ -360,6 +369,8 @@ impl ForjaApp {
                 name: candidate.name(pt).to_owned(),
             });
         } else if index == candidates.len() {
+            actions::push(Action::ToggleFocusMode);
+        } else if index == candidates.len() + 1 {
             self.open_save_dialog();
         } else {
             self.restore_layout_defaults();
@@ -405,7 +416,7 @@ impl ForjaApp {
         self.layout_state.applied = true;
     }
 
-    pub(crate) fn handle_layout_action(&mut self, action: Action) {
+    pub(crate) fn handle_layout_action(&mut self, action: Action, ctx: &egui::Context) {
         match action {
             Action::OpenLayoutPicker => self.layout_state.picker_open = true,
             Action::SwitchLayout { id, layer, .. } => {
@@ -427,6 +438,7 @@ impl ForjaApp {
                 self.settings_open = true;
                 self.settings_section = Some("appearance".to_owned());
             }
+            Action::ToggleFocusMode => self.toggle_focus_mode(ctx),
             _ => {}
         }
     }
@@ -543,9 +555,44 @@ impl ForjaApp {
         if let Some(edit) = edit {
             apply_rail_edit(&mut self.layout_state.projection, edit);
         }
+        self.status_items_settings_ui(ui);
         let restore = self.text("shell.layout.restore");
         if forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &restore).clicked() {
             self.restore_layout_defaults();
+        }
+    }
+
+    /// Ajustes → Layout: alterna e reordena os itens da barra de status. Ids
+    /// desconhecidos da lista configurada não aparecem aqui, mas são preservados
+    /// pelas funções de edição.
+    fn status_items_settings_ui(&mut self, ui: &mut egui::Ui) {
+        ui.separator();
+        ui.heading(self.text("shell.layout.status-items"));
+        let items = crate::status_bar_items::configured_items(self);
+        let registered: Vec<(String, String)> = self
+            .status_views
+            .iter()
+            .map(|view| (view.id.clone(), self.text(&view.title_key)))
+            .collect();
+        let up = self.text("shell.layout.up");
+        let down = self.text("shell.layout.down");
+        for (id, label) in registered {
+            let accessible = self.text_args("shell.layout.status-item", &[("name", &label)]);
+            ui.horizontal(|ui| {
+                let mut on = items.iter().any(|item| item == &id);
+                if forja_ui_kit::toggle_labeled(ui, &mut on, &accessible).changed() {
+                    self.toggle_status_item(&id);
+                }
+                let move_up = forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &up);
+                if forja_ui_kit::tooltip(move_up, up.clone()).clicked() {
+                    self.move_status_item(&id, -1);
+                }
+                let move_down = forja_ui_kit::button(ui, forja_ui_kit::ButtonKind::Ghost, &down);
+                if forja_ui_kit::tooltip(move_down, down.clone()).clicked() {
+                    self.move_status_item(&id, 1);
+                }
+                forja_ui_kit::text(ui, &label);
+            });
         }
     }
 }

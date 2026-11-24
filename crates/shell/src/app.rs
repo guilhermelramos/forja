@@ -863,7 +863,7 @@ impl ForjaApp {
                     }
                 }
                 action if crate::layout_presets::is_layout_action(&action) => {
-                    self.handle_layout_action(action)
+                    self.handle_layout_action(action, ctx)
                 }
                 _ => {}
             }
@@ -1055,6 +1055,7 @@ impl eframe::App for ForjaApp {
         self.sync_sidebar_setting();
         self.sync_dynamic_tabs();
         self.top_bar(ctx);
+        self.poll_status_services(ctx);
         self.status_bar(ctx);
         self.left_panels(ctx);
         self.right_panel(ctx);
@@ -1115,6 +1116,7 @@ pub(crate) fn always_shortcut(id: &str) -> bool {
             | "help.keymap"
             | "panel.toggle"
             | "layout.switch"
+            | "layout.focus_mode"
             | "terminal.toggle"
             | "view.zoom.in"
             | "view.zoom.out"
@@ -1233,6 +1235,7 @@ mod shortcut_tests {
     fn terminal_toggle_works_while_the_terminal_owns_the_keyboard() {
         assert!(always_shortcut("terminal.toggle"));
         assert!(always_shortcut("layout.switch"));
+        assert!(always_shortcut("layout.focus_mode"));
         assert!(always_shortcut("bench.create"));
         assert!(always_shortcut("tab.focus"));
         assert!(!always_shortcut("terminal.copy"));
