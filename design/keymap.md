@@ -187,6 +187,7 @@ Ids seguem `<módulo>.<ação>` e podem ter um terceiro nível quando a ação �
 | Ação (pt-BR · en) | id | Atalho | Escopo | Observação |
 |---|---|---|---|---|
 | Alternar arranjo · Switch layout | `layout.switch` | `Ctrl+Alt+L` | `global` | Abre o seletor com os arranjos de fábrica, do usuário e do projeto. |
+| Alternar Modo Foco · Toggle Focus Mode | `layout.focus_mode` | `Ctrl+F11` | `global` + terminal/editor | Recolhe o chrome escolhido e repete o atalho para restaurar visibilidade e foco. |
 | Salvar layout atual · Save current layout | `layout.save` | — | `global` | Grava pelo catálogo do módulo `content`. |
 | Restaurar padrão do arranjo · Restore layout defaults | `layout.reset` | — | `global` | Reaplica o chrome declarado no arranjo. |
 | Gerenciar layouts · Manage layouts | `layout.manage` | — | `global` | Abre Ajustes → Layout. |
