@@ -39,7 +39,7 @@ fn open_logs(registrar: &mut Registrar<'_>) {
             cx.spawn(
                 move || {
                     std::fs::create_dir_all(&task_path)
-                        .and_then(|()| open_folder(&task_path))
+                        .and_then(|()| forja_kernel::process::reveal_folder(&task_path))
                         .map_err(|error| error.to_string())
                 },
                 move |_cx, result| {
@@ -54,23 +54,6 @@ fn open_logs(registrar: &mut Registrar<'_>) {
         }
         Ok(json!({ "path": displayed }))
     });
-}
-
-#[cfg(all(windows, not(test)))]
-fn open_folder(path: &std::path::Path) -> std::io::Result<()> {
-    forja_kernel::process::command("explorer.exe")
-        .arg(path)
-        .stdin(std::process::Stdio::null())
-        .spawn()
-        .map(|_| ())
-}
-
-#[cfg(all(not(windows), not(test)))]
-fn open_folder(_path: &std::path::Path) -> std::io::Result<()> {
-    Err(std::io::Error::new(
-        std::io::ErrorKind::Unsupported,
-        "opening a folder is only available on Windows",
-    ))
 }
 
 fn focus_bench(registrar: &mut Registrar<'_>) {

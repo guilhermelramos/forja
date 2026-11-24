@@ -267,24 +267,7 @@ pub fn format_active(cx: &mut Ctx<'_>, shared: &Shared, path: &str) {
 pub fn open_external(cx: &mut Ctx<'_>, path: &str) {
     let path = path.to_owned();
     cx.spawn(
-        move || {
-            #[cfg(windows)]
-            {
-                forja_kernel::process::command("cmd")
-                    .args(["/C", "start", "", &path])
-                    .spawn()
-                    .map(|_| ())
-                    .map_err(|error| error.to_string())
-            }
-            #[cfg(not(windows))]
-            {
-                forja_kernel::process::command("xdg-open")
-                    .arg(&path)
-                    .spawn()
-                    .map(|_| ())
-                    .map_err(|error| error.to_string())
-            }
-        },
+        move || forja_kernel::process::open_external(path),
         |_cx, _result| {},
     );
 }

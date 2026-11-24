@@ -67,6 +67,16 @@ impl Element {
     }
 }
 
+/// One exit to the system that the app recorded instead of performing.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExternalRequest {
+    /// `open` for a URL/path, `copy` for clipboard text, `reveal` for Explorer.
+    #[serde(default)]
+    pub kind: String,
+    #[serde(default)]
+    pub target: String,
+}
+
 /// Parsed response from `ui.snapshot` or any `ui.*` action.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Snapshot {
@@ -82,6 +92,9 @@ pub struct Snapshot {
     pub frames: u64,
     #[serde(default)]
     pub closed: bool,
+    /// Recorded browser/Explorer/clipboard requests (test runs only).
+    #[serde(default)]
+    pub externals: Vec<ExternalRequest>,
 }
 
 impl Snapshot {
