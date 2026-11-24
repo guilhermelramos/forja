@@ -159,6 +159,9 @@ pub struct MusterRun {
     /// Custo acumulado em dólares.
     #[serde(default)]
     pub spent_usd: f64,
+    /// A limpeza de bancadas deste mutirão já foi decidida.
+    #[serde(default)]
+    pub cleanup_done: bool,
 }
 
 /// Uma tarefa do mutirão.
@@ -356,6 +359,7 @@ impl MusterFile {
             plan_approved: true,
             budget_usd: 0.0,
             spent_usd: 0.0,
+            cleanup_done: false,
         };
         self.runs.push(run.clone());
         run
@@ -682,6 +686,19 @@ impl MusterFile {
                 task: task.to_owned(),
             });
         }
+    }
+
+    /// Marca a limpeza de um mutirão terminado como decidida, uma única vez.
+    pub fn take_cleanup(&mut self, run_id: &str) -> bool {
+        let Some(run) = self.runs.iter_mut().find(|run| run.id == run_id) else {
+            return false;
+        };
+        let finished = matches!(run.state, RunState::Done | RunState::Failed);
+        if finished && !run.cleanup_done {
+            run.cleanup_done = true;
+            return true;
+        }
+        false
     }
 
     /// Atualiza o status de uma atribuição e devolve um alerta quando ela para

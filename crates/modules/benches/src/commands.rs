@@ -319,6 +319,19 @@ pub(crate) fn register_commands(r: &mut Registrar<'_>, shared: &Shared) {
     );
 
     let s = shared.clone();
+    r.command("bench.is_dirty", "bench.command.is-dirty", move |cx, args| {
+        let id = args.required_str("bench_id")?;
+        s.ensure_loaded(cx);
+        let dirty = s
+            .find(id)
+            .map(|bench| {
+                crate::git::is_dirty(std::path::Path::new(&bench.path)).unwrap_or(false)
+            })
+            .unwrap_or(false);
+        Ok(json!({ "dirty": dirty }))
+    });
+
+    let s = shared.clone();
     r.command("bench.refresh", "bench.command.refresh", move |cx, _| {
         crate::refresh::refresh(cx, &s).map_err(kernel_error)?;
         Ok(json!({ "pending": true }))

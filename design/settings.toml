@@ -3279,7 +3279,6 @@ help_key = "setting-muster-budget-max_usd-help"
 
 [[setting]]
 key = "muster.cleanup.on_finish"
-deferred = "Aguardando rastreamento de posse das bancadas e conclusão assíncrona do arquivamento."
 module = "muster"
 group = "muster"
 scope = "user"

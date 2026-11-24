@@ -3,6 +3,7 @@
 //! O estado persistido fica em `muster.json`; a página é uma Rail. O módulo
 //! fala com bancadas, ajudantes e terminais por comandos e eventos.
 
+mod cleanup;
 mod commands;
 mod cost;
 mod delivery;
@@ -210,6 +211,18 @@ fn register_settings(r: &mut Registrar<'_>) {
         SettingValue::Number(0.0),
         "setting-muster-budget-max_usd-label",
         "setting-muster-budget-max_usd-help",
+    ));
+    r.setting(SettingSpec::new(
+        "muster.cleanup.on_finish",
+        SettingKind::Choice {
+            options: ["ask", "keep", "remove"]
+                .into_iter()
+                .map(str::to_owned)
+                .collect(),
+        },
+        SettingValue::Text("ask".to_owned()),
+        "setting-muster-cleanup-on_finish-label",
+        "setting-muster-cleanup-on_finish-help",
     ));
     r.setting(SettingSpec::new(
         "muster.notifications.task_failed",
@@ -895,6 +908,150 @@ mod tests {
             )
             .unwrap_err();
         assert!(error.message.contains("bancada"), "{}", error.message);
+    }
+
+    fn finish_new_bench_dispatch(runtime: &mut Runtime, task_id: &str) {
+        let ready = BenchCreated(BenchRef {
+            project_id: "p1".to_owned(),
+            bench_id: "bench-new".to_owned(),
+            name: format!("muster-{task_id}"),
+            path: "C:/bancadas/pronta".to_owned(),
+            branch: None,
+        });
+        runtime.emit(&ready);
+        settle(runtime);
+    }
+
+    #[test]
+    fn cleanup_keeps_dirty_bench_and_warns() {
+        let dir = temp_dir();
+        let (mut runtime, stubs) = bench_runtime(&dir.0);
+        runtime
+            .set_setting("muster.plan.require_approval", SettingValue::Bool(false))
+            .unwrap();
+        runtime
+            .set_setting(
+                "muster.dispatch.target",
+                SettingValue::Text("new".to_owned()),
+            )
+            .unwrap();
+        runtime
+            .set_setting(
+                "muster.cleanup.on_finish",
+                SettingValue::Text("remove".to_owned()),
+            )
+            .unwrap();
+        stubs
+            .dirty
+            .lock()
+            .unwrap()
+            .insert("bench-new".to_owned(), true);
+        let (_, task_id) = new_run_and_task(&mut runtime);
+        runtime
+            .call_method(
+                "muster.start",
+                Map::from_iter([("task".to_owned(), json!(task_id.clone()))]),
+            )
+            .unwrap();
+        finish_new_bench_dispatch(&mut runtime, &task_id);
+        runtime
+            .call_method(
+                "muster.handoff",
+                Map::from_iter([
+                    ("task".to_owned(), json!(task_id)),
+                    ("summary".to_owned(), json!("feito")),
+                    ("evidence".to_owned(), json!("testes ok")),
+                ]),
+            )
+            .unwrap();
+        settle(&mut runtime);
+        assert!(stubs.stored.lock().unwrap().is_empty());
+        let status = runtime.call_method("muster.status", Map::new()).unwrap();
+        assert_eq!(status["notice"], "muster-notice-cleanup-dirty");
+        assert_eq!(status["runs"][0]["cleanup_done"], true);
+    }
+
+    #[test]
+    fn cleanup_removes_only_the_owned_clean_bench() {
+        let dir = temp_dir();
+        let (mut runtime, stubs) = bench_runtime(&dir.0);
+        runtime
+            .set_setting("muster.plan.require_approval", SettingValue::Bool(false))
+            .unwrap();
+        runtime
+            .set_setting(
+                "muster.dispatch.target",
+                SettingValue::Text("new".to_owned()),
+            )
+            .unwrap();
+        runtime
+            .set_setting(
+                "muster.cleanup.on_finish",
+                SettingValue::Text("remove".to_owned()),
+            )
+            .unwrap();
+        stubs
+            .dirty
+            .lock()
+            .unwrap()
+            .insert("bench-foreign".to_owned(), false);
+        let (_, task_id) = new_run_and_task(&mut runtime);
+        runtime
+            .call_method(
+                "muster.start",
+                Map::from_iter([("task".to_owned(), json!(task_id.clone()))]),
+            )
+            .unwrap();
+        finish_new_bench_dispatch(&mut runtime, &task_id);
+        runtime
+            .call_method(
+                "muster.handoff",
+                Map::from_iter([
+                    ("task".to_owned(), json!(task_id)),
+                    ("summary".to_owned(), json!("feito")),
+                    ("evidence".to_owned(), json!("testes ok")),
+                ]),
+            )
+            .unwrap();
+        settle(&mut runtime);
+        assert_eq!(stubs.stored.lock().unwrap().as_slice(), ["bench-new"]);
+    }
+
+    #[test]
+    fn cleanup_ask_only_warns() {
+        let dir = temp_dir();
+        let (mut runtime, stubs) = bench_runtime(&dir.0);
+        runtime
+            .set_setting("muster.plan.require_approval", SettingValue::Bool(false))
+            .unwrap();
+        runtime
+            .set_setting(
+                "muster.dispatch.target",
+                SettingValue::Text("new".to_owned()),
+            )
+            .unwrap();
+        let (_, task_id) = new_run_and_task(&mut runtime);
+        runtime
+            .call_method(
+                "muster.start",
+                Map::from_iter([("task".to_owned(), json!(task_id.clone()))]),
+            )
+            .unwrap();
+        finish_new_bench_dispatch(&mut runtime, &task_id);
+        runtime
+            .call_method(
+                "muster.handoff",
+                Map::from_iter([
+                    ("task".to_owned(), json!(task_id)),
+                    ("summary".to_owned(), json!("feito")),
+                    ("evidence".to_owned(), json!("testes ok")),
+                ]),
+            )
+            .unwrap();
+        settle(&mut runtime);
+        assert!(stubs.stored.lock().unwrap().is_empty());
+        let status = runtime.call_method("muster.status", Map::new()).unwrap();
+        assert_eq!(status["notice"], "muster-notice-cleanup-ask");
     }
 
     #[test]

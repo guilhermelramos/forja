@@ -46,6 +46,7 @@ pub fn demo_seed(store: &Store, bench_path: &str) -> Result<(), String> {
         plan_approved: true,
         budget_usd: 12.0,
         spent_usd: 3.4,
+        cleanup_done: false,
     });
 
     let mut tasks = vec![

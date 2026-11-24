@@ -1,9 +1,10 @@
 //! Comandos, RPC e efeitos externos do Mutirão.
 
+use crate::cleanup::{self, CleanupPolicy};
 use crate::cost;
 use crate::delivery::{self, Delivery};
 use crate::model::{
-    Assignment, AssignmentState, HandoffResult, MusterRun, NoteKind, TaskState,
+    Assignment, AssignmentState, HandoffResult, MusterRun, NoteKind, RunState, TaskState,
 };
 use crate::preamble::helper_preamble;
 use crate::state::{self, with, Shared};
@@ -16,6 +17,7 @@ use forja_kernel::forja_protocol::{
 };
 use forja_kernel::{Args, Ctx, KernelError, Registrar, SettingValue};
 use serde_json::{json, Value};
+use std::collections::BTreeMap;
 use std::sync::Arc;
 
 /// Chaves i18n usadas pelos comandos e notificações.
@@ -75,6 +77,8 @@ pub const USED_KEYS: &[&str] = &[
     "muster-assignment-blocked",
     "muster-assignment-stopped",
     "muster-notice-load-failed",
+    "muster-notice-cleanup-ask",
+    "muster-notice-cleanup-dirty",
     "muster.page-loading",
 ];
 
@@ -800,6 +804,7 @@ fn handoff(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kern
         &[("result", result.as_str()), ("summary", &summary)],
     );
     notify(cx, "muster.notify.handoff-title", &body, None);
+    maybe_cleanup(cx, shared);
     Ok(json!({
         "note": note,
         "result": result.as_str(),
@@ -1250,6 +1255,7 @@ pub(super) fn on_status(
             },
         );
     }
+    maybe_cleanup(cx, shared);
 }
 
 fn flush_queued(
@@ -1441,6 +1447,110 @@ fn fail_dispatch(cx: &mut Ctx<'_>, shared: &Shared, bench_id: &str, reason: &str
         let body = cx.t_args("muster.notify.alert-body", &[("tail", reason)]);
         notify(cx, "muster.notify.alert-title", &body, None);
     }
+}
+
+/// Decide a limpeza quando um mutirão termina. Só bancadas que o mutirão criou
+/// chegam ao plano; a remoção roda em tarefa de fundo, por `bench.store`.
+fn maybe_cleanup(cx: &mut Ctx<'_>, shared: &Shared) {
+    let busy = with(shared, |state| {
+        state.store.assignments.iter().any(|assignment| {
+            matches!(
+                assignment.state,
+                AssignmentState::Starting | AssignmentState::Running | AssignmentState::NeedsYou
+            )
+        }) || !state.store.retry_candidates().is_empty()
+            || !state.store.pending_dispatches.is_empty()
+    })
+    .unwrap_or(true);
+    if busy {
+        return;
+    }
+    let policy = CleanupPolicy::parse(
+        cx.setting("muster.cleanup.on_finish")
+            .and_then(SettingValue::as_str)
+            .unwrap_or("ask"),
+    );
+    let finished: Vec<String> = with(shared, |state| {
+        state
+            .store
+            .runs
+            .iter()
+            .filter(|run| {
+                matches!(run.state, RunState::Done | RunState::Failed) && !run.cleanup_done
+            })
+            .map(|run| run.id.clone())
+            .collect()
+    })
+    .unwrap_or_default();
+    for run_id in finished {
+        if !with(shared, |state| state.store.take_cleanup(&run_id)).unwrap_or(false) {
+            continue;
+        }
+        let owned: Vec<String> = with(shared, |state| {
+            state
+                .store
+                .owned_benches
+                .iter()
+                .filter(|bench| bench.run == run_id)
+                .map(|bench| bench.bench_id.clone())
+                .collect()
+        })
+        .unwrap_or_default();
+        if owned.is_empty() {
+            continue;
+        }
+        match policy {
+            CleanupPolicy::Ask => {
+                with(shared, |state| {
+                    state.notice = Some("muster-notice-cleanup-ask".to_owned())
+                });
+            }
+            CleanupPolicy::Keep => {}
+            CleanupPolicy::Remove => {
+                let shared = Arc::clone(shared);
+                cx.spawn(
+                    move || (run_id, owned),
+                    move |cx, (run_id, owned)| cleanup_benches(cx, &shared, &run_id, &owned),
+                );
+            }
+        }
+    }
+    state::persist(cx, shared);
+}
+
+/// Consulta sujeira por `bench_id` (nunca por caminho montado aqui) e remove só
+/// o que o plano liberou. Falta de resposta do serviço é tratada como suja.
+fn cleanup_benches(cx: &mut Ctx<'_>, shared: &Shared, run_id: &str, ids: &[String]) {
+    let mut dirty = BTreeMap::new();
+    for id in ids {
+        let mut args = Args::new();
+        args.insert("bench_id", json!(id));
+        let is_dirty = cx
+            .run_command("bench.is_dirty", args)
+            .ok()
+            .and_then(|value| value["dirty"].as_bool())
+            .unwrap_or(true);
+        dirty.insert(id.clone(), is_dirty);
+    }
+    let plan = with(shared, |state| {
+        cleanup::plan(&state.store, run_id, CleanupPolicy::Remove, &dirty)
+    })
+    .unwrap_or_default();
+    for id in plan.remove {
+        let mut args = Args::new();
+        args.insert("bench_id", json!(id));
+        // Sem `force`: a própria API de bancadas barra bancada suja.
+        let _ = cx.run_command("bench.store", args);
+        with(shared, |state| {
+            state.store.owned_benches.retain(|bench| bench.bench_id != id)
+        });
+    }
+    if !plan.kept_dirty.is_empty() {
+        with(shared, |state| {
+            state.notice = Some("muster-notice-cleanup-dirty".to_owned())
+        });
+    }
+    state::persist(cx, shared);
 }
 
 fn notify(cx: &mut Ctx<'_>, title_key: &str, body: &str, bench_path: Option<String>) {

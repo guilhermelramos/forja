@@ -15,6 +15,7 @@ bench-command-sleep = Dormir bancada
 bench-command-wake = Acordar bancada
 bench-command-pin = Fixar bancada
 bench-command-read = Marcar bancada como lida
+bench-command-is-dirty = Verifica se a bancada tem mudanças não comitadas
 bench-command-refresh = Atualizar worktrees
 bench-command-script_approve = Aprovar scripts do forja.toml
 bench-command-create_dialog = Abrir diálogo de nova bancada
