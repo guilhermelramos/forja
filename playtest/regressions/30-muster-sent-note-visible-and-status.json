@@ -17,7 +17,7 @@
     { "m": "ui.click", "target": "Escreva um recado; ele espera se o ajudante estiver ocupado ou pedindo aprovação." },
     { "m": "ui.type", "text": "Conferir regex do cadastro" },
     { "m": "ui.click", "target": "Enviar" },
-    { "m": "ui.click", "target": "Validar e-mail (sem ajudante)" },
+    { "m": "ui.click", "target": "Destinatário do recado" },
     { "m": "ui.click", "target": "Revisar testes (OpenCode · precisa de você)" },
     { "m": "ui.scroll", "target": "Revisar testes (OpenCode · precisa de você)", "dy": -200 },
     { "m": "ui.click", "target": "Escreva um recado; ele espera se o ajudante estiver ocupado ou pedindo aprovação." },
