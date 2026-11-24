@@ -131,6 +131,7 @@ pub fn ensure_main(cx: &mut Ctx<'_>, shared: &Shared) -> Result<(), String> {
                     request_command: None,
                     open_tabs: Vec::new(),
                     request_key: None,
+                    request_ref: None,
                 }),
             }
         }

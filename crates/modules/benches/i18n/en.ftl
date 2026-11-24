@@ -1,5 +1,6 @@
 bench-name = Benches
 bench-command-current = Current bench
+bench-command-request = Bench request context
 bench-command-tool_tabs = Bench tool tabs
 bench-command-list = List benches
 bench-command-list_cards = List bench cards

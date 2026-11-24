@@ -67,10 +67,14 @@ pub fn launch_helper(cx: &mut Ctx<'_>, bench_path: &str, reference: &RequestRef)
     if !auto_start {
         return Ok(false);
     }
+    let initial_context = cx
+        .setting("helper.launch.initial_context")
+        .and_then(forja_kernel::SettingValue::as_str)
+        .unwrap_or("request");
     let mut args = Args::new();
     args.insert("bench_path", json!(bench_path));
     args.insert("from_request", serde_json::to_value(reference)?);
-    args.insert("initial_context", json!("request"));
+    args.insert("initial_context", json!(initial_context));
     match cx.run_command("helper.launch", args) {
         Ok(_) => Ok(true),
         Err(KernelError::UnknownCommand(_)) => Ok(false),

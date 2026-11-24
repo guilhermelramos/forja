@@ -127,6 +127,25 @@ helper-view-set-default = Definir padrão
 helper-launch-not-installed = O ajudante { $name } não está instalado neste computador.
 
 helper-status-summary = { $working } trabalhando · { $waiting } esperando
+
+setting-helper-launch-initial_context-option-request = Pedido
+setting-helper-launch-initial_context-option-bench = Bancada
+setting-helper-launch-initial_context-option-none = Nenhum
+setting-helper-sessions-resume_policy-option-ask = Perguntar
+setting-helper-sessions-resume_policy-option-auto = Sempre
+setting-helper-sessions-resume_policy-option-never = Nunca
+
+helper-command-resume = Retomar sessão anterior do ajudante
+helper-command-resume-dismiss = Dispensar pedido de retomada
+helper-command-resume-pending = Consultar retomada pendente
+helper-command-resume-evaluate = Avaliar política de retomada na bancada restaurada
+helper-ready-timeout-title = Ajudante demorou a responder
+helper-ready-timeout-body = O ajudante { $name } não sinalizou prontidão em { $seconds }s; o processo continuou aberto.
+helper-resume-ask-title = Retomar sessão anterior?
+helper-resume-ask-body = O ajudante { $name } tinha uma sessão na bancada { $bench }. Use `helper.resume` para retomar.
+helper-resume-unsupported-title = Retomada automática indisponível
+helper-resume-unsupported-body = O ajudante { $name } não suporta retomar sessões; usando política "nunca".
+helper-resume-none-found = Nenhuma sessão anterior encontrada para esta bancada.
 helper-settings-cli-installed = CLI instalado
 helper-settings-cli-missing = CLI não instalado
 helper-settings-enabled-help = Habilita um CLI instalado para uso na Forja; isto não instala o ajudante.

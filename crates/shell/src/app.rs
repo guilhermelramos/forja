@@ -26,7 +26,7 @@ use forja_kernel::ui::Slot;
 use forja_kernel::ui_contract::{self, View};
 use forja_kernel::{Args, Module, Registry, Runtime};
 use forja_ui_kit::Tokens;
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -665,7 +665,21 @@ impl ForjaApp {
                     .map(str::to_owned);
                 if bench_id.is_some() && self.current_bench_id != bench_id {
                     let keep_page = self.rail_page.is_some();
-                    self.switch_bench_layout(bench_id, keep_page);
+                    self.switch_bench_layout(bench_id.clone(), keep_page);
+                }
+                // A política de retomada também vale na bancada restaurada no boot.
+                if self.runtime.registry().command("helper.resume.evaluate").is_some() {
+                    let mut args = Args::new();
+                    if let Some(id) = &bench_id {
+                        args.insert("bench_id", json!(id));
+                    }
+                    if let Some(path) = value.get("path").and_then(Value::as_str) {
+                        args.insert("bench_path", json!(path));
+                    }
+                    if let Some(name) = value.get("name").and_then(Value::as_str) {
+                        args.insert("name", json!(name));
+                    }
+                    let _ = self.runtime.run_command("helper.resume.evaluate", args);
                 }
                 let bench_name = value
                     .get("name")

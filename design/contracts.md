@@ -19,6 +19,7 @@ Um módulo **nunca depende do crate de outro**. Eles conversam de duas formas:
 | `project.update` | projects | `{project_id, name?, icon?, color?}` | `ProjectRef` |
 | `project.add_dialog` | projects | - | `{pending: true}`. Abre o diálogo de adicionar pasta de qualquer tela. |
 | `bench.current` | benches | — | `BenchRef \| null` |
+| `bench.request` | benches | `{bench_id?, bench_path?}` | `{bench_id, bench_path, name, branch, request_key, request_ref}` ou `null` |
 | `bench.list` | benches | `{project_id?, include_archived?}` | `{benches: [BenchRef]}` |
 | `bench.list_cards` | benches | `{project_id?, include_archived?}` | `{benches: [BenchCard]}` |
 | `bench.activate` | benches | `{bench_id}` | `BenchRef` |
