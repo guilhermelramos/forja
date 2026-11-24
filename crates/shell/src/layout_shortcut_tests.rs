@@ -15,7 +15,8 @@ fn layout_switch_survives_a_focused_text_surface() {
     let mut focused = false;
     let _ = ctx.run(egui::RawInput::default(), |ctx| {
         egui::CentralPanel::default().show(ctx, |ui| {
-            let response = ui.add(egui::TextEdit::singleline(&mut text));
+            let response =
+                forja_ui_kit::text_field_labeled(ui, &mut text, "Terminal input", "Terminal input");
             response.request_focus();
             focused = ctx.wants_keyboard_input();
         });

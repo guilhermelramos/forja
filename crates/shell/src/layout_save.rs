@@ -37,16 +37,7 @@ impl ForjaApp {
             .show(ctx, |ui| {
                 ui.label(self.text("shell.layout.save-hint"));
                 let name_label = self.text("shell.layout.save-name");
-                let edit = ui.add(
-                    egui::TextEdit::singleline(&mut dialog.name).hint_text(&name_label),
-                );
-                edit.widget_info(|| {
-                    egui::WidgetInfo::labeled(
-                        egui::WidgetType::TextEdit,
-                        ui.is_enabled(),
-                        &name_label,
-                    )
-                });
+                forja_ui_kit::text_field_labeled(ui, &mut dialog.name, &name_label, &name_label);
                 ui.radio_value(
                     &mut dialog.layer,
                     LayoutLayer::User,
@@ -56,10 +47,9 @@ impl ForjaApp {
                 ui.add_enabled_ui(has_project, |ui| {
                     ui.radio_value(&mut dialog.layer, LayoutLayer::Project, project_scope);
                 });
-                ui.checkbox(
-                    &mut dialog.make_default,
-                    self.text("shell.layout.save-default"),
-                );
+                let default_label = self.text("shell.layout.save-default");
+                ui.label(&default_label);
+                forja_ui_kit::toggle_labeled(ui, &mut dialog.make_default, &default_label);
                 if let Some(error) = &dialog.error {
                     ui.label(error);
                 }

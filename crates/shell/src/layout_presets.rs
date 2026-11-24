@@ -473,20 +473,22 @@ impl ForjaApp {
         ui.heading(self.text("shell.layout.settings-title"));
         let current = self.current_layout_name();
         ui.label(self.text_args("shell.layout.settings-current", &[("name", &current)]));
+        let rail_label = self.text("shell.layout.settings-rail");
         let mut rail = self.layout_rail_visible();
-        if ui
-            .checkbox(&mut rail, self.text("shell.layout.settings-rail"))
-            .changed()
-        {
-            self.layout_state.projection.rail_visible = Some(rail);
-        }
+        ui.horizontal(|ui| {
+            ui.label(&rail_label);
+            if forja_ui_kit::toggle_labeled(ui, &mut rail, &rail_label).changed() {
+                self.layout_state.projection.rail_visible = Some(rail);
+            }
+        });
+        let status_label = self.text("shell.layout.settings-status");
         let mut status = self.layout_status_bar_visible();
-        if ui
-            .checkbox(&mut status, self.text("shell.layout.settings-status"))
-            .changed()
-        {
-            self.layout_state.projection.status_bar_visible = Some(status);
-        }
+        ui.horizontal(|ui| {
+            ui.label(&status_label);
+            if forja_ui_kit::toggle_labeled(ui, &mut status, &status_label).changed() {
+                self.layout_state.projection.status_bar_visible = Some(status);
+            }
+        });
         ui.separator();
         ui.label(self.text("shell.layout.settings-rail-order"));
         let order = self.layout_state.projection.effective_rail_order.clone();
