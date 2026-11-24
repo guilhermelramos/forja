@@ -1,5 +1,7 @@
 counter_jira-name = Jira
+counter_jira-site-label = Jira site
 counter_jira-site-hint = Site, for example acme.atlassian.net
+counter_jira-email-label = Jira account email
 counter_jira-email-hint = E-mail of the account
 counter_jira-command-describe = Describe the Jira counter
 counter_jira-command-list = List Jira requests
@@ -21,6 +23,7 @@ counter_jira-error-decode = The counter sent an unexpected response.
 counter_jira-error-config = The counter settings are incomplete.
 counter_jira-error-vault = The system credential vault did not respond.
 counter_jira-error-unsupported = The counter does not support this action.
+counter_jira-token-label = Jira API token
 counter_jira-token-hint = Token
 counter_jira-action-connect = Connect
 counter_jira-action-test = Test

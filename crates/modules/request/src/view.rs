@@ -10,7 +10,10 @@ use forja_contracts::{RequestItem, RequestKind, RequestState};
 use forja_counter_kit::error_key;
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::Ctx;
-use forja_ui_kit::{button, segmented, text_field, wrapped_label, ButtonKind};
+use forja_ui_kit::{
+    button, segmented, select_labeled, text_area, text_field, text_field_labeled, wrapped_label,
+    ButtonKind,
+};
 use std::time::SystemTime;
 
 /// Cópia do estado usada por um quadro. Não guarda lock.
@@ -154,7 +157,8 @@ impl RequestsView {
         ui.horizontal(|ui| {
             ui.scope(|ui| {
                 ui.set_width((width * 0.25).clamp(100.0, 240.0));
-                if text_field(ui, &mut self.query_draft, &cx.t("request-search-hint")).changed() {
+                let hint = cx.t("request-search-hint");
+                if text_field_labeled(ui, &mut self.query_draft, &hint, &hint).changed() {
                     self.set_query(&self.query_draft.clone());
                 }
             });
@@ -203,7 +207,8 @@ impl RequestsView {
             .iter()
             .position(|option| *option == frame.source)
             .unwrap_or(options.len() - 1);
-        if forja_ui_kit::select(ui, &mut selected, &refs).changed() {
+        let label = cx.t("request-source-label");
+        if select_labeled(ui, &mut selected, &label, &refs).changed() {
             if let Some(source) = options.get(selected).cloned() {
                 commands::set_source(&self.shared, source);
                 let _ = commands::refresh(cx, &self.shared);
@@ -428,12 +433,8 @@ impl RequestsView {
                     wrapped_label(ui, comment.body.as_str(), body_font.clone(), text_color);
                     ui.add_space(forja_ui_kit::Spacing::XS);
                 }
-                ui.add(
-                    egui::TextEdit::multiline(&mut self.comment_draft)
-                        .hint_text(cx.t("request-comment-hint"))
-                        .desired_width(f32::INFINITY)
-                        .desired_rows(2),
-                );
+                let hint = cx.t("request-comment-hint");
+                text_area(ui, &mut self.comment_draft, &hint, &hint, 2);
                 if button(ui, ButtonKind::Secondary, &cx.t("request-action-comment")).clicked()
                     && !self.comment_draft.trim().is_empty()
                 {

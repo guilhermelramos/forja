@@ -19,6 +19,7 @@ counter_github-error-decode = O balcão mandou uma resposta inesperada.
 counter_github-error-config = A configuração do balcão está incompleta.
 counter_github-error-vault = O cofre de credenciais do sistema não respondeu.
 counter_github-error-unsupported = O balcão não tem esta ação.
+counter_github-token-label = Token do GitHub
 counter_github-token-hint = Token
 counter_github-action-connect = Conectar
 counter_github-action-test = Testar
