@@ -154,21 +154,15 @@ impl ChatView {
                 }
                 let effort_values = &session.profile.models.effort_values;
                 if !effort_values.is_empty() {
-                    egui::ComboBox::from_id_salt("chat-effort")
-                        .selected_text(
-                            session.effort.as_deref().map(|value| effort_label(cx, value)).unwrap_or_else(|| cx.t("chat.view.effort")),
-                        )
-                        .width(110.0)
-                        .show_ui(ui, |ui| {
-                            ui.selectable_value(&mut session.effort, None, cx.t("chat.view.default"));
-                            for value in effort_values {
-                                ui.selectable_value(
-                                    &mut session.effort,
-                                    Some(value.clone()),
-                                    effort_label(cx, value),
-                                );
-                            }
-                        });
+                    if let Some(chosen) = crate::effort_picker::draw_effort(
+                        ui,
+                        cx,
+                        effort_values,
+                        session.effort.as_deref(),
+                        &cx.t("chat.view.effort"),
+                    ) {
+                        session.effort = chosen;
+                    }
                 }
                 if session.profile.models.model_env.is_some() || !session.profile.models.model_args.is_empty() {
                     egui::ComboBox::from_label(cx.t("chat.view.model"))
@@ -180,7 +174,12 @@ impl ChatView {
                             for value in values { ui.selectable_value(&mut session.model, Some(value.clone()), value); }
                             ui.separator();
                             let mut custom = session.model.clone().unwrap_or_default();
-                            if ui.add(egui::TextEdit::singleline(&mut custom).hint_text(cx.t("chat.view.custom-model"))).changed() {
+                            if forja_ui_kit::text_field_labeled(
+                                ui,
+                                &mut custom,
+                                &cx.t("chat.view.custom-model"),
+                                &cx.t("chat.view.custom-model-help"),
+                            ).changed() {
                                 session.model = (!custom.trim().is_empty()).then_some(custom);
                             }
                         });
@@ -1006,7 +1005,7 @@ fn short_folder(path: &std::path::Path) -> String {
     format!("…\\{leaf}")
 }
 
-fn effort_label(cx: &Ctx<'_>, value: &str) -> String {
+pub(crate) fn effort_label(cx: &Ctx<'_>, value: &str) -> String {
     match value {
         "low" | "medium" | "high" | "xhigh" | "max" => cx.t(&format!("chat.effort.{value}")),
         _ => value.to_owned(),

@@ -36,6 +36,7 @@ chat-view-error = erro
 chat-view-queued = na fila
 chat-view-terminal = Terminal
 chat-view-effort = Esforço
+chat-view-effort-help = Nível de esforço de raciocínio usado pelo ajudante
 chat-view-default = padrão
 chat-view-attach = Anexar imagem
 chat-view-attachment-too-large = Anexo passa do limite:
@@ -83,3 +84,4 @@ chat-effort-xhigh = Muito alto
 chat-effort-max = Máximo
 
 chat-view-custom-model = Outro modelo
+chat-view-custom-model-help = Informe o identificador de um modelo personalizado

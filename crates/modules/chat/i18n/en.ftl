@@ -36,6 +36,7 @@ chat-view-error = error
 chat-view-queued = queued
 chat-view-terminal = Terminal
 chat-view-effort = Effort
+chat-view-effort-help = Reasoning effort level used by the helper
 chat-view-default = default
 chat-view-attach = Attach image
 chat-view-attachment-too-large = Attachment exceeds the limit:
@@ -83,3 +84,4 @@ chat-effort-xhigh = Very high
 chat-effort-max = Maximum
 
 chat-view-custom-model = Another model
+chat-view-custom-model-help = Enter the identifier of a custom model

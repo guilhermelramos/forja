@@ -6,6 +6,7 @@
 
 mod clipboard;
 mod diff_mode;
+mod effort_picker;
 mod helper_picker;
 mod model;
 mod profile;
@@ -82,6 +83,7 @@ impl Module for ChatModule {
             "chat.view.queued",
             "chat.view.terminal",
             "chat.view.effort",
+            "chat.view.effort-help",
             "chat.view.default",
             "chat.view.attach",
             "chat.view.attachment-too-large",
@@ -116,6 +118,8 @@ impl Module for ChatModule {
             "chat.view.send-no-helper",
             "chat.view.copy-install",
             "chat.view.copied",
+            "chat.view.custom-model",
+            "chat.view.custom-model-help",
             "chat.view.error-not-found",
             "chat.view.error-launch",
             "chat.view.error-provider",
