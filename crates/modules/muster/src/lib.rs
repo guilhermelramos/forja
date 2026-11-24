@@ -249,7 +249,10 @@ fn register_settings(r: &mut Registrar<'_>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use forja_contracts::{BenchCreateFailed, BenchCreated, BenchRef, TerminalExited, TerminalRef};
+    use forja_contracts::{
+        names, BenchCreateFailed, BenchCreated, BenchRef, BenchStoreOutcome, TerminalExited,
+        TerminalRef,
+    };
     use forja_kernel::{contract, Runtime, RuntimeOptions};
     use serde_json::{json, Map};
     use std::path::PathBuf;
@@ -441,6 +444,8 @@ mod tests {
         current: String,
         created: Arc<std::sync::Mutex<Vec<String>>>,
         stored: Arc<std::sync::Mutex<Vec<String>>>,
+        benches: Arc<std::sync::Mutex<Vec<String>>>,
+        dirty_calls: Arc<std::sync::Mutex<usize>>,
         dirty: Arc<std::sync::Mutex<std::collections::BTreeMap<String, bool>>>,
     }
 
@@ -450,6 +455,7 @@ mod tests {
         }
 
         fn register(&mut self, r: &mut Registrar<'_>) {
+            r.contract_event::<BenchStoreOutcome>(names::BENCH_STORE_OUTCOME);
             let current = self.current.clone();
             r.command("bench.current", "muster.command.status", move |_, _| {
                 Ok(json!({
@@ -461,9 +467,11 @@ mod tests {
             });
 
             let created = Arc::clone(&self.created);
+            let benches = Arc::clone(&self.benches);
             r.command("bench.create", "muster.command.start", move |_, args| {
                 let name = args.required_str("name")?.to_owned();
                 created.lock().unwrap().push(name.clone());
+                benches.lock().unwrap().push("bench-new".to_owned());
                 Ok(json!({
                     "project_id": "p1",
                     "bench_id": "bench-new",
@@ -473,19 +481,34 @@ mod tests {
             });
 
             let stored = Arc::clone(&self.stored);
-            r.command("bench.store", "muster.command.start", move |_, args| {
-                stored
-                    .lock()
-                    .unwrap()
-                    .push(args.required_str("bench_id")?.to_owned());
+            let benches = Arc::clone(&self.benches);
+            let dirty = Arc::clone(&self.dirty);
+            r.command("bench.store", "muster.command.start", move |cx, args| {
+                let id = args.required_str("bench_id")?.to_owned();
+                let is_dirty = dirty.lock().unwrap().get(&id).copied().unwrap_or(false);
+                if is_dirty {
+                    // O serviço real barra aqui, dentro da tarefa que apaga.
+                    cx.emit(&BenchStoreOutcome {
+                        bench_id: id,
+                        outcome: "kept_dirty".to_owned(),
+                    });
+                } else {
+                    stored.lock().unwrap().push(id.clone());
+                    benches.lock().unwrap().retain(|item| item != &id);
+                    cx.emit(&BenchStoreOutcome {
+                        bench_id: id,
+                        outcome: "stored".to_owned(),
+                    });
+                }
                 Ok(json!({ "pending": true }))
             });
 
-            let dirty = Arc::clone(&self.dirty);
+            // Armadilha: se a limpeza chamar is_dirty na thread da UI, o teste falha.
+            let dirty_calls = Arc::clone(&self.dirty_calls);
             r.command("bench.is_dirty", "muster.command.status", move |_, args| {
-                let id = args.required_str("bench_id")?;
-                let value = dirty.lock().unwrap().get(id).copied().unwrap_or(false);
-                Ok(json!({ "dirty": value }))
+                let _ = args.required_str("bench_id")?;
+                *dirty_calls.lock().unwrap() += 1;
+                Ok(json!({ "dirty": false }))
             });
         }
     }
@@ -730,6 +753,8 @@ mod tests {
                     current: "C:/atual".to_owned(),
                     created: Arc::clone(&stubs.created),
                     stored: Arc::clone(&stubs.stored),
+                    benches: Arc::clone(&stubs.benches),
+                    dirty_calls: Arc::clone(&stubs.dirty_calls),
                     dirty: Arc::clone(&stubs.dirty),
                 }),
             ],
@@ -766,6 +791,10 @@ mod tests {
         paths: Arc<std::sync::Mutex<Vec<String>>>,
         created: Arc<std::sync::Mutex<Vec<String>>>,
         stored: Arc<std::sync::Mutex<Vec<String>>>,
+        /// Bancadas existentes no serviço falso, incluindo as que não são do mutirão.
+        benches: Arc<std::sync::Mutex<Vec<String>>>,
+        /// Número de chamadas a `bench.is_dirty`; a limpeza não deve chamar nada disso.
+        dirty_calls: Arc<std::sync::Mutex<usize>>,
         dirty: Arc<std::sync::Mutex<std::collections::BTreeMap<String, bool>>>,
     }
 
@@ -1050,6 +1079,12 @@ mod tests {
             .unwrap();
         settle(&mut runtime);
         assert!(stubs.stored.lock().unwrap().is_empty());
+        assert_eq!(
+            *stubs.dirty_calls.lock().unwrap(),
+            0,
+            "o done da limpeza não pode consultar git"
+        );
+        assert!(stubs.benches.lock().unwrap().contains(&"bench-new".to_owned()));
         let status = runtime.call_method("muster.status", Map::new()).unwrap();
         assert_eq!(status["notice"], "muster-notice-cleanup-dirty");
         assert_eq!(status["runs"][0]["cleanup_done"], true);
@@ -1074,11 +1109,12 @@ mod tests {
                 SettingValue::Text("remove".to_owned()),
             )
             .unwrap();
+        // Uma bancada real do mesmo projeto, criada fora do mutirão.
         stubs
-            .dirty
+            .benches
             .lock()
             .unwrap()
-            .insert("bench-foreign".to_owned(), false);
+            .push("bench-foreign".to_owned());
         let (_, task_id) = new_run_and_task(&mut runtime);
         runtime
             .call_method(
@@ -1098,6 +1134,62 @@ mod tests {
             )
             .unwrap();
         settle(&mut runtime);
+        assert_eq!(stubs.stored.lock().unwrap().as_slice(), ["bench-new"]);
+        assert_eq!(
+            *stubs.dirty_calls.lock().unwrap(),
+            0,
+            "o done da limpeza não pode consultar git"
+        );
+        assert!(
+            stubs.benches.lock().unwrap().contains(&"bench-foreign".to_owned()),
+            "bancada alheia continua no serviço"
+        );
+        assert!(!stubs.benches.lock().unwrap().contains(&"bench-new".to_owned()));
+    }
+
+    #[test]
+    fn cleanup_done_never_calls_git() {
+        let dir = temp_dir();
+        let (mut runtime, stubs) = bench_runtime(&dir.0);
+        runtime
+            .set_setting("muster.plan.require_approval", SettingValue::Bool(false))
+            .unwrap();
+        runtime
+            .set_setting(
+                "muster.dispatch.target",
+                SettingValue::Text("new".to_owned()),
+            )
+            .unwrap();
+        runtime
+            .set_setting(
+                "muster.cleanup.on_finish",
+                SettingValue::Text("remove".to_owned()),
+            )
+            .unwrap();
+        let (_, task_id) = new_run_and_task(&mut runtime);
+        runtime
+            .call_method(
+                "muster.start",
+                Map::from_iter([("task".to_owned(), json!(task_id.clone()))]),
+            )
+            .unwrap();
+        finish_new_bench_dispatch(&mut runtime, &task_id);
+        runtime
+            .call_method(
+                "muster.handoff",
+                Map::from_iter([
+                    ("task".to_owned(), json!(task_id)),
+                    ("summary".to_owned(), json!("feito")),
+                    ("evidence".to_owned(), json!("testes ok")),
+                ]),
+            )
+            .unwrap();
+        settle(&mut runtime);
+        assert_eq!(
+            *stubs.dirty_calls.lock().unwrap(),
+            0,
+            "a função chamada no done da Task não pode consultar git"
+        );
         assert_eq!(stubs.stored.lock().unwrap().as_slice(), ["bench-new"]);
     }
 

@@ -15,7 +15,6 @@ bench-command-sleep = Sleep bench
 bench-command-wake = Wake bench
 bench-command-pin = Pin bench
 bench-command-read = Mark bench read
-bench-command-is-dirty = Check whether a bench has uncommitted changes
 bench-command-refresh = Refresh worktrees
 bench-command-script_approve = Approve forja.toml scripts
 bench-command-create_dialog = Open new bench dialog

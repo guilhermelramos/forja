@@ -6,7 +6,7 @@ use crate::service::{
     close_terminals, ensure_main, notify, project_path, setting_bool, setting_i64, setting_str,
 };
 use crate::state::Shared;
-use forja_contracts::BenchStored;
+use forja_contracts::{names, BenchStored, BenchStoreOutcome};
 use forja_kernel::Ctx;
 use std::path::{Path, PathBuf};
 pub fn store(
@@ -75,15 +75,28 @@ struct Stored {
     warnings: Vec<String>,
 }
 
-fn run_store(job: StoreJob) -> Result<Stored, String> {
+/// Falha da tarefa de bancadas. `dirty` distingue a recusa do git das outras
+/// falhas, para que o resultado publicado diga se a bancada ficou por sujeira.
+struct StoreFailure {
+    bench_id: String,
+    message: String,
+    dirty: bool,
+}
+
+fn run_store(job: StoreJob) -> Result<Stored, StoreFailure> {
     let project = Path::new(&job.project_path);
     let mut warnings = Vec::new();
     let mut teardown = scripts::ScriptOutcome::default();
     let mut teardown_skipped = None;
     if job.path.exists() {
+        // O git é conferido aqui, no work closure, logo antes de apagar.
         let dirty = git::is_dirty(&job.path).unwrap_or(false);
         if dirty && job.confirm_dirty && !job.force {
-            return Err("bench has uncommitted changes; confirm force".to_owned());
+            return Err(StoreFailure {
+                bench_id: job.bench_id,
+                message: "bench has uncommitted changes; confirm force".to_owned(),
+                dirty: true,
+            });
         }
         let loaded = config::load(&job.project_path);
         warnings.extend(loaded.warnings.clone());
@@ -98,7 +111,13 @@ fn run_store(job: StoreJob) -> Result<Stored, String> {
                 teardown_skipped = Some("unapproved");
             }
         }
-        git::remove_worktree(project, &job.path, job.force || dirty)?;
+        git::remove_worktree(project, &job.path, job.force || dirty).map_err(|message| {
+            StoreFailure {
+                bench_id: job.bench_id.clone(),
+                message,
+                dirty: false,
+            }
+        })?;
     } else {
         warnings.push("the bench folder was already missing".to_owned());
     }
@@ -120,16 +139,29 @@ fn run_store(job: StoreJob) -> Result<Stored, String> {
     })
 }
 
-fn finish_store(cx: &mut Ctx<'_>, shared: &Shared, result: Result<Stored, String>) {
+fn finish_store(cx: &mut Ctx<'_>, shared: &Shared, result: Result<Stored, StoreFailure>) {
     let stored = match result {
         Ok(stored) => stored,
-        Err(error) => {
-            let human = crate::create::humanize_error(cx, &error);
-            shared.set_error(Some(error));
+        Err(failure) => {
+            // O `done` só publica o resultado; nenhum git roda aqui.
+            cx.emit(&BenchStoreOutcome {
+                bench_id: failure.bench_id.clone(),
+                outcome: if failure.dirty {
+                    "kept_dirty".to_owned()
+                } else {
+                    "error".to_owned()
+                },
+            });
+            let human = crate::create::humanize_error(cx, &failure.message);
+            shared.set_error(Some(failure.message));
             notify(cx, cx.t("bench.notify.store-failed.title"), human.summary, "error");
             return;
         }
     };
+    cx.emit(&BenchStoreOutcome {
+        bench_id: stored.bench_id.clone(),
+        outcome: "stored".to_owned(),
+    });
     shared.set_error(None);
     let path = if stored.delete_branch {
         None

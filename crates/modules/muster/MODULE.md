@@ -114,8 +114,9 @@ aparece uma vez por atribuição.
 bancada já usada por outra do mesmo mutirão; `shared` permite o reaproveitamento.
 As bancadas criadas pelo mutirão ficam marcadas em `owned_benches`. Ao terminar,
 `muster.cleanup.on_finish = remove` chama `bench.store` só para as bancadas
-próprias e limpas, depois de `bench.is_dirty`; suja ou alheia nunca é removida e
-gera aviso na página.
+próprias; o git é conferido pelo módulo de bancadas dentro da própria tarefa,
+logo antes de apagar, e `bench.store_outcome` avisa quando uma bancada suja
+ficou. Bancada alheia nunca é removida.
 
 ## Contratos
 

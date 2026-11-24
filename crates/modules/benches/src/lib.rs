@@ -29,8 +29,8 @@ mod view_dialogs;
 
 use forja_contracts::names;
 use forja_contracts::{
-    BenchActivated, BenchCreated, BenchCreateFailed, BenchSleepChanged, BenchStored, ProjectActivated,
-    ProjectRemoved, StageChanged,
+    BenchActivated, BenchCreated, BenchCreateFailed, BenchSleepChanged, BenchStored,
+    BenchStoreOutcome, ProjectActivated, ProjectRemoved, StageChanged,
 };
 use forja_kernel::{Module, ModuleManifest, Registrar, Slot};
 use state::Shared;
@@ -63,6 +63,7 @@ impl Module for BenchModule {
         r.contract_event::<BenchCreated>(names::BENCH_CREATED);
         r.contract_event::<BenchCreateFailed>(names::BENCH_CREATE_FAILED);
         r.contract_event::<BenchStored>(names::BENCH_STORED);
+        r.contract_event::<BenchStoreOutcome>(names::BENCH_STORE_OUTCOME);
         r.contract_event::<BenchSleepChanged>(names::BENCH_SLEEP_CHANGED);
         r.contract_event::<StageChanged>(names::STAGE_CHANGED);
         r.contract_event::<ProjectActivated>(names::PROJECT_ACTIVATED);

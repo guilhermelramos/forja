@@ -23,8 +23,7 @@ Um módulo **nunca depende do crate de outro**. Eles conversam de duas formas:
 | `bench.list_cards` | benches | `{project_id?, include_archived?}` | `{benches: [BenchCard]}` |
 | `bench.activate` | benches | `{bench_id}` | `BenchRef` |
 | `bench.create` | benches | `{project_id, name, base?, from_request?: RequestRef, fetch?}` | `BenchRef` (assíncrono: evento `bench.created`) |
-| `bench.store` | benches | `{bench_id, delete_branch?, force?}` | `{pending: true}` (destrutivo; assíncrono: evento `bench.stored`) |
-| `bench.is_dirty` | benches | `{bench_id}` | `{dirty: bool}` (caminho confinado ao id da bancada registrada) |
+| `bench.store` | benches | `{bench_id, delete_branch?, force?}` | `{pending: true}` (destrutivo; assíncrono: eventos `bench.stored` ou `bench.store_outcome`) |
 | `bench.stage.set` | benches | `{bench_id, stage, reason?, confirm_backward?}` | `BenchCard` (emite `stage.changed`) |
 | `bench.stage.list` | benches | `{project_id?}` | `{stages: [{id, label, order, parent, locked, dot}], warnings}` |
 | `bench.sleep` / `bench.wake` | benches | `{bench_id}` | `BenchCard` (emite `bench.sleep_changed`) |
@@ -109,6 +108,7 @@ evento correspondente ou na próxima leitura. `git.status`, `git.changes`,
 | `project.added` / `project.removed` | projects | `ProjectAdded` / `ProjectRemoved` |
 | `bench.activated` / `bench.created` / `bench.stored` | benches | `BenchActivated` / `BenchCreated` / `BenchStored` |
 | `bench.create_failed` | benches | `BenchCreateFailed` (`bench_id`, `name`, `reason`): falha verificável do `bench.create` assíncrono, com a mesma identidade do pedido |
+| `bench.store_outcome` | benches | `BenchStoreOutcome` (`bench_id`, `outcome`: `stored`, `kept_dirty` ou `error`): resultado do `bench.store` assíncrono, publicado depois da checagem de git no work closure |
 | `bench.sleep_changed` | benches | `BenchSleepChanged` |
 | `stage.changed` | benches | `StageChanged` (`bench_id`, `from`, `to`, `actor`, `origin`, `reason`, `at`, `request?`: chave do pedido de origem, só com `bench.stage.sync_request` ligado; aditivo) |
 | `terminal.exited` / `terminal.bell` / `terminal.command_finished` / `terminal.title_changed` | terminal | `TerminalExited` … |
@@ -463,8 +463,8 @@ Métodos RPC equivalentes: `muster.run`, `muster.task`, `muster.start`, `muster.
 - **Plano.** Com `muster.plan.require_approval` ligado, o mutirão nasce com `plan_approved: false`; `muster.start` recusa até `muster.plan.approve`. `muster.plan.max_tasks` limita `muster.task`.
 - **Orçamento.** `budget_usd` vem do pedido ou de `muster.budget.max_usd`; `muster.spend` soma o custo e `muster.start` recusa quando o teto já foi atingido.
 - **Despacho.** `muster.dispatch.target` escolhe `ask` (exige `bench_path`), `current` (usa a bancada atual) ou `new` (`bench.create`, com posse registrada ao concluir). O despacho `new` só sobe o ajudante quando chega `bench.created` com o mesmo `bench_id`; `bench.create_failed` fecha o pedido, marca a tarefa como falha e avisa. `muster.workspace.isolation = worktree` recusa reaproveitar a bancada de outra tarefa do mesmo mutirão; `shared` permite.
-- **Limpeza.** `muster.cleanup.on_finish` só remove bancadas que o próprio mutirão criou (posse persistida). Consulta `bench.is_dirty` por `bench_id` e chama `bench.store` sem `force`: bancada suja fica e gera aviso.
-- **Eventos.** Consome `helper.status_changed`, `terminal.exited`, `terminal.command_finished`, `bench.created` e `bench.create_failed`; não publica eventos próprios.
+- **Limpeza.** `muster.cleanup.on_finish` só remove bancadas que o próprio mutirão criou (posse persistida). Chama `bench.store` sem `force`: o git é conferido logo antes de apagar, dentro da tarefa do módulo de bancadas, e `bench.store_outcome` diz se a bancada ficou por sujeira.
+- **Eventos.** Consome `helper.status_changed`, `terminal.exited`, `terminal.command_finished`, `bench.created`, `bench.create_failed` e `bench.store_outcome`; não publica eventos próprios.
 
 ## MCP (onda C3)
 

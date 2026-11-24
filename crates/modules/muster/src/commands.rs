@@ -10,7 +10,7 @@ use crate::preamble::helper_preamble;
 use crate::state::{self, with, Shared};
 use crate::workspace::{self, Isolation};
 use forja_contracts::{
-    names, BenchCreateFailed, BenchCreated, HelperStatus, HelperStatusChanged,
+    names, BenchCreateFailed, BenchCreated, BenchStoreOutcome, HelperStatus, HelperStatusChanged,
     TerminalCommandFinished, TerminalExited,
 };
 use forja_kernel::forja_protocol::{
@@ -18,7 +18,6 @@ use forja_kernel::forja_protocol::{
 };
 use forja_kernel::{Args, Ctx, KernelError, Registrar, SettingValue};
 use serde_json::{json, Value};
-use std::collections::BTreeMap;
 use std::sync::Arc;
 
 /// Chaves i18n usadas pelos comandos e notificações.
@@ -1378,6 +1377,7 @@ pub(super) fn subscribe_events(r: &mut Registrar<'_>, shared: &Shared) {
     r.contract_event::<TerminalCommandFinished>(names::TERMINAL_COMMAND_FINISHED);
     r.contract_event::<BenchCreated>(names::BENCH_CREATED);
     r.contract_event::<BenchCreateFailed>(names::BENCH_CREATE_FAILED);
+    r.contract_event::<BenchStoreOutcome>(names::BENCH_STORE_OUTCOME);
 
     let status_shared = Arc::clone(shared);
     r.subscribe(move |cx, event: &HelperStatusChanged| {
@@ -1402,6 +1402,10 @@ pub(super) fn subscribe_events(r: &mut Registrar<'_>, shared: &Shared) {
             &event.terminal.terminal_id,
             HelperStatus::Idle,
         );
+    });
+    let outcome_shared = Arc::clone(shared);
+    r.subscribe(move |cx, event: &BenchStoreOutcome| {
+        on_bench_store_outcome(cx, &outcome_shared, event);
     });
 
     let created_shared = Arc::clone(shared);
@@ -1554,37 +1558,53 @@ fn maybe_cleanup(cx: &mut Ctx<'_>, shared: &Shared) {
     state::persist(cx, shared);
 }
 
-/// Consulta sujeira por `bench_id` (nunca por caminho montado aqui) e remove só
-/// o que o plano liberou. Falta de resposta do serviço é tratada como suja.
+/// Aplica a decisão de limpeza. Não consulta git nem remove nada diretamente:
+/// só pede `bench.store` para as bancadas que o mutirão possui. O módulo de
+/// bancadas confere o git no work closure da própria tarefa, logo antes de
+/// apagar, e publica o desfecho em `bench.store_outcome`.
 fn cleanup_benches(cx: &mut Ctx<'_>, shared: &Shared, run_id: &str, ids: &[String]) {
-    let mut dirty = BTreeMap::new();
-    for id in ids {
-        let mut args = Args::new();
-        args.insert("bench_id", json!(id));
-        let is_dirty = cx
-            .run_command("bench.is_dirty", args)
-            .ok()
-            .and_then(|value| value["dirty"].as_bool())
-            .unwrap_or(true);
-        dirty.insert(id.clone(), is_dirty);
-    }
     let plan = with(shared, |state| {
-        cleanup::plan(&state.store, run_id, CleanupPolicy::Remove, &dirty)
+        cleanup::plan(&state.store, run_id, CleanupPolicy::Remove)
     })
     .unwrap_or_default();
-    for id in plan.remove {
+    for id in ids.iter().filter(|id| plan.contains(id)) {
         let mut args = Args::new();
         args.insert("bench_id", json!(id));
         // Sem `force`: a própria API de bancadas barra bancada suja.
         let _ = cx.run_command("bench.store", args);
-        with(shared, |state| {
-            state.store.owned_benches.retain(|bench| bench.bench_id != id)
-        });
     }
-    if !plan.kept_dirty.is_empty() {
-        with(shared, |state| {
-            state.notice = Some("muster-notice-cleanup-dirty".to_owned())
-        });
+    state::persist(cx, shared);
+}
+
+/// Publica o desfecho da remoção assíncrona no estado do Mutirão. Este callback
+/// só aplica o resultado recebido; nenhuma checagem de git acontece aqui.
+fn on_bench_store_outcome(cx: &mut Ctx<'_>, shared: &Shared, outcome: &BenchStoreOutcome) {
+    let owned = with(shared, |state| {
+        state
+            .store
+            .owned_benches
+            .iter()
+            .any(|bench| bench.bench_id == outcome.bench_id)
+    })
+    .unwrap_or(false);
+    if !owned {
+        return;
+    }
+    match outcome.outcome.as_str() {
+        "stored" => {
+            with(shared, |state| {
+                state
+                    .store
+                    .owned_benches
+                    .retain(|bench| bench.bench_id != outcome.bench_id)
+            });
+        }
+        "kept_dirty" => {
+            with(shared, |state| {
+                state.notice = Some("muster-notice-cleanup-dirty".to_owned())
+            });
+        }
+        _ => {}
     }
     state::persist(cx, shared);
 }
