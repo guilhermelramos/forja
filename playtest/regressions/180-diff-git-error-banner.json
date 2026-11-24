@@ -10,20 +10,22 @@
     { "m": "ui.click", "target": "Adicionar" },
     { "m": "ui.wait", "ms": 1200 },
     { "m": "ui.click", "target": "Diferenças" },
-    { "m": "ui.click", "target": "Mudança anterior" },
-    { "m": "ui.click", "target": "Em linha" },
-    { "m": "ui.click", "target": "Ignorar espaço" },
+    { "m": "diff.open", "comparison": "forja-ghost-base...HEAD" },
+    { "m": "ui.wait", "ms": 2500 },
     { "m": "ui.snapshot" }
   ],
   "expect": [
     {
-      "step": 9,
-      "present_contains": ["Diferenças"],
+      "step": 8,
+      "present_contains": [
+        "A branch base ou referência informada não existe neste repositório.",
+        "Detalhes técnicos"
+      ],
       "absent_contains": [
         "rev-parse",
-        "Needed a single revision",
+        "unknown revision",
         "fatal:",
-        "git rev-parse",
+        "failed:",
         "os error"
       ]
     }
