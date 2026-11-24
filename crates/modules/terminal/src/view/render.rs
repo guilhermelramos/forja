@@ -73,6 +73,7 @@ pub fn draw_grid(
     cache: &mut TerminalLineCache,
     body: Rect,
     focused: bool,
+    surface_label: &str,
 ) -> GridResponse {
     let font_id = terminal_font(ui.ctx(), &settings.font_family, settings.font_size());
     let char_width = ui.fonts_mut(|fonts| fonts.glyph_width(&font_id, 'M')).max(1.0);
@@ -91,6 +92,10 @@ pub fn draw_grid(
         ui.id().with(("forja-terminal-body", terminal.id)),
         egui::Sense::click_and_drag(),
     );
+    let surface_name = surface_label.to_owned();
+    response.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), surface_name.clone())
+    });
 
     let metrics = GridMetrics {
         origin: body.min + egui::vec2(PAD_X, PAD_Y),

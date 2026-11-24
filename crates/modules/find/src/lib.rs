@@ -201,6 +201,9 @@ impl Module for FindModule {
 }
 
 #[cfg(test)]
+mod a11y_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate::commands;

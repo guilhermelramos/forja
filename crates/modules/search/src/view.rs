@@ -42,7 +42,9 @@ impl View for SearchView {
 
         // O título do painel já está na aba: não repetimos aqui.
         let mut edited = form.clone();
-        let query = forja_ui_kit::text_field(ui, &mut edited.pattern, &cx.t("search.query.hint"));
+        let query_hint = cx.t("search.query.hint");
+        let query =
+            forja_ui_kit::text_field_labeled(ui, &mut edited.pattern, &query_hint, &query_hint);
         if focus {
             query.request_focus();
             lock(&self.shared).focus_query = false;
@@ -55,8 +57,10 @@ impl View for SearchView {
             forja_ui_kit::toggle(ui, &mut edited.case_sensitive, &cx.t("search.option.case"));
             forja_ui_kit::toggle(ui, &mut edited.whole_word, &cx.t("search.option.word"));
         });
-        forja_ui_kit::text_field(ui, &mut edited.include, &cx.t("search.include.hint"));
-        forja_ui_kit::text_field(ui, &mut edited.exclude, &cx.t("search.exclude.hint"));
+        let include_hint = cx.t("search.include.hint");
+        forja_ui_kit::text_field_labeled(ui, &mut edited.include, &include_hint, &include_hint);
+        let exclude_hint = cx.t("search.exclude.hint");
+        forja_ui_kit::text_field_labeled(ui, &mut edited.exclude, &exclude_hint, &exclude_hint);
         if edited != form {
             actions.push(Action::Form(edited.clone()));
         }
@@ -130,7 +134,9 @@ impl View for SearchView {
         ui.separator();
         ui.label(egui::RichText::new(cx.t("search.replace.title")).strong());
         let mut replacement = form.replacement.clone();
-        let replace_edit = forja_ui_kit::text_field(ui, &mut replacement, &cx.t("search.replace.hint"));
+        let replace_hint = cx.t("search.replace.hint");
+        let replace_edit =
+            forja_ui_kit::text_field_labeled(ui, &mut replacement, &replace_hint, &replace_hint);
         if replace_edit.changed() {
             let mut next = form.clone();
             next.replacement = replacement;
@@ -220,7 +226,7 @@ fn draw_results(
                                 break;
                             }
                             drawn += 1;
-                            draw_hit(ui, hit, &file.path, actions);
+                            draw_hit(ui, cx, hit, &file.rel, &file.path, actions);
                         }
                     });
             }
@@ -230,7 +236,14 @@ fn draw_results(
         });
 }
 
-fn draw_hit(ui: &mut egui::Ui, hit: &Hit, path: &std::path::Path, actions: &mut Vec<Action>) {
+fn draw_hit(
+    ui: &mut egui::Ui,
+    cx: &Ctx<'_>,
+    hit: &Hit,
+    rel: &str,
+    path: &std::path::Path,
+    actions: &mut Vec<Action>,
+) {
     for line in &hit.lines {
         ui.horizontal(|ui| {
             ui.label(
@@ -245,6 +258,14 @@ fn draw_hit(ui: &mut egui::Ui, hit: &Hit, path: &std::path::Path, actions: &mut 
                 text.weak()
             };
             let response = ui.add(egui::Label::new(text).sense(egui::Sense::click()));
+            let name = cx.t_args(
+                "search.result.open-line",
+                &[("path", rel), ("line", &line.number.to_string())],
+            );
+            response.widget_info(|| {
+                egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), name.clone())
+            });
+            let response = forja_ui_kit::tooltip(response, name);
             if line.is_match && response.clicked() {
                 actions.push(Action::Open(path.to_path_buf(), line.number));
             }

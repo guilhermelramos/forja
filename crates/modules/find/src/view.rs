@@ -112,11 +112,8 @@ impl View for AnvilView {
         };
         let mut actions: Vec<Action> = Vec::new();
         let mut text = query.clone();
-        let edit = ui.add(
-            egui::TextEdit::singleline(&mut text)
-                .hint_text(cx.t("find.anvil.hint"))
-                .desired_width(f32::INFINITY),
-        );
+        let hint = cx.t("find.anvil.hint");
+        let edit = forja_ui_kit::text_field_labeled(ui, &mut text, &hint, &hint);
         if edit.changed() {
             actions.push(Action::Query(Which::Anvil, text.clone()));
         }
@@ -165,10 +162,6 @@ impl FindView {
             restore_picker_focus(ctx);
             return;
         }
-        // Typing must always reach the query, even after Tab moved the focus to
-        // the window close button or a result row.
-        let search_id = egui::Id::new("forja.find.picker.search");
-        focus_search_when_typing(ctx, search_id);
         // Rebuilds the listing if the bench changed or the listing is old (throttled inside).
         commands::ensure_index(cx, &self.shared);
         let mut window_open = true;
@@ -190,12 +183,11 @@ impl FindView {
                 if forja_ui_kit::window_header(ui, &title, &close_label) {
                     window_open = false;
                 }
-                let edit = ui.add(
-                    egui::TextEdit::singleline(&mut text)
-                        .id(search_id)
-                        .hint_text(hint)
-                        .desired_width(f32::INFINITY),
-                );
+                // Typing must reach the query even after Tab moved focus to the
+                // close button or a result row. The ui-kit field owns its id, so
+                // focus the very id it is about to allocate, before drawing it.
+                focus_search_when_typing(ui.ctx(), ui.next_auto_id());
+                let edit = forja_ui_kit::text_field_labeled(ui, &mut text, &hint, &hint);
                 if focus_now {
                     let focused = ui.memory(|memory| memory.focused());
                     ui.ctx().data_mut(|data| {

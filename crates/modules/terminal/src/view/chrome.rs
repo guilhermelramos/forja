@@ -127,6 +127,7 @@ pub(super) fn tab_chip(ui: &mut egui::Ui, chip: &TabChip<'_>) -> (egui::Response
             c32(tokens.color.text_muted),
         );
     }
+    let close = forja_ui_kit::tooltip(close, close_label.clone());
     (response.on_hover_text(chip_label), close.clicked())
 }
 
