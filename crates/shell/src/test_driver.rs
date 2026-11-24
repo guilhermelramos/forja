@@ -10,6 +10,7 @@
 //! | `ui.key` | `{keys}` e.g. `"Ctrl+K"`, `"Enter"`, `"Escape"` | key press and release |
 //! | `ui.scroll` | `{target? \| id? \| x?,y?, dy}` | mouse wheel over a point |
 //! | `ui.wait` | `{ms}` | lets background work finish |
+//! | `ui.externals` | `{}` | requests to open a URL or copy text, recorded instead of performed |
 //! | `ui.debug_panic` | `{where:"view", view_id:"<id>"}` or `{where:"main"}` | test-only panic injection |
 //! | `ui.request_close` | `{}` | requests closing the main window |
 //!
@@ -314,6 +315,7 @@ impl Driver {
                 let ms = params.get("ms").and_then(Value::as_u64).unwrap_or(500).min(20_000);
                 Ok((vec![settle(ms)], Value::Null))
             }
+            "ui.externals" => Ok((vec![settle(0)], Value::Null)),
             "ui.debug_panic" => {
                 match params.get("where").and_then(Value::as_str) {
                     Some("main") => self.debug_main_panic = true,
@@ -752,9 +754,16 @@ impl Driver {
             });
         }
         let screen = ctx.content_rect();
+        let externals: Vec<Value> = forja_kernel::process::external_requests()
+            .into_iter()
+            .map(|request| {
+                json!({ "kind": request.kind.as_str(), "target": request.target })
+            })
+            .collect();
         let mut result = json!({
             "window": { "width": (screen.width() * ppp).round(), "height": (screen.height() * ppp).round() },
             "frames": self.frames,
+            "externals": externals,
             "changes": {
                 "appeared": appeared,
                 "disappeared": disappeared,

@@ -458,19 +458,7 @@ fn open_external(url: &str) -> Result<Value, String> {
     if !url.starts_with("https://") && !is_localhost_url(url) {
         return Err("[argument] open_url accepts https or http://localhost".to_owned());
     }
-    let target = url.to_owned();
-    std::thread::spawn(move || {
-        #[cfg(target_os = "windows")]
-        {
-            let _ = forja_kernel::process::command("cmd")
-                .args(["/C", "start", "", &target])
-                .spawn();
-        }
-        #[cfg(not(target_os = "windows"))]
-        {
-            let _ = forja_kernel::process::command("xdg-open").arg(&target).spawn();
-        }
-    });
+    forja_kernel::process::open_external(url)?;
     Ok(serde_json::json!({ "opened": true }))
 }
 

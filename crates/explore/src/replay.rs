@@ -39,7 +39,7 @@ pub enum StringOrList {
 }
 
 impl StringOrList {
-    fn as_slice(&self) -> Vec<&str> {
+    pub(crate) fn as_slice(&self) -> Vec<&str> {
         match self {
             Self::One(s) => vec![s.as_str()],
             Self::Many(list) => list.iter().map(String::as_str).collect(),
@@ -97,6 +97,12 @@ pub struct Expectation {
     pub max_frames_delta: Option<u64>,
     #[serde(default)]
     pub closed: Option<bool>,
+    /// Every needle must appear in the target of a recorded external request.
+    #[serde(default)]
+    pub externals_contains: Option<StringOrList>,
+    /// Every kind must be present among the recorded external requests.
+    #[serde(default)]
+    pub external_kinds: Option<StringOrList>,
 }
 
 /// Runs every `*.json` regression file in `dir` against a fresh clean app instance.
@@ -448,6 +454,9 @@ pub fn evaluate_expectations(
                 }
             }
         }
+        crate::external_expectations::check_external_expectations(
+            exp, snap, exp_idx, target_idx,
+        )?;
         if let Some(absent) = &exp.absent {
             for needle in absent.as_slice() {
                 if snap.elements.iter().any(|el| el.name.trim() == needle) {
@@ -648,6 +657,7 @@ mod tests {
             elements,
             frames: 0,
             closed: false,
+            externals: Vec::new(),
         }
     }
 
@@ -790,6 +800,7 @@ mod tests {
             elements,
             frames: 0,
             closed: false,
+            externals: Vec::new(),
         })
         .unwrap()
     }

@@ -14,6 +14,7 @@ mod appearance;
 mod crash;
 mod demo;
 mod diagnostics;
+mod externals;
 mod hosts;
 mod hosts_motion;
 mod icon;
@@ -112,6 +113,11 @@ fn run() -> i32 {
         // execução é de teste, mesmo antes da janela existir.
         std::env::set_var("FORJA_TEST_DRIVER", "1");
     }
+    // Single switch for every exit to the system: in a test run no browser,
+    // Explorer or clipboard is touched (see `forja_kernel::process`).
+    forja_kernel::process::set_test_mode(
+        flags.test_driver || flags.screenshot.is_some() || flags.demo,
+    );
     set_app_user_model_id();
 
     // Captures and test-driver runs never touch the person's real data (window

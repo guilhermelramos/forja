@@ -385,6 +385,10 @@ fn browser_json(cx: &Ctx<'_>) -> Value {
 
 #[cfg(windows)]
 fn copy_text(text: &str) {
+    if forja_kernel::process::is_test_mode() {
+        forja_kernel::process::record_external(forja_kernel::process::ExternalKind::Copy, text);
+        return;
+    }
     use windows_sys::Win32::Foundation::GlobalFree;
     use windows_sys::Win32::System::DataExchange::{
         CloseClipboard, EmptyClipboard, OpenClipboard, SetClipboardData,
@@ -419,10 +423,18 @@ fn copy_text(text: &str) {
 }
 
 #[cfg(not(windows))]
-fn copy_text(_text: &str) {}
+fn copy_text(text: &str) {
+    if forja_kernel::process::is_test_mode() {
+        forja_kernel::process::record_external(forja_kernel::process::ExternalKind::Copy, text);
+    }
+}
 
 #[cfg(windows)]
 fn clear_clipboard() {
+    if forja_kernel::process::is_test_mode() {
+        forja_kernel::process::record_external(forja_kernel::process::ExternalKind::Copy, "");
+        return;
+    }
     use windows_sys::Win32::System::DataExchange::{CloseClipboard, EmptyClipboard, OpenClipboard};
     unsafe {
         if OpenClipboard(std::ptr::null_mut()) != 0 {

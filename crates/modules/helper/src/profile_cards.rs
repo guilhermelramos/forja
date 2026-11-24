@@ -106,7 +106,13 @@ pub(crate) fn draw_missing_profile(
             )
             .clicked()
         {
-            ui.ctx().open_url(egui::OpenUrl::new_tab(&profile.site));
+            forja_kernel::process::open_external(profile.site.clone())
+                .unwrap_or_else(|error| {
+                    forja_kernel::logging::log(
+                        forja_kernel::logging::LogLevel::Warn,
+                        format!("helper: could not open docs: {error}"),
+                    );
+                });
         }
     });
 }
