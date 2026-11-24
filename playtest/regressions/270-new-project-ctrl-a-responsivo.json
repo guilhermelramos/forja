@@ -20,7 +20,8 @@
     },
     {
       "step": 6,
-      "present_contains": ["99999999999999999999", "Novo projeto"],
+      "present_contains": ["C:\\dev\\projeto", "Novo projeto"],
+      "value_contains": ["99999999999999999999"],
       "absent_contains": ["erro de aplica"]
     }
   ]

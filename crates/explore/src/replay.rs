@@ -72,6 +72,9 @@ pub struct Expectation {
     pub present: Option<StringOrList>,
     #[serde(default)]
     pub present_contains: Option<StringOrList>,
+    /// Text typed into a field, checked against the element's current value.
+    #[serde(default)]
+    pub value_contains: Option<StringOrList>,
     #[serde(default)]
     pub absent: Option<StringOrList>,
     #[serde(default)]
@@ -436,6 +439,15 @@ pub fn evaluate_expectations(
                 }
             }
         }
+        if let Some(value_contains) = &exp.value_contains {
+            for needle in value_contains.as_slice() {
+                if !snap.elements.iter().any(|el| el.value.contains(needle)) {
+                    return Err(format!(
+                        "expectation {exp_idx} (step {target_idx}): expected field value containing \"{needle}\""
+                    ));
+                }
+            }
+        }
         if let Some(absent) = &exp.absent {
             for needle in absent.as_slice() {
                 if snap.elements.iter().any(|el| el.name.trim() == needle) {
@@ -602,6 +614,7 @@ mod tests {
                 id: i as u64 + 1,
                 role: "Window".into(),
                 name: format!("W{i}"),
+                value: String::new(),
                 rect: [0.0, 0.0, 400.0, 400.0],
                 clickable: false,
                 editable: false,
@@ -614,6 +627,7 @@ mod tests {
                 id: 100 + i as u64,
                 role: "Button".into(),
                 name: (*n).to_owned(),
+                value: String::new(),
                 rect: [10.0, 10.0, 90.0, 40.0],
                 clickable: true,
                 editable: false,
@@ -675,6 +689,25 @@ mod tests {
         );
         snap.elements[0].role = "Label".into();
         assert!(evaluate_expectations(&expected, &[snap]).is_ok());
+    }
+
+    #[test]
+    fn value_contains_checks_typed_text_not_the_field_label() {
+        let expectations: Vec<Expectation> = serde_json::from_str(
+            r#"[{"present_contains":"C:\\dev\\projeto","value_contains":"99999999999999999999"}]"#,
+        )
+        .unwrap();
+        let mut snap = snap_with(&["C:\\dev\\projeto"], 0, &[]);
+        assert!(
+            evaluate_expectations(&expectations, &[snap.clone()]).is_err(),
+            "a field without the typed value must not satisfy value_contains"
+        );
+        snap.elements[0].role = "TextInput".into();
+        snap.elements[0].value = "99999999999999999999".into();
+        assert!(evaluate_expectations(&expectations, &[snap.clone()]).is_ok());
+
+        snap.elements[0].value = "123".into();
+        assert!(evaluate_expectations(&expectations, &[snap]).is_err());
     }
 
     #[test]
@@ -766,6 +799,7 @@ mod tests {
             id,
             role: "Button".into(),
             name: name.into(),
+            value: String::new(),
             rect: [10.0, 10.0, 90.0, 40.0],
             clickable,
             editable: false,
