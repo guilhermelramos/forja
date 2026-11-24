@@ -43,16 +43,17 @@ pub fn humanize_error(i18n: &I18n, raw: &str) -> HumanError {
     let lower = normalized.to_ascii_lowercase();
     let full_lower = trimmed.to_ascii_lowercase();
 
+    let safe_detail = redact_internal_ids(trimmed);
     if let Some(key) = classify_key(&full_lower, &lower) {
-        return HumanError::with_detail(i18n.t(key), trimmed);
+        return HumanError::with_detail(i18n.t(key), safe_detail);
     }
 
     if looks_technical(normalized, &lower) {
-        return HumanError::with_detail(i18n.t("kernel.error.generic"), trimmed);
+        return HumanError::with_detail(i18n.t("kernel.error.generic"), safe_detail);
     }
 
     if normalized != trimmed {
-        return HumanError::with_detail(normalized, trimmed);
+        return HumanError::with_detail(normalized, safe_detail);
     }
 
     HumanError::simple(trimmed)
@@ -124,6 +125,9 @@ fn classify_key(full_lower: &str, inner_lower: &str) -> Option<&'static str> {
     if is_program_not_found(full_lower, inner_lower) {
         return Some("kernel.error.program-not-found");
     }
+    if let Some(launch_key) = classify_launch_key(full_lower, inner_lower) {
+        return Some(launch_key);
+    }
     if is_permission_error(inner_lower) {
         return Some("kernel.error.permission");
     }
@@ -149,6 +153,138 @@ fn classify_key(full_lower: &str, inner_lower: &str) -> Option<&'static str> {
         return Some("kernel.error.network");
     }
     None
+}
+
+/// Classifica falhas ligadas ao lançamento do ajudante e ao provedor.
+fn classify_launch_key(full_lower: &str, inner_lower: &str) -> Option<&'static str> {
+    if is_provider_failure_inner(full_lower, inner_lower) {
+        return Some("kernel.error.provider-unavailable");
+    }
+    if is_helper_executable_missing_inner(full_lower, inner_lower) {
+        return Some("kernel.error.helper-executable-missing");
+    }
+    if is_internal_command_failure_inner(full_lower, inner_lower) {
+        return Some("kernel.error.internal-command-failed");
+    }
+    // Um id de sessão sem outra pista aponta para uma resposta do provedor.
+    if full_lower.contains("ses_") {
+        return Some("kernel.error.provider-unavailable");
+    }
+    None
+}
+
+/// Verdadeiro quando o texto é uma falha de comando interno sem causa mais
+/// específica (por exemplo, um wrapper `command \`...\` failed` genérico).
+pub fn is_internal_command_failure(raw: &str) -> bool {
+    let trimmed = raw.trim();
+    let normalized = strip_wrappers(trimmed);
+    is_internal_command_failure_inner(
+        &trimmed.to_ascii_lowercase(),
+        &normalized.to_ascii_lowercase(),
+    )
+}
+
+fn is_internal_command_failure_inner(full_lower: &str, inner_lower: &str) -> bool {
+    let wrapped = (full_lower.starts_with("command `")
+        && (full_lower.contains("` failed:") || full_lower.contains("` falhou:")))
+        || (full_lower.contains("command `") && inner_lower.contains("` failed:"));
+    let technical = inner_lower.contains("os error")
+        || inner_lower.contains("error:")
+        || inner_lower.contains("failed")
+        || inner_lower.contains("falhou")
+        || has_backtick_internal_id(inner_lower);
+    (wrapped && technical) || has_backtick_internal_id(inner_lower)
+}
+
+/// Remove ids internos (`ses_…`, `ctx_…`) e nomes de comandos internos entre
+/// crases antes de mostrar o texto técnico nos detalhes da interface.
+pub fn redact_internal_ids(text: &str) -> String {
+    let bytes = text.as_bytes();
+    let mut out = String::with_capacity(text.len());
+    let mut index = 0;
+    while index < text.len() {
+        let rest = &text[index..];
+        let mut hit = None;
+        for prefix in ["ses_", "ctx_"] {
+            if let Some(offset) = rest.find(prefix) {
+                if hit.is_none_or(|(earliest, _)| offset < earliest) {
+                    hit = Some((offset, prefix));
+                }
+            }
+        }
+        if let Some(open) = rest.find('`') {
+            if hit.is_none_or(|(earliest, _)| open < earliest) {
+                hit = Some((open, "`"));
+            }
+        }
+        let Some((offset, marker)) = hit else {
+            out.push_str(rest);
+            break;
+        };
+        out.push_str(&rest[..offset]);
+        let start = index + offset;
+        let mut end = start + marker.len();
+        if marker == "`" {
+            if let Some(close) = text[start + 1..].find('`') {
+                end = start + 1 + close + 1;
+                out.push_str("[interno]");
+            } else {
+                out.push('`');
+            }
+        } else {
+            while end < text.len() && bytes[end].is_ascii_alphanumeric() {
+                end += 1;
+            }
+            out.push_str("[id]");
+        }
+        index = end;
+    }
+    out
+}
+
+/// Verdadeiro quando o texto descreve uma falha de saldo, credencial ou limite
+/// do provedor do ajudante (inclusive quando só o id interno da sessão aparece).
+pub fn is_provider_failure(raw: &str) -> bool {
+    let trimmed = raw.trim();
+    let normalized = strip_wrappers(trimmed);
+    is_provider_failure_inner(&trimmed.to_ascii_lowercase(), &normalized.to_ascii_lowercase())
+        || trimmed.to_ascii_lowercase().contains("ses_")
+}
+
+fn is_provider_failure_inner(_full_lower: &str, inner_lower: &str) -> bool {
+    [
+        "insufficient balance",
+        "insufficient_quota",
+        "insufficient quota",
+        "quota exceeded",
+        "rate limit",
+        "pay-as-you-go",
+        "billing",
+        "invalid api key",
+        "bad credentials",
+        "credential",
+        "sem saldo",
+        "saldo insuficiente",
+    ]
+    .iter()
+    .any(|pattern| inner_lower.contains(pattern))
+}
+
+/// Verdadeiro quando o texto descreve um executável de ajudante ausente.
+pub fn is_helper_executable_missing(raw: &str) -> bool {
+    let trimmed = raw.trim();
+    let normalized = strip_wrappers(trimmed);
+    is_helper_executable_missing_inner(&trimmed.to_ascii_lowercase(), &normalized.to_ascii_lowercase())
+}
+
+fn is_helper_executable_missing_inner(full_lower: &str, inner_lower: &str) -> bool {
+    inner_lower.contains("executable-not-found:")
+        || inner_lower.contains("not installed on this machine")
+        || (full_lower.contains("helper.launch")
+            && (inner_lower.contains("os error 2")
+                || inner_lower.contains("cannot find the file")
+                || inner_lower.contains("não pode encontrar o arquivo")
+                || inner_lower.contains("no such file")))
 }
 
 fn classify_helper_key(inner_lower: &str) -> Option<&'static str> {
@@ -438,6 +574,74 @@ mod tests {
         );
         assert_eq!(cmd_err.summary, "Não foi possível concluir a operação do Git.");
         assert!(!cmd_err.summary.contains("review.refresh"));
+    }
+
+    #[test]
+    fn missing_helper_executable_gets_human_phrase_without_raw_os_error() {
+        let pt = test_i18n(Locale::PtBr);
+        let en = test_i18n(Locale::En);
+
+        let missing = humanize_error(&pt, "executable-not-found:OpenCode");
+        assert_eq!(
+            missing.summary,
+            "Não achei o programa do ajudante. Confira a instalação em Ajudantes."
+        );
+        assert!(!missing.summary.contains("os error"));
+        assert!(!missing.summary.contains("executable-not-found:"));
+        assert_eq!(missing.detail.as_deref(), Some("executable-not-found:OpenCode"));
+
+        let wrapped = humanize_error(
+            &en,
+            "command `helper.launch` failed: The system cannot find the file specified. (os error 2)",
+        );
+        assert!(wrapped.summary.contains("Could not find the helper's program"), "{}", wrapped.summary);
+        assert!(!wrapped.summary.to_ascii_lowercase().contains("os error"));
+        assert!(!wrapped.summary.contains('`'));
+        assert!(wrapped.detail.is_some());
+        assert!(is_helper_executable_missing("executable-not-found:X"));
+    }
+
+    #[test]
+    fn provider_failure_gets_localized_guidance_without_internal_session_id() {
+        let pt = test_i18n(Locale::PtBr);
+        let en = test_i18n(Locale::En);
+
+        let balance = humanize_error(
+            &pt,
+            "Insufficient balance. This request is pay-as-you-go, billed to ses_e1ef4970cffeQh6MI0sy42sh5e",
+        );
+        assert!(balance.summary.contains("saldo"), "{}", balance.summary);
+        assert!(balance.summary.contains("credencial"), "{}", balance.summary);
+        assert!(!balance.summary.contains("ses_"));
+        assert!(!balance.summary.contains("Insufficient balance"));
+
+        let limit = humanize_error(&en, "rate limit exceeded for the current model");
+        assert!(limit.summary.contains("plan limits"), "{}", limit.summary);
+        assert!(!limit.summary.to_ascii_lowercase().contains("rate limit"));
+        assert!(is_provider_failure("credential is invalid"));
+    }
+
+    #[test]
+    fn internal_command_failure_hides_command_name_and_ids() {
+        let pt = test_i18n(Locale::PtBr);
+        let en = test_i18n(Locale::En);
+
+        let raw = "command `helper.launch` failed: ctx_ab12 internal step failed";
+        let human = humanize_error(&pt, raw);
+        assert_eq!(
+            human.summary,
+            "Não foi possível concluir uma ação interna do aplicativo. Tente de novo; se continuar, confira o log."
+        );
+        assert!(!human.summary.contains("helper.launch"));
+        assert!(!human.summary.contains("ctx_"));
+        let detail = human.detail.as_deref().unwrap();
+        assert!(!detail.contains("helper.launch"), "{detail}");
+        assert!(!detail.contains("ctx_ab12"), "{detail}");
+
+        let clean = humanize_error(&en, "command `content.run` falhou: error: unknown step");
+        assert!(clean.summary.contains("Could not complete an internal application action"));
+        assert!(!clean.summary.to_ascii_lowercase().contains("failed"));
+        assert!(is_internal_command_failure(raw));
     }
 
     #[test]

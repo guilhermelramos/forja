@@ -539,11 +539,15 @@ impl MusterFile {
                     HelperStatus::NeedsYou => AssignmentState::NeedsYou,
                     HelperStatus::Idle => AssignmentState::Idle,
                     HelperStatus::Finished => AssignmentState::Stopped,
+                    HelperStatus::Error => AssignmentState::Stopped,
                     HelperStatus::Unknown => AssignmentState::Idle,
                 };
             }
         }
-        let stopped = matches!(status, HelperStatus::Idle | HelperStatus::Finished);
+        let stopped = matches!(
+            status,
+            HelperStatus::Idle | HelperStatus::Finished | HelperStatus::Error
+        );
         if stopped && was_running && !delivered && !escalated {
             let assignment = self
                 .assignments
@@ -922,6 +926,7 @@ pub fn status_key(status: HelperStatus) -> &'static str {
         HelperStatus::Working => "working",
         HelperStatus::NeedsYou => "needs_you",
         HelperStatus::Finished => "finished",
+        HelperStatus::Error => "error",
     }
 }
 

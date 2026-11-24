@@ -88,6 +88,8 @@ pub struct HelperState {
     pub preview_seeded: bool,
     /// Contexto de launch, prontidão e retomada.
     pub launch: launch_context::State,
+    /// Erro cru do último lançamento que falhou, exibido humanizado na página.
+    pub last_launch_error: Option<String>,
 }
 
 impl HelperState {
@@ -121,7 +123,7 @@ impl HelperState {
         let active = self
             .runs
             .values()
-            .any(|run| !matches!(run.status, HelperStatus::Finished));
+            .any(|run| !matches!(run.status, HelperStatus::Finished | HelperStatus::Error));
         if active != self.awake {
             self.awake = active;
             set_awake(active);
@@ -564,6 +566,71 @@ mod tests {
     }
 
     #[test]
+    fn failed_launch_leaves_run_in_error_status() {
+        let dir = temp_guard("failed-launch-error-status");
+        let dir = &dir.0;
+        let core = Arc::new(Core::new());
+        let calls = Arc::new(std::sync::Mutex::new(Vec::new()));
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(HelperModule {
+                    core: Arc::clone(&core),
+                }),
+                Box::new(StubTerminal {
+                    calls: Arc::clone(&calls),
+                }),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("helper and stub terminal register");
+        let mut profile = crate::profile::Profile::parse(
+            "id = \"ghost\"\nname = \"Ghost\"\nmaker = \"Test\"\nsite = \"https://example.test\"\n[detect]\nexecutables=[\"definitely-not-a-real-helper-xyz\"]\n[start]\ncommand=\"definitely-not-a-real-helper-xyz\"\n",
+            std::path::PathBuf::from("ghost.toml"),
+            crate::profile::Layer::User,
+        )
+        .unwrap();
+        profile.trusted = true;
+        core.with_state(|state| {
+            state.profiles = vec![profile];
+            state.detection.clear();
+            state.probed.clear();
+            state.loaded_for = Some(dir.clone());
+        })
+        .unwrap();
+
+        let mut args = forja_kernel::Args::new();
+        args.insert("profile_id", serde_json::json!("ghost"));
+        args.insert("bench_path", serde_json::json!(dir.display().to_string()));
+        let error = runtime
+            .run_command("helper.launch", args)
+            .expect_err("missing executable must fail launch");
+        assert!(error.to_string().contains("executable-not-found:"), "{error}");
+
+        let status = core
+            .with_state(|state| {
+                state
+                    .runs
+                    .values()
+                    .find(|run| run.profile_id == "ghost")
+                    .map(|run| run.status)
+            })
+            .unwrap();
+        assert_eq!(status, Some(HelperStatus::Error));
+        let raw = core
+            .with_state(|state| state.last_launch_error.clone())
+            .unwrap();
+        assert!(
+            raw.as_deref().is_some_and(|raw| raw.contains("executable-not-found:")),
+            "{raw:?}"
+        );
+    }
+
+    #[test]
     fn contract_rpc_list_and_missing_terminal() {
         let dir = temp_guard("rpc");
         let dir = &dir.0;
@@ -843,7 +910,7 @@ events = ["Stop"]
         let status = runtime
             .call_method("helper.status", Map::new())
             .expect("helper.status");
-        assert_eq!(status["runs"][0]["status"], json!("finished"));
+        assert_eq!(status["runs"][0]["status"], json!("error"));
         assert_eq!(status["runs"][0]["failed"], true);
     }
 
@@ -882,7 +949,7 @@ events = ["Stop"]
             )
             .expect_err("uninstalled helper must fail");
         assert!(
-            error.message.contains("não está instalado"),
+            error.message.contains("executable-not-found:"),
             "{}",
             error.message
         );
@@ -1023,7 +1090,7 @@ events = ["Stop"]
             )
             .expect_err("launch must obey the same installed verdict");
         assert!(
-            error.message.contains("não está instalado"),
+            error.message.contains("executable-not-found:"),
             "{}",
             error.message
         );

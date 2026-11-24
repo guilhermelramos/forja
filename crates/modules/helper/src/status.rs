@@ -113,14 +113,57 @@ pub(crate) fn is_failed(run: &Run) -> bool {
 pub(crate) fn update_exited_run(cx: &mut Ctx<'_>, core: &Shared, terminal: &TerminalRef, code: Option<i32>) {
     let failed = code.is_some_and(|code| code != 0);
     let event = if failed { "process failed" } else { "process exited" };
+    let status = if failed {
+        HelperStatus::Error
+    } else {
+        HelperStatus::Finished
+    };
     update_run_inner(
         cx,
         core,
         &terminal.terminal_id,
-        HelperStatus::Finished,
+        status,
         Some(event.to_owned()),
         failed,
     );
+}
+
+/// Registra uma falha de lançamento como execução em estado de erro.
+///
+/// Usado quando o processo nem chega a abrir (por exemplo, executável ausente):
+/// não há terminal para associar, mas a interface ainda precisa mostrar `Erro`
+/// em vez de `Ocioso`/`Parado`.
+pub(crate) fn record_launch_failure(
+    cx: &mut Ctx<'_>,
+    core: &Shared,
+    bench_path: &str,
+    profile_id: Option<&str>,
+    raw_error: &str,
+) {
+    let profile_id = profile_id.unwrap_or("unknown").to_owned();
+    let run = Run {
+        terminal_id: format!("launch-error:{profile_id}"),
+        profile_id: profile_id.clone(),
+        bench_path: bench_path.to_owned(),
+        started_at: chrono::Utc::now().to_rfc3339(),
+        hook_token: String::new(),
+        status: HelperStatus::Error,
+        last_event: Some("launch failed".to_owned()),
+    };
+    {
+        let Ok(mut state) = core.state.lock() else {
+            return;
+        };
+        state.runs.insert(run.terminal_id.clone(), run.clone());
+        state.last_launch_error = Some(raw_error.to_owned());
+        state.refresh_awake();
+    }
+    let _ = cx.emit(&HelperStatusChanged {
+        bench_path: run.bench_path.clone(),
+        terminal_id: Some(run.terminal_id.clone()),
+        profile_id: run.profile_id.clone(),
+        status: HelperStatus::Error,
+    });
 }
 
 fn update_run_inner(
@@ -155,7 +198,7 @@ fn update_run_inner(
 }
 
 fn notification_keys(status: HelperStatus, failed: bool) -> Option<(&'static str, &'static str, &'static str)> {
-    if failed {
+    if failed || status == HelperStatus::Error {
         Some(("helper.notifications.error", "helper.notify.error-title", "helper.notify.error-body"))
     } else {
         match status {

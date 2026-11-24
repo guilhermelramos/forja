@@ -1,0 +1,25 @@
+{
+  "title": "Executável de ajudante ausente mostra Erro e frase humana (#58)",
+  "issue": 58,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.key", "keys": "Ctrl+Alt+Shift+A" },
+    { "m": "ui.click", "target": "OpenCode" },
+    { "m": "ui.click", "target": "Ajudantes" }
+  ],
+  "expect": [
+    {
+      "present_contains": [
+        "Não achei o programa do ajudante",
+        "Erro"
+      ],
+      "absent_contains": [
+        "os error",
+        "helper.launch",
+        "executable-not-found"
+      ]
+    }
+  ]
+}
