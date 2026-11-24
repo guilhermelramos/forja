@@ -19,6 +19,10 @@ pub struct LaunchRequest {
     pub model: Option<String>,
     /// Esforço opcional.
     pub effort: Option<String>,
+    /// Referência do pedido associada à bancada (`from_request`).
+    pub from_request: Option<forja_contracts::RequestRef>,
+    /// Sobrescrita opcional para `helper.launch.initial_context`.
+    pub initial_context: Option<String>,
 }
 
 /// Ajustes do usuário para um perfil.
@@ -111,19 +115,17 @@ pub fn build(
         .as_deref()
         .map(str::trim)
         .filter(|prompt| !prompt.is_empty());
+    // Nenhum texto não confiável entra no argv: shims `.cmd`/`.bat` são
+    // interpretados pelo cmd.exe, onde `&` e `>` executam comandos. O prompt
+    // completa vai para o PTY depois que o terminal abrir.
     let mut delayed_prompt = None;
     if let Some(prompt) = prompt {
-        match profile.prompt.mode.as_str() {
-            "argument" => args.push(prompt.to_owned()),
-            "flag" => {
-                if let Some(flag) = &profile.prompt.flag {
-                    args.push(flag.clone());
-                }
-                args.push(prompt.to_owned());
+        if profile.prompt.mode == "flag" {
+            if let Some(flag) = &profile.prompt.flag {
+                args.push(flag.clone());
             }
-            "stdin" | "none" | "" => delayed_prompt = Some(prompt.to_owned()),
-            _ => {}
         }
+        delayed_prompt = Some(prompt.to_owned());
     }
     if let Some(model) = &request.model {
         if !profile.models.model_args.is_empty() {
@@ -160,6 +162,56 @@ pub fn build(
         args,
         environment,
         delayed_prompt,
+    })
+}
+
+/// Monta o plano de retomada para o perfil quando `[resume]` declara argumentos válidos.
+pub fn build_resume(
+    profile: &Profile,
+    session_id: Option<&str>,
+    cwd: PathBuf,
+    overrides: &ProfileOverride,
+) -> Result<LaunchPlan, String> {
+    if overrides.disabled {
+        return Err(format!("helper profile `{}` is disabled", profile.id));
+    }
+    if !profile.trusted {
+        return Err(profile
+            .risk_reason
+            .clone()
+            .unwrap_or_else(|| format!("helper profile `{}` is not trusted", profile.id)));
+    }
+    let clean_session = session_id
+        .map(str::trim)
+        .filter(|value| !value.is_empty());
+    let mut args = if let Some(id) = clean_session {
+        if !profile.resume.id.is_empty() {
+            profile
+                .resume
+                .id
+                .iter()
+                .map(|arg| arg.replace("{id}", id))
+                .collect()
+        } else {
+            profile.resume.last.clone()
+        }
+    } else {
+        profile.resume.last.clone()
+    };
+    if args.is_empty() {
+        return Err(format!(
+            "helper profile `{}` does not support resuming sessions",
+            profile.id
+        ));
+    }
+    args.extend(overrides.extra_args.clone());
+    Ok(LaunchPlan {
+        profile_id: profile.id.clone(),
+        cwd,
+        program: profile.start.command.clone(),
+        args,
+        environment: overrides.environment.clone(),
+        delayed_prompt: None,
     })
 }
 
@@ -241,20 +293,73 @@ mod tests {
             )
             .expect("plan");
             assert!(!plan.program.is_empty());
-            match profile.prompt.mode.as_str() {
-                "argument" => {
-                    assert_eq!(plan.args.last().map(String::as_str), Some("do the thing"))
-                }
-                "flag" => {
-                    assert!(plan.args.iter().any(|arg| arg == "do the thing"));
-                    assert!(plan.args.len() >= 2);
-                }
-                "stdin" | "none" | "" => {
-                    assert_eq!(plan.delayed_prompt.as_deref(), Some("do the thing"))
-                }
-                _ => {}
-            }
+            assert!(
+                !plan.args.iter().any(|arg| arg.contains("do the thing")),
+                "untrusted prompt must never enter argv: {}",
+                plan.command_line()
+            );
+            assert_eq!(plan.delayed_prompt.as_deref(), Some("do the thing"));
         }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn untrusted_request_text_never_reaches_a_cmd_shim_argv() {
+        let dir = std::env::temp_dir().join(format!(
+            "forja-helper-shim-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let shim = dir.join("fake-helper.cmd");
+        let log = dir.join("args.txt");
+        let pwned = dir.join("pwned.txt");
+        let shim_path = shim.display().to_string().replace('\\', "/");
+        let log_path = log.display().to_string().replace('\\', "/");
+        let pwned_path = pwned.display().to_string().replace('\\', "/");
+        std::fs::write(
+            &shim,
+            format!("@echo off\r\n> \"{log_path}\" echo %*\r\n"),
+        )
+        .unwrap();
+        let malicious = format!("& echo PWNED > \"{pwned_path}\"");
+
+        let profile = Profile::parse(
+            &format!(
+                "id = \"shim\"\nname = \"Shim\"\nmaker = \"Test\"\nsite = \"https://example.test\"\n[detect]\nexecutables=[\"fake-helper.cmd\"]\n[start]\ncommand = \"{shim_path}\"\n[prompt]\nmode = \"argument\"\n"
+            ),
+            PathBuf::from("shim.toml"),
+            Layer::User,
+        )
+        .unwrap();
+        let mut profile = profile;
+        profile.trusted = true;
+        let plan = build(
+            &profile,
+            &LaunchRequest {
+                prompt: Some(malicious.clone()),
+                ..LaunchRequest::default()
+            },
+            "ask",
+            dir.clone(),
+            &ProfileOverride::default(),
+        )
+        .expect("plan");
+        assert!(!plan.args_text().contains("PWNED"));
+        assert!(!plan.args.iter().any(|arg| arg.contains('&')));
+
+        // É exatamente esta linha que o ConPTY monta para um shim .cmd.
+        let conpty_line = format!(
+            "\"cmd.exe\" /d /s /c \"\"{}\" {}\"",
+            shim_path,
+            plan.args_text()
+        );
+        assert!(!conpty_line.contains("PWNED"), "{conpty_line}");
+        assert!(!pwned.exists(), "request text must not create files");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -302,5 +407,44 @@ mod tests {
                 .map(String::as_str),
             Some("C:/accounts/ana")
         );
+    }
+
+    #[test]
+    fn resume_plan_uses_profile_flags_and_rejects_unsupported_profiles() {
+        let claude = profile("claude-code");
+        let by_id = build_resume(
+            &claude,
+            Some("sess-42"),
+            PathBuf::from("C:/work"),
+            &ProfileOverride::default(),
+        )
+        .expect("claude supports id resume");
+        assert_eq!(by_id.args, vec!["--resume", "sess-42"]);
+
+        let last = build_resume(
+            &claude,
+            None,
+            PathBuf::from("C:/work"),
+            &ProfileOverride::default(),
+        )
+        .expect("claude supports last resume");
+        assert_eq!(last.args, vec!["--continue"]);
+
+        let plain = Profile::parse(
+            "id = \"no-resume\"\nname = \"NoResume\"\nmaker = \"Test\"\nsite = \"https://example.test\"\n[detect]\nexecutables=[\"x\"]\n[start]\ncommand=\"x\"\n",
+            PathBuf::from("no-resume.toml"),
+            Layer::User,
+        )
+        .unwrap();
+        let mut plain = plain;
+        plain.trusted = true;
+        let err = build_resume(
+            &plain,
+            None,
+            PathBuf::from("C:/work"),
+            &ProfileOverride::default(),
+        )
+        .unwrap_err();
+        assert!(err.contains("does not support resuming"));
     }
 }

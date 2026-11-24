@@ -18,6 +18,9 @@ use std::any::{Any, TypeId};
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
+/// Per-frame callback of a service module, with its module id.
+pub type TickHandler = Arc<dyn for<'a, 'b> Fn(&'b mut Ctx<'a>) + Send + Sync + 'static>;
+
 /// Per-module registration handle. A module may only register into this.
 pub struct Registrar<'a> {
     module_id: &'a str,
@@ -94,6 +97,16 @@ impl<'a> Registrar<'a> {
             fields,
             handler: Arc::new(handler),
         });
+    }
+
+    /// Registers a per-frame service tick. It runs before views are drawn.
+    pub fn tick<F>(&mut self, handler: F)
+    where
+        F: for<'c, 'd> Fn(&'d mut Ctx<'c>) + Send + Sync + 'static,
+    {
+        self.registry
+            .ticks
+            .push((self.module_id.to_owned(), Arc::new(handler)));
     }
 
     /// Registers a view whose value is already type-erased.
@@ -291,6 +304,7 @@ pub struct Registry {
     /// Contract namespaces (e.g. `file`) and the single module that serves each.
     contract_namespaces: Vec<(String, String)>,
     subscriptions: Vec<EventSubscription>,
+    ticks: Vec<(String, TickHandler)>,
     bundles: Vec<BundleSource>,
     used_keys: BTreeSet<String>,
     errors: Vec<String>,
@@ -309,6 +323,7 @@ impl Registry {
             event_signatures: Vec::new(),
             contract_namespaces: Vec::new(),
             subscriptions: Vec::new(),
+            ticks: Vec::new(),
             bundles: Vec::new(),
             used_keys: BTreeSet::new(),
             errors: Vec::new(),
@@ -329,6 +344,10 @@ impl Registry {
 
     pub fn views(&self) -> &[ViewContribution] {
         &self.views
+    }
+
+    pub fn ticks(&self) -> &[(String, TickHandler)] {
+        &self.ticks
     }
 
     pub fn views_in(&self, slot: Slot) -> Vec<&ViewContribution> {

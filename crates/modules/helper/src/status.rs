@@ -77,9 +77,10 @@ pub fn match_hook_run<'a>(
     })
 }
 
-fn same_path(left: &str, right: &str) -> bool {
+pub(crate) fn same_path(left: &str, right: &str) -> bool {
     left.replace('/', "\\")
-        .eq_ignore_ascii_case(&right.replace('/', "\\"))
+        .trim_end_matches('\\')
+        .eq_ignore_ascii_case(right.replace('/', "\\").trim_end_matches('\\'))
 }
 
 /// Atualiza um run pelo terminal e publica o evento quando o estado muda.

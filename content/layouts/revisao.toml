@@ -1,0 +1,38 @@
+# Exemplo de design/layout.md: mudanças, código e revisão.
+schema_version = 1
+id = "revisao"
+name = { pt-BR = "Revisão", en = "Review" }
+
+[chrome]
+rail_visible = true
+rail_hidden = []
+status_bar_visible = true
+
+[root]
+kind = "split"
+dir = "columns"
+ratio = 0.24
+
+[root.first]
+kind = "leaf"
+id = "changes"
+collapsible = true
+tabs = ["git.changes", "explorer.panel"]
+active = 0
+
+[root.second]
+kind = "split"
+dir = "columns"
+ratio = 0.54
+
+[root.second.first]
+kind = "leaf"
+id = "code"
+tabs = ["diff.tab", "editor.tab"]
+active = 0
+
+[root.second.second]
+kind = "leaf"
+id = "review"
+tabs = [{ view = "review.tab" }, { view = "chat.tab", instance = "1" }, { view = "terminal.tab", instance = "1" }]
+active = 0

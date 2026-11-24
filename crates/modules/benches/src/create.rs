@@ -21,6 +21,29 @@ pub fn create(
     from_request: Option<&str>,
     fetch: Option<bool>,
 ) -> Result<BenchRef, String> {
+    create_with_request(
+        cx,
+        shared,
+        project_id,
+        name,
+        base,
+        from_request,
+        None,
+        fetch,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn create_with_request(
+    cx: &mut Ctx<'_>,
+    shared: &Shared,
+    project_id: &str,
+    name: &str,
+    base: Option<&str>,
+    from_request: Option<&str>,
+    request_ref: Option<forja_contracts::RequestRef>,
+    fetch: Option<bool>,
+) -> Result<BenchRef, String> {
     ensure_main(cx, shared)?;
     if name.trim().is_empty() {
         return Err("bench name is required".to_owned());
@@ -68,6 +91,7 @@ pub fn create(
         created_at: now_millis(),
         creation_stage: setting_str(cx, "bench.stage.creation_default", stages::DRAFT),
         from_request: from_request.map(str::to_owned),
+        request_ref,
     };
     let state = shared.clone();
     cx.spawn(
@@ -102,6 +126,7 @@ struct CreateJob {
     created_at: u64,
     creation_stage: String,
     from_request: Option<String>,
+    request_ref: Option<forja_contracts::RequestRef>,
 }
 
 struct Created {
@@ -174,6 +199,7 @@ fn run_create(job: CreateJob) -> Result<Created, String> {
         request_command,
         open_tabs: Vec::new(),
         request_key: job.from_request.clone(),
+        request_ref: job.request_ref,
     };
     Ok(Created {
         record,
