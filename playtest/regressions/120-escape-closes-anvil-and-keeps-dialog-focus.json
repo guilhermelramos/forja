@@ -1,0 +1,35 @@
+{
+  "title": "Escape fecha só a Bigorna e devolve o foco a 'Novo arquivo' (#183)",
+  "issue": 183,
+  "locale": "pt-BR",
+  "steps": [
+    { "m": "ui.wait", "ms": 500 },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Abrir pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 800 },
+    { "m": "ui.open_tab", "target": "Arquivos" },
+    { "m": "ui.click", "target": "Novo arquivo" },
+    { "m": "ui.click", "target": "Buscar ou executar… Ctrl+K" },
+    { "m": "ui.snapshot" },
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.type", "text": "foco-no-dialogo" },
+    { "m": "ui.wait", "ms": 300 },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 9,
+      "window_count": 2,
+      "present": ["Bigorna", "Novo arquivo"]
+    },
+    {
+      "step": 13,
+      "window_count": 1,
+      "present": ["Novo arquivo"],
+      "present_contains": "foco-no-dialogo",
+      "absent": ["Bigorna"]
+    }
+  ]
+}
