@@ -19,6 +19,7 @@ pub mod names {
     pub const PROJECT_ACTIVATED: &str = "project.activated";
     pub const BENCH_ACTIVATED: &str = "bench.activated";
     pub const BENCH_CREATED: &str = "bench.created";
+    pub const BENCH_CREATE_FAILED: &str = "bench.create_failed";
     pub const BENCH_STORED: &str = "bench.stored";
     pub const BENCH_SLEEP_CHANGED: &str = "bench.sleep_changed";
     pub const STAGE_CHANGED: &str = "stage.changed";
@@ -65,6 +66,13 @@ pub struct ProjectRemoved {
 pub struct BenchActivated(pub BenchRef);
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BenchCreated(pub BenchRef);
+/// Falha verificável da criação assíncrona pedida por `bench.create`.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BenchCreateFailed {
+    pub bench_id: String,
+    pub name: String,
+    pub reason: String,
+}
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BenchStored {
     pub bench_id: String,

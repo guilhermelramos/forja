@@ -107,6 +107,7 @@ evento correspondente ou na próxima leitura. `git.status`, `git.changes`,
 |---|---|---|
 | `project.added` / `project.removed` | projects | `ProjectAdded` / `ProjectRemoved` |
 | `bench.activated` / `bench.created` / `bench.stored` | benches | `BenchActivated` / `BenchCreated` / `BenchStored` |
+| `bench.create_failed` | benches | `BenchCreateFailed` (`bench_id`, `name`, `reason`): falha verificável do `bench.create` assíncrono, com a mesma identidade do pedido |
 | `bench.sleep_changed` | benches | `BenchSleepChanged` |
 | `stage.changed` | benches | `StageChanged` (`bench_id`, `from`, `to`, `actor`, `origin`, `reason`, `at`, `request?`: chave do pedido de origem, só com `bench.stage.sync_request` ligado; aditivo) |
 | `terminal.exited` / `terminal.bell` / `terminal.command_finished` / `terminal.title_changed` | terminal | `TerminalExited` … |
@@ -438,7 +439,7 @@ Módulo `muster` (`crates/modules/muster`). Coordena tarefas em bancadas e ajuda
 |---|---|---|
 | `muster.run` | `{title, objective?, coordinator?, bench_path?, budget_usd?}` | `MusterRun` |
 | `muster.task` | `{run, title, spec?, deps?}` | `Task` (`deps` é uma lista separada por vírgulas) |
-| `muster.start` | `{task, profile_id?, bench_path?, new_bench?, permission?}` | `{assignment, bench_path, preamble}`. Abre bancada e chama `helper.launch` |
+| `muster.start` | `{task, profile_id?, bench_path?, new_bench?, permission?}` | `{assignment, bench_path, preamble}` ou `{pending: true, bench_id, dispatch}` quando `muster.dispatch.target = new`. Abre bancada e chama `helper.launch` |
 | `muster.note` | `{body, task?, assignment?, kind?, from?}` | `{note, queued, delivered, reason?}`. De ajudante para coordenador ou do coordenador para uma atribuição |
 | `muster.reply` | `{note, body}` | `{note, queued, delivered, reason?}` |
 | `muster.handoff` | `{summary, result?, evidence?, task?, assignment?}` | `{note, result, delivered}`. `result`: `feito`, `falhou` ou `bloqueado` |
@@ -446,7 +447,7 @@ Módulo `muster` (`crates/modules/muster`). Coordena tarefas em bancadas e ajuda
 | `muster.budget.set` | `{run, budget_usd}` | `MusterRun` atualizado |
 | `muster.spend` | `{run, usd}` | `MusterRun` atualizado; soma `spent_usd` |
 | `muster.inbox` | `{run?, all?}` | `{notes: [Note]}` |
-| `muster.status` | `{run?}` | `{runs, tasks, assignments, inbox, loaded, notice}` |
+| `muster.status` | `{run?}` | `{runs, tasks, assignments, inbox, pending_dispatches, owned_benches, loaded, notice}` |
 | `muster.open` | - | `{open: true}`. Atalho do trilho |
 
 Métodos RPC equivalentes: `muster.run`, `muster.task`, `muster.start`, `muster.note`, `muster.reply`, `muster.handoff`, `muster.plan.approve`, `muster.budget.set`, `muster.spend` (write) e `muster.inbox`, `muster.status` (read).
@@ -460,7 +461,8 @@ Métodos RPC equivalentes: `muster.run`, `muster.task`, `muster.start`, `muster.
 - **Entrega.** `muster.handoff.require_evidence` exige `evidence` quando o resultado é `feito`.
 - **Plano.** Com `muster.plan.require_approval` ligado, o mutirão nasce com `plan_approved: false`; `muster.start` recusa até `muster.plan.approve`. `muster.plan.max_tasks` limita `muster.task`.
 - **Orçamento.** `budget_usd` vem do pedido ou de `muster.budget.max_usd`; `muster.spend` soma o custo e `muster.start` recusa quando o teto já foi atingido.
-- **Eventos.** Consome `helper.status_changed`, `terminal.exited` e `terminal.command_finished`; não publica eventos próprios.
+- **Despacho.** `muster.dispatch.target` escolhe `ask` (exige `bench_path`), `current` (usa a bancada atual) ou `new` (`bench.create`, com posse registrada ao concluir). O despacho `new` só sobe o ajudante quando chega `bench.created` com o mesmo `bench_id`; `bench.create_failed` fecha o pedido, marca a tarefa como falha e avisa.
+- **Eventos.** Consome `helper.status_changed`, `terminal.exited`, `terminal.command_finished`, `bench.created` e `bench.create_failed`; não publica eventos próprios.
 
 ## MCP (onda C3)
 

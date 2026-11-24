@@ -153,6 +153,18 @@ fn register_settings(r: &mut Registrar<'_>) {
         "setting-muster-dispatch-max_parallel-help",
     ));
     r.setting(SettingSpec::new(
+        "muster.dispatch.target",
+        SettingKind::Choice {
+            options: ["ask", "current", "new"]
+                .into_iter()
+                .map(str::to_owned)
+                .collect(),
+        },
+        SettingValue::Text("ask".to_owned()),
+        "setting-muster-dispatch-target-label",
+        "setting-muster-dispatch-target-help",
+    ));
+    r.setting(SettingSpec::new(
         "muster.notes.poll_s",
         SettingKind::Integer {
             min: Some(1),
@@ -201,6 +213,7 @@ fn register_settings(r: &mut Registrar<'_>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use forja_contracts::{BenchCreateFailed, BenchCreated, BenchRef};
     use forja_kernel::{contract, Runtime, RuntimeOptions};
     use serde_json::{json, Map};
     use std::path::PathBuf;
@@ -361,6 +374,7 @@ mod tests {
 
     struct StubHelper {
         profiles: Arc<std::sync::Mutex<Vec<String>>>,
+        paths: Arc<std::sync::Mutex<Vec<String>>>,
     }
 
     impl Module for StubHelper {
@@ -370,14 +384,72 @@ mod tests {
 
         fn register(&mut self, r: &mut Registrar<'_>) {
             let profiles = Arc::clone(&self.profiles);
+            let paths = Arc::clone(&self.paths);
             r.command("helper.launch", "muster.command.start", move |_, args| {
                 let profile = args.str("profile_id").unwrap_or("auto").to_owned();
                 profiles.lock().unwrap().push(profile.clone());
+                paths
+                    .lock()
+                    .unwrap()
+                    .push(args.str("bench_path").unwrap_or("").to_owned());
                 Ok(json!({
                     "profile_id": profile,
                     "terminal_id": "9",
                     "mode": "tui"
                 }))
+            });
+        }
+    }
+
+    struct StubBench {
+        current: String,
+        created: Arc<std::sync::Mutex<Vec<String>>>,
+        stored: Arc<std::sync::Mutex<Vec<String>>>,
+        dirty: Arc<std::sync::Mutex<std::collections::BTreeMap<String, bool>>>,
+    }
+
+    impl Module for StubBench {
+        fn manifest(&self) -> ModuleManifest {
+            ModuleManifest::new("bench", "muster.name", "0.0.0")
+        }
+
+        fn register(&mut self, r: &mut Registrar<'_>) {
+            let current = self.current.clone();
+            r.command("bench.current", "muster.command.status", move |_, _| {
+                Ok(json!({
+                    "project_id": "p1",
+                    "bench_id": "bench-current",
+                    "name": "atual",
+                    "path": current
+                }))
+            });
+
+            let created = Arc::clone(&self.created);
+            r.command("bench.create", "muster.command.start", move |_, args| {
+                let name = args.required_str("name")?.to_owned();
+                created.lock().unwrap().push(name.clone());
+                Ok(json!({
+                    "project_id": "p1",
+                    "bench_id": "bench-new",
+                    "name": name,
+                    "path": format!("C:/bancadas/{name}")
+                }))
+            });
+
+            let stored = Arc::clone(&self.stored);
+            r.command("bench.store", "muster.command.start", move |_, args| {
+                stored
+                    .lock()
+                    .unwrap()
+                    .push(args.required_str("bench_id")?.to_owned());
+                Ok(json!({ "pending": true }))
+            });
+
+            let dirty = Arc::clone(&self.dirty);
+            r.command("bench.is_dirty", "muster.command.status", move |_, args| {
+                let id = args.required_str("bench_id")?;
+                let value = dirty.lock().unwrap().get(id).copied().unwrap_or(false);
+                Ok(json!({ "dirty": value }))
             });
         }
     }
@@ -391,6 +463,7 @@ mod tests {
                 Box::new(MusterModule::new()),
                 Box::new(StubHelper {
                     profiles: Arc::clone(&profiles),
+                    paths: Arc::new(std::sync::Mutex::new(Vec::new())),
                 }),
             ],
             RuntimeOptions {
@@ -608,20 +681,210 @@ mod tests {
             .is_ok());
     }
 
-    #[test]
-    fn dispatch_rejects_new_bench_until_creation_can_be_awaited() {
-        let dir = temp_dir();
-        let mut runtime = runtime(&dir.0);
-        let result = runtime
+    fn bench_runtime(dir: &std::path::Path) -> (Runtime, BenchStubs) {
+        let stubs = BenchStubs::default();
+        let runtime = Runtime::new(
+            vec![
+                Box::new(MusterModule::new()),
+                Box::new(StubHelper {
+                    profiles: Arc::clone(&stubs.profiles),
+                    paths: Arc::clone(&stubs.paths),
+                }),
+                Box::new(StubBench {
+                    current: "C:/atual".to_owned(),
+                    created: Arc::clone(&stubs.created),
+                    stored: Arc::clone(&stubs.stored),
+                    dirty: Arc::clone(&stubs.dirty),
+                }),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.to_path_buf()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("muster, helper and bench register");
+        (runtime, stubs)
+    }
+
+    /// Drena as tarefas em segundo plano até não haver trabalho pendente.
+    fn settle(runtime: &mut Runtime) {
+        let (sender, receiver) = std::sync::mpsc::channel();
+        runtime.set_wake(Arc::new(move || {
+            let _ = sender.send(());
+        }));
+        loop {
+            runtime.poll_tasks();
+            if runtime.tasks().inflight() == 0 {
+                runtime.poll_tasks();
+                return;
+            }
+            let _ = receiver.recv_timeout(std::time::Duration::from_secs(10));
+        }
+    }
+
+    #[derive(Default)]
+    struct BenchStubs {
+        profiles: Arc<std::sync::Mutex<Vec<String>>>,
+        paths: Arc<std::sync::Mutex<Vec<String>>>,
+        created: Arc<std::sync::Mutex<Vec<String>>>,
+        stored: Arc<std::sync::Mutex<Vec<String>>>,
+        dirty: Arc<std::sync::Mutex<std::collections::BTreeMap<String, bool>>>,
+    }
+
+    fn new_run_and_task(runtime: &mut Runtime) -> (String, String) {
+        let run = runtime
             .call_method(
-                "muster.start",
+                "muster.run",
+                Map::from_iter([("title".to_owned(), json!("Despacho"))]),
+            )
+            .unwrap();
+        let task = runtime
+            .call_method(
+                "muster.task",
                 Map::from_iter([
-                    ("task".to_owned(), json!("task-1")),
-                    ("new_bench".to_owned(), json!(true)),
+                    ("run".to_owned(), run["id"].clone()),
+                    ("title".to_owned(), json!("Tarefa")),
                 ]),
             )
+            .unwrap();
+        (
+            run["id"].as_str().unwrap().to_owned(),
+            task["id"].as_str().unwrap().to_owned(),
+        )
+    }
+
+    #[test]
+    fn dispatch_new_bench_waits_for_its_identity_then_launches() {
+        let dir = temp_dir();
+        let (mut runtime, stubs) = bench_runtime(&dir.0);
+        runtime
+            .set_setting("muster.plan.require_approval", SettingValue::Bool(false))
+            .unwrap();
+        runtime
+            .set_setting(
+                "muster.dispatch.target",
+                SettingValue::Text("new".to_owned()),
+            )
+            .unwrap();
+        let (_, task_id) = new_run_and_task(&mut runtime);
+        let pending = runtime
+            .call_method(
+                "muster.start",
+                Map::from_iter([("task".to_owned(), json!(task_id.clone()))]),
+            )
+            .unwrap();
+        assert_eq!(pending["pending"], true);
+        assert_eq!(pending["bench_id"], "bench-new");
+        assert_eq!(
+            stubs.created.lock().unwrap().as_slice(),
+            [format!("muster-{task_id}")]
+        );
+        assert!(stubs.paths.lock().unwrap().is_empty());
+        let before = runtime.call_method("muster.status", Map::new()).unwrap();
+        assert_eq!(before["pending_dispatches"][0]["bench_id"], "bench-new", "{before}");
+
+        let wrong = BenchCreated(BenchRef {
+            project_id: "p1".to_owned(),
+            bench_id: "outra".to_owned(),
+            name: "outra".to_owned(),
+            path: "C:/errada".to_owned(),
+            branch: None,
+        });
+        runtime.emit(&wrong);
+        settle(&mut runtime);
+        assert!(stubs.paths.lock().unwrap().is_empty());
+
+        let ready = BenchCreated(BenchRef {
+            project_id: "p1".to_owned(),
+            bench_id: "bench-new".to_owned(),
+            name: format!("muster-{task_id}"),
+            path: "C:/bancadas/pronta".to_owned(),
+            branch: None,
+        });
+        assert!(runtime.emit(&ready));
+        settle(&mut runtime);
+        let after = runtime.call_method("muster.status", Map::new()).unwrap();
+        assert_eq!(
+            stubs.paths.lock().unwrap().as_slice(),
+            ["C:/bancadas/pronta"],
+            "{after}"
+        );
+        let status = runtime.call_method("muster.status", Map::new()).unwrap();
+        assert_eq!(status["pending_dispatches"], json!([]));
+        assert_eq!(status["owned_benches"][0]["bench_id"], "bench-new");
+        assert_eq!(status["assignments"].as_array().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn dispatch_failure_closes_the_pending_dispatch_and_marks_the_task_failed() {
+        let dir = temp_dir();
+        let (mut runtime, stubs) = bench_runtime(&dir.0);
+        runtime
+            .set_setting("muster.plan.require_approval", SettingValue::Bool(false))
+            .unwrap();
+        runtime
+            .set_setting(
+                "muster.dispatch.target",
+                SettingValue::Text("new".to_owned()),
+            )
+            .unwrap();
+        let (_, task_id) = new_run_and_task(&mut runtime);
+        runtime
+            .call_method(
+                "muster.start",
+                Map::from_iter([("task".to_owned(), json!(task_id))]),
+            )
+            .unwrap();
+        runtime.emit(&BenchCreateFailed {
+            bench_id: "bench-new".to_owned(),
+            name: "muster-task-1".to_owned(),
+            reason: "git falhou".to_owned(),
+        });
+        settle(&mut runtime);
+        let status = runtime.call_method("muster.status", Map::new()).unwrap();
+        assert_eq!(status["pending_dispatches"], json!([]));
+        assert_eq!(status["tasks"][0]["state"], "failed");
+        assert!(stubs.paths.lock().unwrap().is_empty());
+    }
+
+    #[test]
+    fn dispatch_target_decides_between_current_and_ask() {
+        let dir = temp_dir();
+        let (mut runtime, stubs) = bench_runtime(&dir.0);
+        runtime
+            .set_setting("muster.plan.require_approval", SettingValue::Bool(false))
+            .unwrap();
+        runtime
+            .set_setting(
+                "muster.dispatch.target",
+                SettingValue::Text("current".to_owned()),
+            )
+            .unwrap();
+        let (_, task_id) = new_run_and_task(&mut runtime);
+        runtime
+            .call_method(
+                "muster.start",
+                Map::from_iter([("task".to_owned(), json!(task_id))]),
+            )
+            .unwrap();
+        assert_eq!(stubs.paths.lock().unwrap().as_slice(), ["C:/atual"]);
+
+        runtime
+            .set_setting(
+                "muster.dispatch.target",
+                SettingValue::Text("ask".to_owned()),
+            )
+            .unwrap();
+        let (_, other) = new_run_and_task(&mut runtime);
+        let error = runtime
+            .call_method(
+                "muster.start",
+                Map::from_iter([("task".to_owned(), json!(other))]),
+            )
             .unwrap_err();
-        assert!(result.message.contains("bancada"), "{}", result.message);
+        assert!(error.message.contains("bancada"), "{}", error.message);
     }
 
     #[test]

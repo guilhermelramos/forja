@@ -3180,7 +3180,6 @@ help_key = "setting-muster-dispatch-max_parallel-help"
 
 [[setting]]
 key = "muster.dispatch.target"
-deferred = "Aguardando contrato de conclusão e falha da criação assíncrona de bancada."
 module = "muster"
 group = "muster"
 scope = "user"

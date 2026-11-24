@@ -228,6 +228,27 @@ pub struct Assignment {
     pub escalated: bool,
 }
 
+/// Bancada criada pelo mutirão. Só bancadas com esta marca podem ser limpas.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BenchOwnership {
+    pub bench_id: String,
+    pub run: String,
+    pub task: String,
+}
+
+/// Criação assíncrona de bancada esperada por uma tarefa. O `bench_id` é a
+/// identidade que liga o evento `bench.created` (ou a falha) a esta tarefa.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PendingDispatch {
+    pub id: String,
+    pub task: String,
+    pub run: String,
+    pub bench_id: String,
+    pub bench_name: String,
+    pub profile_id: Option<String>,
+    pub permission: Option<String>,
+}
+
 /// Estado de entrega de um recado enviado pelo coordenador.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NoteDeliveryState {
@@ -288,6 +309,12 @@ pub struct MusterFile {
     pub assignments: Vec<Assignment>,
     /// Recados.
     pub notes: Vec<Note>,
+    /// Criações de bancada esperadas, identificadas pelo `bench_id`.
+    #[serde(default)]
+    pub pending_dispatches: Vec<PendingDispatch>,
+    /// Bancadas que o mutirão criou.
+    #[serde(default)]
+    pub owned_benches: Vec<BenchOwnership>,
     next_id: u64,
 }
 
@@ -501,6 +528,75 @@ impl MusterFile {
             if let Some(task) = self.tasks.iter_mut().find(|task| task.id == task_id) {
                 task.state = TaskState::Failed;
             }
+        }
+    }
+
+    /// Registra a criação assíncrona de bancada pedida para uma tarefa.
+    pub fn queue_dispatch(
+        &mut self,
+        task: &str,
+        run: &str,
+        bench_id: &str,
+        bench_name: &str,
+        profile_id: Option<String>,
+        permission: Option<String>,
+    ) -> PendingDispatch {
+        let pending = PendingDispatch {
+            id: self.id("dispatch-"),
+            task: task.to_owned(),
+            run: run.to_owned(),
+            bench_id: bench_id.to_owned(),
+            bench_name: bench_name.to_owned(),
+            profile_id,
+            permission,
+        };
+        self.pending_dispatches.push(pending.clone());
+        pending
+    }
+
+    /// Fecha a criação pelo `bench_id`. O evento de outra bancada não casa.
+    pub fn resolve_dispatch(&mut self, bench_id: &str) -> Option<PendingDispatch> {
+        let at = self
+            .pending_dispatches
+            .iter()
+            .position(|item| item.bench_id == bench_id)?;
+        Some(self.pending_dispatches.remove(at))
+    }
+
+    /// Fecha uma criação que falhou, marca a tarefa como falha e avisa.
+    pub fn fail_dispatch(&mut self, bench_id: &str, reason: &str) -> Option<PendingDispatch> {
+        let pending = self.resolve_dispatch(bench_id)?;
+        if let Some(task) = self.tasks.iter_mut().find(|task| task.id == pending.task) {
+            if !matches!(task.state, TaskState::Delivered) {
+                task.state = TaskState::Failed;
+            }
+        }
+        self.note(
+            &pending.run,
+            Some(pending.task.clone()),
+            None,
+            "muster",
+            "coordinator",
+            NoteKind::Alert,
+            &format!("bancada não criada: {}", tail(reason)),
+            false,
+            false,
+        );
+        Some(pending)
+    }
+
+    /// Marca que o mutirão criou esta bancada.
+    pub fn own_bench(&mut self, run: &str, task: &str, bench_id: &str) {
+        if !self
+            .owned_benches
+            .iter()
+            .any(|item| item.bench_id == bench_id)
+        {
+            self.owned_benches.push(BenchOwnership {
+                bench_id: bench_id.to_owned(),
+                run: run.to_owned(),
+                task: task.to_owned(),
+            });
         }
     }
 

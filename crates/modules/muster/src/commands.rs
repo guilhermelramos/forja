@@ -7,7 +7,10 @@ use crate::model::{
 };
 use crate::preamble::helper_preamble;
 use crate::state::{self, with, Shared};
-use forja_contracts::{HelperStatus, HelperStatusChanged, TerminalCommandFinished, TerminalExited};
+use forja_contracts::{
+    names, BenchCreateFailed, BenchCreated, HelperStatus, HelperStatusChanged,
+    TerminalCommandFinished, TerminalExited,
+};
 use forja_kernel::forja_protocol::{
     Method, MethodEffect, ParamKind, ParamSchema, ResultSchema, RpcError,
 };
@@ -53,6 +56,10 @@ pub const USED_KEYS: &[&str] = &[
     "muster.notify.handoff-title",
     "muster.notify.handoff-body",
     "muster.error.bench-pending",
+    "muster.error.bench-ask",
+    "muster.error.bench-conflict",
+    "muster.error.bench-service",
+    "muster.error.bench-service-empty",
     "muster.error.empty-title",
     "muster-task-pending",
     "muster-task-running",
@@ -350,8 +357,13 @@ fn start(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kernel
     let permission = args.str("permission").map(str::to_owned);
     let new_bench = args.bool("new_bench").unwrap_or(false);
     let bench_arg = args.str("bench_path").map(str::to_owned);
-    if new_bench && bench_arg.is_none() {
-        return Err(KernelError::Message(cx.t("muster.error.bench-pending")));
+    let target = cx
+        .setting("muster.dispatch.target")
+        .and_then(SettingValue::as_str)
+        .unwrap_or("ask")
+        .to_owned();
+    if new_bench && bench_arg.is_some() {
+        return Err(KernelError::Message(cx.t("muster.error.bench-conflict")));
     }
 
     let run_id = with(shared, |state| {
@@ -385,21 +397,25 @@ fn start(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kernel
             run.budget_usd
         )));
     }
+    check_parallel(cx, shared)?;
 
+    if new_bench || target == "new" {
+        return create_dispatch_bench(cx, shared, &task_id, &run_id, profile, permission);
+    }
     let bench_path = match bench_arg {
         Some(path) => path,
-        None => current_bench_path(cx)
-            .ok_or_else(|| KernelError::Message("sem bancada atual; informe bench_path".to_owned()))?,
+        None if target == "current" => current_bench_path(cx)
+            .ok_or_else(|| KernelError::Message(cx.t("muster.error.bench-ask")))?,
+        None => return Err(KernelError::Message(cx.t("muster.error.bench-ask"))),
     };
+    launch_task(cx, shared, &task_id, &run, profile, permission, &bench_path)
+}
 
-    let task_for_preamble = with(shared, |state| {
-        state.store.task(&task_id).cloned()
-    })
-    .flatten()
-    .ok_or_else(|| KernelError::Message("tarefa sumiu".to_owned()))?;
+/// Número de ajudantes em paralelo, contando criações de bancada pendentes.
+fn check_parallel(cx: &Ctx<'_>, shared: &Shared) -> Result<(), KernelError> {
     let max_parallel = cx
         .setting("muster.dispatch.max_parallel")
-        .and_then(|value| value.as_i64())
+        .and_then(SettingValue::as_i64)
         .unwrap_or(4)
         .clamp(1, 16) as usize;
     let active = with(shared, |state| {
@@ -416,6 +432,7 @@ fn start(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kernel
                 )
             })
             .count()
+            + state.store.pending_dispatches.len()
     })
     .unwrap_or(0);
     if active >= max_parallel {
@@ -423,9 +440,77 @@ fn start(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kernel
             "o limite de {max_parallel} ajudantes em paralelo já foi atingido"
         )));
     }
-    let preamble = helper_preamble(&run, &task_for_preamble, &bench_path);
+    Ok(())
+}
+
+/// Pede uma bancada nova ao `bench.create`. O despacho só continua quando
+/// chegar `bench.created` (ou `bench.create_failed`) com o mesmo `bench_id`.
+fn create_dispatch_bench(
+    cx: &mut Ctx<'_>,
+    shared: &Shared,
+    task_id: &str,
+    run_id: &str,
+    profile: Option<String>,
+    permission: Option<String>,
+) -> Result<Value, KernelError> {
+    let current = cx
+        .run_command("bench.current", Args::new())
+        .map_err(|error| KernelError::Message(cx.t_args("muster.error.bench-service", &[("detail", &error.to_string())])))?;
+    let project_id = current
+        .get("project_id")
+        .and_then(Value::as_str)
+        .ok_or_else(|| KernelError::Message(cx.t("muster.error.bench-service-empty")))?
+        .to_owned();
+    let bench_name = format!("muster-{task_id}");
+    let mut create = Args::new();
+    create.insert("project_id", json!(project_id));
+    create.insert("name", json!(bench_name));
+    let created = cx
+        .run_command("bench.create", create)
+        .map_err(|error| KernelError::Message(cx.t_args("muster.error.bench-service", &[("detail", &error.to_string())])))?;
+    let bench_id = created
+        .get("bench_id")
+        .and_then(Value::as_str)
+        .ok_or_else(|| KernelError::Message(cx.t("muster.error.bench-service-empty")))?
+        .to_owned();
+    let name = created
+        .get("name")
+        .and_then(Value::as_str)
+        .unwrap_or(&bench_name)
+        .to_owned();
+    let pending = with(shared, |state| {
+        state
+            .store
+            .queue_dispatch(task_id, run_id, &bench_id, &name, profile, permission)
+    })
+    .ok_or_else(|| KernelError::Message("muster state is unavailable".to_owned()))?;
+    state::persist(cx, shared);
+    Ok(json!({
+        "pending": true,
+        "bench_id": bench_id,
+        "dispatch": pending
+    }))
+}
+
+/// Abre o ajudante numa bancada já pronta (comum às quatro formas de despacho).
+fn launch_task(
+    cx: &mut Ctx<'_>,
+    shared: &Shared,
+    task_id: &str,
+    run: &MusterRun,
+    profile: Option<String>,
+    permission: Option<String>,
+    bench_path: &str,
+) -> Result<Value, KernelError> {
+    check_parallel(cx, shared)?;
+    let task_for_preamble = with(shared, |state| state.store.task(task_id).cloned())
+        .flatten()
+        .ok_or_else(|| KernelError::Message("tarefa sumiu".to_owned()))?;
+    let preamble = helper_preamble(run, &task_for_preamble, bench_path);
     let assignment = with(shared, |state| {
-        state.store.start(&task_id, profile.as_deref().unwrap_or(""), &bench_path)
+        state
+            .store
+            .start(task_id, profile.as_deref().unwrap_or(""), bench_path)
     })
     .ok_or_else(|| KernelError::Message("muster state is unavailable".to_owned()))?
     .map_err(KernelError::Message)?;
@@ -789,6 +874,8 @@ fn status(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kerne
             "tasks": tasks,
             "assignments": assignments,
             "inbox": notes,
+            "pending_dispatches": state.store.pending_dispatches,
+            "owned_benches": state.store.owned_benches,
             "loaded": state.loaded,
             "notice": state.notice
         })
@@ -1158,9 +1245,11 @@ pub(super) fn flush_pending(cx: &mut Ctx<'_>, shared: &Shared) {
 }
 
 pub(super) fn subscribe_events(r: &mut Registrar<'_>, shared: &Shared) {
-    r.contract_event::<HelperStatusChanged>(forja_contracts::names::HELPER_STATUS_CHANGED);
-    r.contract_event::<TerminalExited>(forja_contracts::names::TERMINAL_EXITED);
-    r.contract_event::<TerminalCommandFinished>(forja_contracts::names::TERMINAL_COMMAND_FINISHED);
+    r.contract_event::<HelperStatusChanged>(names::HELPER_STATUS_CHANGED);
+    r.contract_event::<TerminalExited>(names::TERMINAL_EXITED);
+    r.contract_event::<TerminalCommandFinished>(names::TERMINAL_COMMAND_FINISHED);
+    r.contract_event::<BenchCreated>(names::BENCH_CREATED);
+    r.contract_event::<BenchCreateFailed>(names::BENCH_CREATE_FAILED);
 
     let status_shared = Arc::clone(shared);
     r.subscribe(move |cx, event: &HelperStatusChanged| {
@@ -1186,6 +1275,86 @@ pub(super) fn subscribe_events(r: &mut Registrar<'_>, shared: &Shared) {
             HelperStatus::Idle,
         );
     });
+
+    let created_shared = Arc::clone(shared);
+    r.subscribe(move |cx, event: &BenchCreated| {
+        let bench_id = event.0.bench_id.clone();
+        let path = event.0.path.clone();
+        let shared = Arc::clone(&created_shared);
+        // Identidade e caminho viajam no resultado da tarefa; a UI só agenda.
+        cx.spawn(
+            move || (bench_id, path),
+            move |cx, (bench_id, path)| finish_dispatch(cx, &shared, &bench_id, &path),
+        );
+    });
+    let failed_shared = Arc::clone(shared);
+    r.subscribe(move |cx, event: &BenchCreateFailed| {
+        let bench_id = event.bench_id.clone();
+        let reason = event.reason.clone();
+        let shared = Arc::clone(&failed_shared);
+        cx.spawn(
+            move || (bench_id, reason),
+            move |cx, (bench_id, reason)| fail_dispatch(cx, &shared, &bench_id, &reason),
+        );
+    });
+}
+
+/// `bench.created` com o `bench_id` esperado conclui o despacho e sobe o
+/// ajudante. Eventos de outras bancadas não casam e são ignorados.
+fn finish_dispatch(cx: &mut Ctx<'_>, shared: &Shared, bench_id: &str, path: &str) {
+    state::ensure_loaded(cx, shared);
+    let Some(pending) = with(shared, |state| state.store.resolve_dispatch(bench_id)).flatten()
+    else {
+        return;
+    };
+    let Some(run) = with(shared, |state| {
+        state
+            .store
+            .runs
+            .iter()
+            .find(|run| run.id == pending.run)
+            .cloned()
+    })
+    .flatten()
+    else {
+        return;
+    };
+    with(shared, |state| {
+        state.store.own_bench(&pending.run, &pending.task, bench_id)
+    });
+    let result = launch_task(
+        cx,
+        shared,
+        &pending.task,
+        &run,
+        pending.profile_id,
+        pending.permission,
+        path,
+    );
+    if let Err(error) = result {
+        with(shared, |state| {
+            if let Some(task) = state.store.task(&pending.task) {
+                let task_id = task.id.clone();
+                if let Some(task) = state.store.tasks.iter_mut().find(|t| t.id == task_id) {
+                    task.state = TaskState::Failed;
+                }
+            }
+        });
+        let body = cx.t_args("muster.error.bench-service", &[("detail", &error.to_string())]);
+        notify(cx, "muster.notify.alert-title", &body, None);
+    }
+    state::persist(cx, shared);
+}
+
+/// `bench.create_failed` fecha o despacho pelo mesmo `bench_id` e avisa.
+fn fail_dispatch(cx: &mut Ctx<'_>, shared: &Shared, bench_id: &str, reason: &str) {
+    state::ensure_loaded(cx, shared);
+    let closed = with(shared, |state| state.store.fail_dispatch(bench_id, reason)).flatten();
+    if closed.is_some() {
+        state::persist(cx, shared);
+        let body = cx.t_args("muster.notify.alert-body", &[("tail", reason)]);
+        notify(cx, "muster.notify.alert-title", &body, None);
+    }
 }
 
 fn notify(cx: &mut Ctx<'_>, title_key: &str, body: &str, bench_path: Option<String>) {
