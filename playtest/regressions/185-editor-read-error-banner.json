@@ -1,0 +1,33 @@
+{
+  "title": "Visualizador mostra erro de leitura de arquivo de forma humana, sem texto cru (#185)",
+  "issue": 185,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Abrir pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 1200 },
+    { "m": "file.open", "path": "C:\\forja-missing-folder\\ghost\\999.csv" },
+    { "m": "ui.open_tab", "target": "Visualizador" },
+    { "m": "ui.wait", "ms": 800 },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 8,
+      "present_contains": [
+        "O arquivo ou a pasta não foi encontrado.",
+        "Detalhes técnicos"
+      ],
+      "absent_contains": [
+        "could not read the file",
+        "C:\\forja-missing-folder",
+        "os error",
+        "(os error",
+        "Access is denied"
+      ]
+    }
+  ]
+}

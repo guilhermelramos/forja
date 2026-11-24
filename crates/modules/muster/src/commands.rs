@@ -1,13 +1,19 @@
 //! Comandos, RPC e efeitos externos do Mutirão.
 
+use crate::dispatch::{check_parallel, configure_dispatch_profile, create_dispatch_bench, fail_dispatch, finish_dispatch, launch_task, maybe_cleanup, on_bench_store_outcome};
 use crate::cost;
 use crate::delivery::{self, Delivery};
 use crate::model::{
     Assignment, AssignmentState, HandoffResult, MusterRun, NoteKind, TaskState,
 };
-use crate::preamble::helper_preamble;
+pub(crate) use crate::status::flush_pending;
+use crate::status::on_status;
 use crate::state::{self, with, Shared};
-use forja_contracts::{HelperStatus, HelperStatusChanged, TerminalCommandFinished, TerminalExited};
+use crate::workspace::{self, Isolation};
+use forja_contracts::{
+    names, BenchCreateFailed, BenchCreated, BenchStoreOutcome, HelperStatus, HelperStatusChanged,
+    TerminalCommandFinished, TerminalExited,
+};
 use forja_kernel::forja_protocol::{
     Method, MethodEffect, ParamKind, ParamSchema, ResultSchema, RpcError,
 };
@@ -53,6 +59,11 @@ pub const USED_KEYS: &[&str] = &[
     "muster.notify.handoff-title",
     "muster.notify.handoff-body",
     "muster.error.bench-pending",
+    "muster.error.bench-ask",
+    "muster.error.bench-conflict",
+    "muster.error.bench-service",
+    "muster.error.bench-service-empty",
+    "muster.error.isolation",
     "muster.error.empty-title",
     "muster-task-pending",
     "muster-task-running",
@@ -68,6 +79,8 @@ pub const USED_KEYS: &[&str] = &[
     "muster-assignment-blocked",
     "muster-assignment-stopped",
     "muster-notice-load-failed",
+    "muster-notice-cleanup-ask",
+    "muster-notice-cleanup-dirty",
     "muster.page-loading",
 ];
 
@@ -282,12 +295,14 @@ fn run(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, KernelEr
         .and_then(Value::as_f64)
         .unwrap_or(default_budget)
         .max(0.0);
+    let coordinator_profile = configure_dispatch_profile(cx, "muster.coordinator.profile");
     let run = with(shared, |state| {
         let mut run = state
             .store
             .create_run(title, objective, coordinator, bench_path);
         run.plan_approved = !require_approval;
         run.budget_usd = budget;
+        run.coordinator_profile = coordinator_profile;
         if let Some(stored) = state.store.runs.iter_mut().find(|item| item.id == run.id) {
             *stored = run.clone();
         }
@@ -344,12 +359,17 @@ fn start(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kernel
     state::ensure_loaded(cx, shared);
     ensure_writable(shared)?;
     let task_id = args.required_str("task")?.to_owned();
-    let profile = args.str("profile_id").map(str::to_owned);
+    let explicit_profile = args.str("profile_id").map(str::to_owned);
     let permission = args.str("permission").map(str::to_owned);
     let new_bench = args.bool("new_bench").unwrap_or(false);
     let bench_arg = args.str("bench_path").map(str::to_owned);
-    if new_bench && bench_arg.is_none() {
-        return Err(KernelError::Message(cx.t("muster.error.bench-pending")));
+    let target = cx
+        .setting("muster.dispatch.target")
+        .and_then(SettingValue::as_str)
+        .unwrap_or("ask")
+        .to_owned();
+    if new_bench && bench_arg.is_some() {
+        return Err(KernelError::Message(cx.t("muster.error.bench-conflict")));
     }
 
     let run_id = with(shared, |state| {
@@ -372,6 +392,9 @@ fn start(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kernel
             "o plano do mutirão precisa ser aprovado antes de iniciar".to_owned(),
         ));
     }
+    let profile = explicit_profile.or_else(|| {
+        (run.coordinator_profile != "auto").then(|| run.coordinator_profile.clone())
+    });
     let assignments = with(shared, |state| state.store.assignments.clone()).unwrap_or_default();
     let spent = automatic_spend_usd(cx, &run, &assignments).unwrap_or(run.spent_usd);
     if run.budget_usd > 0.0 && spent >= run.budget_usd {
@@ -380,112 +403,59 @@ fn start(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kernel
             run.budget_usd
         )));
     }
+    check_parallel(cx, shared)?;
 
-    let bench_path = match bench_arg {
-        Some(path) => path,
-        None => current_bench_path(cx)
-            .ok_or_else(|| KernelError::Message("sem bancada atual; informe bench_path".to_owned()))?,
-    };
-
-    let task_for_preamble = with(shared, |state| {
-        state.store.task(&task_id).cloned()
-    })
-    .flatten()
-    .ok_or_else(|| KernelError::Message("tarefa sumiu".to_owned()))?;
-    let max_parallel = cx
-        .setting("muster.dispatch.max_parallel")
-        .and_then(|value| value.as_i64())
-        .unwrap_or(4)
-        .clamp(1, 16) as usize;
-    let active = with(shared, |state| {
+    let isolation = Isolation::parse(
+        cx.setting("muster.workspace.isolation")
+            .and_then(SettingValue::as_str)
+            .unwrap_or("worktree"),
+    );
+    let used: Vec<String> = with(shared, |state| {
         state
             .store
             .assignments
             .iter()
-            .filter(|assignment| {
-                matches!(
-                    assignment.state,
-                    AssignmentState::Starting
-                        | AssignmentState::Running
-                        | AssignmentState::NeedsYou
-                )
-            })
-            .count()
+            .filter(|assignment| assignment.run == run_id && assignment.task != task_id)
+            .map(|assignment| assignment.bench_path.clone())
+            .collect()
     })
-    .unwrap_or(0);
-    if active >= max_parallel {
-        return Err(KernelError::Message(format!(
-            "o limite de {max_parallel} ajudantes em paralelo já foi atingido"
-        )));
-    }
-    let preamble = helper_preamble(&run, &task_for_preamble, &bench_path);
-    let assignment = with(shared, |state| {
-        state.store.start(&task_id, profile.as_deref().unwrap_or(""), &bench_path)
-    })
-    .ok_or_else(|| KernelError::Message("muster state is unavailable".to_owned()))?
-    .map_err(KernelError::Message)?;
-
-    let mut launch = Args::new();
-    if let Some(profile) = &profile {
-        launch.insert("profile_id", json!(profile));
-    }
-    launch.insert("bench_path", json!(bench_path));
-    launch.insert("prompt", json!(preamble));
-    if let Some(permission) = &permission {
-        launch.insert("permission", json!(permission));
-    }
-    let opened = cx.run_command("helper.launch", launch);
-    let opened = match opened {
-        Ok(value) => value,
-        Err(error) => {
-            let reason = match error {
-                KernelError::Command { message, .. } => message,
-                other => other.to_string(),
-            };
-            with(shared, |state| {
-                state.store.launch_failed(&assignment.id, &reason)
-            });
-            state::persist(cx, shared);
-            return Err(KernelError::Message(format!(
-                "não foi possível abrir o ajudante: {reason}"
-            )));
-        }
+    .unwrap_or_default();
+    let wants_new = new_bench || target == "new";
+    let current = if target == "current"
+        && bench_arg.is_none()
+        && run.bench_path.is_none()
+        && !wants_new
+    {
+        current_bench_path(cx)
+    } else {
+        None
     };
-    let profile_id = opened
-        .get("profile_id")
-        .and_then(Value::as_str)
-        .unwrap_or_else(|| profile.as_deref().unwrap_or("auto"))
-        .to_owned();
-    let terminal_id = opened
-        .get("terminal_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let session_id = opened
-        .get("session_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let mode = opened
-        .get("mode")
-        .and_then(Value::as_str)
-        .unwrap_or("tui");
-    let launched = with(shared, |state| {
-        state
-            .store
-            .launched(&assignment.id, &profile_id, terminal_id, session_id, mode)
-            .map(|_| state.store.assignment(&assignment.id).cloned())
-    })
-    .ok_or_else(|| KernelError::Message("muster state is unavailable".to_owned()))?
-    .map_err(KernelError::Message)?;
-    let assignment =
-        launched.ok_or_else(|| KernelError::Message("atribuição sumiu".to_owned()))?;
-    state::persist(cx, shared);
-    Ok(json!({
-        "assignment": assignment,
-        "bench_path": bench_path,
-        "preamble": preamble
-    }))
+    let choice = workspace::choose(
+        isolation,
+        bench_arg.as_deref(),
+        run.bench_path.as_deref(),
+        current.as_deref(),
+        &used,
+        wants_new,
+    )
+    .map_err(|detail| {
+        KernelError::Message(cx.t_args("muster.error.isolation", &[("detail", &detail)]))
+    })?;
+    match choice {
+        workspace::BenchChoice::Create => {
+            create_dispatch_bench(cx, shared, &task_id, &run_id, profile, permission)
+        }
+        workspace::BenchChoice::Use(path) => {
+            launch_task(cx, shared, &task_id, &run, profile, permission, &path)
+        }
+    }
 }
 
+/// Número de ajudantes em paralelo, contando criações de bancada pendentes.
+/// chegar `bench.created` (ou `bench.create_failed`) com o mesmo `bench_id`.
+/// Abre o ajudante numa bancada já pronta (comum às quatro formas de despacho).
+/// Abre o ajudante de uma atribuição já registrada no estado.
+/// Reenvia a mesma tarefa depois que a atribuição anterior encerrou.
 fn note(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, KernelError> {
     state::ensure_loaded(cx, shared);
     ensure_writable(shared)?;
@@ -649,6 +619,7 @@ fn handoff(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kern
         &[("result", result.as_str()), ("summary", &summary)],
     );
     notify(cx, "muster.notify.handoff-title", &body, None);
+    maybe_cleanup(cx, shared);
     Ok(json!({
         "note": note,
         "result": result.as_str(),
@@ -784,6 +755,8 @@ fn status(cx: &mut Ctx<'_>, shared: &Shared, args: &Args) -> Result<Value, Kerne
             "tasks": tasks,
             "assignments": assignments,
             "inbox": notes,
+            "pending_dispatches": state.store.pending_dispatches,
+            "owned_benches": state.store.owned_benches,
             "loaded": state.loaded,
             "notice": state.notice
         })
@@ -921,7 +894,7 @@ fn mark_queued(state: &mut crate::state::MusterState, note_id: &str) {
     }
 }
 
-fn send_terminal(cx: &mut Ctx<'_>, terminal_id: &str, text: &str) -> bool {
+pub(crate) fn send_terminal(cx: &mut Ctx<'_>, terminal_id: &str, text: &str) -> bool {
     let mut args = Args::new();
     args.insert("terminal_id", json!(terminal_id));
     args.insert("text", json!(text));
@@ -929,7 +902,7 @@ fn send_terminal(cx: &mut Ctx<'_>, terminal_id: &str, text: &str) -> bool {
     cx.run_command("terminal.send", args).is_ok()
 }
 
-fn read_terminal(cx: &mut Ctx<'_>, terminal_id: &str) -> Option<String> {
+pub(crate) fn read_terminal(cx: &mut Ctx<'_>, terminal_id: &str) -> Option<String> {
     let mut args = Args::new();
     args.insert("terminal_id", json!(terminal_id));
     args.insert("lines", json!(60));
@@ -1017,135 +990,16 @@ fn parse_kind(text: &str) -> NoteKind {
     }
 }
 
-pub(super) fn on_status(
-    cx: &mut Ctx<'_>,
-    shared: &Shared,
-    terminal_id: &str,
-    status: HelperStatus,
-) {
-    state::ensure_loaded(cx, shared);
-    let assignment = with(shared, |state| {
-        state
-            .store
-            .assignments
-            .iter()
-            .rev()
-            .find(|assignment| assignment.terminal_id.as_deref() == Some(terminal_id))
-            .map(|assignment| assignment.id.clone())
-    })
-    .flatten();
-    let Some(assignment) = assignment else {
-        return;
-    };
-    let terminal_tail = read_terminal(cx, terminal_id).unwrap_or_default();
-    let alert = with(shared, |state| {
-        state
-            .store
-            .update_status(&assignment, status, &terminal_tail)
-    })
-    .flatten();
-    if let Some(alert) = alert {
-        let enabled = cx
-            .setting("muster.notifications.task_failed")
-            .and_then(|value| value.as_bool())
-            .unwrap_or(true);
-        if enabled {
-            let body = cx.t_args("muster.notify.alert-body", &[("tail", &alert.body)]);
-            notify(cx, "muster.notify.alert-title", &body, None);
-        }
-    }
-    if matches!(
-        status,
-        HelperStatus::Idle | HelperStatus::Unknown | HelperStatus::Finished
-    ) {
-        flush_queued(cx, shared, &assignment, status);
-    } else {
-        state::persist(cx, shared);
-    }
-}
 
-fn flush_queued(
-    cx: &mut Ctx<'_>,
-    shared: &Shared,
-    assignment_id: &str,
-    status: HelperStatus,
-) {
-    let (state, terminal_id, notes) = with(shared, |state| {
-        state.store.assignment(assignment_id).map(|assignment| {
-            (
-                assignment.state,
-                assignment.terminal_id.clone(),
-                state.store.queued_notes(assignment_id),
-            )
-        })
-    })
-    .flatten()
-    .unwrap_or((AssignmentState::Idle, None, Vec::new()));
-    let terminal = match terminal_id {
-        Some(terminal) => terminal,
-        None => {
-            state::persist(cx, shared);
-            return;
-        }
-    };
-    let tail = read_terminal(cx, &terminal).unwrap_or_default();
-    if !matches!(status, HelperStatus::Idle | HelperStatus::Unknown)
-        || !matches!(delivery::decide(state, &delivery::recent_lines(&tail)), Delivery::Send)
-    {
-        state::persist(cx, shared);
-        return;
-    }
-    for note in notes {
-        if send_terminal(cx, &terminal, &note.body) {
-            with(shared, |state| state.store.mark_delivered(&note.id));
-        }
-    }
-    state::persist(cx, shared);
-}
 
-/// Reenvia recados que já podem sair. O passo da barra de status usa o
-/// intervalo `muster.notes.poll_s`.
-pub(super) fn flush_pending(cx: &mut Ctx<'_>, shared: &Shared) {
-    let retention_days = cx
-        .setting("muster.notes.retention_days")
-        .and_then(SettingValue::as_i64)
-        .unwrap_or(30)
-        .clamp(1, 365);
-    let cutoff = crate::model::now_ms() - retention_days * 86_400_000;
-    if with(shared, |state| state.store.prune_notes(cutoff)).unwrap_or(0) > 0 {
-        state::persist(cx, shared);
-    }
-    let pending: Vec<(String, String)> = with(shared, |state| {
-        state
-            .store
-            .assignments
-            .iter()
-            .filter(|assignment| {
-                assignment.terminal_id.is_some()
-                    && !state.store.queued_notes(&assignment.id).is_empty()
-            })
-            .map(|assignment| (assignment.id.clone(), assignment.last_status.clone()))
-            .collect()
-    })
-    .unwrap_or_default();
-    for (assignment, last_status) in pending {
-        let status = match last_status.as_str() {
-            "working" => HelperStatus::Working,
-            "needs_you" => HelperStatus::NeedsYou,
-            "finished" => HelperStatus::Finished,
-            "idle" => HelperStatus::Idle,
-            _ => HelperStatus::Unknown,
-        };
-        if matches!(status, HelperStatus::Idle | HelperStatus::Unknown) {
-            flush_queued(cx, shared, &assignment, status);
-        }
-    }
-}
 
 pub(super) fn subscribe_events(r: &mut Registrar<'_>, shared: &Shared) {
-    r.contract_event::<HelperStatusChanged>(forja_contracts::names::HELPER_STATUS_CHANGED);
-    r.contract_event::<TerminalExited>(forja_contracts::names::TERMINAL_EXITED);
-    r.contract_event::<TerminalCommandFinished>(forja_contracts::names::TERMINAL_COMMAND_FINISHED);
+    r.contract_event::<HelperStatusChanged>(names::HELPER_STATUS_CHANGED);
+    r.contract_event::<TerminalExited>(names::TERMINAL_EXITED);
+    r.contract_event::<TerminalCommandFinished>(names::TERMINAL_COMMAND_FINISHED);
+    r.contract_event::<BenchCreated>(names::BENCH_CREATED);
+    r.contract_event::<BenchCreateFailed>(names::BENCH_CREATE_FAILED);
+    r.contract_event::<BenchStoreOutcome>(names::BENCH_STORE_OUTCOME);
 
     let status_shared = Arc::clone(shared);
     r.subscribe(move |cx, event: &HelperStatusChanged| {
@@ -1171,9 +1025,37 @@ pub(super) fn subscribe_events(r: &mut Registrar<'_>, shared: &Shared) {
             HelperStatus::Idle,
         );
     });
+    let outcome_shared = Arc::clone(shared);
+    r.subscribe(move |cx, event: &BenchStoreOutcome| {
+        on_bench_store_outcome(cx, &outcome_shared, event);
+    });
+
+    let created_shared = Arc::clone(shared);
+    r.subscribe(move |cx, event: &BenchCreated| {
+        let bench_id = event.0.bench_id.clone();
+        let path = event.0.path.clone();
+        let shared = Arc::clone(&created_shared);
+        // Identidade e caminho viajam no resultado da tarefa; a UI só agenda.
+        cx.spawn(
+            move || (bench_id, path),
+            move |cx, (bench_id, path)| finish_dispatch(cx, &shared, &bench_id, &path),
+        );
+    });
+    let failed_shared = Arc::clone(shared);
+    r.subscribe(move |cx, event: &BenchCreateFailed| {
+        let bench_id = event.bench_id.clone();
+        let reason = event.reason.clone();
+        let shared = Arc::clone(&failed_shared);
+        cx.spawn(
+            move || (bench_id, reason),
+            move |cx, (bench_id, reason)| fail_dispatch(cx, &shared, &bench_id, &reason),
+        );
+    });
 }
 
-fn notify(cx: &mut Ctx<'_>, title_key: &str, body: &str, bench_path: Option<String>) {
+/// `bench.created` com o `bench_id` esperado conclui o despacho e sobe o
+/// ajudante. Eventos de outras bancadas não casam e são ignorados.
+pub(crate) fn notify(cx: &mut Ctx<'_>, title_key: &str, body: &str, bench_path: Option<String>) {
     let mut args = Args::new();
     args.insert("title", json!(cx.t(title_key)));
     args.insert("body", json!(body));

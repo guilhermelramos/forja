@@ -895,10 +895,7 @@ impl EditorView {
             return;
         };
         if let Some(error) = &document.error {
-            forja_ui_kit::text(ui,
-                egui::RichText::new(error)
-                    .color(c32(forja_ui_kit::applied_tokens(ui.ctx()).color.danger)),
-            );
+            crate::view_error::banner(ui, cx, error);
             return;
         }
         egui::ScrollArea::vertical()
