@@ -52,39 +52,16 @@ pub fn trash(_path: &Path) -> io::Result<()> {
 }
 
 /// Opens Windows Explorer with `path` selected. The process is not awaited.
-#[cfg(windows)]
+///
+/// The launch goes through the kernel's single exit, which only records the
+/// request in a test run.
 pub fn reveal(path: &Path) -> io::Result<()> {
-    forja_kernel::process::command("explorer.exe")
-        .arg(format!("/select,{}", path.display()))
-        .stdin(std::process::Stdio::null())
-        .spawn()
-        .map(|_| ())
-}
-
-#[cfg(not(windows))]
-pub fn reveal(_path: &Path) -> io::Result<()> {
-    Err(io::Error::new(
-        io::ErrorKind::Unsupported,
-        "revealing files is only available on Windows",
-    ))
+    forja_kernel::process::reveal(path)
 }
 
 /// Opens `path` with the system's default app. Used when no editor module answers.
-#[cfg(windows)]
 pub fn open_default(path: &Path) -> io::Result<()> {
-    forja_kernel::process::command("explorer.exe")
-        .arg(path)
-        .stdin(std::process::Stdio::null())
-        .spawn()
-        .map(|_| ())
-}
-
-#[cfg(not(windows))]
-pub fn open_default(_path: &Path) -> io::Result<()> {
-    Err(io::Error::new(
-        io::ErrorKind::Unsupported,
-        "opening with the default app is only available on Windows",
-    ))
+    forja_kernel::process::reveal_folder(path)
 }
 
 #[cfg(test)]
