@@ -1,0 +1,30 @@
+{
+  "title": "Ctrl+F11 oculta e restaura o chrome; itens da barra podem ser ocultados em Ajustes (#214)",
+  "issue": 214,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.snapshot", "region": "baixo" },
+    { "m": "ui.key", "keys": "Ctrl+F11" },
+    { "m": "ui.snapshot", "region": "baixo" },
+    { "m": "ui.snapshot", "region": "esquerda" },
+    { "m": "ui.key", "keys": "Ctrl+F11" },
+    { "m": "ui.snapshot", "region": "baixo" },
+    { "m": "ui.snapshot", "region": "esquerda" },
+    { "m": "ui.click", "target": "Ajustes" },
+    { "m": "ui.scroll", "x": 900, "y": 600, "dy": -800 },
+    { "m": "ui.snapshot", "region": "baixo" },
+    { "m": "ui.click", "target": "Mostrar Portas" },
+    { "m": "ui.snapshot", "region": "baixo" }
+  ],
+  "expect": [
+    { "step": 1, "present_contains": ["avisos"] },
+    { "step": 3, "absent_contains": ["avisos"] },
+    { "step": 4, "absent": ["Quadro", "Ajustes"] },
+    { "step": 6, "present_contains": ["avisos"] },
+    { "step": 7, "present": ["Quadro", "Ajustes"] },
+    { "step": 10, "present_contains": ["portas"] },
+    { "step": 12, "absent_contains": ["portas"] }
+  ]
+}
