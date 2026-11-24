@@ -7,8 +7,8 @@ use eframe::egui::{self, Align, Layout, Margin, RichText, Sense, Stroke, Viewpor
 use forja_ui_kit::{button, ButtonKind};
 use std::sync::Arc;
 
-struct RailPage {
-    id: String,
+pub(crate) struct RailPage {
+    pub(crate) id: String,
     title: String,
     glyph: forja_ui_kit::Icon,
     png: Option<Arc<[u8]>>,
@@ -57,7 +57,7 @@ impl ForjaApp {
                     ctx.send_viewport_cmd(ViewportCommand::StartDrag);
                 }
                 let left_width = (bounds.width() * 0.24).clamp(100.0, 280.0);
-                let controls_width = 184.0;
+                let controls_width = 286.0;
                 let search_width =
                     (bounds.width() - left_width - controls_width - 40.0).clamp(180.0, 420.0);
                 let search_x =
@@ -195,6 +195,7 @@ impl ForjaApp {
                         {
                             self.set_theme_mode(["system", "dark", "light"][index]);
                         }
+                        self.layout_selector(ui);
                     },
                 );
             });
@@ -202,7 +203,7 @@ impl ForjaApp {
     }
 
     pub(crate) fn status_bar(&mut self, ctx: &egui::Context) {
-        if !self.setting_bool("appearance.status_bar.visible", true) {
+        if !self.layout_status_bar_visible() {
             return;
         }
         let frame = egui::Frame::NONE
@@ -308,7 +309,7 @@ impl ForjaApp {
     }
 
     pub(crate) fn left_panels(&mut self, ctx: &egui::Context) {
-        if self.setting_bool("appearance.rail.visible", true) {
+        if self.layout_rail_visible() {
             self.rail(ctx);
         }
         if !self.no_project() {
@@ -372,7 +373,7 @@ impl ForjaApp {
                         self.rail_page = None;
                         self.settings_open = false;
                     }
-                    for page in &pages {
+                    for page in self.visible_rail_pages(pages) {
                         let selected = self.rail_page.as_deref() == Some(page.id.as_str());
                         let mark = page.glyph;
                         if self

@@ -182,6 +182,15 @@ Ids seguem `<módulo>.<ação>` e podem ter um terceiro nível quando a ação �
 | Reduzir interface · Zoom out UI | `view.zoom.out` | `Ctrl+Shift+-` | `global` + terminal | Zoom da interface; o zoom da página no navegador usa Ctrl+-. |
 | Restaurar interface a 100% · Reset UI zoom | `view.zoom.reset` | `Ctrl+Shift+0` | `global` + terminal | Ctrl+0 sem Shift muda para a aba 10. |
 
+### Layout / Layout
+
+| Ação (pt-BR · en) | id | Atalho | Escopo | Observação |
+|---|---|---|---|---|
+| Alternar arranjo · Switch layout | `layout.switch` | `Ctrl+Alt+L` | `global` | Abre o seletor com os arranjos de fábrica, do usuário e do projeto. |
+| Salvar layout atual · Save current layout | `layout.save` | — | `global` | Grava pelo catálogo do módulo `content`. |
+| Restaurar padrão do arranjo · Restore layout defaults | `layout.reset` | — | `global` | Reaplica o chrome declarado no arranjo. |
+| Gerenciar layouts · Manage layouts | `layout.manage` | — | `global` | Abre Ajustes → Layout. |
+
 ## 4. O terminal recebe quase tudo
 
 O terminal é uma superfície de texto: o shell espera receber praticamente toda combinação. A Forja só intercepta o que está na tabela abaixo. Cada linha é uma exceção consciente, com o custo declarado.

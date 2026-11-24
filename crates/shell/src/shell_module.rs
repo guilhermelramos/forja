@@ -21,10 +21,12 @@ impl Module for ShellModule {
         for key in CHROME_KEYS {
             registrar.uses_i18n(key);
         }
+        crate::layout_commands::register_i18n(registrar);
         open_rail(registrar);
         focus_bench(registrar);
         open_logs(registrar);
         toggle_diagnostics(registrar);
+        crate::layout_commands::register(registrar);
     }
 }
 

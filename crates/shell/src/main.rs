@@ -21,6 +21,15 @@ mod icon;
 #[cfg(test)]
 mod icon_contract_tests;
 mod layout;
+mod layout_commands;
+mod layout_presets;
+mod layout_projection;
+mod layout_save;
+mod layout_settings;
+#[cfg(test)]
+mod layout_shortcut_tests;
+#[cfg(test)]
+mod layout_store_tests;
 mod overlays;
 mod pacer;
 #[cfg(test)]
