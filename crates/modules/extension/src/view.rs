@@ -28,7 +28,8 @@ impl ExtensionPage {
     }
 
     fn filters(&mut self, ui: &mut egui::Ui, cx: &Ctx<'_>) {
-        forja_ui_kit::text_field(ui, &mut self.query, &cx.t("extension.page.search"));
+        let label = cx.t("extension.page.search");
+        forja_ui_kit::text_field_labeled(ui, &mut self.query, &label, &label);
     }
 
     fn pick_folder(&self, cx: &mut Ctx<'_>) {
@@ -178,12 +179,8 @@ impl ExtensionPage {
         }
         if self.open_logs.contains(&entry.id) {
             let mut log = state::read_log(&self.core, &entry.id, 120);
-            ui.add(
-                egui::TextEdit::multiline(&mut log)
-                    .desired_rows(8)
-                    .desired_width(f32::INFINITY)
-                    .font(egui::TextStyle::Monospace),
-            );
+            let label = cx.t("extension.log.label");
+            forja_ui_kit::text_area(ui, &mut log, &label, "", 8);
         }
         ui.separator();
     }
@@ -200,10 +197,12 @@ impl ExtensionPage {
                 .cloned()
                 .unwrap_or(Value::Null);
             let label = setting.label.resolve(cx.i18n().locale().id());
+            let help = setting.help.resolve(cx.i18n().locale().id());
+            let hint = if help.trim().is_empty() { label } else { help };
             match setting.kind.as_str() {
                 "toggle" => {
                     let mut checked = value.as_bool().unwrap_or(false);
-                    if ui.checkbox(&mut checked, label).changed() {
+                    if forja_ui_kit::toggle_labeled(ui, &mut checked, label).changed() {
                         state::set_setting(&self.core, &entry.id, &setting.name, json!(checked));
                     }
                 }
@@ -218,7 +217,7 @@ impl ExtensionPage {
                         forja_ui_kit::text(ui, label);
                         let options: Vec<&str> =
                             setting.options.iter().map(String::as_str).collect();
-                        if forja_ui_kit::select(ui, &mut index, &options).changed() {
+                        if forja_ui_kit::select_labeled(ui, &mut index, label, &options).changed() {
                             if let Some(option) = setting.options.get(index) {
                                 state::set_setting(
                                     &self.core,
@@ -237,7 +236,7 @@ impl ExtensionPage {
                         .unwrap_or_default();
                     ui.horizontal(|ui| {
                         forja_ui_kit::text(ui, label);
-                        if forja_ui_kit::text_field(ui, &mut text, "").changed() {
+                        if forja_ui_kit::text_field_labeled(ui, &mut text, label, hint).changed() {
                             if let Ok(number) = text.parse::<f64>() {
                                 state::set_setting(
                                     &self.core,
@@ -258,7 +257,7 @@ impl ExtensionPage {
                         .unwrap_or_else(|| value.as_str().unwrap_or_default().to_owned());
                     ui.horizontal(|ui| {
                         forja_ui_kit::text(ui, label);
-                        if forja_ui_kit::text_field(ui, &mut text, "").changed() {
+                        if forja_ui_kit::text_field_labeled(ui, &mut text, label, hint).changed() {
                             self.field_drafts.insert(key.clone(), text.clone());
                             state::set_setting(&self.core, &entry.id, &setting.name, json!(text));
                         }
@@ -563,7 +562,7 @@ impl ExtensionPanels {
             match kind {
                 "boolean" => {
                     let mut checked = value == "true";
-                    if ui.checkbox(&mut checked, "").changed() {
+                    if forja_ui_kit::toggle_labeled(ui, &mut checked, label).changed() {
                         value = checked.to_string();
                         self.drafts.insert(key.clone(), value.clone());
                         self.action(
@@ -596,7 +595,7 @@ impl ExtensionPanels {
                         .iter()
                         .position(|option| option == &value)
                         .unwrap_or(0);
-                    if forja_ui_kit::select(ui, &mut index, &refs).changed() {
+                    if forja_ui_kit::select_labeled(ui, &mut index, label, &refs).changed() {
                         if let Some(option) = options.get(index) {
                             self.drafts.insert(key.clone(), option.clone());
                             self.action(
@@ -610,7 +609,7 @@ impl ExtensionPanels {
                     }
                 }
                 _ => {
-                    if forja_ui_kit::text_field(ui, &mut value, "").changed() {
+                    if forja_ui_kit::text_field_labeled(ui, &mut value, label, label).changed() {
                         self.drafts.insert(key.clone(), value.clone());
                         self.action(
                             _cx,

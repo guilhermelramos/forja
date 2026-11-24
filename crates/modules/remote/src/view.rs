@@ -11,7 +11,7 @@ use crate::target::{SshTarget, DEFAULT_SSH_PORT};
 use crate::wsl::WslDistro;
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::{Args, Ctx};
-use forja_ui_kit::{button, text_field, ButtonKind};
+use forja_ui_kit::{button, text_field_labeled, ButtonKind};
 use serde_json::json;
 use std::collections::BTreeMap;
 use std::time::Duration;
@@ -159,10 +159,14 @@ impl RemoteView {
 
     fn new_target_form(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         ui.label(egui::RichText::new(cx.t("remote-new-target")).small().strong());
-        text_field(ui, &mut self.label, &cx.t("remote-field-label"));
-        text_field(ui, &mut self.host, &cx.t("remote-field-host"));
-        text_field(ui, &mut self.user, &cx.t("remote-field-user"));
-        text_field(ui, &mut self.port, &cx.t("remote-field-port"));
+        let label = cx.t("remote-field-label");
+        text_field_labeled(ui, &mut self.label, &label, &label);
+        let host = cx.t("remote-field-host");
+        text_field_labeled(ui, &mut self.host, &host, &host);
+        let user = cx.t("remote-field-user");
+        text_field_labeled(ui, &mut self.user, &user, &user);
+        let port = cx.t("remote-field-port");
+        text_field_labeled(ui, &mut self.port, &port, &port);
         if let Some(error) = &self.error {
             ui.colored_label(forja_ui_kit::applied_tokens(ui.ctx()).color.danger.to_color32(), error.as_str());
         }
@@ -201,9 +205,12 @@ impl RemoteView {
             return;
         };
         ui.label(egui::RichText::new(cx.t("remote-new-forward")).small().strong());
-        text_field(ui, &mut self.forward_port, &cx.t("remote-field-local_port"));
-        text_field(ui, &mut self.forward_remote, &cx.t("remote-field-remote_host"));
-        text_field(ui, &mut self.forward_remote_port, &cx.t("remote-field-remote_port"));
+        let local_port = cx.t("remote-field-local_port");
+        text_field_labeled(ui, &mut self.forward_port, &local_port, &local_port);
+        let remote_host = cx.t("remote-field-remote_host");
+        text_field_labeled(ui, &mut self.forward_remote, &remote_host, &remote_host);
+        let remote_port = cx.t("remote-field-remote_port");
+        text_field_labeled(ui, &mut self.forward_remote_port, &remote_port, &remote_port);
         if button(ui, ButtonKind::Secondary, &cx.t("remote-action-add-forward")).clicked() {
             let local = self.forward_port.trim().parse::<u16>().unwrap_or(0);
             let remote = self.forward_remote_port.trim().parse::<u16>().unwrap_or(0);

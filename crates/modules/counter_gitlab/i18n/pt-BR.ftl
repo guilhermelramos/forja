@@ -19,6 +19,7 @@ counter_gitlab-error-decode = O balcão mandou uma resposta inesperada.
 counter_gitlab-error-config = A configuração do balcão está incompleta.
 counter_gitlab-error-vault = O cofre de credenciais do sistema não respondeu.
 counter_gitlab-error-unsupported = O balcão não tem esta ação.
+counter_gitlab-token-label = Token do GitLab
 counter_gitlab-token-hint = Token
 counter_gitlab-action-connect = Conectar
 counter_gitlab-action-test = Testar

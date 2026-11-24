@@ -19,6 +19,7 @@ counter_linear-error-decode = O balcão mandou uma resposta inesperada.
 counter_linear-error-config = A configuração do balcão está incompleta.
 counter_linear-error-vault = O cofre de credenciais do sistema não respondeu.
 counter_linear-error-unsupported = O balcão não tem esta ação.
+counter_linear-token-label = Token do Linear
 counter_linear-token-hint = Token
 counter_linear-action-connect = Conectar
 counter_linear-action-test = Testar
