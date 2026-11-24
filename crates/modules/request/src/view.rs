@@ -325,9 +325,23 @@ impl RequestsView {
                         .as_ref()
                         .is_some_and(|(counter, key)| *counter == item.counter && *key == item.key);
                     let title = format!("{}  {}", item.key, item.title);
-                    if ui.selectable_label(selected, title).clicked() {
-                        let _ = commands::open(cx, &self.shared, &item.counter, &item.key);
-                    }
+                    let tokens = forja_ui_kit::applied_tokens(ui.ctx());
+                    let font = egui::FontId::proportional(tokens.metrics().body);
+                    let max_w = ui.available_width().max(1.0);
+                    ui.set_max_width(max_w);
+                    ui.vertical(|ui| {
+                        ui.set_max_width(max_w);
+                        let label = forja_ui_kit::selectable_wrapped_label(
+                            ui,
+                            selected,
+                            &title,
+                            font,
+                            tokens.color.text.to_color32(),
+                        );
+                        if label.clicked() {
+                            let _ = commands::open(cx, &self.shared, &item.counter, &item.key);
+                        }
+                    });
                     forja_ui_kit::text(ui, egui::RichText::new(row_meta(cx, item)).small().weak());
                     ui.add_space(forja_ui_kit::Spacing::XS);
                 }

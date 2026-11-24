@@ -107,6 +107,27 @@ fn contract_passes_without_other_modules() {
 }
 
 #[test]
+fn detail_view_shows_project_name_instead_of_internal_id() {
+    let root = temp_dir("detail-project-name");
+    let mut runtime = runtime(
+        &root,
+        Some(forja_contracts::ProjectRef {
+            id: "p-fb3a89e707e85c917a5b".to_owned(),
+            name: "exemplo".to_owned(),
+            path: root.join("projeto").to_string_lossy().into_owned(),
+        }),
+    );
+    let unknown = runtime.i18n().t("bench.detail.project-unknown");
+    let mut cx = runtime.ctx("bench");
+    assert_eq!(
+        crate::view::project_label(&mut cx, "p-fb3a89e707e85c917a5b"),
+        "exemplo"
+    );
+    assert_eq!(crate::view::project_label(&mut cx, "p-missing"), unknown);
+    let _ = std::fs::remove_dir_all(root);
+}
+
+#[test]
 fn commands_that_need_context_declare_what_the_anvil_asks() {
     let root = temp_dir("ask-fields");
     let runtime = runtime(&root, None);
