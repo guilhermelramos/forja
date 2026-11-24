@@ -1019,6 +1019,39 @@ impl ForjaApp {
             ctx.request_repaint();
         }
     }
+
+    /// Diverts egui's exit commands to the kernel's test log before eframe
+    /// can hand them to `egui-winit` (which would open a browser or write to
+    /// the system clipboard). Outside a test run this does nothing.
+    fn isolate_external_output(&self, ctx: &egui::Context) {
+        if !forja_kernel::process::is_test_mode() {
+            return;
+        }
+        ctx.output_mut(|output| {
+            for command in std::mem::take(&mut output.commands) {
+                match command {
+                    egui::OutputCommand::OpenUrl(url) => {
+                        forja_kernel::process::record_external(
+                            forja_kernel::process::ExternalKind::Open,
+                            url.url,
+                        );
+                    }
+                    egui::OutputCommand::CopyText(text) => {
+                        forja_kernel::process::record_external(
+                            forja_kernel::process::ExternalKind::Copy,
+                            text,
+                        );
+                    }
+                    egui::OutputCommand::CopyImage(_) => {
+                        forja_kernel::process::record_external(
+                            forja_kernel::process::ExternalKind::Copy,
+                            "<image>",
+                        );
+                    }
+                }
+            }
+        });
+    }
 }
 
 impl eframe::App for ForjaApp {
@@ -1058,6 +1091,9 @@ impl eframe::App for ForjaApp {
         self.sync_shell_store();
         self.diagnostics_overlay(ctx);
         self.capture(ctx);
+        // Must happen before eframe takes the platform output: in a test run
+        // an URL or a copy must never reach the real browser or clipboard.
+        self.isolate_external_output(ctx);
         if let Some(driver) = self.driver.as_mut() {
             driver.tick(ctx, self.runtime.tasks(), tasks_applied);
         }

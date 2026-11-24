@@ -15,8 +15,10 @@
 
 use std::ffi::OsStr;
 use std::process::Command;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
+#[cfg(test)]
+use std::sync::atomic::AtomicU64;
 
 /// `CREATE_NO_WINDOW` process creation flag.
 pub const CREATE_NO_WINDOW: u32 = 0x0800_0000;

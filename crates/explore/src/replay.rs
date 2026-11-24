@@ -97,6 +97,12 @@ pub struct Expectation {
     pub max_frames_delta: Option<u64>,
     #[serde(default)]
     pub closed: Option<bool>,
+    /// Every needle must appear in the target of a recorded external request.
+    #[serde(default)]
+    pub externals_contains: Option<StringOrList>,
+    /// Every kind must be present among the recorded external requests.
+    #[serde(default)]
+    pub external_kinds: Option<StringOrList>,
 }
 
 /// Runs every `*.json` regression file in `dir` against a fresh clean app instance.
@@ -448,6 +454,30 @@ pub fn evaluate_expectations(
                 }
             }
         }
+        if let Some(externals_contains) = &exp.externals_contains {
+            for needle in externals_contains.as_slice() {
+                if !snap
+                    .externals
+                    .iter()
+                    .any(|request| request.target.contains(needle))
+                {
+                    return Err(format!(
+                        "expectation {exp_idx} (step {target_idx}): expected a recorded external containing \"{needle}\", got {:?}",
+                        snap.externals
+                    ));
+                }
+            }
+        }
+        if let Some(kinds) = &exp.external_kinds {
+            for kind in kinds.as_slice() {
+                if !snap.externals.iter().any(|request| request.kind == kind) {
+                    return Err(format!(
+                        "expectation {exp_idx} (step {target_idx}): expected a recorded external of kind \"{kind}\", got {:?}",
+                        snap.externals
+                    ));
+                }
+            }
+        }
         if let Some(absent) = &exp.absent {
             for needle in absent.as_slice() {
                 if snap.elements.iter().any(|el| el.name.trim() == needle) {
@@ -648,6 +678,7 @@ mod tests {
             elements,
             frames: 0,
             closed: false,
+            externals: Vec::new(),
         }
     }
 
@@ -790,6 +821,7 @@ mod tests {
             elements,
             frames: 0,
             closed: false,
+            externals: Vec::new(),
         })
         .unwrap()
     }
@@ -947,6 +979,27 @@ mod tests {
         let mut middle = snap_with(&["Terminal"], 0, &[]);
         middle.frames = 20;
         assert!(evaluate_expectations(&explicit, &[before, middle, busy_after]).is_err());
+    }
+
+    #[test]
+    fn externals_expectations_check_recorded_requests() {
+        let expectations: Vec<Expectation> = serde_json::from_str(
+            r#"[{"externals_contains":"https://","external_kinds":["open","copy"]}]"#,
+        )
+        .unwrap();
+        let mut snapshot = snap_with(&[], 0, &[]);
+        assert!(evaluate_expectations(&expectations, &[snapshot.clone()]).is_err());
+
+        snapshot.externals.push(crate::snapshot::ExternalRequest {
+            kind: "open".to_owned(),
+            target: "https://aider.chat".to_owned(),
+        });
+        assert!(evaluate_expectations(&expectations, &[snapshot.clone()]).is_err());
+        snapshot.externals.push(crate::snapshot::ExternalRequest {
+            kind: "copy".to_owned(),
+            target: "npm install -g @openai/codex".to_owned(),
+        });
+        assert!(evaluate_expectations(&expectations, &[snapshot]).is_ok());
     }
 
     #[test]

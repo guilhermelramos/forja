@@ -583,6 +583,7 @@ mod tests {
             elements,
             frames: 0,
             closed: false,
+            externals: Vec::new(),
         }
     }
 
