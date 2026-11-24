@@ -64,3 +64,6 @@ board-page-state-empty = Ainda não há itens.
 board-page-state-loading = Carregando…
 board-page-state-error = Não foi possível carregar.
 board-card-actions = Ações do cartão { $name }
+
+board-card-changed = { $count } alterados
+board-card-changed-hint = Arquivos alterados nesta bancada

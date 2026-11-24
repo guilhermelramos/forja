@@ -5,6 +5,7 @@
 //! `bench.stage.list`, `bench.stage.set`), então não depende do crate de
 //! bancadas e degrada quando ele não está presente.
 
+mod changed_files;
 mod state;
 mod view;
 mod view_board;
@@ -14,8 +15,8 @@ mod view_sidebar;
 mod view_tests;
 
 use forja_contracts::{
-    names, BenchActivated, BenchCreated, BenchStored, ProjectActivated, ProjectAdded,
-    ProjectRemoved, StageChanged,
+    names, BenchActivated, BenchCreated, BenchStored, GitStatusChanged, ProjectActivated,
+    ProjectAdded, ProjectRemoved, StageChanged,
 };
 use forja_kernel::{
     Module, ModuleManifest, Registrar, SettingKind, SettingSpec, SettingValue, Slot,
@@ -58,6 +59,7 @@ impl Module for BoardModule {
         r.contract_event::<ProjectActivated>(names::PROJECT_ACTIVATED);
         r.contract_event::<ProjectAdded>(names::PROJECT_ADDED);
         r.contract_event::<ProjectRemoved>(names::PROJECT_REMOVED);
+        r.contract_event::<GitStatusChanged>(names::GIT_STATUS_CHANGED);
         let created_state = self.state.clone();
         r.subscribe::<BenchCreated, _>(move |_cx, _event| created_state.request_refresh());
         let stored_state = self.state.clone();
@@ -66,6 +68,10 @@ impl Module for BoardModule {
         r.subscribe::<BenchActivated, _>(move |_cx, _event| activated_state.request_refresh());
         let stage_state = self.state.clone();
         r.subscribe::<StageChanged, _>(move |_cx, _event| stage_state.request_refresh());
+        let status_state = self.state.clone();
+        r.subscribe(move |_cx, event: &GitStatusChanged| {
+            changed_files::apply(&status_state, event);
+        });
         let project_activated_state = self.state.clone();
         r.subscribe::<ProjectActivated, _>(move |_cx, _event| {
             project_activated_state.request_refresh()
@@ -104,6 +110,8 @@ impl Module for BoardModule {
             "board.action.create",
             "board.action.move",
             "board.card.actions",
+            "board.card.changed",
+            "board.card.changed-hint",
             "board.action.move-to",
             "board.action.move-back",
             "board.action.open",

@@ -387,6 +387,11 @@ fn render_card(
                     );
                 }
             });
+            crate::changed_files::render(
+                ui,
+                cx,
+                crate::changed_files::count(state, &card.bench.path),
+            );
             let helper = options
                 .show_helper
                 .then(|| state.helper_status(&card.bench.bench_id))

@@ -101,6 +101,8 @@ struct State {
     names: BTreeMap<String, String>,
     /// Helper status per bench id, as snake_case `HelperStatus` values.
     helpers: BTreeMap<String, String>,
+    /// Changed-file count per bench path key, from published git status events.
+    changed: BTreeMap<String, usize>,
     error: Option<String>,
     dragging: Option<String>,
     pending: Option<PendingMove>,
@@ -165,6 +167,19 @@ impl Shared {
             .lock()
             .map(|state| state.names.clone())
             .unwrap_or_default()
+    }
+
+    pub fn set_changed_count(&self, path_key: String, count: usize) {
+        if let Ok(mut state) = self.0.lock() {
+            state.changed.insert(path_key, count);
+        }
+    }
+
+    pub fn changed_count(&self, path_key: &str) -> usize {
+        self.0
+            .lock()
+            .map(|state| state.changed.get(path_key).copied().unwrap_or(0))
+            .unwrap_or(0)
     }
 
     /// Helper status of a bench, when a helper run is known for it.
