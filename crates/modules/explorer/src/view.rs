@@ -11,7 +11,7 @@ use crate::tree::Entry;
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::{Args, Ctx, Result as KResult};
 use serde_json::{json, Value};
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::path::{Path, PathBuf};
 
 /// Indentation per tree level, in points.
@@ -46,6 +46,7 @@ struct Frame {
     busy: bool,
     expanded: HashSet<PathBuf>,
     selected: Option<PathBuf>,
+    changed: BTreeSet<String>,
 }
 
 impl View for ExplorerView {
@@ -63,6 +64,7 @@ impl View for ExplorerView {
                 busy: state.busy,
                 expanded: state.expanded.clone(),
                 selected: state.selected.clone(),
+                changed: state.changed_paths.clone(),
             };
             (frame, state.pending_copy.take())
         };
@@ -298,6 +300,13 @@ impl ExplorerView {
                 text = text.weak();
             }
             let response = ui.add(egui::Button::selectable(is_selected, text).truncate());
+            crate::changed::render(
+                ui,
+                cx,
+                frame.root.as_deref().is_some_and(|root| {
+                    crate::changed::is_changed(root, &entry.path, &frame.changed)
+                }),
+            );
             if response.clicked() {
                 requests.push(Request::Select(entry.path.clone()));
                 if entry.is_dir {

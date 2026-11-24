@@ -53,3 +53,6 @@ setting-explorer-tree-follow_symlinks-label = Follow symbolic links
 setting-explorer-tree-follow_symlinks-help = Lists the targets of symbolic links.
 explorer-tree-collapse = Collapse folder
 explorer-tree-expand = Expand folder
+
+explorer-tree-modified = M
+explorer-tree-modified-hint = Changed file in this bench
