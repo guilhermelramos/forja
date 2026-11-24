@@ -1,0 +1,28 @@
+{
+  "title": "Painel de terminal não mostra erros crus do sistema (#43)",
+  "issue": 43,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Abrir pasta" },
+    { "m": "ui.click", "target": "Escolher…" },
+    { "m": "ui.click", "target": "Adicionar" },
+    { "m": "ui.wait", "ms": 1200 },
+    { "m": "ui.click", "target": "Dividir abaixo" },
+    { "m": "ui.click", "target": "Nova aba" },
+    { "m": "ui.wait", "ms": 800 },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 8,
+      "absent_contains": [
+        "os error 2",
+        "The system cannot find the file specified",
+        "failed:",
+        "fatal:"
+      ]
+    }
+  ]
+}
