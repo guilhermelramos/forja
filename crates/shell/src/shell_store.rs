@@ -20,6 +20,8 @@ pub struct BenchLayout {
     pub right_tab: Option<String>,
     pub sidebar_open: bool,
     pub right_panel_open: bool,
+    /// Arranjo escolhido e camada de origem. Ausente em estado antigo.
+    pub layout: Option<crate::layout_settings::LayoutSelection>,
 }
 
 fn json_string_list(value: &Value, key: &str) -> Option<Vec<String>> {
@@ -56,6 +58,7 @@ impl BenchLayout {
             right_tab: str_opt("right_tab"),
             sidebar_open: bool_or("sidebar_open", default_sidebar_open),
             right_panel_open: bool_or("right_panel_open", true),
+            layout: crate::layout_settings::LayoutSelection::from_json(value.get("layout")),
         }
     }
 
@@ -69,6 +72,9 @@ impl BenchLayout {
             "right_tab": self.right_tab,
             "sidebar_open": self.sidebar_open,
             "right_panel_open": self.right_panel_open,
+            "layout": self.layout.as_ref().map(
+                crate::layout_settings::LayoutSelection::to_json,
+            ),
         })
     }
 
@@ -364,6 +370,7 @@ impl ForjaApp {
                 .map(|view| view.id.clone()),
             sidebar_open: self.show_sidebar,
             right_panel_open: self.show_right_panel,
+            layout: self.layout_state.selection.clone(),
         }
     }
 
@@ -483,6 +490,25 @@ mod tests {
     }
 
     #[test]
+    fn legacy_bench_state_without_a_layout_choice_still_loads() {
+        let old = serde_json::json!({
+            "active_tab": "editor.tab",
+            "open_tabs": ["editor.tab", "terminal.tab"],
+            "sidebar_open": true,
+            "right_panel_open": false,
+        });
+        let layout = BenchLayout::from_json(&old, true);
+        assert_eq!(layout.layout, None);
+        assert_eq!(layout.to_json()["active_tab"], "editor.tab");
+        let with_choice = serde_json::json!({
+            "layout": { "id": "foco", "layer": "user", "hash": "abc" }
+        });
+        let layout = BenchLayout::from_json(&with_choice, true);
+        assert_eq!(layout.layout.as_ref().unwrap().id, "foco");
+        assert_eq!(layout.to_json()["layout"]["layer"], "user");
+    }
+
+    #[test]
     fn resolve_restores_tabs_rail_closed_tabs_side_tabs_and_panels() {
         let bench_views = ["terminal.tab", "editor.tab", "git.tab", "browser.tab"];
         let rail_views = ["board.page", "routine.page", "files.page"];
@@ -498,6 +524,7 @@ mod tests {
             right_tab: Some("helper.runs".to_owned()),
             sidebar_open: false,
             right_panel_open: false,
+            layout: None,
         };
         let mut resolved = layout.resolve(&bench_views, &rail_views, &sidebar_views, &right_views);
         assert_eq!(resolved.active_tab, 2);
@@ -527,6 +554,7 @@ mod tests {
             right_tab: Some("chat.panel".to_owned()),
             sidebar_open: true,
             right_panel_open: false,
+            layout: None,
         };
         let mut resolved = saved.resolve(&bench_views, &rail_views, &sidebar_views, &right_views);
         resolved.apply_cli_overrides(
@@ -600,6 +628,7 @@ mod tests {
                 right_tab: Some("helper.runs".to_owned()),
                 sidebar_open: false,
                 right_panel_open: true,
+                layout: None,
             },
         );
 

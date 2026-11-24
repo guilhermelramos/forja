@@ -282,6 +282,14 @@ fn register_appearance(registrar: &mut Registrar<'_>) {
             "setting-appearance-status_bar-visible-help",
             100,
         ),
+        SettingSpec::new(
+            "appearance.layout.default",
+            SettingKind::Text { max_len: Some(64) },
+            SettingValue::Text("oficina".to_owned()),
+            "setting-appearance-layout-default-label",
+            "setting-appearance-layout-default-help",
+        )
+        .order(105),
     ]);
     for spec in specs {
         registrar.setting(spec);

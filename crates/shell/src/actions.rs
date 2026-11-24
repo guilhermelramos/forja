@@ -35,6 +35,20 @@ pub enum Action {
     CloseTab,
     ReopenTab,
     SwitchTab(usize),
+    /// Abre o seletor de arranjos (`Ctrl+Alt+L`).
+    OpenLayoutPicker,
+    /// Aplica um arranjo efetivo do catálogo.
+    SwitchLayout {
+        id: String,
+        layer: crate::layout_settings::LayoutLayer,
+        name: String,
+    },
+    /// Abre o modal "Salvar layout atual…".
+    SaveLayout,
+    /// Reaplica o chrome declarado pelo arranjo atual.
+    ResetLayout,
+    /// Abre Ajustes → Layout para gerenciar os arranjos.
+    ManageLayouts,
 }
 
 #[cfg(not(test))]
@@ -115,6 +129,10 @@ pub fn dispatch(id: &str) {
         "tab.switch_8" => Action::SwitchTab(8),
         "tab.switch_9" => Action::SwitchTab(9),
         "tab.switch_10" => Action::SwitchTab(10),
+        "layout.switch" => Action::OpenLayoutPicker,
+        "layout.save" => Action::SaveLayout,
+        "layout.reset" => Action::ResetLayout,
+        "layout.manage" => Action::ManageLayouts,
         _ => return,
     };
     push(action);

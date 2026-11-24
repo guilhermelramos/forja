@@ -20,6 +20,8 @@ mod icon;
 #[cfg(test)]
 mod icon_contract_tests;
 mod layout;
+mod layout_presets;
+mod layout_settings;
 mod overlays;
 mod pacer;
 #[cfg(test)]

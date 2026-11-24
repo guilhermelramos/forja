@@ -144,6 +144,8 @@ pub struct ForjaApp {
     pub(crate) anvil_group: usize,
     pub(crate) shell_data: shell_store::ShellData,
     pub(crate) shell_writer: shell_store::ShellWriter,
+    /// Seletor, projeção e gravação de arranjos (estado em memória).
+    pub(crate) layout_state: crate::layout_presets::LayoutState,
     pub(crate) current_bench_id: Option<String>,
     pub(crate) show_sidebar: bool,
     pub(crate) last_sidebar_setting: bool,
@@ -253,6 +255,12 @@ impl ForjaApp {
         let mut shell_writer = shell_store::ShellWriter::default();
         shell_writer.seed(shell_data.clone());
         let current_bench_id = Self::query_current_bench_id(&mut runtime);
+        let saved_selection = current_bench_id
+            .as_deref()
+            .and_then(|id| shell_data.layout.get(id))
+            .and_then(|layout| layout.layout.clone());
+        let rail_registration: Vec<String> =
+            rail_views.iter().map(|view| view.id.clone()).collect();
         let resolved = {
             let base_layout = current_bench_id
                 .as_deref()
@@ -342,6 +350,11 @@ impl ForjaApp {
             anvil_group: 0,
             shell_data,
             shell_writer,
+            layout_state: crate::layout_presets::LayoutState {
+                selection: saved_selection,
+                rail_registration,
+                ..Default::default()
+            },
             current_bench_id,
             show_sidebar: resolved.sidebar_open,
             last_sidebar_setting: default_sidebar_open,
@@ -858,6 +871,11 @@ impl ForjaApp {
                         self.rail_page = None;
                     }
                 }
+                action @ (actions::Action::OpenLayoutPicker
+                | actions::Action::SwitchLayout { .. }
+                | actions::Action::SaveLayout
+                | actions::Action::ResetLayout
+                | actions::Action::ManageLayouts) => self.handle_layout_action(action),
             }
         }
     }
@@ -1038,6 +1056,7 @@ impl eframe::App for ForjaApp {
         }
         let tasks_applied = self.runtime.poll_tasks();
         self.runtime.poll_ticks();
+        self.poll_layout_catalog();
         self.handle_shortcuts(ctx);
         self.drain_actions(ctx);
         self.show_demos();
@@ -1054,6 +1073,8 @@ impl eframe::App for ForjaApp {
         self.keymap_window(ctx);
         self.anvil_window(ctx);
         self.modal_windows(ctx);
+        self.layout_picker_window(ctx);
+        self.layout_save_window(ctx);
         self.sync_shell_store();
         self.diagnostics_overlay(ctx);
         self.capture(ctx);
