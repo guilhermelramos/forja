@@ -176,7 +176,7 @@ fn register_events(r: &mut Registrar<'_>, core: &Shared) {
     r.subscribe(move |_, event: &HelperStatusChanged| {
         if let Some(id) = event.terminal_id.as_deref().and_then(|id| id.parse().ok()) {
             let _ = helper_core.with_hub(|hub| {
-                if event.status == HelperStatus::Finished {
+                if matches!(event.status, HelperStatus::Finished | HelperStatus::Error) {
                     hub.helper_terminals.remove(&id);
                 } else {
                     hub.helper_terminals.insert(id);

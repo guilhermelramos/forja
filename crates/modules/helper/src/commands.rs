@@ -77,7 +77,7 @@ pub(super) fn register(r: &mut Registrar<'_>, core: &Shared) {
                     state
                         .runs
                         .values()
-                        .filter(|run| !matches!(run.status, HelperStatus::Finished))
+                        .filter(|run| !matches!(run.status, HelperStatus::Finished | HelperStatus::Error))
                         .max_by(|a, b| a.started_at.cmp(&b.started_at))
                         .map(|run| (run.terminal_id.clone(), Some(run.bench_path.clone())))
                 }

@@ -72,13 +72,15 @@ pub(crate) fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) ->
     })?;
     let (profile, overrides, detected) = selected?;
     if overrides.disabled {
-        return Err(format!("helper profile `{}` is disabled", profile.id));
+        let error = format!("helper profile `{}` is disabled", profile.id);
+        return Err(fail(cx, core, &bench, &profile, error));
     }
     if !profile.trusted {
-        return Err(profile
+        let error = profile
             .risk_reason
             .clone()
-            .unwrap_or_else(|| format!("helper profile `{}` is not trusted", profile.id)));
+            .unwrap_or_else(|| format!("helper profile `{}` is not trusted", profile.id));
+        return Err(fail(cx, core, &bench, &profile, error));
     }
     let include_rules = cx
         .setting("helper.launch.include_rules")
@@ -140,9 +142,9 @@ pub(crate) fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) ->
         if let Some(effort) = &request.effort {
             open.insert("effort", json!(effort));
         }
-        let opened = cx
-            .run_command("chat.open", open)
-            .map_err(|error| error.to_string())?;
+        let opened = cx.run_command("chat.open", open).map_err(|error| {
+            fail(cx, core, &bench, &profile, error.to_string())
+        })?;
         let session_id = opened
             .get("session_id")
             .and_then(Value::as_str)
@@ -178,7 +180,8 @@ pub(crate) fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) ->
         }));
     }
     if cx.registry().command("terminal.open").is_none() {
-        return Err("terminal module is not available; helper.launch needs terminal.open".to_owned());
+        let error = "terminal module is not available; helper.launch needs terminal.open".to_owned();
+        return Err(fail(cx, core, &bench, &profile, error));
     }
     let mut plan = launch::build(
         &profile,
@@ -188,13 +191,16 @@ pub(crate) fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) ->
         &overrides,
     )?;
     if detected.is_none() {
+        // Sinal estável para o classificador de erros humanos: nenhum id
+        // interno ou comando interno vazia para a tela.
+        let error = format!("executable-not-found:{}", profile.name);
         let body = cx.t_args("helper.launch.not-installed", &[("name", &profile.name)]);
         let mut notify = Args::new();
         notify.insert("title", json!(cx.t("helper.notify.error-title")));
-        notify.insert("body", json!(body.clone()));
+        notify.insert("body", json!(body));
         notify.insert("level", json!("warn"));
         let _ = cx.run_command("notify.show", notify);
-        return Err(body);
+        return Err(fail(cx, core, &bench, &profile, error));
     }
     inject_account_env(cx, &profile.id, &mut plan);
     let hook_token = if profile.hooks.supported {
@@ -212,17 +218,36 @@ pub(crate) fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) ->
     args.insert("title", json!(profile.name));
     args.insert("env", json!(plan.environment));
     let opened = cx.run_command("terminal.open", args).map_err(|_| {
-        "terminal module is not available; helper.launch needs terminal.open".to_owned()
+        fail(
+            cx,
+            core,
+            &bench,
+            &profile,
+            "terminal module is not available; helper.launch needs terminal.open".to_owned(),
+        )
     })?;
     let terminal_id = opened
         .get("terminal_id")
         .and_then(Value::as_str)
-        .ok_or_else(|| "terminal.open returned no terminal_id".to_owned())?
+        .ok_or_else(|| {
+            fail(
+                cx,
+                core,
+                &bench,
+                &profile,
+                "terminal.open returned no terminal_id".to_owned(),
+            )
+        })?
         .to_owned();
+    let bench_display = bench.display().to_string();
+    core.with_state(|state| {
+        state.last_launch_error = None;
+        status::clear_launch_failure_run(state, &profile.id, &bench_display);
+    })?;
     let run = Run {
         terminal_id: terminal_id.clone(),
         profile_id: profile.id.clone(),
-        bench_path: bench.display().to_string(),
+        bench_path: bench_display.clone(),
         started_at: chrono::Utc::now().to_rfc3339(),
         hook_token,
         status: if effective_prompt.is_some() {
@@ -234,9 +259,7 @@ pub(crate) fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) ->
     };
     core.with_state(|state| {
         state.runs.insert(terminal_id.clone(), run.clone());
-        state
-            .last_benches
-            .insert(profile.id.clone(), bench.display().to_string());
+        state.last_benches.insert(profile.id.clone(), bench_display);
         state.refresh_awake();
     })?;
     resume::record_bench_session(cx, core, &bench.display().to_string(), &profile.id, None);
@@ -279,6 +302,24 @@ pub(crate) fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) ->
         "command_line": plan.command_line(),
         "mode": "tui"
     }))
+}
+
+/// Registra a falha no estado do módulo e devolve o erro para quem chamou.
+fn fail(
+    cx: &mut Ctx<'_>,
+    core: &Shared,
+    bench: &std::path::Path,
+    profile: &profile::Profile,
+    error: String,
+) -> String {
+    status::record_launch_failure(
+        cx,
+        core,
+        &bench.display().to_string(),
+        Some(&profile.id),
+        &error,
+    );
+    error
 }
 
 pub(crate) fn hook_event(cx: &mut Ctx<'_>, core: &Shared, payload: Value) {

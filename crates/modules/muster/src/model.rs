@@ -867,6 +867,7 @@ pub fn status_key(status: HelperStatus) -> &'static str {
         HelperStatus::Working => "working",
         HelperStatus::NeedsYou => "needs_you",
         HelperStatus::Finished => "finished",
+        HelperStatus::Error => "error",
     }
 }
 

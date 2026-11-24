@@ -59,7 +59,7 @@ pub(super) fn on_status(
     }
     if matches!(
         status,
-        HelperStatus::Idle | HelperStatus::Unknown | HelperStatus::Finished
+        HelperStatus::Idle | HelperStatus::Unknown | HelperStatus::Finished | HelperStatus::Error
     ) {
         flush_queued(cx, shared, &assignment, status);
     } else {
@@ -149,6 +149,7 @@ pub(super) fn flush_pending(cx: &mut Ctx<'_>, shared: &Shared) {
             "working" => HelperStatus::Working,
             "needs_you" => HelperStatus::NeedsYou,
             "finished" => HelperStatus::Finished,
+            "error" => HelperStatus::Error,
             "idle" => HelperStatus::Idle,
             _ => HelperStatus::Unknown,
         };
