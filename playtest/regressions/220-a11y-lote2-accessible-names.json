@@ -5,7 +5,7 @@
   "demo": true,
   "steps": [
     { "m": "ui.key", "keys": "Escape" },
-    { "m": "ui.open_tab", "target": "Busca" },
+    { "m": "ui.click", "target": "Busca" },
     { "m": "ui.snapshot" }
   ],
   "expect": [
