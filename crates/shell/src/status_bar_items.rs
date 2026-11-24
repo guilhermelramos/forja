@@ -74,7 +74,7 @@ pub(crate) fn apply_toggle(items: &mut Vec<String>, id: &str, registration: &[St
 }
 
 /// Move um item uma posição, sem tocar nos demais (inclusive desconhecidos).
-pub(crate) fn apply_move(items: &mut Vec<String>, id: &str, delta: isize) {
+pub(crate) fn apply_move(items: &mut [String], id: &str, delta: isize) {
     let Some(from) = items.iter().position(|item| item == id) else {
         return;
     };
@@ -231,7 +231,7 @@ mod tests {
     #[test]
     fn status_bar_uses_the_design_order_and_filters_unlisted_views() {
         let app_items = items();
-        let registered = vec![
+        let registered = [
             "ports.status".to_owned(),
             "bench.status".to_owned(),
             "trust.settings".to_owned(),
