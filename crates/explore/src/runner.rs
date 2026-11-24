@@ -345,6 +345,7 @@ mod tests {
             }],
             frames: 0,
             closed: false,
+            externals: Vec::new(),
         }
     }
 

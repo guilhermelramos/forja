@@ -427,22 +427,7 @@ fn save_history(cx: &mut Ctx<'_>, shared: &Shared) {
 }
 
 pub(crate) fn open_external(url: &str) -> Result<(), String> {
-    #[cfg(windows)]
-    {
-        forja_kernel::process::command("cmd")
-            .args(["/C", "start", "", url])
-            .spawn()
-            .map(|_| ())
-            .map_err(|error| error.to_string())
-    }
-    #[cfg(not(windows))]
-    {
-        forja_kernel::process::command("xdg-open")
-            .arg(url)
-            .spawn()
-            .map(|_| ())
-            .map_err(|error| error.to_string())
-    }
+    forja_kernel::process::open_external(url)
 }
 
 fn bench_tab_order(default: i32) -> i32 {
