@@ -416,6 +416,29 @@ pub fn new_spec(id: &str, name_pt: &str, name_en: &str, tabs: &[String]) -> Layo
     }
 }
 
+/// Ordena as abas laterais pela ordem declarada no arranjo: as refs declaradas
+/// vêm primeiro (na ordem de leitura da árvore), as demais completam na ordem de
+/// registro. Devolve também a primeira ref declarada que existe no registro,
+/// para virar a aba ativa numa troca explícita de arranjo.
+pub(crate) fn order_side_tabs(
+    current: &[String],
+    declared: &[String],
+) -> (Vec<String>, Option<String>) {
+    let mut order: Vec<String> = declared
+        .iter()
+        .filter(|id| current.contains(id))
+        .cloned()
+        .collect();
+    let mut seen: BTreeSet<&str> = order.iter().map(String::as_str).collect();
+    for id in current {
+        if seen.insert(id.as_str()) {
+            order.push(id.clone());
+        }
+    }
+    let active = order.first().filter(|id| declared.contains(id)).cloned();
+    (order, active)
+}
+
 pub(crate) enum RailEdit {
     Move(String, isize),
     Hide(String),
@@ -635,6 +658,28 @@ mod tests {
         apply_rail_edit(&mut edited, RailEdit::Show("muster.page".to_owned()));
         assert!(edited.effective_rail_order.contains(&"muster.page".to_owned()));
         assert!(!edited.rail_hidden.contains(&"muster.page".to_owned()));
+    }
+
+    #[test]
+    fn side_tabs_follow_the_declared_order() {
+        let current: Vec<String> = ["project.sidebar", "board.sidebar", "explorer.panel"]
+            .iter()
+            .map(|id| (*id).to_owned())
+            .collect();
+        let declared: Vec<String> = ["board.sidebar", "explorer.panel"]
+            .iter()
+            .map(|id| (*id).to_owned())
+            .collect();
+        let (order, first) = order_side_tabs(&current, &declared);
+        assert_eq!(order, vec![
+            "board.sidebar".to_owned(),
+            "explorer.panel".to_owned(),
+            "project.sidebar".to_owned(),
+        ]);
+        assert_eq!(first.as_deref(), Some("board.sidebar"));
+        let (order, first) = order_side_tabs(&current, &[]);
+        assert_eq!(order, current);
+        assert_eq!(first, None);
     }
 
     #[test]

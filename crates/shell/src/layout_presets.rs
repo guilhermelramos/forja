@@ -7,7 +7,7 @@
 use crate::actions::{self, Action};
 use crate::app::ForjaApp;
 use crate::layout_settings::{
-    apply_rail_edit, export, new_spec, project, resolve_selection, CatalogSnapshot,
+    apply_rail_edit, export, new_spec, order_side_tabs, project, resolve_selection, CatalogSnapshot,
     LayoutCandidate, LayoutLayer, LayoutSelection, Projection, RailEdit,
 };
 use eframe::egui;
@@ -169,8 +169,36 @@ impl ForjaApp {
                 .position(|id| id == &view.id)
                 .unwrap_or(order.len())
         });
+        // O arranjo também declara as abas das laterais; aplicar só `bench_tabs`
+        // deixaria `sidebar_tabs` e `right_tabs` calculados e nunca usados.
+        self.apply_side_panel(true, &projection.sidebar_tabs, reset_tabs);
+        self.apply_side_panel(false, &projection.right_tabs, reset_tabs);
         self.layout_state.projection = projection;
         self.layout_state.applied = true;
+    }
+
+    /// Reordena a lateral conforme a projeção e(ao trocar de arranjo) escolhe a
+    /// primeira aba declarada. Nas restaurações preserva a aba que já estava ativa.
+    fn apply_side_panel(&mut self, sidebar: bool, declared: &[String], select_first: bool) {
+        let active_id = if sidebar {
+            self.sidebar_views.get(self.sidebar_tab).map(|view| view.id.clone())
+        } else {
+            self.right_views.get(self.right_tab).map(|view| view.id.clone())
+        };
+        let (views, tab) = if sidebar {
+            (&mut self.sidebar_views, &mut self.sidebar_tab)
+        } else {
+            (&mut self.right_views, &mut self.right_tab)
+        };
+        let ids: Vec<String> = views.iter().map(|view| view.id.clone()).collect();
+        let (order, first) = order_side_tabs(&ids, declared);
+        views.sort_by_key(|view| order.iter().position(|id| id == &view.id).unwrap_or(order.len()));
+        let wanted = if select_first { first.or(active_id) } else { active_id };
+        if let Some(id) = wanted {
+            if let Some(index) = views.iter().position(|view| view.id == id) {
+                *tab = index;
+            }
+        }
     }
 
     pub(crate) fn layout_rail_visible(&self) -> bool {
