@@ -239,13 +239,15 @@ pub(crate) fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) ->
             )
         })?
         .to_owned();
+    let bench_display = bench.display().to_string();
     core.with_state(|state| {
         state.last_launch_error = None;
+        status::clear_launch_failure_run(state, &profile.id, &bench_display);
     })?;
     let run = Run {
         terminal_id: terminal_id.clone(),
         profile_id: profile.id.clone(),
-        bench_path: bench.display().to_string(),
+        bench_path: bench_display.clone(),
         started_at: chrono::Utc::now().to_rfc3339(),
         hook_token,
         status: if effective_prompt.is_some() {
@@ -257,9 +259,7 @@ pub(crate) fn launch(cx: &mut Ctx<'_>, core: &Shared, request: LaunchRequest) ->
     };
     core.with_state(|state| {
         state.runs.insert(terminal_id.clone(), run.clone());
-        state
-            .last_benches
-            .insert(profile.id.clone(), bench.display().to_string());
+        state.last_benches.insert(profile.id.clone(), bench_display);
         state.refresh_awake();
     })?;
     resume::record_bench_session(cx, core, &bench.display().to_string(), &profile.id, None);

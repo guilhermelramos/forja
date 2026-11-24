@@ -632,6 +632,94 @@ mod tests {
     }
 
     #[test]
+    fn successful_relaunch_clears_the_launch_error_run() {
+        let dir = temp_guard("relaunch-clears-error");
+        let dir = &dir.0;
+        let core = Arc::new(Core::new());
+        let mut runtime = Runtime::new(
+            vec![
+                Box::new(HelperModule {
+                    core: Arc::clone(&core),
+                }),
+                Box::new(StubTerminal {
+                    calls: Arc::new(std::sync::Mutex::new(Vec::new())),
+                }),
+            ],
+            RuntimeOptions {
+                data_dir: Some(dir.clone()),
+                user_dir: Some(dir.join("user")),
+                locale: Some("pt-BR".to_owned()),
+                wake: None,
+            },
+        )
+        .expect("helper and stub terminal register");
+        let mut profile = crate::profile::Profile::parse(
+            "id = \"ghost\"\nname = \"Ghost\"\nmaker = \"Test\"\nsite = \"https://example.test\"\n[detect]\nexecutables=[\"definitely-not-a-real-helper-xyz\"]\n[start]\ncommand=\"definitely-not-a-real-helper-xyz\"\n",
+            std::path::PathBuf::from("ghost.toml"),
+            crate::profile::Layer::User,
+        )
+        .unwrap();
+        profile.trusted = true;
+        core.with_state(|state| {
+            state.profiles = vec![profile];
+            state.detection.clear();
+            state.probed.clear();
+            state.loaded_for = Some(dir.clone());
+        })
+        .unwrap();
+
+        let mut args = forja_kernel::Args::new();
+        args.insert("profile_id", serde_json::json!("ghost"));
+        args.insert("bench_path", serde_json::json!(dir.display().to_string()));
+        runtime
+            .run_command("helper.launch", args)
+            .expect_err("missing executable must fail launch");
+        let status = runtime
+            .call_method("helper.status", Map::new())
+            .expect("helper.status");
+        assert_eq!(status["runs"].as_array().map(Vec::len), Some(1));
+        assert!(status["runs"][0]["terminal_id"]
+            .as_str()
+            .unwrap()
+            .starts_with("launch-error:"));
+
+        // O executável "aparece" e o mesmo perfil/bancada relança com sucesso.
+        core.with_state(|state| {
+            state.detection.insert(
+                "ghost".to_owned(),
+                detect::Detection {
+                    executable: Some(dir.join("ghost.exe")),
+                    ..detect::Detection::default()
+                },
+            );
+        })
+        .unwrap();
+        let mut args = forja_kernel::Args::new();
+        args.insert("profile_id", serde_json::json!("ghost"));
+        args.insert("bench_path", serde_json::json!(dir.display().to_string()));
+        runtime
+            .run_command("helper.launch", args)
+            .expect("launch now succeeds");
+
+        let status = runtime
+            .call_method("helper.status", Map::new())
+            .expect("helper.status");
+        let runs = status["runs"].as_array().unwrap();
+        assert!(
+            runs.iter()
+                .all(|run| run["status"] != json!("error")),
+            "{runs:?}"
+        );
+        assert!(
+            runs.iter().all(|run| !run["terminal_id"]
+                .as_str()
+                .unwrap()
+                .starts_with("launch-error:")),
+            "{runs:?}"
+        );
+    }
+
+    #[test]
     fn contract_rpc_list_and_missing_terminal() {
         let dir = temp_guard("rpc");
         let dir = &dir.0;

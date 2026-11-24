@@ -166,6 +166,24 @@ pub(crate) fn record_launch_failure(
     });
 }
 
+/// Remove a execução de erro de lançamento quando o mesmo perfil e bancada
+/// voltam a funcionar, para que a lista não mostre um `Erro` fantasma.
+pub(crate) fn clear_launch_failure_run(
+    state: &mut crate::HelperState,
+    profile_id: &str,
+    bench_path: &str,
+) -> bool {
+    let error_id = format!("launch-error:{profile_id}");
+    let matches = state
+        .runs
+        .get(&error_id)
+        .is_some_and(|run| same_path(&run.bench_path, bench_path));
+    if matches {
+        state.runs.remove(&error_id);
+    }
+    matches
+}
+
 fn update_run_inner(
     cx: &mut Ctx<'_>, core: &Shared, terminal_id: &str, status: HelperStatus,
     event: Option<String>, failed: bool,
