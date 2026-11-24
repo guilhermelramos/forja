@@ -8,6 +8,7 @@
 
 use crate::runtime::Ctx;
 use crate::ui::AnvilHit;
+use std::time::Duration;
 
 pub use eframe::egui;
 
@@ -19,7 +20,16 @@ pub trait View {
 
     /// Called every frame before [`Self::ui`], including for a modal that is
     /// still closed. Use it to call [`Ctx::open_modal`] when the view should appear.
+    /// No disk, network or process work belongs in [`Self::ui`]; services use
+    /// this hook instead, so they keep running with their chrome hidden.
     fn poll(&mut self, _cx: &mut Ctx<'_>) {}
+
+    /// Next real deadline for [`Self::poll`], relative to now. The shell calls
+    /// `poll` once per frame but only schedules a repaint when this deadline
+    /// arrives, so an idle service never wakes a continuous stream of frames.
+    fn next_poll_at(&self) -> Option<Duration> {
+        None
+    }
 
     /// When true, the shell asks [`Self::anvil_hits`] for rows and does not
     /// paint [`Self::ui`] inside the Bigorna.

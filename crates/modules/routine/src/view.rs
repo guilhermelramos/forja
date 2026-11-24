@@ -510,17 +510,24 @@ impl View for RoutinesView {
     }
 }
 
-/// Passo da barra de status: avança o agendador a cada segundo e mostra quantas rodam.
+/// Serviço do agendador: o trabalho acontece em `poll()`, com o chrome oculto.
+/// `ui()` só desenha o contador; o shell agenda o próximo prazo real.
 pub struct TickView {
     pub shared: Shared,
+    pub(crate) next: Option<std::time::Duration>,
 }
 
 impl View for TickView {
-    fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
+    fn poll(&mut self, cx: &mut Ctx<'_>) {
         actions::tick(cx, &self.shared);
-        if let Some(delay) = actions::next_wake(cx, &self.shared) {
-            forja_ui_kit::request_repaint_after_active(ui.ctx(), delay);
-        }
+        self.next = actions::next_wake(cx, &self.shared);
+    }
+
+    fn next_poll_at(&self) -> Option<std::time::Duration> {
+        self.next
+    }
+
+    fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         let busy = with(&self.shared, |state| {
             state.runner.running() + state.runner.queued()
         })

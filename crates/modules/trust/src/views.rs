@@ -21,6 +21,20 @@ impl ApprovalView {
 }
 
 impl View for ApprovalView {
+    /// A aprovação é hospedada pela camada modal do shell: o chamado acontece
+    /// mesmo quando a barra de status está fora da tela.
+    fn poll(&mut self, cx: &mut Ctx<'_>) {
+        let pending = self
+            .core
+            .with_state(cx, |state| state.pending.front().is_some())
+            .unwrap_or(false);
+        if pending {
+            cx.open_modal("trust.approval");
+        } else {
+            cx.close_modal("trust.approval");
+        }
+    }
+
     fn ui(&mut self, ui: &mut egui::Ui, cx: &mut Ctx<'_>) {
         let pending = self
             .core

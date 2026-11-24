@@ -546,3 +546,41 @@ fn rpc_save_and_run_work_end_to_end() {
     let _ = std::fs::remove_dir_all(h.dir.clone());
 }
 
+#[test]
+fn hidden_tick_service_reports_the_scheduler_deadline_without_a_frame_loop() {
+    use forja_kernel::ui_contract::View;
+
+    let mut h = harness("tick-poll", false, false);
+    h.load();
+    {
+        let mut state = h.shared.lock().unwrap();
+        state.store.routines.push(Routine {
+            id: "poll".into(),
+            name: "Poll".into(),
+            schedule: Schedule::Cron {
+                expression: "* * * * *".into(),
+            },
+            target: Target::Fixed {
+                bench_path: "C:/repo".into(),
+            },
+            action: Action::Command {
+                command: "x".into(),
+            },
+            created_at: crate::state::now_unix() - 3600,
+            ..Routine::default()
+        });
+    }
+    let mut view = view::TickView {
+        shared: Arc::clone(&h.shared),
+        next: None,
+    };
+    let mut cx = h.runtime.ctx("routine");
+    view.poll(&mut cx);
+    let deadline = view
+        .next_poll_at()
+        .expect("a scheduled routine has a real deadline");
+    assert!(deadline > std::time::Duration::ZERO);
+    assert!(deadline <= std::time::Duration::from_secs(60));
+    let _ = std::fs::remove_dir_all(h.dir.clone());
+}
+

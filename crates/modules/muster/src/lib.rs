@@ -259,4 +259,6 @@ mod tests_flow;
 #[cfg(test)]
 mod tests_model;
 #[cfg(test)]
+mod tests_poll;
+#[cfg(test)]
 mod tests_support;
