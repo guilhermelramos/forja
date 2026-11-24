@@ -7,6 +7,7 @@
 mod model;
 mod state;
 mod view;
+mod view_error;
 
 use forja_contracts::names;
 use forja_contracts::FileOpenRequested;

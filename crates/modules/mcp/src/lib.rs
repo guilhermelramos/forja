@@ -508,7 +508,15 @@ mod tests {
     use serde_json::Map;
     use std::path::PathBuf;
 
-    struct TempGuard(PathBuf);
+    // The kernel logger is a process-wide singleton: `Runtime::new` calls
+    // `logging::configure` and moves its destination to that test's temp dir.
+    // In a parallel run another test can redirect it between our `initialize`
+    // and our log call, so the record lands in the wrong file. Hold one lock for
+    // the whole lifetime of every test that owns a temp dir; the logger's
+    // destination then cannot change while a test asserts on its own log.
+    static LOG_DEST_LOCK: Mutex<()> = Mutex::new(());
+
+    struct TempGuard(PathBuf, #[allow(dead_code)] std::sync::MutexGuard<'static, ()>);
 
     impl std::ops::Deref for TempGuard {
         type Target = PathBuf;
@@ -531,6 +539,9 @@ mod tests {
     }
 
     fn temp_dir() -> TempGuard {
+        let guard = LOG_DEST_LOCK
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         let dir = std::env::temp_dir().join(format!(
             "forja-mcp-module-{}-{}",
             std::process::id(),
@@ -540,7 +551,7 @@ mod tests {
                 .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        TempGuard(dir)
+        TempGuard(dir, guard)
     }
 
     struct StubModule {
@@ -774,28 +785,20 @@ mod tests {
         runtime
             .set_setting("mcp.log.requests", SettingValue::Bool(true))
             .unwrap();
-        // The writer is global and the first `initialize` wins the folder, so
-        // read the file it is really appending to instead of assuming ours.
+        // `LOG_DEST_LOCK` keeps another Runtime from moving the writer here.
         let log = forja_kernel::logging::current_log_path()
             .unwrap_or_else(|| forja_kernel::logging::logs_dir(dir.0.clone()).join("forja.log"));
         let before = std::fs::read_to_string(&log).unwrap_or_default().lines().count();
         runtime.call_method("mcp.tools", Map::new()).expect("tools");
+        // Flush is a barrier in the logger channel: when it returns the record
+        // is already on disk, so no polling or sleeping is needed.
         forja_kernel::logging::flush();
-        let mut text = String::new();
-        for _ in 0..50 {
-            forja_kernel::logging::flush();
-            text = std::fs::read_to_string(&log)
-                .unwrap_or_default()
-                .lines()
-                .skip(before)
-                .collect::<Vec<_>>()
-                .join("
-");
-            if text.contains("mcp mcp.tools ok") {
-                break;
-            }
-            std::thread::sleep(std::time::Duration::from_millis(20));
-        }
+        let text = std::fs::read_to_string(&log)
+            .unwrap_or_default()
+            .lines()
+            .skip(before)
+            .collect::<Vec<_>>()
+            .join("\n");
         assert!(text.contains("mcp mcp.tools ok"), "{text}");
         assert!(!text.contains("mcp.server.expose"), "{text}");
         drop(runtime);

@@ -240,6 +240,18 @@ fn classify_git_key(full_lower: &str, inner_lower: &str) -> Option<&'static str>
     if inner_lower.contains("not a git repository") {
         return Some("kernel.error.git-not-repo");
     }
+    if inner_lower.contains("does not have any commits yet")
+        || inner_lower.contains("no commits yet")
+        || inner_lower.contains("unborn branch")
+        || inner_lower.contains("não tem nenhum commit")
+        || inner_lower.contains("nao tem nenhum commit")
+        || inner_lower.contains("sem nenhum commit")
+    {
+        return Some("kernel.error.git-no-commits");
+    }
+    if inner_lower.contains("needed a single revision") {
+        return Some("kernel.error.git-invalid-ref");
+    }
     if inner_lower.contains("invalid reference:")
         || (inner_lower.contains("base branch") && inner_lower.contains("does not exist"))
         || inner_lower.contains("unknown revision")
@@ -498,5 +510,46 @@ mod tests {
             "Esta branch já está em uso em outra bancada."
         );
         assert!(worktree_delete.detail.is_some());
+    }
+
+    #[test]
+    fn humanizes_repository_without_commits_and_bad_revision() {
+        let pt = test_i18n(Locale::PtBr);
+        let en = test_i18n(Locale::En);
+        let no_commits = "git log --graph --date-order --max-count=200 --pretty=format:%H%x1f%h%x1f%P%x1f%an%x1f%ae%x1f%at%x1f%s failed: fatal: your current branch 'master' does not have any commits yet";
+
+        let pt_no_commits = humanize_error(&pt, no_commits);
+        assert_eq!(
+            pt_no_commits.summary,
+            "Este repositório ainda não tem nenhum commit. Faça o primeiro commit para ver o histórico."
+        );
+        let pt_lower = pt_no_commits.summary.to_ascii_lowercase();
+        assert!(!pt_lower.contains("fatal"));
+        assert!(!pt_lower.contains("git log"));
+        assert!(!pt_lower.contains("does not have any"));
+        assert!(pt_no_commits.detail.as_deref().unwrap().contains("does not have any commits yet"));
+
+        let en_no_commits = humanize_error(&en, no_commits);
+        assert_eq!(
+            en_no_commits.summary,
+            "This repository has no commits yet. Make the first commit to see the history."
+        );
+        let en_lower = en_no_commits.summary.to_ascii_lowercase();
+        assert!(!en_lower.contains("fatal"));
+        assert!(!en_lower.contains("git log"));
+        assert!(!en_lower.contains("does not have any"));
+        assert!(en_no_commits.detail.is_some());
+
+        let bad_rev = humanize_error(
+            &pt,
+            "git rev-parse --verify --end-of-options C:\\forja-missing-folder\\ghost\\999^{commit} failed: fatal: Needed a single revision",
+        );
+        assert_eq!(
+            bad_rev.summary,
+            "A branch base ou referência informada não existe neste repositório."
+        );
+        assert!(!bad_rev.summary.contains("rev-parse"));
+        assert!(!bad_rev.summary.to_ascii_lowercase().contains("failed"));
+        assert!(bad_rev.detail.is_some());
     }
 }
