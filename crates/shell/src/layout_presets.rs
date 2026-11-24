@@ -414,6 +414,7 @@ impl ForjaApp {
         );
         self.layout_state.projection = projection;
         self.layout_state.applied = true;
+        self.restore_status_items();
     }
 
     pub(crate) fn handle_layout_action(&mut self, action: Action, ctx: &egui::Context) {

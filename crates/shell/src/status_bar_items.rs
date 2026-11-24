@@ -89,6 +89,18 @@ pub(crate) fn schedule_due(now: Instant, deadline: Option<Instant>) -> bool {
     deadline.is_none_or(|at| now >= at)
 }
 
+/// "Restaurar padrão": volta à ordem de registro e preserva os ids que ainda
+/// não têm contribuição registrada (o usuário não pode mexer neles na interface).
+pub(crate) fn restore_order(registered: &[String], current: &[String]) -> Vec<String> {
+    let mut restored = registered.to_vec();
+    for id in current {
+        if !registered.iter().any(|registered| registered == id) && !restored.contains(id) {
+            restored.push(id.clone());
+        }
+    }
+    restored
+}
+
 impl ForjaApp {
     fn save_items(&mut self, items: Vec<String>) {
         let _ = self
@@ -142,6 +154,17 @@ impl ForjaApp {
                 let _ = ctx.data_mut(|data| data.remove_temp::<Option<Instant>>(poll_deadline_id()));
             }
         }
+    }
+
+    pub(crate) fn restore_status_items(&mut self) {
+        let registered: Vec<String> = self
+            .status_views
+            .iter()
+            .map(|view| view.id.clone())
+            .collect();
+        let current = configured_items(self);
+        let restored = restore_order(&registered, &current);
+        self.save_items(restored);
     }
 
     pub(crate) fn toggle_status_item(&mut self, id: &str) {
@@ -260,6 +283,33 @@ mod tests {
         apply_move(&mut edited, "ports.status", -1);
         assert!(edited.iter().any(|id| id == "plugin.future"));
         assert_eq!(edited.len(), DEFAULT_ITEMS.len() + 1);
+    }
+
+    #[test]
+    fn restoring_defaults_orders_by_registration_and_keeps_unknown_ids() {
+        let registered = [
+            "bench.status".to_owned(),
+            "helper.status-bar".to_owned(),
+            "usage.status".to_owned(),
+            "ports.status".to_owned(),
+        ];
+        let current = vec![
+            "ports.status".to_owned(),
+            "plugin.future".to_owned(),
+            "helper.status-bar".to_owned(),
+        ];
+        let restored = restore_order(&registered, &current);
+        assert_eq!(
+            restored,
+            vec![
+                "bench.status".to_owned(),
+                "helper.status-bar".to_owned(),
+                "usage.status".to_owned(),
+                "ports.status".to_owned(),
+                "plugin.future".to_owned(),
+            ]
+        );
+        assert_eq!(restored.iter().filter(|id| *id == "plugin.future").count(), 1);
     }
 
     #[test]
