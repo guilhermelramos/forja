@@ -33,6 +33,7 @@ impl ForjaApp {
             .inner_margin(Margin::symmetric(10, 4))
             .stroke(Stroke::new(1.0_f32, self.paint(self.tokens.color.border)));
         let crumb = self.active_project_crumb();
+        let crumb_label = self.text("shell.top.crumb-label");
         let search_label = format!(
             "{} {}",
             self.text("shell.top.search"),
@@ -48,6 +49,10 @@ impl ForjaApp {
                     egui::Id::new("forja.top.drag"),
                     Sense::click_and_drag(),
                 );
+                let drag_name = crumb_label.clone();
+                drag.widget_info(|| {
+                    egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), &drag_name)
+                });
                 if drag.drag_started_by(egui::PointerButton::Primary) {
                     ctx.send_viewport_cmd(ViewportCommand::StartDrag);
                 }
@@ -72,6 +77,15 @@ impl ForjaApp {
                                 .truncate()
                                 .sense(Sense::click_and_drag()),
                         );
+                        let title_name = crumb_label.clone();
+                        title.widget_info(|| {
+                            egui::WidgetInfo::labeled(
+                                egui::WidgetType::Button,
+                                ui.is_enabled(),
+                                &title_name,
+                            )
+                        });
+                        let title = forja_ui_kit::tooltip(title, crumb_label.clone());
                         if title.drag_started_by(egui::PointerButton::Primary) {
                             ctx.send_viewport_cmd(ViewportCommand::StartDrag);
                         }
@@ -415,7 +429,8 @@ impl ForjaApp {
                 ));
             }
         }
-        if let Some(texture) = &self.logo {
+        let bench_name = self.text("shell.rail.bench");
+        let response = if let Some(texture) = &self.logo {
             ui.add(
                 egui::Image::from_texture(texture)
                     .fit_to_exact_size(egui::vec2(28.0, 28.0))
@@ -430,7 +445,11 @@ impl ForjaApp {
                 )
                 .sense(Sense::click()),
             )
-        }
+        };
+        response.widget_info(|| {
+            egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), &bench_name)
+        });
+        response
     }
 
     fn rail_button(

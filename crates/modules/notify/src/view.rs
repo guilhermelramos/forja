@@ -170,6 +170,7 @@ impl forja_kernel::ui_contract::View for CenterView {
         response.widget_info(|| {
             egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), &label)
         });
+        let response = forja_ui_kit::tooltip(response, cx.t("notify.center.title"));
         if response.clicked() {
             self.state.toggle_center();
         }
@@ -362,10 +363,20 @@ fn draw_center(ctx: &egui::Context, cx: &mut Ctx<'_>, state: &Shared, notices: &
                         }
                         for notice in notices.iter().rev() {
                             let line = brief(&notice.title, &notice.body);
+                            let open_label =
+                                cx.t_args("notify.item.open", &[("summary", &line)]);
                             let response = ui.add(
                                 egui::Label::new(egui::RichText::new(line).color(text_color(ui)))
                                     .sense(Sense::click()),
                             );
+                            response.widget_info(|| {
+                                egui::WidgetInfo::labeled(
+                                    egui::WidgetType::Button,
+                                    ui.is_enabled(),
+                                    &open_label,
+                                )
+                            });
+                            let response = forja_ui_kit::tooltip(response, &open_label);
                             if response.clicked() {
                                 if let Some(path) = &notice.bench_path {
                                     activate = Some((notice.id, path.clone()));

@@ -17,12 +17,12 @@
     { "m": "ui.key", "keys": "Tab" }
   ],
   "expect": [
-    { "step": 0, "focused": "Seguir o Windows" },
-    { "step": 3, "focused": "Seguir o Windows" },
+    { "step": 0, "focused": "Idioma da interface" },
+    { "step": 3, "focused": "Idioma da interface" },
     { "step": 6, "present_contains": ["Escolha o tema"] },
-    { "step": 7, "focused": "Seguir o Windows" },
+    { "step": 7, "focused": "Tema visual" },
     { "step": 8, "focused": "Voltar" },
     { "step": 10, "focused": "Fechar" },
-    { "focused": "Seguir o Windows" }
+    { "focused": "Tema visual" }
   ]
 }
