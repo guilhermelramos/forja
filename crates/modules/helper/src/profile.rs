@@ -172,6 +172,25 @@ pub struct Hooks {
     pub events: Vec<String>,
 }
 
+/// Seção `[rules]`.
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct Rules {
+    /// Arquivos de regras declarados pelo perfil para `helper.launch.include_rules`.
+    #[serde(default)]
+    pub files: Vec<String>,
+}
+
+/// Seção `[ready]`.
+#[derive(Clone, Debug, Default, Deserialize)]
+pub struct Ready {
+    /// Padrões na saída do terminal que sinalizam prontidão do ajudante.
+    #[serde(default)]
+    pub patterns: Vec<String>,
+    /// Prompt esperado no terminal indicando que o ajudante está pronto.
+    #[serde(default)]
+    pub prompt: Option<String>,
+}
+
 /// Seção `[sources]`.
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Sources {
@@ -233,6 +252,12 @@ pub struct Profile {
     /// Contas com home de configuração separada.
     #[serde(default)]
     pub accounts: Accounts,
+    /// Regras de projeto declaradas pelo perfil.
+    #[serde(default)]
+    pub rules: Rules,
+    /// Sinais verificáveis de prontidão do CLI.
+    #[serde(default)]
+    pub ready: Ready,
     /// Fontes.
     #[serde(default)]
     pub sources: Sources,
@@ -397,6 +422,58 @@ impl Profile {
             "medium" => 1,
             _ => 0,
         }
+    }
+
+    /// Verdadeiro quando o perfil declara argumentos de retomada para o caso pedido.
+    pub fn supports_resume(&self, session_id: Option<&str>) -> bool {
+        !self.resume.last.is_empty()
+            || (session_id.is_some_and(|id| !id.trim().is_empty()) && !self.resume.id.is_empty())
+    }
+
+    /// Candidatos de arquivos de regras na ordem do perfil + padrões `AGENTS.md`/`CLAUDE.md`.
+    pub fn rule_files(&self) -> Vec<String> {
+        let mut files = Vec::new();
+        for candidate in self
+            .rules
+            .files
+            .iter()
+            .map(String::as_str)
+            .chain(["AGENTS.md", "CLAUDE.md"])
+        {
+            let trimmed = candidate.trim();
+            if trimmed.is_empty() {
+                continue;
+            }
+            if !files
+                .iter()
+                .any(|existing: &String| existing.eq_ignore_ascii_case(trimmed))
+            {
+                files.push(trimmed.to_owned());
+            }
+        }
+        files
+    }
+
+    /// Padrões declarados pelo perfil para detectar que a TUI/CLI está pronta.
+    pub fn ready_markers(&self) -> Vec<String> {
+        let mut markers = Vec::new();
+        if let Some(prompt) = self.ready.prompt.as_deref() {
+            let trimmed = prompt.trim();
+            if !trimmed.is_empty() {
+                markers.push(trimmed.to_owned());
+            }
+        }
+        for pattern in &self.ready.patterns {
+            let trimmed = pattern.trim();
+            if !trimmed.is_empty()
+                && !markers
+                    .iter()
+                    .any(|existing: &String| existing.eq_ignore_ascii_case(trimmed))
+            {
+                markers.push(trimmed.to_owned());
+            }
+        }
+        markers
     }
 }
 

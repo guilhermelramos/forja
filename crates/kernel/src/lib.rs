@@ -22,6 +22,7 @@ pub mod events;
 pub mod human_error;
 pub mod i18n;
 pub mod keymap;
+pub mod layout_spec;
 pub mod logging;
 pub mod manifest;
 pub mod module;
@@ -51,9 +52,13 @@ pub use i18n::{BundleSource, I18n, Locale};
 pub use keymap::{
     BindingSource, KeyBinding, KeyChord, KeyConflict, Keymap, KeymapLayer, Scope,
 };
+pub use layout_spec::{
+    LayoutChrome, LayoutError, LayoutNodeSpec, LayoutSpecV1, LocalizedName, SplitDir, TabSpec,
+    TabTable, ViewRef,
+};
 pub use manifest::ModuleManifest;
 pub use module::{discovered_modules, module, Module, ModuleFactory, MODULE_FACTORIES};
-pub use registry::{build_registry, CacheDirSpec, Registrar, Registry};
+pub use registry::{build_registry, CacheDirSpec, Registrar, Registry, TickHandler};
 pub use runtime::{Ctx, Runtime, RuntimeOptions, StoreHandle};
 pub use settings::{
     is_forbidden_project_key, is_project_safe_key, project_settings_path, SettingKind,
