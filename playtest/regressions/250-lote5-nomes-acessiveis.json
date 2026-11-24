@@ -1,0 +1,24 @@
+{
+  "title": "Lote 5: Acervo expõe nomes acessíveis nos filtros (#207)",
+  "issue": 207,
+  "locale": "pt-BR",
+  "test_helpers": "none",
+  "steps": [
+    { "m": "ui.key", "keys": "Escape" },
+    { "m": "ui.click", "target": "Acervo" },
+    { "m": "ui.snapshot" }
+  ],
+  "expect": [
+    {
+      "step": 2,
+      "present_elements": [
+        { "name": "Buscar", "role": "TextInput" },
+        { "name": "Projeto", "role": "TextInput" },
+        { "name": "Filtrar por ajudante", "role": "ComboBox" },
+        { "name": "Filtrar por período", "role": "ComboBox" }
+      ],
+      "no_unnamed_buttons": true,
+      "no_geometry_issues": true
+    }
+  ]
+}
