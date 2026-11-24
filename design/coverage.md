@@ -6,17 +6,17 @@
 
 | Métrica | Valor |
 |---|---|
-| Configurações no catálogo | 314 |
+| Configurações no catálogo | 315 |
 | Configurações sobreponíveis por projeto (`scope = "project"`) | 31 |
-| Configurações registradas no app | 293 (292 do catálogo + 1 extras) |
-| Configurações com efeito real no código | 292 (291 do catálogo) |
+| Configurações registradas no app | 294 (293 do catálogo + 1 extras) |
+| Configurações com efeito real no código | 293 (292 do catálogo) |
 | Configurações registradas sem efeito | 1 (1 do catálogo) |
 | Configurações do catálogo ausentes no app | 2 |
 | Configurações adiadas | 20 |
 | Divergências de tipo ou padrão | 0 |
 | Divergências de faixa, opções ou módulo | 0 |
-| Atalhos no catálogo | 110 |
-| Atalhos registrados no app | 110 (110 do catálogo + 0 extras) |
+| Atalhos no catálogo | 111 |
+| Atalhos registrados no app | 111 (111 do catálogo + 0 extras) |
 | Atalhos do catálogo ausentes no app | 0 |
 | Atalhos com tecla ou escopo divergente | 0 |
 
@@ -68,6 +68,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `appearance.sidebar.width` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.rail.visible` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.status_bar.visible` | `appearance` | `appearance` | sim | ok | sim |
+| `appearance.layout.default` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.window.remember_geometry` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.window.start_maximized` | `appearance` | `appearance` | sim | ok | sim |
 | `appearance.tabs.middle_click` | `appearance` | `appearance` | sim | ok | sim |
@@ -480,6 +481,7 @@ Nenhuma divergência de tipo, padrão, faixa, opções, módulo ou tecla.
 | `anvil.group.previous` | `Shift+Tab` | `anvil` | sim | `Shift+Tab` | ok |
 | `anvil.run_background` | `Ctrl+Enter` | `anvil` | sim | `Ctrl+Enter` | ok |
 | `voice.dictate` | `Ctrl+Alt+V` | `voice` | sim | `Ctrl+Alt+V` | ok |
+| `layout.switch` | `Ctrl+Alt+L` | `global` | sim | `Ctrl+Alt+L` | ok |
 
 ## Registrados no app mas ausentes do catálogo
 
