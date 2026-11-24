@@ -44,25 +44,48 @@ fn view_with_fields_open() -> EditorView {
     view
 }
 
-fn render(cx: &mut Ctx<'_>, view: &mut EditorView) -> egui::FullOutput {
+fn render(cx: &mut Ctx<'_>, view: &mut EditorView, hover: Option<&str>) -> egui::FullOutput {
     let ctx = egui::Context::default();
     ctx.enable_accesskit();
     let _ = forja_ui_kit::install_fonts(&ctx);
     forja_ui_kit::apply(&ctx, &forja_ui_kit::Tokens::brasa_dark());
+    ctx.style_mut(|style| style.interaction.tooltip_delay = 0.0);
+    let mut point = None;
     let mut output = None;
-    for _ in 0..2 {
-        output = Some(ctx.run(
-            egui::RawInput {
-                screen_rect: Some(egui::Rect::from_min_size(
-                    egui::Pos2::ZERO,
-                    egui::vec2(1000.0, 700.0),
-                )),
-                ..Default::default()
-            },
-            |ctx| {
-                egui::CentralPanel::default().show(ctx, |ui| view.ui(ui, cx));
-            },
-        ));
+    for _ in 0..3 {
+        let mut input = egui::RawInput {
+            screen_rect: Some(egui::Rect::from_min_size(
+                egui::Pos2::ZERO,
+                egui::vec2(1000.0, 700.0),
+            )),
+            ..Default::default()
+        };
+        if let Some(point) = point {
+            input.events.push(egui::Event::PointerMoved(point));
+        }
+        output = Some(ctx.run(input, |ctx| {
+            egui::CentralPanel::default().show(ctx, |ui| view.ui(ui, cx));
+        }));
+        if point.is_none() {
+            if let Some(target) = hover {
+                let tree = output
+                    .as_ref()
+                    .unwrap()
+                    .platform_output
+                    .accesskit_update
+                    .as_ref()
+                    .unwrap();
+                if let Some(node) = tree.nodes.iter().map(|(_, node)| node).find(|node| {
+                    node.label() == Some(target) && format!("{:?}", node.role()) == "TextInput"
+                }) {
+                    let bounds = node.bounds().unwrap();
+                    point = Some(egui::pos2(
+                        (bounds.x0 + 20.0) as f32,
+                        (bounds.y0 + 16.0) as f32,
+                    ));
+                }
+            }
+        }
     }
     output.unwrap()
 }
@@ -71,8 +94,8 @@ fn render(cx: &mut Ctx<'_>, view: &mut EditorView) -> egui::FullOutput {
 fn production_fields_render_without_panic_and_have_names() {
     let mut runtime = runtime();
     let mut cx = runtime.ctx("editor");
-    let mut view = view_with_fields_open();
-    let output = render(&mut cx, &mut view);
+    let labels = ["Linha", "Buscar", "Substituir por", "Novo nome"];
+    let output = render(&mut cx, &mut view_with_fields_open(), None);
     let names: Vec<String> = output
         .platform_output
         .accesskit_update
@@ -82,7 +105,21 @@ fn production_fields_render_without_panic_and_have_names() {
         .iter()
         .filter_map(|(_, node)| node.label().map(str::to_owned))
         .collect();
-    for expected in ["Linha", "Buscar", "Substituir por", "Novo nome"] {
-        assert!(names.iter().any(|name| name == expected), "missing {expected:?}");
+    for label in labels {
+        assert!(names.iter().any(|name| name == label), "missing {label:?}");
+    }
+    // O campo de renomear vive numa janela flutuante: o nome é lido da view de
+    // produção, e a dica é garantida pelo contrato de text_field_labeled no ui-kit.
+    for label in &labels[..3] {
+        let hovered = render(&mut cx, &mut view_with_fields_open(), Some(label));
+        let texts: Vec<String> = hovered
+            .shapes
+            .iter()
+            .filter_map(|shape| match &shape.shape {
+                egui::Shape::Text(text) => Some(text.galley.text().to_owned()),
+                _ => None,
+            })
+            .collect();
+        assert!(texts.iter().any(|text| text == label), "missing tooltip {label:?}");
     }
 }
