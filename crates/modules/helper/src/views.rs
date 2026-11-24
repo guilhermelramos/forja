@@ -531,10 +531,16 @@ impl HelperSettings {
             )));
             ui.horizontal(|ui| {
                 forja_ui_kit::text(ui, cx.t("helper.settings.extra-args"));
-                if ui
-                    .add(egui::TextEdit::singleline(&mut extra).desired_width(260.0))
-                    .lost_focus()
-                {
+                let response = ui.scope(|ui| {
+                    ui.set_max_width(260.0);
+                    forja_ui_kit::text_field_labeled(
+                        ui,
+                        &mut extra,
+                        &cx.t("helper.settings.extra-args"),
+                        &cx.t("helper.settings.extra-args-help"),
+                    )
+                }).inner;
+                if response.lost_focus() {
                     let mut next = overrides.clone();
                     next.extra_args = split_arguments(&extra);
                     changes.push((profile.id.clone(), next));
@@ -542,10 +548,16 @@ impl HelperSettings {
             });
             ui.horizontal(|ui| {
                 forja_ui_kit::text(ui, cx.t("helper.settings.environment"));
-                if ui
-                    .add(egui::TextEdit::singleline(&mut environment).desired_width(320.0))
-                    .lost_focus()
-                {
+                let response = ui.scope(|ui| {
+                    ui.set_max_width(320.0);
+                    forja_ui_kit::text_field_labeled(
+                        ui,
+                        &mut environment,
+                        &cx.t("helper.settings.environment"),
+                        &cx.t("helper.settings.environment-help"),
+                    )
+                }).inner;
+                if response.lost_focus() {
                     let mut next = overrides.clone();
                     next.environment = parse_environment(&environment);
                     changes.push((profile.id.clone(), next));

@@ -47,7 +47,9 @@ helper-settings-profiles = Perfis
 helper-settings-enabled = Habilitado
 helper-settings-command = Comando
 helper-settings-extra-args = Argumentos extras
+helper-settings-extra-args-help = Argumentos adicionais passados ao CLI deste ajudante
 helper-settings-environment = Ambiente
+helper-settings-environment-help = Pares CHAVE=VALOR aplicados ao iniciar este ajudante
 helper-settings-hooks = Hooks
 helper-settings-hook-target = Arquivo de configuração que será alterado:
 helper-settings-consent = Permitir escrita de hooks
