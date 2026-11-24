@@ -1,90 +1,88 @@
-//! Contrato de acessibilidade dos controles nomeados do lote 2 (Refs #207).
+//! Contrato de acessibilidade desenhando a view real do editor (Refs #207).
 
-use forja_kernel::{BundleSource, I18n, Locale};
+use crate::model::{Encoding, Eol};
+use crate::state::{RenameState, Tab};
+use crate::view::EditorView;
+use forja_kernel::ui_contract::View;
+use forja_kernel::{Ctx, Runtime, RuntimeOptions};
 use forja_ui_kit::egui;
 
-fn bundle(locale: Locale) -> I18n {
-    I18n::build(
-        &[BundleSource {
-            module: "editor".to_owned(),
-            en: include_str!("../i18n/en.ftl").to_owned(),
-            pt_br: include_str!("../i18n/pt-BR.ftl").to_owned(),
-        }],
-        locale,
+fn runtime() -> Runtime {
+    let dir = std::env::temp_dir().join(format!("forja-editor-a11y-{}", std::process::id()));
+    Runtime::new(
+        vec![Box::new(crate::EditorModule::new())],
+        RuntimeOptions {
+            data_dir: Some(dir.clone()),
+            user_dir: Some(dir.join("user")),
+            locale: Some("pt-BR".to_owned()),
+            wake: None,
+        },
     )
-    .0
+    .expect("editor registers")
+}
+
+fn view_with_fields_open() -> EditorView {
+    let state = crate::state::Shared::new();
+    state.with(|state| {
+        state.tabs = vec![Tab::new(
+            "src/main.rs".to_owned(),
+            "fn main() {}\n".to_owned(),
+            Eol::Lf,
+            Encoding::Utf8,
+            false,
+        )];
+        state.active = 0;
+        state.find.open = true;
+        state.find.replace_open = true;
+        state.rename = Some(RenameState {
+            word: "main".to_owned(),
+            text: "main2".to_owned(),
+        });
+    });
+    let mut view = EditorView::new(state);
+    view.goto_open = true;
+    view
+}
+
+fn render(cx: &mut Ctx<'_>, view: &mut EditorView) -> egui::FullOutput {
+    let ctx = egui::Context::default();
+    ctx.enable_accesskit();
+    let _ = forja_ui_kit::install_fonts(&ctx);
+    forja_ui_kit::apply(&ctx, &forja_ui_kit::Tokens::brasa_dark());
+    let mut output = None;
+    for _ in 0..2 {
+        output = Some(ctx.run(
+            egui::RawInput {
+                screen_rect: Some(egui::Rect::from_min_size(
+                    egui::Pos2::ZERO,
+                    egui::vec2(1000.0, 700.0),
+                )),
+                ..Default::default()
+            },
+            |ctx| {
+                egui::CentralPanel::default().show(ctx, |ui| view.ui(ui, cx));
+            },
+        ));
+    }
+    output.unwrap()
 }
 
 #[test]
-fn named_controls_expose_non_empty_names_and_tooltips() {
-    for locale in [Locale::PtBr, Locale::En] {
-        let i18n = bundle(locale);
-        let labels: Vec<String> = [
-            "editor.goto.label",
-            "editor.find.hint",
-            "editor.find.replace-hint",
-            "editor.rename.hint",
-        ]
+fn production_fields_render_without_panic_and_have_names() {
+    let mut runtime = runtime();
+    let mut cx = runtime.ctx("editor");
+    let mut view = view_with_fields_open();
+    let output = render(&mut cx, &mut view);
+    let names: Vec<String> = output
+        .platform_output
+        .accesskit_update
+        .as_ref()
+        .expect("accesskit habilitado")
+        .nodes
         .iter()
-        .map(|key| i18n.t(key))
+        .filter_map(|(_, node)| node.label().map(str::to_owned))
         .collect();
-        let canvas = i18n.t_args("editor.canvas.label", &[("file", "src/main.rs")]);
-        for label in labels.iter().chain(std::iter::once(&canvas)) {
-            assert!(!label.trim().is_empty(), "empty label in {locale:?}");
-        }
-        let ctx = egui::Context::default();
-        forja_ui_kit::apply(&ctx, &forja_ui_kit::Tokens::brasa_dark());
-        ctx.style_mut(|style| style.interaction.tooltip_delay = 0.0);
-        ctx.enable_accesskit();
-        let mut first_center = None;
-        let output = ctx.run(Default::default(), |ctx| {
-            egui::CentralPanel::default().show(ctx, |ui| {
-                let mut value = String::new();
-                for (index, label) in labels.iter().enumerate() {
-                    let response = forja_ui_kit::text_field_labeled(ui, &mut value, label, label);
-                    if index == 0 {
-                        first_center = Some(response.rect.center());
-                    }
-                }
-                let (_, body) =
-                    ui.allocate_exact_size(egui::vec2(40.0, 40.0), egui::Sense::click_and_drag());
-                body.widget_info(|| {
-                    egui::WidgetInfo::labeled(egui::WidgetType::TextEdit, true, canvas.clone())
-                });
-            });
-        });
-        let names: Vec<String> = output
-            .platform_output
-            .accesskit_update
-            .as_ref()
-            .expect("accesskit habilitado")
-            .nodes
-            .iter()
-            .filter_map(|(_, node)| node.label().map(str::to_owned))
-            .collect();
-        for expected in labels.iter().chain(std::iter::once(&canvas)) {
-            assert!(names.contains(expected), "missing name {expected:?} in {locale:?}");
-        }
-        let mut hovered = None;
-        for _ in 0..3 {
-            let mut input = egui::RawInput::default();
-            input.events.push(egui::Event::PointerMoved(first_center.unwrap()));
-            hovered = Some(ctx.run(input, |ctx| {
-                egui::CentralPanel::default().show(ctx, |ui| {
-                    let mut value = String::new();
-                    for label in &labels {
-                        forja_ui_kit::text_field_labeled(ui, &mut value, label, label);
-                    }
-                });
-            }));
-        }
-        assert!(
-            hovered.unwrap().shapes.iter().any(|shape| matches!(
-                &shape.shape,
-                egui::Shape::Text(text) if text.galley.text() == labels[0]
-            )),
-            "missing tooltip {:?} in {locale:?}",
-            labels[0]
-        );
+    for expected in ["Linha", "Buscar", "Substituir por", "Novo nome"] {
+        assert!(names.iter().any(|name| name == expected), "missing {expected:?}");
     }
 }

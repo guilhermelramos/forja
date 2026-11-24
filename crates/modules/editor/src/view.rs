@@ -19,7 +19,7 @@ pub struct EditorView {
     last_find_key: u64,
     last_check: Instant,
     bootstrapped: bool,
-    goto_open: bool,
+    pub(crate) goto_open: bool,
     goto_text: String,
     preview_open: bool,
     text_focused: bool,
@@ -336,9 +336,10 @@ impl EditorView {
             ui.horizontal(|ui| {
                 let goto_label = cx.t("editor.goto.label");
                 forja_ui_kit::text(ui, goto_label.clone());
+                let full_width = ui.available_width();
                 ui.set_width(80.0);
                 forja_ui_kit::text_field_labeled(ui, &mut line, &goto_label, &goto_label);
-                ui.set_width(f32::INFINITY);
+                ui.set_width(full_width);
                 if forja_ui_kit::button(
                     ui,
                     forja_ui_kit::ButtonKind::Secondary,
@@ -410,11 +411,12 @@ impl EditorView {
         let mut changed = false;
         ui.horizontal_wrapped(|ui| {
             let find_hint = cx.t("editor.find.hint");
+            let full_width = ui.available_width();
             ui.set_width(220.0);
             changed |=
                 forja_ui_kit::text_field_labeled(ui, &mut find.query, &find_hint, &find_hint)
                     .changed();
-            ui.set_width(f32::INFINITY);
+            ui.set_width(full_width);
             changed |=
                 forja_ui_kit::toggle(ui, &mut find.case_sensitive, &cx.t("editor.find.case"))
                     .changed();
@@ -452,10 +454,11 @@ impl EditorView {
             if find.replace_open {
                 ui.separator();
                 let replace_hint = cx.t("editor.find.replace-hint");
+                let full_width = ui.available_width();
                 ui.set_width(180.0);
                 changed |= forja_ui_kit::text_field_labeled(
                     ui, &mut find.replacement, &replace_hint, &replace_hint).changed();
-                ui.set_width(f32::INFINITY);
+                ui.set_width(full_width);
                 if ui.button(cx.t("editor.find.replace-all")).clicked() {
                     let mut args = Args::new();
                     args.insert("path", json!(tab.path));

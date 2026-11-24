@@ -221,6 +221,7 @@ fn draw_search(ui: &mut egui::Ui, terminal: &mut Terminal, texts: &UiText) {
     let field_width = (ui.available_width() - 210.0).clamp(60.0, 220.0);
     let mut contents = |ui: &mut egui::Ui| {
         let search_label = texts.search_hint.clone();
+        let full_width = ui.available_width();
         ui.set_width(field_width);
         let response = forja_ui_kit::text_field_labeled(
             ui,
@@ -228,7 +229,7 @@ fn draw_search(ui: &mut egui::Ui, terminal: &mut Terminal, texts: &UiText) {
             &search_label,
             &search_label,
         );
-        ui.set_width(f32::INFINITY);
+        ui.set_width(full_width);
         if terminal.search.focus_requested {
             terminal.search.focus_requested = false;
             response.request_focus();
