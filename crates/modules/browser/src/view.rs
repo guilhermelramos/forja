@@ -508,14 +508,12 @@ impl BrowserView {
             }
             let mut address = self.address.clone();
             let address_label = cx.t("browser.view.address");
-            ui.set_width(420.0);
             let response = forja_ui_kit::text_field_labeled(
                 ui,
                 &mut address,
                 &address_label,
                 &address_label,
             );
-            ui.set_width(f32::INFINITY);
             if self.state.take_address_focus() {
                 response.request_focus();
             }
@@ -612,10 +610,8 @@ impl BrowserView {
         ui.horizontal(|ui| {
             let mut query = self.state.find_query();
             let find_label = cx.t("browser.view.find");
-            ui.set_width(260.0);
             let response =
                 forja_ui_kit::text_field_labeled(ui, &mut query, &find_label, &find_label);
-            ui.set_width(f32::INFINITY);
             let enter =
                 response.lost_focus() && ui.input(|input| input.key_pressed(egui::Key::Enter));
             if enter || response.changed() {
