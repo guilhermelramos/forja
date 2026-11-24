@@ -10,7 +10,7 @@ use crate::model::{RootInfo, Scope, Skill, FORJA_OWNER};
 use crate::state::{InstallKind, Notice, Pending, Shared};
 use forja_kernel::ui_contract::{egui, View};
 use forja_kernel::Ctx;
-use forja_ui_kit::{button, segmented, select, text_field, ButtonKind};
+use forja_ui_kit::{button, segmented, select_labeled, text_field_labeled, ButtonKind};
 use std::path::PathBuf;
 
 /// Chaves que a tela monta em tempo de execução.
@@ -27,6 +27,9 @@ pub const USED_KEYS: &[&str] = &[
     "skill.scope.user",
     "skill.scope.project",
     "skill.search.hint",
+    "skill.search.help",
+    "skill.install.owner-label",
+    "skill.copy.owner-label",
     "skill.list.loading",
     "skill.list.empty",
     "skill.detail.empty",
@@ -114,7 +117,7 @@ impl SkillView {
             forja_ui_kit::text(ui, cx.t("skill.target.label"));
             if !owner_names.is_empty() {
                 let mut index = self.install_owner.min(owners.len().saturating_sub(1));
-                select(ui, &mut index, &owner_names);
+                select_labeled(ui, &mut index, &cx.t("skill.install.owner-label"), &owner_names);
                 self.install_owner = index;
             }
         });
@@ -316,7 +319,7 @@ impl SkillView {
             forja_ui_kit::text(ui, cx.t("skill.copy.label"));
             if !owner_names.is_empty() {
                 let mut index = self.copy_owner.min(owners.len() - 1);
-                select(ui, &mut index, &owner_names);
+                select_labeled(ui, &mut index, &cx.t("skill.copy.owner-label"), &owner_names);
                 self.copy_owner = index;
             }
             segmented(ui, &mut self.copy_scope, &scope_refs);
@@ -450,7 +453,12 @@ impl View for SkillView {
             actions::refresh(cx, &self.shared);
         }
         page.filters(|ui| {
-            text_field(ui, &mut self.query, &cx.t("skill.search.hint"));
+            text_field_labeled(
+                ui,
+                &mut self.query,
+                &cx.t("skill.search.hint"),
+                &cx.t("skill.search.help"),
+            );
             self.toolbar(ui, cx, &snap);
         });
         page.body(|ui| {
